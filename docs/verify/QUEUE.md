@@ -71,10 +71,10 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-c2 | 35 | AI, MATH, SCRIPT, UNK-game, VEH | 49bdb6d2 | master | 35 | 0 | 0 | 0 | 0 | L2 35 |
 | frontier2-c3 | 11 | AI, SCRIPT, UNK-game | 49bdb6d2 | master | 11 | 0 | 0 | 0 | 0 | L2 11 |
 | frontier2-c4 | 10 | AUDIO, CALLED-ONLY, SCRIPT, UNK-game | d18327f1 | master | 10 | 0 | 0 | 0 | 0 | L2 9, split 1 |
-| frontier2-c5 | 22 | AI, ANIM, AUDIO, CALLED-ONLY, MATH, SCRIPT, UNK-game, WORLD | uncommitted | worktree-agent-afdd623e21965992f | 22 | 0 | 0 | 0 | 0 | L2 21, split 1 |
-| frontier2-c6 | 12 | AI, UNK-game, WORLD | uncommitted | worktree-agent-afdd623e21965992f | 12 | 0 | 0 | 0 | 0 | L2 12 |
+| frontier2-c5 | 22 | AI, ANIM, AUDIO, CALLED-ONLY, MATH, SCRIPT, UNK-game, WORLD | 1a07f443 | worktree-agent-afdd623e21965992f | 22 | 0 | 0 | 0 | 0 | L2 21, split 1 |
+| frontier2-c6 | 12 | AI, UNK-game, WORLD | 1a07f443 | worktree-agent-afdd623e21965992f | 12 | 0 | 0 | 0 | 0 | L2 12 |
 | gen2-anim-1 | 1 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| gen2-audio-1 | 1 | AUDIO | uncommitted | worktree-agent-afdd623e21965992f | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| gen2-audio-1 | 1 | AUDIO | 1a07f443 | worktree-agent-afdd623e21965992f | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | gen2-coll-1 | 20 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 20 | 0 | L2 8, split 12 |
 | gen2-core-1 | 4 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
 | gen2-input-1 | 1 | INPUT | 327954b9 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
