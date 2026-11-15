@@ -23,7 +23,7 @@ use sa_core::bindings::{
     general_random_int_in_range, get_anim_hierarchy_from_skin_clump, get_weapon_info, matrix_mul_vec, ped_get_bone_position,
     rp_hanim_hierarchy_get_matrix_array, rp_hanim_id_get_index, rw_v3d_transform_points, vector_normalise,
 };
-use sa_math::fpu::{fbits, fcom_jnp, ge_or_nan, gt, le_or_nan, lt, st0};
+use sa_math::fpu::{fbits, fcom_jnp, ge_or_nan, gt, le_or_nan, lt};
 use sa_world::bindings::{
     cam_get_two_player_aim_vector, camera_find_3rd_person_cam_target_vector, camera_set_new_player_weapon_mode,
     get_pad_from_player, get_player_info, is_coop_game_going_on, pad_get_weapon, ped_do_gun_flash,
@@ -781,14 +781,14 @@ pub fn gang_drive_by_point_gun(this: GPtr<u8>, ped: GPtr<u8>) {
     let pp = entity_pos(ped);
     bp[0] = rd::<f32>(pp, 0);
     bp[1] = rd::<f32>(pp, 4);
-    let mut yaw = st0(general_get_radian_angle_between_points(v[0], v[1], bp[0], bp[1])).to_f32();
+    let mut yaw = general_get_radian_angle_between_points(v[0], v[1], bp[0], bp[1]).to_f32();
     let mut pitch = 0f32;
     let veh = rd::<GPtr<u8>>(ped, 0x58C);
     if !veh.is_null() && rd::<u32>(veh, 0x590) == 9 {
         let a = x(bp[0]).fsub_m(v[0]);
         let b = x(bp[1]).fsub_m(v[1]);
         let s = b.fmul(b).fadd(a.fmul(a)).fsqrt().to_f32();
-        let p = st0(general_get_radian_angle_between_points(v[2], s, bp[2], 0.0));
+        let p = general_get_radian_angle_between_points(v[2], s, bp[2], 0.0);
         pitch = x(yaw)
             .fsub(placeable_heading(veh))
             .fsin()

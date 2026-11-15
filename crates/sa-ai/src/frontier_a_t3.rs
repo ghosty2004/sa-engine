@@ -594,7 +594,7 @@ pub fn arrest_ped_simple_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         ped_get_bone_position(suspect, vec3f_ptr(&mut bone), 3, 0);
     }
     let pp = entity_pos(ped);
-    let a = st0(general_get_radian_angle_between_points(bone[0], bone[1], rd::<f32>(pp, 0), rd::<f32>(pp, 4))).to_f32();
+    let a = general_get_radian_angle_between_points(bone[0], bone[1], rd::<f32>(pp, 0), rd::<f32>(pp, 4)).to_f32();
     wr::<f32>(ped, 0x55C, a);
     wr::<f32>(ped, 0x558, a);
     set_orientation(ped, 0.0, 0.0, a);
