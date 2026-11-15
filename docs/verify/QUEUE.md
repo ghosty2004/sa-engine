@@ -68,6 +68,8 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-b3 | 7 | VEH | 221f09a0 | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
 | frontier2-b4 | 5 | RW, SAVE | 2f47ba34 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | frontier2-b5 | 25 | MATH, POP, VEH, WORLD | 5025cb27 | worktree-agent-a01dd37b0c8f4b2db | 25 | 0 | 0 | 0 | 0 | L2 22, split 3 |
+| frontier2-b6 | 6 | VEH | 89411bca | worktree-agent-a01dd37b0c8f4b2db | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| frontier2-b7 | 2 | WORLD | 89411bca | worktree-agent-a01dd37b0c8f4b2db | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | frontier2-c1 | 44 | AI, UNK-game | 49bdb6d2 | master | 44 | 0 | 0 | 0 | 0 | L2 44 |
 | frontier2-c2 | 35 | AI, MATH, SCRIPT, UNK-game, VEH | 49bdb6d2 | master | 35 | 0 | 0 | 0 | 0 | L2 35 |
 | frontier2-c3 | 11 | AI, SCRIPT, UNK-game | 49bdb6d2 | master | 11 | 0 | 0 | 0 | 0 | L2 11 |
@@ -2311,6 +2313,42 @@ SA_UNVERIFIED=frontier2-b5 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b5 $S
 | 0x568DD0 | `CWorld::FindObjectsIntersectingCube` | written | L2 | none |
 | 0x569240 | `CWorld::FindMissionEntitiesIntersectingCube` | written | L2 | none |
 | 0x59B9F0 | `CCompressedMatrixNotAligned::DecompressIntoFullMatrix` | written | L2 | none |
+
+## frontier2-b6
+
+6 hooks in sa-veh; hazards: heap-writes (5), stack-residue (1), x87-transcendental (2); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-b6 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-b6 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b6 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-b6
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6A3A60 | `CAutomobile::BoostJumpControl` | written | L2 | none |
+| 0x6B4410 | `CAutomobile::SetTowLink` | written | L2 | heap-writes,x87-transcendental |
+| 0x6CFDF0 | `CTrailer::SetTowLink` | written | L2 | heap-writes,x87-transcendental |
+| 0x6D3510 | `CVehicle::CreateUpgradeAtomic` | written | L2 | heap-writes,stack-residue |
+| 0x6DFA20 | `CVehicle::AddUpgrade` | written | L2 | heap-writes |
+| 0x6F6850 | `CTrain::RemoveRandomPassenger` | written | L2 | heap-writes |
+
+## frontier2-b7
+
+2 hooks in sa-world; hazards: none; recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-b7 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-b7 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b7 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-b7
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x566A60 | `CWorld::CallOffChaseForArea` | written | L2 | none |
+| 0x5693F0 | `CWorld::FindNearestObjectOfType` | written | L2 | none |
 
 ## frontier2-c1
 
