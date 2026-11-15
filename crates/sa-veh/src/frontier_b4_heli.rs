@@ -40,6 +40,11 @@ orig! {
     fn heli_find_swat_position(h: GPtr<u8>, out: GPtr<u8>, i: u32) -> GPtr<f32> = thiscall 0x6C4760 => crate::frontier_b4_heli::heli_find_swat_position_native;
     /// `CRopes::SetSpeedOfTopNode(uint32 id, CVector speed)` (0x555DF0)
     fn ropes_set_speed_of_top_node(id: GPtr<u8>, sx: f32, sy: f32, sz: f32) = cdecl 0x555DF0 => unported;
+    /// `CVehicle::DoBladeCollision(CVector pos, CMatrix& matrix, int16 rotorType, float radius, float damageMult)`
+    /// (0x6E2E50)
+    fn do_blade_collision(v: GPtr<u8>, px: f32, py: f32, pz: f32, m: GPtr<u8>, rotor: u32, radius: f32, mult: u32) -> u8 = thiscall 0x6E2E50 => crate::vehicle_blade_collision::vehicle_do_blade_collision;
+    /// `CWindModifiers::RegisterOne(CVector pos, int32 type, float power)` (0x72C8B0)
+    fn wind_register_one(px: f32, py: f32, pz: f32, ty: i32, power: f32) = cdecl 0x72C8B0 => unported;
     /// `CVehicle::UpdateWinch()` (0x6D3B80)
     fn vehicle_update_winch(v: GPtr<u8>) = thiscall 0x6D3B80 => crate::vehicle2::update_winch;
 }
@@ -408,8 +413,161 @@ pub fn heli_send_down_swat(this: GPtr<u8>) -> u8 {
     1
 }
 
+/// `CHeli::ProcessFlyingCarStuff()` (0x6C4E60, vtable slot). Not player / remote / status 8: only with handling flag
+/// 0x2000000 (+0x384 +0xCC) the engine flag +0x428 bit 4 is cleared and the rotor speed +0x84C runs down by
+/// `0.00055 * timeStep` (to 0; byte +0xB8 cleared while it runs). Driven (status 0 / 3 / 8): the rotor speed rises by
+/// 0.001 (0.003 for models 465 / 501) while below 0.22 and +0x40 bit 8 is clear; above 0.15 `FlyingControl` runs
+/// (model 2 with +0x42C bit 7; else model 6 with the four control values +0x98C..+0x998, skipped on the ground (+0x960
+/// >= 4 wheels, or the parked Leviathan / Skimmer flag) with no input (+0x998 <= 0) and every speed component within
+/// 0.02). Above 0.015 with a rotor frame (+0x678): the rotor atomic's bounding sphere (radius > 0.1) cuts with
+/// `DoBladeCollision` (rotor type -3, damage by model: 0.9 / 0.8 / 0.5 / 1.0) for status 0 / 8, and the wind
+/// modifier registers (power `min(rotor * 6.67, 1)` for status 0 / 3 above 0.0075, 1.0 for status 2). Then (not for
+/// 465 / 501, rotor in (0.0044, 0.154)) the camera within 20 of the heli and the rotor turned more than 30 degrees since
+/// the last chop (+0x958 vs +0x82C): when the rotor's right vector faces the camera (|dot| > 0.95) the chop sound 0x5E
+/// plays and +0x958 = +0x82C.
+#[hook(addr = 0x6C4E60, conv = thiscall, name = "CHeli::ProcessFlyingCarStuff", this = "CHeli", expect = "64 A1 00 00 00 00 6A FF 68 6E 84 84 00",
+       unverified = "frontier2-b12", route = "L2", hazards = "x87-transcendental,heap-writes",
+       note = "FSQRT of the camera distance; the stack CMatrix copies live on the Rust stack; the SEH frame is not reproduced")]
+pub fn heli_process_flying_car_stuff(this: GPtr<u8>) {
+    use crate::mvpb_a1::flying_control;
+    use sa_core::bindings::{frame_for_all_objects, matrix_attach, rp_atomic_resync_interpolated_sphere};
+    use sa_world::bindings::audio_add_event;
+    let status = rd::<u8>(this, 0x36) >> 3;
+    let ts = time_step();
+    if status != 0 && status != 8 && status != 3 {
+        if rd::<u32>(rd::<GPtr<u8>>(this, 0x384), 0xCC) & 0x200_0000 == 0 {
+            return;
+        }
+        wr::<u8>(this, 0x428, rd::<u8>(this, 0x428) & 0xEF);
+        let d = x(ts).fmul_m(f32::from_bits(0x3A10_2DE0));
+        if ge_or_nan(d, x(rd::<f32>(this, 0x84C))) {
+            wr::<u32>(this, 0x84C, 0);
+        } else {
+            wr::<u8>(this, 0xB8, 0);
+            wr::<f32>(this, 0x84C, f32_of(x(rd::<f32>(this, 0x84C)).fsub(d)));
+        }
+    } else {
+        let model = rd::<u16>(this, 0x22);
+        if !ge_or_nan(x(rd::<f32>(this, 0x84C)), x(f32::from_bits(0x3E61_47AE))) && rd::<u32>(this, 0x40) & 0x100 == 0 {
+            let inc = if model == 0x1D1 || model == 0x1F5 { f32::from_bits(0x3B44_9BA6) } else { f32::from_bits(0x3A83_126F) };
+            wr::<f32>(this, 0x84C, f32_of(x(rd::<f32>(this, 0x84C)).fadd_m(inc)));
+        }
+        if !le_or_nan(x(rd::<f32>(this, 0x84C)), x(f32::from_bits(0x3E19_999A))) {
+            let parked = rd::<u32>(this, 0x40) & 0x800_0000 != 0 && (model == 0x1BF || model == 0x1A1);
+            let ctl = |o: isize| rd::<f32>(this, o);
+            if rd::<u8>(this, 0x42C) & 0x80 != 0 {
+                flying_control(this, 2, ctl(0x98C), ctl(0x990), ctl(0x994), ctl(0x998));
+            } else {
+                let k = f32::from_bits(0x3CA3_D70A);
+                let still = |o: isize| le_or_nan(x(rd::<f32>(this, o)).fabs(), x(k));
+                let skip = (rd::<u8>(this, 0x960) >= 4 || parked)
+                    && le_or_nan(x(ctl(0x998)), X87::from_f64_exact(0.0))
+                    && still(0x44)
+                    && still(0x48)
+                    && still(0x4C);
+                if !skip {
+                    flying_control(this, 6, ctl(0x98C), ctl(0x990), ctl(0x994), ctl(0x998));
+                }
+            }
+        }
+        let frame = rd::<GPtr<u8>>(this, 0x678);
+        if !le_or_nan(x(rd::<f32>(this, 0x84C)), x(f32::from_bits(0x3C75_C290))) && !frame.is_null() {
+            let mut a = [0u32; 0x12];
+            let am: GPtr<u8> = GPtr::from_raw(a.as_mut_ptr()).cast();
+            matrix_attach(am, frame.byte_add(0x10), 0);
+            let mut atomic = [0u32; 1];
+            frame_for_all_objects(rd::<GPtr<u8>>(this, 0x678), 0x6A_0750, GPtr::from_raw(atomic.as_mut_ptr()).addr() as u32);
+            if atomic[0] != 0 {
+                let at = GPtr::<u8>::from_addr(atomic[0] as usize);
+                if rd::<u8>(at, 0x4C) & 2 != 0 {
+                    rp_atomic_resync_interpolated_sphere(at);
+                }
+                let radius = rd::<f32>(at, 0x28);
+                if !le_or_nan(x(radius), x(f32::from_bits(0x3DCC_CCCD))) {
+                    let scale = match model {
+                        0x1D1 | 0x1F5 => f32::from_bits(0x3F66_6666),
+                        0x1D5 | 0x1BF => f32::from_bits(0x3F4C_CCCD),
+                        0x1A9 => 0.5,
+                        _ => 1.0,
+                    };
+                    let st = rd::<u8>(this, 0x36) >> 3;
+                    if st == 0 || st == 8 {
+                        let pos = [a[0xC], a[0xD], a[0xE]].map(f32::from_bits);
+                        do_blade_collision(this, pos[0], pos[1], pos[2], rd::<GPtr<u8>>(this, 0x14), 0xFFFF_FFFD, radius, scale.to_bits());
+                    }
+                }
+            }
+            let st = rd::<u8>(this, 0x36) >> 3;
+            let pos = entity_pos(this);
+            let p3 = [rd::<f32>(pos, 0), rd::<f32>(pos, 4), rd::<f32>(pos, 8)];
+            if st == 0 || st == 3 {
+                if !le_or_nan(x(rd::<f32>(this, 0x84C)), x(f32::from_bits(0x3BF5_C290))) {
+                    let v = x(rd::<f32>(this, 0x84C)).fmul_m(f32::from_bits(0x40D5_5555));
+                    let power = if ge_or_nan(x(1.0), v) { f32_of(v) } else { 1.0 };
+                    wind_register_one(p3[0], p3[1], p3[2], 1, power);
+                }
+            } else if st == 2 {
+                wind_register_one(p3[0], p3[1], p3[2], 1, 1.0);
+            }
+            sa_world::bindings::matrix_dtor(am);
+        }
+    }
+    let model = rd::<u16>(this, 0x22);
+    if model == 0x1D1 || model == 0x1F5 {
+        return;
+    }
+    let rot = x(rd::<f32>(this, 0x84C));
+    if ge_or_nan(rot, x(f32::from_bits(0x3E1D_B22D))) || le_or_nan(rot, x(f32::from_bits(0x3B90_2DE0))) {
+        return;
+    }
+    let frame = rd::<GPtr<u8>>(this, 0x678);
+    if frame.is_null() {
+        return;
+    }
+    let hp = entity_pos(this);
+    let cp = entity_pos(GPtr::from_addr(0xB6_F028));
+    let dz = f32_of(x(rd::<f32>(cp, 8)).fsub_m(rd::<f32>(hp, 8)));
+    let dy = f32_of(x(rd::<f32>(cp, 4)).fsub_m(rd::<f32>(hp, 4)));
+    let dxe = x(rd::<f32>(cp, 0)).fsub_m(rd::<f32>(hp, 0));
+    let dx = f32_of(dxe);
+    let d2e = dxe.fmul_m(dx).fadd(x(dy).fmul_m(dy)).fadd(x(dz).fmul_m(dz));
+    let d2 = f32_of(d2e);
+    if ge_or_nan(d2e, x(400.0)) {
+        return;
+    }
+    let diff = x(rd::<f32>(this, 0x958)).fsub_m(rd::<f32>(this, 0x82C)).fabs();
+    if le_or_nan(diff, x(f32::from_bits(0x3F06_0A92))) {
+        return;
+    }
+    let mut b = [0u32; 0x12];
+    let bm: GPtr<u8> = GPtr::from_raw(b.as_mut_ptr()).cast();
+    let mut c = [0u32; 0x12];
+    let cm: GPtr<u8> = GPtr::from_raw(c.as_mut_ptr()).cast();
+    matrix_attach(bm, frame.byte_add(0x10), 0);
+    let mut v = [b[0], b[1], b[2]].map(f32::from_bits);
+    let mut w = [0f32; 3];
+    let r = multiply3x3(vp(&mut w), rd::<GPtr<u8>>(this, 0x14), vp(&mut v));
+    let w = [rd::<f32>(r, 0), rd::<f32>(r, 4), rd::<f32>(r, 8)];
+    let mut d = x(d2).fsqrt();
+    let k = x(f32::from_bits(0x3C23_D70A));
+    if !le_or_nan(k, d) {
+        d = k;
+    }
+    let inv = d.fdivr_m(1.0);
+    let nx = x(dx).fmul(inv);
+    let ny = inv.fmul_m(dy);
+    let nz = inv.fmul_m(dz);
+    let dot = x(w[2]).fmul(nz).fadd(x(w[1]).fmul(ny)).fadd(x(w[0]).fmul(nx));
+    if !le_or_nan(dot.fabs(), x(f32::from_bits(0x3F73_3333))) {
+        audio_add_event(this.byte_add(0x138), 0x5E, 0.0);
+        wr::<u32>(this, 0x958, rd::<u32>(this, 0x82C));
+    }
+    sa_world::bindings::matrix_dtor(cm);
+    sa_world::bindings::matrix_dtor(bm);
+}
+
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_HELI_PROCESS_CONTROL, HOOK_HELI_SEND_DOWN_SWAT];
+pub const HOOKS: &[HookReg] = &[HOOK_HELI_PROCESS_CONTROL, HOOK_HELI_SEND_DOWN_SWAT, HOOK_HELI_PROCESS_FLYING_CAR_STUFF];
 
 /// This module's phase B natives.
 pub const NATIVES: &[NativeReg] = &[NATIVE_HELI_FIND_SWAT_POSITION_NATIVE];

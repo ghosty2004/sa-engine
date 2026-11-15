@@ -44,7 +44,7 @@ orig! {
     /// `CVehicle::PlayCarHorn()` (virtual, vtable +0xD8)
     fn play_car_horn_virtual(v: GPtr<u8>) = thiscall vslot 0xD8 => unported;
     /// `CVehicle::FlyingControl(eFlightModel, float, float, float, float)` (0x6D85F0)
-    fn flying_control(v: GPtr<u8>, model: u32, a: f32, b: f32, c: f32, d: f32) = thiscall 0x6D85F0 => unported;
+    pub(crate) fn flying_control(v: GPtr<u8>, model: u32, a: f32, b: f32, c: f32, d: f32) = thiscall 0x6D85F0 => unported;
 }
 
 /// `ped->m_pIntelligence->m_TaskMgr` (`[ped + 0x47C] + 4`).
