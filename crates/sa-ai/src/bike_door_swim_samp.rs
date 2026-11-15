@@ -318,6 +318,48 @@ pub fn ik_look_at_update_look_at_info(this: GPtr<u8>, _name: u32, _ped: u32, tar
     }
 }
 
+/// `CTaskSimpleIKPointArm::UpdatePointArmInfo(const char*, CEntity* target, int32 bone, CVector offset, float speed,
+/// int32 blendTime)` (0x634370, `ret 0x20`; FRONTIER-2 batch `frontier2-5`, user-hit in free roam; the name is unused):
+/// replaces the target reference (+0x28; +0x40 = target set), stores bone (+0x2C), offset (+0x30), speed (+0x3C) and
+/// blend time (+0xC), the end times +0x48 = now + 999999 and +0x50 = now + blend time, +0x4C = 1.0, +0x54 = 0; an
+/// active IK chain (+0x10) is updated (entity, offset, target).
+#[hook(addr = 0x634370, conv = thiscall, name = "CTaskSimpleIKPointArm::UpdatePointArmInfo", expect = "55 56 8B F1 8B 4E 28",
+       unverified = "frontier2-5", route = "L2", hazards = "heap-writes")]
+#[allow(clippy::too_many_arguments)]
+pub fn ik_point_arm_update_point_arm_info(this: GPtr<u8>, _name: u32, target: GPtr<u8>, bone: u32, ox: u32, oy: u32,
+                                          oz: u32, speed: u32, blend: u32) {
+    let slot = this.byte_add(0x28);
+    let old = rd::<GPtr<u8>>(slot, 0);
+    if !old.is_null() {
+        entity_clean_up_old_reference(old, slot.cast::<u8>());
+    }
+    wr::<GPtr<u8>>(slot, 0, target);
+    if !target.is_null() {
+        entity_register_reference(target, slot);
+        wr::<u8>(this, 0x40, 1);
+    } else {
+        wr::<u8>(this, 0x40, 0);
+    }
+    wr::<u32>(this, 0x2C, bone);
+    wr::<u32>(this, 0x30, ox);
+    wr::<u32>(this, 0x34, oy);
+    wr::<u32>(this, 0x38, oz);
+    wr::<u32>(this, 0x3C, speed);
+    wr::<u32>(this, 0xC, blend);
+    let now = g::<u32>(TIME_MS).read();
+    wr::<u32>(this, 0x48, now.wrapping_add(0xF423F));
+    wr::<u32>(this, 0x4C, 0x3F80_0000);
+    wr::<u32>(this, 0x50, now.wrapping_add(blend));
+    wr::<u32>(this, 0x54, 0);
+    let chain = rd::<GPtr<u8>>(this, 0x10);
+    if !chain.is_null() {
+        ik_chain_update_entity(chain, rd::<u32>(slot, 0));
+        let (x0, y0, z0) = (rd::<u32>(this, 0x30), rd::<u32>(this, 0x34), rd::<u32>(this, 0x38));
+        ik_chain_update_offset(rd::<GPtr<u8>>(this, 0x10), rd::<u32>(this, 0x2C), x0, y0, z0);
+        ik_chain_update_target(rd::<GPtr<u8>>(this, 0x10), 1);
+    }
+}
+
 /// `CTaskComplexInWater::CreateFirstSubTask(CPed*)` (0x635200, `ret 4`): players and sunbather models swim
 /// (`CTaskSimpleSwim(null, null)`); a ped with +0x470 bit 0x100000 drowns (`CTaskComplexDie(0x35, 0, 0x8C, 4.0,
 /// 0, ...)`); a member of a group led by a player (leader +0x480 set) swims after the leader; a mission ped
@@ -371,5 +413,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_CAR_JUMP_OUT_CTOR,
     HOOK_GOTO_DOOR_AND_OPEN_CREATE_NEXT_SUB_TASK,
     HOOK_IK_LOOK_AT_UPDATE_LOOK_AT_INFO,
+    HOOK_IK_POINT_ARM_UPDATE_POINT_ARM_INFO,
     HOOK_IN_WATER_CREATE_FIRST_SUB_TASK,
 ];

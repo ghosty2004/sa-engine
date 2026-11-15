@@ -59,6 +59,41 @@ pub fn ik_look_at_create_ik_chain(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
     (c.addr() as u32 & 0xFFFF_FF00) | 1
 }
 
+/// `CTaskSimpleIKPointArm::CreateIKChain(CPed*)` (0x6342F0, thiscall, `ret 4`; FRONTIER-2 batch `frontier2-5`, user-hit
+/// in free roam). Part (+0x16) = 4; chain (+0x10) = `g_ikChainMan.AddIKChain("", (arm +0x58 != 0) + 1, ped, bone
+/// +0x18, offset +0x1C, 4, entity +0x28, bone +0x2C, offset +0x30, speed +0x3C, priority 3)`; AL = chain != null
+/// with the chain pointer's upper bytes in EAX (reproduced; null → 0).
+#[hook(addr = 0x6342F0, conv = thiscall, name = "CTaskSimpleIKPointArm::CreateIKChain", expect = "56 8B F1 8B 56 58",
+       unverified = "frontier2-5", route = "L2", hazards = "ax-al-return,heap-writes",
+       note = "the IK chain pool is heap memory")]
+pub fn ik_point_arm_create_ik_chain(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
+    let idx = u32::from(rd::<u32>(this, 0x58) != 0) + 1;
+    wr::<u16>(this, 0x16, 4);
+    let c = ik_manager_add_ik_chain(
+        g::<u8>(IK_CHAIN_MAN),
+        g::<u8>(STR_EMPTY).addr() as u32,
+        idx,
+        ped,
+        i32::from(rd::<i16>(this, 0x18)),
+        rd::<u32>(this, 0x1C),
+        rd::<u32>(this, 0x20),
+        rd::<u32>(this, 0x24),
+        4,
+        rd::<u32>(this, 0x28),
+        rd::<u32>(this, 0x2C),
+        rd::<u32>(this, 0x30),
+        rd::<u32>(this, 0x34),
+        rd::<u32>(this, 0x38),
+        rd::<u32>(this, 0x3C),
+        3,
+    );
+    wr::<GPtr<u8>>(this, 0x10, c);
+    if c.is_null() {
+        return 0;
+    }
+    (c.addr() as u32 & 0xFFFF_FF00) | 1
+}
+
 use crate::bindings::ik_chain_update_target;
 use crate::bindings::ik_manager_remove_ik_chain;
 use sa_core::bindings::ik_chain_task_blend_out;
@@ -143,4 +178,4 @@ pub fn ik_chain_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     0
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_IK_LOOK_AT_CREATE_IK_CHAIN, HOOK_IK_CHAIN_PROCESS_PED];
+pub const HOOKS: &[HookReg] = &[HOOK_IK_LOOK_AT_CREATE_IK_CHAIN, HOOK_IK_CHAIN_PROCESS_PED, HOOK_IK_POINT_ARM_CREATE_IK_CHAIN];
