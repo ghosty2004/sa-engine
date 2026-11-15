@@ -159,6 +159,8 @@ pub fn running_script_locate_char_object_command(this: Scr, command: i32) {
 
 /// `CPools::ms_pVehiclePool` (0xB74494; 0xA18 per vehicle)
 const VEHICLE_POOL: usize = 0xB74494;
+
+use crate::bindings::is_vehicle_stopped as the_scripts_is_vehicle_stopped_call;
 /// `CTimer::ms_fTimeStep` (0xB7CB5C)
 const TIME_STEP: usize = 0xB7CB5C;
 /// `CTimer::ms_fOldTimeStep` (0xB7CB54)
@@ -406,7 +408,128 @@ pub fn the_scripts_is_ped_stopped(ped: GPtr<u8>) -> u8 {
     u8::from(zero(0x4D8) && zero(0x4DC))
 }
 
+/// The original's `fcom`-based box test of `IS_*_IN_AREA`: `p` not below `lo` (`test ah, 1; jne` fails) and not above
+/// `hi` (`test ah, 0x41; jp` fails); NaN fails.
+fn in_span(p: f32, lo: f32, hi: f32) -> bool {
+    !x(p).fcom(x(lo)).c0() && !x(p).fcom(x(hi)).test_parity(0x41)
+}
+
+/// `a > b` (ordered; `fcom; test ah, 0x41; jne` not taken): the swap test of the area corners.
+fn swap_if_greater(a: &mut f32, b: &mut f32) {
+    if !x(*a).fcom(x(*b)).test_any(0x41) {
+        core::mem::swap(a, b);
+    }
+}
+
+/// The shared part of the `IS_*_IN_AREA_2D/3D` checks (0x488B50, 0x488EC0, 0x489150) after the entity position `p`
+/// is known: the corners from the parameters (2D: x1, y1, x2, y2, show from parameter 1; 3D: x1, y1, z1, x2, y2, z2,
+/// show), each pair ordered (z first in 3D, then x, then y; swapped only when the first is greater). Unless `failed`,
+/// the result is `in_span` on every axis and then `pass()`. `UpdateCompareFlag(result)` (a byte over an uninitialised
+/// dword). Show set → `HighlightImportantArea(this + IP, x1, y1, x2, y2, 3D ? f32((z2 + z1) * 0.5) : -100)`.
+/// `CTheScripts::DbgFlag` and 2D → `DrawDebugSquare(x1, y1, x2, y2)`.
+fn area_check(this: Scr, is3d: bool, p: [f32; 3], failed: bool, pass: impl Fn() -> bool) {
+    let (mut x1, mut y1) = (param_f32(1), param_f32(2));
+    let (mut x2, mut y2, mut z1, mut z2, show);
+    if is3d {
+        z1 = param_f32(3);
+        x2 = param_f32(4);
+        y2 = param_f32(5);
+        z2 = param_f32(6);
+        swap_if_greater(&mut z1, &mut z2);
+        show = param_u32(7);
+    } else {
+        x2 = param_f32(3);
+        y2 = param_f32(4);
+        show = param_u32(5);
+        z1 = 0.0;
+        z2 = 0.0;
+    }
+    swap_if_greater(&mut x1, &mut x2);
+    swap_if_greater(&mut y1, &mut y2);
+    let result = !failed
+        && in_span(p[0], x1, x2)
+        && in_span(p[1], y1, y2)
+        && (!is3d || in_span(p[2], z1, z2))
+        && pass();
+    update_compare_flag_call(this, u32::from(result));
+    if show != 0 {
+        let id = (this.addr() as u32).wrapping_add(rd::<u32>(this, 0x14));
+        let z = if is3d { x(z2).fadd_m(z1).fmul_m(0.5).to_f32().to_bits() } else { K_MINUS_100 };
+        highlight_important_area(id, x1.to_bits(), y1.to_bits(), x2.to_bits(), y2.to_bits(), z);
+    }
+    if GPtr::<u8>::from_addr(DBG_FLAG).read() != 0 && !is3d {
+        draw_debug_square(x1.to_bits(), y1.to_bits(), x2.to_bits(), y2.to_bits());
+    }
+}
+
+/// `CRunningScript::CharInAreaCheckCommand(int32 command)` (0x488B50, thiscall, `ret 4`; unreversed in gta-reversed).
+/// x87 compares.
+///
+/// Commands 0xA4 and 0x1A6..0x1AA are 3D (8 parameters: char, x1, y1, z1, x2, y2, z2, show), the others 2D (6: char,
+/// x1, y1, x2, y2, show). The char from the ped pool (NULL for a stale handle, not checked) or, in a vehicle (+0x46C bit
+/// 8, +0x58C), its vehicle gives the position p. The "stopped" commands (0x1A3..0x1A5, 0x1A8..0x1AA; byte table
+/// 0x488EA4) fail unless `IsPedStopped(ped)`. Inside the box (`area_check`) → by command: any (0xA3, 0xA4, 0x1A3,
+/// 0x1A8), on foot (0x1A1, 0x1A4, 0x1A6, 0x1A9: not in a vehicle), in a vehicle (0x1A2, 0x1A5, 0x1A7, 0x1AA); others
+/// false.
+#[hook(addr = 0x488B50, conv = thiscall, name = "CRunningScript::CharInAreaCheckCommand", expect = "83 EC 2C 53 55 56",
+       this = "CRunningScript", unverified = "frontier2-c2", route = "L2", hazards = "uninit-locals",
+       recs = "grove-walk", note = "UpdateCompareFlag gets the result byte over an uninitialised dword (upper bytes)")]
+pub fn running_script_char_in_area_check_command(this: Scr, command: i32) {
+    let is3d = command == 0xA4 || (0x1A6..=0x1AA).contains(&command);
+    collect_parameters_call(this, if is3d { 8 } else { 6 });
+    let ped = pool_at(PED_POOL, 0x7C4, param_u32(0) as i32);
+    let in_vehicle = rd::<u32>(ped, 0x46C) & 0x100 != 0;
+    let pos = if in_vehicle && !rd::<GPtr<u8>>(ped, 0x58C).is_null() { entity_pos(rd::<GPtr<u8>>(ped, 0x58C)) } else { entity_pos(ped) };
+    let p = [rd::<f32>(pos, 0), rd::<f32>(pos, 4), rd::<f32>(pos, 8)];
+    let t = command.wrapping_sub(0x1A3) as u32;
+    let failed = t <= 7 && [0u8, 0, 0, 1, 1, 0, 0, 0][t as usize] == 0 && is_ped_stopped(ped) == 0;
+    area_check(this, is3d, p, failed, || {
+        let on_foot = rd::<u32>(ped, 0x46C) & 0x100 == 0;
+        match command {
+            0xA3 | 0xA4 | 0x1A3 | 0x1A8 => true,
+            0x1A1 | 0x1A4 | 0x1A6 | 0x1A9 => on_foot,
+            0x1A2 | 0x1A5 | 0x1A7 | 0x1AA => !on_foot,
+            _ => false,
+        }
+    });
+}
+
+/// `CRunningScript::CarInAreaCheckCommand(int32 command)` (0x488EC0, thiscall, `ret 4`; unreversed in gta-reversed).
+/// x87 compares. Commands 0xB1 and 0x1AC are 3D (8 parameters), the others 2D (6); the car from the vehicle pool (no
+/// NULL check) gives the position. The "stopped" commands 0x1AB / 0x1AC fail unless `IsVehicleStopped(car)` (checked
+/// before the corners are read). Inside the box → true (`area_check`).
+#[hook(addr = 0x488EC0, conv = thiscall, name = "CRunningScript::CarInAreaCheckCommand", expect = "83 EC 28 53 55 56 57",
+       this = "CRunningScript", unverified = "frontier2-c2", route = "L2", hazards = "uninit-locals",
+       recs = "grove-walk", note = "UpdateCompareFlag gets the result byte over an uninitialised dword (upper bytes)")]
+pub fn running_script_car_in_area_check_command(this: Scr, command: i32) {
+    let is3d = command == 0xB1 || command == 0x1AC;
+    collect_parameters_call(this, if is3d { 8 } else { 6 });
+    let car = pool_at(VEHICLE_POOL, 0xA18, param_u32(0) as i32);
+    let failed = (0x1AB..=0x1AC).contains(&command) && the_scripts_is_vehicle_stopped_call(car) == 0;
+    let pos = entity_pos(car);
+    let p = [rd::<f32>(pos, 0), rd::<f32>(pos, 4), rd::<f32>(pos, 8)];
+    area_check(this, is3d, p, failed, || true);
+}
+
+/// `CRunningScript::ObjectInAreaCheckCommand(int32 command)` (0x489150, thiscall, `ret 4`; unreversed in
+/// gta-reversed). x87 compares. Command 0x4EA is 3D (8 parameters), the others 2D (6); the object from the object pool
+/// (no NULL check) gives the position. Inside the box → true (`area_check`).
+#[hook(addr = 0x489150, conv = thiscall, name = "CRunningScript::ObjectInAreaCheckCommand", expect = "8B 44 24 04 83 EC 28",
+       this = "CRunningScript", unverified = "frontier2-c2", route = "L2", hazards = "uninit-locals",
+       recs = "grove-walk", note = "UpdateCompareFlag gets the result byte over an uninitialised dword (upper bytes)")]
+pub fn running_script_object_in_area_check_command(this: Scr, command: i32) {
+    let is3d = command == 0x4EA;
+    collect_parameters_call(this, if is3d { 8 } else { 6 });
+    let obj = pool_at(OBJECT_POOL, 0x19C, param_u32(0) as i32);
+    let pos = entity_pos(obj);
+    let p = [rd::<f32>(pos, 0), rd::<f32>(pos, 4), rd::<f32>(pos, 8)];
+    area_check(this, is3d, p, false, || true);
+}
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_RUNNING_SCRIPT_CHAR_IN_AREA_CHECK_COMMAND,
+    HOOK_RUNNING_SCRIPT_CAR_IN_AREA_CHECK_COMMAND,
+    HOOK_RUNNING_SCRIPT_OBJECT_IN_AREA_CHECK_COMMAND,
     HOOK_RUNNING_SCRIPT_LOCATE_CHAR_COMMAND,
     HOOK_RUNNING_SCRIPT_LOCATE_CHAR_OBJECT_COMMAND,
     HOOK_RUNNING_SCRIPT_LOCATE_CHAR_CHAR_COMMAND,

@@ -284,6 +284,31 @@ fn pool_free_inline(pool: GPtr<u8>, node: GPtr<u8>, size: i32) {
     }
 }
 
+sa_core::orig! {
+    /// `CPool<CQuadTreeNode>::Delete(obj)` (0x552BC0, thiscall)
+    fn quad_tree_node_pool_delete(pool: GPtr<u8>, obj: GPtr<u8>) = thiscall 0x552BC0 => quad_pool_delete_port;
+}
+
+fn quad_pool_delete_port(pool: GPtr<u8>, obj: GPtr<u8>) {
+    sa_core::pools::quad_tree_node_pool_delete(pool.cast(), obj.cast())
+}
+
+/// `CQuadTreeNode::~CQuadTreeNode()` (0x552520, thiscall, SEH frame not modelled; catalogued as `CQuadTreeNode`): each
+/// of the four children (+0x14..+0x20) that is set is destroyed (this function) and returned to the node pool
+/// (`Delete` 0x552BC0 on `[0xB745BC]`, read after the child's destructor); then the item list (+0x10) is flushed.
+#[hook(addr = 0x552520, conv = thiscall, name = "CQuadTreeNode::~CQuadTreeNode", expect = "6A FF 68 2B CC 83 00",
+       unverified = "frontier2-c1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+pub fn quad_tree_node_dtor(this: GPtr<u8>) {
+    for k in 0..4 {
+        let child = rd::<GPtr<u8>>(this, 0x14 + 4 * k);
+        if !child.is_null() {
+            sa_stream::bindings::quad_dtor(child);
+            quad_tree_node_pool_delete(GPtr::<GPtr<u8>>::from_addr(0xB745BC).read(), child);
+        }
+    }
+    crate::bindings::flush_single(this.byte_add(0x10));
+}
+
 /// `CPtrListDoubleLink::Flush()` (0x552470, thiscall): unlinks every node (head +0; node: item +0, next
 /// +4, prev +8) and frees it into `CPools::ms_pPtrNodeDoubleLinkPool` (0xB74488, 0xC-byte nodes) inline.
 #[hook(addr = 0x552470, conv = thiscall, name = "CPtrListDoubleLink::Flush", expect = "57 8B 39 85 FF",
@@ -466,6 +491,7 @@ pub fn matrix_link_list_init(this: GPtr<u8>, count: i32) {
 
 /// Every registration of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_QUAD_TREE_NODE_DTOR,
     HOOK_VECTOR_SUB,
     HOOK_VECTOR_ADD,
     HOOK_VECTOR_MUL_SCALAR,

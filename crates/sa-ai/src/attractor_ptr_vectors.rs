@@ -23,21 +23,21 @@ orig! {
     /// `vector<CPed*>::_Xlen()` (0x5ECAB0, throws `length_error`)
     fn xlen_p(v: GPtr<u8>) = thiscall 0x5ECAB0 => unported;
     /// `vector<CPedAttractor*>::_Ucopy(first, last, dest)` (0x5EBA00, `ret 0xC`)
-    fn ucopy_a(v: GPtr<u8>, first: u32, last: u32, dest: u32) -> u32 = thiscall 0x5EBA00 => unported;
+    fn ucopy_a(v: GPtr<u8>, first: u32, last: u32, dest: u32) -> u32 = thiscall 0x5EBA00 => ucopy_a_port;
     /// `vector<CPed*>::_Ucopy(first, last, dest)` (0x5EB930, `ret 0xC`)
-    fn ucopy_p(v: GPtr<u8>, first: u32, last: u32, dest: u32) -> u32 = thiscall 0x5EB930 => unported;
+    fn ucopy_p(v: GPtr<u8>, first: u32, last: u32, dest: u32) -> u32 = thiscall 0x5EB930 => ucopy_p_port;
     /// `vector<CPedAttractor*>::_Ufill(dest, count, const T*)` (0x5EC1B0, `ret 0xC`)
-    fn ufill_a(v: GPtr<u8>, dest: u32, n: u32, val: GPtr<u8>) -> u32 = thiscall 0x5EC1B0 => unported;
+    fn ufill_a(v: GPtr<u8>, dest: u32, n: u32, val: GPtr<u8>) -> u32 = thiscall 0x5EC1B0 => ufill_a_port;
     /// `vector<CPed*>::_Ufill(dest, count, const T*)` (0x5EC070, `ret 0xC`)
-    fn ufill_p(v: GPtr<u8>, dest: u32, n: u32, val: GPtr<u8>) -> u32 = thiscall 0x5EC070 => unported;
+    fn ufill_p(v: GPtr<u8>, dest: u32, n: u32, val: GPtr<u8>) -> u32 = thiscall 0x5EC070 => ufill_p_port;
     /// `std::copy_backward` for `CPedAttractor**` (0x5EB260, iterator result through the first argument)
-    fn copy_backward_a(out: GPtr<u8>, first: u32, last: u32, dest_last: u32) -> GPtr<u8> = cdecl 0x5EB260 => unported;
+    fn copy_backward_a(out: GPtr<u8>, first: u32, last: u32, dest_last: u32) -> GPtr<u8> = cdecl 0x5EB260 => copy_backward_a_port;
     /// `std::copy_backward` for `CPed**` (0x5EB140)
-    fn copy_backward_p(out: GPtr<u8>, first: u32, last: u32, dest_last: u32) -> GPtr<u8> = cdecl 0x5EB140 => unported;
+    fn copy_backward_p(out: GPtr<u8>, first: u32, last: u32, dest_last: u32) -> GPtr<u8> = cdecl 0x5EB140 => copy_backward_p_port;
     /// `std::fill` for `CPedAttractor**` (0x5EAB10)
-    fn fill_a(first: u32, last: u32, val: GPtr<u8>) = cdecl 0x5EAB10 => unported;
+    fn fill_a(first: u32, last: u32, val: GPtr<u8>) = cdecl 0x5EAB10 => fill_a_port;
     /// `std::fill` for `CPed**` (0x5EAAA0)
-    fn fill_p(first: u32, last: u32, val: GPtr<u8>) = cdecl 0x5EAAA0 => unported;
+    fn fill_p(first: u32, last: u32, val: GPtr<u8>) = cdecl 0x5EAAA0 => fill_p_port;
     fn fill_n_a_o(dest: u32, n: u32, val: GPtr<u8>) -> u32 = cdecl 0x5EB390 => fill_n_a;
     fn fill_n_p_o(dest: u32, n: u32, val: GPtr<u8>) -> u32 = cdecl 0x5EB2A0 => fill_n_p;
     fn copy_a_o(first: u32, last: u32, dest: u32) -> u32 = cdecl 0x5EAEE0 => copy_a;
@@ -47,13 +47,13 @@ orig! {
     /// `vector<CTask*>::_Xlen()` (0x5ECBB0, throws `length_error`)
     fn xlen_t(v: GPtr<u8>) = thiscall 0x5ECBB0 => unported;
     /// `vector<CTask*>::_Ucopy(first, last, dest)` (0x5EB990, `ret 0xC`)
-    fn ucopy_t(v: GPtr<u8>, first: u32, last: u32, dest: u32) -> u32 = thiscall 0x5EB990 => unported;
+    fn ucopy_t(v: GPtr<u8>, first: u32, last: u32, dest: u32) -> u32 = thiscall 0x5EB990 => ucopy_t_port;
     /// `vector<CTask*>::_Ufill(dest, count, const T*)` (0x5EC110, `ret 0xC`)
-    fn ufill_t(v: GPtr<u8>, dest: u32, n: u32, val: GPtr<u8>) -> u32 = thiscall 0x5EC110 => unported;
+    fn ufill_t(v: GPtr<u8>, dest: u32, n: u32, val: GPtr<u8>) -> u32 = thiscall 0x5EC110 => ufill_t_port;
     /// `std::copy_backward` for `CTask**` (0x5EB1B0)
-    fn copy_backward_t(out: GPtr<u8>, first: u32, last: u32, dest_last: u32) -> GPtr<u8> = cdecl 0x5EB1B0 => unported;
+    fn copy_backward_t(out: GPtr<u8>, first: u32, last: u32, dest_last: u32) -> GPtr<u8> = cdecl 0x5EB1B0 => copy_backward_t_port;
     /// `std::fill` for `CTask**` (0x5EAAF0)
-    fn fill_t(first: u32, last: u32, val: GPtr<u8>) = cdecl 0x5EAAF0 => unported;
+    fn fill_t(first: u32, last: u32, val: GPtr<u8>) = cdecl 0x5EAAF0 => fill_t_port;
     fn copy_t_o(first: u32, last: u32, dest: u32) -> u32 = cdecl 0x5EAE70 => copy_t;
 }
 
@@ -305,8 +305,138 @@ pub fn copy_t(first: u32, last: u32, dest: u32) -> u32 {
     copy(first, last, dest)
 }
 
+// ---- frontier2-c1: the in-place insertion helpers of the three instantiations (byte-identical bodies) ----
+
+/// `std::fill(first, last, const T&)` for a pointer vector: every dword of `[first, last)` becomes `*val` (re-read
+/// for each element, `mov esi, [edx]; mov [eax], esi`).
+fn fill_ptrs(first: u32, last: u32, val: GPtr<u8>) {
+    let mut p = first;
+    while p != last {
+        GPtr::<u32>::from_addr(p as usize).write(rd::<u32>(val, 0));
+        p = p.wrapping_add(4);
+    }
+}
+
+/// `std::copy_backward(first, last, dest_last)` for a pointer vector, the iterator result through `out`: dwords
+/// moved from the back (`last` down to `first`); `*out` = the destination start. Returns `out`.
+fn copy_backward_ptrs(out: GPtr<u8>, first: u32, last: u32, dest_last: u32) -> GPtr<u8> {
+    let (mut s, mut d) = (last, dest_last);
+    while s != first {
+        let v = GPtr::<u32>::from_addr(s.wrapping_sub(4) as usize).read();
+        s = s.wrapping_sub(4);
+        d = d.wrapping_sub(4);
+        GPtr::<u32>::from_addr(d as usize).write(v);
+    }
+    wr::<u32>(out, 0, d);
+    out
+}
+
+/// `std::fill<CPed**>` (0x5EAAA0, cdecl): see `fill_ptrs`.
+#[hook(addr = 0x5EAAA0, conv = cdecl, name = "FUN_005eaaa0", expect = "8B 44 24 04 8B 4C 24 08 3B C1",
+       unverified = "frontier2-c1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn fill_p_port(first: u32, last: u32, val: GPtr<u8>) {
+    fill_ptrs(first, last, val);
+}
+
+/// `std::fill<CTask**>` (0x5EAAF0, cdecl): see `fill_ptrs`.
+#[hook(addr = 0x5EAAF0, conv = cdecl, name = "FUN_005eaaf0", expect = "8B 44 24 04 8B 4C 24 08 3B C1",
+       unverified = "frontier2-c1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn fill_t_port(first: u32, last: u32, val: GPtr<u8>) {
+    fill_ptrs(first, last, val);
+}
+
+/// `std::fill<CPedAttractor**>` (0x5EAB10, cdecl): see `fill_ptrs`.
+#[hook(addr = 0x5EAB10, conv = cdecl, name = "FUN_005eab10", expect = "8B 44 24 04 8B 4C 24 08 3B C1",
+       unverified = "frontier2-c1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn fill_a_port(first: u32, last: u32, val: GPtr<u8>) {
+    fill_ptrs(first, last, val);
+}
+
+/// `std::copy_backward<CPed**>` (0x5EB140, cdecl): see `copy_backward_ptrs`.
+#[hook(addr = 0x5EB140, conv = cdecl, name = "FUN_005eb140", expect = "8B 54 24 08 8B 44 24 0C 3B D0",
+       unverified = "frontier2-c1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn copy_backward_p_port(out: GPtr<u8>, first: u32, last: u32, dest_last: u32) -> GPtr<u8> {
+    copy_backward_ptrs(out, first, last, dest_last)
+}
+
+/// `std::copy_backward<CTask**>` (0x5EB1B0, cdecl): see `copy_backward_ptrs`.
+#[hook(addr = 0x5EB1B0, conv = cdecl, name = "FUN_005eb1b0", expect = "8B 54 24 08 8B 44 24 0C 3B D0",
+       unverified = "frontier2-c1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn copy_backward_t_port(out: GPtr<u8>, first: u32, last: u32, dest_last: u32) -> GPtr<u8> {
+    copy_backward_ptrs(out, first, last, dest_last)
+}
+
+/// `std::copy_backward<CPedAttractor**>` (0x5EB260, cdecl): see `copy_backward_ptrs`.
+#[hook(addr = 0x5EB260, conv = cdecl, name = "FUN_005eb260", expect = "8B 54 24 08 8B 44 24 0C 3B D0",
+       unverified = "frontier2-c1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn copy_backward_a_port(out: GPtr<u8>, first: u32, last: u32, dest_last: u32) -> GPtr<u8> {
+    copy_backward_ptrs(out, first, last, dest_last)
+}
+
+/// `vector<CPed*>::_Ucopy(first, last, dest)` (0x5EB930, thiscall, `ret 0xC`): `uninitialized_copy` 0x5EAE10 (the
+/// allocator and the destination are pushed again after the three arguments, unread); its result.
+#[hook(addr = 0x5EB930, conv = thiscall, name = "FUN_005eb930", expect = "8B 44 24 0C 8B 54 24 08 50 51",
+       unverified = "frontier2-c1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn ucopy_p_port(_v: GPtr<u8>, first: u32, last: u32, dest: u32) -> u32 {
+    copy_p_o(first, last, dest)
+}
+
+/// `vector<CTask*>::_Ucopy(first, last, dest)` (0x5EB990, thiscall, `ret 0xC`): `uninitialized_copy` 0x5EAE70.
+#[hook(addr = 0x5EB990, conv = thiscall, name = "FUN_005eb990", expect = "8B 44 24 0C 8B 54 24 08 50 51",
+       unverified = "frontier2-c1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn ucopy_t_port(_v: GPtr<u8>, first: u32, last: u32, dest: u32) -> u32 {
+    copy_t_o(first, last, dest)
+}
+
+/// `vector<CPedAttractor*>::_Ucopy(first, last, dest)` (0x5EBA00, thiscall, `ret 0xC`): `uninitialized_copy`
+/// 0x5EAEE0.
+#[hook(addr = 0x5EBA00, conv = thiscall, name = "FUN_005eba00", expect = "8B 44 24 0C 8B 54 24 08 50 51",
+       unverified = "frontier2-c1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn ucopy_a_port(_v: GPtr<u8>, first: u32, last: u32, dest: u32) -> u32 {
+    copy_a_o(first, last, dest)
+}
+
+/// `vector<CPed*>::_Ufill(dest, count, const T&)` (0x5EC070, thiscall, `ret 0xC`): `uninitialized_fill_n` 0x5EB2A0
+/// (its result unused), then `dest + count * 4`.
+#[hook(addr = 0x5EC070, conv = thiscall, name = "FUN_005ec070", expect = "8B 44 24 0C 56 8B 74 24 0C 57",
+       unverified = "frontier2-c1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn ufill_p_port(_v: GPtr<u8>, dest: u32, n: u32, val: GPtr<u8>) -> u32 {
+    fill_n_p_o(dest, n, val);
+    dest.wrapping_add(n.wrapping_mul(4))
+}
+
+/// `vector<CTask*>::_Ufill(dest, count, const T&)` (0x5EC110, thiscall, `ret 0xC`): `uninitialized_fill_n` 0x5EB310,
+/// then `dest + count * 4`.
+#[hook(addr = 0x5EC110, conv = thiscall, name = "FUN_005ec110", expect = "8B 44 24 0C 56 8B 74 24 0C 57",
+       unverified = "frontier2-c1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn ufill_t_port(_v: GPtr<u8>, dest: u32, n: u32, val: GPtr<u8>) -> u32 {
+    fill_n_t_o(dest, n, val);
+    dest.wrapping_add(n.wrapping_mul(4))
+}
+
+/// `vector<CPedAttractor*>::_Ufill(dest, count, const T&)` (0x5EC1B0, thiscall, `ret 0xC`): `uninitialized_fill_n`
+/// 0x5EB390, then `dest + count * 4`.
+#[hook(addr = 0x5EC1B0, conv = thiscall, name = "FUN_005ec1b0", expect = "8B 44 24 0C 56 8B 74 24 0C 57",
+       unverified = "frontier2-c1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn ufill_a_port(_v: GPtr<u8>, dest: u32, n: u32, val: GPtr<u8>) -> u32 {
+    fill_n_a_o(dest, n, val);
+    dest.wrapping_add(n.wrapping_mul(4))
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_FILL_P_PORT,
+    HOOK_FILL_T_PORT,
+    HOOK_FILL_A_PORT,
+    HOOK_COPY_BACKWARD_P_PORT,
+    HOOK_COPY_BACKWARD_T_PORT,
+    HOOK_COPY_BACKWARD_A_PORT,
+    HOOK_UCOPY_P_PORT,
+    HOOK_UCOPY_T_PORT,
+    HOOK_UCOPY_A_PORT,
+    HOOK_UFILL_P_PORT,
+    HOOK_UFILL_T_PORT,
+    HOOK_UFILL_A_PORT,
     HOOK_PUSH_BACK_T,
     HOOK_INSERT_N_T,
     HOOK_FILL_N_T,

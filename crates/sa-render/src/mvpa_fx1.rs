@@ -295,8 +295,58 @@ pub fn interp_float_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) {
     }
 }
 
+// ---- frontier2-c1: the remaining `GetValue`s of the same shape ----
+
+/// `FxInfoAnimTexture_c::GetValue` (0x4A65E0): `FxInterpInfo32_c::GetVal`; `out +0x34 = 1`, then `out +0x35 =
+/// _ftol(key[0])` (low byte).
+#[hook(addr = 0x4A65E0, conv = thiscall, name = "FxInfoAnimTexture_c::GetValue", expect = "8A 41 06 83 EC 40",
+       unverified = "frontier2-c2", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       note = "writes the particle render info")]
+pub fn fx_info_anim_texture_get_value(this: GPtr<u8>, curr: u32, mult: u32, _step: u32, total: u32, _use_const: u32,
+                                      out: GPtr<u8>) {
+    let t = key_time(this, curr, mult, total);
+    let b = eval32(this, t);
+    wr::<u8>(out, 0x34, 1);
+    wr::<u8>(out, 0x35, ftol32(X87::from_f32(b[0])) as u8);
+}
+
+/// `FxInfoColourRange_c::GetValue` (0x4A66C0): `FxInterpInfoU255_c::GetVal`; the bytes `out[0..7]` are `_ftol` of the
+/// keys 0, 2, 4, 6 (the first colour) then 1, 3, 5 (the second colour's r, g, b), in that order; `out +8 = 1` (dword).
+#[hook(addr = 0x4A66C0, conv = thiscall, name = "FxInfoColourRange_c::GetValue", expect = "8A 41 06 83 EC 40",
+       unverified = "frontier2-c2", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       note = "writes the particle render info")]
+pub fn fx_info_colour_range_get_value(this: GPtr<u8>, curr: u32, mult: u32, _step: u32, total: u32, _use_const: u32,
+                                      out: GPtr<u8>) {
+    let t = key_time(this, curr, mult, total);
+    let mut b = [0f32; 16];
+    interp_u255_get_val(this.byte_add(8), GPtr::from_raw(b.as_mut_ptr()).cast(), t);
+    for (i, k) in [0usize, 2, 4, 6, 1, 3, 5].iter().enumerate() {
+        wr::<u8>(out, i as isize, ftol32(X87::from_f32(b[*k])) as u8);
+    }
+    wr::<u32>(out, 8, 1);
+}
+
+/// `FxInfoSmoke_c::GetValue` (0x4A6970): `FxInterpInfoU255_c::GetVal`; `out +0x7B = _ftol(key[0])` (low byte), then
+/// the keys 1..7 copied as dwords to `out +0x88..+0xA0`.
+#[hook(addr = 0x4A6970, conv = thiscall, name = "FxInfoSmoke_c::GetValue", expect = "8A 41 06 83 EC 40",
+       unverified = "frontier2-c2", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       note = "writes the particle render info")]
+pub fn fx_info_smoke_get_value(this: GPtr<u8>, curr: u32, mult: u32, _step: u32, total: u32, _use_const: u32,
+                               out: GPtr<u8>) {
+    let t = key_time(this, curr, mult, total);
+    let mut b = [0f32; 16];
+    interp_u255_get_val(this.byte_add(8), GPtr::from_raw(b.as_mut_ptr()).cast(), t);
+    wr::<u8>(out, 0x7B, ftol32(X87::from_f32(b[0])) as u8);
+    for k in 1..8 {
+        wr::<u32>(out, 0x88 + 4 * (k as isize - 1), b[k].to_bits());
+    }
+}
+
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_FX_INFO_ANIM_TEXTURE_GET_VALUE,
+    HOOK_FX_INFO_COLOUR_RANGE_GET_VALUE,
+    HOOK_FX_INFO_SMOKE_GET_VALUE,
     HOOK_FX_INFO_NOISE_CTOR,
     HOOK_FX_INFO_FORCE_GET_VALUE,
     HOOK_FX_INFO_FRICTION_GET_VALUE,

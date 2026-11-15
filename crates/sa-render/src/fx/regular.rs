@@ -1175,7 +1175,127 @@ pub fn fx_4a8d90(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
 }
 
 /// This module's registrations.
+// ---- frontier2-c1: the complete destructors the scalar deleting destructors above call ----
+
+/// `FxInfoEmWeather_c::~FxInfoEmWeather_c()` (0x4A6DA0, catalogued `FUN_004a6da0`): the member at +0x8 destroyed (0x4a8460), then the base vtable
+/// 0x85a7dc. The SEH frame is not reproduced.
+#[hook(addr = 0x4A6DA0, conv = thiscall, name = "FUN_004a6da0", expect = "6A FF 68 98 93 83 00",
+       unverified = "frontier2-c2", route = "L2", hazards = "heap-writes")]
+pub fn fx_4a6da0(this: GPtr<u8>) {
+    dtor_4a8460(this.byte_add(0x8));
+    wr::<u32>(this, 0, 0x85a7dc);
+}
+
+/// `FxInfoEmRotation_c::~FxInfoEmRotation_c()` (0x4A6E10, catalogued `FUN_004a6e10`): the member at +0x8 destroyed (0x4a8460), then the base vtable
+/// 0x85a7dc. The SEH frame is not reproduced.
+#[hook(addr = 0x4A6E10, conv = thiscall, name = "FUN_004a6e10", expect = "6A FF 68 B8 93 83 00",
+       unverified = "frontier2-c2", route = "L2", hazards = "heap-writes")]
+pub fn fx_4a6e10(this: GPtr<u8>) {
+    dtor_4a8460(this.byte_add(0x8));
+    wr::<u32>(this, 0, 0x85a7dc);
+}
+
+/// `FxInfoNoise_c::~FxInfoNoise_c()` (0x4A6E80, catalogued `FUN_004a6e80`): the member at +0x8 destroyed (0x4a89b0), then the base vtable
+/// 0x85a7dc. The SEH frame is not reproduced.
+#[hook(addr = 0x4A6E80, conv = thiscall, name = "FUN_004a6e80", expect = "6A FF 68 D8 93 83 00",
+       unverified = "frontier2-c2", route = "L2", hazards = "heap-writes")]
+pub fn fx_4a6e80(this: GPtr<u8>) {
+    dtor_4a89b0(this.byte_add(0x8));
+    wr::<u32>(this, 0, 0x85a7dc);
+}
+
+/// `FxInfoGroundCollide_c::~FxInfoGroundCollide_c()` (0x4A70B0, catalogued `FUN_004a70b0`): the member at +0x8 destroyed (0x4a89b0), then the base vtable
+/// 0x85a7dc. The SEH frame is not reproduced.
+#[hook(addr = 0x4A70B0, conv = thiscall, name = "FUN_004a70b0", expect = "6A FF 68 78 94 83 00",
+       unverified = "frontier2-c2", route = "L2", hazards = "heap-writes")]
+pub fn fx_4a70b0(this: GPtr<u8>) {
+    dtor_4a89b0(this.byte_add(0x8));
+    wr::<u32>(this, 0, 0x85a7dc);
+}
+
+/// `FxInfoWind_c::~FxInfoWind_c()` (0x4A73B0, catalogued `FUN_004a73b0`): the member at +0x8 destroyed (0x4a89b0), then the base vtable
+/// 0x85a7dc. The SEH frame is not reproduced.
+#[hook(addr = 0x4A73B0, conv = thiscall, name = "FUN_004a73b0", expect = "6A FF 68 98 94 83 00",
+       unverified = "frontier2-c2", route = "L2", hazards = "heap-writes")]
+pub fn fx_4a73b0(this: GPtr<u8>) {
+    dtor_4a89b0(this.byte_add(0x8));
+    wr::<u32>(this, 0, 0x85a7dc);
+}
+
+/// `FxInfoJitter_c::~FxInfoJitter_c()` (0x4A7420, catalogued `FUN_004a7420`): the member at +0x8 destroyed (0x4a89b0), then the base vtable
+/// 0x85a7dc. The SEH frame is not reproduced.
+#[hook(addr = 0x4A7420, conv = thiscall, name = "FUN_004a7420", expect = "6A FF 68 B8 94 83 00",
+       unverified = "frontier2-c2", route = "L2", hazards = "heap-writes")]
+pub fn fx_4a7420(this: GPtr<u8>) {
+    dtor_4a89b0(this.byte_add(0x8));
+    wr::<u32>(this, 0, 0x85a7dc);
+}
+
+/// `FxInfoRotSpeed_c::~FxInfoRotSpeed_c()` (0x4A7490, catalogued `FUN_004a7490`): the member at +0x8 destroyed (0x4a8460), then the base vtable
+/// 0x85a7dc. The SEH frame is not reproduced.
+#[hook(addr = 0x4A7490, conv = thiscall, name = "FUN_004a7490", expect = "6A FF 68 D8 94 83 00",
+       unverified = "frontier2-c2", route = "L2", hazards = "heap-writes")]
+pub fn fx_4a7490(this: GPtr<u8>) {
+    dtor_4a8460(this.byte_add(0x8));
+    wr::<u32>(this, 0, 0x85a7dc);
+}
+
+/// `FxInfoSpriteRect_c::~FxInfoSpriteRect_c()` (0x4A76C0, catalogued `FUN_004a76c0`): the member at +0x8 destroyed (0x4a8b70), then the base vtable
+/// 0x85a7dc. The SEH frame is not reproduced.
+#[hook(addr = 0x4A76C0, conv = thiscall, name = "FUN_004a76c0", expect = "6A FF 68 78 95 83 00",
+       unverified = "frontier2-c2", route = "L2", hazards = "heap-writes")]
+pub fn fx_4a76c0(this: GPtr<u8>) {
+    dtor_4a8b70(this.byte_add(0x8));
+    wr::<u32>(this, 0, 0x85a7dc);
+}
+
+/// `FxInfoHeatHaze_c::~FxInfoHeatHaze_c()` (0x4A7730, catalogued `FUN_004a7730`): the member at +0x8 destroyed (0x4a8b70), then the base vtable
+/// 0x85a7dc. The SEH frame is not reproduced.
+#[hook(addr = 0x4A7730, conv = thiscall, name = "FUN_004a7730", expect = "6A FF 68 98 95 83 00",
+       unverified = "frontier2-c2", route = "L2", hazards = "heap-writes")]
+pub fn fx_4a7730(this: GPtr<u8>) {
+    dtor_4a8b70(this.byte_add(0x8));
+    wr::<u32>(this, 0, 0x85a7dc);
+}
+
+/// `FxInfoFlat_c::~FxInfoFlat_c()` (0x4A7810, catalogued `FUN_004a7810`): the member at +0x8 destroyed (0x4a8460), then the base vtable
+/// 0x85a7dc. The SEH frame is not reproduced.
+#[hook(addr = 0x4A7810, conv = thiscall, name = "FUN_004a7810", expect = "6A FF 68 D8 95 83 00",
+       unverified = "frontier2-c2", route = "L2", hazards = "heap-writes")]
+pub fn fx_4a7810(this: GPtr<u8>) {
+    dtor_4a8460(this.byte_add(0x8));
+    wr::<u32>(this, 0, 0x85a7dc);
+}
+
+sa_core::orig! {
+    /// `FxEmitterBP_c::~FxEmitterBP_c()` (0x4A18F0, the complete destructor; called at its address)
+    pub fn emitter_bp_dtor(this: GPtr<u8>) = thiscall 0x4A18F0 => unported;
+}
+
+/// `FxEmitterBP_c::~FxEmitterBP_c(uint8 flags)` (0x4A2B20, scalar deleting destructor, vtable slot 0): the destructor
+/// 0x4A18F0, then `free(this)` when `flags & 1`; returns `this`.
+#[hook(addr = 0x4A2B20, conv = thiscall, name = "FxEmitterBP_c::~FxEmitterBP_c", expect = "56 8B F1 E8 C8 ED FF FF",
+       unverified = "frontier2-c2", route = "L2", hazards = "heap-writes")]
+pub fn fx_4a2b20(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+    emitter_bp_dtor(this);
+    if flags & 1 != 0 {
+        crt_free(this);
+    }
+    this
+}
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_FX_4A2B20,
+    HOOK_FX_4A6DA0,
+    HOOK_FX_4A6E10,
+    HOOK_FX_4A6E80,
+    HOOK_FX_4A70B0,
+    HOOK_FX_4A73B0,
+    HOOK_FX_4A7420,
+    HOOK_FX_4A7490,
+    HOOK_FX_4A76C0,
+    HOOK_FX_4A7730,
+    HOOK_FX_4A7810,
     HOOK_FX_4A4B40,
     HOOK_FX_4A4C90,
     HOOK_FX_4A4CB0,

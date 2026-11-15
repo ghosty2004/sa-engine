@@ -431,7 +431,7 @@ orig! {
     fn c_674c30_t1(this: u32, a0: u32) -> u32 = thiscall 0x674C30 => unported;
     /// `CTaskInteriorBeInOffice::GetInfoForPedToUse` (0x675300), thiscall, 1 stack argument(s)
     fn c_675300_t1(this: u32, a0: u32) -> u32 = thiscall 0x675300 => unported;
-    /// `FUN_00675c30` (0x675C30), thiscall, 3 stack argument(s)
+    /// `CTaskInteriorSitOnChair::Constructor` (0x675C30), thiscall, 3 stack argument(s)
     fn c_675c30_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x675C30 => unported;
     /// `CTaskInteriorLieInBed::Constructor` (0x675E20), thiscall, 4 stack argument(s)
     fn c_675e20_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x675E20 => unported;

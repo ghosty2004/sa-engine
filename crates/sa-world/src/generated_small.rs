@@ -25,9 +25,9 @@ orig! {
     fn c_552400_t0(this: u32) -> u32 = thiscall 0x552400 => unported;
     /// `CPtrListDoubleLink::Flush` (0x552470), thiscall, 0 stack argument(s)
     fn c_552470_t0(this: u32) -> u32 = thiscall 0x552470 => unported;
-    /// `CQuadTreeNode` (0x552520), thiscall, 0 stack argument(s)
+    /// `CQuadTreeNode::~CQuadTreeNode` (0x552520), thiscall, 0 stack argument(s)
     fn c_552520_t0(this: u32) -> u32 = thiscall 0x552520 => unported;
-    /// `delete` (0x552C90), cdecl, 1 stack argument(s)
+    /// `CQuadTreeNode::operator delete` (0x552C90), cdecl, 1 stack argument(s)
     fn c_552c90_c1(a0: u32) -> u32 = cdecl 0x552C90 => unported;
     /// `CEntity::RegisterReference-` (0x571B70), thiscall, 1 stack argument(s)
     fn c_571b70_t1(this: u32, a0: u32) -> u32 = thiscall 0x571B70 => unported;

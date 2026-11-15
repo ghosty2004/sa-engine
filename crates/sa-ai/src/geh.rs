@@ -117,7 +117,7 @@ orig! {
     /// `CTaskSimpleWaitUntilLeaderAreaCodesMatch::ProcessPed(CPed*)` (0x6356C0)
     fn wait_leader_area_process(t: P, ped: P) -> u8 = thiscall 0x6356C0 => unported;
     /// `CTaskSimpleWaitUntilAreaCodesMatch::~...` (0x6355E0)
-    fn wait_area_dtor(t: P) = thiscall 0x6355E0 => unported;
+    pub(crate) fn wait_area_dtor(t: P) = thiscall 0x6355E0 => unported;
     /// `CTaskGangHassleVehicle::CTaskGangHassleVehicle(CVehicle*, int32, uint8, float, float)` (0x65FAC0)
     fn hassle_veh_ctor(t: P, veh: P, a: i32, b: u32, c: u32, d: u32) -> P = thiscall 0x65FAC0 => unported;
     /// `CTaskGangHassleVehicle::~...` (0x65FB60)

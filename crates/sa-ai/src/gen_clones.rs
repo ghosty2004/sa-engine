@@ -60,7 +60,7 @@ orig! {
     fn c_4af350_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x4AF350 => unported;
     /// `CEventVehicleToSteal::Constructor` (0x4AF670), thiscall, 1 stack argument(s)
     fn c_4af670_t1(this: u32, a0: u32) -> u32 = thiscall 0x4AF670 => unported;
-    /// `FUN_004afb50` (0x4AFB50), thiscall, 1 stack argument(s)
+    /// `CEventVehicleThreat::Constructor` (0x4AFB50), thiscall, 1 stack argument(s)
     fn c_4afb50_t1(this: u32, a0: u32) -> u32 = thiscall 0x4AFB50 => unported;
     /// `CEventGunAimedAt::CEventGunAimedAt` (0x4B0700), thiscall, 1 stack argument(s)
     fn c_4b0700_t1(this: u32, a0: u32) -> u32 = thiscall 0x4B0700 => unported;
@@ -130,7 +130,7 @@ orig! {
     fn c_6202c0_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x6202C0 => unported;
     /// `CTaskSimpleBeHit::Constructor` (0x620780), thiscall, 4 stack argument(s)
     fn c_620780_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x620780 => unported;
-    /// `FUN_00620b00` (0x620B00), thiscall, 5 stack argument(s)
+    /// `CTaskComplexReactToAttack::Constructor` (0x620B00), thiscall, 5 stack argument(s)
     fn c_620b00_t5(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 = thiscall 0x620B00 => unported;
     /// `CTaskComplexKillPedOnFoot::Constructor` (0x620E30), thiscall, 6 stack argument(s)
     fn c_620e30_t6(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) -> u32 = thiscall 0x620E30 => unported;
@@ -296,7 +296,7 @@ orig! {
     fn c_655720_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x655720 => unported;
     /// `CTaskComplexMedicTreatInjuredPed::Constructor` (0x658BA0), thiscall, 3 stack argument(s)
     fn c_658ba0_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x658BA0 => unported;
-    /// `FUN_006591d0` (0x6591D0), thiscall, 1 stack argument(s)
+    /// `CTaskComplexPresentIDToCop::Constructor` (0x6591D0), thiscall, 1 stack argument(s)
     fn c_6591d0_t1(this: u32, a0: u32) -> u32 = thiscall 0x6591D0 => unported;
     /// `CTaskComplexDriveFireTruck::Constructor` (0x659310), thiscall, 3 stack argument(s)
     fn c_659310_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x659310 => unported;
@@ -362,7 +362,7 @@ orig! {
     fn c_674930_t5(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 = thiscall 0x674930 => unported;
     /// `CTaskInteriorBeInShop::Constructor` (0x6753E0), thiscall, 1 stack argument(s)
     fn c_6753e0_t1(this: u32, a0: u32) -> u32 = thiscall 0x6753E0 => unported;
-    /// `FUN_00675c30` (0x675C30), thiscall, 3 stack argument(s)
+    /// `CTaskInteriorSitOnChair::Constructor` (0x675C30), thiscall, 3 stack argument(s)
     fn c_675c30_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x675C30 => unported;
     /// `CTaskInteriorLieInBed::Constructor` (0x675E20), thiscall, 4 stack argument(s)
     fn c_675e20_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x675E20 => unported;
@@ -404,11 +404,11 @@ orig! {
     fn c_6917b0_t7(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32) -> u32 = thiscall 0x6917B0 => unported;
     /// `CTaskSimplePickUpEntity::Constructor-1` (0x691870), thiscall, 8 stack argument(s)
     fn c_691870_t8(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32) -> u32 = thiscall 0x691870 => unported;
-    /// `FUN_006919c0` (0x6919C0), thiscall, 2 stack argument(s)
+    /// `CTaskComplexGoPickUpEntity::Constructor` (0x6919C0), thiscall, 2 stack argument(s)
     fn c_6919c0_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x6919C0 => unported;
     /// `CTaskSimpleDuck::Constructor` (0x691FC0), thiscall, 3 stack argument(s)
     fn c_691fc0_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x691FC0 => unported;
-    /// `FUN_00692680` (0x692680), thiscall, 1 stack argument(s)
+    /// `CTaskSimpleDuckWhileShotsWhizzing::Constructor` (0x692680), thiscall, 1 stack argument(s)
     fn c_692680_t1(this: u32, a0: u32) -> u32 = thiscall 0x692680 => unported;
     /// `CTaskComplexFollowLeaderInFormation::Constructor` (0x6949A0), thiscall, 4 stack argument(s)
     fn c_6949a0_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x6949A0 => unported;

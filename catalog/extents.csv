@@ -380,7 +380,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x41b7c0,CPointRoute::operator new,unknown,game,UNK-game,ghidra-created,0x409aed,0x41b7cb,32,2,0x409aed-0x409b02;0x41b7c0-0x41b7cb,,9,0,0,0,0,0,0
 0x41b7d0,CPointRoute::operator delete,unknown,game,UNK-game,ghidra,0x41b7d0,0x1565001,54,2,0x41b7d0-0x41b7d5;0x1564fd0-0x1565001,0x1564fd0,19,0,0,0,0,2,0
 0x41b810,,unknown,game,UNK-game,ghidra,0x41b810,0x41b81b,11,1,0x41b810-0x41b81b,,2,0,0,0,0,0,0
-0x41b820,,unknown,game,UNK-game,ghidra,0x41b820,0x156a253,56,2,0x41b820-0x41b825;0x156a220-0x156a253,0x156a220,20,0,0,0,0,2,0
+0x41b820,CPatrolRoute::operator delete,unknown,game,UNK-game,ghidra,0x41b820,0x156a253,56,2,0x41b820-0x41b825;0x156a220-0x156a253,0x156a220,20,0,0,0,0,2,0
 0x41b860,CNodeRoute::operator new,gr-reversed,game,CORE,ghidra,0x41b860,0x41b86b,11,1,0x41b860-0x41b86b,,2,0,0,0,0,0,0
 0x41b870,CNodeRoute::operator delete,gr-reversed,game,CORE,ghidra,0x41b870,0x156e0f1,54,2,0x41b870-0x41b875;0x156e0c0-0x156e0f1,0x156e0c0,19,0,0,0,0,2,0
 0x41b950,CAutoPilot::RemoveOnePathNode,gr-called-only,game,POP,ghidra,0x41b950,0x156202d,50,2,0x41b950-0x41b955;0x1562000-0x156202d,0x1562000,15,0,0,0,0,2,0
@@ -1501,7 +1501,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x490db0,CRunningScript::ProcessCommands1500To1599,unknown,game,SCRIPT,ghidra-created,0x4015fb,0x492ac6,7455,3,0x4015fb-0x40160b;0x490db0-0x4913b9;0x4913c0-0x492ac6,,2052,300,1,1,0,34,0
 0x492cb0,,unknown,game,SCRIPT,ghidra,0x492cb0,0x156e9c0,53,2,0x492cb0-0x492cb5;0x156e990-0x156e9c0,0x156e990,19,0,0,0,0,3,0
 0x492d10,CTaskSimpleTogglePedThreatScanner::CTaskSimpleTogglePedThreatScanner,unknown,game,SCRIPT,ghidra,0x492d10,0x15622d9,46,2,0x492d10-0x492d15;0x15622b0-0x15622d9,0x15622b0,14,1,0,0,0,4,0
-0x492d40,,unknown,game,UNK-game,ghidra,0x492d40,0x492d4b,11,1,0x492d40-0x492d4b,,2,0,0,0,0,1,0
+0x492d40,CTaskSimpleTogglePedThreatScanner::Destructor,unknown,game,AI,ghidra,0x492d40,0x492d4b,11,1,0x492d40-0x492d4b,,2,0,0,0,0,1,0
 0x492d50,CTaskSimpleTogglePedThreatScanner::Clone,unknown,game,AI,ghidra,0x492d50,0x492dca,122,1,0x492d50-0x492dca,,40,2,0,0,0,4,0
 0x492dd0,CTaskSimpleTogglePedThreatScanner::GetTaskType,unknown,game,AI,ghidra-created,0x492dd0,0x492dd6,6,1,0x492dd0-0x492dd6,,2,0,0,0,0,0,0
 0x492de0,CTaskSimpleTogglePedThreatScanner::MakeAbortable,unknown,game,AI,ghidra-created,0x492de0,0x492de5,5,1,0x492de0-0x492de5,,2,0,0,0,0,0,0
@@ -1544,7 +1544,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x499430,vt_85a428::GetTaskType,unknown,game,AI,ghidra-created,0x499430,0x499436,6,1,0x499430-0x499436,,2,0,0,0,0,0,0
 0x499440,vt_85a428::Clone,unknown,game,AI,ghidra,0x499440,0x4994b9,121,1,0x499440-0x4994b9,,43,2,1,0,0,0,0
 0x4994c0,vt_85a428::Destructor,unknown,game,AI,ghidra,0x4994c0,0x4994de,30,1,0x4994c0-0x4994de,,11,2,0,0,0,0,0
-0x4994e0,,unknown,game,UNK-game,ghidra,0x4994e0,0x4994eb,11,1,0x4994e0-0x4994eb,,2,0,0,0,0,1,0
+0x4994e0,CTaskComplexBeCop::Destructor,unknown,game,AI,ghidra,0x4994e0,0x4994eb,11,1,0x4994e0-0x4994eb,,2,0,0,0,0,1,0
 0x4994f0,CSetPieces::Init,gr-reversed,game,WORLD,ghidra,0x4994f0,0x156235d,18,2,0x4994f0-0x4994f5;0x1562350-0x156235d,0x1562350,5,0,0,0,0,0,0
 0x499500,CSetPieces::AddOne,gr-reversed,game,WORLD,ghidra,0x499500,0x499689,393,1,0x499500-0x499689,,90,12,0,0,0,0,0
 0x499690,CSetPiece::TryToGenerateCopPed,gr-reversed,game,WORLD,ghidra,0x40193f,0x49979d,292,2,0x40193f-0x401956;0x499690-0x49979d,,94,5,0,0,0,3,0
@@ -2200,7 +2200,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x4aee90,vt_85b0b0::GetEventPriority,unknown,game,AI,ghidra-created,0x4aee90,0x4aee96,6,1,0x4aee90-0x4aee96,,2,0,0,0,0,0,0
 0x4aeea0,,unknown,game,UNK-game,ghidra,0x4aeea0,0x4aeef1,81,1,0x4aeea0-0x4aeef1,,23,1,0,0,0,2,0
 0x4aef00,vt_85b0b0::AffectsPed,unknown,game,AI,ghidra,0x4aef00,0x4af010,272,1,0x4aef00-0x4af010,,86,10,2,2,0,0,0
-0x4af010,,unknown,game,UNK-game,ghidra,0x4af010,0x4af066,86,1,0x4af010-0x4af066,,27,1,0,0,0,4,0
+0x4af010,CEventSexyVehicle::Constructor,unknown,game,AI,ghidra,0x4af010,0x4af066,86,1,0x4af010-0x4af066,,27,1,0,0,0,4,0
 0x4af070,vt_85b0f8::GetEventType,unknown,game,AI,ghidra-created,0x4af070,0x4af076,6,1,0x4af070-0x4af076,,2,0,0,0,0,0,0
 0x4af080,vt_85b0f8::GetLifeTime,unknown,game,AI,ghidra-created,0x4af080,0x4af083,3,1,0x4af080-0x4af083,,2,0,0,0,0,0,0
 0x4af090,vt_85b0f8::GetEventPriority,unknown,game,AI,ghidra-created,0x4af090,0x4af096,6,1,0x4af090-0x4af096,,2,0,0,0,0,0,0
@@ -2238,7 +2238,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x4afa30,CEventAcquaintancePed::AffectsPed,gr-reversed,game,AI,ghidra,0x4afa30,0x4afa85,85,1,0x4afa30-0x4afa85,,36,3,0,0,0,0,0
 0x4afa90,CEventAcquaintancePedHateBadlyLit::AffectsPed,gr-reversed,game,AI,ghidra,0x4afa90,0x4afb35,165,1,0x4afa90-0x4afb35,,67,2,3,3,0,0,0
 0x4afb40,CEventSeenCop::AffectsPed,unknown,game,AI,ghidra-created,0x4afb40,0x4afb45,5,1,0x4afb40-0x4afb45,,1,0,0,0,0,0,0
-0x4afb50,,unknown,game,UNK-game,ghidra,0x4afb50,0x4afbb6,102,1,0x4afb50-0x4afbb6,,30,1,0,0,0,7,0
+0x4afb50,CEventVehicleThreat::Constructor,unknown,game,AI,ghidra,0x4afb50,0x4afbb6,102,1,0x4afb50-0x4afbb6,,30,1,0,0,0,7,0
 0x4afbc0,vt_85b298::GetEventType,unknown,game,AI,ghidra-created,0x4afbc0,0x4afbc6,6,1,0x4afbc0-0x4afbc6,,2,0,0,0,0,0,0
 0x4afbd0,vt_85b298::GetLifeTime,unknown,game,AI,ghidra-created,0x4afbd0,0x4afbd3,3,1,0x4afbd0-0x4afbd3,,2,0,0,0,0,0,0
 0x4afbe0,vt_85b298::GetEventPriority,unknown,game,AI,ghidra-created,0x4afbe0,0x4afbe6,6,1,0x4afbe0-0x4afbe6,,2,0,0,0,0,0,0
@@ -2366,7 +2366,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x4b1ed0,CEventPotentialWalkIntoFire::GetEventType,unknown,game,AI,ghidra-created,0x4b1ed0,0x4b1ed6,6,1,0x4b1ed0-0x4b1ed6,,2,0,0,0,0,0,0
 0x4b1ee0,CEventPotentialWalkIntoFire::GetLifeTime,unknown,game,AI,ghidra-created,0x4b1ee0,0x4b1ee3,3,1,0x4b1ee0-0x4b1ee3,,2,0,0,0,0,0,0
 0x4b1ef0,CEventPotentialWalkIntoFire::GetEventPriority,unknown,game,AI,ghidra-created,0x4b1ef0,0x4b1ef6,6,1,0x4b1ef0-0x4b1ef6,,2,0,0,0,0,0,0
-0x4b1f00,,unknown,game,UNK-game,ghidra,0x4b1f00,0x4b1f07,7,1,0x4b1f00-0x4b1f07,,2,0,0,0,0,1,0
+0x4b1f00,CEventPotentialWalkIntoFire::Destructor,unknown,game,AI,ghidra,0x4b1f00,0x4b1f07,7,1,0x4b1f00-0x4b1f07,,2,0,0,0,0,1,0
 0x4b1f10,,unknown,game,UNK-game,ghidra,0x4b1f10,0x4b1f4c,60,1,0x4b1f10-0x4b1f4c,,19,0,0,0,0,9,0
 0x4b1f50,CEventFireNearby::GetEventType,unknown,game,AI,ghidra-created,0x4b1f50,0x4b1f56,6,1,0x4b1f50-0x4b1f56,,2,0,0,0,0,0,0
 0x4b1f60,CEventFireNearby::GetLifeTime,unknown,game,AI,ghidra-created,0x4b1f60,0x4b1f63,3,1,0x4b1f60-0x4b1f63,,2,0,0,0,0,0,0
@@ -2434,7 +2434,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x4b4830,CEventDeadPed::AffectsPed,unknown,game,AI,ghidra-created,0x4b4830,0x4b4943,275,1,0x4b4830-0x4b4943,,97,3,0,0,0,0,0
 0x4b4950,CEventPotentialWalkIntoObject::AffectsPed,gr-reversed,game,AI,ghidra,0x4b4950,0x4b4a43,243,1,0x4b4950-0x4b4a43,,75,3,2,2,0,0,0
 0x4b4a50,,unknown,game,UNK-game,ghidra,0x4b4a50,0x4b4a9d,77,1,0x4b4a50-0x4b4a9d,,23,1,0,0,0,3,0
-0x4b4aa0,,unknown,game,UNK-game,ghidra,0x4b4aa0,0x4b4ab3,19,1,0x4b4aa0-0x4b4ab3,,8,1,0,0,0,0,0
+0x4b4aa0,CEventKnockOffBike::operator=,unknown,game,AI,ghidra,0x4b4aa0,0x4b4ab3,19,1,0x4b4aa0-0x4b4ab3,,8,1,0,0,0,0,0
 0x4b4ac0,CEventKnockOffBike::SetPedSafePosition,gr-reversed,game,AI,ghidra,0x4b4ac0,0x4b4e7d,957,1,0x4b4ac0-0x4b4e7d,,331,10,4,0,0,25,0
 0x4b4e80,CEventKnockOffBike::ReportCriminalEvent,gr-reversed,game,AI,ghidra-created,0x4b4e80,0x4b4ed5,85,1,0x4b4e80-0x4b4ed5,,34,3,1,1,0,0,0
 0x4b4ee0,CEventGunAimedAt::AffectsPed,unknown,game,AI,ghidra,0x4b4ee0,0x4b4fc8,232,1,0x4b4ee0-0x4b4fc8,,77,9,1,1,0,0,0
@@ -2561,7 +2561,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x4b86c0,vt_85b8dc::Clone,unknown,game,AI,ghidra,0x4b86c0,0x4b8719,89,1,0x4b86c0-0x4b8719,,29,2,0,0,0,1,0
 0x4b8720,vt_85b8dc::GetTaskType,unknown,game,AI,ghidra-created,0x4b8720,0x4b8726,6,1,0x4b8720-0x4b8726,,2,0,0,0,0,0,0
 0x4b8730,vt_85b8dc::Destructor,unknown,game,AI,ghidra,0x4b8730,0x4b874e,30,1,0x4b8730-0x4b874e,,11,2,0,0,0,0,0
-0x4b8750,,unknown,game,UNK-game,ghidra,0x4b8750,0x4b875b,11,1,0x4b8750-0x4b875b,,2,0,0,0,0,1,0
+0x4b8750,CTaskSimpleOnEscalator::Destructor,unknown,game,AI,ghidra,0x4b8750,0x4b875b,11,1,0x4b8750-0x4b875b,,2,0,0,0,0,1,0
 0x4b8790,CTaskComplexUseClosestFreeScriptedAttractorRun::Constructor,gr-reversed,game,AI,ghidra,0x4b8790,0x4b87ab,27,1,0x4b8790-0x4b87ab,,9,1,0,0,0,2,0
 0x4b87b0,CTaskComplexUseClosestFreeScriptedAttractorRun::Clone,gr-reversed,game,AI,ghidra,0x4b87b0,0x4b8808,88,1,0x4b87b0-0x4b8808,,27,2,0,0,0,2,0
 0x4b8810,CTaskComplexUseClosestFreeScriptedAttractorRun::GetTaskType,gr-reversed,game,AI,ghidra-created,0x4b8810,0x4b8816,6,1,0x4b8810-0x4b8816,,2,0,0,0,0,0,0
@@ -4594,7 +4594,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x541d90,CPad::Initialise,gr-reversed,game,INPUT,ghidra,0x541d90,0x541dc8,56,1,0x541d90-0x541dc8,,14,1,0,0,0,1,0
 0x541dd0,CPad::UpdatePads,gr-reversed,game,INPUT,ghidra,0x40380d,0x541e41,123,2,0x40380d-0x403817;0x541dd0-0x541e41,,32,7,0,0,0,2,0
 0x541e50,,unknown,game,UNK-game,ghidra,0x541e50,0x541e55,5,1,0x541e50-0x541e55,,1,0,0,0,0,0,0
-0x541e90,,unknown,game,UNK-game,ghidra,0x541e90,0x541ea7,23,1,0x541e90-0x541ea7,,9,1,0,0,0,0,0
+0x541e90,CMatrix::Rotate-vec,unknown,game,MATH,ghidra,0x541e90,0x541ea7,23,1,0x541e90-0x541ea7,,9,1,0,0,0,0,0
 0x541f40,,unknown,game,PHYS,ghidra,0x541f40,0x541f66,38,1,0x541f40-0x541f66,,10,0,0,0,0,0,0
 0x541f70,CEntity::TreatAsPlayerForCollisions,gr-reversed,game,WORLD,ghidra,0x541f70,0x541f7c,12,1,0x541f70-0x541f7c,,6,0,0,0,0,0,0
 0x542080,,unknown,game,UNK-game,ghidra,0x542080,0x542085,5,1,0x542080-0x542085,,1,0,0,0,0,0,0
@@ -4782,7 +4782,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x5523d0,delete,unknown,game,UNK-game,ghidra,0x5523d0,0x552400,48,1,0x5523d0-0x552400,,18,0,0,0,0,2,0
 0x552400,CPtrListSingleLink::Flush,unknown,game,UNK-game,ghidra,0x552400,0x552463,99,1,0x552400-0x552463,,44,0,0,0,0,4,0
 0x552470,CPtrListDoubleLink::Flush,unknown,game,UNK-game,ghidra,0x552470,0x5524e0,112,1,0x552470-0x5524e0,,48,0,0,0,0,5,0
-0x552520,CQuadTreeNode,unknown,game,UNK-game,ghidra,0x552520,0x552592,114,1,0x552520-0x552592,,37,3,0,0,0,0,0
+0x552520,CQuadTreeNode::~CQuadTreeNode,unknown,game,UNK-game,ghidra,0x552520,0x552592,114,1,0x552520-0x552592,,37,3,0,0,0,0,0
 0x5525a0,CQuadTreeNode<T>::FindSector-rect,gr-reversed,game,CORE,ghidra-created,0x5525a0,0x552635,149,1,0x5525a0-0x552635,,52,0,0,0,0,0,0
 0x552640,CQuadTreeNode<T>::FindSector-vec,gr-reversed,game,CORE,ghidra,0x552640,0x55269f,95,1,0x552640-0x55269f,,35,0,0,0,0,0,0
 0x5526a0,CQuadTreeNode<T>::InSector,gr-reversed,game,CORE,ghidra,0x5526a0,0x552796,246,1,0x5526a0-0x552796,,72,0,0,0,0,0,0
@@ -4796,10 +4796,10 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x552a90,CQuadTreeNode<T>::DeleteItem-rect,gr-reversed,game,CORE,ghidra-created,0x552a90,0x552aea,90,1,0x552a90-0x552aea,,41,3,0,0,0,0,0
 0x552af0,,unknown,game,CORE,ghidra,0x552af0,0x552b4c,92,1,0x552af0-0x552b4c,,36,2,0,0,0,7,0
 0x552b50,,unknown,game,UNK-game,ghidra,0x552b50,0x552bb8,104,1,0x552b50-0x552bb8,,47,0,0,0,0,4,0
-0x552bc0,,unknown,game,UNK-game,ghidra,0x552bc0,0x552bf1,49,1,0x552bc0-0x552bf1,,19,0,0,0,0,2,0
+0x552bc0,CQuadTreeNodePool::Delete,unknown,game,UNK-game,ghidra,0x552bc0,0x552bf1,49,1,0x552bc0-0x552bf1,,19,0,0,0,0,2,0
 0x552c00,CQuadTreeNode<T>::InitPool,gr-reversed,game,CORE,ghidra,0x552c00,0x552c74,116,1,0x552c00-0x552c74,,31,2,0,0,0,0,0
 0x552c80,new,unknown,game,UNK-game,ghidra,0x552c80,0x552c8b,11,1,0x552c80-0x552c8b,,2,0,0,0,0,0,0
-0x552c90,delete,unknown,game,UNK-game,ghidra,0x406a3a,0x552cc1,72,2,0x406a3a-0x406a51;0x552c90-0x552cc1,,26,0,0,0,0,2,0
+0x552c90,CQuadTreeNode::operator delete,unknown,game,UNK-game,ghidra,0x406a3a,0x552cc1,72,2,0x406a3a-0x406a51;0x552c90-0x552cc1,,26,0,0,0,0,2,0
 0x552cd0,CQuadTreeNode<T>::AddItem,gr-reversed,game,CORE,ghidra,0x552cd0,0x552e4e,379,2,0x552cd0-0x552d1d;0x552d20-0x552e4e,,118,4,0,0,0,16,0
 0x552ee0,,unknown,game,UNK-game,ghidra,0x552ee0,0x552f70,144,1,0x552ee0-0x552f70,,49,4,0,0,0,2,0
 0x553010,,unknown,game,UNK-game,ghidra,0x553010,0x5530de,206,1,0x553010-0x5530de,,70,6,0,0,0,3,0
@@ -5696,7 +5696,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x59f450,CObject::RemoveFromControlCodeList,gr-reversed,game,WORLD,ghidra,0x59f450,0x59f4a3,83,1,0x59f450-0x59f4a3,,26,1,0,0,0,3,0
 0x59f4b0,CObject::ResetDoorAngle,gr-reversed,game,WORLD,ghidra,0x59f4b0,0x59f5b9,265,1,0x59f4b0-0x59f5b9,,80,3,1,1,0,13,0
 0x59f5c0,CObject::LockDoor,gr-reversed,game,WORLD,ghidra,0x59f5c0,0x59f5df,31,1,0x59f5c0-0x59f5df,,7,0,0,0,0,2,0
-0x59f610,,unknown,game,UNK-game,ghidra,0x59f610,0x59f65a,74,1,0x59f610-0x59f65a,,29,0,0,0,0,4,0
+0x59f610,CObjectPool::CreateAtRef,unknown,game,UNK-game,ghidra,0x59f610,0x59f65a,74,1,0x59f610-0x59f65a,,29,0,0,0,0,4,0
 0x59f660,CObject,unknown,game,UNK-game,ghidra,0x59f660,0x59f840,480,1,0x59f660-0x59f840,,123,10,0,0,0,3,0
 0x59f840,CObject::Init,gr-reversed,game,WORLD,ghidra,0x59f840,0x59fb41,769,1,0x59f840-0x59fb41,,192,6,5,1,0,34,0
 0x59fb50,CObject::DoBurnEffect,gr-reversed,game,WORLD,ghidra,0x59fb50,0x59fcf7,420,2,0x59fb50-0x59fbdd;0x59fbe0-0x59fcf7,,115,8,0,0,0,1,0
@@ -6894,7 +6894,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x5f66e0,CTaskComplexBeStill::~CTaskComplexBeStill,unknown,game,AI,ghidra,0x5f66e0,0x5f66fe,30,1,0x5f66e0-0x5f66fe,,11,2,0,0,0,0,0
 0x5f6700,CTaskComplexBeStill::~CTaskComplexBeStill,unknown,game,AI,ghidra,0x5f6700,0x5f670b,11,1,0x5f6700-0x5f670b,,2,0,0,0,0,1,0
 0x5f6710,CTaskComplexSequence::Clone,gr-reversed,game,AI,ghidra,0x5f6710,0x5f67aa,154,1,0x5f6710-0x5f67aa,,53,2,1,0,0,4,0
-0x5f67e0,,unknown,game,UNK-game,ghidra,0x5f67e0,0x5f67eb,11,1,0x5f67e0-0x5f67eb,,2,0,0,0,0,1,0
+0x5f67e0,CTaskSimpleWaitUntilLeaderAreaCodesMatch::Destructor,unknown,game,AI,ghidra,0x5f67e0,0x5f67eb,11,1,0x5f67e0-0x5f67eb,,2,0,0,0,0,1,0
 0x5f67f0,CTaskSimpleWaitUntilLeaderAreaCodesMatch::Clone,gr-reversed,game,AI,ghidra,0x5f67f0,0x5f6865,117,1,0x5f67f0-0x5f6865,,38,2,0,0,0,3,0
 0x5f6870,CTaskSimpleWaitUntilLeaderAreaCodesMatch::GetTaskType,gr-reversed,game,AI,ghidra-created,0x5f6870,0x5f6876,6,1,0x5f6870-0x5f6876,,2,0,0,0,0,0,0
 0x5f6880,CTaskSimpleStandStill::~CTaskSimpleStandStill,unknown,game,AI,ghidra,0x5f6880,0x5f689e,30,1,0x5f6880-0x5f689e,,11,2,0,0,0,0,0
@@ -7039,7 +7039,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x5feda0,CEventPedCollisionWithPlayer::Clone,unknown,game,AI,ghidra,0x5feda0,0x5fee18,120,1,0x5feda0-0x5fee18,,44,2,0,0,0,1,0
 0x5fee20,CEventPedCollisionWithPlayer::~CEventPedCollisionWithPlayer,unknown,game,AI,ghidra,0x5fee20,0x5fee3e,30,1,0x5fee20-0x5fee3e,,11,2,0,0,0,0,0
 0x5fee40,CEventPlayerCollisionWithPed::Constructor,gr-reversed,game,AI,ghidra,0x5fee40,0x5fee79,57,1,0x5fee40-0x5fee79,,22,1,0,0,0,1,0
-0x5fee80,,unknown,game,UNK-game,ghidra,0x5fee80,0x5fee8b,11,1,0x5fee80-0x5fee8b,,2,0,0,0,0,1,0
+0x5fee80,CEventPlayerCollisionWithPed::Destructor,unknown,game,AI,ghidra,0x5fee80,0x5fee8b,11,1,0x5fee80-0x5fee8b,,2,0,0,0,0,1,0
 0x5fee90,CEventPlayerCollisionWithPed::GetEventType,unknown,game,AI,ghidra-created,0x5fee90,0x5fee96,6,1,0x5fee90-0x5fee96,,2,0,0,0,0,0,0
 0x5feea0,CEventPlayerCollisionWithPed::Clone,unknown,game,AI,ghidra,0x5feea0,0x5fef18,120,1,0x5feea0-0x5fef18,,44,2,0,0,0,1,0
 0x5fef20,CEventPlayerCollisionWithPed::~CEventPlayerCollisionWithPed,unknown,game,AI,ghidra,0x5fef20,0x5fef3e,30,1,0x5fef20-0x5fef3e,,11,2,0,0,0,0,0
@@ -7648,11 +7648,11 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x61c520,CTaskSimpleFight::GetTaskType,unknown,game,AI,ghidra-created,0x61c520,0x61c526,6,1,0x61c520-0x61c526,,2,0,0,0,0,0,0
 0x61c530,CTaskSimpleFight::~CTaskSimpleFight,gr-called-only,game,AI,ghidra,0x61c530,0x61c5e0,176,1,0x61c530-0x61c5e0,,52,5,0,0,0,2,0
 0x61c5e0,CTaskSimpleFight::ControlFight,gr-unreversed,game,AI,ghidra,0x61c5e0,0x61c623,67,1,0x61c5e0-0x61c623,,29,2,0,0,0,3,0
-0x61c650,,unknown,game,AI,ghidra,0x61c650,0x61c73a,234,1,0x61c650-0x61c73a,,90,0,0,0,0,1,0
+0x61c650,CTaskSimpleFight::BeHitWhileBlocking,unknown,game,AI,ghidra,0x61c650,0x61c73a,234,1,0x61c650-0x61c73a,,90,0,0,0,0,1,0
 0x61c740,,unknown,game,UNK-game,ghidra,0x61c740,0x61c7e4,164,1,0x61c740-0x61c7e4,,51,2,0,0,0,0,0
 0x61c7f0,,unknown,game,AI,ghidra,0x61c7f0,0x61c9a2,434,1,0x61c7f0-0x61c9a2,,146,9,0,0,0,5,0
 0x61c9b0,,unknown,game,AI,ghidra,0x61c9b0,0x61cb96,486,1,0x61c9b0-0x61cb96,,177,8,0,0,0,18,0
-0x61cba0,,unknown,game,AI,ghidra,0x61cba0,0x61d0a9,1289,1,0x61cba0-0x61d0a9,,388,32,1,1,0,1,0
+0x61cba0,CTaskSimpleFight::FightHitPed,unknown,game,AI,ghidra,0x61cba0,0x61d0a9,1289,1,0x61cba0-0x61d0a9,,388,32,1,1,0,1,0
 0x61d0b0,,unknown,game,UNK-game,ghidra,0x61d0b0,0x61d3f9,834,2,0x61d0b0-0x61d2b9;0x61d2c0-0x61d3f9,,216,16,2,0,0,5,0
 0x61d400,,unknown,game,AI,ghidra,0x61d400,0x61d5ee,494,1,0x61d400-0x61d5ee,,151,7,1,0,0,6,0
 0x61d5f0,,unknown,game,UNK-game,ghidra,0x61d5f0,0x61d6e8,248,1,0x61d5f0-0x61d6e8,,52,1,0,0,0,0,0
@@ -7695,14 +7695,14 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x61f9f0,CTaskSimpleThrowControl::ProcessPed,gr-reversed,game,AI,ghidra-created,0x61f9f0,0x61fc13,547,1,0x61f9f0-0x61fc13,,172,9,2,2,0,8,0
 0x61fc20,,unknown,game,UNK-game,ghidra,0x61fc20,0x61fc3a,26,1,0x61fc20-0x61fc3a,,10,1,0,0,0,3,0
 0x61fc40,vt_86d7d8::GetTaskType,unknown,game,AI,ghidra-created,0x61fc40,0x61fc46,6,1,0x61fc40-0x61fc46,,2,0,0,0,0,0,0
-0x61fc50,,unknown,game,UNK-game,ghidra,0x61fc50,0x61fcb7,103,1,0x61fc50-0x61fcb7,,27,2,0,0,0,2,0
+0x61fc50,CTaskSimpleBeKickedOnGround::Destructor,unknown,game,AI,ghidra,0x61fc50,0x61fcb7,103,1,0x61fc50-0x61fcb7,,27,2,0,0,0,2,0
 0x61fcc0,vt_86d7d8::MakeAbortable,unknown,game,AI,ghidra-created,0x61fcc0,0x61fd0c,76,1,0x61fcc0-0x61fd0c,,26,1,0,0,0,3,0
 0x61fd10,,unknown,game,UNK-game,ghidra-created,0x61fd10,0x61fd20,16,1,0x61fd10-0x61fd20,,4,0,0,0,0,2,0
 0x61fd20,,unknown,game,UNK-game,ghidra,0x61fd20,0x61fdfb,219,1,0x61fd20-0x61fdfb,,73,10,0,0,0,4,0
 0x61fe00,vt_86d7d8::ProcessPed,unknown,game,AI,ghidra-created,0x61fe00,0x61fe22,34,1,0x61fe00-0x61fe22,,13,1,0,0,0,0,0
 0x61fe30,,unknown,game,UNK-game,ghidra,0x61fe30,0x61fe5a,42,1,0x61fe30-0x61fe5a,,14,1,0,0,0,5,0
 0x61fe60,vt_86d7fc::GetTaskType,unknown,game,AI,ghidra-created,0x61fe60,0x61fe66,6,1,0x61fe60-0x61fe66,,2,0,0,0,0,0,0
-0x61fe70,,unknown,game,UNK-game,ghidra,0x61fe70,0x61fed7,103,1,0x61fe70-0x61fed7,,27,2,0,0,0,2,0
+0x61fe70,CTaskSimpleBeHitWhileMoving::Destructor,unknown,game,AI,ghidra,0x61fe70,0x61fed7,103,1,0x61fe70-0x61fed7,,27,2,0,0,0,2,0
 0x61fee0,vt_86d7fc::MakeAbortable,unknown,game,AI,ghidra-created,0x61fee0,0x61ff2c,76,1,0x61fee0-0x61ff2c,,26,1,0,0,0,3,0
 0x61ff30,,unknown,game,UNK-game,ghidra-created,0x61ff30,0x61ff40,16,1,0x61ff30-0x61ff40,,4,0,0,0,0,2,0
 0x61ff40,,unknown,game,UNK-game,ghidra,0x401122,0x620284,863,2,0x401122-0x40113d;0x61ff40-0x620284,,265,25,0,0,0,12,0
@@ -7721,9 +7721,9 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x620900,CTaskSimpleBeHit::FinishAnimBeHitCB,gr-reversed,game,AI,ghidra-created,0x620900,0x620910,16,1,0x620900-0x620910,,4,0,0,0,0,2,0
 0x620910,CTaskSimpleBeHit::StartAnim,gr-reversed,game,AI,ghidra,0x620910,0x620a1e,270,1,0x620910-0x620a1e,,90,5,0,0,0,11,0
 0x620a20,CTaskSimpleBeHit::ProcessPed,gr-reversed,game,AI,ghidra-created,0x620a20,0x620afb,219,1,0x620a20-0x620afb,,82,7,0,0,0,1,0
-0x620b00,,unknown,game,UNK-game,ghidra,0x620b00,0x620b79,121,1,0x620b00-0x620b79,,38,2,0,0,0,8,0
+0x620b00,CTaskComplexReactToAttack::Constructor,unknown,game,AI,ghidra,0x620b00,0x620b79,121,1,0x620b00-0x620b79,,38,2,0,0,0,8,0
 0x620b80,vt_86d868::GetTaskType,unknown,game,AI,ghidra-created,0x620b80,0x620b86,6,1,0x620b80-0x620b86,,2,0,0,0,0,0,0
-0x620b90,,unknown,game,UNK-game,ghidra,0x620b90,0x620bea,90,1,0x620b90-0x620bea,,25,2,0,0,0,1,0
+0x620b90,CTaskComplexReactToAttack::Destructor,unknown,game,AI,ghidra,0x620b90,0x620bea,90,1,0x620b90-0x620bea,,25,2,0,0,0,1,0
 0x620bf0,vt_86d868::MakeAbortable,unknown,game,AI,ghidra,0x620bf0,0x620c30,64,1,0x620bf0-0x620c30,,29,0,1,0,0,1,0
 0x620c30,,unknown,game,UNK-game,ghidra-created,0x4020ff,0x620df3,462,2,0x4020ff-0x40210a;0x620c30-0x620df3,,137,12,0,0,0,1,0
 0x620e00,vt_86d868::ControlSubTask,unknown,game,AI,ghidra,0x620e00,0x620e29,41,1,0x620e00-0x620e29,,18,0,2,0,0,0,0
@@ -7746,7 +7746,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x621500,CTaskComplexKillPedOnFootArmed::LineOfSightClearForAttack,gr-reversed,game,AI,ghidra,0x405932,0x6217c5,721,2,0x405932-0x40593e;0x621500-0x6217c5,,248,6,0,0,0,12,0
 0x6217d0,CTaskSimpleGangDriveBy,unknown,game,UNK-game,ghidra,0x6217d0,0x6218a5,213,1,0x6217d0-0x6218a5,,68,2,0,0,0,29,0
 0x6218b0,CTaskSimpleGangDriveBy::GetTaskType,unknown,game,AI,ghidra-created,0x6218b0,0x6218b6,6,1,0x6218b0-0x6218b6,,2,0,0,0,0,0,0
-0x6218c0,,unknown,game,UNK-game,ghidra,0x6218c0,0x621954,148,1,0x6218c0-0x621954,,43,4,0,0,0,1,0
+0x6218c0,CTaskSimpleGangDriveBy::Destructor,unknown,game,AI,ghidra,0x6218c0,0x621954,148,1,0x6218c0-0x621954,,43,4,0,0,0,1,0
 0x621960,,unknown,game,UNK-game,ghidra,0x621960,0x621afe,414,1,0x621960-0x621afe,,120,6,0,0,0,9,0
 0x621b10,,unknown,game,UNK-game,ghidra,0x621b10,0x621bd9,201,1,0x621b10-0x621bd9,,60,3,0,0,0,3,0
 0x621be0,,unknown,game,UNK-game,ghidra-created,0x621be0,0x621bf5,21,1,0x621be0-0x621bf5,,6,0,0,0,0,1,0
@@ -7768,7 +7768,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x622170,CTaskComplexRoadRage::MakeAbortable,gr-reversed,game,AI,ghidra-created,0x622170,0x622178,8,1,0x622170-0x622178,,3,0,0,0,1,0,0
 0x622180,,unknown,game,UNK-game,ghidra,0x622180,0x6221a9,41,1,0x622180-0x6221a9,,13,1,0,0,0,4,0
 0x6221b0,vt_86da1c::GetTaskType,unknown,game,AI,ghidra-created,0x6221b0,0x6221b6,6,1,0x6221b0-0x6221b6,,2,0,0,0,0,0,0
-0x6221c0,,unknown,game,UNK-game,ghidra,0x6221c0,0x6221cb,11,1,0x6221c0-0x6221cb,,2,0,0,0,0,1,0
+0x6221c0,CTaskComplexKillAllThreats::Destructor,unknown,game,AI,ghidra,0x6221c0,0x6221cb,11,1,0x6221c0-0x6221cb,,2,0,0,0,0,1,0
 0x6221d0,,unknown,game,UNK-game,ghidra,0x6221d0,0x622229,89,1,0x6221d0-0x622229,,26,1,0,0,0,0,0
 0x622230,vt_86da1c::ControlSubTask,unknown,game,AI,ghidra-created,0x622230,0x622236,6,1,0x622230-0x622236,,2,0,0,0,0,0,0
 0x622240,CTaskComplexKillPedGroupOnFoot::Constructor,gr-reversed,game,AI,ghidra,0x622240,0x62229e,94,1,0x622240-0x62229e,,27,2,0,0,0,3,0
@@ -7976,7 +7976,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x62fc10,CTaskSimpleDie::FinishAnimDieCB,gr-reversed,game,AI,ghidra-created,0x62fc10,0x62fc20,16,1,0x62fc10-0x62fc20,,4,0,0,0,0,2,0
 0x62fc20,CTaskSimpleDieInCar::CTaskSimpleDieInCar,unknown,game,AI,ghidra,0x62fc20,0x62fc60,64,1,0x62fc20-0x62fc60,,20,1,0,0,0,9,0
 0x62fc60,CTaskSimpleDieInCar::GetTaskType,unknown,game,AI,ghidra-created,0x62fc60,0x62fc66,6,1,0x62fc60-0x62fc66,,2,0,0,0,0,0,0
-0x62fc70,,unknown,game,UNK-game,ghidra,0x62fc70,0x62fc7b,11,1,0x62fc70-0x62fc7b,,2,0,0,0,0,1,0
+0x62fc70,CTaskSimpleDieInCar::Destructor,unknown,game,AI,ghidra,0x62fc70,0x62fc7b,11,1,0x62fc70-0x62fc7b,,2,0,0,0,0,1,0
 0x62fc80,CTaskComplexDieInCar::CTaskComplexDieInCar,unknown,game,AI,ghidra,0x62fc80,0x62fca9,41,1,0x62fc80-0x62fca9,,14,1,0,0,0,6,0
 0x62fcb0,CTaskComplexDieInCar::GetTaskType,unknown,game,AI,ghidra-created,0x62fcb0,0x62fcb6,6,1,0x62fcb0-0x62fcb6,,2,0,0,0,0,0,0
 0x62fcc0,CTaskComplexDieInCar::MakeAbortable,gr-reversed,game,AI,ghidra-created,0x62fcc0,0x62fceb,43,1,0x62fcc0-0x62fceb,,18,0,1,1,0,0,0
@@ -8115,7 +8115,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x632b30,,unknown,game,UNK-game,ghidra,0x632b30,0x632b50,32,1,0x632b30-0x632b50,,12,1,0,0,0,5,0
 0x632b50,vt_86e1dc::GetTaskType,unknown,game,AI,ghidra-created,0x632b50,0x632b56,6,1,0x632b50-0x632b56,,2,0,0,0,0,0,0
 0x632b60,vt_86e1dc::MakeAbortable,unknown,game,AI,ghidra-created,0x632b60,0x632b65,5,1,0x632b60-0x632b65,,2,0,0,0,0,0,0
-0x632b70,,unknown,game,UNK-game,ghidra,0x632b70,0x632b7b,11,1,0x632b70-0x632b7b,,2,0,0,0,0,1,0
+0x632b70,CTaskSimpleWaitForPizza::Destructor,unknown,game,AI,ghidra,0x632b70,0x632b7b,11,1,0x632b70-0x632b7b,,2,0,0,0,0,1,0
 0x632b80,vt_86e1dc::ProcessPed,unknown,game,AI,ghidra-created,0x632b80,0x632bc8,72,1,0x632b80-0x632bc8,,22,0,0,0,0,5,0
 0x632bd0,CTaskComplexSequence::Constructor,gr-reversed,game,AI,ghidra,0x4015da,0x632bff,58,2,0x4015da-0x4015e5;0x632bd0-0x632bff,,21,1,0,0,0,7,0
 0x632c00,CTaskComplexSequence::MakeAbortable,gr-reversed,game,AI,ghidra-created,0x632c00,0x632c08,8,1,0x632c00-0x632c08,,3,0,0,0,1,0,0
@@ -8197,7 +8197,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x634370,CTaskSimpleIKPointArm::UpdatePointArmInfo,gr-reversed,game,AI,ghidra,0x634370,0x634430,192,1,0x634370-0x634430,,65,5,0,0,0,16,0
 0x634440,,unknown,game,UNK-game,ghidra,0x40384f,0x6344e3,186,2,0x40384f-0x403866;0x634440-0x6344e3,,60,2,0,0,0,13,0
 0x6344f0,vt_86e3cc::GetTaskType,unknown,game,AI,ghidra-created,0x6344f0,0x6344f6,6,1,0x6344f0-0x6344f6,,2,0,0,0,0,0,0
-0x634500,,unknown,game,UNK-game,ghidra,0x634500,0x63455a,90,1,0x634500-0x63455a,,25,2,0,0,0,1,0
+0x634500,CTaskSimpleTriggerLookAt::Destructor,unknown,game,AI,ghidra,0x634500,0x63455a,90,1,0x634500-0x63455a,,25,2,0,0,0,1,0
 0x634560,vt_86e3cc::Clone,unknown,game,AI,ghidra,0x634560,0x634610,176,1,0x634560-0x634610,,68,2,0,0,0,3,0
 0x634610,vt_86e3cc::MakeAbortable,unknown,game,AI,ghidra-created,0x634610,0x634615,5,1,0x634610-0x634615,,2,0,0,0,0,0,0
 0x634620,vt_86e3cc::ProcessPed,unknown,game,AI,ghidra-created,0x634620,0x63466c,76,1,0x634620-0x63466c,,31,1,0,0,0,0,0
@@ -8214,7 +8214,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x634890,CTaskComplexUseClosestFreeScriptedAttractor::ControlSubTask,gr-reversed,game,AI,ghidra-created,0x634890,0x634896,6,1,0x634890-0x634896,,2,0,0,0,0,0,0
 0x6348a0,CTaskComplexUseMobilePhone,unknown,game,SCRIPT,ghidra,0x6348a0,0x6348cf,47,1,0x6348a0-0x6348cf,,16,1,0,0,0,8,0
 0x6348d0,CTaskComplexUseMobilePhone::GetTaskType,unknown,game,AI,ghidra-created,0x6348d0,0x6348d6,6,1,0x6348d0-0x6348d6,,2,0,0,0,0,0,0
-0x6348e0,,unknown,game,UNK-game,ghidra,0x6348e0,0x6348eb,11,1,0x6348e0-0x6348eb,,2,0,0,0,0,1,0
+0x6348e0,CTaskComplexUseMobilePhone::Destructor,unknown,game,AI,ghidra,0x6348e0,0x6348eb,11,1,0x6348e0-0x6348eb,,2,0,0,0,0,1,0
 0x6348f0,,unknown,game,UNK-game,ghidra,0x6348f0,0x63492e,62,1,0x6348f0-0x63492e,,16,2,0,0,0,2,0
 0x634930,CTaskComplexUseMobilePhone::MakeAbortable,unknown,game,AI,ghidra-created,0x634930,0x634a36,262,1,0x634930-0x634a36,,95,2,5,4,0,8,0
 0x634a40,,unknown,game,UNK-game,ghidra,0x634a40,0x634a5c,28,1,0x634a40-0x634a5c,,11,0,1,0,0,1,0
@@ -8584,7 +8584,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x640380,,unknown,game,UNK-game,ghidra,0x640380,0x64038b,11,1,0x640380-0x64038b,,2,0,0,0,0,1,0
 0x640390,,unknown,game,AI,ghidra,0x640390,0x6403b8,40,1,0x640390-0x6403b8,,14,1,0,0,0,2,0
 0x6403c0,CTaskComplexOpenDriverDoor::GetTaskType,unknown,game,AI,ghidra-created,0x6403c0,0x6403c6,6,1,0x6403c0-0x6403c6,,2,0,0,0,0,0,0
-0x6403d0,,unknown,game,UNK-game,ghidra,0x6403d0,0x6403db,11,1,0x6403d0-0x6403db,,2,0,0,0,0,1,0
+0x6403d0,CTaskComplexOpenDriverDoor::Destructor,unknown,game,AI,ghidra,0x6403d0,0x6403db,11,1,0x6403d0-0x6403db,,2,0,0,0,0,1,0
 0x6403e0,,unknown,game,AI,ghidra,0x6403e0,0x640408,40,1,0x6403e0-0x640408,,15,1,0,0,0,2,0
 0x640410,CTaskComplexOpenPassengerDoor::GetTaskType,unknown,game,AI,ghidra-created,0x640410,0x640416,6,1,0x640410-0x640416,,2,0,0,0,0,0,0
 0x640420,CTaskComplexOpenPassengerDoor::~CTaskComplexOpenPassengerDoor,unknown,game,AI,ghidra,0x640420,0x64042b,11,1,0x640420-0x64042b,,2,0,0,0,0,1,0
@@ -9171,7 +9171,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x658810,CTaskComplexWanderMedic::GetWanderType,unknown,game,AI,ghidra-created,0x658810,0x658816,6,1,0x658810-0x658816,,2,0,0,0,0,0,0
 0x658820,CTaskComplexWanderMedic::ScanForStuff,unknown,game,AI,ghidra-created,0x658820,0x658823,3,1,0x658820-0x658823,,1,0,0,0,0,0,0
 0x658830,CTaskComplexWanderMedic::~CTaskComplexWanderMedic,unknown,game,AI,ghidra,0x658830,0x65884e,30,1,0x658830-0x65884e,,11,2,0,0,0,0,0
-0x658850,,unknown,game,UNK-game,ghidra,0x658850,0x65885b,11,1,0x658850-0x65885b,,2,0,0,0,0,1,0
+0x658850,CTaskComplexWanderMedic::Destructor,unknown,game,AI,ghidra,0x658850,0x65885b,11,1,0x658850-0x65885b,,2,0,0,0,0,1,0
 0x658860,CTaskSimpleGiveCPR::Constructor,gr-reversed,game,AI,ghidra,0x658860,0x65888c,44,1,0x658860-0x65888c,,14,1,0,0,0,4,0
 0x658890,CTaskSimpleGiveCPR::GetTaskType,unknown,game,AI,ghidra-created,0x658890,0x658896,6,1,0x658890-0x658896,,2,0,0,0,0,0,0
 0x6588a0,,unknown,game,AI,ghidra,0x6588a0,0x6588fd,93,1,0x6588a0-0x6588fd,,25,2,0,0,0,1,0
@@ -9189,9 +9189,9 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x658cc0,CTaskComplexMedicTreatInjuredPed::FindNearestAccident,gr-reversed,game,AI,ghidra,0x658cc0,0x658ce4,36,1,0x658cc0-0x658ce4,,12,2,0,0,0,2,0
 0x658d20,CTaskComplexMedicTreatInjuredPed::CalcTargetPosWithOffset,gr-reversed,game,AI,ghidra,0x658d20,0x658daa,138,1,0x658d20-0x658daa,,43,2,0,0,0,3,0
 0x658db0,CTaskComplexMedicTreatInjuredPed::CreateSubTask,gr-reversed,game,AI,ghidra,0x658db0,0x6590e7,823,1,0x658db0-0x6590e7,,227,21,0,0,0,1,0
-0x6591d0,,unknown,game,UNK-game,ghidra,0x6591d0,0x659223,83,1,0x6591d0-0x659223,,23,2,0,0,0,2,0
+0x6591d0,CTaskComplexPresentIDToCop::Constructor,unknown,game,AI,ghidra,0x6591d0,0x659223,83,1,0x6591d0-0x659223,,23,2,0,0,0,2,0
 0x659230,vt_86f544::GetTaskType,unknown,game,AI,ghidra-created,0x659230,0x659236,6,1,0x659230-0x659236,,2,0,0,0,0,0,0
-0x659240,,unknown,game,UNK-game,ghidra,0x659240,0x65929a,90,1,0x659240-0x65929a,,25,2,0,0,0,1,0
+0x659240,CTaskComplexPresentIDToCop::Destructor,unknown,game,AI,ghidra,0x659240,0x65929a,90,1,0x659240-0x65929a,,25,2,0,0,0,1,0
 0x6592a0,,unknown,game,UNK-game,ghidra,0x6592a0,0x659303,99,1,0x6592a0-0x659303,,40,2,0,0,0,0,0
 0x659310,CTaskComplexDriveFireTruck::Constructor,gr-reversed,game,AI,ghidra,0x659310,0x65938c,124,1,0x659310-0x65938c,,38,3,0,0,0,5,0
 0x659390,CTaskComplexDriveFireTruck::GetTaskType,unknown,game,AI,ghidra-created,0x659390,0x659396,6,1,0x659390-0x659396,,2,0,0,0,0,0,0
@@ -9211,7 +9211,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x6597d0,CTaskComplexUseWaterCannon::CreateFirstSubTask,gr-reversed,game,AI,ghidra,0x6597d0,0x65983a,106,1,0x6597d0-0x65983a,,29,2,0,0,0,0,0
 0x659870,,unknown,game,UNK-game,ghidra,0x659870,0x65989b,43,1,0x659870-0x65989b,,15,1,0,0,0,4,0
 0x6598a0,vt_86f5fc::GetTaskType,unknown,game,AI,ghidra-created,0x6598a0,0x6598a6,6,1,0x6598a0-0x6598a6,,2,0,0,0,0,0,0
-0x6598b0,,unknown,game,UNK-game,ghidra,0x6598b0,0x6598bb,11,1,0x6598b0-0x6598bb,,2,0,0,0,0,1,0
+0x6598b0,CTaskComplexExtinguishFireOnFoot::Destructor,unknown,game,AI,ghidra,0x6598b0,0x6598bb,11,1,0x6598b0-0x6598bb,,2,0,0,0,0,1,0
 0x6598c0,vt_86f5fc::CreateNextSubTask,unknown,game,AI,ghidra-created,0x6598c0,0x659974,180,1,0x6598c0-0x659974,,63,2,2,0,0,0,0
 0x659980,vt_86f5fc::ControlSubTask,unknown,game,AI,ghidra-created,0x659980,0x659986,6,1,0x659980-0x659986,,2,0,0,0,0,0,0
 0x659990,,unknown,game,UNK-game,ghidra,0x659990,0x659a08,120,1,0x659990-0x659a08,,49,1,0,0,0,0,0
@@ -9498,7 +9498,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x667310,,unknown,game,AI,ghidra,0x667310,0x667373,99,1,0x667310-0x667373,,25,0,0,0,0,3,0
 0x667460,,unknown,game,UNK-game,ghidra,0x667460,0x667485,37,1,0x667460-0x667485,,17,0,0,0,0,0,0
 0x6674b0,CTaskSimpleRunNamedAnim::Constructor-Default,gr-reversed,game,AI,ghidra-created,0x6674b0,0x6674d3,35,1,0x6674b0-0x6674d3,,15,1,0,0,0,5,0
-0x667720,,unknown,game,UNK-game,ghidra,0x667720,0x667794,116,1,0x667720-0x667794,,48,0,0,0,0,6,0
+0x667720,CPointRoute::Reverse,unknown,game,UNK-game,ghidra,0x667720,0x667794,116,1,0x667720-0x667794,,48,0,0,0,0,6,0
 0x6677a0,,unknown,game,UNK-game,ghidra,0x6677a0,0x6677b3,19,1,0x6677a0-0x6677b3,,7,1,0,0,0,0,0
 0x667900,,unknown,game,AI,ghidra,0x667900,0x66792b,43,1,0x667900-0x66792b,,24,0,0,0,0,2,0
 0x667980,,unknown,game,UNK-game,ghidra,0x667980,0x667987,7,1,0x667980-0x667987,,2,0,0,0,0,1,0
@@ -9571,7 +9571,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x66a850,CTaskComplexAvoidOtherPedWhileWandering::SetUpIK,gr-reversed,game,AI,ghidra,0x66a850,0x66aa17,455,1,0x66a850-0x66aa17,,139,9,2,0,0,1,0
 0x66aa20,,unknown,game,UNK-game,ghidra,0x66aa20,0x66aac1,161,1,0x66aa20-0x66aac1,,56,2,0,0,0,14,0
 0x66aad0,vt_86ff00::GetTaskType,unknown,game,AI,ghidra-created,0x66aad0,0x66aad6,6,1,0x66aad0-0x66aad6,,2,0,0,0,0,0,0
-0x66aae0,,unknown,game,UNK-game,ghidra,0x66aae0,0x66ab3a,90,1,0x66aae0-0x66ab3a,,25,2,0,0,0,1,0
+0x66aae0,CTaskComplexAvoidEntity::Destructor,unknown,game,AI,ghidra,0x66aae0,0x66ab3a,90,1,0x66aae0-0x66ab3a,,25,2,0,0,0,1,0
 0x66ab40,,unknown,game,UNK-game,ghidra,0x66ab40,0x66ad07,455,1,0x66ab40-0x66ad07,,139,9,2,0,0,1,0
 0x66ad10,,unknown,game,UNK-game,ghidra,0x66ad10,0x66ad3e,46,1,0x66ad10-0x66ad3e,,15,2,0,0,0,0,0
 0x66ad40,vt_86ff00::MakeAbortable,unknown,game,AI,ghidra-created,0x66ad40,0x66ad70,48,1,0x66ad40-0x66ad70,,16,2,0,0,0,0,0
@@ -9704,7 +9704,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x670830,CTaskComplexTurnToFaceEntityOrCoord::~CTaskComplexTurnToFaceEntityOrCoord,unknown,game,AI,ghidra,0x670830,0x67084e,30,1,0x670830-0x67084e,,11,2,0,0,0,0,0
 0x670850,CTaskComplexTurnToFaceEntityOrCoord::CreateFirstSubTask,gr-reversed,game,AI,ghidra-created,0x670850,0x67091c,204,1,0x670850-0x67091c,,64,3,0,0,0,5,0
 0x670920,CTaskComplexTurnToFaceEntityOrCoord::ControlSubTask,gr-reversed,game,AI,ghidra-created,0x670920,0x6709ee,206,1,0x670920-0x6709ee,,74,1,0,0,0,6,0
-0x6709f0,,unknown,game,UNK-game,ghidra,0x6709f0,0x670a5e,110,1,0x6709f0-0x670a5e,,33,3,0,0,0,1,0
+0x6709f0,CTaskComplexFollowPatrolRoute::Destructor,unknown,game,AI,ghidra,0x6709f0,0x670a5e,110,1,0x6709f0-0x670a5e,,33,3,0,0,0,1,0
 0x670a60,vt_870114::GetTaskType,unknown,game,AI,ghidra-created,0x670a60,0x670a66,6,1,0x670a60-0x670a66,,2,0,0,0,0,0,0
 0x670a70,,unknown,game,UNK-game,ghidra,0x670a70,0x670ae9,121,1,0x670a70-0x670ae9,,49,1,0,0,0,2,0
 0x670b00,,unknown,game,UNK-game,ghidra,0x670b00,0x670d77,631,1,0x670b00-0x670d77,,190,10,0,0,0,2,0
@@ -9806,9 +9806,9 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x675b30,CTaskInteriorUseInfo::MakeAbortable,gr-reversed,game,AI,ghidra-created,0x675b30,0x675b60,48,1,0x675b30-0x675b60,,17,0,1,0,0,1,0
 0x675b60,CTaskInteriorUseInfo::CreateFirstSubTask,gr-unreversed,game,AI,ghidra,0x675b60,0x675c00,160,1,0x675b60-0x675c00,,53,2,0,0,0,5,0
 0x675c00,CTaskInteriorUseInfo::ControlSubTask,gr-reversed,game,AI,ghidra-created,0x675c00,0x675c21,33,1,0x675c00-0x675c21,,11,0,0,0,0,1,0
-0x675c30,,unknown,game,UNK-game,ghidra,0x675c30,0x675c7a,74,1,0x675c30-0x675c7a,,23,1,0,0,0,13,0
+0x675c30,CTaskInteriorSitOnChair::Constructor,unknown,game,AI,ghidra,0x675c30,0x675c7a,74,1,0x675c30-0x675c7a,,23,1,0,0,0,13,0
 0x675c80,vt_870314::GetTaskType,unknown,game,AI,ghidra-created,0x675c80,0x675c86,6,1,0x675c80-0x675c86,,2,0,0,0,0,0,0
-0x675c90,,unknown,game,UNK-game,ghidra,0x675c90,0x675ced,93,1,0x675c90-0x675ced,,25,2,0,0,0,1,0
+0x675c90,CTaskInteriorSitOnChair::Destructor,unknown,game,AI,ghidra,0x675c90,0x675ced,93,1,0x675c90-0x675ced,,25,2,0,0,0,1,0
 0x675cf0,vt_870314::Clone,unknown,game,AI,ghidra,0x675cf0,0x675d5a,106,1,0x675cf0-0x675d5a,,35,2,0,0,0,0,0
 0x675d60,vt_870314::MakeAbortable,unknown,game,AI,ghidra-created,0x675d60,0x675dc3,99,1,0x675d60-0x675dc3,,32,3,0,0,0,3,0
 0x675dd0,,unknown,game,UNK-game,ghidra-created,0x675dd0,0x675e11,65,1,0x675dd0-0x675e11,,17,0,0,0,0,6,0
@@ -9877,7 +9877,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x6789d0,,unknown,game,UNK-game,ghidra,0x6789d0,0x6789f2,34,1,0x6789d0-0x6789f2,,11,1,0,0,0,3,0
 0x678a00,vt_870480::GetTaskType,unknown,game,AI,ghidra-created,0x678a00,0x678a06,6,1,0x678a00-0x678a06,,2,0,0,0,0,0,0
 0x678a10,,unknown,game,UNK-game,ghidra,0x678a10,0x678a7e,110,1,0x678a10-0x678a7e,,28,1,0,0,0,9,0
-0x678a90,,unknown,game,UNK-game,ghidra,0x678a90,0x678a9b,11,1,0x678a90-0x678a9b,,2,0,0,0,0,1,0
+0x678a90,CTaskComplexFallAndStayDown::Destructor,unknown,game,AI,ghidra,0x678a90,0x678a9b,11,1,0x678a90-0x678a9b,,2,0,0,0,0,1,0
 0x678aa0,vt_870480::MakeAbortable,unknown,game,AI,ghidra-created,0x678aa0,0x678b16,118,1,0x678aa0-0x678b16,,50,0,4,0,1,0,0
 0x678b20,vt_870480::CreateFirstSubTask,unknown,game,AI,ghidra,0x678b20,0x678bb1,145,1,0x678b20-0x678bb1,,45,2,0,0,0,7,0
 0x678bc0,vt_870480::ControlSubTask,unknown,game,AI,ghidra-created,0x678bc0,0x678bc6,6,1,0x678bc0-0x678bc6,,2,0,0,0,0,0,0
@@ -10218,9 +10218,9 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x691870,CTaskSimplePickUpEntity::Constructor-1,gr-reversed,game,AI,ghidra,0x691870,0x6918bb,75,1,0x691870-0x6918bb,,28,1,0,0,0,5,0
 0x691900,CTaskSimplePutDownEntity::GetTaskType,gr-reversed,game,AI,ghidra-created,0x691900,0x691906,6,1,0x691900-0x691906,,2,0,0,0,0,0,0
 0x691990,CTaskSimplePutDownEntity::Constructor,gr-reversed,game,AI,ghidra,0x691990,0x6919bb,43,1,0x691990-0x6919bb,,16,1,0,0,0,2,0
-0x6919c0,,unknown,game,UNK-game,ghidra,0x6919c0,0x691a3e,126,1,0x6919c0-0x691a3e,,40,2,0,0,0,11,0
+0x6919c0,CTaskComplexGoPickUpEntity::Constructor,unknown,game,AI,ghidra,0x6919c0,0x691a3e,126,1,0x6919c0-0x691a3e,,40,2,0,0,0,11,0
 0x691a40,vt_870b98::GetTaskType,unknown,game,AI,ghidra-created,0x691a40,0x691a46,6,1,0x691a40-0x691a46,,2,0,0,0,0,0,0
-0x691a50,,unknown,game,UNK-game,ghidra,0x691a50,0x691ad5,133,1,0x691a50-0x691ad5,,38,3,0,0,0,2,0
+0x691a50,CTaskComplexGoPickUpEntity::Destructor,unknown,game,AI,ghidra,0x691a50,0x691ad5,133,1,0x691a50-0x691ad5,,38,3,0,0,0,2,0
 0x691ae0,vt_870b98::CreateNextSubTask,unknown,game,AI,ghidra-created,0x691ae0,0x691d4b,619,1,0x691ae0-0x691d4b,,197,9,1,0,0,6,0
 0x691d50,vt_870b98::ControlSubTask,unknown,game,AI,ghidra-created,0x691d50,0x691fb3,611,1,0x691d50-0x691fb3,,200,10,3,0,0,1,0
 0x691fc0,CTaskSimpleDuck::Constructor,gr-reversed,game,AI,ghidra,0x40a43c,0x692016,97,2,0x40a43c-0x40a447;0x691fc0-0x692016,,29,1,0,0,0,14,0
@@ -10235,9 +10235,9 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x692530,CTaskSimpleDuck::SetDuckTimer,gr-reversed,game,AI,ghidra,0x692530,0x69254a,26,1,0x692530-0x69254a,,7,0,0,0,0,2,0
 0x692550,CTaskSimpleDuck::DeleteDuckAnimCB,gr-reversed,game,AI,ghidra-created,0x692550,0x69259e,78,1,0x692550-0x69259e,,26,0,0,0,0,5,0
 0x692610,CTaskSimpleDuck::CanPedDuck,gr-reversed,game,AI,ghidra,0x692610,0x69267f,111,1,0x692610-0x69267f,,38,3,0,0,0,0,0
-0x692680,,unknown,game,UNK-game,ghidra,0x692680,0x6926d5,85,1,0x692680-0x6926d5,,25,1,0,0,0,15,0
+0x692680,CTaskSimpleDuckWhileShotsWhizzing::Constructor,unknown,game,AI,ghidra,0x692680,0x6926d5,85,1,0x692680-0x6926d5,,25,1,0,0,0,15,0
 0x6926e0,vt_870bec::GetTaskType,unknown,game,AI,ghidra-created,0x6926e0,0x6926e6,6,1,0x6926e0-0x6926e6,,2,0,0,0,0,0,0
-0x6926f0,,unknown,game,UNK-game,ghidra,0x6926f0,0x6926fb,11,1,0x6926f0-0x6926fb,,2,0,0,0,0,1,0
+0x6926f0,CTaskSimpleDuckWhileShotsWhizzing::Destructor,unknown,game,AI,ghidra,0x6926f0,0x6926fb,11,1,0x6926f0-0x6926fb,,2,0,0,0,0,1,0
 0x692700,vt_870bec::MakeAbortable,unknown,game,AI,ghidra,0x692700,0x6927a7,167,1,0x692700-0x6927a7,,63,4,1,0,0,3,0
 0x6927b0,CTaskSimpleShakeFist::Clone,gr-reversed,game,AI,ghidra,0x6927b0,0x69281f,111,1,0x6927b0-0x69281f,,32,2,0,0,0,3,0
 0x692820,CTaskSimpleFacial::Clone,gr-reversed,game,AI,ghidra,0x692820,0x6928a4,132,1,0x692820-0x6928a4,,48,2,0,0,0,7,0
@@ -10942,7 +10942,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x6d56c0,CVehicle::ProcessOpenDoor,gr-reversed,game,VEH,ghidra-created,0x6d56c0,0x6d5c28,1384,1,0x6d56c0-0x6d5c28,,439,4,12,12,0,0,0
 0x6d5cf0,CVehicle::CanPedLeanOut,gr-reversed,game,VEH,ghidra-created,0x4011cd,0x6d5d63,126,2,0x4011cd-0x4011d8;0x6d5cf0-0x6d5d63,,40,0,0,0,0,0,0
 0x6d5d70,CVehicle::SetVehicleCreatedBy,gr-reversed,game,VEH,ghidra,0x6d5d70,0x6d5da1,49,1,0x6d5d70-0x6d5da1,,18,2,0,0,0,1,0
-0x6d5dd0,,unknown,game,UNK-game,ghidra,0x6d5dd0,0x6d5e1a,74,1,0x6d5dd0-0x6d5e1a,,29,0,0,0,0,4,0
+0x6d5dd0,CVehiclePool::CreateAtRef,unknown,game,VEH,ghidra,0x6d5dd0,0x6d5e1a,74,1,0x6d5dd0-0x6d5e1a,,29,0,0,0,0,4,0
 0x6d5e20,CAutoPilot::CAutoPilot,unknown,game,VEH,ghidra,0x6d5e20,0x6d5f03,227,1,0x6d5e20-0x6d5f03,,69,1,0,0,0,40,0
 0x6d5f10,CVehicle::Constructor,gr-reversed,game,VEH,ghidra,0x6d5f10,0x6d6266,854,1,0x6d5f10-0x6d6266,,175,6,0,0,0,89,0
 0x6d6270,CVehicle::ProcessControlCollisionCheck,unknown,game,VEH,ghidra-created,0x6d6270,0x6d6273,3,1,0x6d6270-0x6d6273,,1,0,0,0,0,0,0

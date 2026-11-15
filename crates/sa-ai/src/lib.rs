@@ -254,3 +254,5 @@ pub mod be_hit;
 pub mod fighting_control;
 pub mod kill_threats_basic;
 pub mod gun_control;
+pub mod frontier_c_dtors;
+pub mod frontier_c;

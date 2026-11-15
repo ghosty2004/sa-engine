@@ -255,7 +255,119 @@ pub fn shutdown_this_script(this: GPtr<u8>) {
     }
 }
 
+// ---- frontier2-c2: the attractor brains by name (the `.HOODLUM` bodies) ----
+
+/// `CScriptsForBrains::GetIndexOfScriptBrainWithThisName(const char* name, int8 type)` (stub 0x46AA30 → .HOODLUM
+/// 0x1569100, thiscall, `ret 8`): the first of the 0x46 brains whose type byte (+2) equals `type` and whose name (+0xC)
+/// `_stricmp`s equal; AX = its index, else AX = -1. The whole EAX is returned as the original leaves it (callers
+/// pass it on): the index zero-extended when found; otherwise `or ax, 0xFFFF` over the last EAX of the loop (the
+/// entry address when the last type test failed, else the last `_stricmp` result).
+#[hook(addr = 0x46AA30, conv = thiscall, name = "CScriptsForBrains::GetIndexOfScriptBrainWithThisName",
+       expect = "E9 CB E6 0F 01", unverified = "frontier2-c2", route = "L2", hazards = "none", recs = "grove-walk")]
+pub fn get_index_of_script_brain_with_this_name(this: GPtr<u8>, name: GPtr<u8>, ty: u32) -> u32 {
+    let mut eax = 0u32;
+    for i in 0..0x46u32 {
+        let e = this.byte_add((i * 0x14) as isize);
+        eax = e.addr() as u32;
+        if at::<u8>(e, 2).read() == ty as u8 {
+            let r = stricmp(e.byte_add(0xC), name);
+            eax = r as u32;
+            if r == 0 {
+                return i;
+            }
+        }
+    }
+    eax | 0xFFFF
+}
+
+/// The brain's streamed script index (+0, int16) for a found name, or `None` (`test ax, ax; jl`).
+fn attractor_brain(this: GPtr<u8>, name: GPtr<u8>) -> Option<i32> {
+    let idx = get_index_of_script_brain_with_this_name_o(this, name, 5) as u16 as i16;
+    if idx < 0 {
+        return None;
+    }
+    Some(i32::from(at::<i16>(this, isize::from(idx) * 0x14).read()))
+}
+
+/// `CScriptsForBrains::RequestAttractorScriptBrainWithThisName(const char* name)` (stub 0x46AA80 → .HOODLUM 0x156D980,
+/// thiscall, `ret 4`): for a type-5 brain of that name, its script model (0x6676 + script) is requested (flags 0x10,
+/// decoded in line) unless loaded (load state 1), and the streamed script's use count (byte +4 of its 0x20-byte entry
+/// at 0xA47B60) incremented.
+#[hook(addr = 0x46AA80, conv = thiscall, name = "CScriptsForBrains::RequestAttractorScriptBrainWithThisName",
+       expect = "E9 FB 2E 10 01", unverified = "frontier2-c2", route = "L2", hazards = "none", recs = "grove-walk")]
+pub fn request_attractor_script_brain_with_this_name(this: GPtr<u8>, name: GPtr<u8>) {
+    if let Some(script) = attractor_brain(this, name) {
+        if GPtr::<u8>::from_addr(SCRIPT_LOAD_STATE + (script as usize).wrapping_mul(0x14)).read() != 1 {
+            request_model(script + 0x6676, 0x10);
+        }
+        let users = GPtr::<u8>::from_addr(STREAMED_SCRIPTS + 4 + (script as usize).wrapping_mul(0x20));
+        users.write(users.read().wrapping_add(1));
+    }
+}
+
+/// `CScriptsForBrains::MarkAttractorScriptBrainWithThisNameAsNoLongerNeeded(const char* name)` (stub 0x46AAE0 →
+/// .HOODLUM 0x156D940, thiscall, `ret 4`): for a type-5 brain of that name, the streamed script's use count is
+/// decremented when above 0 (unsigned).
+#[hook(addr = 0x46AAE0, conv = thiscall,
+       name = "CScriptsForBrains::MarkAttractorScriptBrainWithThisNameAsNoLongerNeeded", expect = "E9 5B 2E 10 01",
+       unverified = "frontier2-c2", route = "L2", hazards = "none", recs = "grove-walk")]
+pub fn mark_attractor_script_brain_with_this_name_as_no_longer_needed(this: GPtr<u8>, name: GPtr<u8>) {
+    if let Some(script) = attractor_brain(this, name) {
+        let users = GPtr::<u8>::from_addr(STREAMED_SCRIPTS + 4 + (script as usize).wrapping_mul(0x20));
+        let n = users.read();
+        if n > 0 {
+            users.write(n - 1);
+        }
+    }
+}
+
+/// `CScriptsForBrains::StartAttractorScriptBrainWithThisName(const char* name, CPed* ped, bool hasBrain)` (stub
+/// 0x46B390 → .HOODLUM 0x156A340, thiscall, `ret 0xC`): nothing when the ped waits for or has a script brain (flags
+/// 0x1800000 of +0x474); else for a type-5 brain of that name `StartNewStreamedScriptBrain(index, ped, hasBrain)`
+/// (0x46B270, reached through an obfuscated call; the index is pushed as the whole EAX of the lookup).
+#[hook(addr = 0x46B390, conv = thiscall, name = "CScriptsForBrains::StartAttractorScriptBrainWithThisName",
+       expect = "E9 AB EF 0F 01", unverified = "frontier2-c2", route = "L2", hazards = "none", recs = "grove-walk")]
+pub fn start_attractor_script_brain_with_this_name(this: GPtr<u8>, name: GPtr<u8>, ped: GPtr<u8>, has_brain: u32) {
+    if at::<u32>(ped, 0x474).read() & 0x0180_0000 != 0 {
+        return;
+    }
+    let eax = get_index_of_script_brain_with_this_name_o(this, name, 5);
+    if (eax as u16 as i16) < 0 {
+        return;
+    }
+    start_new_streamed_script_brain(this, eax, ped, has_brain);
+}
+
+/// `CTheScripts::DrawDebugSquare(float x1, float y1, float x2, float y2)` (0x486840, cdecl): what is left of the debug
+/// square in the release build: four `CWorld::ProcessVerticalLine` probes from z = -1000 over 1000 units at (x1, y1),
+/// (x2, y1), (x2, y2), (x1, y2) (buildings and dummies only), into one colpoint and entity slot on the stack; the
+/// heights the original derives from them (z + 2) are not used.
+#[hook(addr = 0x486840, conv = cdecl, name = "CTheScripts::DrawDebugSquare-", expect = "83 EC 60 8B 44 24 64",
+       unverified = "frontier2-c2", route = "L2", hazards = "uninit-locals", recs = "grove-walk",
+       note = "the colpoint and entity locals are never initialised (only ProcessVerticalLine writes them)")]
+pub fn draw_debug_square(x1: u32, y1: u32, x2: u32, y2: u32) {
+    let mut col_point = [0u32; 11];
+    let mut entity = 0u32;
+    for (x, y) in [(x1, y1), (x2, y1), (x2, y2), (x1, y2)] {
+        let mut origin = [x, y, (-1000.0f32).to_bits()];
+        world_process_vertical_line(GPtr::from_raw(origin.as_mut_ptr()).cast(), 1000.0, GPtr::from_raw(col_point.as_mut_ptr()).cast(),
+            GPtr::from_raw(&raw mut entity).cast(), 1, 0, 0, 0, 1, 0, GPtr::NULL);
+    }
+}
+
+use sa_core::bindings::stricmp;
+use sa_world::bindings::world_process_vertical_line;
+orig! {
+    /// `CScriptsForBrains::GetIndexOfScriptBrainWithThisName` (0x46AA30, through its hook toggle)
+    fn get_index_of_script_brain_with_this_name_o(this: GPtr<u8>, name: GPtr<u8>, ty: u32) -> u32 = thiscall 0x46AA30 => get_index_of_script_brain_with_this_name;
+}
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_GET_INDEX_OF_SCRIPT_BRAIN_WITH_THIS_NAME,
+    HOOK_REQUEST_ATTRACTOR_SCRIPT_BRAIN_WITH_THIS_NAME,
+    HOOK_MARK_ATTRACTOR_SCRIPT_BRAIN_WITH_THIS_NAME_AS_NO_LONGER_NEEDED,
+    HOOK_START_ATTRACTOR_SCRIPT_BRAIN_WITH_THIS_NAME,
+    HOOK_DRAW_DEBUG_SQUARE,
     HOOK_START_NEW_STREAMED_SCRIPT_BRAIN_PORT,
     HOOK_SHUTDOWN_THIS_SCRIPT,
     HOOK_START_OR_REQUEST_NEW_STREAMED_SCRIPT_BRAIN,

@@ -16,7 +16,7 @@ orig! {
     /// `CCamera::TryToStartNewCamMode(int32 seq)` (0x51E560, AL)
     pub fn try_to_start_new_cam_mode(this: GPtr<u8>, seq: i32) -> u8 = thiscall 0x51E560 => unported;
     /// "active camera under water" (0x50B830, cdecl, AL)
-    pub fn active_cam_under_water() -> u8 = cdecl 0x50B830 => unported;
+    pub fn active_cam_under_water() -> u8 = cdecl 0x50B830 => active_cam_under_water_port;
 }
 
 const DID_CINEMA: usize = 0xB6EC2D;
@@ -196,7 +196,26 @@ pub fn obbe_boat(this: GPtr<u8>) {
 }
 
 /// This module's registrations.
+/// "Is the active camera under water" (0x50B830, cdecl, AL; unnamed): the active camera's (`TheCamera.m_nActiveCam`
+/// byte 0xB6F081) source position (`CCam` +0x19C) is probed with `CWaterLevel::GetWaterLevel(x, y, z, &level, true,
+/// NULL)`; true when there is water and `level >= z` (`test ah, 5; jp`: NaN counts as above).
+#[hook(addr = 0x50B830, conv = cdecl, name = "FUN_0050b830", expect = "51 56 0F B6 35 81 F0 B6 00",
+       unverified = "frontier2-c3", route = "L2", hazards = "uninit-locals", recs = "grove-walk",
+       note = "the level local is the pushed ECX until GetWaterLevel writes it")]
+pub fn active_cam_under_water_port() -> u8 {
+    let idx = g::<u8>(0xB6F081).read();
+    let src = GPtr::<u8>::from_addr(0xB6F338 + usize::from(idx) * 0x238);
+    let z = rd::<f32>(src, 8);
+    let mut level = 0f32;
+    if sa_world::bindings::get_water_level(rd::<f32>(src, 0), rd::<f32>(src, 4), z, GPtr::from_raw(&raw mut level).cast(), 1,
+                                           GPtr::NULL) == 0 {
+        return 0;
+    }
+    u8::from(sa_math::fpu::ge_or_nan(sa_math::fpu::x(level), sa_math::fpu::x(z)))
+}
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_ACTIVE_CAM_UNDER_WATER_PORT,
     HOOK_OBBE_CAR,
     HOOK_OBBE_TRAIN,
     HOOK_OBBE_HELI,

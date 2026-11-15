@@ -76,6 +76,7 @@ use sa_world::bindings::set_ped_in_as_passenger_process_ped;
 use sa_world::bindings::weather_release_weather as release_weather;
 use crate::bindings::get_correct_ped_model_index;
 use sa_ped::bindings::set_maximum_wanted_level;
+use crate::bindings::is_vehicle_stopped;
 orig! {
     /// `CUpsideDownCarCheck::AddCarToCheck(int32)` (0x4638D0)
     fn add_car_to_check(c: GPtr<u8>, h: i32) = thiscall 0x4638D0 => unported;
@@ -91,8 +92,6 @@ orig! {
     fn force_weather(w: u32) = cdecl 0x72A4E0 => unported;
     /// `CEntity` virtual slot 14 (+0x38, `Teleport(CVector, bool)`): the vector by value (three words)
     fn entity_teleport(e: GPtr<u8>, x: u32, y: u32, z: u32, clear_orientation: u32) = thiscall vslot 0x38 => unported;
-    /// `CTheScripts::IsVehicleStopped(CVehicle*)` (0x4861F0), AL
-    fn is_vehicle_stopped(v: GPtr<u8>) -> u8 = cdecl 0x4861F0 => unported;
 }
 
 /// The 8-byte key of 01E3..01E5: `ReadTextLabelFromScript(buf, 8)`, `TheText.Get(buf)` (zeroed buffer,

@@ -74,3 +74,4 @@ pub mod play_anim_command;
 pub mod generated;
 pub mod mission_cleanup_init;
 pub mod search_lights_checkpoints;
+pub mod frontier_c;

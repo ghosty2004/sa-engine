@@ -239,6 +239,11 @@ orig! {
 }
 
 orig! {
+    /// `CTheScripts::IsVehicleStopped` (0x4861F0)
+    pub fn is_vehicle_stopped(v: GPtr<u8>) -> u8 = cdecl 0x4861F0 => crate::script_locate::the_scripts_is_vehicle_stopped;
+}
+
+orig! {
     /// `CTheScripts::CleanUpThisPed` (0x486300)
     pub fn clean_up_this_ped(p: GPtr<u8>) = cdecl 0x486300 => unported;
 }

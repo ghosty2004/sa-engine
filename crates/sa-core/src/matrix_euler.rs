@@ -62,6 +62,23 @@ pub fn matrix_rotate_xyz(m: GPtr<u8>, x: f32, y: f32, z: f32) {
     store(m, &v, &ROT_POS);
 }
 
+crate::orig! {
+    /// `CMatrix::Rotate(float, float, float)` (0x59B460, through its hook toggle)
+    fn matrix_rotate_xyz_o(m: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x59B460 => matrix_rotate_xyz;
+}
+
+/// `CMatrix::Rotate(const CVector& rot)` (0x541E90, thiscall, `ret 4`): `Rotate(rot.x, rot.y, rot.z)` (0x59B460).
+#[hook(addr = 0x541E90, conv = thiscall, name = "CMatrix::Rotate-vec", this = "CMatrix", expect = "8B 44 24 04 8B 50 08",
+       unverified = "frontier2-c2", route = "L2", hazards = "none")]
+pub fn matrix_rotate_vec(m: GPtr<u8>, v: GPtr<u8>) {
+    let r = |o: isize| v.byte_add(o).cast::<f32>().read();
+    matrix_rotate_xyz_o(m, r(0), r(4), r(8));
+}
+
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] =
-    &[HOOK_MATRIX_CONVERT_TO_EULER_ANGLES, HOOK_MATRIX_CONVERT_FROM_EULER_ANGLES, HOOK_MATRIX_ROTATE_XYZ];
+pub const HOOKS: &[HookReg] = &[
+    HOOK_MATRIX_CONVERT_TO_EULER_ANGLES,
+    HOOK_MATRIX_CONVERT_FROM_EULER_ANGLES,
+    HOOK_MATRIX_ROTATE_XYZ,
+    HOOK_MATRIX_ROTATE_VEC,
+];

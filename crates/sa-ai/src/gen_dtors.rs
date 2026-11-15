@@ -54,13 +54,13 @@ orig! {
     fn c_48e960_t0(this: u32) -> u32 = thiscall 0x48E960 => unported;
     /// `CTaskSimpleHandsUp::Destructor` (0x48EA60), thiscall, 0 stack argument(s)
     fn c_48ea60_t0(this: u32) -> u32 = thiscall 0x48EA60 => unported;
-    /// `FUN_00492d40` (0x492D40), thiscall, 0 stack argument(s)
+    /// `CTaskSimpleTogglePedThreatScanner::Destructor` (0x492D40), thiscall, 0 stack argument(s)
     fn c_492d40_t0(this: u32) -> u32 = thiscall 0x492D40 => unported;
     /// `CTaskComplexDiveFromAttachedEntityAndGetUp::Destructor` (0x492F10), thiscall, 0 stack argument(s)
     fn c_492f10_t0(this: u32) -> u32 = thiscall 0x492F10 => unported;
     /// `CTaskComplexSeekEntityRadiusAngleOffset::Destructor` (0x493890), thiscall, 0 stack argument(s)
     fn c_493890_t0(this: u32) -> u32 = thiscall 0x493890 => unported;
-    /// `FUN_004994e0` (0x4994E0), thiscall, 0 stack argument(s)
+    /// `CTaskComplexBeCop::Destructor` (0x4994E0), thiscall, 0 stack argument(s)
     fn c_4994e0_t0(this: u32) -> u32 = thiscall 0x4994E0 => unported;
     /// `FxSystem_c::Kill` (0x4AA3F0), thiscall, 0 stack argument(s)
     fn c_4aa3f0_t0(this: u32) -> u32 = thiscall 0x4AA3F0 => unported;
@@ -130,7 +130,7 @@ orig! {
     fn c_4b5630_c1(a0: u32) -> u32 = cdecl 0x4B5630 => unported;
     /// `FUN_004b83c0` (0x4B83C0), thiscall, 0 stack argument(s)
     fn c_4b83c0_t0(this: u32) -> u32 = thiscall 0x4B83C0 => unported;
-    /// `FUN_004b8750` (0x4B8750), thiscall, 0 stack argument(s)
+    /// `CTaskSimpleOnEscalator::Destructor` (0x4B8750), thiscall, 0 stack argument(s)
     fn c_4b8750_t0(this: u32) -> u32 = thiscall 0x4B8750 => unported;
     /// `CTaskComplexUseClosestFreeScriptedAttractorRun::Destructor` (0x4B8840), thiscall, 0 stack argument(s)
     fn c_4b8840_t0(this: u32) -> u32 = thiscall 0x4B8840 => unported;
@@ -188,7 +188,7 @@ orig! {
     fn c_5f63f0_t0(this: u32) -> u32 = thiscall 0x5F63F0 => unported;
     /// `CTaskComplexBeStill::~CTaskComplexBeStill` (0x5F6700), thiscall, 0 stack argument(s)
     fn c_5f6700_t0(this: u32) -> u32 = thiscall 0x5F6700 => unported;
-    /// `FUN_005f67e0` (0x5F67E0), thiscall, 0 stack argument(s)
+    /// `CTaskSimpleWaitUntilLeaderAreaCodesMatch::Destructor` (0x5F67E0), thiscall, 0 stack argument(s)
     fn c_5f67e0_t0(this: u32) -> u32 = thiscall 0x5F67E0 => unported;
     /// `FUN_005f6920` (0x5F6920), thiscall, 0 stack argument(s)
     fn c_5f6920_t0(this: u32) -> u32 = thiscall 0x5F6920 => unported;
@@ -238,15 +238,15 @@ orig! {
     fn c_61f700_t0(this: u32) -> u32 = thiscall 0x61F700 => unported;
     /// `CTaskSimpleThrowControl::Destructor` (0x61F950), thiscall, 0 stack argument(s)
     fn c_61f950_t0(this: u32) -> u32 = thiscall 0x61F950 => unported;
-    /// `FUN_0061fc50` (0x61FC50), thiscall, 0 stack argument(s)
+    /// `CTaskSimpleBeKickedOnGround::Destructor` (0x61FC50), thiscall, 0 stack argument(s)
     fn c_61fc50_t0(this: u32) -> u32 = thiscall 0x61FC50 => unported;
-    /// `FUN_0061fe70` (0x61FE70), thiscall, 0 stack argument(s)
+    /// `CTaskSimpleBeHitWhileMoving::Destructor` (0x61FE70), thiscall, 0 stack argument(s)
     fn c_61fe70_t0(this: u32) -> u32 = thiscall 0x61FE70 => unported;
     /// `CTaskSimpleChoking::Destructor` (0x620370), thiscall, 0 stack argument(s)
     fn c_620370_t0(this: u32) -> u32 = thiscall 0x620370 => unported;
     /// `CTaskSimpleBeHit::Destructor` (0x620810), thiscall, 0 stack argument(s)
     fn c_620810_t0(this: u32) -> u32 = thiscall 0x620810 => unported;
-    /// `FUN_00620b90` (0x620B90), thiscall, 0 stack argument(s)
+    /// `CTaskComplexReactToAttack::Destructor` (0x620B90), thiscall, 0 stack argument(s)
     fn c_620b90_t0(this: u32) -> u32 = thiscall 0x620B90 => unported;
     /// `FUN_00620ef0` (0x620EF0), thiscall, 0 stack argument(s)
     fn c_620ef0_t0(this: u32) -> u32 = thiscall 0x620EF0 => unported;
@@ -256,7 +256,7 @@ orig! {
     fn c_621090_t0(this: u32) -> u32 = thiscall 0x621090 => unported;
     /// `CTaskComplexKillPedOnFootArmed::Destructor` (0x621250), thiscall, 0 stack argument(s)
     fn c_621250_t0(this: u32) -> u32 = thiscall 0x621250 => unported;
-    /// `FUN_006218c0` (0x6218C0), thiscall, 0 stack argument(s)
+    /// `CTaskSimpleGangDriveBy::Destructor` (0x6218C0), thiscall, 0 stack argument(s)
     fn c_6218c0_t0(this: u32) -> u32 = thiscall 0x6218C0 => unported;
     /// `CTaskComplexDestroyCar::Destructor` (0x621CB0), thiscall, 0 stack argument(s)
     fn c_621cb0_t0(this: u32) -> u32 = thiscall 0x621CB0 => unported;
@@ -264,7 +264,7 @@ orig! {
     fn c_621da0_t0(this: u32) -> u32 = thiscall 0x621DA0 => unported;
     /// `CTaskComplexDestroyCarArmed::Destructor` (0x622010), thiscall, 0 stack argument(s)
     fn c_622010_t0(this: u32) -> u32 = thiscall 0x622010 => unported;
-    /// `FUN_006221c0` (0x6221C0), thiscall, 0 stack argument(s)
+    /// `CTaskComplexKillAllThreats::Destructor` (0x6221C0), thiscall, 0 stack argument(s)
     fn c_6221c0_t0(this: u32) -> u32 = thiscall 0x6221C0 => unported;
     /// `CTaskComplexKillPedGroupOnFoot::Destructor` (0x6222B0), thiscall, 0 stack argument(s)
     fn c_6222b0_t0(this: u32) -> u32 = thiscall 0x6222B0 => unported;
@@ -284,7 +284,7 @@ orig! {
     fn c_62f6d0_t0(this: u32) -> u32 = thiscall 0x62F6D0 => unported;
     /// `CTaskSimpleDie::~CTaskSimpleDie` (0x62FB40), thiscall, 0 stack argument(s)
     fn c_62fb40_t0(this: u32) -> u32 = thiscall 0x62FB40 => unported;
-    /// `FUN_0062fc70` (0x62FC70), thiscall, 0 stack argument(s)
+    /// `CTaskSimpleDieInCar::Destructor` (0x62FC70), thiscall, 0 stack argument(s)
     fn c_62fc70_t0(this: u32) -> u32 = thiscall 0x62FC70 => unported;
     /// `FUN_0062fcf0` (0x62FCF0), thiscall, 0 stack argument(s)
     fn c_62fcf0_t0(this: u32) -> u32 = thiscall 0x62FCF0 => unported;
@@ -322,7 +322,7 @@ orig! {
     fn c_632930_t0(this: u32) -> u32 = thiscall 0x632930 => unported;
     /// `CTaskSimpleWaitForBus::Destructor` (0x632A90), thiscall, 0 stack argument(s)
     fn c_632a90_t0(this: u32) -> u32 = thiscall 0x632A90 => unported;
-    /// `FUN_00632b70` (0x632B70), thiscall, 0 stack argument(s)
+    /// `CTaskSimpleWaitForPizza::Destructor` (0x632B70), thiscall, 0 stack argument(s)
     fn c_632b70_t0(this: u32) -> u32 = thiscall 0x632B70 => unported;
     /// `CTaskComplexSequence::Flush` (0x632C10), thiscall, 0 stack argument(s)
     fn c_632c10_t0(this: u32) -> u32 = thiscall 0x632C10 => unported;
@@ -340,13 +340,13 @@ orig! {
     fn c_6335b0_t0(this: u32) -> u32 = thiscall 0x6335B0 => unported;
     /// `CTaskSimpleIKChain::Destructor` (0x633A90), thiscall, 0 stack argument(s)
     fn c_633a90_t0(this: u32) -> u32 = thiscall 0x633A90 => unported;
-    /// `FUN_00634500` (0x634500), thiscall, 0 stack argument(s)
+    /// `CTaskSimpleTriggerLookAt::Destructor` (0x634500), thiscall, 0 stack argument(s)
     fn c_634500_t0(this: u32) -> u32 = thiscall 0x634500 => unported;
     /// `CTaskSimpleClearLookAt::Destructor` (0x6346A0), thiscall, 0 stack argument(s)
     fn c_6346a0_t0(this: u32) -> u32 = thiscall 0x6346A0 => unported;
     /// `CTaskComplexUseClosestFreeScriptedAttractor::Destructor` (0x634720), thiscall, 0 stack argument(s)
     fn c_634720_t0(this: u32) -> u32 = thiscall 0x634720 => unported;
-    /// `FUN_006348e0` (0x6348E0), thiscall, 0 stack argument(s)
+    /// `CTaskComplexUseMobilePhone::Destructor` (0x6348E0), thiscall, 0 stack argument(s)
     fn c_6348e0_t0(this: u32) -> u32 = thiscall 0x6348E0 => unported;
     /// `CTaskComplexUseGoggles::~CTaskComplexUseGoggles` (0x634F20), thiscall, 0 stack argument(s)
     fn c_634f20_t0(this: u32) -> u32 = thiscall 0x634F20 => unported;
@@ -420,7 +420,7 @@ orig! {
     fn c_63dfa0_t0(this: u32) -> u32 = thiscall 0x63DFA0 => unported;
     /// `FUN_00640380` (0x640380), thiscall, 0 stack argument(s)
     fn c_640380_t0(this: u32) -> u32 = thiscall 0x640380 => unported;
-    /// `FUN_006403d0` (0x6403D0), thiscall, 0 stack argument(s)
+    /// `CTaskComplexOpenDriverDoor::Destructor` (0x6403D0), thiscall, 0 stack argument(s)
     fn c_6403d0_t0(this: u32) -> u32 = thiscall 0x6403D0 => unported;
     /// `CTaskComplexOpenPassengerDoor::~CTaskComplexOpenPassengerDoor` (0x640420), thiscall, 0 stack argument(s)
     fn c_640420_t0(this: u32) -> u32 = thiscall 0x640420 => unported;
@@ -504,7 +504,7 @@ orig! {
     fn c_655dd0_t0(this: u32) -> u32 = thiscall 0x655DD0 => unported;
     /// `thunk_FUN_0061a6f0` (0x655E00), thiscall, 0 stack argument(s)
     fn c_655e00_t0(this: u32) -> u32 = thiscall 0x655E00 => unported;
-    /// `FUN_00658850` (0x658850), thiscall, 0 stack argument(s)
+    /// `CTaskComplexWanderMedic::Destructor` (0x658850), thiscall, 0 stack argument(s)
     fn c_658850_t0(this: u32) -> u32 = thiscall 0x658850 => unported;
     /// `FUN_006588a0` (0x6588A0), thiscall, 0 stack argument(s)
     fn c_6588a0_t0(this: u32) -> u32 = thiscall 0x6588A0 => unported;
@@ -512,7 +512,7 @@ orig! {
     fn c_658ae0_t0(this: u32) -> u32 = thiscall 0x658AE0 => unported;
     /// `CTaskComplexMedicTreatInjuredPed::~CTaskComplexMedicTreatInjuredPed` (0x658C30), thiscall, 0 stack argument(s)
     fn c_658c30_t0(this: u32) -> u32 = thiscall 0x658C30 => unported;
-    /// `FUN_00659240` (0x659240), thiscall, 0 stack argument(s)
+    /// `CTaskComplexPresentIDToCop::Destructor` (0x659240), thiscall, 0 stack argument(s)
     fn c_659240_t0(this: u32) -> u32 = thiscall 0x659240 => unported;
     /// `CTaskComplexDriveFireTruck::~CTaskComplexDriveFireTruck` (0x6593A0), thiscall, 0 stack argument(s)
     fn c_6593a0_t0(this: u32) -> u32 = thiscall 0x6593A0 => unported;
@@ -520,7 +520,7 @@ orig! {
     fn c_6594d0_t0(this: u32) -> u32 = thiscall 0x6594D0 => unported;
     /// `FUN_006597b0` (0x6597B0), thiscall, 0 stack argument(s)
     fn c_6597b0_t0(this: u32) -> u32 = thiscall 0x6597B0 => unported;
-    /// `FUN_006598b0` (0x6598B0), thiscall, 0 stack argument(s)
+    /// `CTaskComplexExtinguishFireOnFoot::Destructor` (0x6598B0), thiscall, 0 stack argument(s)
     fn c_6598b0_t0(this: u32) -> u32 = thiscall 0x6598B0 => unported;
     /// `thunk_FUN_0061a6f0` (0x659E00), thiscall, 0 stack argument(s)
     fn c_659e00_t0(this: u32) -> u32 = thiscall 0x659E00 => unported;
@@ -562,7 +562,7 @@ orig! {
     fn c_668d40_t0(this: u32) -> u32 = thiscall 0x668D40 => unported;
     /// `thunk_FUN_0040387c` (0x669D20), thiscall, 0 stack argument(s)
     fn c_669d20_t0(this: u32) -> u32 = thiscall 0x669D20 => unported;
-    /// `FUN_0066aae0` (0x66AAE0), thiscall, 0 stack argument(s)
+    /// `CTaskComplexAvoidEntity::Destructor` (0x66AAE0), thiscall, 0 stack argument(s)
     fn c_66aae0_t0(this: u32) -> u32 = thiscall 0x66AAE0 => unported;
     /// `CTaskComplexGoToPointAnyMeans::Destructor` (0x66B830), thiscall, 0 stack argument(s)
     fn c_66b830_t0(this: u32) -> u32 = thiscall 0x66B830 => unported;
@@ -576,7 +576,7 @@ orig! {
     fn c_66cbb0_t0(this: u32) -> u32 = thiscall 0x66CBB0 => unported;
     /// `thunk_FUN_00668870` (0x66DFA0), thiscall, 0 stack argument(s)
     fn c_66dfa0_t0(this: u32) -> u32 = thiscall 0x66DFA0 => unported;
-    /// `FUN_006709f0` (0x6709F0), thiscall, 0 stack argument(s)
+    /// `CTaskComplexFollowPatrolRoute::Destructor` (0x6709F0), thiscall, 0 stack argument(s)
     fn c_6709f0_t0(this: u32) -> u32 = thiscall 0x6709F0 => unported;
     /// `FUN_006726f0` (0x6726F0), thiscall, 0 stack argument(s)
     fn c_6726f0_t0(this: u32) -> u32 = thiscall 0x6726F0 => unported;
@@ -594,7 +594,7 @@ orig! {
     fn c_675810_t0(this: u32) -> u32 = thiscall 0x675810 => unported;
     /// `CTaskInteriorUseInfo::Destructor` (0x675A90), thiscall, 0 stack argument(s)
     fn c_675a90_t0(this: u32) -> u32 = thiscall 0x675A90 => unported;
-    /// `FUN_00675c90` (0x675C90), thiscall, 0 stack argument(s)
+    /// `CTaskInteriorSitOnChair::Destructor` (0x675C90), thiscall, 0 stack argument(s)
     fn c_675c90_t0(this: u32) -> u32 = thiscall 0x675C90 => unported;
     /// `CTaskInteriorLieInBed::Destructor` (0x675E90), thiscall, 0 stack argument(s)
     fn c_675e90_t0(this: u32) -> u32 = thiscall 0x675E90 => unported;
@@ -608,7 +608,7 @@ orig! {
     fn c_678310_t0(this: u32) -> u32 = thiscall 0x678310 => unported;
     /// `FUN_00678790` (0x678790), thiscall, 0 stack argument(s)
     fn c_678790_t0(this: u32) -> u32 = thiscall 0x678790 => unported;
-    /// `FUN_00678a90` (0x678A90), thiscall, 0 stack argument(s)
+    /// `CTaskComplexFallAndStayDown::Destructor` (0x678A90), thiscall, 0 stack argument(s)
     fn c_678a90_t0(this: u32) -> u32 = thiscall 0x678A90 => unported;
     /// `CTaskComplexFallToDeath::~CTaskComplexFallToDeath` (0x6790B0), thiscall, 0 stack argument(s)
     fn c_6790b0_t0(this: u32) -> u32 = thiscall 0x6790B0 => unported;
@@ -644,9 +644,9 @@ orig! {
     fn c_690bb0_t0(this: u32) -> u32 = thiscall 0x690BB0 => unported;
     /// `FUN_006912c0` (0x6912C0), thiscall, 0 stack argument(s)
     fn c_6912c0_t0(this: u32) -> u32 = thiscall 0x6912C0 => unported;
-    /// `FUN_00691a50` (0x691A50), thiscall, 0 stack argument(s)
+    /// `CTaskComplexGoPickUpEntity::Destructor` (0x691A50), thiscall, 0 stack argument(s)
     fn c_691a50_t0(this: u32) -> u32 = thiscall 0x691A50 => unported;
-    /// `FUN_006926f0` (0x6926F0), thiscall, 0 stack argument(s)
+    /// `CTaskSimpleDuckWhileShotsWhizzing::Destructor` (0x6926F0), thiscall, 0 stack argument(s)
     fn c_6926f0_t0(this: u32) -> u32 = thiscall 0x6926F0 => unported;
     /// `thunk_FUN_00691630` (0x6935B0), thiscall, 0 stack argument(s)
     fn c_6935b0_t0(this: u32) -> u32 = thiscall 0x6935B0 => unported;

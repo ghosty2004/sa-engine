@@ -405,6 +405,68 @@ pub fn node_route_operator_delete(obj: GPtr<NodeRouteSlot>) {
     pool_delete_exact(NODE_ROUTE_POOL.get(), obj)
 }
 
+/// `CPatrolRoute::operator delete` (stub 0x41B820 → .HOODLUM 0x156A220): inlined `Delete`, slot 0x1A4 (magic
+/// 0x9C09C09D, `add edx, ecx; sar 8`).
+#[hook(addr = 0x41B820, conv = cdecl, name = "CPatrolRoute::operator delete", expect = "E9 FB E9 14 01",
+       unverified = "frontier2-c1", route = "L2", hazards = "none")]
+pub fn patrol_route_operator_delete(obj: GPtr<PatrolRouteSlot>) {
+    pool_delete_exact(PATROL_ROUTE_POOL.get(), obj)
+}
+
+/// `CQuadTreeNode::operator delete` (0x552C90): inlined `Delete` on `CQuadTreeNode::ms_pQuadTreeNodePool` (the pool
+/// pointer 0xB745BC decoded in the protection fragment 0x406A3A), slot 0x28 (magic 0x66666667, `sar 4`).
+#[hook(addr = 0x552C90, conv = cdecl, name = "CQuadTreeNode::operator delete", expect = "8B 4C 24 04 56",
+       unverified = "frontier2-c1", route = "L2", hazards = "none")]
+pub fn quad_tree_node_operator_delete(obj: GPtr<QuadTreeNodeSlot>) {
+    pool_delete_exact(crate::quadtree::QUAD_TREE_NODE_POOL.get().cast(), obj)
+}
+
+/// `CPool<CQuadTreeNode>::Delete(obj)` (0x552BC0, thiscall, `ret 4`): slot 0x28 (magic 0x66666667, `sar 4`), the
+/// map byte read, or-ed with 0x80 and written back, the first free index lowered.
+#[hook(addr = 0x552BC0, conv = thiscall, name = "CQuadTreeNodePool::Delete", expect = "8B 54 24 04 53 2B 11",
+       this = "CPool<int32>", unverified = "frontier2-c1", route = "L2", hazards = "none")]
+pub fn quad_tree_node_pool_delete(p: PoolPtr<QuadTreeNodeSlot>, obj: GPtr<QuadTreeNodeSlot>) {
+    pool_delete_exact(p, obj)
+}
+
+/// `CPool<T>::CreateAtRef(handle)` as the object (0x59F610) and vehicle (0x6D5DD0) pools compile it (byte-identical):
+/// slot `handle >> 8` (arithmetic) made used (`and 0x7F`) and its id set to `handle & 0x7F` (the map pointer re-read
+/// for each access); then `m_nFirstFree = 0` and advanced past every used slot (sign bit clear).
+fn pool_create_at_ref_exact(pool: GPtr<u8>, handle: i32) {
+    use crate::field::{rd, wr};
+    let idx = (handle >> 8) as isize;
+    let m = rd::<GPtr<u8>>(pool, 4).byte_add(idx);
+    m.write(m.read() & 0x7F);
+    let m = rd::<GPtr<u8>>(pool, 4).byte_add(idx);
+    let v = m.read();
+    m.write(v ^ ((v ^ handle as u8) & 0x7F));
+    wr::<i32>(pool, 0xC, 0);
+    if (rd::<GPtr<u8>>(pool, 4).read() as i8) < 0 {
+        return;
+    }
+    loop {
+        let ff = rd::<i32>(pool, 0xC).wrapping_add(1);
+        wr::<i32>(pool, 0xC, ff);
+        if (rd::<GPtr<u8>>(pool, 4).byte_add(ff as isize).read() as i8) < 0 {
+            return;
+        }
+    }
+}
+
+/// `CPool<CObject>::CreateAtRef(int32 handle)` (0x59F610, thiscall, `ret 4`): see `pool_create_at_ref_exact`.
+#[hook(addr = 0x59F610, conv = thiscall, name = "CObjectPool::CreateAtRef", expect = "8B 51 04 53 8B 5C 24 08",
+       this = "CPool<int32>", unverified = "frontier2-c2", route = "L2", hazards = "none", recs = "save-load")]
+pub fn object_pool_create_at_ref(pool: GPtr<u8>, handle: i32) {
+    pool_create_at_ref_exact(pool, handle)
+}
+
+/// `CPool<CVehicle>::CreateAtRef(int32 handle)` (0x6D5DD0, thiscall, `ret 4`): see `pool_create_at_ref_exact`.
+#[hook(addr = 0x6D5DD0, conv = thiscall, name = "CVehiclePool::CreateAtRef", expect = "8B 51 04 53 8B 5C 24 08",
+       this = "CPool<int32>", unverified = "frontier2-c2", route = "L2", hazards = "none", recs = "save-load")]
+pub fn vehicle_pool_create_at_ref(pool: GPtr<u8>, handle: i32) {
+    pool_create_at_ref_exact(pool, handle)
+}
+
 /// `CEntryInfoNode::operator new` (0x536DC0): `mov ecx, ms_pEntryInfoNodePool; jmp 0x536D10`.
 #[hook(addr = 0x536DC0, conv = cdecl, name = "CEntryInfoNode::operator new", expect = "8B 0D 8C 44 B7 00")]
 pub fn entry_info_node_operator_new(_size: u32) -> GPtr<EntryInfoNodeSlot> {
@@ -1069,6 +1131,11 @@ pub const HOOKS: &[crate::abi::HookReg] = &[
     HOOK_PTR_NODE_DOUBLE_POOL_NEW,
     HOOK_PED_INTELLIGENCE_POOL_NEW,
     HOOK_NODE_ROUTE_OPERATOR_DELETE,
+    HOOK_PATROL_ROUTE_OPERATOR_DELETE,
+    HOOK_QUAD_TREE_NODE_OPERATOR_DELETE,
+    HOOK_QUAD_TREE_NODE_POOL_DELETE,
+    HOOK_OBJECT_POOL_CREATE_AT_REF,
+    HOOK_VEHICLE_POOL_CREATE_AT_REF,
     HOOK_ENTRY_INFO_NODE_OPERATOR_NEW,
     HOOK_ENTRY_INFO_NODE_OPERATOR_DELETE,
     HOOK_ENTRY_INFO_LIST_FLUSH,

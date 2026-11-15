@@ -186,7 +186,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x41b660,CPatrolRoutePool::New,CORE,0,184,1
 0x41b710,CNodeRoutePool::New,CORE,0,185,1
 0x41b7d0,CPointRoute::operator delete,UNK-game,0,186,1
-0x41b820,,UNK-game,0,187,1
+0x41b820,CPatrolRoute::operator delete,UNK-game,0,187,1
 0x41b870,CNodeRoute::operator delete,CORE,0,188,1
 0x41b950,CAutoPilot::RemoveOnePathNode,POP,0,189,1
 0x41bc70,CBridge::Init,WORLD,0,190,1
@@ -1012,7 +1012,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x4b1ed0,CEventPotentialWalkIntoFire::GetEventType,AI,0,1010,1
 0x4b1ee0,CEventPotentialWalkIntoFire::GetLifeTime,AI,0,1011,1
 0x4b1ef0,CEventPotentialWalkIntoFire::GetEventPriority,AI,0,1012,1
-0x4b1f00,,UNK-game,0,1013,1
+0x4b1f00,CEventPotentialWalkIntoFire::Destructor,AI,0,1013,1
 0x4b1f10,,UNK-game,0,1014,1
 0x4b1f50,CEventFireNearby::GetEventType,AI,0,1015,1
 0x4b1f60,CEventFireNearby::GetLifeTime,AI,0,1016,1
@@ -1907,8 +1907,8 @@ address,name,subsystem,level,scc_id,scc_size
 0x552830,CQuadTreeNode,UNK-game,0,1905,1
 0x552af0,,CORE,0,1906,1
 0x552b50,,UNK-game,0,1907,1
-0x552bc0,,UNK-game,0,1908,1
-0x552c90,delete,UNK-game,0,1909,1
+0x552bc0,CQuadTreeNodePool::Delete,UNK-game,0,1908,1
+0x552c90,CQuadTreeNode::operator delete,UNK-game,0,1909,1
 0x552ee0,,UNK-game,0,1910,1
 0x553010,,UNK-game,0,1911,1
 0x5531c0,CRenderer::Init,RENDER,0,1912,1
@@ -2274,7 +2274,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x59f120,CObject::CanBeDeleted,WORLD,0,2272,1
 0x59f300,CObject::SetObjectTargettable,WORLD,0,2273,1
 0x59f320,CObject::CanBeTargetted,WORLD,0,2274,1
-0x59f610,,UNK-game,0,2275,1
+0x59f610,CObjectPool::CreateAtRef,UNK-game,0,2275,1
 0x5a0760,CObject::SetIsStatic,WORLD,0,2276,1
 0x5a1b60,CObject::CanBeUsedToTakeCoverBehind,WORLD,0,2277,1
 0x5a1c20,CObjectPool::New,CORE,0,2278,1
@@ -2887,7 +2887,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x61c3d0,CTaskSimpleDuck::IsTaskInUseByOtherTasks,AI,0,2885,1
 0x61c420,CTaskSimpleDuck::StopFireGun,AI,0,2886,1
 0x61c520,CTaskSimpleFight::GetTaskType,AI,0,2887,1
-0x61c650,,AI,0,2888,1
+0x61c650,CTaskSimpleFight::BeHitWhileBlocking,AI,0,2888,1
 0x61dae0,,UNK-game,0,2889,1
 0x61db30,,WEAPON,0,2890,1
 0x61dc90,CTaskSimpleFightingControl::GetTaskType,AI,0,2891,1
@@ -3331,7 +3331,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x665dc0,,AI,0,3329,1
 0x667310,,AI,0,3330,1
 0x667460,,UNK-game,0,3331,1
-0x667720,,UNK-game,0,3332,1
+0x667720,CPointRoute::Reverse,UNK-game,0,3332,1
 0x6677a0,,UNK-game,0,3333,1
 0x667900,,AI,0,3334,1
 0x667980,,UNK-game,0,3335,1
@@ -3740,7 +3740,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x6d5400,CVehicle::CanBeDriven,VEH,0,3737,1
 0x6d56b0,CVehicle::GetDooorAngleOpenRatio,VEH,0,3738,1
 0x6d5cf0,CVehicle::CanPedLeanOut,VEH,0,3739,1
-0x6d5dd0,,UNK-game,0,3740,1
+0x6d5dd0,CVehiclePool::CreateAtRef,VEH,0,3740,1
 0x6d5e20,CAutoPilot::CAutoPilot,VEH,0,3741,1
 0x6d6270,CVehicle::ProcessControlCollisionCheck,VEH,0,3742,1
 0x6d6280,CVehicle::ProcessControlInputs,VEH,0,3743,1
@@ -6848,7 +6848,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x48e750,CTaskSimplePause::Constructor,AI,1,6844,1
 0x48e8a0,,AI,1,6845,1
 0x492d10,CTaskSimpleTogglePedThreatScanner::CTaskSimpleTogglePedThreatScanner,SCRIPT,1,6846,1
-0x492d40,,UNK-game,1,6847,1
+0x492d40,CTaskSimpleTogglePedThreatScanner::Destructor,AI,1,6847,1
 0x493280,CTheScripts::IsPointWithinSearchLight,SCRIPT,1,6848,1
 0x49b010,IsValidModForVehicle,WORLD,1,6849,1
 0x49b280,CShopping::StoreVehicleMods,WORLD,1,6850,1
@@ -7520,7 +7520,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x540e80,,UNK-game,1,7514,1
 0x540f80,,UNK-game,1,7515,1
 0x541a70,CPad::Clear,INPUT,1,7516,1
-0x541e90,,UNK-game,1,7517,1
+0x541e90,CMatrix::Rotate-vec,MATH,1,7517,1
 0x542080,,UNK-game,1,7518,1
 0x542860,CPhysical::RemoveFromMovingList,PHYS,1,7519,1
 0x542a50,CPhysical::ApplyTurnForce,PHYS,1,7520,1
@@ -8038,16 +8038,16 @@ address,name,subsystem,level,scc_id,scc_size
 0x61f780,CTaskSimpleThrowProjectile::MakeAbortable,AI,1,8032,1
 0x61f950,CTaskSimpleThrowControl::Destructor,AI,1,8033,1
 0x61fc20,,UNK-game,1,8034,1
-0x61fc50,,UNK-game,1,8035,1
+0x61fc50,CTaskSimpleBeKickedOnGround::Destructor,AI,1,8035,1
 0x61fcc0,vt_86d7d8::MakeAbortable,AI,1,8036,1
 0x61fe30,,UNK-game,1,8037,1
-0x61fe70,,UNK-game,1,8038,1
+0x61fe70,CTaskSimpleBeHitWhileMoving::Destructor,AI,1,8038,1
 0x61fee0,vt_86d7fc::MakeAbortable,AI,1,8039,1
 0x620370,CTaskSimpleChoking::Destructor,AI,1,8040,1
 0x6203f0,CTaskSimpleChoking::MakeAbortable,AI,1,8041,1
 0x620810,CTaskSimpleBeHit::Destructor,AI,1,8042,1
 0x620890,CTaskSimpleBeHit::MakeAbortable,AI,1,8043,1
-0x6218c0,,UNK-game,1,8044,1
+0x6218c0,CTaskSimpleGangDriveBy::Destructor,AI,1,8044,1
 0x621e00,CTaskComplexDestroyCarMelee::MakeAbortable,AI,1,8045,1
 0x622180,,UNK-game,1,8046,1
 0x622680,,AI,1,8047,1
@@ -8103,7 +8103,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x632a50,CTaskSimpleWaitForBus::Constructor,AI,1,8097,1
 0x632a90,CTaskSimpleWaitForBus::Destructor,AI,1,8098,1
 0x632b30,,UNK-game,1,8099,1
-0x632b70,,UNK-game,1,8100,1
+0x632b70,CTaskSimpleWaitForPizza::Destructor,AI,1,8100,1
 0x632bd0,CTaskComplexSequence::Constructor,AI,1,8101,1
 0x632d90,CTaskSequences::Init,AI,1,8102,1
 0x632dd0,CTaskSequences::CleanUpForShutdown,AI,1,8103,1
@@ -8119,7 +8119,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x6335b0,CTaskSimplePlayerOnFire::Destructor,AI,1,8113,1
 0x6337f0,CTaskSimpleIKManager::Constructor,AI,1,8114,1
 0x633830,CTaskSimpleIKManager::Destructor,AI,1,8115,1
-0x634500,,UNK-game,1,8116,1
+0x634500,CTaskSimpleTriggerLookAt::Destructor,AI,1,8116,1
 0x634670,CTaskSimpleClearLookAt::Constructor,AI,1,8117,1
 0x6346a0,CTaskSimpleClearLookAt::Destructor,AI,1,8118,1
 0x6346f0,CTaskComplexUseClosestFreeScriptedAttractor::Constructor,AI,1,8119,1
@@ -8283,8 +8283,8 @@ address,name,subsystem,level,scc_id,scc_size
 0x675660,CTaskInteriorShopKeeper::Constructor,AI,1,8277,1
 0x6757d0,CTaskInteriorGoToInfo::Constructor,AI,1,8278,1
 0x675a50,CTaskInteriorUseInfo::Constructor,AI,1,8279,1
-0x675c30,,UNK-game,1,8280,1
-0x675c90,,UNK-game,1,8281,1
+0x675c30,CTaskInteriorSitOnChair::Constructor,AI,1,8280,1
+0x675c90,CTaskInteriorSitOnChair::Destructor,AI,1,8281,1
 0x675e20,CTaskInteriorLieInBed::Constructor,AI,1,8282,1
 0x675e90,CTaskInteriorLieInBed::Destructor,AI,1,8283,1
 0x675f60,CTaskInteriorLieInBed::MakeAbortable,AI,1,8284,1
@@ -8341,7 +8341,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x691fc0,CTaskSimpleDuck::Constructor,AI,1,8335,1
 0x692030,CTaskSimpleDuck::Destructor,AI,1,8336,1
 0x692340,CTaskSimpleDuck::AbortBecauseOfOtherDuck,AI,1,8337,1
-0x692680,,UNK-game,1,8338,1
+0x692680,CTaskSimpleDuckWhileShotsWhizzing::Constructor,AI,1,8338,1
 0x692e50,CTaskSimpleFacial::MakeAbortable,AI,1,8339,1
 0x696ee0,CTaskComplexInvestigateDeadPed::ComputeTargetPos,AI,1,8340,1
 0x6975c0,CTaskComplexExtinguishFires::Constructor,AI,1,8341,1
@@ -9206,14 +9206,14 @@ address,name,subsystem,level,scc_id,scc_size
 0x4aecd0,,UNK-game,2,9200,1
 0x4aedf0,,UNK-game,2,9201,1
 0x4aef00,vt_85b0b0::AffectsPed,AI,2,9202,1
-0x4af010,,UNK-game,2,9203,1
+0x4af010,CEventSexyVehicle::Constructor,AI,2,9203,1
 0x4af130,CEventPedToChase::CEventPedToChase,AI,2,9204,1
 0x4af240,CEventPedToFlee::CEventPedToFlee,AI,2,9205,1
 0x4af350,CEventAttractor::Constructor,AI,2,9206,1
 0x4af670,CEventVehicleToSteal::Constructor,AI,2,9207,1
 0x4af820,CEventAcquaintancePed::Constructor,AI,2,9208,1
 0x4afa30,CEventAcquaintancePed::AffectsPed,AI,2,9209,1
-0x4afb50,,UNK-game,2,9210,1
+0x4afb50,CEventVehicleThreat::Constructor,AI,2,9210,1
 0x4afcf0,CEventKnockOffBike::Constructor-first,AI,2,9211,1
 0x4afdd0,CEventKnockOffBike::From,AI,2,9212,1
 0x4b0020,CEventKnockOffBike::CalcForcesAndAnims,AI,2,9213,1
@@ -9285,7 +9285,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x4b8340,CEventLeaderExitedCarAsDriver::CloneEditable,AI,2,9279,1
 0x4b83a0,CEventLeaderExitedCarAsDriver::~CEventLeaderExitedCarAsDriver,AI,2,9280,1
 0x4b86c0,vt_85b8dc::Clone,AI,2,9281,1
-0x4b8750,,UNK-game,2,9282,1
+0x4b8750,CTaskSimpleOnEscalator::Destructor,AI,2,9282,1
 0x4b8790,CTaskComplexUseClosestFreeScriptedAttractorRun::Constructor,AI,2,9283,1
 0x4b87b0,CTaskComplexUseClosestFreeScriptedAttractorRun::Clone,AI,2,9284,1
 0x4b8850,CTaskComplexUseClosestFreeScriptedAttractorSprint::Constructor,AI,2,9285,1
@@ -9578,7 +9578,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x551890,,UNK-game,2,9572,1
 0x5518f0,,UNK-game,2,9573,1
 0x5519f0,CPools::ShutDown,CORE,2,9574,1
-0x552520,CQuadTreeNode,UNK-game,2,9575,1
+0x552520,CQuadTreeNode::~CQuadTreeNode,UNK-game,2,9575,1
 0x552a40,CQuadTreeNode<T>::DeleteItem-,CORE,2,9576,1
 0x552a90,CQuadTreeNode<T>::DeleteItem-rect,CORE,2,9577,1
 0x552cd0,CQuadTreeNode<T>::AddItem,CORE,2,9578,1
@@ -9824,7 +9824,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x5fb990,CPedGroupMembership,UNK-game,2,9818,1
 0x5fd8f0,CPedIK::GetWorldMatrix,ANIM,2,9819,1
 0x5fed80,,UNK-game,2,9820,1
-0x5fee80,,UNK-game,2,9821,1
+0x5fee80,CEventPlayerCollisionWithPed::Destructor,AI,2,9821,1
 0x5fef70,,UNK-game,2,9822,1
 0x5ff030,,UNK-game,2,9823,1
 0x5ff0f0,,UNK-game,2,9824,1
@@ -9925,8 +9925,8 @@ address,name,subsystem,level,scc_id,scc_size
 0x61f9b0,CTaskSimpleThrowControl::MakeAbortable,AI,2,9919,1
 0x6202c0,CTaskSimpleChoking::Constructor,AI,2,9920,1
 0x620780,CTaskSimpleBeHit::Constructor,AI,2,9921,1
-0x620b00,,UNK-game,2,9922,1
-0x620b90,,UNK-game,2,9923,1
+0x620b00,CTaskComplexReactToAttack::Constructor,AI,2,9922,1
+0x620b90,CTaskComplexReactToAttack::Destructor,AI,2,9923,1
 0x620e30,CTaskComplexKillPedOnFoot::Constructor,AI,2,9924,1
 0x620ef0,,UNK-game,2,9925,1
 0x621000,CTaskComplexKillPedOnFootMelee::Constructor,AI,2,9926,1
@@ -9944,7 +9944,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x622010,CTaskComplexDestroyCarArmed::Destructor,AI,2,9938,1
 0x6220a0,CTaskComplexRoadRage::Constructor,AI,2,9939,1
 0x622110,CTaskComplexRoadRage::Destructor,AI,2,9940,1
-0x6221c0,,UNK-game,2,9941,1
+0x6221c0,CTaskComplexKillAllThreats::Destructor,AI,2,9941,1
 0x622240,CTaskComplexKillPedGroupOnFoot::Constructor,AI,2,9942,1
 0x6222b0,CTaskComplexKillPedGroupOnFoot::Destructor,AI,2,9943,1
 0x622450,CTaskComplexKillPedGroupOnFoot::ComputeNearestLivingGroupPed,AI,2,9944,1
@@ -9986,7 +9986,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x62f080,CTaskSimpleHitByGunFromRight::Constructor,AI,2,9980,1
 0x62f0b0,CTaskSimpleHitByGunFromRight::Clone,AI,2,9981,1
 0x62fa60,CTaskSimpleDie::Constructor-2,AI,2,9982,1
-0x62fc70,,UNK-game,2,9983,1
+0x62fc70,CTaskSimpleDieInCar::Destructor,AI,2,9983,1
 0x62fcf0,,AI,2,9984,1
 0x62ff10,,AI,2,9985,1
 0x6300c0,,AI,2,9986,1
@@ -10027,7 +10027,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x634440,,UNK-game,2,10021,1
 0x6346c0,CTaskSimpleClearLookAt::ProcessPed,AI,2,10022,1
 0x634720,CTaskComplexUseClosestFreeScriptedAttractor::Destructor,AI,2,10023,1
-0x6348e0,,UNK-game,2,10024,1
+0x6348e0,CTaskComplexUseMobilePhone::Destructor,AI,2,10024,1
 0x634a60,CTaskComplexUseMobilePhone::CreateNextSubTask,AI,2,10025,1
 0x634f20,CTaskComplexUseGoggles::~CTaskComplexUseGoggles,AI,2,10026,1
 0x634f90,CTaskComplexUseGoggles::CreateFirstSubTask,AI,2,10027,1
@@ -10277,14 +10277,14 @@ address,name,subsystem,level,scc_id,scc_size
 0x658ba0,CTaskComplexMedicTreatInjuredPed::Constructor,AI,2,10271,1
 0x658c30,CTaskComplexMedicTreatInjuredPed::~CTaskComplexMedicTreatInjuredPed,AI,2,10272,1
 0x658cc0,CTaskComplexMedicTreatInjuredPed::FindNearestAccident,AI,2,10273,1
-0x6591d0,,UNK-game,2,10274,1
-0x659240,,UNK-game,2,10275,1
+0x6591d0,CTaskComplexPresentIDToCop::Constructor,AI,2,10274,1
+0x659240,CTaskComplexPresentIDToCop::Destructor,AI,2,10275,1
 0x659310,CTaskComplexDriveFireTruck::Constructor,AI,2,10276,1
 0x6593a0,CTaskComplexDriveFireTruck::~CTaskComplexDriveFireTruck,AI,2,10277,1
 0x659470,CTaskComplexUseSwatRope::Constructor,AI,2,10278,1
 0x6594d0,,AI,2,10279,1
 0x6597b0,,AI,2,10280,1
-0x6598b0,,UNK-game,2,10281,1
+0x6598b0,CTaskComplexExtinguishFireOnFoot::Destructor,AI,2,10281,1
 0x659a10,CTaskSimpleGiveCPR::Clone,AI,2,10282,1
 0x659a90,CTaskComplexTreatAccident::Clone,AI,2,10283,1
 0x659d10,CTaskComplexUseWaterCannon::Clone,AI,2,10284,1
@@ -10372,7 +10372,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x66a230,CTaskComplexAvoidOtherPedWhileWandering::QuitIK,AI,2,10366,1
 0x66a260,CTaskComplexAvoidOtherPedWhileWandering::MakeAbortable,AI,2,10367,1
 0x66aa20,,UNK-game,2,10368,1
-0x66aae0,,UNK-game,2,10369,1
+0x66aae0,CTaskComplexAvoidEntity::Destructor,AI,2,10369,1
 0x66ad10,,UNK-game,2,10370,1
 0x66ad40,vt_86ff00::MakeAbortable,AI,2,10371,1
 0x66ad70,vt_86ff00::CreateNextSubTask,AI,2,10372,1
@@ -10407,7 +10407,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x66f670,,UNK-game,2,10401,1
 0x670850,CTaskComplexTurnToFaceEntityOrCoord::CreateFirstSubTask,AI,2,10402,1
 0x670920,CTaskComplexTurnToFaceEntityOrCoord::ControlSubTask,AI,2,10403,1
-0x6709f0,,UNK-game,2,10404,1
+0x6709f0,CTaskComplexFollowPatrolRoute::Destructor,AI,2,10404,1
 0x671470,CTaskComplexWanderGang::Clone,AI,2,10405,1
 0x671510,CTaskComplexFollowPointRoute::Constructor,AI,2,10406,1
 0x671ef0,CTaskComplexWander::ScanForBlockedNode-,AI,2,10407,1
@@ -10447,7 +10447,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x678790,,AI,2,10441,1
 0x678870,CTaskComplexFallAndGetUp::CreateFirstSubTask,AI,2,10442,1
 0x678900,CTaskComplexFallAndGetUp::CreateSubTask,AI,2,10443,1
-0x678a90,,UNK-game,2,10444,1
+0x678a90,CTaskComplexFallAndStayDown::Destructor,AI,2,10444,1
 0x678b20,vt_870480::CreateFirstSubTask,AI,2,10445,1
 0x678bd0,,UNK-game,2,10446,1
 0x678cc0,,AI,2,10447,1
@@ -10520,10 +10520,10 @@ address,name,subsystem,level,scc_id,scc_size
 0x6913a0,CTaskSimpleHoldEntity::Constructor-1,AI,2,10514,1
 0x691470,CTaskSimpleHoldEntity::Constructor-2,AI,2,10515,1
 0x691550,CTaskSimpleHoldEntity::Constructor-3,AI,2,10516,1
-0x6919c0,,UNK-game,2,10517,1
-0x691a50,,UNK-game,2,10518,1
+0x6919c0,CTaskComplexGoPickUpEntity::Constructor,AI,2,10517,1
+0x691a50,CTaskComplexGoPickUpEntity::Destructor,AI,2,10518,1
 0x691d50,vt_870b98::ControlSubTask,AI,2,10519,1
-0x6926f0,,UNK-game,2,10520,1
+0x6926f0,CTaskSimpleDuckWhileShotsWhizzing::Destructor,AI,2,10520,1
 0x6927b0,CTaskSimpleShakeFist::Clone,AI,2,10521,1
 0x692820,CTaskSimpleFacial::Clone,AI,2,10522,1
 0x6928b0,CTaskComplexFacial::Clone,AI,2,10523,1
@@ -11043,7 +11043,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x4b2b00,CEventEditableResponse::InformRespectedFriends,AI,3,11037,1
 0x4b33b0,CEventDamage::Constructor-,AI,3,11038,1
 0x4b4a50,,UNK-game,3,11039,1
-0x4b4aa0,,UNK-game,3,11040,1
+0x4b4aa0,CEventKnockOffBike::operator=,AI,3,11040,1
 0x4b67f0,CEventCarUpsideDown::~CEventCarUpsideDown,AI,3,11041,1
 0x4b6990,CEventGunShotWhizzedBy::~CEventGunShotWhizzedBy,AI,3,11042,1
 0x4b6b20,CEventGunShot::CloneEditable,AI,3,11043,1
@@ -11336,7 +11336,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x5f6370,CEventPlayerCommandToGroupAttack::CloneEditable,AI,3,11330,1
 0x5f63d0,CEventPlayerCommandToGroupAttack::~CEventPlayerCommandToGroupAttack,AI,3,11331,1
 0x5f66e0,CTaskComplexBeStill::~CTaskComplexBeStill,AI,3,11332,1
-0x5f67e0,,UNK-game,3,11333,1
+0x5f67e0,CTaskSimpleWaitUntilLeaderAreaCodesMatch::Destructor,AI,3,11333,1
 0x5f67f0,CTaskSimpleWaitUntilLeaderAreaCodesMatch::Clone,AI,3,11334,1
 0x5f6900,CTaskAllocatorKillThreatsBasicRandomGroup::~CTaskAllocatorKillThreatsBasicRandomGroup,AI,3,11335,1
 0x5f6b40,CPedGroupDefaultTaskAllocatorFollowAnyMeans::AllocateDefaultTasks,AI,3,11336,1
@@ -11577,7 +11577,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x640340,CTaskComplexEnterCarAsPassenger,UNK-game,3,11571,1
 0x640380,,UNK-game,3,11572,1
 0x640390,,AI,3,11573,1
-0x6403d0,,UNK-game,3,11574,1
+0x6403d0,CTaskComplexOpenDriverDoor::Destructor,AI,3,11574,1
 0x6403e0,,AI,3,11575,1
 0x640420,CTaskComplexOpenPassengerDoor::~CTaskComplexOpenPassengerDoor,AI,3,11576,1
 0x640430,CTaskComplexDragPedFromCar::CTaskComplexDragPedFromCar,AI,3,11577,1
@@ -11684,7 +11684,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x6581b0,CTaskComplexWalkRoundFire::ComputeDetourTarget,AI,3,11678,1
 0x6584e0,CTaskComplexWalkRoundFire::CreateFirstSubTask,AI,3,11679,1
 0x6585c0,CTaskComplexWalkRoundFire::ControlSubTask,AI,3,11680,1
-0x658850,,UNK-game,3,11681,1
+0x658850,CTaskComplexWanderMedic::Destructor,AI,3,11681,1
 0x659620,CTaskComplexUseSwatRope::CreateSubTask,AI,3,11682,1
 0x6597d0,CTaskComplexUseWaterCannon::CreateFirstSubTask,AI,3,11683,1
 0x6598c0,vt_86f5fc::CreateNextSubTask,AI,3,11684,1
@@ -12806,7 +12806,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x4935a0,CTheScripts::AddScriptCheckpoint,SCRIPT,5,12800,1
 0x4936c0,CTheScripts::RemoveScriptCheckpoint,SCRIPT,5,12801,1
 0x493900,CTheScripts::IsEntityWithinSearchLight,SCRIPT,5,12802,1
-0x4994e0,,UNK-game,5,12803,1
+0x4994e0,CTaskComplexBeCop::Destructor,AI,5,12803,1
 0x49e850,Fx_c::ExitStaticSystems,RENDER,5,12804,1
 0x4a12d0,Fx_c::ExitEntitySystems,RENDER,5,12805,1
 0x4a2b20,FxEmitterBP_c::~FxEmitterBP_c,UNK-game,5,12806,1
@@ -14970,7 +14970,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x60d000,CPlayerPed::MakeChangesForNewWeapon-BySlot,PED,16,14933,1
 0x60d850,CPlayerPed::ProcessWeaponSwitch,PED,16,14934,1
 0x61af60,CTaskSimplePlayHandSignalAnim::StartAnim,AI,16,14935,1
-0x61cba0,,AI,16,14936,1
+0x61cba0,CTaskSimpleFight::FightHitPed,AI,16,14936,1
 0x62b790,CTaskComplexKillPedOnFootStealth::CreateNextSubTask,AI,16,14937,1
 0x62b810,CTaskComplexKillPedOnFootStealth::CreateFirstSubTask,AI,16,14938,1
 0x62e170,CTaskComplexRoadRage::CreateFirstSubTask,AI,16,14939,1

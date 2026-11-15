@@ -70,7 +70,7 @@ orig! {
 
     // ---- this module's own functions (called through the original address) ----
     /// `CTaskSimpleDuck::Destructor` (0x692030)
-    fn duck_dtor_orig(t: GPtr<u8>) = thiscall 0x692030 => unported;
+    pub(crate) fn duck_dtor_orig(t: GPtr<u8>) = thiscall 0x692030 => unported;
     /// `CTaskSimpleDuck::SetMoveAnim(CPed*)` (0x6939F0, `ret 4`)
     fn duck_set_move_anim_orig(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x6939F0 => unported;
 
