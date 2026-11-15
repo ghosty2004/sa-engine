@@ -13,7 +13,10 @@ use crate::bindings::{
     membership_count_members, ped_groups_get_peds_group, seek_entity_xy_offset_ctor, stand_still_dtor, stand_still_process_ped,
     event_base_dtor, event_group_add, use_gun_ctor,
 };
-use sa_core::bindings::{get_weapon_info, matrix_set_scale, tm_get_task_secondary, tm_set_task_secondary};
+use sa_core::bindings::{
+    get_weapon_info, matrix_set_scale, tm_get_task_secondary, tm_set_task_secondary, world_get_is_line_of_sight_clear,
+};
+use sa_core::crt::rand_at;
 use crate::common::*;
 use sa_core::bindings::ped_is_alive;
 use sa_world::bindings::{
@@ -355,6 +358,94 @@ pub fn use_closest_free_scripted_attractor_compute_closest_free_scripted_effect(
     found
 }
 
+/// `CWorld::GetIsLineOfSightClear(a, b, buildings, vehicles, false, objects, false, false, false)` between two stack
+/// points, as `CalcFall` tests its probes.
+fn fall_probe_clear(a: &mut [f32; 3], b: &mut [f32; 3]) -> u8 {
+    let (pa, pb) = (GPtr::from_raw(a.as_mut_ptr()).cast(), GPtr::from_raw(b.as_mut_ptr()).cast());
+    world_get_is_line_of_sight_clear(pa, pb, 1, 1, 0, 1, 0, 0, 0)
+}
+
+/// `CTaskComplexFallToDeath::CalcFall(CPed* ped, int32& dir, bool& fallToDeath)` (0x6796C0, cdecl). Not in a vehicle
+/// (+0x46C bit 8) nor with +0x40 bit 8: the directions 0..3 shuffled by eight swaps of `rand() & 3` pairs (return
+/// addresses 0x67971A / 0x679724); for the first two, `dir` = it and `v` = the matrix forward (0), -right (1),
+/// -forward (2) or right (3) (negated per component through f32 stores); the ledge probe from `pos + v * 1.5 +
+/// (0, 0, 0.375)` (0x8D2F00 / 0x8D2F08; x rounded to f32 first, y / z unrounded) straight down by 4.0 (0x8D2F04) must be
+/// clear, and the probe from there plus `v * 0.7` back to `pos + (0, 0, 0.375)` must be blocked (buildings, vehicles,
+/// objects); then `fallToDeath` = the line from `pos - (0, 0, 0.5)` (0x8D2F0C) to `pos + v * 1.5 - (0, 0, 0.5) + v *
+/// 0.7` is blocked and AL = 1. Otherwise AL = 0.
+#[hook(addr = 0x6796C0, conv = cdecl, name = "CTaskComplexFallToDeath::CalcFall", expect = "81 EC 94 00 00 00 53 8B 9C 24 9C 00 00 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "ax-al-return")]
+pub fn fall_to_death_calc_fall(ped: GPtr<u8>, dir: GPtr<i32>, fall_to_death: GPtr<u8>) -> u8 {
+    if rd::<u32>(ped, 0x46C) & 0x100 != 0 || rd::<u32>(ped, 0x40) & 0x100 != 0 {
+        return 0;
+    }
+    let m = rd::<GPtr<u8>>(ped, 0x14);
+    let mut dirs = [0i32, 1, 2, 3];
+    for _ in 0..8 {
+        let i = (rand_at(0x67971A) & 3) as usize;
+        let j = (rand_at(0x679724) & 3) as usize;
+        dirs.swap(i, j);
+    }
+    let k = |a: usize| g::<f32>(a).read();
+    let pos = || entity_pos(ped).cast::<f32>();
+    let mut v = [0f32; 3];
+    for &d in &dirs[..2] {
+        dir.write(d);
+        let row = |o: isize, neg: bool| {
+            let r = [rd::<f32>(m, o), rd::<f32>(m, o + 4), rd::<f32>(m, o + 8)];
+            if neg { r.map(|c| x(c).fmul_m(k(0x858C1C)).to_f32()) } else { r }
+        };
+        match d {
+            0 => v = row(0x10, false),
+            1 => v = row(0, true),
+            2 => v = row(0x10, true),
+            3 => v = row(0, false),
+            _ => {}
+        }
+        let ax = x(v[0]).fmul_m(k(0x8D2F00)).to_f32();
+        let kz = k(0x8D2F08);
+        let ay = x(v[1]).fmul_m(k(0x8D2F00));
+        let az = x(v[2]).fmul_m(k(0x8D2F00));
+        let p = pos();
+        let (px, py) = (p.read(), p.wrapping_index(1).read());
+        let top = x(kz).fadd_m(p.wrapping_index(2).read()).to_f32();
+        let sx = x(px).fadd_m(ax).to_f32();
+        let sy = x(py).fadd(ay).to_f32();
+        let sz = x(top).fadd(az).to_f32();
+        let ez = x(sz).fsub_m(k(0x8D2F04)).to_f32();
+        if fall_probe_clear(&mut [sx, sy, sz], &mut [sx, sy, ez]) == 0 {
+            continue;
+        }
+        let k2 = k(0x858CB0);
+        let (bx, by) = (x(v[0]).fmul_m(k2), x(v[1]).fmul_m(k2));
+        let bz = x(v[2]).fmul_m(k2).to_f32();
+        let mut back = [bx.fadd_m(sx).to_f32(), by.fadd_m(sy).to_f32(), x(bz).fadd_m(sz).to_f32()];
+        let p = pos();
+        let (px, py) = (p.read(), p.wrapping_index(1).read());
+        let hz = x(k(0x8D2F08)).fadd_m(p.wrapping_index(2).read()).to_f32();
+        if fall_probe_clear(&mut back, &mut [px, py, hz]) == 0 {
+            continue;
+        }
+        let k5 = k(0x8D2F0C);
+        let p = pos();
+        let mut from = [p.read(), p.wrapping_index(1).read(), x(p.wrapping_index(2).read()).fsub_m(k5).to_f32()];
+        let (axk, ayk) = (x(v[0]).fmul_m(k(0x8D2F00)), x(v[1]).fmul_m(k(0x8D2F00)));
+        let azk = x(v[2]).fmul_m(k(0x8D2F00)).to_f32();
+        let p = pos();
+        let low = x(p.wrapping_index(2).read()).fsub_m(k5).to_f32();
+        let fx = x(p.read()).fadd(axk).to_f32();
+        let fy = x(p.wrapping_index(1).read()).fadd(ayk);
+        let fz = x(low).fadd_m(azk);
+        let (cx, cy) = (x(v[0]).fmul_m(k2), x(v[1]).fmul_m(k2));
+        let cz = x(v[2]).fmul_m(k2).to_f32();
+        let mut to = [cx.fadd_m(fx).to_f32(), cy.fadd(fy).to_f32(), x(cz).fadd(fz).to_f32()];
+        let r = fall_probe_clear(&mut from, &mut to);
+        fall_to_death.write(u8::from(r == 0));
+        return 1;
+    }
+    0
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_FOLLOW_LEADER_IN_FORMATION_CREATE_SUB_TASK,
@@ -364,4 +455,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_GO_TO_POINT_AIMING_CREATE_FIRST_SUB_TASK,
     HOOK_BE_IN_SHOP_SCAN_FOR_STUFF,
     HOOK_USE_CLOSEST_FREE_SCRIPTED_ATTRACTOR_COMPUTE_CLOSEST_FREE_SCRIPTED_EFFECT,
+    HOOK_FALL_TO_DEATH_CALC_FALL,
 ];
