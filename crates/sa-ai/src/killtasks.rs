@@ -993,10 +993,153 @@ pub fn kill_criminal_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev
     not_obeyed()
 }
 
+// ---------------------------------------------------------------------------------------------------------
+// FRONTIER-2 turn 2 lane A (batch `frontier2-a1`): CreateNextSubTask 0x68E4F0 (crossing 4000's last block) and the
+// CreateSubTask 0x68C050 it calls, from the 1.0 US bytes.
+
+orig! {
+    /// `CTaskComplexKillCriminal::CreateSubTask(int, CPed*, bool)` (0x68C050, `ret 0xC`)
+    fn create_sub_task_call(this: GPtr<u8>, ty: i32, ped: GPtr<u8>, force: u8) -> GPtr<u8> = thiscall 0x68C050 => kill_criminal_create_sub_task;
+}
+
+/// `CTaskComplexKillCriminal::CreateSubTask(int type, CPed* ped, bool force)` (0x68C050, `ret 0xC`; the tail runs
+/// through the island 0x40198B, which only restores the SEH link). Without `force`, a current sub-task of type `type`
+/// is returned as is (one `GetTaskType` call); else the task of [`create_chosen`] (the same switch the original
+/// inlines into ControlSubTask 0x68E950).
+#[hook(addr = 0x68C050, conv = thiscall, name = "CTaskComplexKillCriminal::CreateSubTask", expect = "64 A1 00 00 00 00 6A FF",
+       unverified = "frontier2-a1", route = "L2", hazards = "heap-writes",
+       note = "allocates from the task pool; the SEH frame is not reproduced")]
+pub fn kill_criminal_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>, force: u8) -> GPtr<u8> {
+    if force == 0 {
+        let s = sub_task(this);
+        if !s.is_null() && v_task_type(s) == ty {
+            return sub_task(this);
+        }
+    }
+    create_chosen(this, ped, ty)
+}
+
+/// `CreateSubTask(ty, ped, false)` then `+0x19 = 1` (the 0x68E929 tail of the kill-on-foot case).
+fn finish_with(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> {
+    let t = create_sub_task_call(this, ty, ped, 0);
+    wr::<u8>(this, 0x19, 1);
+    t
+}
+
+/// `CTaskComplexKillCriminal::CreateNextSubTask(CPed* ped)` (0x68E4F0, `ret 4`). The cop's partner (cop +0x7A8) is read
+/// before the sub-task's `GetTaskType`. By the finished sub-task's type (+0x19 finished, +0x1A cannot get in the car):
+/// - 0x2BD enter as driver: not in a vehicle → +0x1A = 1, kill on foot (0x3E8) while not finished and the criminal
+///   lives (health > 0), else finished (0x516). In a vehicle: `p` = no partner, a dead one or one in a vehicle; with a
+///   living criminal and not finished: a criminal in its vehicle → car-drive mission (0x2D4) when `p`, else simple car
+///   drive (0x2C5); otherwise kill on foot when the cop has no vehicle or the criminal is within 25 of it (squared
+///   distance not above 625, NaN included), else the same drive choice. Otherwise the next criminal (any = true) is
+///   targeted with a forced kill on foot when `ChangeTarget` accepts it, else the siren flag of the cop's vehicle
+///   (+0x42D bit 7) is cleared (in a vehicle) and the task finishes (`p`) or drives (0x2C5).
+/// - 0x2BC enter as passenger: in a vehicle → 0x2C5; else +0x1A = 1 and kill on foot / finished as above.
+/// - 0x2C0 leave car: kill on foot without a vehicle or with +0x1A set; else enter as driver (0x2BD) unless the
+///   criminal lives, is not finished, is not in its vehicle and is within 25 of the cop.
+/// - 0x3FE drive-by: 0x2D4 for the driver cop (+0x7C0), else 0x2C5.
+/// - 0x3E8 kill on foot: the living criminal or the next one; a forced kill on foot when `ChangeTarget` accepts it.
+///   Else +0x19 = 1 after the new sub-task: finished (+0x1A set or no vehicle), enter as passenger (0x2BC) for a
+///   passenger cop whose partner lives, else the cop becomes the driver (+0x7C0 = 1, `SetPartner(NULL)`) and enters as
+///   driver (0x2BD).
+/// - any other type: null.
+///
+/// gta-reversed differs: it tests `bInVehicle` instead of the vehicle pointer in the leave-car case and does not set
+/// +0x1A in the enter-as-driver case (the bytes do).
+#[hook(addr = 0x68E4F0, conv = thiscall, name = "CTaskComplexKillCriminal::CreateNextSubTask", expect = "83 EC 18 53 55 56 8B F1",
+       unverified = "frontier2-a1", route = "L2", hazards = "heap-writes")]
+pub fn kill_criminal_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let partner = rd::<GPtr<u8>>(cop(this), 0x7A8);
+    let cs = |ty: i32| create_sub_task_call(this, ty, ped, 0);
+    match v_task_type(sub_task(this)) {
+        0x2BD => {
+            if !in_vehicle(ped) {
+                let fin = rd::<u8>(this, 0x19);
+                wr::<u8>(this, 0x1A, 1);
+                let c = criminal(this);
+                return cs(if fin == 0 && !c.is_null() && alive_gt(c) { 0x3E8 } else { 0x516 });
+            }
+            let p = partner.is_null() || dead(partner) || in_vehicle(partner);
+            let c = criminal(this);
+            if rd::<u8>(this, 0x19) == 0 && !c.is_null() && !dead(c) {
+                if !(in_vehicle(c) && !veh_of(c).is_null()) {
+                    let pv = veh_of(ped);
+                    if pv.is_null() {
+                        return cs(0x3E8);
+                    }
+                    if !gt(sub_sq(entity_pos(pv), entity_pos(c)), x(g::<f32>(0x85A6E8).read())) {
+                        return cs(0x3E8);
+                    }
+                }
+                return cs(if p { 0x2D4 } else { 0x2C5 });
+            }
+            let n = find_next_criminal_call(this, ped, 1);
+            if !n.is_null() && change_target_call(this, n) != 0 {
+                return create_sub_task_call(this, 0x3E8, ped, 1);
+            }
+            if in_vehicle(ped) {
+                let v = veh_of(ped);
+                if !v.is_null() {
+                    wr::<u8>(v, 0x42D, rd::<u8>(v, 0x42D) & 0x7F);
+                }
+            }
+            cs(if p { 0x516 } else { 0x2C5 })
+        }
+        0x2BC => {
+            if in_vehicle(ped) {
+                return cs(0x2C5);
+            }
+            let fin = rd::<u8>(this, 0x19);
+            wr::<u8>(this, 0x1A, 1);
+            let c = criminal(this);
+            cs(if fin == 0 && !c.is_null() && alive_gt(c) { 0x3E8 } else { 0x516 })
+        }
+        0x2C0 => {
+            if veh_of(ped).is_null() || rd::<u8>(this, 0x1A) != 0 {
+                return cs(0x3E8);
+            }
+            let c = criminal(this);
+            if rd::<u8>(this, 0x19) == 0
+                && !c.is_null()
+                && !dead(c)
+                && !(in_vehicle(c) && !veh_of(c).is_null())
+                && !gt(sub_sq(entity_pos(ped), entity_pos(c)), x(g::<f32>(0x85A6E8).read()))
+            {
+                return cs(0x3E8);
+            }
+            cs(0x2BD)
+        }
+        0x3FE => cs(if rd::<u8>(cop(this), 0x7C0) != 0 { 0x2D4 } else { 0x2C5 }),
+        0x3E8 => {
+            let c = criminal(this);
+            let n = if !c.is_null() && alive_gt(c) { c } else { find_next_criminal_call(this, ped, 1) };
+            if !n.is_null() && change_target_call(this, n) != 0 {
+                return create_sub_task_call(this, 0x3E8, ped, 1);
+            }
+            if rd::<u8>(this, 0x1A) != 0 || veh_of(ped).is_null() {
+                return finish_with(this, 0x516, ped);
+            }
+            let k = cop(this);
+            if rd::<u8>(k, 0x7C0) == 0 {
+                if !partner.is_null() && !dead(partner) {
+                    return finish_with(this, 0x2BC, ped);
+                }
+                wr::<u8>(k, 0x7C0, 1);
+                cop_set_partner(cop(this), GPtr::NULL);
+            }
+            finish_with(this, 0x2BD, ped)
+        }
+        _ => GPtr::NULL,
+    }
+}
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_KILL_CRIMINAL_CREATE_FIRST_SUB_TASK,
     HOOK_KILL_CRIMINAL_FIND_NEXT_CRIMINAL_TO_KILL,
     HOOK_KILL_CRIMINAL_CHANGE_TARGET,
     HOOK_KILL_CRIMINAL_CONTROL_SUB_TASK,
     HOOK_KILL_CRIMINAL_MAKE_ABORTABLE,
+    HOOK_KILL_CRIMINAL_CREATE_SUB_TASK,
+    HOOK_KILL_CRIMINAL_CREATE_NEXT_SUB_TASK,
 ];

@@ -11,7 +11,7 @@ use crate::call::SCRATCH;
 use crate::generate::Rng;
 use crate::mspec::*;
 use crate::specs::{ExpRet, RetKind::*, Spec};
-use sa_ai::{car_enter, misc, tasks};
+use sa_ai::{car_enter, event_dtors, misc, tasks};
 use sa_core::abi::{PRESERVE_ECX, PRESERVE_EDX};
 use sa_core::mem::GPtr;
 
@@ -165,5 +165,27 @@ pub fn all() -> Vec<Spec> {
             w.finish(&mut c.mem);
             ExpRet::Eax(r)
         }),
+        // FRONTIER-2 part 4 (frontier2-7): the folded event destructors `mov dword [ecx], 0x85AB38; ret`; their scalar
+        // deleting destructors 0x4B6080 / 0x4B65C0 / 0x4B6750 read ECX after the call
+        event_vtbl_dtor("AiEventReviveDtor", "CEventRevive::Destructor", 0x4AECA0, event_dtors::event_revive_dtor),
+        event_vtbl_dtor(
+            "AiEventHitByWaterCannonDtor",
+            "CEventHitByWaterCannon::Destructor",
+            0x4B1320,
+            event_dtors::event_hit_by_water_cannon_dtor,
+        ),
+        event_vtbl_dtor("AiEventSpecialDtor", "CEventSpecial::Destructor", 0x4B1B50, event_dtors::event_special_dtor),
     ]
+}
+
+/// A destructor that only stores the `CEvent` vtable into `this` (two words of scratch: the store and the word after).
+fn event_vtbl_dtor(key: &'static str, name: &'static str, addr: u32, f: fn(GPtr<u8>)) -> Spec {
+    b(key, name, addr, Thiscall, Void)
+        .regions(vec![raw(2)])
+        .args(vec![A::P(0)])
+        .preserve(PRESERVE_ECX)
+        .rust(move |c| {
+            f(GPtr::from_raw(c.mem.as_mut_ptr().wrapping_add(c.lay.off[0])));
+            ExpRet::Void
+        })
 }

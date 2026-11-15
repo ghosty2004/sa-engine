@@ -2,7 +2,7 @@
 # FRONTIER-1 scenarios: native sa-game runs (deterministic, --fixed-step 40, offscreen) that reach the blockers the
 # user hit. Each must end with an empty blocker list in OUT/report.md and no crash.
 #
-#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|melee|sniper|shootcar|shootdriver OUTDIR [FRAMES]
+#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|melee|sniper|shootcar|shootdriver OUTDIR [FRAMES]
 #
 # pausemenu (400)  Esc, down x3, Enter (pause-menu item 4: Stats), down, Enter, Enter: the Stats pages draw
 #                  (was a SIGSEGV at iteration ~171: CStats::GetStatValue's X87 result dispatched as cdecl)
@@ -27,6 +27,9 @@
 #                  with a driver (SA_GAME_JACK), aiming and firing at it (the user's free-roam case, FRONTIER-2 part 4): the
 #                  shots damage the car, CVehicle::InflictDamage gives its occupants a CEventVehicleDamageWeapon, and the
 #                  event group's clone is deleted later (0x61C390 -> 0x61C310 -> CEventVehicleDamage's destructor)
+# crossing-long (4000) the crossing run continued to 4000 iterations: the police chase reaches
+#                  CTaskComplexKillCriminal::CreateNextSubTask 0x68E4F0 / CreateSubTask 0x68C050 (FRONTIER-2 turn 2 lane A;
+#                  frontier2-a-counts.gdb counts them): 0 blocked
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-counts.gdb --args" counts the FRONTIER-2 ports' calls
 # (frontier2-3-counts.gdb: those of part 2).
 # Env: SA_ROOT (checkout holding wine/gta-sa; default ~/sa-engine), SA_GAME (binary; default this checkout's
@@ -55,10 +58,11 @@ solicit)
     export SA_GAME_TELEPORT="60:2505.0:-1666.4:13.4;300:2470.0:-1665.0:13.6:-2.246;400:2470.0:-1665.0:13.6:-2.364;530:2497.35:-1678.6:13.6:3.1416"
     export SA_GAME_KEYS=f:100:103,w:301:360,w:401:450,w:531:553
     run "${3:-4000}" --start-in-world ;;
-crossing)
+crossing|crossing-long)
     export SA_GAME_TELEPORT="60:2505.0:-1666.4:13.4;300:2200.6:-1850.0:13.6:3.1416"
     export SA_GAME_KEYS=f:100:103,w:330:420,s:520:560
-    run "${3:-1200}" --start-in-world ;;
+    if [ "$NAME" = crossing ]; then n=1200; else n=4000; fi
+    run "${3:-$n}" --start-in-world ;;
 melee)
     # the PEDHIT foot run's sprint into the Grove Street peds (they are next to CJ at ~905), then punches every 25
     # iterations: CTaskSimpleFight::FightHitPed lands (7 hits by 2600); stops on HandlePedHit 0x4E1CC0 and
@@ -94,6 +98,6 @@ shootdriver)
     export SA_GAME_RMB="${SA_GAME_RMB:-420:1150}" SA_GAME_LMB="${SA_GAME_LMB:-450:1150}"
     run "${3:-1200}" --start-in-world ;;
 *)
-    echo "usage: $0 pausemenu|solicit|crossing|melee|sniper|shootcar|shootdriver OUTDIR [FRAMES]" >&2
+    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|melee|sniper|shootcar|shootdriver OUTDIR [FRAMES]" >&2
     exit 2 ;;
 esac
