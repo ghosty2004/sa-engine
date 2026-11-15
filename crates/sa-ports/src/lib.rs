@@ -112,11 +112,10 @@ pub const NATIVES: &[&[&[sa_core::abi::NativeReg]]] = &[
     &[sa_pop::frontier_b2::NATIVES],
     // FRONTIER-2 turn 2, lane C
     &[sa_ai::frontier_c::NATIVES],
-    &[sa_pop::frontier_c_natives::NATIVES2],
+    &[sa_pop::frontier_c_natives::NATIVES],
     // FRONTIER-2 turn 2 lane A
     &[sa_ai::frontier_a::NATIVES],
     &[sa_ai::frontier_a_subtasks::NATIVES],
-    &[sa_pop::frontier_c_natives::NATIVES],
 ];
 
 /// Every `#[native]` registration of every crate.
