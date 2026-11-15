@@ -2766,13 +2766,13 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x4c57a0,CPedModelInfo::CPedModelInfo,unknown,game,STREAM,ghidra,0x4c57a0,0x4c57b9,25,1,0x4c57a0-0x4c57b9,,8,1,0,0,0,2,0
 0x4c57c0,CPedModelInfo::GetModelType,gr-reversed,game,STREAM,ghidra-created,0x4c57c0,0x4c57c3,3,1,0x4c57c0-0x4c57c3,,2,0,0,0,0,0,0
 0x4c57d0,C2dEffect::Shutdown,gr-reversed,game,RW,ghidra,0x4c57d0,0x4c5833,99,1,0x4c57d0-0x4c5833,,43,4,0,0,0,4,0
-0x4c5840,,unknown,game,UNK-game,ghidra-created,0x4c5840,0x4c5856,22,1,0x4c5840-0x4c5856,,7,1,0,0,0,0,0
-0x4c5860,,unknown,game,UNK-game,ghidra-created,0x4c5860,0x4c5873,19,1,0x4c5860-0x4c5873,,7,1,0,0,0,0,0
-0x4c5880,,unknown,game,UNK-game,ghidra-created,0x4c5880,0x4c5893,19,1,0x4c5880-0x4c5893,,7,1,0,0,0,0,0
-0x4c58a0,,unknown,game,UNK-game,ghidra-created,0x4c58a0,0x4c58b6,22,1,0x4c58a0-0x4c58b6,,7,1,0,0,0,0,0
-0x4c58c0,,unknown,game,UNK-game,ghidra-created,0x4c58c0,0x4c58d3,19,1,0x4c58c0-0x4c58d3,,7,1,0,0,0,0,0
-0x4c58e0,,unknown,game,UNK-game,ghidra-created,0x4c58e0,0x4c58f3,19,1,0x4c58e0-0x4c58f3,,7,1,0,0,0,0,0
-0x4c5900,,unknown,game,UNK-game,ghidra-created,0x4c5900,0x4c5913,19,1,0x4c5900-0x4c5913,,7,1,0,0,0,0,0
+0x4c5840,CModelInfo::ms_atomicModelInfoStore::~CStore,unknown,game,STREAM,ghidra-created,0x4c5840,0x4c5856,22,1,0x4c5840-0x4c5856,,7,1,0,0,0,0,0
+0x4c5860,CModelInfo::ms_damageAtomicModelInfoStore::~CStore,unknown,game,STREAM,ghidra-created,0x4c5860,0x4c5873,19,1,0x4c5860-0x4c5873,,7,1,0,0,0,0,0
+0x4c5880,CModelInfo::ms_lodAtomicModelInfoStore::~CStore,unknown,game,STREAM,ghidra-created,0x4c5880,0x4c5893,19,1,0x4c5880-0x4c5893,,7,1,0,0,0,0,0
+0x4c58a0,CModelInfo::ms_timeModelInfoStore::~CStore,unknown,game,STREAM,ghidra-created,0x4c58a0,0x4c58b6,22,1,0x4c58a0-0x4c58b6,,7,1,0,0,0,0,0
+0x4c58c0,CModelInfo::ms_lodTimeModelInfoStore::~CStore,unknown,game,STREAM,ghidra-created,0x4c58c0,0x4c58d3,19,1,0x4c58c0-0x4c58d3,,7,1,0,0,0,0,0
+0x4c58e0,CModelInfo::ms_weaponModelInfoStore::~CStore,unknown,game,STREAM,ghidra-created,0x4c58e0,0x4c58f3,19,1,0x4c58e0-0x4c58f3,,7,1,0,0,0,0,0
+0x4c5900,CModelInfo::ms_clumpModelInfoStore::~CStore,unknown,game,STREAM,ghidra-created,0x4c5900,0x4c5913,19,1,0x4c5900-0x4c5913,,7,1,0,0,0,0,0
 0x4c5920,CVehicleModelInfo::~CVehicleModelInfo,unknown,game,STREAM,ghidra,0x4c5920,0x4c5927,7,1,0x4c5920-0x4c5927,,2,0,0,0,0,1,0
 0x4c5940,CModelInfo::GetModelInfo-full,gr-reversed,game,STREAM,ghidra,0x4014ed,0x4c59a9,130,2,0x4014ed-0x401506;0x4c5940-0x4c59a9,,49,1,0,0,0,1,0
 0x4c59b0,CModelInfo::GetModelInfoFromHashKey,gr-reversed,game,STREAM,ghidra,0x4c59b0,0x4c59e7,47,2,0x4c59b0-0x4c59b8;0x4c59c0-0x4c59e7,,18,0,0,0,0,1,0
@@ -2809,8 +2809,8 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x4c62d0,CWeaponModelInfo::`scalar deleting destructor',unknown,game,STREAM,ghidra,0x4c62d0,0x4c62ee,30,1,0x4c62d0-0x4c62ee,,11,2,0,0,0,0,0
 0x4c62f0,CPedModelInfo::~CPedModelInfo,unknown,game,STREAM,ghidra,0x4c62f0,0x4c634a,90,1,0x4c62f0-0x4c634a,,27,2,0,0,0,2,0
 0x4c6350,CPedModelInfo::`scalar deleting destructor',unknown,game,STREAM,ghidra,0x4c6350,0x4c636e,30,1,0x4c6350-0x4c636e,,11,2,0,0,0,0,0
-0x4c6370,,unknown,game,UNK-game,ghidra-created,0x4c6370,0x4c6389,25,1,0x4c6370-0x4c6389,,7,1,0,0,0,0,0
-0x4c6390,,unknown,game,UNK-game,ghidra-created,0x4c6390,0x4c63a6,22,1,0x4c6390-0x4c63a6,,7,1,0,0,0,0,0
+0x4c6370,CModelInfo::ms_vehicleModelInfoStore::~CStore,unknown,game,STREAM,ghidra-created,0x4c6370,0x4c6389,25,1,0x4c6370-0x4c6389,,7,1,0,0,0,0,0
+0x4c6390,CModelInfo::ms_pedModelInfoStore::~CStore,unknown,game,STREAM,ghidra-created,0x4c6390,0x4c63a6,22,1,0x4c6390-0x4c63a6,,7,1,0,0,0,0,0
 0x4c63b0,CModelInfo::ReInit2dEffects,gr-reversed,game,STREAM,ghidra-created,0x4c63b0,0x4c63d8,40,1,0x4c63b0-0x4c63d8,,12,1,0,0,0,0,0
 0x4c63e0,CModelInfo::ShutDown,gr-reversed,game,STREAM,ghidra,0x4c63e0,0x4c6617,567,1,0x4c63e0-0x4c6617,,186,15,0,0,0,4,0
 0x4c6620,CModelInfo::AddAtomicModel,gr-reversed,game,STREAM,ghidra,0x4c6620,0x4c664d,45,1,0x4c6620-0x4c664d,,15,0,1,0,0,0,0

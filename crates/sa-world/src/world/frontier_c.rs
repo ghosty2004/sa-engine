@@ -53,7 +53,7 @@ orig! {
 /// = 1000.0; an automobile (type +0x590 == 0) gets +0x8E4 = 0, a bike (type 9) +0x7BC = 0, and either is `Fix()`ed
 /// (vtable +0xC8, tail call); other vehicle types stop after the health. Not in the catalogue (the tail of
 /// `CCheat::MoneyArmourHealthCheat`'s extent, CAT-12): a phase B native in turn 1, a hook since it is a catalogue row.
-#[sa_core::hook(addr = 0x438D60, conv = cdecl, name = "CCheat::HealthCheat", expect = "51 0F B6 05 E7 CE",
+#[sa_core::hook(addr = 0x438D60, conv = cdecl, name = "CCheat::HealthCheat", expect = "51 0F B6 05 E7 CE B7 00",
        unverified = "frontier2-c8", route = "L2", hazards = "heap-writes",
        note = "FRONTIER-2 lane C turn 3: was a phase B native until the body became a catalogue row (CAT-12 tail target)")]
 pub fn health_cheat() {

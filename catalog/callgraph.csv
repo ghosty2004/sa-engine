@@ -41849,15 +41849,15 @@ caller,callee,kind,callee_class,callee_name,sites
 0x8561f0,0x4b2950,fnref,game,FUN_004b2950,1
 0x856210,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x856210,0x4b29a0,fnref,game,CInformGroupEvent::Destructor,1
-0x856230,0x4c5840,tailcall,game,(missed by ghidra: cat7-call),1
-0x856240,0x4c5860,tailcall,game,(missed by ghidra: cat7-call),1
-0x856250,0x4c5880,tailcall,game,(missed by ghidra: cat7-call),1
-0x856260,0x4c58a0,tailcall,game,(missed by ghidra: cat7-call),1
-0x856270,0x4c58c0,tailcall,game,(missed by ghidra: cat7-call),1
-0x856280,0x4c58e0,tailcall,game,(missed by ghidra: cat7-call),1
-0x856290,0x4c5900,tailcall,game,(missed by ghidra: cat7-call),1
-0x8562a0,0x4c6370,tailcall,game,(missed by ghidra: cat7-call),1
-0x8562b0,0x4c6390,tailcall,game,(missed by ghidra: cat7-call),1
+0x856230,0x4c5840,tailcall,game,CModelInfo::ms_atomicModelInfoStore::~CStore,1
+0x856240,0x4c5860,tailcall,game,CModelInfo::ms_damageAtomicModelInfoStore::~CStore,1
+0x856250,0x4c5880,tailcall,game,CModelInfo::ms_lodAtomicModelInfoStore::~CStore,1
+0x856260,0x4c58a0,tailcall,game,CModelInfo::ms_timeModelInfoStore::~CStore,1
+0x856270,0x4c58c0,tailcall,game,CModelInfo::ms_lodTimeModelInfoStore::~CStore,1
+0x856280,0x4c58e0,tailcall,game,CModelInfo::ms_weaponModelInfoStore::~CStore,1
+0x856290,0x4c5900,tailcall,game,CModelInfo::ms_clumpModelInfoStore::~CStore,1
+0x8562a0,0x4c6370,tailcall,game,CModelInfo::ms_vehicleModelInfoStore::~CStore,1
+0x8562b0,0x4c6390,tailcall,game,CModelInfo::ms_pedModelInfoStore::~CStore,1
 0x8562c0,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x8562c0,0x4cf970,fnref,game,CAnimBlendHierarchy::Destructor,1
 0x8562f0,0x4d83a0,tailcall,game,CAEAudioHardware::Destructor,1

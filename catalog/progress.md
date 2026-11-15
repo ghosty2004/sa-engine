@@ -7,13 +7,13 @@ Functions: 22196 (15512 non-excluded, 6684 excluded). States per docs/PLAN.md se
 | Subsystem | unknown | specified | implemented | L1 | L2 | L3 | excluded | total | ≥L2 % |
 |---|---|---|---|---|---|---|---|---|---|
 | AI | 8 | 405 | 2683 | 0 | 1011 | 0 | 0 | 4107 | 24.6 |
-| UNK-game | 576 | 456 | 476 | 3 | 1328 | 0 | 0 | 2839 | 46.8 |
+| UNK-game | 576 | 456 | 467 | 3 | 1328 | 0 | 0 | 2830 | 46.9 |
 | RW | 116 | 286 | 960 | 19 | 423 | 1 | 0 | 1805 | 23.5 |
 | WORLD | 12 | 179 | 449 | 22 | 259 | 0 | 0 | 921 | 28.1 |
 | AUDIO | 2 | 95 | 309 | 0 | 442 | 0 | 0 | 848 | 52.1 |
 | RENDER | 3 | 159 | 381 | 15 | 274 | 1 | 0 | 833 | 33.0 |
 | VEH | 1 | 111 | 412 | 0 | 190 | 1 | 0 | 715 | 26.7 |
-| STREAM | 0 | 3 | 209 | 70 | 271 | 0 | 0 | 553 | 49.0 |
+| STREAM | 0 | 3 | 218 | 70 | 271 | 0 | 0 | 562 | 48.2 |
 | POP | 2 | 12 | 280 | 0 | 137 | 0 | 0 | 431 | 31.8 |
 | PED | 0 | 8 | 179 | 20 | 163 | 2 | 0 | 372 | 44.4 |
 | HUD | 0 | 0 | 139 | 24 | 179 | 0 | 0 | 342 | 52.3 |
@@ -2470,13 +2470,13 @@ Functions: 22196 (15512 non-excluded, 6684 excluded). States per docs/PLAN.md se
 | 0x4c5790 | CWeaponModelInfo::~CWeaponModelInfo | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c57a0 | CPedModelInfo::CPedModelInfo | STREAM | L2 | STREAM-L2 (agent 2026-11-10, double-run all-frames): PASS, 0 mismatches, 0 undeclared (target/streaml2/h4/verdicts.tsv); main session: keycells merge, all ports IDENTICAL on 3 recordings | 2026-11-10 |
 | 0x4c57c0 | CPedModelInfo::GetModelType | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
-| 0x4c5840 |  | UNK-game | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
-| 0x4c5860 |  | UNK-game | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
-| 0x4c5880 |  | UNK-game | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
-| 0x4c58a0 |  | UNK-game | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
-| 0x4c58c0 |  | UNK-game | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
-| 0x4c58e0 |  | UNK-game | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
-| 0x4c5900 |  | UNK-game | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
+| 0x4c5840 | CModelInfo::ms_atomicModelInfoStore::~CStore | STREAM | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
+| 0x4c5860 | CModelInfo::ms_damageAtomicModelInfoStore::~CStore | STREAM | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
+| 0x4c5880 | CModelInfo::ms_lodAtomicModelInfoStore::~CStore | STREAM | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
+| 0x4c58a0 | CModelInfo::ms_timeModelInfoStore::~CStore | STREAM | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
+| 0x4c58c0 | CModelInfo::ms_lodTimeModelInfoStore::~CStore | STREAM | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
+| 0x4c58e0 | CModelInfo::ms_weaponModelInfoStore::~CStore | STREAM | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
+| 0x4c5900 | CModelInfo::ms_clumpModelInfoStore::~CStore | STREAM | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
 | 0x4c5920 | CVehicleModelInfo::~CVehicleModelInfo | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c5940 | CModelInfo::GetModelInfo-full | STREAM | L2 | STREAM-L2 (2026-11-07): main-session port-l2.sh lane 2 all-frames batches sR0-sR2 (SA_L2_FROM=0, 1000/frame, spool drained): every call or >=1000 cases, 0 mismatches, 0 undeclared writes (sR0 l2 trace leaves plain at frame 202 because loader sampling changes heap allocation; per-case comparisons stay original vs Rust from the same restored state); all ports on Rust frame-identical; hook-off not run | 2026-11-07 |
 | 0x4c59b0 | CModelInfo::GetModelInfoFromHashKey | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
@@ -2513,8 +2513,8 @@ Functions: 22196 (15512 non-excluded, 6684 excluded). States per docs/PLAN.md se
 | 0x4c62d0 | CWeaponModelInfo::`scalar deleting destructor' | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c62f0 | CPedModelInfo::~CPedModelInfo | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c6350 | CPedModelInfo::`scalar deleting destructor' | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
-| 0x4c6370 |  | UNK-game | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
-| 0x4c6390 |  | UNK-game | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
+| 0x4c6370 | CModelInfo::ms_vehicleModelInfoStore::~CStore | STREAM | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
+| 0x4c6390 | CModelInfo::ms_pedModelInfoStore::~CStore | STREAM | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
 | 0x4c63b0 | CModelInfo::ReInit2dEffects | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c63e0 | CModelInfo::ShutDown | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c6620 | CModelInfo::AddAtomicModel | STREAM | L2 | STREAM-L2 (2026-11-07): main-session port-l2.sh lane 2 all-frames batches sR0-sR2 (SA_L2_FROM=0, 1000/frame, spool drained): every call or >=1000 cases, 0 mismatches, 0 undeclared writes (sR0 l2 trace leaves plain at frame 202 because loader sampling changes heap allocation; per-case comparisons stay original vs Rust from the same restored state); all ports on Rust frame-identical; hook-off not run | 2026-11-07 |
