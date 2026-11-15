@@ -206,10 +206,7 @@ fn player_group(p: GPtr<u8>) -> GPtr<u8> {
     g::<u8>(GROUPS + rd::<i32>(pdata(p), 0x38) as usize * GROUP_SIZE)
 }
 
-/// `&m_aWeapons[(int8)m_nActiveWeaponSlot]`
-fn active_weapon(p: GPtr<u8>) -> GPtr<u8> {
-    p.byte_add(0x5A0 + rd::<i8>(p, 0x718) as isize * 0x1C)
-}
+use sa_world::world::common::ped_active_weapon as active_weapon;
 
 use sa_world::world::common::entity_type as ent_type;
 

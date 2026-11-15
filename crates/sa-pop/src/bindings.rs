@@ -379,6 +379,11 @@ orig! {
 }
 
 orig! {
+    /// `CPed::AddWeaponModel` (0x5E5ED0)
+    pub fn add_weapon_model(p: GPtr<u8>, model: i32) = thiscall 0x5E5ED0 => unported;
+}
+
+orig! {
     /// `CPopulation::RemovePed` (0x610F20)
     pub fn population_remove_ped(p: GPtr<u8>) = cdecl 0x610F20 => crate::population::remove_ped;
 }

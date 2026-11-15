@@ -26,6 +26,7 @@ use sa_world::bindings::{
 
 use crate::bindings::clean_up_this_vehicle;
 use crate::bindings::cleanup_remove_entity_from_list;
+use crate::bindings::drive_by_start_anim;
 orig! {
     /// virtual `CEvent::GetEventType()` (vtable +4)
     fn v_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
@@ -37,8 +38,6 @@ orig! {
     fn kill_on_foot_allocator_dtor(t: GPtr<u8>) = thiscall 0x69BBF0 => unported;
     /// the sunbathe weather test (0x62F2D0, cdecl, the weather type in AX; generated port in gen_bodies)
     fn sunbathe_weather_ok(w: u32) -> u32 = cdecl 0x62F2D0 => unported;
-    /// `CTaskSimpleGangDriveBy` anim start (0x627B20, `ret 4`, AL)
-    fn drive_by_start_anim(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x627B20 => gang_drive_by_start_anim;
 }
 
 /// `CTaskSimpleJetPack::Constructor(const CVector* target, float cruiseHeight, int32 hoverTime, CEntity* target)`

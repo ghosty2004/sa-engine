@@ -18,13 +18,11 @@ use sa_core::bindings::general_random_int_in_range;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::compute_target_door_to_exit as car_enter_exit_compute_target_door_to_exit;
 use crate::bindings::car_drive_start_bopping;
+use crate::bindings::vehicle_can_ped_lean_out;
+use crate::bindings::vehicle_set_window_open_flag;
 orig! {
     /// `CVehicle::ClearWindowOpenFlag(uint8)` (0x6D30B0, `ret 4`)
     fn vehicle_clear_window_open_flag(v: GPtr<u8>, door: u32) = thiscall 0x6D30B0 => unported;
-    /// `CVehicle::SetWindowOpenFlag(uint8)` (0x6D3080, `ret 4`)
-    fn vehicle_set_window_open_flag(v: GPtr<u8>, door: u32) = thiscall 0x6D3080 => unported;
-    /// `CVehicle::CanPedLeanOut(CPed*)` (0x6D5CF0, `ret 4`)
-    fn vehicle_can_ped_lean_out(v: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6D5CF0 => unported;
 }
 
 /// The bopping switch value (0xC81324, float): above 0 every window closes and nothing bops

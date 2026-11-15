@@ -170,6 +170,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x620F70,sa-ai,kill_ped_on_foot_stealth_ctor,thiscall,,t:GPtr<u8>;ped:GPtr<u8>,GPtr<u8>,unported,CTaskComplexKillPedOnFootStealth::Constructor,
 0x6225F0,sa-ai,stealth_kill_ctor,thiscall,,t:GPtr<u8>;b:u32;src:GPtr<u8>;g:u32,GPtr<u8>,unported,CTaskSimpleStealthKill::Constructor,
 0x6240B0,sa-ai,fight_6240b0,thiscall,,t:GPtr<u8>;ped:GPtr<u8>;pos:GPtr<u8>,,unported,FUN_006240b0,
+0x627B20,sa-ai,drive_by_start_anim,thiscall,,t:GPtr<u8>;ped:GPtr<u8>,u8,sa_ai::frontier_a::gang_drive_by_start_anim,FUN_00627b20,
 0x629080,sa-ai,road_rage_create_sub_task,thiscall,,t:GPtr<u8>;ty:i32;ped:GPtr<u8>,GPtr<u8>,sa_ai::road_rage_sub_tasks::road_rage_create_sub_task,CTaskComplexRoadRage::CreateSubTask,
 0x62F360,sa-ai,stand_still_dtor,thiscall,,this:GPtr<u8>,,unported,FUN_0062f360,
 0x62F370,sa-ai,stand_still_process_ped,thiscall,,t:GPtr<u8>;ped:GPtr<u8>,u8,unported,CTaskSimpleStandStill::ProcessPed,
@@ -293,8 +294,10 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x6D3020,sa-ai,vehicle_set_getting_out_flags,thiscall,,v:GPtr<u8>;f:u32,,unported,CVehicle::SetGettingOutFlags,
 0x6D3040,sa-ai,vehicle_clear_getting_in_flags,thiscall,,v:GPtr<u8>;f:u32,,unported,CVehicle::ClearGettingInFlags,
 0x6D3060,sa-ai,vehicle_clear_getting_out_flags,thiscall,,v:GPtr<u8>;doors:u32,,unported,CVehicle::ClearGettingOutFlags,
+0x6D3080,sa-ai,vehicle_set_window_open_flag,thiscall,,v:GPtr<u8>;door:u32,,unported,CVehicle::SetWindowOpenFlag,
 0x6D3AE0,sa-ai,veh_spare_hassle_pos,thiscall,,v:GPtr<u8>,i32,unported,CVehicle::GetSpareHasslePosId,
 0x6D3B30,sa-ai,vehicle_set_hassle_pos_id,thiscall,,v:GPtr<u8>;id:i32;b:u32,,unported,CVehicle::SetHasslePosId,
+0x6D5CF0,sa-ai,vehicle_can_ped_lean_out,thiscall,,v:GPtr<u8>;ped:GPtr<u8>,u8,unported,CVehicle::CanPedLeanOut,
 0x6DF930,sa-world,remove_vehicle_upgrade,thiscall,,v:GPtr<u8>;m:i32,,unported,CVehicle::RemoveVehicleUpgrade,sa_veh::vehicle_upgrade_remove::remove_vehicle_upgrade
 0x6E3400,sa-world,vehicle_setup_upgrades_after_load,thiscall,,v:GPtr<u8>,,unported,CVehicle::SetupUpgradesAfterLoad,sa_veh::vehicle2::setup_upgrades_after_load
 0x6E3C80,sa-ai,veh_anim_group_compute_critical_blend_time,thiscall,,g:GPtr<u8>;anim:u32,f64,unported,CVehicleAnimGroup::ComputeCriticalBlendTime,
@@ -1196,7 +1199,6 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x5DF170,sa-ped,remove_goggles_model,thiscall,,p:GPtr<u8>,,sa_ped::ped_weapon::remove_goggles_model_port,CPed::RemoveGogglesModel,
 0x5E1950,sa-ped,ped_clear_look_flag,thiscall,,ped:GPtr<u8>,,sa_ped::ped::clear_look_flag,CPed::ClearLookFlag,
 0x5E4880,sa-ped,ped_set_model_index,thiscall,,p:GPtr<u8>;m:u32,,sa_ped::ped_life::ped_set_model_index,CPed::SetModelIndex,
-0x5E5ED0,sa-ped,add_weapon_model,thiscall,,p:GPtr<u8>;model:i32,,sa_ped::ped_render::add_weapon_model,CPed::AddWeaponModel,
 0x5E8030,sa-ped,ped_ctor,thiscall,,p:GPtr<u8>;ty:u32,GPtr<u8>,sa_ped::ped_life::ped_constructor,CPed::Constructor,
 0x5E8910,sa-ped,request_delayed_weapon,thiscall,,p:GPtr<u8>,,sa_ped::ped_render::request_delayed_weapon,CPed::RequestDelayedWeapon,
 0x60A1D0,sa-ped,tell_group_to_start_following_player,thiscall,,p:GPtr<u8>;a:u32;b:u32;c:u32,,sa_ped::player_target::tell_group_to_start_following_player,CPlayerPed::TellGroupToStartFollowingPlayer,
@@ -1268,6 +1270,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x556780,sa-pop,rope_remove,thiscall,,rope:GPtr<u8>,,unported,CRope::Remove,sa_render::mvpa_render1::rope_remove
 0x588B60,sa-pop,get_y_pos_based_on_health_st0,cdecl,,player:u8;y:f32;offset:i8,f64,unported,CHud::GetYPosBasedOnHealth,
 0x5DE5A0,sa-pop,choose_gang_ped_model,cdecl,,gang:i16,i32,sa_pop::gangs::choose_gang_ped_model,CGangs::ChooseGangPedModel,
+0x5E5ED0,sa-pop,add_weapon_model,thiscall,,p:GPtr<u8>;model:i32,,unported,CPed::AddWeaponModel,sa_ped::ped_render::add_weapon_model
 0x611570,sa-pop,population_update_ped_count,cdecl,,p:GPtr<u8>;b:u8,,sa_pop::population::update_ped_count,CPopulation::UpdatePedCount,
 0x6116C0,sa-pop,pdm_call,cdecl,,,sa_math::x87::X87,sa_pop::population::ped_creation_dist_multiplier,CPopulation::PedCreationDistMultiplier,
 0x612F90,sa-pop,choose_civilian_occupation,cdecl,,male:u8;female:u8;race:i32;exclude:i32;stat:i32;a:u8;b:u8;c:u8;name:GPtr<u8>,i32,sa_pop::population2::choose_civilian_occupation,CPopulation::ChooseCivilianOccupation,

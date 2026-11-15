@@ -50,6 +50,11 @@ pub fn entity_pos3(e: GPtr<u8>) -> [f32; 3] {
     sa_core::field::rd3f(entity_pos(e))
 }
 
+/// `&ped->m_aWeapons[(int8)ped->m_nActiveWeaponSlot]` (the weapons at +0x5A0, stride 0x1C; the slot byte +0x718).
+pub fn ped_active_weapon(p: GPtr<u8>) -> GPtr<u8> {
+    p.byte_add(0x5A0 + rd::<i8>(p, 0x718) as isize * 0x1C)
+}
+
 /// `CEntity::m_nType` (the low 3 bits of +0x36).
 pub fn entity_type(e: GPtr<u8>) -> u8 {
     rd::<u8>(e, 0x36) & 7
