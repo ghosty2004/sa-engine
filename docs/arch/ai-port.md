@@ -804,8 +804,8 @@ List: `tools/e2e/lists/ai3-split.txt` (the 55 v1 hooks; every one writes or call
 |---|---|---|
 | all engine ports on Rust (`port-l2.sh ports REC --runs "plain rust"`), **L3** | v1 | IDENTICAL on all 17 subsystems and every frame on driving, grove, c-bug, pause-restart, world-cheats, anim-input, weapon-combat. **car-ai: DIVERGED at frame 2363, `buildings` only** (every other subsystem incl. rand/randcalls identical to the end) |
 | car-ai bisection, `--runs "plain rust"` with a hook list | v1 | the 55 new hooks alone: IDENTICAL; every other port (2917) alone: IDENTICAL; every port as a list (2972, list mode): IDENTICAL; `ports` mode again: DIVERGED at 2363 (reproducible) |
-| car-ai `ports` mode on the parent commit 73ec3b0 (no PORT-AI-3 code) | v0 | **DIVERGED at 2363, `buildings`**: the divergence predates this pass. `ports` mode differs from list mode in that sa-hook's own pre-ARCH-1 hooks (`Ps::psInstallFileSystem`, CIplStore, CdStream, pools ...) are installed in Rust mode from process start (`rust.log` install lines); frame 2363 is CJ's death and hospital respawn (a new area streams in) |
-| all engine ports on Rust, **L3** | v2 | IDENTICAL on driving, grove, c-bug, pause-restart, world-cheats, anim-input, weapon-combat; car-ai `ports` mode DIVERGED at 2363 `buildings` as at 73ec3b0; car-ai with every port as a list (2970 hooks): IDENTICAL over 5000 frames |
+| car-ai `ports` mode on the parent commit 7055b44 (no PORT-AI-3 code) | v0 | **DIVERGED at 2363, `buildings`**: the divergence predates this pass. `ports` mode differs from list mode in that sa-hook's own pre-ARCH-1 hooks (`Ps::psInstallFileSystem`, CIplStore, CdStream, pools ...) are installed in Rust mode from process start (`rust.log` install lines); frame 2363 is CJ's death and hospital respawn (a new area streams in) |
+| all engine ports on Rust, **L3** | v2 | IDENTICAL on driving, grove, c-bug, pause-restart, world-cheats, anim-input, weapon-combat; car-ai `ports` mode DIVERGED at 2363 `buildings` as at 7055b44; car-ai with every port as a list (2970 hooks): IDENTICAL over 5000 frames |
 | split `ai3-split.txt` | v1 | splito/splitr traces == plain on every frame on all four recordings. Verdicts per row in `ai-port-3-verdicts.tsv`. DIVERGED (inputs differ) only for the two `ComputeAnimID` pairs whose pointer arguments point into the Rust caller's stack. FAIL: 0x6479B0 and 0x647D10 on all four recordings (window writes from 0x967F50 on, in the `CCollision::ProcessColModels` statics 0x967F40.., differ: orig `0x0036E614`, a stack address, rust `0x00xx0001`, and the two write a different number of bytes), and 0x6419F0 on c-bug only (2 of 19 cases: 0x967F50 holds a stack address that differs by exactly 0x40, the Rust caller's deeper stack: a normaliser gap, not a logic difference) |
 
 - 0x6479B0 / 0x647D10 were unregistered (v2, 296c723) and stay `ported-unregistered`; the cause is not resolved
@@ -819,7 +819,7 @@ List: `tools/e2e/lists/ai3-split.txt` (the 55 v1 hooks; every one writes or call
 
 ## Open items
 
-- car-ai frame 2363 `buildings` divergence in `ports` mode (pre-existing at 73ec3b0; list mode identical): bisect over
+- car-ai frame 2363 `buildings` divergence in `ports` mode (pre-existing at 7055b44; list mode identical): bisect over
   sa-hook's local hooks (harness slot).
 - 0x6479B0 / 0x647D10 split FAIL at 0x967F50 (`CCollision::ProcessColModels` statics): find what writes there, then
   either fix the port or add a normaliser rule; 0x6419F0's c-bug FAIL is the stack-address case of the same static.
@@ -1274,7 +1274,7 @@ after porting). Ported from the 1.0 US bytes (objdump of the exe incl. the prote
   never executed in the corpus; time box).
 - No `preserve=`, `footprint` or `fallback` in this pass (sa-hook `callers` test green).
 - **Build fix on master**: `crates/sa-veh/src/vehicle2.rs` declared two `orig!` ST0 returns as `X87` (16 bytes since
-  3064b95), which the phase-A return check rejects (i686 build broken at ee3477c); declared `f64` and converted with
+  28e00d9), which the phase-A return check rejects (i686 build broken at ee3477c); declared `f64` and converted with
   `X87::from_f64_exact` (separate commit).
 
 ### Verification (lane 1, `SA_ROOT=/home/ghosty2004/sa-engine`)

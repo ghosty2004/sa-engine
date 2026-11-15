@@ -1,6 +1,6 @@
 # INTEGRATE-7: the native path (STD-10..14), VERIFIER-9 and the writers
 
-Integration branch `worktree-agent-aa1e6f32d27702b8b`, from master `efe5120`. INTEGRATE-6
+Integration branch `worktree-agent-aa1e6f32d27702b8b`, from master `6cf5457`. INTEGRATE-6
 (`worktree-agent-aa4c0e8384f020c37`) had not finished when this started (no `docs/verify/integration-6.md`), so it
 is skipped, and PORT-AI-7 comes in through the STD-14 chain instead.
 
@@ -15,8 +15,8 @@ side was kept and the files were then regenerated with `tools/gen/ai_patterns.py
 | step | source (branch, commits) | taken as | notes |
 |---|---|---|---|
 | 1 | INTEGRATE-6 | skipped | not finished at 09:01 |
-| 2a | STD-13 `worktree-agent-adab932ed2ad46a44` `ca917d6..9e704a6` (53 commits: STD-10, STD-11, STD-12, STD-13 and its WRITER-O/P/Q/INTRO picks) | 49 picks | skipped because master already has them: `d0bd681` (= `0ba8327`), `ab960d0` (= `abe5e42`), `08075c2` (= `c97b6d1`), `2077fc0` (= `399478d`, WRITER-P); `bf33506d` is regeneration only (empty after resolution). Conflicts in `crates/sa-game` were resolved in favour of STD-13; master's `--samp` host skeleton was then put back onto STD-13's `Session` loop (`fe187de`) |
-| 2b | STD-14 `worktree-agent-a98204e188a13ff2e` = WRITER-NATIVE `worktree-agent-a6d319b53fd3185ec`, `9e704a6..3ab9516` (36 commits) | picks | these carry RENDER-SHADOW `7e080de1` / `86d6e5fd` / `39842281`, PORT-AI-7 `f9328ce` / `462c48d` / `5e4797c`, PORT-AI-8 `60ec250` / `e030fcd`, WRITER-ATTR attr-1 and attr-3..attr-7, WRITER-NATIVE native-3..native-13 and STD-14's std14-* commits |
+| 2a | STD-13 `worktree-agent-adab932ed2ad46a44` `99d634e..05c90b7` (53 commits: STD-10, STD-11, STD-12, STD-13 and its WRITER-O/P/Q/INTRO picks) | 49 picks | skipped because master already has them: `0be51fd` (= `08ada4c`), `66cb0f7` (= `6613470`), `081f25e` (= `6753e3a`), `59d32a6` (= `84c4c49`, WRITER-P); `89d35666` is regeneration only (empty after resolution). Conflicts in `crates/sa-game` were resolved in favour of STD-13; master's `--samp` host skeleton was then put back onto STD-13's `Session` loop (`bee70b4`) |
+| 2b | STD-14 `worktree-agent-a98204e188a13ff2e` = WRITER-NATIVE `worktree-agent-a6d319b53fd3185ec`, `05c90b7..bdfe737` (36 commits) | picks | these carry RENDER-SHADOW `7e080de1` / `86d6e5fd` / `39842281`, PORT-AI-7 `f9328ce` / `462c48d` / `5e4797c`, PORT-AI-8 `60ec250` / `e030fcd`, WRITER-ATTR attr-1 and attr-3..attr-7, WRITER-NATIVE native-3..native-13 and STD-14's std14-* commits |
 | 2c | WRITER-ATTR `worktree-agent-a1954952637efd64a` | `dcbe3d2`, `53c1f7e`, `5ee67d7`, `2c9d51a` | attr-2, attr-7 rest, attr-8; `84ed7ba` / `b3bd508` are queue regeneration only |
 | 2d | WRITER-NATIVE | `092fa86` (0x421A50) | `f19bf238` (AI-GEN regeneration) gives the same output as our own regeneration |
 | 3 | VERIFIER-9 `worktree-agent-a6555c420bac1a0c9` | `dbcac4a`, `44d4157`, `1f4dbaf`, `fa78175` | 0x5F1FA0 `CPedGeometryAnalyser::ComputeEntityBoundingBoxCornersUncached` keeps `unverified = "intro-ai-1"` (main-session decision); `verdicts-native.tsv` marks it `open` |
@@ -25,9 +25,9 @@ side was kept and the files were then regenerated with `tools/gen/ai_patterns.py
 | 4c | WRITER-SAMP `worktree-agent-ac88fcf86cc63a973` | `39986d4c` | |
 | 4d | PORT-AI-8 `worktree-agent-a70c1c8af9cc7a9c7` | `d879c4d2` | `60ec250` / `e030fcd` came in through 2b; generator and exclude list taken, AI-GEN modules regenerated |
 | 4e | PORT-VEH-4 `worktree-agent-a2678b899a4c57db1` | `08c723d`, `49cc1ac3`, `df2eefba` | resolved by hand (see below) |
-| 4f | SAMP-UI `worktree-agent-a76d04bde0aeeaa67` | `3323627..90afa23` (10 commits) | `--samp-ui-demo` and `samp_input` put back onto STD-13's `Session` (the UI filters are applied in `Session::iterate`, so window mode and offscreen mode both go through them) |
-| 4g | STD-14 after `3ab9516` | `7db1048`, `df65922`, `963962e`, `6f54784`, `03ef542`, `35ef39b`; `d6d8ecd`'s settlement reproduced | `df65922` adds the AI-GEN exclusion of 0x5F2B80 / 0x5F3730 / 0x5F3B40: their generated bodies called 0x5F1FA0 as a one-argument thiscall, but it takes three cdecl arguments |
-| fix | this integration | `b34c610` | `CPedAttractor` `orig!` declarations of ComputeDeltaPos / ComputeDeltaHeading returned `X87`, and the phase A DLL did not build (an `orig!` return must fit in a register pair). They now return f64 (ST0) through `_st0` wrappers |
+| 4f | SAMP-UI `worktree-agent-a76d04bde0aeeaa67` | `5b1ef73..ff48656` (10 commits) | `--samp-ui-demo` and `samp_input` put back onto STD-13's `Session` (the UI filters are applied in `Session::iterate`, so window mode and offscreen mode both go through them) |
+| 4g | STD-14 after `bdfe737` | `ba3df6c`, `ee0b1cf`, `47452dd`, `52d0691`, `4991414`, `cd73461`; `4871d38`'s settlement reproduced | `ee0b1cf` adds the AI-GEN exclusion of 0x5F2B80 / 0x5F3730 / 0x5F3B40: their generated bodies called 0x5F1FA0 as a one-argument thiscall, but it takes three cdecl arguments |
+| fix | this integration | `b28624f` | `CPedAttractor` `orig!` declarations of ComputeDeltaPos / ComputeDeltaHeading returned `X87`, and the phase A DLL did not build (an `orig!` return must fit in a register pair). They now return f64 (ST0) through `_st0` wrappers |
 
 Not taken: SAMP-4 (main-session decision). WRITER-SAMP-2 `a089a405` / `855a5ba0` was offered late and is not taken,
 because it would have needed a second full verify-all (open item).
@@ -39,7 +39,7 @@ because it would have needed a second full verify-all (open item).
   were removed (`visibility_vehicle`, `visibility_weapon`, `float_pow`, `vehicle_collision_particles`).
 - Hand ports beat generated hooks through the generator, not through hand edits: `ai_patterns.py` skips every
   address that is already ported, plus `tools/gen/ai_patterns_exclude.txt` (PORT-AI-8's list plus STD-14's
-  three 0x5F1FA0 callers). STD-14's hand edits of `gen_*.rs` (`3ab9516`) are reproduced by the generator
+  three 0x5F1FA0 callers). STD-14's hand edits of `gen_*.rs` (`bdfe737`) are reproduced by the generator
   (`--check` clean).
 - WRITER-SAMP's copies were dropped in favour of WRITER-NATIVE / WRITER-ATTR / STD-13:
   - hooks 0x46F690, 0x640330, 0x6478B0, 0x647950 (`car_task_ctors_dtors.rs`)
@@ -48,7 +48,7 @@ because it would have needed a second full verify-all (open item).
   - hook 0x734E50 (`quad_marker_wind_index_buffer.rs`; WRITER-ATTR's `rw_tex_dict_find_hash.rs` stays)
   - natives 0x4AD420 and 0x5E01B0 (master's `std7_natives` has them)
 - WRITER-WORLD's 0x59EE80 `CHandObject::Render` gave way to WRITER-ATTR's `hand_object.rs`.
-- 0x6B7080 `CBike::PlayCarHorn` and 0x64F240 `CCarEnterExit::IsPlayerToQuitCarEnter` follow STD-14 (`d6d8ecd`):
+- 0x6B7080 `CBike::PlayCarHorn` and 0x64F240 `CCarEnterExit::IsPlayerToQuitCarEnter` follow STD-14 (`4871d38`):
   PORT-VEH-3's ports stay, and STD-13/14's `bike_car_horn.rs` / `player_quit_car_enter.rs` are removed.
 - PORT-VEH-4 against WRITER-WORLD: WRITER-WORLD's copies stay for these:
   - BreakObject_c ×7 (`break_object.rs`)
@@ -76,7 +76,7 @@ because it would have needed a second full verify-all (open item).
 - `cargo test -p sa-script --lib`: 9 passed. `-p sa-core --lib`: 72 passed. `-p sa-rw-wgpu`: 58 passed.
 - `cargo test -p sa-oracle --test l1 --release`: 17 passed, 1 ignored, and `preserved_registers_match_the_hook_registrations`
   failed. That test flagged STD-12's skid-value hooks 0x4F5F30 / 0x4F6000, which use `preserve = edx` but have no
-  spec. They are now in `PRESERVE_SPECS_PENDING` (`a46da0b`), and the test passes on a rerun. The full run took
+  spec. They are now in `PRESERVE_SPECS_PENDING` (`ba44fa2`), and the test passes on a rerun. The full run took
   1422 s and did not hang.
 - sa-oracle and satool were rebuilt in this worktree (release).
 - `i686-pc-windows-gnu` release build of sa-launcher and sa-hook: clean. This needed the f64 fix above.
@@ -87,7 +87,7 @@ because it would have needed a second full verify-all (open item).
 
 ## verify-all
 
-`SA_ROOT=~/sa-engine tools/e2e/verify-all.sh int7 6,7` at `b34c610`, DLL sha256 `c813154e…`. **IDENTICAL on all
+`SA_ROOT=~/sa-engine tools/e2e/verify-all.sh int7 6,7` at `b28624f`, DLL sha256 `c813154e…`. **IDENTICAL on all
 13 recordings**, 17 subsystems each:
 
 | recording | frames |
@@ -108,15 +108,15 @@ because it would have needed a second full verify-all (open item).
 
 The disk guard skipped no recording, and no step had to be dropped.
 
-The first attempt failed for two reasons: the phase A DLL did not build (fixed in `b34c610`), and satool had not
+The first attempt failed for two reasons: the phase A DLL did not build (fixed in `b28624f`), and satool had not
 been built in the worktree yet. Neither is a divergence.
 
-Changes after `b34c610`:
+Changes after `b28624f`:
 - WRITER-SAMP's two duplicate natives were removed. This matters for phase B only, but it changes the DLL bytes
   (sha256 `281422d7…`).
 - `PRESERVE_SPECS_PENDING`, the verdict note, the MVP gap list and this document changed.
 
-The final head `a46da0b` (DLL `281422d7…`) was rechecked as `verify-all.sh int7b 6,7` on the grove walk (inf4,
+The final head `ba44fa2` (DLL `281422d7…`) was rechecked as `verify-all.sh int7b 6,7` on the grove walk (inf4,
 5200 frames) and on driving (4338 frames): IDENTICAL on both.
 
 ## VERIFIER-9 promotions for the catalogue (162)

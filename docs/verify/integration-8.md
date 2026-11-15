@@ -1,14 +1,14 @@
 # INTEGRATE-8: WEB-3's tree on master
 
-Integration branch `worktree-agent-ac8a20a070c956b08`, from master `b239e888`. It brings in WEB-3
-(`worktree-agent-a51e2199757a44c0b`, head `421ba072`): the web build (wasm32, WebGL2/WebGPU, input, full window,
+Integration branch `worktree-agent-ac8a20a070c956b08`, from master `518819bb`. It brings in WEB-3
+(`worktree-agent-a51e2199757a44c0b`, head `be0762be`): the web build (wasm32, WebGL2/WebGPU, input, full window,
 menu cursor), SA:MP in the browser through sa-udp-proxy, SAMP-4 + SAMP-START + SAMP-UI-2, STD-15 driving, the
 WRITER-NATIVE / WRITER-CLIMB / WORLD (world6-1/2/3) picks and WEB-AUDIO.
 
 ## How
 
 WEB-3 sits on WEB-SAMP → WEB-2 → STD-14 → STD-13, which master already carries under other hashes (INTEGRATE-7's
-picks). Both histories start at `efe5120`, so WEB-3 came in as one three-way merge with that base (`d605f11f`):
+picks). Both histories start at `6cf5457`, so WEB-3 came in as one three-way merge with that base (`a9444d15`):
 the commits both sides carry are identical changes there and merged without conflicts. 58 files conflicted.
 They were settled like this:
 
@@ -24,7 +24,7 @@ They were settled like this:
   `docs/samp/overlay.md`, `docs/arch/platform.md`): WEB-3's version. It is the later state of the same lanes
   (STD-15 on STD-14, SAMP-UI-2 on SAMP-UI). Many of these hunks were only rustfmt differences.
 - `crates/sa-ai/src/ped_attractor_base.rs`: master's version. It has INTEGRATE-7's f64 (ST0) `orig!` fix
-  (`b34c610`), without which the phase A DLL does not build.
+  (`b28624f`), without which the phase A DLL does not build.
 - `crates/sa-oracle/tests/l1.rs` `PRESERVE_SPECS_PENDING`: master's union (0x4F5F30, 0x4F6000, 0x6289F0,
   0x4ADE90, 0x4B13C0).
 - keycells `READERS`: the union by `at` gives **43** readers, with no duplicate `at`. This is WEB-3's 41 plus
@@ -61,10 +61,10 @@ WRITER-WORLD's world5 files that have no double (`cheat_player_toggles.rs`, `fur
 stay.
 
 WEB-3 itself registers these addresses twice. Its own `cargo test -p sa-hook --lib` fails because of the first one:
-- `65557b1c`: 0x733670 `CVisibilityPlugins::RenderWeaponCB` stays with STD-10's `visibility_weapon.rs`, as on
+- `7f590ed6`: 0x733670 `CVisibilityPlugins::RenderWeaponCB` stays with STD-10's `visibility_weapon.rs`, as on
   master, and SAMP-4's copy in `visibility_ped.rs` is removed. This fixes `every_hook_installs_on_the_exe`
   ("RenderWeaponCB overlaps RenderWeaponCB") and `unverified_selection`.
-- `9bb545a7`: SAMP-4's phase B natives for 0x540E80 / 0x540F80 (`sa-cam` padlook), 0x680600 (`fall.rs`) and
+- `aef4665e`: SAMP-4's phase B natives for 0x540E80 / 0x540F80 (`sa-cam` padlook), 0x680600 (`fall.rs`) and
   0x6D1E20 (`vehicle2.rs`) are no longer registered. The hooks for these addresses win:
   `pad_mouse_steer`, `task_in_air_process_ped` and `wake_locks_component_rotation`. The functions stay, because
   Rust callers use them.
@@ -86,12 +86,12 @@ INTEGRATE-7 noted:
 
 ## Tests
 
-- `cargo test --release -p sa-hook --lib`: 58 passed, at `65557b1c` and again at `9bb545a7`. At `d605f11f` and on
+- `cargo test --release -p sa-hook --lib`: 58 passed, at `7f590ed6` and again at `aef4665e`. At `a9444d15` and on
   WEB-3 it fails twice, because of 0x733670. `-p sa-script --lib`: 9 passed. `-p sa-core --lib`: 73 passed.
   `-p sa-rw-wgpu --lib`: 58 passed.
 - `cargo test -p sa-oracle --test l1 --release`: 17 passed, 1 ignored and 1 failed, in 589 s with no hang. The
   failure was `preserved_registers_match_the_hook_registrations`: WRITER-NATIVE's
-  `CPlayerPed::GetButtonSprintResults` 0x60A820 has `preserve = "edx"` but no spec. `907043d6` puts it in
+  `CPlayerPed::GetButtonSprintResults` 0x60A820 has `preserve = "edx"` but no spec. `5ca00061` puts it in
   `PRESERVE_SPECS_PENDING`, and that test now passes.
 - sa-oracle, satool and sa-oracle-format were rebuilt in this worktree (release).
 - `i686-pc-windows-gnu` release build of sa-launcher and sa-hook: clean.
@@ -99,13 +99,13 @@ INTEGRATE-7 noted:
   samp-rs from `file:///home/ghosty2004/samp-rs` at rev fb89010.
 - wasm32 (`tools/web/build.sh`): clean, 46 MB `sa_game_bg.wasm`. The `wasm-bindgen` on PATH is 0.2.128, and the
   build needs 0.2.130 (WEB-3's `target/tools/bin`).
-- Native smoke run at `9bb545a7`: `--start-in-world --fixed-step 40 --frames 300`, offscreen,
+- Native smoke run at `aef4665e`: `--start-in-world --fixed-step 40 --frames 300`, offscreen,
   `SA_GAME_SCRIPT_SKIP=1`. Result: **316 ok, 0 blocked, 0 original-only, 0 crashed**, 788,323 calls served
   natively, 13,375 Rust ports in the `orig!` registry, 5 addresses with a second registration (see above).
 
 ## verify-all
 
-The run was `SA_ROOT=~/sa-engine tools/e2e/verify-all.sh int8 6,7` at `65557b1c`, DLL sha256 `ecfd0bb8…`.
+The run was `SA_ROOT=~/sa-engine tools/e2e/verify-all.sh int8 6,7` at `7f590ed6`, DLL sha256 `ecfd0bb8…`.
 INTEGRATE-6 was holding lanes 4 and 5 with its own verify-all (`i6-final`) the whole time, so this run used the
 idle lanes 6 and 7. Two extra workers on lanes 2 and 3 took recordings from the same index; they ran the same
 worker body against the same DLL.
@@ -131,11 +131,11 @@ same DLL (`VERIFY_NO_BUILD=1`) as `int8inf` (lane 3) and `int8aw` (lane 3). **ID
 | weapon-combat | 3500 |
 | world-cheats | 3276 |
 
-Changes after `65557b1c`:
-- `9bb545a7` removes four phase B natives. This changes the DLL bytes.
-- `907043d6` touches only the L1 test.
+Changes after `7f590ed6`:
+- `aef4665e` removes four phase B natives. This changes the DLL bytes.
+- `5ca00061` touches only the L1 test.
 
-The final head `907043d6` was rechecked as `verify-all.sh int8b 1` on driving (4338 frames) and on the grove walk
+The final head `5ca00061` was rechecked as `verify-all.sh int8b 1` on driving (4338 frames) and on the grove walk
 (inf4, 5200 frames), with that head's DLL (`af62e0a8…`). Result: **IDENTICAL on both**. This follows
 INTEGRATE-7's `int7b` precedent.
 

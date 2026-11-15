@@ -1,29 +1,29 @@
 # INTEGRATE-9: master and the INTEGRATE-8 tree combined
 
 Branch `worktree-agent-ab58bdb347d7ad153`. It starts from the INTEGRATE-8 tree
-(`worktree-agent-ac8a20a070c956b08`, `f94f1ee3`: web build, SA:MP natively and in the browser, driving, climbing,
-browser audio, SAMP-4 / SAMP-START / SAMP-UI-2; based on master `b239e888`) and replays master's commits
-`b239e888..284fd692` on top, in order. master can fast-forward to it.
+(`worktree-agent-ac8a20a070c956b08`, `7fc5980a`: web build, SA:MP natively and in the browser, driving, climbing,
+browser audio, SAMP-4 / SAMP-START / SAMP-UI-2; based on master `518819bb`) and replays master's commits
+`518819bb..284fd692` on top, in order. master can fast-forward to it.
 
 ## How
 
-master's 15 commits since `b239e888` were cherry-picked in order:
+master's 15 commits since `518819bb` were cherry-picked in order:
 
 | master | here | content | conflicts |
 |---|---|---|---|
-| `a9f08b48` | `03e20313` | CONTINUE.md branch list | none |
-| `95b9f784` | `c61e9781` | L1 evidence 0x70FA70 / 0x6FD7C0 (status rows) | queue files |
-| `9b27b6d4` | `f320ebdb` | patterns.py: void forwarders (VERIFIER-10 8ba7aa9) | none |
-| `cc4e8e36` | `187403da` | 12 gen2 + 11 writero promotions (VERIFIER-10 2fc5e63) | queue files |
-| `5eb94a81` | `1d56be42` | audio thread `Start` ports resume through the original call sites | none |
-| `388eeac5` | `932ea486` | L3-batch status of the 157 SA:MP-priority batches | queue files |
-| `8a7a9cdb` | `63859ea5` | 370 SA:MP-priority promotions (VERIFIER-11) | queue files |
-| `7e13e332`, `bb13f5eb` | `671bcb9b`, `b68cfa93` | integration-6.md | none |
-| `cff47307` | `fd4a5a16` | catalogue states of the INTEGRATE-6 promotions | none |
-| `2286dfe2` | `cf78cf2e` | CONTINUE.md | none |
-| `79b0bfe2`, `a881a1e5` | `6cd40a5d`, `d08cbd86` | README, getting-started guide | none |
-| `737f7e76` | `8d57ff7b` | samp-rs imported as `samp-rs/` | none |
-| `284fd692` | `f0d0851f` | samp-rs takes sa-samp-api / sa-net by path; sa-samp-api v3 | none |
+| `a9f08b48` | `29cb0f95` | CONTINUE.md branch list | none |
+| `95b9f784` | `0c82926a` | L1 evidence 0x70FA70 / 0x6FD7C0 (status rows) | queue files |
+| `9b27b6d4` | `4d4138a6` | patterns.py: void forwarders (VERIFIER-10 8ba7aa9) | none |
+| `cc4e8e36` | `205a5026` | 12 gen2 + 11 writero promotions (VERIFIER-10 2fc5e63) | queue files |
+| `5eb94a81` | `37cd6849` | audio thread `Start` ports resume through the original call sites | none |
+| `388eeac5` | `2ea9cbe0` | L3-batch status of the 157 SA:MP-priority batches | queue files |
+| `8a7a9cdb` | `7145949d` | 370 SA:MP-priority promotions (VERIFIER-11) | queue files |
+| `7e13e332`, `bb13f5eb` | `bf96c346`, `66e05c73` | integration-6.md | none |
+| `cff47307` | `fa2eefed` | catalogue states of the INTEGRATE-6 promotions | none |
+| `2286dfe2` | `de798394` | CONTINUE.md | none |
+| `79b0bfe2`, `a881a1e5` | `303060a2`, `21d0532a` | README, getting-started guide | none |
+| `737f7e76` | `280574a0` | samp-rs imported as `samp-rs/` | none |
+| `284fd692` | `b2757954` | samp-rs takes sa-samp-api / sa-net by path; sa-samp-api v3 | none |
 
 - Queue files (`catalog/verify-queue.csv`, `docs/verify/QUEUE.md`) were kept at the INTEGRATE-8 side during the
   picks and regenerated once at the end. `catalog/verify-status.csv` merged without conflicts every time.
@@ -31,15 +31,15 @@ master's 15 commits since `b239e888` were cherry-picked in order:
   both trees share.
 - **SA:MP crates.** sa-samp-api was already identical on both sides (INTEGRATE-8 carries SAMP-4's API v3, master
   raised its copy to the same v3). `284fd692` added an `Unsupported` `force_weather` stub to sa-samp's
-  `world.rs`, next to the write side's real implementation; `e70899ba` keeps the real one (the INTEGRATE-8
+  `world.rs`, next to the write side's real implementation; `6f2d4149` keeps the real one (the INTEGRATE-8
   file). sa-net unchanged. `samp-rs/` comes from master.
 
 ## samp-rs in the repository
 
-- `cb717f23`: sa-game's `samp-client`, `samp-proto` and `samp-saa` dependencies are `path =
+- `fd5aba92`: sa-game's `samp-client`, `samp-proto` and `samp-saa` dependencies are `path =
   "../../samp-rs/crates/…"`; the workspace `[patch."file:///home/ghosty2004/sa-engine"]` is gone (samp-client takes
   sa-samp-api and sa-net by path already). `Cargo.lock` lost the four `git+file:///…samp-rs` sources.
-- `dd815843`: every document and script points at `samp-rs/`:
+- `570a42cf`: every document and script points at `samp-rs/`:
   - `tools/e2e/samp/native-handshake.sh` and `proxy-handshake.sh` default `SAMP_RS_DIR` to `samp-rs/` (no more
     scratch copy with the step-4 patch: the test is in `samp-rs/crates/samp-client/tests/native_handshake.rs`).
   - The auth table (third-party, never committed) defaults to `$SA_ROOT/re/samp/auth_table.txt`
@@ -65,10 +65,10 @@ master's 15 commits since `b239e888` were cherry-picked in order:
 The open item from integration-6.md. `catalog/state.csv` has `implemented` for every registered hook an
 integration found ("written (hook or native registration on master)"), and `tools/gen/ai_patterns.py` gave
 `unverified` only to hooks in `unknown`/`specified`. INTEGRATE-8's regeneration had therefore **already dropped
-`unverified` from 554 PORT-AI-7 generated hooks** (batches ai7-1..ai7-5 in `gen_*.rs`) on `f94f1ee3`; they were
+`unverified` from 554 PORT-AI-7 generated hooks** (batches ai7-1..ai7-5 in `gen_*.rs`) on `7fc5980a`; they were
 in its verify-all default set, but they were never promoted.
 
-`c28e0198`: a hook listed in `tools/gen/ai_patterns_unverified.txt` stays `unverified` until its state is
+`61d34c24`: a hook listed in `tools/gen/ai_patterns_unverified.txt` stays `unverified` until its state is
 L1/L2/L3. Unlisted hooks in `unknown`/`specified` still get a batch; the pre-split AI-GEN hooks (unlisted,
 `implemented-needs-L2`, generated without `unverified` since AI-GEN) are unchanged. `patterns.py` already
 promotes only on L1/L2/L3 or `patterns_verified.txt` (its `implemented` clause only stops its own output from
@@ -77,10 +77,10 @@ hiding candidates), and `inflight.py` does not read states; both needed no chang
 Regenerated `inflight.py`, `ai_patterns.py`, `patterns.py`; all three `--check` clean afterwards. Comparison of
 the `unverified` attribute per address (every `#[hook]`/`#[native]` in `crates/`):
 - against master `284fd692`: **0** addresses gained or lost `unverified`;
-- against INTEGRATE-8 `f94f1ee3`: 554 gained (the ai7 hooks above) and 393 lost (exactly master's 370 + 12 + 11
+- against INTEGRATE-8 `7fc5980a`: 554 gained (the ai7 hooks above) and 393 lost (exactly master's 370 + 12 + 11
   promotions with their L2/split/L1 evidence).
 
-Queue (`30df2074`, `python3 -I tools/verify/queue.py`): **2328 unverified hooks in 343 batches**.
+Queue (`30cb338d`, `python3 -I tools/verify/queue.py`): **2328 unverified hooks in 343 batches**.
 
 ## One registration per address
 
@@ -107,7 +107,7 @@ registration, the known pre-existing ones: 0x5B0440, 0x618E70 (`std7_natives` + 
 
 ## verify-all
 
-`SA_ROOT=~/sa-engine tools/e2e/verify-all.sh int9 4,5` at `30df2074` (the code head; the commits after it touch
+`SA_ROOT=~/sa-engine tools/e2e/verify-all.sh int9 4,5` at `30cb338d` (the code head; the commits after it touch
 docs only), DLL sha256 `8d871e1c…`, run beside the L1 test. No recording was skipped by the disk guard (71–74 GB
 free throughout). **IDENTICAL on all 13 recordings**, 17 subsystems each:
 

@@ -1,7 +1,7 @@
 # INTRO-2: the intro past the police-car ride, natively
 
-Branch `worktree-agent-ab80f5d4fe8147e79`, built on master `e52b9fcf` (INTEGRATE-10) and rebased (cleanly) onto master
-`58a1c75b` (MOD-1 roadmap, `--window` pointer / surface fixes, GetBeatInfo / GetTrackInfo ports). master can
+Branch `worktree-agent-ab80f5d4fe8147e79`, built on master `3e675b3b` (INTEGRATE-10) and rebased (cleanly) onto master
+`97e55daf` (MOD-1 roadmap, `--window` pointer / surface fixes, GetBeatInfo / GetTrackInfo ports). master can
 fast-forward to it.
 Goal: New Game runs the original intro natively (no `--start-in-world`, no `SA_GAME_SCRIPT_SKIP`, no stubs):
 airport cutscene → police-car ride → on foot in Ballas territory → BMX to Grove Street → free roam.
@@ -11,7 +11,7 @@ airport cutscene → police-car ride → on foot in Ballas territory → BMX to 
 | from | commits | here | notes |
 |---|---|---|---|
 | AUDIO-STREAM (`worktree-agent-acc62cadcdbd3be53`) | `e1085d4a`, `24f24b5a`, `ffa6da91`, `c4d33884`, `22e226f8` | `eca373d3`..`1a0ce310` | `sa-game/Cargo.toml`: lewton added next to master's `samp-rs/` path dependencies (its own git pins dropped) |
-| INTRO-1 (`worktree-agent-a2c16c35b48eab431`, `421ba072..a87cf585`) | 12 own commits | `0eb10920`..`83c6e71e` | its AUDIO-STREAM copies `aab7ae27` / `299ac780` not taken (AUDIO-STREAM's own commits instead); its `GetStreamID` copy in `5b378d18` dropped (AUDIO-STREAM's `ffa6da91` registers 0x502460); `a7c4c95c` (WRITER-SAMP's FrameUpdateCallBackNonSkinned) skipped: already on master; `c4513221` takes INTRO-1's ANPK port over master's fallback rewind (`99a295f1`) |
+| INTRO-1 (`worktree-agent-a2c16c35b48eab431`, `be0762be..a87cf585`) | 12 own commits | `0eb10920`..`83c6e71e` | its AUDIO-STREAM copies `aab7ae27` / `299ac780` not taken (AUDIO-STREAM's own commits instead); its `GetStreamID` copy in `5b378d18` dropped (AUDIO-STREAM's `ffa6da91` registers 0x502460); `a7c4c95c` (WRITER-SAMP's FrameUpdateCallBackNonSkinned) skipped: already on master; `c4513221` takes INTRO-1's ANPK port over master's fallback rewind (`3ecb5349`) |
 | SCRIPT-5 (`worktree-agent-a43f6b653f2e96d67`) | `ca133bcb` (script5-1) and `ca133bcb..17a4881f` (script5-2..13) | `139aacef`..`6951e29c` | keycells `READERS` unioned (45: INTRO-1's 0x4037BC, SCRIPT-5's 0x634440 reader) |
 | NEWGAME (`newgame-1`) | not taken | | its CAEDataStream constructor duplicates AUDIO-STREAM's |
 
@@ -91,7 +91,7 @@ The runs are deterministic: the keyed run gives the same 5247 ok / first blocker
   blocked, 0 crashed**; 13,445 Rust ports in the `orig!` registry; the same 5 second registrations as INTEGRATE-10.
 - Intro run (no `--start-in-world`, no `SA_GAME_SCRIPT_SKIP`, no stubs): **6016 ok, 0 blocked to frame 6000** without
   input (milestones 1-3); with the BMX keys 5247 ok, then blocked from frame 5231 on `CPed::KillPedWithCar`.
-- After the rebase: `SA_ROOT=~/sa-engine tools/e2e/verify-all.sh intro2b 4,5` at `1fa2bd6c` (DLL sha256 `b2b68fe3…`):
+- After the rebase: `SA_ROOT=~/sa-engine tools/e2e/verify-all.sh intro2b 4,5` at `40bd7b4e` (DLL sha256 `b2b68fe3…`):
   **IDENTICAL on all 13 recordings**, 17 subsystems each, same frame counts as below. Generated files regenerated
   on the rebased tree (queue: 2398 unverified hooks in 376 batches; `--check` clean); sa-hook lib tests 58 pass;
   native sa-game with and without `samp`, `FEATURES=samp tools/web/build.sh`: clean; smoke run 316 ok / 0 blocked

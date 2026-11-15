@@ -1,6 +1,6 @@
 # INTEGRATE-3: STD-7/8/9 (native boot into the world), PORT-MENU, WRITER-CLUMP, WRITER-INTRO
 
-Integration branch `worktree-agent-a1ec5bfbbfdf8dd8b`, from master `4d484a0`. Not taken: WRITER-O, PORT-SAVE,
+Integration branch `worktree-agent-a1ec5bfbbfdf8dd8b`, from master `e6013d9`. Not taken: WRITER-O, PORT-SAVE,
 STD-10 (still running; their registered addresses are generator exclusions through `tools/gen/inflight.py`).
 
 ## Method
@@ -8,8 +8,8 @@ STD-10 (still running; their registered addresses are generator exclusions throu
 STD-9 (`worktree-agent-a5944be11b642b989`, head `622f85e`) holds STD-7 (`407b907`) and STD-8 (`51b8fcd`) as
 ancestors and carries its own picks of INTEGRATE-2's sources (MVP-M, SCRIPT-4, VERIFIER-6, SRAND-FIX, REGCONV,
 GEN-ALL-2, the search-light registration) plus WRITER-MVP-N, PORT-MENU and WRITER-CLUMP. Its merge base with master
-(`7fd59f2`) is far older than the real split: STD-7 starts from the STD-6 tip `21b0439`, whose tree master integrated
-as `309d8fe` (the two trees differ only in the catalogue, WORKLOG, `std6-ports.csv` and two lines of
+(`927d4c2`) is far older than the real split: STD-7 starts from the STD-6 tip `21b0439`, whose tree master integrated
+as `31535a9` (the two trees differ only in the catalogue, WORKLOG, `std6-ports.csv` and two lines of
 `sa-oracle/tests/l1.rs`, all master-side). So the merge is a three-way merge with `21b0439` as the base
 (`git merge-tree --merge-base=21b0439 master STD-9`), resolved per file:
 
@@ -33,10 +33,10 @@ top with `51b8fcd` as the base: new files only, plus union of the sa-ai / sa-ani
 
 | commit | source | content |
 |---|---|---|
-| `da9de7f` | STD-7 + STD-8 + STD-9 (with PORT-MENU, WRITER-CLUMP, WRITER-MVP-N) | sa-game / sa-platform native boot, `--start-in-world`, run-all static initialisers, `CRope::Update`, the in-world render chain, std7/8/9 batches (20 / 21 / 32 hooks plus natives), PORT-MENU (menu-1..3), WRITER-CLUMP (clump-1), MVP-N |
-| `5e0f61b` | WRITER-INTRO | intro-ai-1..5, intro-anim-1: CEventHandler responses, ped collision responses, `ComputeEntityBoundingBoxCornersUncached`, cutscene memory |
-| `519494c` | fix + regeneration | `tools/gen/patterns.py` fix (below), `exclude_inflight.txt` and the generated hooks regenerated |
-| `e5fa9cf` | regeneration | `catalog/verify-queue.csv`, `docs/verify/QUEUE.md` |
+| `afcbf8c` | STD-7 + STD-8 + STD-9 (with PORT-MENU, WRITER-CLUMP, WRITER-MVP-N) | sa-game / sa-platform native boot, `--start-in-world`, run-all static initialisers, `CRope::Update`, the in-world render chain, std7/8/9 batches (20 / 21 / 32 hooks plus natives), PORT-MENU (menu-1..3), WRITER-CLUMP (clump-1), MVP-N |
+| `0657df0` | WRITER-INTRO | intro-ai-1..5, intro-anim-1: CEventHandler responses, ped collision responses, `ComputeEntityBoundingBoxCornersUncached`, cutscene memory |
+| `2440cd4` | fix + regeneration | `tools/gen/patterns.py` fix (below), `exclude_inflight.txt` and the generated hooks regenerated |
+| `20b43e6` | regeneration | `catalog/verify-queue.csv`, `docs/verify/QUEUE.md` |
 
 ## Duplicate registrations settled
 
@@ -56,7 +56,7 @@ The three generated files that only master's GEN-ALL-2 run had (`sa-cam/camera_g
 ## Generator
 
 `tools/gen/patterns.py` on the merged tree first produced **0** hooks (111 candidates): INTEGRATE-2's catalogue record
-(`4d484a0`) sets the generated hooks to `implemented` with the evidence "written (hook or native registration on
+(`e6013d9`) sets the generated hooks to `implemented` with the evidence "written (hook or native registration on
 master)", which carries no `GEN2` tag, so the generator took every one of its own hooks for a port made elsewhere.
 Fix: a row at `implemented` whose address the generator's own files register stays a candidate
 (`generated_addrs`). Regenerated with `python3 -I tools/gen/inflight.py` (98 in-flight exclusions) and
@@ -75,7 +75,7 @@ Verify queue after integration: 2,236 unverified hooks in 265 batches.
 
 ## Verification
 
-On head `e5fa9cf`:
+On head `20b43e6`:
 
 - `cargo test -p sa-hook --lib` 58 passed; `-p sa-script --lib` 8 passed; `-p sa-core --lib` 70 passed.
 - `cargo test -p sa-oracle --test l1 --release`: 18 passed, 1 ignored (654 s).

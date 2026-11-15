@@ -161,7 +161,7 @@ How the list was made complete (systematic, 2026-11-10):
 
 ## Results (2026-11-05, lane 3, grove-walk recording `target/e2e/lane-2/inf4/rec.sarec`, 5,200 frames)
 
-**L3 self-test, tree merged with master 696726a** (universe = 35 hooks: the 8 sa-hook ports + 27 sa-core
+**L3 self-test, tree merged with master fb51d2f** (universe = 35 hooks: the 8 sa-hook ports + 27 sa-core
 ports), `tools/e2e/l3.sh --selftest`:
 - clean: all 35 on Rust → `L3 MATCH ... identical to the reference for all 5200 frames`; hook-off check:
   35 runs (each hook back on the original alone), all MATCH. 37 game runs of ~110 s.
@@ -171,7 +171,7 @@ ports), `tools/e2e/l3.sh --selftest`:
   peds`, `suggest L2: SA_L2=0x53cb50 SA_L2_FROM=209 ...`; the rest (34 hooks) matches for all 5200 frames.
   10 probes, 9 game runs (5 of them only to frame 310). Verdict `PASS injected fault found without help`.
 
-**Same self-test on the tree merged with master 376b089** (785 hooks registered: sa-core + sa-stream;
+**Same self-test on the tree merged with master 0a916a3** (785 hooks registered: sa-core + sa-stream;
 Rust set = the same 35 hooks, hook-off on the 8 sa-hook ports, `L3_SELFTEST_HOOKOFF`): clean MATCH,
 8/8 hook-off MATCH, mutant culprit {CGeneral::LimitRadianAngle} at frame 210 (peds), PASS.
 
@@ -189,15 +189,15 @@ No sa-hook/sa-core/sa-stream code reads that address. Suspected: the game or its
 reads these entry stubs. Not analysed further (no REA in this task). It is listed in the hand-maintained
 `catalog/coverage-exclude.csv`, which `coverage points` honours.
 
-Rerun without 0x55C410 (tree merged with 376b089): the replay still stopped in the same fade loop
+Rerun without 0x55C410 (tree merged with 0a916a3): the replay still stopped in the same fade loop
 (frame 204). The stopped agent then added the static scan and 11 more exclusions (not re-verified at
 the time). The 2026-11-05 partial table is superseded by the results below.
 
-## Results (2026-11-10, lane 5, worktree merged with master 3770f5f: 1,139 port hooks + core hooks)
+## Results (2026-11-10, lane 5, worktree merged with master dba4d00: 1,139 port hooks + core hooks)
 
 Points: 169,689 armed (20,741 entries, 148,948 blocks; 15,471 functions with body ranges, 5,282
 entry-only; 730 jump tables; 1,409 rows not armed) + 12 excluded with a proxy. All armed with 0 byte
-mismatches (1,148 hook entries). DXVK without vsync (master 5ced978's `tools/wine-env.sh`): about
+mismatches (1,148 hook entries). DXVK without vsync (master dad1d9a's `tools/wine-env.sh`): about
 35 s per 5,200-frame replay. Every run below **reached its end frame with a trace IDENTICAL to the
 plain replay of the same recording and port modes**:
 
@@ -295,7 +295,7 @@ hook is sa-hook's passthrough to the original (`game::timer_update_hook`), as de
 let its original body run. 443 ports were never entered by the two recordings (their parity rests on
 L2/L3 runs of other recordings or on none).
 
-Timing: the first set of these runs (master 557a49f, 905 ports, DXVK with vsync, ~110 s per replay)
+Timing: the first set of these runs (master a589ad0, 905 ports, DXVK with vsync, ~110 s per replay)
 also passed all four checks. Its plain grove-walk hits differ from this run in 14 points, all in
 `Ps::psSelectDevice` (0x746190) and RW video-mode code it calls: the DXVK setting changes the mode list
 the game enumerates at boot; pause-restart hits are identical.
@@ -339,7 +339,7 @@ relocated instructions) leaves two hook entries whose patch overlaps a protectio
   push ecx; mov ecx,[0x4C4572]; ror eax,cl; pop ecx; mov eax,[eax]; popfd` at 0x156487A, and
   `CRunningScript::ScriptTaskPickUpObject` reads `xor esi,[0x4C4572]` at 0x156B570. Original: key
   0xA00096A8 (same at run time, `peek`), cl = 0xB8 → ror 24 → reads 0x0096A8A0. With the hook
-  installed (`peek 0x4C4570` = `E9 6B 9D 1A 02 90` in one run of the 557a49f tree), cl = 0x9D → ror 29 → 0x0004B545, which
+  installed (`peek 0x4C4570` = `E9 6B 9D 1A 02 90` in one run of the a589ad0 tree), cl = 0x9D → ror 29 → 0x0004B545, which
   `peek` reports as not readable. The block at 0x156487A and the reader at 0x1564881 do execute in
   both recordings (first-hit points), yet neither run faults and a replay with the ports not installed
   (`L3_HOOK_PORTS=` in l3.sh) is IDENTICAL to one with them installed (5,200 and 3,700 frames). Why
@@ -348,7 +348,7 @@ relocated instructions) leaves two hook entries whose patch overlaps a protectio
   chunk at 0x40222E instead of the entry, or keep 0x4C4572–0x4C4575 intact).
 - **0x410860 `CColStore::LoadCollision`** (stub retarget): the chunk at 0x401E3E (`adc ecx,[0x410860];
   mov ecx,[ecx]`, reached from 0x69D981) gets 0x03C6700E instead of 0x00B744BC with the slot of one
-  run (557a49f tree); the chunk did not execute in the corpus.
+  run (a589ad0 tree); the chunk did not execute in the corpus.
 The other two `--hooks` hits (0x7316A0, 0x7320B0) read the byte after the 5-byte patch: no overlap.
 
 ## Limits

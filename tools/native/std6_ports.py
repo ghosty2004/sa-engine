@@ -9,7 +9,7 @@ import re
 import subprocess
 import sys
 
-base = sys.argv[1] if len(sys.argv) > 1 else '7fd59f2'
+base = sys.argv[1] if len(sys.argv) > 1 else '927d4c2'
 log = subprocess.run(['git', 'log', '--first-parent', '--no-merges', '-p', '--unified=0', base + '..HEAD', '--', 'crates'],
                      capture_output=True, text=True, check=True).stdout
 rows = {}

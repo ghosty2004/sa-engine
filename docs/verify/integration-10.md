@@ -1,39 +1,39 @@
 # INTEGRATE-10: SAMP-FX on master
 
-Branch `worktree-agent-a623a7f9d5dd59528`, on master `d60bbee9` (INTEGRATE-9). It adds SAMP-FX
-(`worktree-agent-ab013435f0f3841aa`, head `e6e0528e`): its own commits after WEB-3 `421ba072`, which include its
+Branch `worktree-agent-a623a7f9d5dd59528`, on master `b89db5ae` (INTEGRATE-9). It adds SAMP-FX
+(`worktree-agent-ab013435f0f3841aa`, head `e6e0528e`): its own commits after WEB-3 `be0762be`, which include its
 picks of WEB-AUDIO (latency), SAMP-SCM, HELI-CONE and WRITER-SAMP's search-light ports. master can fast-forward to it.
 
 ## How
 
-SAMP-FX's 16 commits `421ba072..e6e0528e` were cherry-picked in order:
+SAMP-FX's 16 commits `be0762be..e6e0528e` were cherry-picked in order:
 
 | SAMP-FX | here | content | notes |
 |---|---|---|---|
-| `bca82a34` | `5a169fd4` | web audio: shorter, adaptive output latency (WEB-AUDIO `e3336f89`) | clean |
-| `da13b5d0` | `5e86e431` | 12:00 clock while connecting; samp's main.scm / script.img behind `SA_SAMP_SCM` (SAMP-SCM `646e0f7b`) | clean |
-| `cdf47fde` | `89b3de96` | set_ped_model, play_anim, stop_anims, anim blocks; SetPlayerSkin, ApplyAnimation, ClearAnimations, PlayerPlaySound | clean |
-| `28df3c74` | `0a5248ee` | ported `CTaskManager::HasTaskSecondary` from the scripted-task record update; native-join `EXTRA_CMDS` | clean |
-| `ea1da7d7` | `0dc4e042` | `serve.py --samp-dir`; samp_assets reads sampgui.png / mouse.png through the file layer | clean |
-| `b4678c4d` | `8081afea` | frontend-only mission sounds (class-selection arrows) | clean |
-| `2d3b563c` | `cf2ceeb3` | game clock toggle (`RuntimeToggle::GameClock`) | clean |
+| `bca82a34` | `9963bf7d` | web audio: shorter, adaptive output latency (WEB-AUDIO `e3336f89`) | clean |
+| `da13b5d0` | `89a78023` | 12:00 clock while connecting; samp's main.scm / script.img behind `SA_SAMP_SCM` (SAMP-SCM `646e0f7b`) | clean |
+| `cdf47fde` | `8d6f6b23` | set_ped_model, play_anim, stop_anims, anim blocks; SetPlayerSkin, ApplyAnimation, ClearAnimations, PlayerPlaySound | clean |
+| `28df3c74` | `0ed70d17` | ported `CTaskManager::HasTaskSecondary` from the scripted-task record update; native-join `EXTRA_CMDS` | clean |
+| `ea1da7d7` | `65ce7f3d` | `serve.py --samp-dir`; samp_assets reads sampgui.png / mouse.png through the file layer | clean |
+| `b4678c4d` | `7f8e67c4` | frontend-only mission sounds (class-selection arrows) | clean |
+| `2d3b563c` | `378ee4bf` | game clock toggle (`RuntimeToggle::GameClock`) | clean |
 | `0f1b633b` | — | WRITER-SAMP search-light / checkpoint ports | **skipped**: already on master (`crates/sa-script/src/search_lights_checkpoints.rs` byte-identical, registered once) |
-| `de34dd5a` | `d03bc0d5` | startup.md | clean |
-| `3d3ccc15` | `c9536706` | hands up, phone, car enter / leave tasks; SetPlayerSpecialAction 10 / 11 / 13 | clean |
-| `609f18cb` | `e13e9f18` | samp-demo.sh `SAMP_DIR` | clean |
-| `27489018` | `09bc8f04` | sa-samp tests for skin / anim / hands-up | clean |
-| `cd5f4a4c` | `b729fb20` | `CHeli::SearchLightCone` 0x6C58E0 (HELI-CONE, batch samp-heli-1) | clean |
-| `bb4f327d` | `6e958fe3` | samp mode serves samp's main.scm and script.img by default (the "Fat +" fix; `SA_SAMP_SCM=0` keeps GTA's) | clean |
-| `b5393f8d` | `7380f7f2` | give-weapon like samp (model first), SetPlayerArmedWeapon | clean |
-| `e6e0528e` | `2927a612` | sampcov class-selection camera | clean |
+| `de34dd5a` | `88add7e2` | startup.md | clean |
+| `3d3ccc15` | `cdf2224b` | hands up, phone, car enter / leave tasks; SetPlayerSpecialAction 10 / 11 / 13 | clean |
+| `609f18cb` | `86de5ff7` | samp-demo.sh `SAMP_DIR` | clean |
+| `27489018` | `9c09e9df` | sa-samp tests for skin / anim / hands-up | clean |
+| `cd5f4a4c` | `a4a32285` | `CHeli::SearchLightCone` 0x6C58E0 (HELI-CONE, batch samp-heli-1) | clean |
+| `bb4f327d` | `f111e7fe` | samp mode serves samp's main.scm and script.img by default (the "Fat +" fix; `SA_SAMP_SCM=0` keeps GTA's) | clean |
+| `b5393f8d` | `8a9b068d` | give-weapon like samp (model first), SetPlayerArmedWeapon | clean |
+| `e6e0528e` | `81ed6649` | sampcov class-selection camera | clean |
 
 Then:
-- `39f0c61e`: `tools/web/samp-demo.sh` defaults `SAMP_DIR` to `$SA_ROOT/re/samp/client` when it exists (INTEGRATE-9's
+- `dade19d6`: `tools/web/samp-demo.sh` defaults `SAMP_DIR` to `$SA_ROOT/re/samp/client` when it exists (INTEGRATE-9's
   convention: third-party SA:MP files under `re/samp/`, gitignored; `SAMP_DIR=` serves the game folder alone).
   SAMP-FX's script changes needed nothing else: they already use the auth table variable `AUTH`
   (`$SA_ROOT/re/samp/auth_table.txt`) and no samp-rs path. `git grep '~/samp-rs\|/home/ghosty2004/samp-rs'` over
   `tools crates web` finds nothing.
-- `75a9e6be`: generated files regenerated. `tools/gen/exclude_inflight.txt` (`python3 -I tools/gen/inflight.py`);
+- `d45ba8f4`: generated files regenerated. `tools/gen/exclude_inflight.txt` (`python3 -I tools/gen/inflight.py`);
   `ai_patterns.py --check` and `patterns.py --check` clean (no generated file changed); queue
   (`python3 -I tools/verify/queue.py`, `--check` clean): **2329 unverified hooks in 344 batches** (INTEGRATE-9 had
   2328 / 343; the new one is SearchLightCone, batch samp-heli-1).
@@ -63,7 +63,7 @@ INTEGRATE-9 (0x5B0440, 0x618E70, 0x84A540, 0x84E300, 0x84F320) and no new one.
 
 ## verify-all
 
-`SA_ROOT=~/sa-engine tools/e2e/verify-all.sh int10 4,5` at `75a9e6be` (the code head; the commit after it touches
+`SA_ROOT=~/sa-engine tools/e2e/verify-all.sh int10 4,5` at `d45ba8f4` (the code head; the commit after it touches
 docs only), DLL sha256 `51e989ab…`. No recording was skipped by the disk guard (68 GB free throughout).
 **IDENTICAL on all 13 recordings**, 17 subsystems each:
 

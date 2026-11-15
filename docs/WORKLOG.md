@@ -33,7 +33,7 @@
   gta-reversed: 781 handlers, 716 unimplemented, 283 NOP.
 
 ## 2026-11-05: goal set; INF-1 partial; agents started
-- Initial commit 28ba9b1.
+- Initial commit ebae837.
 - INF-1: copied the Wine prefix (d3dx9 + DXVK) and the GTA files (no SA:MP files) from samp-rs, read-only,
   into `wine/prefix` and `wine/gta-sa`, with the 1.0 US exe. Added `tools/wine-env.sh` and the Cargo
   workspace. Lanes are still to be created.
@@ -395,7 +395,7 @@
 - Agent process note: one `pkill -f` on its own processes (against PLAN §8); no damage.
 
 ## 2026-11-07: resumed; harness display fix; STREAM-FIX-1 part 1
-- Resumed from 1d26881 at the user's request (ROADMAP banner replaced).
+- Resumed from c2261fe at the user's request (ROADMAP banner replaced).
 - Every game run exited before frame 1 (`D3D9: EnterFullscreenMode: Failed to change display mode`) on
   lanes 1 and 2, also with every hook on the original. Cause, measured with WINEDEBUG=+system and a
   small EnumDisplaySettings probe: `winepath` in `e2e_game_start` ran before `env -u WAYLAND_DISPLAY
@@ -495,7 +495,7 @@
   L2 (F1 105 → 170); the remaining 99 PASS claims need per-batch re-runs (in progress).
 
 ## 2026-11-07 ~22:45: paused (user request)
-- State: F1 170 / 15,479 (1.10 %). Session commits 50c928e..this one. Unmerged work in worktrees coll,
+- State: F1 170 / 15,479 (1.10 %). Session commits 148e1c3..this one. Unmerged work in worktrees coll,
   harness2, inf10 (see the ROADMAP PAUSED banner); STREAM-L2 re-verification of 99 claims interrupted.
 
 ## 2026-11-07 (night): PORT-COLL integrated
@@ -710,7 +710,7 @@
 - Agent ac3e5c3c (lane 5) + helpers: crates sa-weapon (121 hooks) and sa-ped (217), docs/arch/weapon-ped-port.md,
   tools/verify/hookscan.py, weapon-combat program/recording, l2-extras section.
 - Merge: conflicts with POP/SCRIPT registrations resolved (order core, stream, world, pop, script, weapon, ped). The
-  branch (based on a6ad91b, before keycells) had unregistered four protection-read hooks to avoid the 0x401E4C crash;
+  branch (based on 861e7ea, before keycells) had unregistered four protection-read hooks to avoid the 0x401E4C crash;
   master's keycells redirect already fixes that crash, so the four stay registered (files restored to master).
 - Verified: sa-hook lib 45 (keycells, INF-20, callers), sa-weapon/sa-ped tests, clippy, i686 build; all-ports IDENTICAL
   on grove 5200, weapon-combat 3500, pause-restart 3700, c-bug 3220. A first c-bug comparison "DIVERGED at 1421: pad"
@@ -1010,7 +1010,7 @@
   skipped them).
 
 ## 2026-11-11 STD-6 integrated (main session): native boot through Init1–3, plus everything it merged
-- STD-6's branch (base master 7fd59f2) carries STD-4/5/6 (native boot: main menu, New Game, Init1/2/3, main.scm
+- STD-6's branch (base master 927d4c2) carries STD-4/5/6 (native boot: main menu, New Game, Init1/2/3, main.scm
   running, CCamera::Process; blocked at ServiceAmbientGunFire 0x4DF210), PORT-AUDIO-3 final, PORT-HUD-3 final
   (incl. the GetStringWidth/UseCommonVehicleTexDicationary constant fix), PORT-CAM-3 (nested footprints),
   WRITER-VEH-BIG, WRITER-RENDER-BIG/-2, WRITER-MVP-I/J, VERIFIER-4 (AddParticle / ComputeEventResponseTasks fixes,
@@ -1038,7 +1038,7 @@
 - verify-all main-hx (fresh DLL 7cc2a0d): IDENTICAL on all 12 recordings (menus-map-controls is new, by PORT-MENU).
 
 ## 2026-11-12 INTEGRATE-2 fast-forwarded onto master (main session)
-- Agent INTEGRATE-2 applied each branch's own diff onto master 1c3e9e0: WRITER-MVP-I..M, WRITER-REGCONV (26
+- Agent INTEGRATE-2 applied each branch's own diff onto master 4235edc: WRITER-MVP-I..M, WRITER-REGCONV (26
   register-convention ports), VERIFIER-6 (28 render promotions, DrawTriPlants srand at_site, 0xC96438 normaliser
   exclusion), GEN-ALL-2 (generator regenerated on the integrated tree: 852 unverified hooks, 25 L1-pure), SRAND-FIX.
   Duplicates settled (see docs/verify/integration-2.md). verify-all int2: IDENTICAL on all 12; L1 18/18.
@@ -1047,7 +1047,7 @@
 ## 2026-11-12 INTEGRATE-3: the native path on master (main session)
 - Agent INTEGRATE-3 brought STD-7/8/9 (native boot through in-world frames: sa-game, sa-platform, 870 static-initialiser
   natives, CRope::Update, the in-world render chain, `--start-in-world`), PORT-MENU (menu-1..3 verified), WRITER-CLUMP
-  (CreateSkinnedClump tree), WRITER-MVP-N and WRITER-INTRO (58 CEventHandler/cutscene hooks) onto master 4d484a0.
+  (CreateSkinnedClump tree), WRITER-MVP-N and WRITER-INTRO (58 CEventHandler/cutscene hooks) onto master e6013d9.
   patterns.py fixed (rows marked implemented by the catalogue no longer hide the generator's own addresses): 841
   generated hooks. Duplicates: 0x4D2E10 keeps STD-7's copy, 0x54EEA0 keeps MVP-K's hook (docs/verify/integration-3.md).
 - Tests: sa-hook 58, sa-script 8, sa-core 70, L1 18/18. verify-all int3/int3b: IDENTICAL on all 13 recordings.
@@ -1073,10 +1073,10 @@
 - Catalogue: 128 addresses → L2; F1 30.88 %.
 
 ## 2026-11-12 SA:MP native groundwork and the browser proxy on master (main session)
-- SAMP-3 (18671e6, 76c533d): crate sa-samp (NativeGame on the sa-samp-api traits, read side), frame dispatch points in
+- SAMP-3 (d1d019c, 88e23a8): crate sa-samp (NativeGame on the sa-samp-api traits, read side), frame dispatch points in
   sa-core samp.rs (Game::Idle / CGame::Process, inert without a handler), `sa-game --samp` host skeleton,
   docs/samp/native-plan.md, samp-rs networking verified on i686 Linux (join to our open.mp copy in ~1.06 s).
-- SAMP-PROXY (3933363, b9ab5c2): crates sa-udp-proxy (WebSocket↔UDP relay with allowlist/limits/shim mode) and
+- SAMP-PROXY (b4161d9, ffc1ba9): crates sa-udp-proxy (WebSocket↔UDP relay with allowlist/limits/shim mode) and
   sa-net (DatagramTransport: UDP native, WebSocket wasm32); samp-rs join through the proxy in 1.13 s.
 - verify-all samp3b (fresh DLL, sa-oracle rebuilt after a stale-binary first attempt): IDENTICAL on all 13 recordings.
 
@@ -1101,7 +1101,7 @@
 - samp-rs: branch sa-engine/adapter fast-forwarded to fb89010 (SAMP-4's 13 verified commits) with the user's approval.
 
 ## 2026-11-12 INTEGRATE-6 / VERIFIER-10 / VERIFIER-11 on master (main session)
-- INTEGRATE-6's commits (rebased by it onto 14f4b7a3, verified there: verify-all i6-final/i6-final2 IDENTICAL on all 13)
+- INTEGRATE-6's commits (rebased by it onto 7a1d1a68, verified there: verify-all i6-final/i6-final2 IDENTICAL on all 13)
   applied unchanged onto master: VERIFIER-10 (void-forwarder generator fix, 23 promotions), the audio-thread Start fix
   (ResumeThread through the original call sites — the stream thread ran free in determinism mode), L3-batch status
   for 157 SA:MP-priority batches (union L3 MATCH 13/13), 370 SA:MP-priority promotions (232 L2, 136 split, 2 L1).
@@ -1111,10 +1111,10 @@
   CShopping::LoadStats, 0x606890, CObject::Render show L2 differences worth a writer's look.
 
 ## 2026-11-12 INTEGRATE-9: one tree for everything (main session)
-- master moved to INTEGRATE-9's 7748bfe7: INTEGRATE-8's tree (web build, SA:MP native + browser, driving, climbing,
-  browser audio, SAMP-4/START/UI-2) with every master commit since b239e888 re-applied (INTEGRATE-6 promotions,
+- master moved to INTEGRATE-9's 29ee0fc0: INTEGRATE-8's tree (web build, SA:MP native + browser, driving, climbing,
+  browser audio, SAMP-4/START/UI-2) with every master commit since 518819bb re-applied (INTEGRATE-6 promotions,
   docs, samp-rs/ monorepo import). Every one of the 15 master commits is present by subject; origin/master
-  (37c7093f) is an ancestor, so the push is a fast-forward.
+  (d95bb320) is an ancestor, so the push is a fast-forward.
 - sa-game takes samp-client / samp-proto / samp-saa from samp-rs/ by path; no git+file sources left; every document
   and script points at samp-rs/ (historical records annotated); auth_table.txt expected under re/samp/ (not committed).
 - Generator fix: ai_patterns.py keeps listed hooks unverified until L1/L2/L3 (INTEGRATE-8's regeneration had dropped
@@ -1135,13 +1135,13 @@
 - Estimate: route A (phase A as a product: original exe + sa-hook, patch detection → per-function fallback to the original bytes) ~1–2 months, medium; route B (native Linux without Wine) ~4–8 months, hard. User chose route A first; ROADMAP MOD-1 and the decisions list updated.
 
 ## 2026-11-14 — INTRO-2 on master (main session)
-- Fast-forwarded master to INTRO-2's head cf15f334 (44 commits on 58a1c75b): AUDIO-STREAM (5), INTRO-1 (12, without its AUDIO-STREAM copies), SCRIPT-5 (13), intro ports batches intro3-1..16 (StartPlaybackRecordedCar 0x45A980, IsTargetBlocked ×2, FrameUpdateCallBackNonSkinnedWithVelocityExtraction, JoinCarWithRoadSystemGotoCoors, CreateDeadPedMoney, CastShadowSectorList, …), native --fixed-step cooperative audio threads (determinism), wasm build fix.
-- Evidence from the agent: verify-all intro2b 4,5 IDENTICAL 13/13 at 1fa2bd6c (later commit docs only); lib tests, i686/wasm builds clean; intro runs 0 blocked through the police-car ride and the Jefferson drop-off; BMX ride blocks at CPed::KillPedWithCar 0x5F0360. Details: docs/verify/integration-intro2.md.
+- Fast-forwarded master to INTRO-2's head ca33426a (44 commits on 97e55daf): AUDIO-STREAM (5), INTRO-1 (12, without its AUDIO-STREAM copies), SCRIPT-5 (13), intro ports batches intro3-1..16 (StartPlaybackRecordedCar 0x45A980, IsTargetBlocked ×2, FrameUpdateCallBackNonSkinnedWithVelocityExtraction, JoinCarWithRoadSystemGotoCoors, CreateDeadPedMoney, CastShadowSectorList, …), native --fixed-step cooperative audio threads (determinism), wasm build fix.
+- Evidence from the agent: verify-all intro2b 4,5 IDENTICAL 13/13 at 40bd7b4e (later commit docs only); lib tests, i686/wasm builds clean; intro runs 0 blocked through the police-car ride and the Jefferson drop-off; BMX ride blocks at CPed::KillPedWithCar 0x5F0360. Details: docs/verify/integration-intro2.md.
 - Next for the intro: KillPedWithCar, the route east to Grove Street, arrival cutscene, Big Smoke marker. Integration notes: FRAMELIMIT also carries the CAEDataStream ctor 0x4DC620 (keep one), WRITER-SAMP-2 also ports 0x6E91D0.
 
 ## 2026-11-14 FRAMELIMIT: the Display Setup frame-limiter toggle natively (agent a1c6b8a6b0d220dec)
 - Why the user's play build stopped on `hw_get_beat_info`: when the limiter is OFF, WinMain (0x748D62) calls
-  `AudioEngine.IsBeatInfoPresent` -> `CAEAudioHardware::GetBeatInfo` in every iteration. 63b156bd ports GetBeatInfo and
+  `AudioEngine.IsBeatInfoPresent` -> `CAEAudioHardware::GetBeatInfo` in every iteration. ad85454a ports GetBeatInfo and
   GetTrackInfo. With INTRO-2's working stream thread, a track is active from boot, so the path runs `GetTrackInfo` ->
   the `CAEDataStream` constructor (master's, from AUDIO-STREAM) in every iteration: 2,283 calls in the repro, 0 blocked.
 - The toggle itself: `psCameraShowRaster` (0x745240) passes the vsync flag from `m_bPrefsFrameLimiter`, so every toggle
@@ -1164,19 +1164,19 @@
   F), the toggle and GetTrackInfo cause 0 blocks. That drive later hits `ProcessTrainCrossingBehaviour` 0x5A0B50,
   which it also hits without the menu. Evidence (not committed): target/framelimit/.
 - verify-all framelimit-final (lanes 1,2,3,6) with `SA_UNVERIFIED=framelimit-render,framelimit-ai,carjack-1,stream-1,batch`
-  (18 hooks installed): IDENTICAL on all 13 recordings. The DLL was built on 0e66feb2; a266cc61 changes only sa-game
-  and doc comments. The branch is rebased on a266cc61, and the repro and window run were repeated there (0 blocked).
+  (18 hooks installed): IDENTICAL on all 13 recordings. The DLL was built on f14da1d0; 9a40b1e6 changes only sa-game
+  and doc comments. The branch is rebased on 9a40b1e6, and the repro and window run were repeated there (0 blocked).
 - Gate: sa-hook lib tests 58/58, i686-windows DLL, wasm32 sa-ports, queue regenerated. The clippy -D warnings
   failures are already on master: sa-pop carctrl4.rs doc lists, sa-game crt.rs/detheap.rs, sa-render
   postfx_speed_fx.rs.
 
 ## 2026-11-14 — FRAMELIMIT on master (main session)
-- Fast-forwarded master to FRAMELIMIT's 8592d839 (rebased on a266cc61): CRealTimeShadowManager::ReInit 0x706870 (the vsync toggle resets the D3D9 device; the reset callback 0x5BA120 makes the next shadow update reinit), plus walk blockers surfaced by the menu timing (0x4AF700, 0x649020, 0x664590, 0x6648C0, 0x4AC920) and CEventVehicleCollision::AffectsPed 0x4B2EE0 copied from CARJACK; `SA_GAME_KEYS` accepts `esc`.
+- Fast-forwarded master to FRAMELIMIT's 283d0235 (rebased on 9a40b1e6): CRealTimeShadowManager::ReInit 0x706870 (the vsync toggle resets the D3D9 device; the reset callback 0x5BA120 makes the next shadow update reinit), plus walk blockers surfaced by the menu timing (0x4AF700, 0x649020, 0x664590, 0x6648C0, 0x4AC920) and CEventVehicleCollision::AffectsPed 0x4B2EE0 copied from CARJACK; `SA_GAME_KEYS` accepts `esc`.
 - Agent evidence: scripted toggle ON→OFF→ON→OFF then 2616 iterations, 0 blocked; window run 0 blocked; gta_sa.set byte 0xB35 saved; verify-all framelimit-final IDENTICAL 13/13 with the new batches on. Main session: sa-hook lib 58/58, i686 sa-game build, play package refreshed.
 - CARJACK registers 0x4AC920 and 0x4B2EE0 too: keep master's when it lands. Driving later hits ProcessTrainCrossingBehaviour 0x5A0B50 (independent of the menu).
 ## 2026-11-14 — CARJACK: pulling drivers out of their cars natively (agent, branch worktree-agent-a271da3abdc02b710)
 - Blocker from the play build: `calls unported v_task_make_abortable (0x6486f0)` right after a drag-out. Ported from
-  the bytes (batch `carjack-1`, 32 hooks + 1 native, all unverified; rebased on master 2ab733fe, whose FRAMELIMIT
+  the bytes (batch `carjack-1`, 32 hooks + 1 native, all unverified; rebased on master 03c9d93e, whose FRAMELIMIT
   registrations of 0x4AC920 and 0x4B2EE0 — the same bodies — replaced CARJACK's): the slow drag-out family
   (`crates/sa-ai/src/car_slow_drag_out.rs`: 0x648100, 0x648180, 0x64E060, SayJacking 0x6497F0, 0x64C190, 0x64E180,
   0x64C220, 0x648520, 0x6485A0, 0x64C6A0 (+ keycells reader 0x402265), 0x64C810, 0x6486F0, 0x648A10), jack events
@@ -1195,7 +1195,7 @@
   blocker). Dropped in the rebase: 0x485B10 / 0x719360 (INTRO-2 ported them).
 - `SA_GAME_JACK=ITER[:DIST[:SIDE]],...` (exploration): teleports CJ in front of the nearest non-police driven car
   (drivers stop for a ped in their path) and prints the jacked driver's state for 400 iterations.
-- Evidence on master 555c616a: `SA_GAME_SCRIPT_SKIP=1 sa-game --start-in-world --fixed-step 40 --frames 4000` with
+- Evidence on master ed2becfc: `SA_GAME_SCRIPT_SKIP=1 sa-game --start-in-world --fixed-step 40 --frames 4000` with
   `SA_GAME_JACK=1250:7,1650:7,2050:7,2450:7,2850:7` and F/W keys per jack (target/carjack/jack-summary.txt): 4 drivers
   jacked (models 475, 600, 439, 475), each dragged out (state 50 → 0 → 1, out of the vehicle, walks away), CJ drives
   off each time; 4000 iterations, blocker list empty. On the rebased head (FRAMELIMIT changed the traffic, so the route
@@ -1215,7 +1215,7 @@
   sa-audio, sa-core and the Linux sa-game target clean). verify-all carjack2 (lanes 4,5,7): IDENTICAL on all 13.
 
 ## 2026-11-14 — CARJACK on master (main session)
-- Rebased CARJACK (03471585, 10 commits) onto 87c1b470 in a temporary worktree (queue conflicts resolved by regeneration: 2438 unverified hooks, 380 batches) and fast-forwarded master. 32 hooks + 1 native, batch carjack-1: the CTaskComplexCarSlowBeDraggedOutAndStandUp / CarSlowDragPedOut / CarSlowBeDraggedOut family (0x6486F0 was the user's blocker), CEventPedEnteredMyVehicle, KillPedOnFoot base, DestroyCar / DestroyCarArmed / DragPedFromCar / ScreamInCarThenLeave, LeaveCarAndFlee, GetCurrentCJMood, 16 previously unlisted generated natives; `SA_GAME_JACK` exploration knob.
+- Rebased CARJACK (03471585, 10 commits) onto 0f751942 in a temporary worktree (queue conflicts resolved by regeneration: 2438 unverified hooks, 380 batches) and fast-forwarded master. 32 hooks + 1 native, batch carjack-1: the CTaskComplexCarSlowBeDraggedOutAndStandUp / CarSlowDragPedOut / CarSlowBeDraggedOut family (0x6486F0 was the user's blocker), CEventPedEnteredMyVehicle, KillPedOnFoot base, DestroyCar / DestroyCarArmed / DragPedFromCar / ScreamInCarThenLeave, LeaveCarAndFlee, GetCurrentCJMood, 16 previously unlisted generated natives; `SA_GAME_JACK` exploration knob.
 - Agent evidence: verify-all carjack2 IDENTICAL 13/13; 3 drivers jacked, 0 blocked over 3600 iterations. Main session on the rebased head: sa-hook lib 58/58, ai_patterns --check clean, i686 build, the jack repro 0 blocked over 3600 iterations; play package refreshed. Ledger entry for 0x621F50 (reference cell).
 - Frontier the agent saw: jacked peds fighting back (GunControl 0x625270, KillPedOnFootMelee), police after a jack (UpdateCarAI law-enforcer path), GoToPointFine::ProcessPed 0x663540, ProstituteSolicit::IsTaskValid 0x661BB0, IsSphereTouchingVehicle 0x6D84D0, burning car 0x4DCBE0.
 ## 2026-11-14 SAMP-CLASSPANEL: SA:MP class-selection panel in the engine-drawn UI (agent, branch worktree-agent-a386e2d86a077ef0c)
@@ -1242,14 +1242,14 @@
   `target/classpanel-evidence/` (not committed).
 
 ## 2026-11-14 — SAMP-CLASSPANEL on master (main session)
-- Rebased SAMP-CLASSPANEL (792d81ee, 3 commits) onto ba14f5d7 (doc conflicts unioned) and fast-forwarded master: the SA:MP class-selection panel (`<<` `>>` `Spawn`) in sa-samp-ui (sa-samp-api v4: `show_class_panel`, `UiEvent::ClassPanelClicked`), trilinear GUI skin, native client wiring (clicks act as Left/Right/Shift through classsel), browser pointer release while the SA:MP cursor shows, `SA_GAME_POINTER`, `headless.mjs --pointer`.
-- Main session: `sa-game --window` also releases the pointer while the SA:MP UI cursor shows (4f446863). Checks: sa-samp-ui 44, samp-client 201+1, sa-hook lib 58/58, i686 clippy with and without `samp`; native join against the local open.mp server with scripted clicks: Next → class 1 (sound 1052, skin 105), Spawn → spawn requested and spawned, 0 blocked over 2800 iterations.
+- Rebased SAMP-CLASSPANEL (792d81ee, 3 commits) onto c64cb63f (doc conflicts unioned) and fast-forwarded master: the SA:MP class-selection panel (`<<` `>>` `Spawn`) in sa-samp-ui (sa-samp-api v4: `show_class_panel`, `UiEvent::ClassPanelClicked`), trilinear GUI skin, native client wiring (clicks act as Left/Right/Shift through classsel), browser pointer release while the SA:MP cursor shows, `SA_GAME_POINTER`, `headless.mjs --pointer`.
+- Main session: `sa-game --window` also releases the pointer while the SA:MP UI cursor shows (2caa6117). Checks: sa-samp-ui 44, samp-client 201+1, sa-hook lib 58/58, i686 clippy with and without `samp`; native join against the local open.mp server with scripted clicks: Next → class 1 (sound 1052, skin 105), Spawn → spawn requested and spawned, 0 blocked over 2800 iterations.
 - Agent evidence: panel pixel-identical to the original 0.3.7-R4 except label glyph width (~12% narrower, UI font size rule; ledger + overlay.md §8 item 9).
 
 ## 2026-11-14 PEDHIT: vehicles and the player hitting peds natively (agent a8dce841187c8089c)
 - Goal: any vehicle (car, BMX) or the player on foot hits peds (bump, fast hit, run over, thrown over the bonnet,
   killed) natively, 1:1 with gta_sa.exe 1.0 US, and play continues. Branch `worktree-agent-a8dce841187c8089c`,
-  rebased on master 90a18dff (CARJACK, SAMP-CLASSPANEL).
+  rebased on master 4d97535d (CARJACK, SAMP-CLASSPANEL).
 - Ported from the 1.0 US bytes, batch `pedhit-1` (13 hooks, unverified, route L2): `CPed::KillPedWithCar` 0x5F0360
   (1139 instructions: the gates, the strong path with pad shake, side hit / runover / bonnet-roof throw with lift
   and bonnet removal, the weak bump, crime report, the damage event and knock-down anims, the force on the car),
@@ -1280,13 +1280,13 @@
   except sa-game (pre-existing: `sa_core::orig::set_busy_wait_handler` is 32-bit only, so the 64-bit sa-game build
   fails on master too); i686 clippy only the known `draw_quad_bits`. Queue regenerated (2451 unverified in 381
   batches, `--check` clean).
-- verify-all pedhit 1,2,3,6 with `SA_UNVERIFIED=pedhit-1` on the ba14f5d7-based head: IDENTICAL on all 13
-  recordings (17 subsystems each). The 90a18dff rebase brings only sa-game / SA:MP UI changes (no game-function
+- verify-all pedhit 1,2,3,6 with `SA_UNVERIFIED=pedhit-1` on the c64cb63f-based head: IDENTICAL on all 13
+  recordings (17 subsystems each). The 4d97535d rebase brings only sa-game / SA:MP UI changes (no game-function
   ports, nothing in the phase A DLL); hooktest, queue and the three scenarios were rerun there with the same results.
 
 ## 2026-11-14 — PEDHIT, clippy clean-up and NEWGAME on master (main session)
-- PEDHIT (4776d188, batch pedhit-1, 13 hooks + 3 natives: CPed::KillPedWithCar 0x5F0360, MakeTyresMuddySectorList, the CEventPedCollisionWithPlayer / GotKnockedOverByCar dtors, pickups/money/weapon drop, blood pool, hydrant water, ProstituteSolicit::IsTaskValid/CreateSubTask, EnterAnyCarAsDriver::CreateFirstSubTask) fast-forwarded. Agent: verify-all IDENTICAL 13/13 with pedhit-1 on; car / foot / intro-BMX scenarios 0 blocked (`tools/e2e/scenarios/pedhit.sh`). Main session: car scenario 0 blocked over 2916 steps on master.
-- Clippy: workspace host clippy and i686-pc-windows sa-hook clippy clean again (64-bit check build gates the busy-wait handler and registry callers; phase A dead `draw_quad_bits`; `is_multiple_of`); writer gate all PASS after the queue regeneration (4f558734).
+- PEDHIT (de4c178a, batch pedhit-1, 13 hooks + 3 natives: CPed::KillPedWithCar 0x5F0360, MakeTyresMuddySectorList, the CEventPedCollisionWithPlayer / GotKnockedOverByCar dtors, pickups/money/weapon drop, blood pool, hydrant water, ProstituteSolicit::IsTaskValid/CreateSubTask, EnterAnyCarAsDriver::CreateFirstSubTask) fast-forwarded. Agent: verify-all IDENTICAL 13/13 with pedhit-1 on; car / foot / intro-BMX scenarios 0 blocked (`tools/e2e/scenarios/pedhit.sh`). Main session: car scenario 0 blocked over 2916 steps on master.
+- Clippy: workspace host clippy and i686-pc-windows sa-hook clippy clean again (64-bit check build gates the busy-wait handler and registry callers; phase A dead `draw_quad_bits`; `is_multiple_of`); writer gate all PASS after the queue regeneration (b5f7ca4e).
 - NEWGAME's last two commits (CMenuSystem::Initialise 0x5822D0 as a phase B native, CTaskComplexWaitForPed ctor/ControlSubTask, --start-in-world on every new game) cherry-picked; its CAEDataStream / CAEStreamingDecoder constructors and stream-thread fix dropped (master has them); duplicate `esc` arm removed. sa-hook lib 58/58, i686 build. Not re-proven by a scripted pause-menu run (menu position not found); the user's report is the check.
 - Found while scripting the pause menu: Enter on pause-menu item 4 (down ×3) SIGSEGVs in a Rust port (host pointer 0x58dc4f9c) — queued for the frontier agent.
 
@@ -1313,7 +1313,7 @@
   sa-samp-api ui 373 → 350; sa-game samp_net / demo / scene 1,897 → 1,638. Total 22,722 → 19,537 (incl. new tests).
 
 ## 2026-11-14 — SAMP-UI-DEDUP on master (main session)
-- Fast-forwarded master to 7e2da8b9: one SA:MP UI, samp-rs's own, drawn through `sa_samp_api::ui::UiBackend` (API v5): samp-client's pass (`ui::render`, `ui::session`, `ui::host`) generic over the trait, its D3D9/DXUT code the original-exe backend, `sa-samp`'s overlay the engine backend; shared geometry moved into samp-ui (dxut, classpanel, scoreboard/deathwindow layout); `crates/sa-samp-ui` deleted (22,722 → 19,537 lines incl. new tests). Behaviour differences resolved by samp-rs/spec, listed in overlay.md section 10.4.
+- Fast-forwarded master to 9f827946: one SA:MP UI, samp-rs's own, drawn through `sa_samp_api::ui::UiBackend` (API v5): samp-client's pass (`ui::render`, `ui::session`, `ui::host`) generic over the trait, its D3D9/DXUT code the original-exe backend, `sa-samp`'s overlay the engine backend; shared geometry moved into samp-ui (dxut, classpanel, scoreboard/deathwindow layout); `crates/sa-samp-ui` deleted (22,722 → 19,537 lines incl. new tests). Behaviour differences resolved by samp-rs/spec, listed in overlay.md section 10.4.
 - Main session: the browser build panicked at start-up (`std::time::SystemTime` in the UI core; wasm32 has no std clock) → web_time; GETTING-STARTED and the Makefile `test` target updated. Checks: samp-rs workspace tests green, sa-samp 30, sa-samp-api; browser (headless Brave, GPU) joins the local open.mp server, class-panel Spawn click → spawned, 0 blocked.
 - Not re-measured: the D3D9 call stream on the original exe (builds and clippy clean).
 
@@ -1360,7 +1360,7 @@
   0x4DCBE0. New blockers the scenarios reach: CAEPedAudioEntity::HandlePedHit 0x4E1CC0 (melee, 2 iterations; nested
   jump tables and a protection fragment), CAutomobile::UpdateMovingCollision 0x6A1460 and
   CTrailer::SetupSuspensionLines 0x6CF1A0 (crossing run).
-- Gates: writer gate on the ad76c2bd-based head: hooks / queue / clippy / i686 / i686clip / wasm32 / hooktest / l1
+- Gates: writer gate on the fdd3277b-based head: hooks / queue / clippy / i686 / i686clip / wasm32 / hooktest / l1
   PASS; l1test 17/18 then 18/18 after queuing 0x4B1F00's preserved-ECX spec (the only failing test, rerun).
   sa-hook lib 58/58, generators `--check` clean, queue 2544 unverified hooks in 391 batches.
 - verify-all (lanes 4-7): `frontier1` with frontier-1-1 + the integrated batches (samp2-*, world5-1, world6-1/3/4/5)
@@ -1373,7 +1373,7 @@
   GoToPointFine and KillPedOnFootMelee ports have no scripted route yet (no call in these runs).
 
 ## 2026-11-14 — FRONTIER-1 on master (main session)
-- Fast-forwarded master to 606b1434 (rebased on 27d89952): WRITER-WORLD-2 and WRITER-SAMP-2 integrated (master's copies kept on duplicates), `tools/verify/frontier.py` (723 unported callees left: 512 direct + 211 virtual), the native `reg(...)` call path fixed (register frame + 16-byte stack alignment; root cause of the pause-menu SIGSEGV), 20 user-hit ports (frontier-1-1/2: ProstituteSolicit::ControlSubTask, ProcessTrainCrossingBehaviour, BikeJacked, GoToPointFine, KillPedOnFootMelee, FightHitPed, …).
+- Fast-forwarded master to fee1c2af (rebased on 18e878c9): WRITER-WORLD-2 and WRITER-SAMP-2 integrated (master's copies kept on duplicates), `tools/verify/frontier.py` (723 unported callees left: 512 direct + 211 virtual), the native `reg(...)` call path fixed (register frame + 16-byte stack alignment; root cause of the pause-menu SIGSEGV), 20 user-hit ports (frontier-1-1/2: ProstituteSolicit::ControlSubTask, ProcessTrainCrossingBehaviour, BikeJacked, GoToPointFine, KillPedOnFootMelee, FightHitPed, …).
 - Agent: verify-all frontier2 IDENTICAL 13/13 with all the new batches on. Main session: sa-hook lib 58/58, i686 and wasm (samp) builds, pausemenu scenario 0 blocked (416 steps); play package refreshed.
 - Still open (FRONTIER-2): GunControl 0x625270, police path, burning car, melee HandlePedHit 0x4E1CC0 / ComputeDamageAnim 0x4B3FC0, crossing 0x6A1460 / 0x6CF1A0.
 
@@ -1411,7 +1411,7 @@
 - Gates: writer gate PASS for each step (hooks, queue, bindings, state, clippy, i686, i686clip, wasm32, hooktest,
   l1test, l1); make test; i686 sa-game (+samp); FEATURES=samp web build; samp-rs workspace tests (step 3).
 - verify-all: step 1 `dedup1-s1` IDENTICAL 13/13; `SA_UNVERIFIED=all` 12/13 IDENTICAL, weapon-combat crashes in the
-  rust run at frame ~1745-1857 (read of 0x9FC2) — the same on master ecc59c5b with `SA_UNVERIFIED=all`
+  rust run at frame ~1745-1857 (read of 0x9FC2) — the same on master 2767cc0c with `SA_UNVERIFIED=all`
   (`master-u-wc`), so pre-existing in some unverified batch, not from this pass. Step 2: DLL byte-identical to
   step 1 (sha 08e48c17…), `dedup1-s2` IDENTICAL 13/13. Step 3 (DLL 5f21fcbf…): `dedup1-s3u` (`SA_UNVERIFIED=all`)
   12/13 IDENTICAL + the same pre-existing weapon-combat crash (1792 common frames, as on master); `dedup1-s3`
@@ -1425,8 +1425,8 @@
   0x4F4620, 0x59CD50, 0x59CB70); left as is.
 
 ## 2026-11-15 — DEDUP-1 pass 2: binding signatures from the original, ADR-003 steps 4, 5, 7 (agent, branch worktree-agent-a1a2b663eb9c1be36)
-- Base: master 3e761b12 (fast-forwarded). Commits: A 11eece4d, B 7e89e5fc, D 2637faf5, E 541c46ea, C 21cf78a5 +
-  74531a50 + 06303313, F (gates, docs, queue). Scratch scripts under target/dedup2 (not committed).
+- Base: master 3b114f6a (fast-forwarded). Commits: A e43c5f6c, B 9dd4cff4, D 89cc5da7, E 3689046b, C 29b4fa4d +
+  fbb0da85 + 8c8b4290, F (gates, docs, queue). Scratch scripts under target/dedup2 (not committed).
 - A (binding conflicts): `tools/gen/bindings.py --resolve` (`tools/gen/bindings_migrate.py`) merged every declaration
   of a repeated or bound address into its binding. Where declarations disagreed, the signature came from the exe
   (`tools/lib/abi.py` on `tools/lib/exe.py`: the callee's `ret N`, ECX reads, `add esp, N` at call sites, the
@@ -1485,7 +1485,7 @@
 - Phase B: a native offscreen run of the tree crashed in RsInitialize (`free(): invalid pointer`) and RwInitialize:
   bindings had taken a Rust target some callers' declarations named where the others had reached the phase B
   registry's implementation (CMemoryMgr::FreeAlign → sa-game's stand-in, paired with its MallocAlign; CRT pow / floor
-  / strncpy → the registry's CRT replacements). Fixed (825c2d09), and `bindings.py --check` now fails when a binding
+  / strncpy → the registry's CRT replacements). Fixed (c88a829d), and `bindings.py --check` now fails when a binding
   a host stand-in replaces is not `unported`. Offscreen 600 frames `--fixed-step 33.333`: the same report as master's
   sa-game (616 ok, 0 blocked, 0 crashed) except the registry call counts (fewer calls go through it). The host L2
   specs needed the same: `sa_oracle::hosted::install_crt` registers the CRT stand-ins (pow, floor, strncpy) those
@@ -1495,14 +1495,14 @@
   tools/web/build.sh` (wasm-bindgen 0.2.130), make test, sa-hook lib tests, l1test (after B: 18 passed; final: 18 passed, 1 ignored),
   bindings / dupes / cfg / layers / state checks. samp-rs not touched.
 - verify-all: A `dedup2-a` IDENTICAL 13/13 (DLL 4df7befa…), B `dedup2-b` IDENTICAL 13/13 (DLL a55c3fed…), final
-  `dedup2-final` (06303313, DLL 61cd9877…; the later commits change only phase B targets, unused code and the L1
+  `dedup2-final` (8c8b4290, DLL 61cd9877…; the later commits change only phase B targets, unused code and the L1
   harness) IDENTICAL 13/13; `dedup2-final-u` (`SA_UNVERIFIED=all`, lanes 4-5) 12/13 IDENTICAL + weapon-combat
   1792 common frames, the same as master (UNVERIFIED-WC, not worse). Not run: a native window or browser session
   (the D refactor's backends are checked by the offscreen run and the web build only).
 
 ## 2026-11-15 — integrate DEDUP-1 pass 2 (main session)
 
-- master fast-forwarded 3e761b12 → 6a76af1f (DEDUP-1 pass 2, 10 commits).
+- master fast-forwarded 3b114f6a → 3b0757dd (DEDUP-1 pass 2, 10 commits).
 - Checked on master: `make structure` (dupes 43/43 allowed, cfg 367 ≤ baseline, layers 0 violations), bindings
   `--check` (2,633 in 16 crates), sa-hook lib 58/58, i686 sa-game with and without samp, `FEATURES=samp
   tools/web/build.sh`.
@@ -1514,7 +1514,7 @@
 
 ## 2026-11-15 — UNVERIFIED-WC: weapon-combat crash with every unverified batch on (agent, lanes 4-5, 6 for one spot run)
 
-- Reproduced on c372e77d: `SA_UNVERIFIED=all` port-l2 `ports` on weapon-combat, rust run stops at 1792 frames. With
+- Reproduced on 016e40db: `SA_UNVERIFIED=all` port-l2 `ports` on weapon-combat, rust run stops at 1792 frames. With
   `SA_CRASH_LOG=1` the fault (read of 0x9FC2) is in the `CAutomobile::BurstTyre` port (0x6A32B0, batch veh3-3) with
   `this` = 0x9FA0, called from 0x6D7E92. No batch bisection was needed: CVehicle::InflictDamage 0x6D7E80 does `mov
   ebp, [esi]; mov ecx, esi; call 0x6D7BC0; add al, 0xD; push eax; call [ebp+0xB0]`, i.e. the virtual BurstTyre call
@@ -1540,7 +1540,7 @@
   also pass the full union run on all 13 recordings; they need per-hook L2 runs before promotion. Nothing promoted.
 
 ## 2026-11-15 — FRONTIER-2: the user-hit blockers, frontier imports / partial ports (agent, branch worktree-agent-acdd0a918985c68f5)
-- Base: master c372e77d (DEDUP-1 pass 2). Every new port is ported from the 1.0 US bytes (gta-reversed read as an aid;
+- Base: master 016e40db (DEDUP-1 pass 2). Every new port is ported from the 1.0 US bytes (gta-reversed read as an aid;
   where it differs the bytes are followed and the docs say how), registered `unverified` (batch `frontier2-1`), and
   checked against `tools/gen/inflight.py` (only 0x4AD420 / 0x645600 are in flight elsewhere, neither touched).
 - Batch `frontier2-1` (34 hooks + 2 phase-B natives):
@@ -1606,15 +1606,15 @@
 
 ## 2026-11-15 — integrate UNVERIFIED-WC and FRONTIER-2 part 1 (main session)
 
-- UNVERIFIED-WC (d09c620a) fast-forwarded; sa-hook lib 59/59, i686 sa-game.
-- FRONTIER-2 part 1 rebased onto d09c620a (WORKLOG conflict: both entries kept) and fast-forwarded. On the rebased
+- UNVERIFIED-WC (4c402a9a) fast-forwarded; sa-hook lib 59/59, i686 sa-game.
+- FRONTIER-2 part 1 rebased onto 4c402a9a (WORKLOG conflict: both entries kept) and fast-forwarded. On the rebased
   tree: sa-hook lib 59/59, `make structure` clean, bindings `--check` (2,649), i686 sa-game; scenarios pausemenu /
   solicit / melee 0 blocked, crossing 345 blocked on `update_car_ai_original (0x0)` (police path, open), no crash;
   verify-all `f2-int` (lanes 1-3) IDENTICAL 13/13. `target/play/sa-game` and `web/pkg` refreshed.
 
 
 ## 2026-11-15 — FRONTIER-2 part 2: police path, first-person aim, user-hit IK point arm / wheel particles, imports (agent, branch worktree-agent-acb224bd5911fd3a7)
-- Base: master 26b094e9. Every port from the 1.0 US bytes (gta-reversed read as an aid; it reverses neither UpdateCarAI's
+- Base: master 8be51029. Every port from the 1.0 US bytes (gta-reversed read as an aid; it reverses neither UpdateCarAI's
   whole switch faithfully nor ControlSubTask / Process_M16_1stPerson), checked with `tools/gen/inflight.py` first.
 - Batch `frontier2-3` (police path; scenario `crossing` was 345 blocked on `update_car_ai_original`):
   - `CCarAI::UpdateCarAI` 0x41DA30 is now a whole port (new module sa-pop update_car_ai.rs; the ADR-002 fallback is gone):
@@ -1659,7 +1659,7 @@
   416 / 0; sniper 1216 / 0; no crash. A 4000-frame crossing run reaches further unported code (firetruck tasks:
   `vslot_18` MakeAbortable, 0x729B60, CreateFirstSubTask 0x62BF00) and a pistol shot at a car `SetUpWheelColModel`
   0x6A3060: left for the frontier turn.
-- Gates: writer gate green (26b094e9..), `make structure` clean, bindings `--check` 2,656; verify-all `frontier2-p2b`
+- Gates: writer gate green (8be51029..), `make structure` clean, bindings `--check` 2,656; verify-all `frontier2-p2b`
   (lanes 1-3, SA_UNVERIFIED=frontier2-1..frontier2-5) IDENTICAL 13/13; i686 sa-game with and without `samp`, `FEATURES=samp
   tools/web/build.sh` (wasm-bindgen 0.2.130) built.
 - frontier.py before / after: direct 480 + virtual 211 + imports 4 + partial 14 → direct 476 + virtual 210 + imports 0 +
@@ -1674,7 +1674,7 @@
 
 ## 2026-11-15 — integrate FRONTIER-2 part 2 (main session)
 
-- master fast-forwarded 26b094e9 → 1aff4f91 (police path, Process_M16_1stPerson, weapon cheats, IK point arm, Fx_c
+- master fast-forwarded 8be51029 → 8e9b827e (police path, Process_M16_1stPerson, weapon cheats, IK point arm, Fx_c
   wheel particles, the four Win32 imports; the agent's verify-all `frontier2-p2b` IDENTICAL 13/13 on the same base).
 - Checked on master: sa-hook lib 59/59, `make structure` clean, i686 sa-game, `FEATURES=samp tools/web/build.sh`;
   scenarios pausemenu / solicit / crossing / melee / sniper all 0 blocked, no crash. `target/play/sa-game` and
@@ -1683,7 +1683,7 @@
 ## 2026-11-15 — GIT-1: prepare the history rewrite (agent, not run on the real repository)
 
 - `docs/history/commit-messages.tsv`: a Conventional Commits subject for each of master's 755 non-merge commits (up to
-  03319d70), written by hand in batches from the original message and diff stat; `Refs` only where the original names
+  fd955e95), written by hand in batches from the original message and diff stat; `Refs` only where the original names
   the task (307 rows). Cherry-picked duplicates share their subject.
 - `tools/git/rewrite_history.py`: rebuilds each commit object from its raw bytes (new subject + original message verbatim
   + `Refs:` + `Original-commit:`; other headers byte-identical, parents mapped), verifies every pair before touching a
@@ -1726,16 +1726,16 @@
   Mismatches left open: CCamera::Process 0x52B730, FrameUpdateCallBackSkinnedWithVelocityExtraction 0x4D1680,
   CShopping::LoadStats 0x49B6A0 (calls FindSection / GetNextSection directly instead of through their hooks).
 - Promoted (d2f5e811): 30 batches, 48 hooks (28 L2, 20 L3) — see the ROADMAP row VERIFY-PROMOTE-1.
-- Checks: writer gate (base d09c620a) PASS on hooks, bindings, state, dupes, cfg, layers, clippy, i686, i686clip,
+- Checks: writer gate (base 4c402a9a) PASS on hooks, bindings, state, dupes, cfg, layers, clippy, i686, i686clip,
   wasm32, hooktest, l1test, l1; queue FAILed once because `batch-l2.py record` was rewriting the status file
   while the gate ran, `queue.py --check` afterwards: up to date. verify-all `bl2-promote` (default set, DLL
   33b96aa6…) IDENTICAL 13/13 (save-load: residue only, SAVE-1).
 - verify-all `bl2-promote-u` (`SA_UNVERIFIED=all`, same DLL) IDENTICAL 13/13 (save-load: residue only, SAVE-1).
   The commit-msg hook of the shared config runs tools/verify/commit_lint.py from the worktree, which this branch
-  (based on d09c620a) lacks: master's copy was placed there untracked so the check ran on these commits.
+  (based on 4c402a9a) lacks: master's copy was placed there untracked so the check ran on these commits.
 
 ## 2026-11-15 — FRONTIER-2 part 3: user-hit IK point arm / plane spawning, car tyres, the fire-truck and armed-cop chain (agent, branch worktree-agent-a1fa130bdd6dc9931)
-- Base: master 11105949 (fast-forwarded to a2ac3540 before the first commit, for the commit-msg hook). Scope cut by the user mid-run to the user-hit blockers: the partial-port cases, the ~250-function
+- Base: master 3a76ad1c (fast-forwarded to 26eec393 before the first commit, for the commit-msg hook). Scope cut by the user mid-run to the user-hit blockers: the partial-port cases, the ~250-function
   frontier turn and the 0xCB73E0 boolean fixes stay open. Every port from the 1.0 US bytes (gta-reversed read as an aid),
   checked with `tools/gen/inflight.py` first; all in batch `frontier2-6` (unverified).
 - User-hit (free roam): `CTaskSimpleIKPointArm::~CTaskSimpleIKPointArm` 0x634240 and `::Clone` 0x634250 (with them every
@@ -1771,15 +1771,15 @@
   melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0; no crash. crossing 4000: 1853 ok / 2163 blocked (see above).
 - verify-all `frontier2-p3` (lanes 1-3, SA_UNVERIFIED=frontier2-1..frontier2-6, DLL of 0a9eaa21; the following commit
   only swaps local helpers for the shared ones and fixes clippy findings): IDENTICAL 13/13.
-- Commit messages follow Conventional Commits (the branch was fast-forwarded to a2ac3540 so the commit-msg hook finds
+- Commit messages follow Conventional Commits (the branch was fast-forwarded to 26eec393 so the commit-msg hook finds
   tools/verify/commit_lint.py).
 
 ## 2026-11-15 — integrate PORT-EAX + promotions and FRONTIER-2 part 3 (main session)
 
 - Promotions branch (PORT-EAX, three port fixes, `tools/verify/batch-l2.py`, 30 batches / 48 hooks promoted) rebased
-  onto a2ac3540 (conflicts: the CanPedTargetPed binding row takes the agent's `u8` return and keeps master's 0x5F1E70
+  onto 26eec393 (conflicts: the CanPedTargetPed binding row takes the agent's `u8` return and keeps master's 0x5F1E70
   row; the verification queue regenerated; ROADMAP / WORKLOG rows merged), FRONTIER-2 part 3 stacked on top, queue
-  regenerated once more (b03d4908). Master fast-forwarded.
+  regenerated once more (6209bcc2). Master fast-forwarded.
 - Checked: sa-hook lib 59/59, `make structure` clean, bindings `--check` (2,659), state_check 0 inconsistent, i686
   sa-game; scenarios pausemenu / solicit / crossing / melee / sniper / shootcar 0 blocked, no crash; verify-all
   `int3-default` (lanes 1-3) IDENTICAL 13/13; `int3-f2b` (`SA_UNVERIFIED=frontier2-1..6`) IDENTICAL 13/13 (a first

@@ -754,3 +754,18 @@ bd5ca91dfe31a518ccb4a7a232cfedfd5ed95402	chore(catalog): regenerate the queue fo
 11105949f47aa6fb9593f9cefb1e4f9288e9db00	docs(worklog): record FRONTIER-2 part 2 integrated	FRONTIER-2
 b1fff3fba1991ce26fb44bd203df0b51c5a5ff89	build(tools): enforce Conventional Commits messages	GIT-1
 03319d70a8ab32d01a220ca39edc03922ab96ca5	docs(roadmap): add GIT-1, Conventional Commits and the history rewrite	GIT-1
+# draft rows appended 2026-11-15 by --draft-missing: review every subject
+5d9f24f78e28d710c06a985c59c08f7110117010	feat(tools): prepare the Conventional Commits rewrite of the history	GIT-1
+9b1c301d808350921c515d99bb29bf2707a92303	docs(history): document the history rewrite and fix its edge cases	GIT-1
+4af4afa3f19b3d8c338e6990c085033f321d332c	fix(tools): rebase old-history branches in a temporary worktree	GIT-1
+a2ac3540938bdf2be6442d4867436d0948f8e540	docs(history): record the GIT-1 dry run and its results	GIT-1
+081df9d5e27fdb6a2a1d5a375a1893afa63f3d30	fix(sa-stream): return the EAX the original leaves (PORT-EAX)	PORT-EAX
+8d4533ddcc1ad87d8933ac7ecaa35de810d0c452	fix(sa-ai): fix three port bodies found by the batch L2 runs	VERIFY-PROMOTE-1
+b294f6f25d5ab556243ac9bd2c8604bfd30718d8	feat(verify): automate per-hook evidence runs for whole batches	VERIFY-PROMOTE-1
+3f51eece086c9873837c697be7f48b0c0d90cd04	chore(catalog): promote 30 batches with per-hook evidence	VERIFY-PROMOTE-1
+6e84605e60afe3dd0179dc45c6bb22a7b5cde066	docs(roadmap): record PORT-EAX and the first batch promotions	PORT-EAX,VERIFY-PROMOTE-1
+d97206e2172835a9fc4e90f7d2d46b83570c6fb3	feat(sa-ai): port the user-hit IK point arm, plane coors and tyre models	FRONTIER-2
+ff3e98e8adfa12fff0af7962a8fae9eed51378e1	refactor(sa-ai): reuse the shared helpers in the frontier2-6 ports	FRONTIER-2
+c42d136cb24db3afb25aa6fe2b7046831c10ef95	docs(worklog): record FRONTIER-2 part 3 and its open blockers	FRONTIER-2
+b03d4908617c5fbf358fdca11f0c37390cd96115	chore(catalog): regenerate the verification queue after integration	FRONTIER-2
+3047303867d787f7615bcacd0bab3418bf34d132	docs(worklog): record the promotions and FRONTIER-2 part 3 integration	FRONTIER-2

@@ -366,7 +366,7 @@ Practical rules learned the hard way:
 - **master** (verified IDENTICAL on all 13 recordings): the native Linux game (walking, sprint, jump, fists,
   window loop, deterministic mode, traffic, shadows), ~84 % of the exe's functions written in Rust, 34 % verified
   at L2/L3, SA:MP read side, the proxy.
-- **Integration branch `worktree-agent-ac8a20a070c956b08` (`f94f1ee3`, also verified 13/13)**: everything above
+- **Integration branch `worktree-agent-ac8a20a070c956b08` (`7fc5980a`, also verified 13/13)**: everything above
   plus the browser build, driving, climbing, SA:MP natively and in the browser (join, SA:MP loading screen,
   class selection, spawn, chat/dialogs/UI), browser audio. It still has to be combined with master's last
   verification commits — that is step 1 in CONTINUE.md.

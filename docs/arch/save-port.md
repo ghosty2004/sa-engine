@@ -160,7 +160,7 @@ the original's in 653 residue bytes only (`GenericSave` stays original, but its 
 
 ### Gate
 
-`tools/verify/writer-gate.sh 1c3e9e0` (GATE_SKIP=l1test): clippy (host, all targets), i686 release build and
+`tools/verify/writer-gate.sh 4235edc` (GATE_SKIP=l1test): clippy (host, all targets), i686 release build and
 clippy, wasm32 build of sa-ports, sa-hook lib tests (58) PASS; the `hooks` step lists the 59 promoted hooks as
 problems (this branch both wrote and verified them).
 

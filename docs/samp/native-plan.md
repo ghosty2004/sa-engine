@@ -17,7 +17,7 @@ sa-game now takes samp-rs's crates by path from `samp-rs/crates/`.
 |---|---|---|
 | native sa-game | boots, runs the front end and `CGame::Initialise`, presents in-world frames at Grove Street (`--start-in-world`, 10 exploration stubs, platform.md §15) | STD-9 |
 | SA:MP-executed engine functions | 4,777 non-init functions; **4,471 in Rust (93.6 %), 2,061 of them verified (L1–L3)**, **306 not in Rust** | §4, `tools/native/samp_unported.py` |
-| sa-samp-api | 15 traits, API v1 at d666ce0 (script threads, `area_raw`, `menu_active_dword`) | `crates/sa-samp-api` |
+| sa-samp-api | 15 traits, API v1 at e4d2b09 (script threads, `area_raw`, `menu_active_dword`) | `crates/sa-samp-api` |
 | original backend (samp-rs) | steps 1–3 committed on `sa-engine/adapter`; 4, 5 (world, HUD) and the network refactors by SAMP-4 (§10.2) | §10 |
 | **native backend `sa-samp`** | **new**: read side served (§3.2), script threads through the ported interpreter, host tests | `crates/sa-samp`, 12 tests (x86_64 and i686) |
 | **dispatch points** | **new**: `sa_core::samp::frame` in the `Game::Idle` and `CGame::Process` ports at samp's three hook sites | `crates/sa-core/src/samp.rs` |
@@ -260,7 +260,7 @@ test joins_a_server_from_linux ... ok
   points, 1 test) + the five calls in `mvpb_app.rs`, `crates/sa-game/src/samp.rs` + `--samp`/`--name`,
   `tools/native/samp_unported.py` → `docs/samp/native-unported.csv`, `tools/e2e/samp/native-handshake.sh`, this
   file, `docs/samp/patches/samp-rs-adapter-step4.patch`.
-* samp-rs step 4 (patch): `sa-samp-api` pin b5d41ce → d666ce0; original backend `ScriptCommands` (thread table,
+* samp-rs step 4 (patch): `sa-samp-api` pin dc82cc3 → e4d2b09; original backend `ScriptCommands` (thread table,
   `run_on_thread` with samp's SEH/fault path, locals, `last_command`), `area_raw`/`menu_active_dword` (unrouted
   neutral values like their siblings); `script::Runner` is now a thin owner of an adapter thread (all 294 call
   sites unchanged); `script::encode` takes `ScriptArg`; `tests/native_handshake.rs`. Verified on the copy:
@@ -281,7 +281,7 @@ test joins_a_server_from_linux ... ok
 ### 10.1 Main-session decisions on §7
 1. **A/B before step 4's commit**: done (§10.3), on lane 3 with the original exe.
 2. **`ScriptCommands::destroy_script_thread`** added (default: keep the thread) and **`PadState::home` split** into
-   `chat_indicated` (+0x28) and `ped_walk` (+0x2A): sa-samp-api v2 (7fd398c). v3 (b4cf80c) adds
+   `chat_indicated` (+0x28) and `ped_walk` (+0x2A): sa-samp-api v2 (69a846b). v3 (8bd1fa8) adds
    `WorldState::force_weather` (samp writes only `ForcedWeatherType` while the game clock runs).
 3. **gpci serial natively**: a random 40-hex-digit seed made once per install and kept in sa-game's configuration
    (`$XDG_CONFIG_HOME/sa-engine/samp.cfg`, `serial_seed=`), never derived from user or host data;
@@ -357,7 +357,7 @@ sa-game: 1418 ok, 198 blocked, 0 crashed over 1616 iterations
 ```
 
 The PNGs (`present/`, every 20th in-game frame) show Grove Street with the server's clock (22:04), money
-($5000), weapon and lowered health, and — through SAMP-UI's engine-drawn overlay (merged here, 45366aa) — the
+($5000), weapon and lowered health, and — through SAMP-UI's engine-drawn overlay (merged here, 53cb8bf) — the
 server's chat lines (`SendClientMessage`, yellow and white) and its game text ("NATIVE SA-GAME"). Chat input and
 dialog answers go back as RPC 101 / 50 / 62 (`SampUi::poll_events`; not exercised offscreen). CJ himself is not
 drawn (STD-9's skin-pipeline stub).

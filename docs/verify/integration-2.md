@@ -1,6 +1,6 @@
 # INTEGRATE-2: MVP-M, REGCONV, VERIFIER-6, GEN-ALL-2
 
-Integration branch `worktree-agent-a77af859541ac4b2c`, from master `1c3e9e0`. Each branch was brought in as its
+Integration branch `worktree-agent-a77af859541ac4b2c`, from master `4235edc`. Each branch was brought in as its
 own diff only (`git diff <its base or merge commit> <its head>` + `git apply --3way`), never as a squash of
 the snapshots of older masters it carried. List conflicts (`hooks.rs` MODULES, `lib.rs` mods, `use crate::{…}`,
 `tools/e2e/l2-extras.txt`) were resolved as unions. `catalog/verify-queue.csv` and `docs/verify/QUEUE.md` were
@@ -13,7 +13,7 @@ regenerated with `python3 -I tools/verify/queue.py` after every step.
 | 1 | WRITER-MVP-M `a84f4f4` (holds WRITER-MVP-L, MVP-K/J/I via merges) | `7cc2a0d..a84f4f4` (`7cc2a0d` is the X87-2 / HARNESS-5 snapshot its merge was based on) | the mvpi..mvpm unverified batches, two keycells readers (0x401409, 0x402195) |
 | 2 | WRITER-REGCONV `dacae5f` | `5446b75..dacae5f` (after its HARNESS-5 merge, which master has) | 26 register-convention ports (regconv-render/stream/anim/ped/rw-1), `regconv_check` improvements |
 | 3 | VERIFIER-6 `f751a64` | `3bf386d..f751a64` (after its RENDER-BIG-2 merge, which master has) | 28 render promotions, DrawTriPlants srand `at_site`, normaliser exclusion of 0xC96438, `port-l2.sh` extras by hook address, `verdicts-render.tsv`, l2 extras |
-| — | SRAND-FIX base | nothing | its first two commits (`d096685`, `7cc2a0d`) are WIP snapshots of HARNESS-5 / X87-2, already on master as `909b776` |
+| — | SRAND-FIX base | nothing | its first two commits (`d096685`, `7cc2a0d`) are WIP snapshots of HARNESS-5 / X87-2, already on master as `21fec30` |
 | 4 | GEN-ALL-2 `f722a1f` | tooling only (`tools/gen/*`, `docs/arch/gen-all.md`, the `generated` registrations, `specs_generated` hook-up) | generated output not merged by hand: `tools/gen/inflight.py` and `tools/gen/patterns.py` were rerun on the integrated tree |
 | 5 | fix | — | 0x4939F0 registered once (below) |
 | 6 | SRAND-FIX `df75d3a` | `7cc2a0d..df75d3a` | `at_site` for the remaining srand calls (below) |
@@ -46,7 +46,7 @@ SRAND-FIX's own commit `df75d3a` arrived after the first pass and is integrated 
 `at_site` for the srand calls in carctrl4 (x4), CPPTriPlantBuffer::Flush (0x5DB120) and the enex
 CreateEffects (0x5339F5); its DrawTriPlants change (0x5DADD2) was already identical to VERIFIER-6's.
 
-On head `a109d55` (the tree before this note):
+On head `c25b5ab` (the tree before this note):
 
 - `cargo test -p sa-hook --lib` 58 passed; `-p sa-script --lib` 8 passed; `-p sa-core --lib` 70 passed.
 - `cargo test -p sa-oracle --test l1 --release`: 18 passed, 1 ignored (953 s).

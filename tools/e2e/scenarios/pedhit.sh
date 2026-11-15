@@ -10,7 +10,7 @@
 # foot   (3500) the main session's repro: CJ sprints into peds with the camera turning (CEventPedCollisionWithPlayer),
 #               then stands until the idle camera starts
 # intro  (7300) New Game: INTRO-2's keys to the BMX; at 5020 the BMX is put on the pavement north of a standing ped
-#               and pedalled into it (killed at 5082; on master a266cc61 INTRO-2's ride ends against a wall)
+#               and pedalled into it (killed at 5082; on master 9a40b1e6 INTRO-2's ride ends against a wall)
 # Env: SA_ROOT (checkout holding wine/gta-sa; default ~/sa-engine), SA_GAME (binary; default this checkout's
 # i686-unknown-linux-gnu release build), plus any SA_GAME_* (SA_GAME_PRESENT_SKIP / _EVERY, SA_GAME_VEHLIST=5 and
 # SA_GAME_VEHLIST_PEDS=60 for the ped table).

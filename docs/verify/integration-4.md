@@ -1,19 +1,19 @@
 # INTEGRATE-4: VERIFIER-7 (gen2 promotions) and WRITER-O
 
-Integration branch `worktree-agent-a89ee9d4903f5a60d`, from master `ca917d6`.
+Integration branch `worktree-agent-a89ee9d4903f5a60d`, from master `99d634e`.
 
 ## What came from where
 
 | commit | source | content |
 |---|---|---|
-| `2db5f17` | VERIFIER-7 `963b06a` (pick) | l3 probe mode lists passed to the runner as `@FILE` |
-| `53fa7a9` | VERIFIER-7 `6a855df` + `f79eec5`, merged by hand with INTEGRATE-3 `519494c` | `tools/gen/patterns.py`, `docs/arch/gen-all.md` (below) |
-| `832a60c` | VERIFIER-7 `39d0278` + `30f58cc` (data only) | `tools/gen/patterns_verified.txt`, `docs/verify/verdicts-gen2.tsv`, `catalog/verify-status.csv`, the gen2 block of `tools/e2e/l2-extras.txt` |
-| `0ba8327` | WRITER-O `19c4c83` (pick) | `CAEVehicleAudioEntity::AddAudioEvent` 0x4F6420 + keycells `Reader` at 0x401931 (READERS 32 -> 33) |
-| `c97b6d1` | WRITER-O `2f6593e` (pick) | `FxEmitterBP_c::Render` 0x4A2C40, `FxEmitterBP_c::RenderHeatHaze` 0x4A1940 |
-| `abe5e42` | WRITER-O `86975df` (pick, without its queue files) | RtQuat 0x7EB5C0, 0x7EB6A0, 0x7EB700, 0x7EB760, 0x7EB7C0, 0x7EBBB0, 0x7EC220; 0x7F1930 (RwMatrixOrthoNormalize body) |
-| `e771134` | regeneration | `tools/gen/inflight.py` (123 exclusions) and `tools/gen/patterns.py` on the integrated tree |
-| `160b066` | regeneration | `python3 -I tools/verify/queue.py`: `catalog/verify-queue.csv`, `docs/verify/QUEUE.md`, `catalog/verify-status.csv` |
+| `5b0813e` | VERIFIER-7 `963b06a` (pick) | l3 probe mode lists passed to the runner as `@FILE` |
+| `018e0bb` | VERIFIER-7 `6a855df` + `f79eec5`, merged by hand with INTEGRATE-3 `2440cd4` | `tools/gen/patterns.py`, `docs/arch/gen-all.md` (below) |
+| `c33804d` | VERIFIER-7 `39d0278` + `30f58cc` (data only) | `tools/gen/patterns_verified.txt`, `docs/verify/verdicts-gen2.tsv`, `catalog/verify-status.csv`, the gen2 block of `tools/e2e/l2-extras.txt` |
+| `08ada4c` | WRITER-O `19c4c83` (pick) | `CAEVehicleAudioEntity::AddAudioEvent` 0x4F6420 + keycells `Reader` at 0x401931 (READERS 32 -> 33) |
+| `6753e3a` | WRITER-O `2f6593e` (pick) | `FxEmitterBP_c::Render` 0x4A2C40, `FxEmitterBP_c::RenderHeatHaze` 0x4A1940 |
+| `6613470` | WRITER-O `86975df` (pick, without its queue files) | RtQuat 0x7EB5C0, 0x7EB6A0, 0x7EB700, 0x7EB760, 0x7EB7C0, 0x7EBBB0, 0x7EC220; 0x7F1930 (RwMatrixOrthoNormalize body) |
+| `aede00d` | regeneration | `tools/gen/inflight.py` (123 exclusions) and `tools/gen/patterns.py` on the integrated tree |
+| `024c72f` | regeneration | `python3 -I tools/verify/queue.py`: `catalog/verify-queue.csv`, `docs/verify/QUEUE.md`, `catalog/verify-status.csv` |
 
 Not taken: VERIFIER-7's generated `.rs` files and queue files (regenerated instead), WRITER-O's MVP-N cherry-picks
 (already on master).
@@ -57,7 +57,7 @@ in `patterns_verified.txt` (harmless: the generator only applies the list to hoo
 
 ## Verification
 
-On head `160b066`:
+On head `024c72f`:
 
 - `cargo test -p sa-hook --lib` 58 passed; `-p sa-script --lib` 8 passed; `-p sa-core --lib` 70 passed.
 - `cargo test -p sa-oracle --test l1 --release`: 18 passed, 1 ignored (193 s).

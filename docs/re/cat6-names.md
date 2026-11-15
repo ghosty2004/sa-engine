@@ -39,7 +39,7 @@ Scope: non-excluded catalogue rows whose `state.csv` name is empty or a bare `vf
 
 | | all | non-RW | RW |
 |---|---:|---:|---:|
-| unnamed before (state.csv of commit d939150) | 5,862 | 4,354 | 1,508 |
+| unnamed before (state.csv of commit 01cd8d5) | 5,862 | 4,354 | 1,508 |
 | unnamed after | **1,656** | **1,418** | **238** |
 | named by this step | 4,206 | 2,936 | 1,270 |
 

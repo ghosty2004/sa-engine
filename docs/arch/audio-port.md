@@ -455,7 +455,7 @@ passes); stopped after the first recording. All-ports Rust runs (inf4) with grou
 (`target/a3/bisect*.sh`) bisect it to the 78 `CVehicleModelInfo` hooks of `sa-stream/src/modelinfo/vehicle.rs`:
 every AUDIO hook on the original still crashes, every sa-stream hook (or just `modelinfo/vehicle.rs`) on the
 original reaches all 5,200 frames. `vehicle.rs` is identical on master, whose verify-all (`main-g3`) passes; this
-branch's base is `c1a27ca WIP RENDER-2` (not on master, which has the final RENDER-2 8b77953) plus PORT-HUD-3's
+branch's base is `c1a27ca WIP RENDER-2` (not on master, which has the final RENDER-2 d1a3119) plus PORT-HUD-3's
 work-in-progress head, so the crash comes from code the vehicle model info ports call on this base, not from the
 AUDIO-3 ports. The integration into master should rerun verify-all there.
 

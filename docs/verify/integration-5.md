@@ -1,30 +1,30 @@
 # INTEGRATE-5: VERIFIER-8, WRITER-P and PORT-SAVE
 
-Integration branch `worktree-agent-aea710a33e9789b7c`, from master `7f75957`.
+Integration branch `worktree-agent-aea710a33e9789b7c`, from master `9fc9698`.
 
 ## What came from where
 
 | commit | source | content |
 |---|---|---|
-| `2e4eaa3` | VERIFIER-8 `a3eb233` (pick) | `FUN_006070F0` 0x6070F0: three stack arguments; `CDecisionMakerTypes::AddDecisionMaker` 0x607050 declared with three (`ret 0xC`) |
-| `fb36314` | VERIFIER-8 `a3bbfe4` (pick) | `CWorld::ProcessVerticalLineSectorList` port: see-through flag and poly in the original argument order |
-| `7f55141` | VERIFIER-8 `ae2e536` (pick) | `CEntity::IsEntityOccluded` port: the four corners the original tests (max corner) |
-| `e16a7a6` | VERIFIER-8 `15bb4d6` (status rows only) | `catalog/verify-status.csv`: L3-batch rows of the 116 mvpc..mvpm / popw4 / harness5-1 / regconv batches, union with master's rows by address |
-| `a666fdf` | VERIFIER-8 `d015b4f` (without queue files) | 54 promotions (`unverified` removed), `docs/verify/verdicts-writers.tsv`, one `tools/e2e/l2-extras.txt` line (`CCollision::IsStoredPolyStillValidVerticalLine@arg2:0x2C:RW`) |
-| `9cc73f6` | VERIFIER-8 `e75d4c3` (without queue files) | 13 more promotions, verdicts updated |
-| `399478d` | WRITER-P `1b4c361` (without queue and MVP-gap files) | hooks 0x84A720, 0x84E2E0, 0x8508C0, 0x850910, 0x855FD0 (static initialisers), 0x40EEC0 (CColBox::operator=), 0x470000 (float pow wrapper), 0x732820, 0x733330, 0x734240 (train / big-vehicle visibility callbacks), 0x5D9900, 0x5D84C0, 0x5D8590, 0x5DA790 (car env-map render callback and helpers), 0x4C9990 (`_rxD3D9DefaultDestroyInstanceCallback`), all unverified (boot-* batches); native 0x4C73F0 |
-| `c492619` | regeneration | `tools/gen/inflight.py`, `tools/gen/patterns.py` (the unhooked generated leaf 0x4C73F0 gives way to WRITER-P's native) |
-| `ec238b9` | PORT-SAVE `21ca980` (pick) | harness pokes in recordings, save-file collection in the e2e scripts (port-l2 check (f)), `footprint_entry_esp`, the save-load program |
-| `9b1fb21` | PORT-SAVE `95f3cfb` (without queue files) | SAVE-1 ports (C_PcSave, CGenericGameStorage, the save blocks, the stats strings), `tools/accept/save-diff.py`, `tools/accept/f5-saves.sh`, l2-extras |
-| `254e9f8` | PORT-SAVE `eb1178d` (without queue files) | CTheScripts::Load returns the script count, BuildStatLine, split extras, corpus doc, `docs/arch/save-port-verdicts.tsv` |
-| `424c7c4` | PORT-SAVE `cc909ec` (without queue files) + main-session decision | 59 promotions; GenericSave 0x5D13E0 and SaveSlot 0x619060 lose `unverified` (ledger SAVE-1, named in their hook notes) |
-| `961b28b` | PORT-SAVE `aaa7f6a` (pick) | SAVE-1 docs |
-| `13d0e7b` | PORT-SAVE `e1483b8` (pick) | `verify-all.sh` accepts residue-only save differences (ledger SAVE-1) |
-| `9b2f957` | regeneration | `inflight.py` after SAVE-1 (87 exclusions); `patterns.py` output unchanged, `--check` clean |
-| `c071917` | regeneration | `python3 -I tools/verify/queue.py`: 1,671 unverified hooks in 265 batches |
-| `2fb94da` | regeneration | `tools/native/mvp_gaps.py`: `docs/arch/platform-mvp-gaps.csv` |
+| `2e02b89` | VERIFIER-8 `a3eb233` (pick) | `FUN_006070F0` 0x6070F0: three stack arguments; `CDecisionMakerTypes::AddDecisionMaker` 0x607050 declared with three (`ret 0xC`) |
+| `08d867f` | VERIFIER-8 `a3bbfe4` (pick) | `CWorld::ProcessVerticalLineSectorList` port: see-through flag and poly in the original argument order |
+| `7e1556d` | VERIFIER-8 `ae2e536` (pick) | `CEntity::IsEntityOccluded` port: the four corners the original tests (max corner) |
+| `9544525` | VERIFIER-8 `15bb4d6` (status rows only) | `catalog/verify-status.csv`: L3-batch rows of the 116 mvpc..mvpm / popw4 / harness5-1 / regconv batches, union with master's rows by address |
+| `82a99b0` | VERIFIER-8 `d015b4f` (without queue files) | 54 promotions (`unverified` removed), `docs/verify/verdicts-writers.tsv`, one `tools/e2e/l2-extras.txt` line (`CCollision::IsStoredPolyStillValidVerticalLine@arg2:0x2C:RW`) |
+| `d777aae` | VERIFIER-8 `e75d4c3` (without queue files) | 13 more promotions, verdicts updated |
+| `84c4c49` | WRITER-P `1b4c361` (without queue and MVP-gap files) | hooks 0x84A720, 0x84E2E0, 0x8508C0, 0x850910, 0x855FD0 (static initialisers), 0x40EEC0 (CColBox::operator=), 0x470000 (float pow wrapper), 0x732820, 0x733330, 0x734240 (train / big-vehicle visibility callbacks), 0x5D9900, 0x5D84C0, 0x5D8590, 0x5DA790 (car env-map render callback and helpers), 0x4C9990 (`_rxD3D9DefaultDestroyInstanceCallback`), all unverified (boot-* batches); native 0x4C73F0 |
+| `9d0ac2a` | regeneration | `tools/gen/inflight.py`, `tools/gen/patterns.py` (the unhooked generated leaf 0x4C73F0 gives way to WRITER-P's native) |
+| `ad3b5ce` | PORT-SAVE `21ca980` (pick) | harness pokes in recordings, save-file collection in the e2e scripts (port-l2 check (f)), `footprint_entry_esp`, the save-load program |
+| `bcad38c` | PORT-SAVE `95f3cfb` (without queue files) | SAVE-1 ports (C_PcSave, CGenericGameStorage, the save blocks, the stats strings), `tools/accept/save-diff.py`, `tools/accept/f5-saves.sh`, l2-extras |
+| `4af2a4e` | PORT-SAVE `eb1178d` (without queue files) | CTheScripts::Load returns the script count, BuildStatLine, split extras, corpus doc, `docs/arch/save-port-verdicts.tsv` |
+| `a3caa04` | PORT-SAVE `cc909ec` (without queue files) + main-session decision | 59 promotions; GenericSave 0x5D13E0 and SaveSlot 0x619060 lose `unverified` (ledger SAVE-1, named in their hook notes) |
+| `d24f7c3` | PORT-SAVE `aaa7f6a` (pick) | SAVE-1 docs |
+| `38ec2ce` | PORT-SAVE `e1483b8` (pick) | `verify-all.sh` accepts residue-only save differences (ledger SAVE-1) |
+| `4fef6fe` | regeneration | `inflight.py` after SAVE-1 (87 exclusions); `patterns.py` output unchanged, `--check` clean |
+| `eea9539` | regeneration | `python3 -I tools/verify/queue.py`: 1,671 unverified hooks in 265 batches |
+| `e7fde1b` | regeneration | `tools/native/mvp_gaps.py`: `docs/arch/platform-mvp-gaps.csv` |
 
-Not taken: VERIFIER-8 `8663457` (l3 `@FILE` mode lists: master's `2db5f17` is the same fix) and `794cbd9`
+Not taken: VERIFIER-8 `8663457` (l3 `@FILE` mode lists: master's `5b0813e` is the same fix) and `794cbd9`
 (CreateIndexBuffer 0x7306A0 format argument: master already has `(n, _format, out)` from STD-9 / INTEGRATE-3);
 every branch's `catalog/verify-queue.csv` / `docs/verify/QUEUE.md` (regenerated); WRITER-P's
 `docs/arch/platform-mvp-gaps.csv` (regenerated); PORT-SAVE's `-s ours` merge of PORT-MENU `f61a145`.
@@ -42,7 +42,7 @@ main session.
 
 ## Verification
 
-On head `2fb94da`:
+On head `e7fde1b`:
 
 - `cargo test -p sa-hook --lib` 58 passed; `-p sa-script --lib` 9 passed; `-p sa-core --lib` 71 passed.
 - `cargo test -p sa-oracle --test l1 --release`: 18 passed, 1 ignored (1,221 s; the machine was shared with

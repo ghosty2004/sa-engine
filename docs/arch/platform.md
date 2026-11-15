@@ -728,7 +728,7 @@ STD-5 wrote or registered: hooks in batches `std5-tristrip-1`, `std5-ctor-1`, `s
 
 ### 12.2 Merges
 
-STD-5 (`worktree-agent-ab3123672f7d6d5c3`), master (7fd59f2), VEH-BIG, RENDER-BIG, MVP-I,
+STD-5 (`worktree-agent-ab3123672f7d6d5c3`), master (927d4c2), VEH-BIG, RENDER-BIG, MVP-I,
 VERIFIER-4, PORT-AUDIO-3 (its `port3_*.rs`, verdicts and fixes; `sa-macros` / `abi` conflicts
 resolved in favour of the base), PORT-CAM-3 (final), WRITER-MVP-J, WRITER-RENDER-BIG-2 and PORT-HUD-3
 (final head 7a3b4cf: the `UseCommonVehicleTexDicationary` constant fix, `peek`, the AX return kind).
@@ -773,7 +773,7 @@ No frame has been presented yet: the loading-screen splash path does not reach `
 
 ### 12.5 Verification queue
 
-`docs/arch/std6-ports.csv` (regenerate with `tools/native/std6_ports.py 7fd59f2`) lists every port
+`docs/arch/std6-ports.csv` (regenerate with `tools/native/std6_ports.py 927d4c2`) lists every port
 STD-6 wrote or registered: hooks in batches `std6-rw-1`, `std6-rw-2`, `std6-render-1`,
 `std6-render-2`, `std6-anim-1`, `std6-script-1`, `std6-stream-1`, `std6-ped-1`, `std6-veh-1`,
 `std6-math-1`, `std6-math-2`, `std6-world-1`, `std6-cam-1`, `std6-core-1`, `std6-input-1` (each
@@ -1040,13 +1040,13 @@ hooks (verified on master, no `unverified`) as new on this base. All written, no
 ### 15.2 Merges
 
 Base: STD-8 (`worktree-agent-aec7f5b6ca90ad56e`, 51b8fcd; the branch was reset to it). Cherry-picked: INTEGRATE-2's
-REGCONV (8d70493: STD-7's `FrameUpdateCallBackOffscreen` 0x4D2E10 in `sa-anim/src/frame_update.rs` kept over
-REGCONV's `rp_anim_blend.rs` copy, which differs from integration-2.md's choice) and GEN-ALL-2 (ed288e8), regenerated
+REGCONV (5917e4e: STD-7's `FrameUpdateCallBackOffscreen` 0x4D2E10 in `sa-anim/src/frame_update.rs` kept over
+REGCONV's `rp_anim_blend.rs` copy, which differs from integration-2.md's choice) and GEN-ALL-2 (327954b), regenerated
 on this tree (`tools/gen/patterns.py`; the generator now also counts path-qualified `#[sa_core::native(addr` /
 `#[crate::native(addr` registrations as ported, which dropped generated duplicates of `ListItem_c::ListItem_c`,
 `CAESound::CAESound`, `CScriptsForBrains` and others; `tools/native/static_inits.py` re-run after it); INTEGRATE-2's
 other commits (MVP-M, VERIFIER-6, SRAND-FIX, the search-light registration) were already on STD-8 and were skipped
-as empty; its documentation commit 90b2042. WRITER-MVP-N's seven own commits (fb31b52..50588be); its complete
+as empty; its documentation commit b654967. WRITER-MVP-N's seven own commits (fb31b52..50588be); its complete
 `ProcessCommands2600To2699` replaces STD-9's partial switch (std9-script-1, CREATE_USER_3D_MARKER only). The
 generated queue files were regenerated. PORT-SAVE and WRITER-INTRO had no commits of their own yet.
 Two duplicate registrations remain from the STD-8 base (both sides already there): 0x6F9DE0
@@ -1257,7 +1257,7 @@ step 0x7C8060 / instancing (taken only with vertex-shader caps, which sa-game do
 
 ### 17.2 Base
 
-Rebased (main session's request, mid-task) onto master ca917d6 (INTEGRATE-3: STD-7/8/9, PORT-MENU, CLUMP, MVP-N,
+Rebased (main session's request, mid-task) onto master 99d634e (INTEGRATE-3: STD-7/8/9, PORT-MENU, CLUMP, MVP-N,
 WRITER-INTRO, GEN-ALL-2). STD-10's own commits were cherry-picked onto it (STD-10's WRITER-INTRO picks are already on
 master and were left out); WRITER-O's three commits (`writero-audio-1`, `writero-render-1`, `writero-rw-1`) came along
 with STD-10's branch. At each conflict the generated queue files were taken from master; they were regenerated at the
@@ -1320,7 +1320,7 @@ therefore black in the original too; STD-10's forced 100 was exploration only.
 
 | step | status |
 |---|---|
-| boot to in-world frames, CJ, sky | ok (as STD-10, now on master ca917d6) |
+| boot to in-world frames, CJ, sky | ok (as STD-10, now on master 99d634e) |
 | walking off the kerb: `CTaskSimpleInAir::ProcessPed` (with its part behind the protection chunk 0x404880), `DeleteAnimCB`, the empty 0x678E80, `CTaskComplexStuckInAir::CreateSubTask` / `ControlSubTask`, `CTaskComplexFallAndGetUp::MakeAbortable`, the `CEventStuckInAir` / `CEventObjectCollision` / wander-prostitute destructors | ported, pass |
 | ambient peds at attractors: `IsApproachable`, `CEventAttractor` ctor / dtor / `AffectsPed` / `IsEffectActive`, `CPedIntelligence::ProcessEventHandler`, `CTaskComplexUseEffect` first / next / control sub-task and destructor | ported, pass |
 | `CQuaternion::Get(RwMatrix*)`, `CGeneral::GetNodeHeadingFromVector` | ported |
@@ -1388,7 +1388,7 @@ the walk), `off10/present-0{040,080,120,160}.png` (offscreen walk past the kerb)
 
 ### 18.2 Base and merges
 
-Base STD-11 (`worktree-agent-a9a0d6cdcec07ed1b`, c013fb7). Cherry-picked own commits: WRITER-P 1b4c361 (car env-map
+Base STD-11 (`worktree-agent-a9a0d6cdcec07ed1b`, 98631eb). Cherry-picked own commits: WRITER-P 1b4c361 (car env-map
 render callback 0x5D9900 and its helpers, train / big-vehicle visibility callbacks, boot statics, CColBox copy, float
 pow), WRITER-Q 3c7512b, 6f24819, 0d79933, c7b7840, 1ac88ae (route round entity box / sphere, PlacePedAtEffect,
 `CBike::ProcessRiderAnims`, `TidyUpGarageClose`, the chat ctor / `CarHasReasonToStop` natives, `CInterestingEvents::Add`,
@@ -1514,7 +1514,7 @@ sa-render, sa-world, sa-ai, sa-pop, sa-audio, sa-core, sa-ports, sa-game; writer
 
 ### 19.2 Base and merges
 
-Base STD-12 (`worktree-agent-a0c5043f7469fc732`, d447cbf). INTEGRATE-5 had not landed on master when STD-13 ended, so
+Base STD-12 (`worktree-agent-a0c5043f7469fc732`, 779aed3). INTEGRATE-5 had not landed on master when STD-13 ended, so
 no rebase. Cherry-picked: WRITER-NATIVE 4012bb9 (`Fx_c::AddSparks`, two task clones, PORT-VEH-3's
 `dmgDrawCarCollidingParticles`). Mid-task the main session moved the attractor tree to WRITER-ATTR and the native
 blockers to WRITER-NATIVE; STD-13 kept entering cars, driving and the flare.
@@ -1649,7 +1649,7 @@ std13-veh-1 (1).
 ## 20. RENDER-SHADOW: render targets without alpha
 
 User report (window run, 08:07): large dark grey quads on the ground under and in front of CJ (a darker trapezoid and
-a lighter rectangle) that move with the camera. Base STD-13 (9e704a6).
+a lighter rectangle) that move with the camera. Base STD-13 (05c90b7).
 
 **Root cause (seam).** The game's camera-texture rasters are `D3DFMT_X8R8G8B8` render-target textures (the
 real-time shadow cameras: 128x128 / 64x64; the post-effect screen copies: 1024x1024); the back buffer is
@@ -1697,7 +1697,7 @@ Not done: a Wine reference frame of the original at the same spot; the black nea
 
 ### 21.2 Base and merges
 
-Base STD-13 (`worktree-agent-adab932ed2ad46a44`, 9e704a6). Cherry-picked, in order: PORT-AI-8 (f9328ce, 462c48d,
+Base STD-13 (`worktree-agent-adab932ed2ad46a44`, 05c90b7). Cherry-picked, in order: PORT-AI-8 (f9328ce, 462c48d,
 5e4797c, 60ec250, e030fca, later d879c4d), WRITER-NATIVE (404c763; 68ffe50..34e3306 without 6c6d495, a duplicate
 of 404c763; f19bf238, 092fa866; 0ab02d5..654c82d without 1a13d09), WRITER-ATTR (3461aa8; dcbe3d2, 53c1f7e,
 5ee67d7, 2c9d51a; the rest already came through WRITER-NATIVE), RENDER-SHADOW (7e080de, 86d6e5f, 3984228, its
@@ -1802,7 +1802,7 @@ sa-ai, sa-veh, sa-core, sa-pop, sa-audio, sa-hook. `cargo test -p sa-hook --lib`
 ## 22. WEB-1: sa-game in the browser (wasm32)
 
 User decision 2026-11-12: keep the legacy 32-bit layouts and the address arena in wasm32 linear memory. Base: STD-13
-(`worktree-agent-adab932ed2ad46a44`, 7da5de4). How to run it: `web/README.md` (`tools/web/build.sh`, then
+(`worktree-agent-adab932ed2ad46a44`, 378bdfb). How to run it: `web/README.md` (`tools/web/build.sh`, then
 `tools/web/serve.sh [--game DIR]`, open http://localhost:8642/).
 
 ### 22.1 The arena at the original addresses
@@ -1877,7 +1877,7 @@ main-loop iteration, so nothing blocks the game loop.
 
 ### 22.7 WEB-2: STD-14 tree, blocked iterations without unwinding, the FX trap's cause
 
-Base: STD-14 (`worktree-agent-a98204e188a13ff2e`, a449ffb3 at the last rebase) with WEB-1's commits rebased on it (STD-14's
+Base: STD-14 (`worktree-agent-a98204e188a13ff2e`, bd1d45c9 at the last rebase) with WEB-1's commits rebased on it (STD-14's
 `SA_GAME_TELEPORT`, `SA_GAME_LMB` and `--system-heap` moved into `app.rs`, where WEB-1 put the executable's code).
 
 **Blocked iterations on wasm32.** Natively an unported callee panics, the panic unwinds to `run_step`'s
@@ -1920,7 +1920,7 @@ to its used size after `LoadFxProject` and keeps using the blueprints inside it,
 blueprint +4) point into the block. MSVC's realloc (`HeapReAlloc`) shrinks in place, and so does glibc natively. The
 moved pool left the links in a freed block that later allocations reuse. The zeroed heap only changed which garbage
 was read. Fix: a shrink keeps the block, both in the wasm32 heap and in the fixed-address heap (`detheap`, now also
-the native window runs' heap since STD-14 3f2b6d7f, which moved across size classes the same way). Reproduced
+the native window runs' heap since STD-14 793030ce, which moved across size classes the same way). Reproduced
 before the fix (`target/web2-evidence/run1`: trap in `CreateEntityFx` at the menu → world transition) and gone after
 it (run2, the recording run).
 
@@ -1951,7 +1951,7 @@ it (run2, the recording run).
 
 ### 22.8 WEB-AUDIO: the DirectSound mix in the browser
 
-Base: WEB-3 (`worktree-agent-a51e2199757a44c0b`, 3881dab6). sa-game already emulates DirectSound 8 with a software
+Base: WEB-3 (`worktree-agent-a51e2199757a44c0b`, 5514e9d0). sa-game already emulates DirectSound 8 with a software
 mixer (10.0); natively a 5 ms thread mixes into cpal or NullAudio. The mixer now also applies `DSBPAN` (the far side
 attenuated by |pan| hundredths of a dB, as DirectSound does; before, pan was recorded only). Native behaviour is
 otherwise unchanged.

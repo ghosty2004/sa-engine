@@ -465,7 +465,7 @@ Every change of engine pixels this caused:
 
 ### 10.5 Evidence (not committed; Rockstar-derived pixels)
 
-* **UI layer, old vs new** (`target/uicmp/` in the SAMP-UI-DEDUP worktree builds the old sa-samp-ui of 6102d540 and
+* **UI layer, old vs new** (`target/uicmp/` in the SAMP-UI-DEDUP worktree builds the old sa-samp-ui of 538d7dc4 and
   the new pass on the engine backend from the same content and rasterises both command lists with one software
   rasteriser onto one background; `target/pix-evidence/uicmp/*.png` = old | new | differing pixels, `*.old.txt` /
   `*.new.txt` the lists): the chat lines, the open chat input with its scrollbar, all six dialog styles (list

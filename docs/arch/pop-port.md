@@ -364,7 +364,7 @@ Shared changes: `sa-core::abi::footprint_residue_u8` (the byte an uninitialised 
 reads, from the footprint snapshot; used by PickNextNodeToChaseCar and FindNodesThisCarIsNearestTo);
 sa-hook `keycells::READERS` gains the UpdateCarAI entry reader (`xor ecx, [0x41DA32]` at 0x407284); the
 merge of PORT-POP-2 needed five `orig!` declarations in sa-pop / sa-veh to return ST0 as `f64` (the 16-byte
-X87 of master's 3064b95 cannot cross `orig!`; master did not build without this). `tools/e2e/l2-extras.txt`:
+X87 of master's 28e00d9 cannot cross `orig!`; master did not build without this). `tools/e2e/l2-extras.txt`:
 out-parameters (FindNewPedType, FindPathDirection, FindNodesThisCarIsNearestTo, ChooseModel,
 GenerateCarCreationCoors2, AddPed) and the path-search regions (ThePaths 0x96F050, aNodesToBeCleared
 0x972CD0) of the callers of DoPathSearch.
@@ -410,7 +410,7 @@ GenerateCarCreationCoors2, AddPed) and the path-search regions (ThePaths 0x96F05
 Not reproduced on the merged build: alone on police-gang 20/20 and car-ai 20/20, with all pass-2 hooks on
 car-ai 3/3, and in the pass-3 batches on car-ai, driving and police-gang 100/100 each, 0 mismatches; with
 the out-parameters declared, 0 undeclared. The pass-2 build predates master's X87 / footprint / harness
-changes (3064b95, 100fb7a); the mismatch (`*outType = 4` vs 0 at the first case, caller 0x614A31) is
+changes (28e00d9, cc48b01); the mismatch (`*outType = 4` vs 0 at the first case, caller 0x614A31) is
 consistent with the Rust and original runs reading different stack residue in a callee
 (ChooseCivilianOccupation runs at a different depth under the Rust caller), which the current stack fill /
 frame layout no longer exposes. Verdict L2.
