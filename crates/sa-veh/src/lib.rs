@@ -81,6 +81,7 @@ pub mod frontier_b2_veh;
 pub mod frontier_b2_veh2;
 pub mod frontier_b3_veh;
 pub mod frontier_b4_heli;
+pub mod frontier_b4_veh;
 pub mod automobile_wheels;
 pub mod automobile_damage;
 pub mod automobile_ai;
