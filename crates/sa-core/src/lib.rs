@@ -82,6 +82,7 @@ pub mod pools;
 pub mod quadtree;
 pub mod references;
 pub mod save;
+pub mod object_save;
 pub mod regconv;
 pub mod timer;
 pub mod video;

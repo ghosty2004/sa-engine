@@ -103,6 +103,9 @@ pub const NATIVES: &[&[&[sa_core::abi::NativeReg]]] = &[
     &[sa_ai::fight_ground_target::NATIVES],
     &[sa_ai::short_body_natives::NATIVES],
     &[sa_ai::event_dtors::NATIVES],
+    // FRONTIER-2 lane B
+    &[sa_pop::carctrl2::NATIVES],
+    &[sa_ped::frontier_b_natives::NATIVES],
 ];
 
 /// Every `#[native]` registration of every crate.

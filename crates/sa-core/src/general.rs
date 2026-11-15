@@ -46,6 +46,21 @@ pub fn get_random_number_in_range_f32(min: f32, max: f32) -> X87 {
     random_in_range_f32_from(r as u32, min, max)
 }
 
+/// `CGeneral::GetAngleBetweenPoints(x1, y1, x2, y2)` (0x53CEA0, cdecl, ST0; FRONTIER-2 lane B): the radian angle
+/// (`GetRadianAngleBetweenPoints`, 0x53CBE0) times 57.295776 (sa-math's L1-verified model of both).
+#[hook(
+    addr = 0x53CEA0,
+    conv = cdecl,
+    name = "CGeneral::GetAngleBetweenPoints",
+    expect = "8B 44 24 10 8B 4C 24 0C",
+    unverified = "frontier2-b1",
+    route = "L1-pure",
+    hazards = "x87-transcendental"
+)]
+pub fn get_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> X87 {
+    sa_math::general::get_angle_between_points_x87(x1, y1, x2, y2)
+}
+
 // Host tests use Rust-owned memory; a phase A build cannot run them.
 #[cfg(all(test, not(sa_phase_a)))]
 mod tests {
@@ -89,6 +104,9 @@ pub const HOOKS: &[crate::abi::HookReg] = &[
     HOOK_GET_RANDOM_NUMBER_IN_RANGE_I32,
     HOOK_GET_RANDOM_NUMBER_IN_RANGE_F32,
 ];
+
+/// FRONTIER-2 lane B's registrations of this module (after every older sa-core hook, so the table order stays).
+pub const FRONTIER_HOOKS: &[crate::abi::HookReg] = &[HOOK_GET_ANGLE_BETWEEN_POINTS];
 
 /// Phase B entries (STD-6) of the `CGeneral` math ports sa-hook installs itself in phase A (its local
 /// hooks `limit_radian_angle_hook`, `limit_angle_hook`, `get_radian_angle_between_points_hook`,

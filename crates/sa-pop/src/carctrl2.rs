@@ -98,6 +98,8 @@ pub fn tell_car_to_block_other_car(veh: GPtr<u8>, target: GPtr<u8>) {
 /// `CCarAI::TellCarToFollowOtherCar(CVehicle*, CVehicle*, float radius)` (0x41C960): mission 0x34,
 /// +0x3DE = `_ftol(radius)`.
 // Unhookable: protection code reads and writes its entry bytes as data (0x14B4FBF, 0x14B5219, ...; sa-hook every_hook_installs_on_the_exe).
+// Phase B native (FRONTIER-2 lane B).
+#[sa_core::native(addr = 0x41C960, conv = cdecl, name = "CCarAI::TellCarToFollowOtherCar")]
 pub fn tell_car_to_follow_other_car(veh: GPtr<u8>, target: GPtr<u8>, radius: f32) {
     tell_car(veh, target, 0x34);
     wr::<u8>(veh, 0x3DE, ftol32(x(radius)) as u8);
@@ -746,3 +748,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_AUTO_PILOT_REMOVE_ONE_PATH_NODE,
     HOOK_AUTO_PILOT_SPEED_STEP,
 ];
+
+/// This module's phase B natives (FRONTIER-2 lane B).
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_TELL_CAR_TO_FOLLOW_OTHER_CAR];

@@ -51,6 +51,9 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::generated::HOOKS,
     crate::save::HOOKS,
     crate::vector_ctor_iterator::HOOKS,
+    // FRONTIER-2 lane B
+    crate::general::FRONTIER_HOOKS,
+    crate::object_save::HOOKS,
 ];
 
 /// Every `#[native]` of this crate (phase B entries of ports that cannot be hooked in phase A).
