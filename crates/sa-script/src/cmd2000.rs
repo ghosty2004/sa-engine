@@ -134,8 +134,6 @@ orig! {
     fn task_follow_patrol_route_ctor(t: GPtr<u8>, ms: u32, route: u32, mode: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x674930 => unported;
     /// `CTask` virtual slot 0x10 (`GetTaskType()`)
     fn task_get_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
-    fn is_plane_model(m: u32) -> u8 = cdecl 0x4C5B30 => unported;
-    fn is_heli_model(m: u32) -> u8 = cdecl 0x4C5B00 => unported;
     /// `CTheScripts::AddToListOfConnectedLodObjects(CObject*, CObject*)` (0x470980)
     fn add_connected_lod_objects(a: GPtr<u8>, b: GPtr<u8>) = cdecl 0x470980 => unported;
     /// `CTaskSimpleDie::CTaskSimpleDie(const char*, const char*, eAnimationFlags, float, float)` (0x62FA60); raw
@@ -722,9 +720,9 @@ pub fn process_commands_2000_to_2099(s: Scr, command: u32) -> i8 {
             let r = if command == 0x081E {
                 u8::from(is_boat_model(m as i32))
             } else if command == 0x081F {
-                is_plane_model(m)
+                u8::from(crate::bindings::is_plane_model(m as i32))
             } else {
-                is_heli_model(m)
+                u8::from(crate::bindings::is_heli_model(m as i32))
             };
             set_flag(s, r != 0);
         }

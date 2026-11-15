@@ -146,8 +146,6 @@ orig! {
     fn set_stay_in_same_place(p: GPtr<u8>, stay: u32) = thiscall 0x481090 => unported;
     /// `CEntity::Teleport(CVector, bool)` (vtable slot 0x38); the by-value vector as three raw dwords
     fn teleport(e: GPtr<u8>, x: u32, y: u32, z: u32, reset_rotation: u32) = thiscall vslot 0x38 => unported;
-    /// `CCamera::SetZoomValueCamStringScript(int16)` (0x50C1B0)
-    fn set_zoom_value_cam_string_script(cam: GPtr<u8>, z: u32) = thiscall 0x50C1B0 => unported;
     /// `CExplosion::TestForExplosionInArea(eExplosionType, float x1, x2, y1, y2, z1, z2)` (0x736950), AL; raw dwords
     fn test_for_explosion_in_area(ty: u32, x1: u32, x2: u32, y1: u32, y2: u32, z1: u32, z2: u32) -> u8 = cdecl 0x736950 => unported;
     /// `CPhysical::PlacePhysicalRelativeToOtherPhysical(CPhysical*, CPhysical*, CVector)` (0x546DB0)
@@ -940,7 +938,7 @@ pub fn process_commands_800_to_899(s: Scr, command: u32) -> i8 {
             if mode == 4 {
                 set_zoom_value_follow_ped_script(GPtr::from_addr(THE_CAMERA), (sp(0) & 0xFFFF) as u16);
             } else if mode == 0x12 {
-                set_zoom_value_cam_string_script(GPtr::from_addr(THE_CAMERA), sp(0) & 0xFFFF);
+                crate::bindings::set_zoom_value_cam_string_script(GPtr::from_addr(THE_CAMERA), (sp(0) & 0xFFFF) as u16);
             }
         }
         // 032B CREATE_PICKUP_WITH_AMMO (0x481678)

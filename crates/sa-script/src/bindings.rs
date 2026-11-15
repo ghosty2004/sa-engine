@@ -54,6 +54,11 @@ orig! {
 }
 
 orig! {
+    /// `CRemote::GivePlayerRemoteControlledCar` (0x45AB10)
+    pub fn give_player_remote_controlled_car(x: f32, y: f32, z: f32, angle: f32, model: u32) = cdecl 0x45AB10 => crate::frontier_c::give_player_remote_controlled_car;
+}
+
+orig! {
     /// `thunk_FUN_015658a0` (0x45AFB0)
     pub fn physical_45afb0(p: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x45AFB0 => unported;
 }
@@ -279,6 +284,16 @@ orig! {
 }
 
 orig! {
+    /// `CModelInfo::IsHeliModel` (0x4C5B00)
+    pub fn is_heli_model(id: i32) -> bool = cdecl 0x4C5B00 => sa_stream::modelinfo::model_info::is_heli_model;
+}
+
+orig! {
+    /// `CModelInfo::IsPlaneModel` (0x4C5B30)
+    pub fn is_plane_model(id: i32) -> bool = cdecl 0x4C5B30 => sa_stream::modelinfo::model_info::is_plane_model;
+}
+
+orig! {
     /// `CAudioEngine::PlayPreloadedBeatTrack` (0x507180)
     pub fn play_preloaded_beat_track(a: GPtr<u8>, b: u32) = thiscall 0x507180 => unported;
 }
@@ -296,6 +311,11 @@ orig! {
 orig! {
     /// `CAudioEngine::PreloadBeatTrack` (0x507F40)
     pub fn preload_beat_track(a: GPtr<u8>, t: u32) = thiscall 0x507F40 => unported;
+}
+
+orig! {
+    /// `CCamera::SetZoomValueCamStringScript` (0x50C1B0)
+    pub fn set_zoom_value_cam_string_script(this: GPtr<u8>, zoom: u16) = thiscall 0x50C1B0 => sa_cam::camctl::set_zoom_value_cam_string_script;
 }
 
 orig! {

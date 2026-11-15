@@ -220,6 +220,73 @@ pub fn take_remote_controlled_car_from_player(blow_up: u32) {
     at::<u8>(p, 0xDF).write(1);
 }
 
+/// `CRemote::GivePlayerRemoteControlledCar(float x, float y, float z, float angle, uint16 model)` (0x45AB10, cdecl;
+/// FRONTIER-2 lane C turn 5): a new vehicle (`operator new` 0x6E2D50) built as a `CHeli` (0xA18 bytes), `CPlane`
+/// (0xA04) or `CAutomobile` (0x988, setup 1), all created-by 2 (an allocation failure leaves NULL, which the original
+/// dereferences). `z = FindGroundZFor3DCoord(x, y, z + 2, &model-argument, NULL) + GetDistanceFromCentreOfMassToBase
+/// OfModel()`, `SetRotateZOnly(angle)` on its matrix, the position into the matrix (or the placement); status 8 (byte
+/// +0x36 high bits 0x40), +0x428 |= 8, `JoinCarWithRoadSystem`, +0x3BA / +0x3BB / +0x3B9 = 0, +0x3C8 = 9.0, +0x3D0 = 9,
+/// +0x3B7 / +0x3B8 = 0, +0x428 bit 0x10 = !(+0x42D & 2); `CWorld::Add`; the player's vehicle (if any) gets status 9;
+/// the focus player's `m_pRemoteVehicle` (+0xB0) = the car and registers the reference; the camera takes control
+/// (mode 0x12, jump cut, script) and `SetZoomValueCamStringScript(1)`.
+#[hook(addr = 0x45AB10, conv = cdecl, name = "CRemote::GivePlayerRemoteControlledCar", expect = "6A FF 68 11 7A 83 00",
+       unverified = "frontier2-c11", route = "L2", hazards = "heap-writes")]
+pub fn give_player_remote_controlled_car(x: f32, y: f32, z: f32, angle: f32, model: u32) {
+    let mut model_slot = model;
+    let mi = (model & 0xFFFF) as i32;
+    let veh = if crate::bindings::is_heli_model(mi) {
+        let v = sa_world::bindings::vehicle_new(0xA18);
+        if v.is_null() { v } else { sa_core::bindings::heli_ctor(v, mi, 2) }
+    } else if crate::bindings::is_plane_model(mi) {
+        let v = sa_world::bindings::vehicle_new(0xA04);
+        if v.is_null() { v } else { sa_core::bindings::plane_ctor(v, mi, 2) }
+    } else {
+        let v = sa_world::bindings::vehicle_new(0x988);
+        if v.is_null() { v } else { sa_core::bindings::automobile_ctor(v, mi as u32, 2, 1) }
+    };
+    let zg = sa_math::x87::X87::from_f32(z).fadd_m(GPtr::<f32>::from_addr(0x858CA0).read()).to_f32();
+    let flag = GPtr::<u8>::from_raw(core::ptr::addr_of_mut!(model_slot).cast::<u8>());
+    let z = sa_math::x87::X87::from_f64_exact(sa_world::bindings::find_ground_z_for_3d_coord(x, y, zg, flag, GPtr::NULL))
+        .to_f32();
+    let z = sa_math::x87::X87::from_f64_exact(sa_world::bindings::get_distance_from_centre_of_mass_to_base_of_model(veh))
+        .fadd_m(z)
+        .to_f32();
+    sa_core::bindings::matrix_set_rotate_z_only(at::<GPtr<u8>>(veh, 0x14).read(), angle);
+    let m = at::<GPtr<u8>>(veh, 0x14).read();
+    if !m.is_null() {
+        at::<f32>(m, 0x30).write(x);
+        at::<f32>(at::<GPtr<u8>>(veh, 0x14).read(), 0x34).write(y);
+        at::<f32>(at::<GPtr<u8>>(veh, 0x14).read(), 0x38).write(z);
+    } else {
+        at::<f32>(veh, 4).write(x);
+        at::<f32>(veh, 8).write(y);
+        at::<f32>(veh, 0xC).write(z);
+    }
+    at::<u8>(veh, 0x36).write(at::<u8>(veh, 0x36).read() & 7 | 0x40);
+    at::<u8>(veh, 0x428).write(at::<u8>(veh, 0x428).read() | 8);
+    sa_pop::bindings::join_car_with_road_system(veh);
+    let f = at::<u8>(veh, 0x428).read();
+    let no_engine = at::<u8>(veh, 0x42D).read() & 2 != 0;
+    at::<u8>(veh, 0x3BA).write(0);
+    at::<u8>(veh, 0x3BB).write(0);
+    at::<u8>(veh, 0x3B9).write(0);
+    at::<u32>(veh, 0x3C8).write(0x4110_0000);
+    at::<u8>(veh, 0x3D0).write(9);
+    at::<u8>(veh, 0x3B7).write(0);
+    at::<u8>(veh, 0x3B8).write(0);
+    at::<u8>(veh, 0x428).write(if no_engine { f & 0xEF } else { f | 0x10 });
+    sa_core::bindings::world_add(veh);
+    if !sa_core::bindings::find_player_vehicle(-1, 0).is_null() {
+        let pv = sa_core::bindings::find_player_vehicle(-1, 0);
+        at::<u8>(pv, 0x36).write(at::<u8>(pv, 0x36).read() & 7 | 0x48);
+    }
+    let slot = focus_player().byte_add(0xB0);
+    slot.cast::<GPtr<u8>>().write(veh);
+    sa_core::bindings::entity_register_reference(veh, slot);
+    sa_world::bindings::camera_take_control(GPtr::from_addr(0xB6F028), veh, 0x12, 1, 1);
+    crate::bindings::set_zoom_value_cam_string_script(GPtr::from_addr(0xB6F028), 1);
+}
+
 /// `CPatrolRoute::AddRoutePoint(const CVector& pos, const record& anim)` (stub 0x46AE80 → .HOODLUM 0x15622E0, thiscall,
 /// `ret 8`; unnamed): with fewer than 8 points (+0), the point is copied to `+0x144 + 12n`, the record's anim name (+0)
 /// and block name (+0x18) `strcpy`d into the 0x28-byte record at `+4 + 0x28n`, the count incremented; AL = 1. A full
@@ -359,6 +426,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_IS_ENTITY_WITHIN_ANY_SEARCH_LIGHT,
     HOOK_START_NEW_SCRIPT_INDEXED,
     HOOK_TAKE_REMOTE_CONTROLLED_CAR_FROM_PLAYER,
+    HOOK_GIVE_PLAYER_REMOTE_CONTROLLED_CAR,
     HOOK_PATROL_ROUTE_ADD_POINT,
     HOOK_PATROL_ANIM_RECORD_CTOR,
     HOOK_FIND_STREAMED_SCRIPT_QUIET,

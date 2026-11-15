@@ -95,8 +95,6 @@ orig! {
     fn set_parameters_for_script_interpolation(cam: GPtr<u8>, stop: u32, catch_up: u32, time: u32) = thiscall 0x50C030 => unported;
     /// `CRunningScript::LocateCharObjectCommand(int32 command)` (0x487720)
     fn locate_char_object_command(s: Scr, command: u32) = thiscall 0x487720 => unported;
-    /// `CRemote::GivePlayerRemoteControlledCar(float x, float y, float z, float angle, uint16 model)` (0x45AB10)
-    fn give_player_remote_controlled_car(x: u32, y: u32, z: u32, angle: u32, model: u32) = cdecl 0x45AB10 => unported;
 }
 
 /// The two DISPLAY_TEXT_WITH_*NUMBER* cases (0x48A5B5 / 0x48A660): CollectParameters(2) (x, y);
@@ -454,7 +452,7 @@ pub fn process_commands_1100_to_1199(s: Scr, command: u32) -> i8 {
                 X87::from_f64_exact(find_ground_z_for_coord(f32::from_bits(x), f32::from_bits(y))).to_f32().to_bits()
             };
             let a = deg2rad(sp(4)).to_bits();
-            give_player_remote_controlled_car(x, y, z, a, sp(5) & 0xFFFF);
+            crate::bindings::give_player_remote_controlled_car(f32::from_bits(x), f32::from_bits(y), f32::from_bits(z), f32::from_bits(a), sp(5) & 0xFFFF);
         }
         // 047A IS_CHAR_ON_ANY_BIKE (0x48AB79): no null check; flag = in a vehicle && it != 0 &&
         // GetVehicleAppearance() == 2 (the set-1 path is the out-of-line 0x404CF3).
