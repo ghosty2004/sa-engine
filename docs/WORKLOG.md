@@ -1679,3 +1679,20 @@
 - Checked on master: sa-hook lib 59/59, `make structure` clean, i686 sa-game, `FEATURES=samp tools/web/build.sh`;
   scenarios pausemenu / solicit / crossing / melee / sniper all 0 blocked, no crash. `target/play/sa-game` and
   `web/pkg` refreshed.
+
+## 2026-11-15 — GIT-1: prepare the history rewrite (agent, not run on the real repository)
+
+- `docs/history/commit-messages.tsv`: a Conventional Commits subject for each of master's 755 non-merge commits (up to
+  03319d70), written by hand in batches from the original message and diff stat; `Refs` only where the original names
+  the task (307 rows). Cherry-picked duplicates share their subject.
+- `tools/git/rewrite_history.py`: rebuilds each commit object from its raw bytes (new subject + original message verbatim
+  + `Refs:` + `Original-commit:`; other headers byte-identical, parents mapped), verifies every pair before touching a
+  ref, archives refs under `refs/archive/pre-rewrite/` plus a bundle, moves master and the fully merged branches, writes
+  `docs/history/hash-map.tsv`, rewrites the cited commit ids and commits that. `--check`, `--draft-missing`,
+  `--dry-run DIR`; refuses on dirty tracked files or registered agent worktrees unless `--force`.
+  `tools/git/rebase_after_rewrite.py` moves unmerged branches (`git rebase --onto`, in a temporary worktree).
+  `commit_lint.py --all`; the body width rule does not apply to messages with `Original-commit:`.
+- Dry run on a fresh clone (master = this branch, 182 branches recreated): 766 commits, tree / author / committer /
+  dates identical and parents mapped 766/766, original messages kept 766/766, `commit_lint.py --range master --all`
+  0 bad of 759, 3,280 cited ids updated in 29 files, 0 ambiguous, 6 decimal-only ids (all real citations), 34 refs
+  moved, two unmerged branches rebased with identical trees. Clone removed. Procedure: docs/history/README.md.

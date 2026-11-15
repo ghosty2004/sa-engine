@@ -126,5 +126,18 @@ new id; only the branch's own commits are replayed. Fully merged branches are re
 
 ## Dry run of 2026-11-15 (this branch)
 
-Fresh clone, master fast-forwarded to this branch (so the drafted rows path is exercised), the 182 other
-branches created as local branches. Results are in the ROADMAP / WORKLOG entry for GIT-1.
+Fresh `git clone --no-local`, master fast-forwarded to this branch (so the missing-rows path is exercised), the
+182 other branches recreated as local branches. `rewrite_history.py` stopped on the 3 commits of this branch
+without rows; `--draft-missing` drafted them (their subjects already conform, so the drafts equal them); the run:
+
+- 766 commits rewritten (758 non-merge + 8 merges) in about 3 s; 34 refs archived and moved (master and the 33
+  fully merged branches); 150 unmerged branches left on the old history.
+- Independent check of every old → new pair: commit count equal (766), tree identical 766/766, author / committer
+  / dates identical 766/766, parents mapped 766/766, original message verbatim + `Original-commit` 766/766.
+- `commit_lint.py --range master --all`: 759 checked (753 older than the rule), 0 bad.
+- References: 3,280 cited ids updated in 29 files (2,523 in `catalog/verify-queue.csv`, 381 in
+  `docs/verify/QUEUE.md`, 56 in `docs/WORKLOG.md`, the rest in docs/verify, docs/arch, CONTINUE, ROADMAP, two
+  tool files); 0 ambiguous; 6 decimal-only ids replaced in 9 places (14221138, 43038126, 87822502, 06303313, 3933363,
+  3323627), all of them commit citations in their context.
+- `rebase_after_rewrite.py --apply` moved `newgame-1` and `fx-pre-rebase` (2 commits each); the rebased trees are
+  identical to the old branch tips.

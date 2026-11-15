@@ -45,7 +45,7 @@ TASK_ID = re.compile(r"(?<![A-Za-z0-9_.\-/])([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+[a-z]?
 # not preceded by 0x (addresses such as 0x6d7bc0)
 HEX_TOKEN = re.compile(r"(?<![0-9A-Za-z_])(?<!0x)(?<!0X)([0-9a-f]{7,40})(?![0-9A-Za-z_])")
 # files never rewritten by the reference update: they must keep the old ids
-KEEP_OLD_IDS = ("docs/history/",)
+KEEP_OLD_IDS = ("docs/history/", "tools/git/")
 
 
 class Git:
