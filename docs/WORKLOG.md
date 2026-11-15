@@ -1603,3 +1603,11 @@
   (1,179 instructions); CCam::Process_M16_1stPerson 0x5105C0 (1,446); the other partial ports' cases; the four
   imports; the rest of the frontier list (the ~250-function turn was not reached).
 
+
+## 2026-11-15 — integrate UNVERIFIED-WC and FRONTIER-2 part 1 (main session)
+
+- UNVERIFIED-WC (d09c620a) fast-forwarded; sa-hook lib 59/59, i686 sa-game.
+- FRONTIER-2 part 1 rebased onto d09c620a (WORKLOG conflict: both entries kept) and fast-forwarded. On the rebased
+  tree: sa-hook lib 59/59, `make structure` clean, bindings `--check` (2,649), i686 sa-game; scenarios pausemenu /
+  solicit / melee 0 blocked, crossing 345 blocked on `update_car_ai_original (0x0)` (police path, open), no crash;
+  verify-all `f2-int` (lanes 1-3) IDENTICAL 13/13. `target/play/sa-game` and `web/pkg` refreshed.
