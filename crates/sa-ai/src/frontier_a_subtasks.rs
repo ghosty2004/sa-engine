@@ -28,11 +28,6 @@ orig! {
     fn swat_rope_anim_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x6586A0 => swat_rope_anim_task_ctor;
 }
 
-/// `new` of `size` bytes from the task pool, then `ctor` on it (null stays null).
-fn new_task(size: u32, ctor: impl FnOnce(GPtr<u8>) -> GPtr<u8>) -> GPtr<u8> {
-    let m = task_new(size);
-    if m.is_null() { GPtr::NULL } else { ctor(m) }
-}
 
 /// `CTaskComplexCopInCar::CreateSubTask(int32 type, CPed* ped)` (0x68C9E0, `ret 8`; the tail runs through the island
 /// 0x40600B). +0xC the vehicle, +0x14 the target ped. 0x2BC / 0x2BD: the ped's decision maker type 6, enter the vehicle

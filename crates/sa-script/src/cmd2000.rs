@@ -52,7 +52,6 @@ use sa_world::bindings::remove_vehicle_upgrade;
 use crate::bindings::task_drive_point_route_ctor;
 use sa_core::bindings::crt_strncpy as strncpy_;
 use sa_core::bindings::rgba_ctor;
-use sa_ai::bindings::task_new;
 use sa_core::bindings::text_get;
 use sa_core::bindings::tm_get_simplest_active_task as get_simplest_active_task;
 use sa_world::bindings::apply_force;
@@ -159,16 +158,7 @@ fn obj(h: u32) -> GPtr<u8> {
 
 use sa_world::world::common::entity_pos_u as ent_pos;
 
-/// `task` or null when `operator new` failed (the constructor runs only on a non-null block).
-#[inline]
-fn new_task(size: u32, ctor: impl FnOnce(GPtr<u8>) -> GPtr<u8>) -> GPtr<u8> {
-    let t = task_new(size);
-    if t.is_null() {
-        GPtr::NULL
-    } else {
-        ctor(t)
-    }
-}
+use sa_ai::common::new_task;
 
 /// A model operand: a negative value indexes `CTheScripts::UsedObjectArray` backwards.
 #[inline]

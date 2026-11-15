@@ -50,7 +50,6 @@ use sa_world::bindings::set_entity_blip;
 use crate::bindings::start_playback_recorded_car;
 use sa_core::bindings::crt_strncpy as strncpy_;
 use sa_core::bindings::get_uppercase_key;
-use sa_ai::bindings::task_new;
 use sa_world::bindings::world_add as world_add_;
 use sa_world::bindings::world_remove as world_remove_;
 use sa_ped::bindings::ped_is_player;
@@ -137,16 +136,7 @@ fn obj(h: u32) -> GPtr<u8> {
 
 use sa_world::world::common::entity_pos_u as ent_pos;
 
-/// `task` or null when `operator new` failed (the constructor runs only on a non-null block).
-#[inline]
-fn new_task(size: u32, ctor: impl FnOnce(GPtr<u8>) -> GPtr<u8>) -> GPtr<u8> {
-    let t = task_new(size);
-    if t.is_null() {
-        GPtr::NULL
-    } else {
-        ctor(t)
-    }
-}
+use sa_ai::common::new_task;
 
 /// `dword = v != 0 ? d | bit : d & !bit` on `p + off`.
 #[inline]

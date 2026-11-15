@@ -74,3 +74,11 @@ orig! {
     /// A virtual destructor called as `delete p` (vtable slot 0: the scalar deleting destructor, flag 1)
     pub fn virtual_delete(p: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
 }
+
+/// `new(size)` from the task pool, then the constructor when non-null (null when `new` fails): the
+/// `CreateSubTask` allocation idiom (`operator new` 0x61A5A0, the constructor on the result).
+#[inline]
+pub fn new_task(size: u32, ctor: impl FnOnce(GPtr<u8>) -> GPtr<u8>) -> GPtr<u8> {
+    let t = task_new(size);
+    if t.is_null() { GPtr::NULL } else { ctor(t) }
+}

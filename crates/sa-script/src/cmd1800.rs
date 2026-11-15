@@ -204,16 +204,7 @@ fn model_operand(v: u32) -> u32 {
     }
 }
 
-/// `task` or null when `operator new` failed (the constructor runs only on a non-null block).
-#[inline]
-fn new_task(size: u32, ctor: impl FnOnce(GPtr<u8>) -> GPtr<u8>) -> GPtr<u8> {
-    let t = task_new(size);
-    if t.is_null() {
-        GPtr::NULL
-    } else {
-        ctor(t)
-    }
-}
+use sa_ai::common::new_task;
 
 /// `CRunningScript::ProcessCommands1800To1899(int32 command)` (0x46D050, thiscall, `ret 4`): AL = 0 continue, 1 wait, -1 unknown.
 #[hook(addr = 0x46D050, conv = thiscall, name = "CRunningScript::ProcessCommands1800To1899", expect = "6A FF 64 A1 00 00 00 00", this = "CRunningScript")]

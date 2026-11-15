@@ -64,7 +64,6 @@ use crate::bindings::task_drive_point_route_ctor;
 use sa_veh::bindings::vehicle_41bdd0;
 use sa_core::bindings::ped_group_process;
 use sa_stream::bindings::set_mission_doesnt_require_model;
-use sa_ai::bindings::task_new;
 use sa_core::bindings::vector_magnitude;
 use sa_stream::bindings::get_num_remaps;
 use sa_world::bindings::arrest_ped_ctor as task_arrest_ped_ctor;
@@ -156,16 +155,7 @@ const K_50: u32 = 0x4248_0000;
 
 use sa_core::field::gr32 as rd;
 
-/// `t = CTask::operator new(size)`; null -> null, else the constructor's result (EAX).
-#[inline]
-fn new_task(size: u32, ctor: impl FnOnce(GPtr<u8>) -> GPtr<u8>) -> GPtr<u8> {
-    let t = task_new(size);
-    if t.is_null() {
-        GPtr::NULL
-    } else {
-        ctor(t)
-    }
-}
+use sa_ai::common::new_task;
 
 #[inline]
 fn ped(h: u32) -> GPtr<u8> {

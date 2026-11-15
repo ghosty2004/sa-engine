@@ -46,7 +46,6 @@ use sa_world::bindings::entity_register_reference as register_reference;
 use sa_weapon::bindings::get_weapon_info;
 use sa_core::bindings::make_upper_case;
 use sa_world::bindings::matrix_dtor;
-use sa_ai::bindings::task_new;
 use sa_ped::bindings::clothes_desc_set_texture_and_model as set_texture_and_model;
 use sa_world::bindings::find_zone_by_label;
 use sa_world::bindings::flush_immediately;
@@ -170,16 +169,7 @@ fn obj(h: u32) -> GPtr<u8> {
 
 use sa_world::world::common::entity_pos_u as ent_pos;
 
-/// `task` or null when `operator new` failed (the constructor runs only on a non-null block).
-#[inline]
-fn new_task(size: u32, ctor: impl FnOnce(GPtr<u8>) -> GPtr<u8>) -> GPtr<u8> {
-    let t = task_new(size);
-    if t.is_null() {
-        GPtr::NULL
-    } else {
-        ctor(t)
-    }
-}
+use sa_ai::common::new_task;
 
 /// The zone's extra-info record: `0xBA1DEC + 17 * (u16)[0xBA37B4 + 32 * z]` (`z` sign-extended, unchecked).
 #[inline]

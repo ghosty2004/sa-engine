@@ -128,16 +128,7 @@ orig! {
 
 use sa_core::field::gr32 as rd;
 
-/// `t = CTask::operator new(size)`; null -> null, else the constructor's result (EAX).
-#[inline]
-fn new_task(size: u32, ctor: impl FnOnce(GPtr<u8>) -> GPtr<u8>) -> GPtr<u8> {
-    let t = task_new(size);
-    if t.is_null() {
-        GPtr::NULL
-    } else {
-        ctor(t)
-    }
-}
+use sa_ai::common::new_task;
 
 /// The sequence-add tail (0x48FEFD): `CTaskSequences::ms_taskSequence[ms_iActiveSequence].AddTask(t)`; the index is
 /// read through the protection stub 0x409AD7 (`[0x15608E0] + [0x4EF1C5]` = 0x8D2E98, decoded from the image).

@@ -89,7 +89,6 @@ use sa_world::bindings::entity_register_reference as register_reference;
 use sa_core::bindings::membership_set_leader;
 use sa_core::bindings::ped_group_process;
 use sa_core::bindings::rgba_ctor;
-use sa_ai::bindings::task_new;
 use sa_ped::bindings::ped_is_player;
 use sa_world::bindings::civilian_ped_ctor;
 use sa_ai::bindings::compute_response_task_type_group;
@@ -200,12 +199,7 @@ fn veh(h: u32) -> GPtr<u8> {
 
 use sa_core::field::gr32 as dword;
 
-/// `new(size)` then the constructor when non-null (EAX = the task, null when `new` fails).
-#[inline]
-fn new_task(size: u32, ctor: impl FnOnce(GPtr<u8>) -> GPtr<u8>) -> GPtr<u8> {
-    let t = task_new(size);
-    if t.is_null() { GPtr::NULL } else { ctor(t) }
-}
+use sa_ai::common::new_task;
 
 use sa_world::world::common::entity_pos;
 
