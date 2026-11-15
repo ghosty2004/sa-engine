@@ -2296,3 +2296,18 @@
   a use of EDX (fixed in sa-hook callers.rs: `or r8, 0FFh` is a write).
 - Integration note: lane C turn 3 makes the 0x53CBE0 binding return X87; the `st0(general_get_radian_angle_between_points
   (..))` sites here (frontier_a_t3.rs ArrestPed ProcessPed, gang_drive_by.rs point-gun x2) drop `st0()` then.
+## 2026-11-16 — FRONTIER-2 turn 3, lanes B and A on master (main session)
+- Lane C turn 3 went in first (d9866059, with the X87 caller fix 7d1189ef; verify-all `intc3` IDENTICAL 13/13 both modes).
+- Lanes B (worktree-agent-a75c5759aead26958) and A (worktree-agent-a79dbccbc537c6d52) rebased in that order onto d9866059
+  (`rebase --onto`; queue → theirs, lib.rs / hooks.rs / WORKLOG union, ROADMAP docmerge, bindings / name-corrections sorted
+  union), each followed by `queue.py gen` (1cc13a25, 48633fb3). Lane A's three `st0(general_get_radian_angle_between_points
+  (..))` sites now take the X87 result (`.to_f32()` or the X87 value directly; 7c52736c), dropping an unused fpu import.
+- Writer gate on the B tree all PASS; on the A tree clippy host / i686 PASS after the import fix (the rest unchanged).
+- Scenarios (sa-game i686 with `--features audio`): pausemenu 416 / 0 blocked, solicit 4016 / 0, crossing 1216 / 0,
+  crossing-long 4016 / 0, melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0, shootdriver 1216 / 0, quad 1216 / 0 (the
+  user-hit quad blocker is gone), roadblocks 258 / 1758, every block on CHeli::ProcessControl 0x6C7050 (the police heli now
+  spawns through GenerateHeli; its control is lane B turn 4's first item).
+- verify-all (lanes 1-7, fresh sa-oracle): `intab3-u` (SA_UNVERIFIED = every frontier2 batch) IDENTICAL 13/13 and
+  `intab3-def` IDENTICAL 13/13. Master fast-forwarded to 48633fb3.
+- frontier.py --no-branches: 309 → 287 to port (172 direct, 104 virtual, 11 partial) + 48 staying original.
+- Play package: target/play/sa-game refreshed from this tree (audio build); web/pkg rebuilt (FEATURES=samp).
