@@ -189,8 +189,141 @@ pub fn patrol_anim_record_ctor(this: GPtr<u8>, anim: GPtr<u8>, block: GPtr<u8>) 
     }
 }
 
+/// `CPlayerInfo` of the player in focus (`CWorld::Players` 0xB7CD98, 0x190 each; `CWorld::PlayerInFocus` byte 0xB7CD74),
+/// re-read at every use as the original does.
+fn focus_player() -> GPtr<u8> {
+    GPtr::from_addr(0xB7CD98 + usize::from(GPtr::<u8>::from_addr(0xB7CD74).read()) * 0x190)
+}
+
+/// `CRemote::TakeRemoteControlledCarFromPlayer(bool blowUp)` (stub 0x45AE80 → .HOODLUM 0x1562160, cdecl): a mission
+/// remote car (created-by +0x4A4 == 2) of the focus player (`m_pRemoteVehicle` +0xB0) becomes random (`SetVehicleCreatedBy
+/// (1)`) and leaves the mission cleanup list (`RemoveEntityFromList(handle, 1)`, the handle from the vehicle pool inline);
+/// then the car's flag bit 3 of +0x428 is cleared and the player's +0xE0 = now, +0xDD = 1, +0xDE = `blowUp`, +0xDF = 1.
+#[hook(addr = 0x45AE80, conv = cdecl, name = "CRemote::TakeRemoteControlledCarFromPlayer", expect = "E9 DB 72 10 01",
+       unverified = "frontier2-c4", route = "L2", hazards = "heap-writes")]
+pub fn take_remote_controlled_car_from_player(blow_up: u32) {
+    let veh = at::<GPtr<u8>>(focus_player(), 0xB0).read();
+    if at::<u8>(veh, 0x4A4).read() == 2 {
+        vehicle_set_created_by(veh, 1);
+        let veh = at::<GPtr<u8>>(focus_player(), 0xB0).read();
+        let pool = GPtr::<GPtr<u8>>::from_addr(0xB74494).read();
+        let idx = (veh.addr() as u32).wrapping_sub(at::<u32>(pool, 0).read()) as i32 / 0xA18;
+        let flags = at::<GPtr<u8>>(pool, 4).read().byte_add(idx as isize).read();
+        cleanup_remove_entity_from_list(GPtr::from_addr(0xA90850), (idx << 8).wrapping_add(i32::from(flags)), 1);
+    }
+    let veh = at::<GPtr<u8>>(focus_player(), 0xB0).read();
+    at::<u8>(veh, 0x428).write(at::<u8>(veh, 0x428).read() & 0xF7);
+    let p = focus_player();
+    at::<u32>(p, 0xE0).write(GPtr::<u32>::from_addr(0xB7CB84).read());
+    at::<u8>(p, 0xDD).write(1);
+    at::<u8>(p, 0xDE).write(blow_up as u8);
+    at::<u8>(p, 0xDF).write(1);
+}
+
+/// `CPatrolRoute::AddRoutePoint(const CVector& pos, const record& anim)` (stub 0x46AE80 → .HOODLUM 0x15622E0, thiscall,
+/// `ret 8`; unnamed): with fewer than 8 points (+0), the point is copied to `+0x144 + 12n`, the record's anim name (+0)
+/// and block name (+0x18) `strcpy`d into the 0x28-byte record at `+4 + 0x28n`, the count incremented; AL = 1. A full
+/// route → AL = 0.
+#[hook(addr = 0x46AE80, conv = thiscall, name = "thunk_FUN_015622e0", expect = "E9 5B 74 0F 01",
+       unverified = "frontier2-c4", route = "L2", hazards = "none")]
+pub fn patrol_route_add_point(this: GPtr<u8>, pos: GPtr<u8>, rec: GPtr<u8>) -> u8 {
+    let n = at::<i32>(this, 0).read();
+    if n >= 8 {
+        return 0;
+    }
+    let dst = this.byte_add(0x144 + 12 * n as isize);
+    for k in 0..3isize {
+        at::<u32>(dst, 4 * k).write(at::<u32>(pos, 4 * k).read());
+    }
+    let r = this.byte_add(4 + 0x28 * at::<i32>(this, 0).read() as isize);
+    for (d, s) in [(r, rec), (r.byte_add(0x18), rec.byte_add(0x18))] {
+        let mut k = 0isize;
+        loop {
+            let b = at::<u8>(s, k).read();
+            at::<u8>(d, k).write(b);
+            k += 1;
+            if b == 0 {
+                break;
+            }
+        }
+    }
+    at::<i32>(this, 0).write(at::<i32>(this, 0).read() + 1);
+    1
+}
+
+use crate::bindings::cleanup_remove_entity_from_list;
+use sa_world::bindings::vehicle_set_created_by;
+
+/// `CTheScripts::IsEntityWithinAnySearchLight(CEntity* entity, int32* out)` (0x493960, cdecl): `*out = -1`; the first
+/// of the 8 search lights (0x7C bytes from 0xA94D68) in use (byte +0) whose cone holds the entity's position (a stack
+/// copy; `IsPointWithinSearchLight(&pos, i)`) gives `*out = (id word +4 << 16) | i` and AL = 1; none → AL = 0.
+#[hook(addr = 0x493960, conv = cdecl, name = "CTheScripts::IsEntityWithinAnySearchLight", expect = "8B 4C 24 04 83 EC 0C",
+       unverified = "frontier2-c4", route = "L2", hazards = "none")]
+pub fn is_entity_within_any_search_light(entity: GPtr<u8>, out: GPtr<u32>) -> u8 {
+    out.write(0xFFFF_FFFF);
+    let p = sa_world::world::common::entity_pos(entity);
+    let mut pos = [at::<u32>(p, 0).read(), at::<u32>(p, 4).read(), at::<u32>(p, 8).read()];
+    for i in 0..8u32 {
+        let light = GPtr::<u8>::from_addr(0xA94D68 + 0x7C * i as usize);
+        if at::<u8>(light, 0).read() != 0
+            && is_point_within_search_light(GPtr::from_raw(pos.as_mut_ptr()).cast(), i as i32) != 0
+        {
+            out.write((u32::from(at::<u16>(light, 4).read()) << 16) | i);
+            return 1;
+        }
+    }
+    0
+}
+
+/// `CTheScripts::StartNewScript(uint8* ip, uint16 index)` (stub 0x464C90 → .HOODLUM 0x156E210, cdecl): the script
+/// `ScriptsArray[index]` (0xA8B430 + 0xE0 index) is looked for in the idle list (`pIdleScripts` 0xA8B428, the head
+/// address decoded in line); absent → NULL. Found: unlinked (its previous script's next, or the idle head, takes its
+/// next; the next's previous takes its previous), `Init()`ed, its IP (+0x14) set, linked in front of the active list
+/// (`pActiveScripts` 0xA8B42C) and marked active (+0xC4 = 1). Returns it.
+#[hook(addr = 0x464C90, conv = cdecl, name = "CTheScripts::StartNewScript-indexed", expect = "E9 7B 95 10 01",
+       unverified = "frontier2-c4", route = "L2", hazards = "heap-writes", recs = "save-load")]
+pub fn start_new_script_indexed(ip: u32, index: u32) -> GPtr<u8> {
+    let script = GPtr::<u8>::from_addr(0xA8B430 + 0xE0 * (index & 0xFFFF) as usize);
+    let idle = GPtr::<GPtr<u8>>::from_addr(0xA8B428);
+    let mut s = idle.read();
+    while !s.is_null() && s != script {
+        s = at::<GPtr<u8>>(s, 0).read();
+    }
+    if s.is_null() {
+        return GPtr::NULL;
+    }
+    let prev = at::<GPtr<u8>>(s, 4).read();
+    if prev.is_null() {
+        idle.write(at::<GPtr<u8>>(s, 0).read());
+    } else {
+        at::<GPtr<u8>>(prev, 0).write(at::<GPtr<u8>>(s, 0).read());
+    }
+    let next = at::<GPtr<u8>>(s, 0).read();
+    if !next.is_null() {
+        at::<GPtr<u8>>(next, 4).write(at::<GPtr<u8>>(s, 4).read());
+    }
+    running_script_init(s);
+    at::<u32>(s, 0x14).write(ip);
+    let active = GPtr::<GPtr<u8>>::from_addr(0xA8B42C);
+    at::<GPtr<u8>>(s, 0).write(active.read());
+    at::<u32>(s, 4).write(0);
+    let head = active.read();
+    if !head.is_null() {
+        at::<GPtr<u8>>(head, 4).write(s);
+    }
+    active.write(s);
+    at::<u8>(s, 0xC4).write(1);
+    s
+}
+
+use crate::bindings::running_script_init;
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_IS_ENTITY_WITHIN_ANY_SEARCH_LIGHT,
+    HOOK_START_NEW_SCRIPT_INDEXED,
+    HOOK_TAKE_REMOTE_CONTROLLED_CAR_FROM_PLAYER,
+    HOOK_PATROL_ROUTE_ADD_POINT,
     HOOK_PATROL_ANIM_RECORD_CTOR,
     HOOK_FIND_STREAMED_SCRIPT_QUIET,
     HOOK_ADD_SCRIPTED_2D_EFFECT,

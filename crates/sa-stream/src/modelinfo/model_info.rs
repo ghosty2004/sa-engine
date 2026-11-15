@@ -172,15 +172,15 @@ orig! {
     pub fn vehicle_store_ctor(s: GPtr<u8>) -> GPtr<u8> = thiscall 0x4C5F50 => unported;
     pub fn ped_store_ctor(s: GPtr<u8>) -> GPtr<u8> = thiscall 0x4C67D0 => unported;
     /// Store destructor helpers (`eh vector destructor iterator` over the elements)
-    pub fn atomic_store_dtor(s: GPtr<u8>) = thiscall 0x4C5840 => unported;
-    pub fn damage_atomic_store_dtor(s: GPtr<u8>) = thiscall 0x4C5860 => unported;
-    pub fn lod_atomic_store_dtor(s: GPtr<u8>) = thiscall 0x4C5880 => unported;
-    pub fn time_store_dtor(s: GPtr<u8>) = thiscall 0x4C58A0 => unported;
-    pub fn lod_time_store_dtor(s: GPtr<u8>) = thiscall 0x4C58C0 => unported;
-    pub fn weapon_store_dtor(s: GPtr<u8>) = thiscall 0x4C58E0 => unported;
-    pub fn clump_store_dtor(s: GPtr<u8>) = thiscall 0x4C5900 => unported;
-    pub fn vehicle_store_dtor(s: GPtr<u8>) = thiscall 0x4C6370 => unported;
-    pub fn ped_store_dtor(s: GPtr<u8>) = thiscall 0x4C6390 => unported;
+    pub fn atomic_store_dtor(s: GPtr<u8>) = thiscall 0x4C5840 => crate::modelinfo::model_info::atomic_store_dtor_native;
+    pub fn damage_atomic_store_dtor(s: GPtr<u8>) = thiscall 0x4C5860 => crate::modelinfo::model_info::damage_atomic_store_dtor_native;
+    pub fn lod_atomic_store_dtor(s: GPtr<u8>) = thiscall 0x4C5880 => crate::modelinfo::model_info::lod_atomic_store_dtor_native;
+    pub fn time_store_dtor(s: GPtr<u8>) = thiscall 0x4C58A0 => crate::modelinfo::model_info::time_store_dtor_native;
+    pub fn lod_time_store_dtor(s: GPtr<u8>) = thiscall 0x4C58C0 => crate::modelinfo::model_info::lod_time_store_dtor_native;
+    pub fn weapon_store_dtor(s: GPtr<u8>) = thiscall 0x4C58E0 => crate::modelinfo::model_info::weapon_store_dtor_native;
+    pub fn clump_store_dtor(s: GPtr<u8>) = thiscall 0x4C5900 => crate::modelinfo::model_info::clump_store_dtor_native;
+    pub fn vehicle_store_dtor(s: GPtr<u8>) = thiscall 0x4C6370 => crate::modelinfo::model_info::vehicle_store_dtor_native;
+    pub fn ped_store_dtor(s: GPtr<u8>) = thiscall 0x4C6390 => crate::modelinfo::model_info::ped_store_dtor_native;
 }
 
 fn key_of(m: MiPtr) -> u32 {
@@ -694,3 +694,69 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_INIT_PED_STORE,
     HOOK_DTOR_PED_STORE,
 ];
+
+// ---- FRONTIER-2 lane C: the store destructor bodies. Not in the catalogue (each is the tail of its `__dtor_` stub's
+// extent, CAT-12), so phase B gets them as natives: `eh_vector_destructor_iterator(this + 4, size, count, dtor)`.
+
+/// The `atomic` model-info store destructor body (0x4C5840, thiscall; reached by `jmp` from its `__dtor_` stub):
+/// `eh_vector_destructor_iterator(this + 4, 0x20, 0x36B0, 0x4C5590)`.
+#[sa_core::native(addr = 0x4C5840, conv = thiscall, name = "atomic_store_dtor")]
+pub fn atomic_store_dtor_native(s: GPtr<u8>) {
+    sa_core::bindings::eh_vector_dtor(s.byte_add(4), 0x20, 0x36B0, 0x4C5590);
+}
+
+/// The `damage_atomic` model-info store destructor body (0x4C5860, thiscall; reached by `jmp` from its `__dtor_` stub):
+/// `eh_vector_destructor_iterator(this + 4, 0x24, 0x46, 0x4C55D0)`.
+#[sa_core::native(addr = 0x4C5860, conv = thiscall, name = "damage_atomic_store_dtor")]
+pub fn damage_atomic_store_dtor_native(s: GPtr<u8>) {
+    sa_core::bindings::eh_vector_dtor(s.byte_add(4), 0x24, 0x46, 0x4C55D0);
+}
+
+/// The `lod_atomic` model-info store destructor body (0x4C5880, thiscall; reached by `jmp` from its `__dtor_` stub):
+/// `eh_vector_destructor_iterator(this + 4, 0x24, 0x1, 0x4C5620)`.
+#[sa_core::native(addr = 0x4C5880, conv = thiscall, name = "lod_atomic_store_dtor")]
+pub fn lod_atomic_store_dtor_native(s: GPtr<u8>) {
+    sa_core::bindings::eh_vector_dtor(s.byte_add(4), 0x24, 0x1, 0x4C5620);
+}
+
+/// The `time` model-info store destructor body (0x4C58A0, thiscall; reached by `jmp` from its `__dtor_` stub):
+/// `eh_vector_destructor_iterator(this + 4, 0x24, 0xA9, 0x4C5680)`.
+#[sa_core::native(addr = 0x4C58A0, conv = thiscall, name = "time_store_dtor")]
+pub fn time_store_dtor_native(s: GPtr<u8>) {
+    sa_core::bindings::eh_vector_dtor(s.byte_add(4), 0x24, 0xA9, 0x4C5680);
+}
+
+/// The `lod_time` model-info store destructor body (0x4C58C0, thiscall; reached by `jmp` from its `__dtor_` stub):
+/// `eh_vector_destructor_iterator(this + 4, 0x28, 0x1, 0x4C56E0)`.
+#[sa_core::native(addr = 0x4C58C0, conv = thiscall, name = "lod_time_store_dtor")]
+pub fn lod_time_store_dtor_native(s: GPtr<u8>) {
+    sa_core::bindings::eh_vector_dtor(s.byte_add(4), 0x28, 0x1, 0x4C56E0);
+}
+
+/// The `weapon` model-info store destructor body (0x4C58E0, thiscall; reached by `jmp` from its `__dtor_` stub):
+/// `eh_vector_destructor_iterator(this + 4, 0x28, 0x33, 0x4C5790)`.
+#[sa_core::native(addr = 0x4C58E0, conv = thiscall, name = "weapon_store_dtor")]
+pub fn weapon_store_dtor_native(s: GPtr<u8>) {
+    sa_core::bindings::eh_vector_dtor(s.byte_add(4), 0x28, 0x33, 0x4C5790);
+}
+
+/// The `clump` model-info store destructor body (0x4C5900, thiscall; reached by `jmp` from its `__dtor_` stub):
+/// `eh_vector_destructor_iterator(this + 4, 0x24, 0x5C, 0x4C5750)`.
+#[sa_core::native(addr = 0x4C5900, conv = thiscall, name = "clump_store_dtor")]
+pub fn clump_store_dtor_native(s: GPtr<u8>) {
+    sa_core::bindings::eh_vector_dtor(s.byte_add(4), 0x24, 0x5C, 0x4C5750);
+}
+
+/// The `vehicle` model-info store destructor body (0x4C6370, thiscall; reached by `jmp` from its `__dtor_` stub):
+/// `eh_vector_destructor_iterator(this + 4, 0x308, 0xD4, 0x4C5920)`.
+#[sa_core::native(addr = 0x4C6370, conv = thiscall, name = "vehicle_store_dtor")]
+pub fn vehicle_store_dtor_native(s: GPtr<u8>) {
+    sa_core::bindings::eh_vector_dtor(s.byte_add(4), 0x308, 0xD4, 0x4C5920);
+}
+
+/// The `ped` model-info store destructor body (0x4C6390, thiscall; reached by `jmp` from its `__dtor_` stub):
+/// `eh_vector_destructor_iterator(this + 4, 0x44, 0x116, 0x4C62F0)`.
+#[sa_core::native(addr = 0x4C6390, conv = thiscall, name = "ped_store_dtor")]
+pub fn ped_store_dtor_native(s: GPtr<u8>) {
+    sa_core::bindings::eh_vector_dtor(s.byte_add(4), 0x44, 0x116, 0x4C62F0);
+}

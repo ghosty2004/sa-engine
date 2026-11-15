@@ -23,7 +23,7 @@ orig! {
     /// `CAEExplosionAudioEntity::CAEExplosionAudioEntity()` (0x5074B0, thiscall)
     pub fn explosion_audio_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x5074B0 => unported;
     /// the `CAEExplosionAudioEntity` destructor body (0x506B90, thiscall)
-    pub fn explosion_audio_dtor(this: GPtr<u8>) = thiscall 0x506B90 => unported;
+    pub fn explosion_audio_dtor(this: GPtr<u8>) = thiscall 0x506B90 => crate::statics::explosion_audio_dtor_native;
     /// `CFireManager::Constructor()` (0x539DA0)
     pub fn fire_manager_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x539DA0 => crate::fire::manager_constructor;
     /// `CFireManager::Destructor()` (0x538BB0)
@@ -152,3 +152,15 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_INIT_PELLET_TEST_COL,
     HOOK_DTOR_PELLET_TEST_COL,
 ];
+
+/// The `CAEExplosionAudioEntity` destructor body (0x506B90, thiscall; not in the catalogue: the tail of its `__dtor_`
+/// stub's extent, CAT-12, so a phase B native): vtable 0x859988, then the `CAESound` member's destructor (0x4EF660) on
+/// `this + 8`.
+#[sa_core::native(addr = 0x506B90, conv = thiscall, name = "CAEExplosionAudioEntity::Destructor")]
+pub fn explosion_audio_dtor_native(this: GPtr<u8>) {
+    this.cast::<u32>().write(0x859988);
+    sa_world::bindings::sound_dtor(this.byte_add(8));
+}
+
+/// Every `#[native]` of this module.
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_EXPLOSION_AUDIO_DTOR_NATIVE];

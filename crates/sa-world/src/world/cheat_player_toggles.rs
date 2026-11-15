@@ -27,7 +27,7 @@ use crate::bindings::give_delayed_weapon as ped_give_delayed_weapon;
 use sa_core::bindings::ped_give_weapon;
 orig! {
     /// `CCheat::HealthCheat()` (0x438D60)
-    fn health_cheat() = cdecl 0x438D60 => unported;
+    fn health_cheat() = cdecl 0x438D60 => crate::world::frontier_c::health_cheat;
     /// virtual slot +0xA4 (`CVehicle::BlowUpCar(CEntity*, bool)`)
     fn v_blow_up_car(v: GPtr<u8>, culprit: u32, in_cutscene: u32) = thiscall vslot 0xA4 => unported;
     /// `CCheat::EverybodyAttacksPlayerCheat()` (0x439C70)

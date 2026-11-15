@@ -317,7 +317,7 @@ pub mod call {
         /// CMemoryMgr::InitScratchPad (0x72F480)
         pub fn init_scratch_pad() = cdecl 0x72F480 => unported;
         /// CPool<CVehicleStructure>::New via CVehicleStructure::operator new (0x4C9570)
-        pub fn vehicle_structure_new(size: u32) -> GPtr<u8> = cdecl 0x4C9570 => unported;
+        pub fn vehicle_structure_new(size: u32) -> GPtr<u8> = cdecl 0x4C9570 => crate::modelinfo::vehicle::vehicle_structure_operator_new;
         /// CVehicleStructure::CVehicleStructure (0x4C8D60)
         pub fn vehicle_structure_ctor(s: GPtr<u8>) -> GPtr<u8> = thiscall 0x4C8D60 => super::vehicle_structure_ctor;
         /// CVehicleModelInfo::~CVehicleModelInfo (0x4C5920)
@@ -2305,3 +2305,11 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_LOAD_VEHICLE_UPGRADES,
     HOOK_LOAD_VEHICLE_COLOURS,
 ];
+
+/// `CVehicleStructure::operator new(size)` (0x4C9570, cdecl; not in the catalogue: the head of the pool `New` 0x4C94C0's
+/// extent, CAT-12, so a phase B native): `ECX = CVehicleModelInfo::CVehicleStructure::m_pInfoPool` ([0xB4E680]), then
+/// `New()` (0x4C94C0); the size is not read.
+#[sa_core::native(addr = 0x4C9570, conv = cdecl, name = "CVehicleStructure::operator new")]
+pub fn vehicle_structure_operator_new(_size: u32) -> GPtr<u8> {
+    vehicle_structure_pool_new(GPtr::<GPtr<u8>>::from_addr(0xB4E680).read())
+}

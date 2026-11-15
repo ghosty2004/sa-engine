@@ -75,7 +75,7 @@ orig! {
     fn bank_load_sfx_pak_lookup_file(this: u32) -> bool = thiscall 0x4DFC70 => bank_loader_load_sfx_pak_lookup_file;
     fn track_load_stream_pack_table(this: u32) -> bool = thiscall 0x4E0970 => mp3_track_loader_load_stream_pack_table;
     fn track_load_lookup_table(this: u32) -> bool = thiscall 0x4E09F0 => mp3_track_loader_load_track_lookup_table;
-    fn get_dvd_game_path() -> u32 = cdecl 0x747300 => get_dvd_game_path_port;
+    pub(crate) fn get_dvd_game_path() -> u32 = cdecl 0x747300 => get_dvd_game_path_port;
     fn hw_initialise(this: u32) -> bool = thiscall 0x4D9930 => audio_hardware_initialise;
     fn hw_init_listener(this: u32, ch: u32, rate: u32, bits: u32) -> bool = thiscall 0x4D9640 => audio_hardware_init_direct_sound_listener;
     fn hw_query_3d_sound_effects(this: u32) = thiscall 0x4D8490 => audio_hardware_query_3d_sound_effects;

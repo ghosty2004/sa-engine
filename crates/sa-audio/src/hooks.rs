@@ -47,6 +47,7 @@ pub const MODULES: &[&[HookReg]] = &[
     // FRONTIER-2
     crate::ped_hit::HOOKS,
     crate::explosion_audio::HOOKS,
+    crate::frontier_c::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

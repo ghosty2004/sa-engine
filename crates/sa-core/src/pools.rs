@@ -467,6 +467,57 @@ pub fn vehicle_pool_create_at_ref(pool: GPtr<u8>, handle: i32) {
     pool_create_at_ref_exact(pool, handle)
 }
 
+/// `COctTree`'s static node pool (`CPool<COctTree>` object at 0xBC12E4: objects +0, map +4, first free +0xC; 0x28-byte
+/// nodes).
+const OCT_TREE_POOL: usize = 0xBC12E4;
+
+/// `CPool<COctTree>::Delete(obj)` (0x5A73C0, thiscall, `ret 4`): the same shape as the quad-tree node pool's 0x552BC0
+/// (slot 0x28; map byte read, or-ed with 0x80, written; first free lowered).
+#[hook(addr = 0x5A73C0, conv = thiscall, name = "FUN_005a73c0", expect = "8B 54 24 04 53 2B 11",
+       this = "CPool<int32>", unverified = "frontier2-c4", route = "L2", hazards = "none")]
+pub fn oct_tree_pool_delete(p: PoolPtr<QuadTreeNodeSlot>, obj: GPtr<QuadTreeNodeSlot>) {
+    pool_delete_exact(p, obj)
+}
+
+orig! {
+    /// `COctTree::empty()` (0x5A6FC0, through its hook toggle)
+    fn oct_tree_empty_o(t: GPtr<u8>) = thiscall 0x5A6FC0 => oct_tree_empty;
+    /// `CPool<COctTree>::Delete` (0x5A73C0, through its hook toggle)
+    fn oct_tree_pool_delete_o(p: PoolPtr<QuadTreeNodeSlot>, obj: GPtr<QuadTreeNodeSlot>) = thiscall 0x5A73C0 => oct_tree_pool_delete;
+}
+
+/// `COctTree::empty()` (0x5A6FC0, thiscall; the 8-child loop count is stored in the protection fragment 0x401D84):
+/// +4, +0x1C, +0x20, +0x24 = 0; each child index (int16 at +0xA + 2k) that is not negative is reset to -1, and when its
+/// pool slot is in use the child node gets vtable 0x867170, is emptied (this function) and returned to the pool
+/// (0x5A73C0); then the leaf byte +8 = 0.
+#[hook(addr = 0x5A6FC0, conv = thiscall, name = "COctTree::empty", expect = "51 53 55 8B E9",
+       unverified = "frontier2-c4", route = "L2", hazards = "heap-writes")]
+pub fn oct_tree_empty(this: GPtr<u8>) {
+    use crate::field::{rd, wr};
+    wr::<u32>(this, 4, 0);
+    wr::<u32>(this, 0x1C, 0);
+    wr::<u32>(this, 0x20, 0);
+    wr::<u32>(this, 0x24, 0);
+    let pool = GPtr::<u8>::from_addr(OCT_TREE_POOL);
+    for k in 0..8isize {
+        let child = rd::<i16>(this, 0xA + 2 * k);
+        if child < 0 {
+            continue;
+        }
+        let i = isize::from(child);
+        if (rd::<GPtr<u8>>(pool, 4).byte_add(i).read() as i8) >= 0 {
+            let node = rd::<GPtr<u8>>(pool, 0).byte_add(i * 0x28);
+            if !node.is_null() {
+                wr::<u32>(node, 0, 0x867170);
+                oct_tree_empty_o(node);
+                oct_tree_pool_delete_o(pool.cast(), node.cast());
+            }
+        }
+        wr::<i16>(this, 0xA + 2 * k, -1);
+    }
+    wr::<u8>(this, 8, 0);
+}
+
 /// `CEntryInfoNode::operator new` (0x536DC0): `mov ecx, ms_pEntryInfoNodePool; jmp 0x536D10`.
 #[hook(addr = 0x536DC0, conv = cdecl, name = "CEntryInfoNode::operator new", expect = "8B 0D 8C 44 B7 00")]
 pub fn entry_info_node_operator_new(_size: u32) -> GPtr<EntryInfoNodeSlot> {
@@ -1134,6 +1185,8 @@ pub const HOOKS: &[crate::abi::HookReg] = &[
     HOOK_PATROL_ROUTE_OPERATOR_DELETE,
     HOOK_QUAD_TREE_NODE_OPERATOR_DELETE,
     HOOK_QUAD_TREE_NODE_POOL_DELETE,
+    HOOK_OCT_TREE_POOL_DELETE,
+    HOOK_OCT_TREE_EMPTY,
     HOOK_OBJECT_POOL_CREATE_AT_REF,
     HOOK_VEHICLE_POOL_CREATE_AT_REF,
     HOOK_ENTRY_INFO_NODE_OPERATOR_NEW,

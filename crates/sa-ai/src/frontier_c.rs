@@ -217,8 +217,89 @@ pub fn point_route_reverse(this: GPtr<u8>) {
     }
 }
 
+/// `CTaskComplexAvoidEntity::Constructor(int32 moveState, CEntity* entity, const CVector& pos)` (0x66AA20, thiscall,
+/// `ret 0xC`): the `CTaskComplex` part, vtable 0x86FF00, `+0x10 = moveState`, the entity at +0xC (registered when set),
+/// the position copied to +0x20 and +0x2C, +0x44 / +0x48 = 0, the bytes +0x4C / +0x4D = 0 and bit 0 of +0x50 cleared.
+/// Returns `this`.
+#[hook(addr = 0x66AA20, conv = thiscall, name = "FUN_0066aa20", expect = "6A FF 68 78 50 84 00",
+       unverified = "frontier2-c4", route = "L2", hazards = "heap-writes")]
+pub fn avoid_entity_ctor(this: GPtr<u8>, move_state: u32, entity: GPtr<u8>, pos: GPtr<u8>) -> GPtr<u8> {
+    task_complex_ctor(this.addr() as u32);
+    wr::<u32>(this, 0x10, move_state);
+    wr::<GPtr<u8>>(this, 0xC, entity);
+    wr::<u32>(this, 0, 0x86FF00);
+    for base in [0x20isize, 0x2C] {
+        for k in 0..3isize {
+            wr::<u32>(this, base + 4 * k, rd::<u32>(pos, 4 * k));
+        }
+    }
+    wr::<u32>(this, 0x44, 0);
+    wr::<u32>(this, 0x48, 0);
+    wr::<u8>(this, 0x4C, 0);
+    wr::<u8>(this, 0x4D, 0);
+    wr::<u8>(this, 0x50, rd::<u8>(this, 0x50) & 0xFE);
+    let e = rd::<GPtr<u8>>(this, 0xC);
+    if !e.is_null() {
+        entity_register_reference(e, this.byte_add(0xC));
+    }
+    this
+}
+
+/// `CTaskComplexFallAndStayDown::CreateSubTask(int32 taskType)` (0x678BD0, thiscall, `ret 4`): type 0xCF → a new 0x20-byte
+/// task (`CTask::operator new`; NULL stays NULL): the `CTaskSimple` part, vtable 0x870430, the fall parameters +0xC /
+/// +0x10 taken from this task's +0xC / +0x10 (read before the constructor), +0x18 / +0x1C = 99999999, +8 = 0, +0x14 = 0.
+/// Any other type → NULL.
+#[hook(addr = 0x678BD0, conv = thiscall, name = "FUN_00678bd0", expect = "64 A1 00 00 00 00 6A FF",
+       unverified = "frontier2-c4", route = "L2", hazards = "heap-writes")]
+pub fn fall_and_stay_down_create_sub_task(this: GPtr<u8>, task_type: i32) -> GPtr<u8> {
+    if task_type != 0xCF {
+        return GPtr::NULL;
+    }
+    let t = task_new(0x20);
+    if t.is_null() {
+        return GPtr::NULL;
+    }
+    let (b, a) = (rd::<u32>(this, 0x10), rd::<u32>(this, 0xC));
+    task_simple_ctor(t);
+    wr::<u32>(t, 0xC, a);
+    wr::<u32>(t, 0x18, 0x05F5_E0FF);
+    wr::<u32>(t, 0x1C, 0x05F5_E0FF);
+    wr::<u32>(t, 0x10, b);
+    wr::<u32>(t, 0, 0x870430);
+    wr::<u8>(t, 8, 0);
+    wr::<u32>(t, 0x14, 0);
+    t
+}
+
+/// The extinguish-fire task's fire search (0x659990, thiscall, `ret 4`; unnamed): `CFireManager::FindNearestFire(&pos,
+/// false, true)` (gFireManager 0xB71F80) from the ped's position; a fire whose squared distance (x87: `dz² + dx²` then
+/// `+ dy²`) is below 100 is returned, else NULL (NaN → NULL).
+#[hook(addr = 0x659990, conv = thiscall, name = "FUN_00659990", expect = "56 8B 74 24 08 8B 46 14",
+       unverified = "frontier2-c4", route = "L2", hazards = "none")]
+pub fn extinguish_fire_find_fire(_this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let fire = find_nearest_fire(GPtr::from_addr(0xB71F80), sa_world::world::common::entity_pos(ped), 0, 1);
+    if fire.is_null() {
+        return GPtr::NULL;
+    }
+    let p = sa_world::world::common::entity_pos(ped);
+    let d = |k: isize| X87::from_f32(rd::<f32>(p, 4 * k)).fsub_m(rd::<f32>(fire, 4 + 4 * k));
+    let (dx, dy, dz) = (d(0), d(1), d(2));
+    let sum = dz.fmul(dz).fadd(dx.fmul(dx)).fadd(dy.fmul(dy));
+    if sum.fcom(X87::from_f32(100.0)).test_parity(5) {
+        return GPtr::NULL;
+    }
+    fire
+}
+
+use sa_math::x87::X87;
+use crate::bindings::task_new;
+use sa_world::bindings::fire_find_nearest_fire as find_nearest_fire;
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_AVOID_ENTITY_CTOR,
+    HOOK_FALL_AND_STAY_DOWN_CREATE_SUB_TASK,
+    HOOK_EXTINGUISH_FIRE_FIND_FIRE,
     HOOK_GO_PICK_UP_ENTITY_CTOR,
     HOOK_REACT_TO_ATTACK_CTOR,
     HOOK_POINT_ROUTE_REVERSE,

@@ -190,7 +190,7 @@ orig! {
     /// the constructor of the 0x977BE8 object (0x4541E0, thiscall, returns `this`)
     pub fn ctor_977be8(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4541E0 => unported;
     /// the destructor body `__dtor_g_977be8` jumps to (0x454200, thiscall)
-    pub fn dtor_977be8_body(this: GPtr<u8>) = thiscall 0x454200 => unported;
+    pub fn dtor_977be8_body(this: GPtr<u8>) = thiscall 0x454200 => crate::pathfind::dtor_977be8_body_native;
     /// `CCollision::DistToLineSqr(const CVector* start, const CVector* end, const CVector* point)` (0x412850)
     pub fn dist_to_line_sqr(a: GPtr<f32>, b: GPtr<f32>, p: GPtr<f32>) -> f64 = cdecl 0x412850 => unported;
 
@@ -594,6 +594,13 @@ pub fn init_g_977af0() {
 pub fn init_g_977be8() {
     ctor_977be8(g(0x977BE8));
     atexit(0x856150);
+}
+
+/// The destructor body of the 0x977BE8 object (0x454200, thiscall; not in the catalogue: the tail of `__dtor_g_977be8`'s
+/// extent, CAT-12, so a phase B native): `eh_vector_destructor_iterator(this + 8, 0x34, 0x32, 0x453FB0)`.
+#[sa_core::native(addr = 0x454200, conv = thiscall, name = "dtor_977be8_body")]
+pub fn dtor_977be8_body_native(this: GPtr<u8>) {
+    sa_core::bindings::eh_vector_dtor(this.byte_add(8), 0x34, 0x32, 0x453FB0);
 }
 
 /// `__dtor_g_977be8` (0x856150): `jmp 0x454200` with ECX = 0x977BE8.

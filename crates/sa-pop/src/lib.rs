@@ -20,6 +20,7 @@ pub use sa_core::hook;
 
 pub mod common;
 pub mod hooks;
+pub mod frontier_c_natives;
 
 pub mod carctrl;
 pub mod cargen;
