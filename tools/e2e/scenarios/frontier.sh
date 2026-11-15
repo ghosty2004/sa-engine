@@ -2,7 +2,7 @@
 # FRONTIER-1 scenarios: native sa-game runs (deterministic, --fixed-step 40, offscreen) that reach the blockers the
 # user hit. Each must end with an empty blocker list in OUT/report.md and no crash.
 #
-#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane OUTDIR [FRAMES]
+#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar OUTDIR [FRAMES]
 #
 # pausemenu (400)  Esc, down x3, Enter (pause-menu item 4: Stats), down, Enter, Enter: the Stats pages draw
 #                  (was a SIGSEGV at iteration ~171: CStats::GetStatValue's X87 result dispatched as cdecl)
@@ -40,6 +40,16 @@
 #                  (FRONTIER-2 turn 4 lane B)
 # plane (1200)    on foot at Grove Street, the stunt plane cheat URKQSRK, CJ gets in and throttles up along the street:
 #                  CPlane::ProcessControl / ProcessFlyingCarStuff / PreRender, CVehicle::FlyingControl
+# roadblock-script (1000) on foot at Grove Street; a script road block (aScriptRoadBlocks[0], 0xA43AB8) poked across the
+#                  road 35 m west of CJ (SA_GAME_POKE), as SET_ROAD_BLOCK-style script state: GenerateRoadBlocks creates it
+#                  (CRoadBlocks::CreateRoadBlockBetween2Points 0x4619C0, FRONTIER-2 turn 5 lane A)
+# roadblock-wanted (2000) the roadblocks run's car with four stars taken to Idlewood (five road block nodes within 90 m)
+#                  and the road block chance (CWanted +0x1C) poked to 127: every node coming in makes a block
+#                  (GenerateRoadBlocks' wanted path)
+# gangwar  (2000)  on foot in Ballas-held Idlewood; gang wars switched on (0x96AB90) and the provocation timer (0x96AB5C)
+#                  poked above 2.1: CGangWars::Update starts an offensive war (StartOffensiveGangWar 0x446050, the
+#                  attack waves 0x444810)
+# WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-a5-counts.gdb --args" counts the road block / gang war calls.
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-counts.gdb --args" counts the FRONTIER-2 ports' calls
 # (frontier2-3-counts.gdb: those of part 2).
 # Env: SA_ROOT (checkout holding wine/gta-sa; default ~/sa-engine), SA_GAME (binary; default this checkout's
@@ -77,6 +87,25 @@ roadblocks)
     export SA_GAME_TELEPORT="60:2505.0:-1666.4:13.4"
     keys="f:100:103"; i=150; for c in o s r b l h h o s r b l h h; do keys="$keys,$c:$i:$((i + 2))"; i=$((i + 6)); done
     export SA_GAME_KEYS="$keys,w:300:900,a:600:640,w:1000:1600,d:1200:1240"
+    run "${3:-2000}" --start-in-world ;;
+roadblock-script)
+    export SA_GAME_SCRIPT_SKIP=1 SA_GAME_TELEPORT="60:2505.0:-1666.4:13.4"
+    # aScriptRoadBlocks[0] (0xA43AB8): A (x, y, z), B (x, y, z), active +0x18, safe to create +0x19, gang +0x1A
+    export SA_GAME_POKE="200:0xA43AB8:2470.0;200:0xA43ABC:-1655.0;200:0xA43AC0:13.4;200:0xA43AC4:2470.0;200:0xA43AC8:-1677.0;200:0xA43ACC:13.4;200:0xA43AD0:0x101"
+    run "${3:-1000}" --start-in-world ;;
+roadblock-wanted)
+    # the roadblocks run's car (four stars), taken at 400 to Idlewood's east-west road (2060, -1752.3, heading west):
+    # five road block nodes (ROADBLOX.DAT; 1981.5 / 2125.75 / 2058.4 / 2051.5, -1752 .. -1812) come within 90 m at once
+    export SA_GAME_TELEPORT="60:2505.0:-1666.4:13.4;400:2060.0:-1752.3:13.5:1.5708"
+    keys="f:100:103"; i=150; for c in o s r b l h h o s r b l h h; do keys="$keys,$c:$i:$((i + 2))"; i=$((i + 6)); done
+    export SA_GAME_KEYS="$keys,w:300:380,w:420:900"
+    # the chance (CWanted +0x1C) is recomputed whenever the chaos level changes: poked every 10 iterations
+    p=; i=240; while [ $i -le "${3:-2000}" ]; do p="$p${p:+;}$i:[0xB7CD9C]+0x1C:127:2"; i=$((i + 10)); done
+    export SA_GAME_POKE="$p"
+    run "${3:-2000}" --start-in-world ;;
+gangwar)
+    export SA_GAME_TELEPORT="60:2070.0:-1730.0:13.5"
+    export SA_GAME_POKE="200:0x96AB90:1:1;200:0x96AB5C:3.0"
     run "${3:-2000}" --start-in-world ;;
 melee)
     # the PEDHIT foot run's sprint into the Grove Street peds (they are next to CJ at ~905), then punches every 25
@@ -133,6 +162,6 @@ plane)
     export SA_GAME_KEYS="$keys,f:260:263,w:400:1150,a:800:840"
     run "${3:-1200}" --start-in-world ;;
 *)
-    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane OUTDIR [FRAMES]" >&2
+    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar OUTDIR [FRAMES]" >&2
     exit 2 ;;
 esac

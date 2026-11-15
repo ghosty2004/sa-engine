@@ -398,6 +398,7 @@ impl Session {
         ITERATION.store(n, std::sync::atomic::Ordering::Relaxed);
         teleport_player(n);
         teleport_in_front_of_driven_car(n);
+        poke_memory(n);
         let state = winmain::game_state();
         self.iter_state = state;
         let frame = winmain::frame_step();
@@ -788,6 +789,51 @@ fn teleport_player(n: u32) {
             }
         }
         println!("teleport: player to ({}, {}, {})", f[1], f[2], f[3]);
+    }
+}
+
+/// `SA_GAME_POKE=ITER:ADDR:VALUE[:SIZE][;...]` (exploration only, scenario set-up): at main-loop iteration ITER,
+/// before the frame, VALUE is written to the game address ADDR (hex with `0x`, or `[0xP]+0xOFF`: the dword at P plus
+/// OFF, skipped while that pointer is null). VALUE is hex with `0x`, an `f32` when
+/// it contains a `.`, else a signed decimal; SIZE is 1, 2 or 4 bytes (default 4). Each write is printed.
+fn poke_memory(n: u32) {
+    use sa_core::mem::GPtr;
+    let Ok(v) = crate::env::var("SA_GAME_POKE") else { return };
+    let num = |s: &str| -> Option<u32> {
+        let s = s.trim();
+        if let Some(h) = s.strip_prefix("0x") {
+            u32::from_str_radix(h, 16).ok()
+        } else if s.contains('.') {
+            s.parse::<f32>().ok().map(f32::to_bits)
+        } else {
+            s.parse::<i32>().ok().map(|i| i as u32)
+        }
+    };
+    for e in v.split(';') {
+        let f: Vec<&str> = e.split(':').collect();
+        let (Some(it), Some(addr), Some(val)) = (
+            f.first().and_then(|s| s.trim().parse::<u32>().ok()),
+            f.get(1).and_then(|s| match s.trim().strip_prefix('[').and_then(|r| r.split_once(']')) {
+                Some((p, off)) => {
+                    let base = GPtr::<u32>::from_addr(num(p)? as usize).read();
+                    let off = off.trim().strip_prefix('+').map_or(Some(0), num)?;
+                    Some(if base < 0x1000 { 0 } else { base.wrapping_add(off) })
+                }
+                None => num(s),
+            }),
+            f.get(2).and_then(|s| num(s)),
+        ) else {
+            continue;
+        };
+        if it != n || addr < 0x1000 {
+            continue;
+        }
+        match f.get(3).map(|s| s.trim()) {
+            Some("1") => GPtr::<u8>::from_addr(addr as usize).write(val as u8),
+            Some("2") => GPtr::<u16>::from_addr(addr as usize).write(val as u16),
+            _ => GPtr::<u32>::from_addr(addr as usize).write(val),
+        }
+        println!("poke {n}: [{addr:#x}] = {val:#x}");
     }
 }
 
