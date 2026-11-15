@@ -1614,6 +1614,26 @@ orig! {
 }
 
 orig! {
+    /// `COctTree` (0x5A6DB0)
+    pub fn oct_tree_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x5A6DB0 => unported;
+}
+
+orig! {
+    /// `FUN_005a7350` (0x5A7350)
+    pub fn oct_tree_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x5A7350 => unported;
+}
+
+orig! {
+    /// `COctTree::~COctTree` (0x5A7490)
+    pub fn oct_tree_deleting_dtor(this: u32, a0: u32) -> u32 = thiscall 0x5A7490 => crate::generated::generated_dtors::g_coct_tree_coct_tree_5a7490;
+}
+
+orig! {
+    /// `COctTree::RemoveChildren` (0x5A74F0)
+    pub fn oct_tree_remove_children(t: GPtr<u8>) = thiscall 0x5A74F0 => unported;
+}
+
+orig! {
     /// `CClothes::Init` (0x5A80D0)
     pub fn clothes_init() = cdecl 0x5A80D0 => unported;
 }

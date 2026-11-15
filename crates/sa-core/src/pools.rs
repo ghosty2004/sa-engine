@@ -1251,6 +1251,69 @@ pub fn oct_tree_fill_palette(this: GPtr<u8>, palette: GPtr<u8>) {
     }
 }
 
+orig! {
+    /// `COctTree::InsertTree(uint8, uint8, uint8)` through the node's vtable (slot 0)
+    fn oct_tree_insert_tree_v(t: GPtr<u8>, r: u32, g: u32, b: u32) -> u8 = thiscall vslot 0x0 => unported;
+}
+
+/// `COctTree::ms_bFailed` (0xBC12DC): set when the node pool runs out
+const OCT_TREE_FAILED: usize = 0xBC12DC;
+
+/// `COctTree::InsertTree(uint8 r, uint8 g, uint8 b)` (0x5A75B0, thiscall, `ret 0xC`, bool in AL; FRONTIER-2 lane C turn
+/// 5). The child index `((g << l) >> 6 & 2) + ((b << l) >> 7 & 1) + ((r << l) >> 5 & 4)` (arithmetic shifts, `l =
+/// ms_level`), then `ms_level += 1`, the colour sums +0x1C / +0x20 / +0x24 and the count +4 grow. At level 8 or in a
+/// leaf (+8 == 1): `ms_level = 0`, +8 = 1, `RemoveChildren()`, result `count == 1`. Otherwise the child (int16 at +0xA
+/// + 2i): none yet: a pool node (`CPool::New` 0x5A7350, then the constructor 0x5A6DB0), none free -> `ms_bFailed = 1`,
+/// false; its index `(node - objects) / 0x28` is stored; a free pool slot gives NULL. The child inserts through its
+/// vtable (slot 0); with `ms_bFailed` set and a child count below 2 the child is deleted (0x5A7490 with 1), its index
+/// -1, false; else the child's result.
+#[hook(addr = 0x5A75B0, conv = thiscall, name = "COctTree::InsertTree", expect = "0F B6 54 24 08 0F B6 44 24 04",
+       unverified = "frontier2-c11", route = "L2", hazards = "heap-writes")]
+pub fn oct_tree_insert_tree(this: GPtr<u8>, r: u32, g: u32, b: u32) -> u8 {
+    use crate::field::{g as ga, rd, wr};
+    let (r, g, b) = (r & 0xFF, g & 0xFF, b & 0xFF);
+    let l = ga::<u32>(OCT_TREE_LEVEL).read();
+    let sh = |v: u32, s: u32, m: i32| ((v as i32).wrapping_shl(l) >> s) & m;
+    let i = (sh(b, 7, 1) + sh(g, 6, 2) + sh(r, 5, 4)) as isize;
+    ga::<u32>(OCT_TREE_LEVEL).write(l.wrapping_add(1));
+    wr::<u32>(this, 0x1C, rd::<u32>(this, 0x1C).wrapping_add(r));
+    wr::<u32>(this, 0x20, rd::<u32>(this, 0x20).wrapping_add(g));
+    wr::<u32>(this, 0x24, rd::<u32>(this, 0x24).wrapping_add(b));
+    wr::<u32>(this, 4, rd::<u32>(this, 4).wrapping_add(1));
+    if ga::<u32>(OCT_TREE_LEVEL).read() == 8 || rd::<u8>(this, 8) == 1 {
+        ga::<u32>(OCT_TREE_LEVEL).write(0);
+        wr::<u8>(this, 8, 1);
+        crate::bindings::oct_tree_remove_children(this);
+        return u8::from(rd::<u32>(this, 4) == 1);
+    }
+    let pool = GPtr::<u8>::from_addr(OCT_TREE_POOL);
+    let idx = rd::<i16>(this, 0xA + 2 * i);
+    let child = if idx < 0 {
+        let mut n = crate::bindings::oct_tree_pool_new(pool);
+        if !n.is_null() {
+            n = crate::bindings::oct_tree_ctor(n);
+        }
+        if n.is_null() {
+            ga::<u8>(OCT_TREE_FAILED).write(1);
+            return 0;
+        }
+        let off = (n.addr() as i32).wrapping_sub(rd::<u32>(pool, 0) as i32);
+        wr::<i16>(this, 0xA + 2 * i, (off / 0x28) as i16);
+        n
+    } else if (rd::<GPtr<u8>>(pool, 4).byte_add(isize::from(idx)).read() as i8) < 0 {
+        GPtr::NULL
+    } else {
+        rd::<GPtr<u8>>(pool, 0).byte_add(isize::from(idx) * 0x28)
+    };
+    let res = oct_tree_insert_tree_v(child, r, g, b);
+    if ga::<u8>(OCT_TREE_FAILED).read() != 0 && rd::<i32>(child, 4) < 2 {
+        crate::bindings::oct_tree_deleting_dtor(child.addr() as u32, 1);
+        wr::<i16>(this, 0xA + 2 * i, -1);
+        return 0;
+    }
+    res
+}
+
 /// This module's `#[native]`s (listed in [`crate::hooks::NATIVES`]).
 pub const NATIVES: &[crate::abi::NativeReg] = &[NATIVE_OCT_TREE_BASE_DTOR];
 
@@ -1275,6 +1338,7 @@ pub const HOOKS: &[crate::abi::HookReg] = &[
     HOOK_PATROL_ROUTE_OPERATOR_NEW,
     HOOK_OCT_TREE_DTOR,
     HOOK_OCT_TREE_FILL_PALETTE,
+    HOOK_OCT_TREE_INSERT_TREE,
     HOOK_OBJECT_POOL_CREATE_AT_REF,
     HOOK_VEHICLE_POOL_CREATE_AT_REF,
     HOOK_ENTRY_INFO_NODE_OPERATOR_NEW,
