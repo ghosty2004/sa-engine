@@ -7,7 +7,10 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
-use crate::common::{b, g, model_info, rd, wr, x};
+use crate::bike2::StackMatrix;
+use crate::common::{b, entity_get_col_model, g, model_info, rd, wr, x};
+use sa_core::bindings::matrix_attach;
+use sa_world::bindings::{col_sphere_set, matrix_dtor};
 
 /// `CAutomobile*` (thiscall `this`).
 type Car = GPtr<u8>;
@@ -322,6 +325,52 @@ pub fn quad_get_ride_anim_data(q: GPtr<u8>) -> GPtr<u8> {
     q.byte_add(0x98C)
 }
 
+/// `CAutomobile::SetUpWheelColModel(CColModel*)` (0x6A3060): the tractor (0x213), combine (0x214) and kart (0x23B) have
+/// none (false); otherwise the wheel model takes the car's bounding sphere and box and one rubber sphere (surface 0x43,
+/// lighting 0xFF) per wheel frame, radius half the model info's front (+0x40) / rear (+0x44) wheel size, centred on the
+/// frame's position: LF +0x65C piece 0xD, LB +0x664 0xF, RF +0x650 0xE, RB +0x658 0x10, then, when both middle frames
+/// exist, LM +0x660 0xF and RM +0x654 0x10 (6 spheres, else 4). `GetColModel` runs before the model test, the col data
+/// pointer is read before it, the sphere is copied before the box (as the bytes do).
+#[hook(addr = 0x6A3060, conv = thiscall, name = "CAutomobile::SetUpWheelColModel", expect = "6A FF 68 E8 7E 84 00",
+       this = "CAutomobile", unverified = "frontier2-6", route = "L2", hazards = "heap-writes",
+       note = "pistol shot at a car (CWorld::ProcessLineOfSight with car tyres)")]
+pub fn set_up_wheel_col_model(car: Car, wheel_col: GPtr<u8>) -> u8 {
+    let mi = model_info(i32::from(rd::<i16>(car, 0x22)));
+    let cm = entity_get_col_model(car);
+    let model = rd::<u16>(car, 0x22);
+    let cd = rd::<GPtr<u8>>(wheel_col, 0x2C);
+    if model == 0x213 || model == 0x214 || model == 0x23B {
+        return 0;
+    }
+    for k in 0..4 {
+        wr::<u32>(wheel_col, 0x18 + 4 * k, rd::<u32>(cm, 0x18 + 4 * k));
+    }
+    for k in 0..6 {
+        wr::<u32>(wheel_col, 4 * k, rd::<u32>(cm, 4 * k));
+    }
+    let mut mat = StackMatrix::new();
+    let mp = mat.ptr();
+    let spheres = rd::<GPtr<u8>>(cd, 8);
+    let wheel = |i: isize, node: isize, size: isize, piece: u32| {
+        matrix_attach(mp, rd::<GPtr<u8>>(car, node).byte_add(0x10), 0);
+        let r = x(rd::<f32>(mi, size)).fmul_m(g::<f32>(0x858B8C).read()).to_f32();
+        col_sphere_set(spheres.byte_add(0x14 * i), r.to_bits(), mp.byte_add(0x30).cast(), 0x43, piece, 0xFF);
+    };
+    wheel(0, 0x65C, 0x40, 0xD);
+    wheel(1, 0x664, 0x44, 0xF);
+    wheel(2, 0x650, 0x40, 0xE);
+    wheel(3, 0x658, 0x44, 0x10);
+    if !rd::<GPtr<u8>>(car, 0x660).is_null() && !rd::<GPtr<u8>>(car, 0x654).is_null() {
+        wheel(4, 0x660, 0x44, 0xF);
+        wheel(5, 0x654, 0x44, 0x10);
+        wr::<u16>(cd, 0, 6);
+    } else {
+        wr::<u16>(cd, 0, 4);
+    }
+    matrix_dtor(mp);
+    1
+}
+
 /// `CMonsterTruck::SetUpWheelColModel(CColModel*)` (0x6C7D20): false.
 #[hook(addr = 0x6C7D20, conv = thiscall, name = "CMonsterTruck::SetUpWheelColModel", expect = "32 C0 C2 04 00", this = "CMonsterTruck")]
 pub fn monster_set_up_wheel_col_model(_m: GPtr<u8>, _col: u32) -> u8 {
@@ -335,6 +384,7 @@ pub fn monster_burst_tyre(_m: GPtr<u8>, _tyre: u32, _effects: u32) -> u8 {
 }
 
 pub const HOOKS: &[HookReg] = &[
+    HOOK_SET_UP_WHEEL_COL_MODEL,
     HOOK_CLEAR_HELI_ORIENTATION,
     HOOK_SET_HELI_ORIENTATION,
     HOOK_IS_ROOM_FOR_PED_TO_LEAVE_CAR,

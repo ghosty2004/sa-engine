@@ -1465,9 +1465,8 @@ pub fn build_cache_of_camera_collision(spa: GPtr<u8>, spb: GPtr<u8>) -> u8 {
     result
 }
 
+use crate::bindings::check_camera_collision_buildings_call;
 orig! {
-    fn check_camera_collision_buildings_call(x: i32, y: i32, bb: GPtr<u8>, sps: GPtr<u8>, spa: GPtr<u8>, spb: GPtr<u8>) -> u8
-        = cdecl 0x41A820 => check_camera_collision_buildings;
     fn check_camera_collision_vehicles_call(x: i32, y: i32, bb: GPtr<u8>, sps: GPtr<u8>, spa: GPtr<u8>, spb: GPtr<u8>,
         vel: GPtr<u8>) -> u8 = cdecl 0x41A990 => check_camera_collision_vehicles;
     fn check_camera_collision_objects_call(x: i32, y: i32, bb: GPtr<u8>, sps: GPtr<u8>, spa: GPtr<u8>, spb: GPtr<u8>) -> u8

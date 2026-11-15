@@ -279,6 +279,11 @@ orig! {
 }
 
 orig! {
+    /// `CCollision::CheckCameraCollisionBuildings` (0x41A820)
+    pub fn check_camera_collision_buildings_call(x: i32, y: i32, bb: GPtr<u8>, sps: GPtr<u8>, spa: GPtr<u8>, spb: GPtr<u8>) -> u8 = cdecl 0x41A820 => crate::collision::mvpe_coll1::check_camera_collision_buildings;
+}
+
+orig! {
     /// `CPlayerPed::GetWantedLevel` (0x41BE60)
     pub fn player_get_wanted_level(p: GPtr<u8>) -> i32 = thiscall 0x41BE60 => unported;
 }

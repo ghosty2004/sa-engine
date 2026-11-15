@@ -94,6 +94,52 @@ pub fn ik_point_arm_create_ik_chain(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
     (c.addr() as u32 & 0xFFFF_FF00) | 1
 }
 
+/// `CTaskSimpleIKLookAt::Clone()` (0x633F00): a new task (0x5C) built from this one's purpose "", entity +0x28, time
+/// +0x8, bone +0x2C, offset +0x30, use-torso byte +0x58, speed +0x3C, blend time +0xC and priority (signed byte +0x59);
+/// when this task has a chain (+0x10) the clone takes its +0x44..+0x50 dwords and part (+0x16 word). A failed
+/// allocation with a chain writes through null, as the original does.
+#[hook(addr = 0x633F00, conv = thiscall, name = "CTaskSimpleIKLookAt::Clone", expect = "6A FF 68 FB 07 84 00",
+       unverified = "frontier2-6", route = "L2", hazards = "heap-writes")]
+pub fn ik_look_at_clone(this: GPtr<u8>) -> GPtr<u8> {
+    let t = task_new(0x5C);
+    let t = if t.is_null() {
+        GPtr::NULL
+    } else {
+        look_at_task_ctor(t, STR_EMPTY as u32, rd::<u32>(this, 0x28), rd::<u32>(this, 8), rd::<u32>(this, 0x2C),
+            rd::<u32>(this, 0x30), rd::<u32>(this, 0x34), rd::<u32>(this, 0x38), u32::from(rd::<u8>(this, 0x58)),
+            rd::<u32>(this, 0x3C), rd::<u32>(this, 0xC), rd::<i8>(this, 0x59) as i32 as u32)
+    };
+    if !rd::<GPtr<u8>>(this, 0x10).is_null() {
+        for k in 0..4 {
+            wr::<u32>(t, 0x44 + 4 * k, rd::<u32>(this, 0x44 + 4 * k));
+        }
+        wr::<u16>(t, 0x16, rd::<u16>(this, 0x16));
+    }
+    t
+}
+
+/// `CTaskSimpleIKPointArm::Clone()` (0x634250): a new task (0x5C) built from this one's purpose "", arm +0x58, entity
+/// +0x28, bone +0x2C, offset +0x30, speed +0x3C and blend time +0xC; with a chain (+0x10) the clone takes the
+/// +0x44..+0x50 dwords (not the part word, unlike the look-at clone).
+#[hook(addr = 0x634250, conv = thiscall, name = "CTaskSimpleIKPointArm::Clone", expect = "6A FF 68 3B 08 84 00",
+       unverified = "frontier2-6", route = "L2", hazards = "heap-writes")]
+pub fn ik_point_arm_clone(this: GPtr<u8>) -> GPtr<u8> {
+    let t = task_new(0x5C);
+    let t = if t.is_null() {
+        GPtr::NULL
+    } else {
+        point_arm_task_ctor(t, STR_EMPTY as u32, rd::<u32>(this, 0x58), rd::<u32>(this, 0x28), rd::<u32>(this, 0x2C),
+            rd::<u32>(this, 0x30), rd::<u32>(this, 0x34), rd::<u32>(this, 0x38), rd::<u32>(this, 0x3C), rd::<u32>(this, 0xC))
+    };
+    if !rd::<GPtr<u8>>(this, 0x10).is_null() {
+        for k in 0..4 {
+            wr::<u32>(t, 0x44 + 4 * k, rd::<u32>(this, 0x44 + 4 * k));
+        }
+    }
+    t
+}
+
+use sa_anim::ik::{look_at_task_ctor, point_arm_task_ctor};
 use crate::bindings::ik_chain_update_target;
 use crate::bindings::ik_manager_remove_ik_chain;
 use sa_core::bindings::ik_chain_task_blend_out;
@@ -178,4 +224,4 @@ pub fn ik_chain_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     0
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_IK_LOOK_AT_CREATE_IK_CHAIN, HOOK_IK_CHAIN_PROCESS_PED, HOOK_IK_POINT_ARM_CREATE_IK_CHAIN];
+pub const HOOKS: &[HookReg] = &[HOOK_IK_LOOK_AT_CREATE_IK_CHAIN, HOOK_IK_CHAIN_PROCESS_PED, HOOK_IK_POINT_ARM_CREATE_IK_CHAIN, HOOK_IK_LOOK_AT_CLONE, HOOK_IK_POINT_ARM_CLONE];

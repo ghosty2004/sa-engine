@@ -430,6 +430,15 @@ pub fn task_simple_ik_look_at_dtor(this: GPtr<u8>) {
     task_simple_ik_chain_dtor(this);
 }
 
+/// `CTaskSimpleIKPointArm::~CTaskSimpleIKPointArm` (0x634240): vtable 0x86E3A4, then
+/// `CTaskSimpleIKChain::~CTaskSimpleIKChain` (0x633A90, tail jump). User-hit in free roam (FRONTIER-2 part 3).
+#[hook(addr = 0x634240, conv = thiscall, name = "CTaskSimpleIKPointArm::Destructor", expect = "C7 01 A4 E3 86 00",
+       unverified = "frontier2-6", route = "L2", hazards = "heap-writes")]
+pub fn task_simple_ik_point_arm_dtor(this: GPtr<u8>) {
+    wr::<u32>(this, 0, 0x86E3A4);
+    task_simple_ik_chain_dtor(this);
+}
+
 /// `CPedGroupDefaultTaskAllocatorFollowAnyMeans::ctor` (0x5F6450): stores vtable 0x86C75C. Returns this.
 #[hook(addr = 0x5F6450, conv = thiscall, name = "FUN_005f6450", expect = "8B C1 C7 00 5C C7 86 00",
        route = "split", hazards = "none",
@@ -676,6 +685,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_TASK_SIMPLE_GO_TO_DTOR,
     HOOK_TASK_COMPLEX_CAR_DRIVE_WANDER_DTOR,
     HOOK_TASK_SIMPLE_IK_LOOK_AT_DTOR,
+    HOOK_TASK_SIMPLE_IK_POINT_ARM_DTOR,
     HOOK_ALLOCATOR_FOLLOW_ANY_MEANS_CTOR,
     HOOK_ALLOCATOR_FOLLOW_LIMITED_CTOR,
     HOOK_ALLOCATOR_STAND_STILL_CTOR,

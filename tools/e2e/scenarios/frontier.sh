@@ -2,7 +2,7 @@
 # FRONTIER-1 scenarios: native sa-game runs (deterministic, --fixed-step 40, offscreen) that reach the blockers the
 # user hit. Each must end with an empty blocker list in OUT/report.md and no crash.
 #
-#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|melee|sniper OUTDIR [FRAMES]
+#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|melee|sniper|shootcar OUTDIR [FRAMES]
 #
 # pausemenu (400)  Esc, down x3, Enter (pause-menu item 4: Stats), down, Enter, Enter: the Stats pages draw
 #                  (was a SIGSEGV at iteration ~171: CStats::GetStatValue's X87 result dispatched as cdecl)
@@ -20,6 +20,9 @@
 # sniper   (1200)  on foot at Grove Street: the weapon cheat KJKSZPJ, six `e` presses (next weapon) to the sniper rifle, then
 #                  the right mouse button held with mouse motion: CCam::Process_M16_1stPerson 0x5105C0 (mode 7, the zoom, the
 #                  look input, the line-of-sight near clip)
+# shootcar (1200) the Greenwood left on the road at the level crossing, CJ 7 m south of it facing it, the weapon cheat
+#                  KJKSZPJ, two `e` presses (the pistol slot), aiming (right button: camera mode 0x35, the shot line includes
+#                  car tyres) and firing (left button) at it: the line of sight takes the car's tyres (CAutomobile::SetUpWheelColModel 0x6A3060, FRONTIER-2 part 3)
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-counts.gdb --args" counts the FRONTIER-2 ports' calls
 # (frontier2-3-counts.gdb: those of part 2).
 # Env: SA_ROOT (checkout holding wine/gta-sa; default ~/sa-engine), SA_GAME (binary; default this checkout's
@@ -68,7 +71,16 @@ sniper)
     export SA_GAME_RMB="${SA_GAME_RMB:-400:1150}"
     export SA_GAME_MOUSE="10:0:500:600,0:-6:650:700,-12:4:750:850"
     run "${3:-1200}" --start-in-world ;;
+shootcar)
+    # the crossing scenario's Greenwood, taken to the level crossing road (2200.6, -1850) and left there; CJ then stands
+    # 7 m south of it facing north, takes the weapon cheat KJKSZPJ, two `e` presses (the pistol slot), aims and fires
+    export SA_GAME_TELEPORT="60:2505.0:-1666.4:13.4;300:2200.6:-1850.0:13.6:3.1416;450:2200.6:-1857.0:13.6:0.0"
+    keys="f:100:103,f:340:343"; i=470; for c in k j k s z p j; do keys="$keys,$c:$i:$((i + 2))"; i=$((i + 6)); done
+    keys="$keys,e:540:542,e:560:562"
+    export SA_GAME_KEYS="$keys"
+    export SA_GAME_RMB="${SA_GAME_RMB:-600:1150}" SA_GAME_LMB="${SA_GAME_LMB:-640:1150}"
+    run "${3:-1200}" --start-in-world ;;
 *)
-    echo "usage: $0 pausemenu|solicit|crossing|melee|sniper OUTDIR [FRAMES]" >&2
+    echo "usage: $0 pausemenu|solicit|crossing|melee|sniper|shootcar OUTDIR [FRAMES]" >&2
     exit 2 ;;
 esac

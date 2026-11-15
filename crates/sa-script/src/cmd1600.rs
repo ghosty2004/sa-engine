@@ -52,6 +52,7 @@ use sa_core::bindings::create_fx_system_mat;
 use sa_core::bindings::fx_create_mat_from_vec as create_mat_from_vec;
 use sa_world::bindings::attach_entity_to_entity;
 use sa_world::bindings::dettach_entity_from_entity;
+use sa_ai::bindings::throw_control_ctor;
 orig! {
     /// `CEntity` virtual slot 7 (+0x1C, `CreateRwObject`)
     fn entity_create_rw_object(e: GPtr<u8>) = thiscall vslot 0x1C => unported;
@@ -131,10 +132,6 @@ orig! {
 use crate::bindings::task_trigger_look_at_ctor as trigger_look_at_ctor;
 use sa_weapon::bindings::get_weapon_info;
 use sa_world::bindings::ik_look_at;
-orig! {
-    /// `CTaskSimpleThrowControl::CTaskSimpleThrowControl(CEntity*, const CVector*)` (0x61F8B0)
-    fn throw_control_ctor(t: GPtr<u8>, e: u32, pos: GPtr<u32>) -> GPtr<u8> = thiscall 0x61F8B0 => unported;
-}
 
 use sa_core::bindings::general_random_int_in_range as random_int_in_range;
 use sa_world::bindings::leave_any_car_ctor;

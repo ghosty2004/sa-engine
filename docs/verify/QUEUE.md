@@ -59,6 +59,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-3 | 8 | AI, POP | 11e8cd0f | master | 8 | 0 | 0 | 0 | 0 | L2 8 |
 | frontier2-4 | 4 | CAM, WORLD | 11e8cd0f | master | 4 | 0 | 0 | 0 | 0 | L2 3, L3-only 1 |
 | frontier2-5 | 6 | AI, RENDER | 6d209fd3 | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| frontier2-6 | 12 | AI, VEH | uncommitted | HEAD | 12 | 0 | 0 | 0 | 0 | L2 12 |
 | gen2-anim-1 | 1 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | gen2-coll-1 | 20 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 20 | 0 | L2 8, split 12 |
 | gen2-core-1 | 4 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
@@ -2012,6 +2013,32 @@ SA_UNVERIFIED=frontier2-5 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-5 $SA_
 | 0x4A09C0 | `Fx_c::AddWheelDust` | written | L2 | heap-writes,stack-residue |
 | 0x6342F0 | `CTaskSimpleIKPointArm::CreateIKChain` | written | L2 | ax-al-return,heap-writes |
 | 0x634370 | `CTaskSimpleIKPointArm::UpdatePointArmInfo` | written | L2 | heap-writes |
+
+## frontier2-6
+
+12 hooks in sa-ai, sa-veh; hazards: heap-writes (10), uninit-locals (1), x87-transcendental (2); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-6 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-6 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-6 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-6
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x621300 | `CTaskComplexKillPedOnFootArmed::IsPedInLeaderFiringLine` | written | L2 | none |
+| 0x621500 | `CTaskComplexKillPedOnFootArmed::LineOfSightClearForAttack` | written | L2 | heap-writes |
+| 0x626FC0 | `CTaskComplexKillPedOnFootArmed::CreateSubTask` | written | L2 | heap-writes |
+| 0x62BF00 | `CTaskComplexKillPedOnFootArmed::CreateFirstSubTask` | written | L2 | heap-writes,uninit-locals |
+| 0x62CCE0 | `CTaskComplexKillPedOnFootArmed::ControlSubTask` | written | L2 | heap-writes |
+| 0x633F00 | `CTaskSimpleIKLookAt::Clone` | written | L2 | heap-writes |
+| 0x634240 | `CTaskSimpleIKPointArm::Destructor` | written | L2 | heap-writes |
+| 0x634250 | `CTaskSimpleIKPointArm::Clone` | written | L2 | heap-writes |
+| 0x6A3060 | `CAutomobile::SetUpWheelColModel` | written | L2 | heap-writes |
+| 0x6B67E0 | `CBike::SetUpWheelColModel` | written | L2 | heap-writes |
+| 0x6CD090 | `CPlane::FindPlaneCreationCoors` | written | L2 | x87-transcendental |
+| 0x729B60 | `CAutomobile::FireTruckControl` | written | L2 | x87-transcendental,heap-writes |
 
 ## gen2-anim-1
 

@@ -2655,3 +2655,6 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x56E120,sa-world,find_player_entity,cdecl,,id:i32,GPtr<u8>,sa_world::world::cworld::find_player_entity,CWorld::FindPlayerEntity,
 0x72DD60,sa-world,cull_zones_police_abandon_cars,cdecl,,,u8,unported,CCullZones::PoliceAbandonCars,
 0x6A2450,sa-cam,set_heli_orientation,thiscall,,v:GPtr<u8>;a:u32,,unported,CAutomobile::SetHeliOrientation,
+0x41A820,sa-world,check_camera_collision_buildings_call,cdecl,,x:i32;y:i32;bb:GPtr<u8>;sps:GPtr<u8>;spa:GPtr<u8>;spb:GPtr<u8>,u8,sa_world::collision::mvpe_coll1::check_camera_collision_buildings,CCollision::CheckCameraCollisionBuildings,
+0x601230,sa-ai,intel_set_task_duck_secondary,thiscall,,i:GPtr<u8>;t:u32,,sa_ai::intelrest::intel_set_task_duck_secondary,CPedIntelligence::SetTaskDuckSecondary,
+0x61F8B0,sa-ai,throw_control_ctor,thiscall,,t:GPtr<u8>;e:u32;pos:GPtr<u32>,GPtr<u8>,unported,CTaskSimpleThrowControl::Constructor,

@@ -89,9 +89,8 @@ use sa_world::bindings::pad_get_ped_walk_left_right;
 use sa_world::bindings::pad_get_ped_walk_up_down;
 use sa_world::bindings::pad_get_touched_time_delta;
 use crate::bindings::tm_set_task;
+use crate::bindings::intel_set_task_duck_secondary;
 orig! {
-    /// `CPedIntelligence::SetTaskDuckSecondary(uint16)` (0x601230, `ret 4`)
-    fn intel_set_task_duck_secondary(i: GPtr<u8>, t: u32) = thiscall 0x601230 => unported;
     /// `CTaskSimplePlayerOnFoot::PlayerControlDucked(CPlayerPed*)` (0x687F30, `ret 4`)
     fn on_foot_player_control_ducked(t: GPtr<u8>, p: GPtr<u8>) = thiscall 0x687F30 => unported;
     /// `CTaskSimplePlayerOnFoot::PlayerControlFighter(CPlayerPed*)` (0x687530, `ret 4`)

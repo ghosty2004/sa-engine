@@ -6,7 +6,9 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-use crate::common::{b, g, rd, wr};
+use crate::common::{b, g, rd, wr, x};
+use sa_core::bindings::rw_matrix_transform;
+use sa_world::bindings::col_sphere_set;
 
 /// `CBike*` (thiscall `this`).
 type Bike = GPtr<u8>;
@@ -151,6 +153,51 @@ pub fn remove_refs_to_vehicle(bk: Bike, e: u32) {
     }
 }
 
+/// `CBike::SetUpWheelColModel(CColModel*)` (0x6B67E0): the wheel model takes the bike's bounding sphere and box (the
+/// sphere copied first) and two rubber spheres (surface 0x43, lighting 0xFF): the front wheel frame (+0x5B0, piece 0xD,
+/// radius half the model info's front wheel size +0x40) and the rear one (+0x5B4, piece 0xF, half the rear size +0x44),
+/// each centred on the position of its modelling matrix combined (`RwMatrixTransform(.., 2)`) with its parents' up to
+/// the frame at +0x5A4 (read once, at entry) or the root; 2 spheres; true. The model info pointer is written over the
+/// argument's stack slot (not reproduced: never read).
+#[hook(addr = 0x6B67E0, conv = thiscall, name = "CBike::SetUpWheelColModel", expect = "83 EC 50 53 8B D9",
+       this = "CBike", unverified = "frontier2-6", route = "L2", hazards = "heap-writes",
+       note = "shootcar scenario: a bike next to the shot line")]
+pub fn bike_set_up_wheel_col_model(bike: GPtr<u8>, wheel_col: GPtr<u8>) -> u8 {
+    let mi = crate::common::model_info(i32::from(rd::<i16>(bike, 0x22)));
+    let stop = rd::<GPtr<u8>>(bike, 0x5A4);
+    let cd = rd::<GPtr<u8>>(wheel_col, 0x2C);
+    let cm = crate::common::entity_get_col_model(bike);
+    for k in 0..4 {
+        wr::<u32>(wheel_col, 0x18 + 4 * k, rd::<u32>(cm, 0x18 + 4 * k));
+    }
+    for k in 0..6 {
+        wr::<u32>(wheel_col, 4 * k, rd::<u32>(cm, 4 * k));
+    }
+    let wheel = |frame_off: isize, size: isize, slot: isize, piece: u32| {
+        let frame = rd::<GPtr<u8>>(bike, frame_off);
+        let mut m = [0u32; 16];
+        let mp: GPtr<u8> = GPtr::from_raw(m.as_mut_ptr()).cast();
+        for k in 0..16 {
+            wr::<u32>(mp, 4 * k, rd::<u32>(frame, 0x10 + 4 * k));
+        }
+        let mut p = rd::<GPtr<u8>>(frame, 4);
+        while !p.is_null() {
+            rw_matrix_transform(mp, p.byte_add(0x10), 2);
+            p = rd::<GPtr<u8>>(p, 4);
+            if p == stop {
+                break;
+            }
+        }
+        let mut c = [rd::<u32>(mp, 0x30), rd::<u32>(mp, 0x34), rd::<u32>(mp, 0x38)];
+        let r = x(rd::<f32>(mi, size)).fmul_m(g::<f32>(0x858B8C).read()).to_f32();
+        col_sphere_set(rd::<GPtr<u8>>(cd, 8).byte_add(slot), r.to_bits(), GPtr::from_raw(c.as_mut_ptr()), 0x43, piece, 0xFF);
+    };
+    wheel(0x5B0, 0x40, 0, 0xD);
+    wheel(0x5B4, 0x44, 0x14, 0xF);
+    wr::<u16>(cd, 0, 2);
+    1
+}
+
 /// `CBmx::SetUpWheelColModel(CColModel*)` (0x6BF9B0): false.
 #[hook(addr = 0x6BF9B0, conv = thiscall, name = "CBmx::SetUpWheelColModel", expect = "32 C0 C2 04 00", this = "CBmx")]
 pub fn bmx_set_up_wheel_col_model(_bk: Bike, _col: u32) -> u8 {
@@ -170,6 +217,7 @@ pub fn bmx_find_wheel_width(_bk: Bike, _rear: u32) -> f32 {
 }
 
 pub const HOOKS: &[HookReg] = &[
+    HOOK_BIKE_SET_UP_WHEEL_COL_MODEL,
     HOOK_GET_NUM_CONTACT_WHEELS,
     HOOK_GET_ALL_WHEELS_OFF_GROUND,
     HOOK_GET_HEIGHT_ABOVE_ROAD,

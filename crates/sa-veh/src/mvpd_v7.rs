@@ -8,7 +8,9 @@ use sa_core::{hook, orig};
 use sa_math::x87::X87;
 use sa_world::world::common::{cam_pos, find_player_coors, find_player_vehicle};
 
-use crate::common::{f32_of, g, jp5, rand_at, rd, wr, x, xi};
+use crate::common::{f32_of, ftol32, g, jp5, rand_at, rd, wr, x, xi};
+use sa_core::bindings::{get_atan_of_xy, world_get_is_line_of_sight_clear};
+use sa_world::bindings::{check_camera_collision_buildings_call, col_sphere_set, world_clear_scan_codes as clear_scan_codes};
 
 use crate::bindings::audio_initialise;
 use crate::bindings::bouncing_panel_set_panel;
@@ -68,7 +70,7 @@ orig! {
     fn are_we_in_no_big_plane_zone() -> u8 = cdecl 0x6CCBB0 => unported;
     /// `CPlane::FindPlaneCreationCoors(CVector*, CVector*, float*, float*, bool)` (0x6CD090); the bool
     /// is pushed as a whole stack dword
-    fn find_plane_creation_coors(coors: GPtr<f32>, target: GPtr<f32>, orientation: GPtr<f32>, height: GPtr<f32>, big: u32) = cdecl 0x6CD090 => unported;
+    fn find_plane_creation_coors(coors: GPtr<f32>, target: GPtr<f32>, orientation: GPtr<f32>, height: GPtr<f32>, big: u32) = cdecl 0x6CD090 => find_plane_creation_coors_port;
     /// `0x6C4130`: the matrix of a heading (`sin`/`cos` of the argument, no roll or pitch)
     fn set_heading_matrix(v: GPtr<u8>, heading: f32) = thiscall 0x6C4130 => unported;
     /// `CWorld::FindUnsuspectingTargetPed(CVector, CVector)` (0x566DA0)
@@ -951,6 +953,93 @@ pub fn automobile_constructor(this: GPtr<u8>, mi: u32, created_by: u32, setup_su
     this
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_TRAIN_DO_GENERATION_AND_REMOVAL, HOOK_PLANE_DO_GENERATION_AND_REMOVAL, HOOK_AUTOMOBILE_CONSTRUCTOR];
+/// `CWorld::ms_nCurrentScanCode` (u16)
+const SCAN_CODE: usize = 0xB7CD78;
+/// `TheCamera.m_mCameraMatrix` forward row
+const CAM_FWD: usize = 0xB6F9AC;
+
+/// `CPlane::FindPlaneCreationCoors(CVector* coors, CVector* target, float* orientation, float* height, bool big)`
+/// (0x6CD090, cdecl; user-hit in free roam, FRONTIER-2 part 3). Distance / height 340 / 200 for a big plane, else
+/// 140 / 25. Up to 50 tries (a counter stepping 10 up to 500): a random angle `(rand() % 360) * 0.017453292` puts
+/// the start `dist` away from the player (`FindPlayerCoors`), at height `(rand() & 15) + counter + height` (written
+/// to `*height` and added to the start's z); the target is the player's position plus the camera's forward row times
+/// `(rand() & 31) + 20`, raised by `*height`; the orientation is `GetATanOfXY(target - start)` (from the unrounded x87
+/// sums). The try is kept when the line from the start to `2 * target - start` hits a building, or when it is clear
+/// and `CheckCameraCollisionBuildings(start.x, start.y, …)` with a radius-15 sphere at the start finds nothing. A new
+/// scan code is taken first each try. At the end `*height` and the target's z get 20 more. The box argument of
+/// CheckCameraCollisionBuildings is an uninitialised local the callee never reads (zero here).
+#[hook(addr = 0x6CD090, conv = cdecl, name = "CPlane::FindPlaneCreationCoors", expect = "81 EC 80 00 00 00",
+       unverified = "frontier2-6", route = "L2", hazards = "x87-transcendental",
+       note = "rand sites 0x6CD103 / 0x6CD140 / 0x6CD19E; FCOS / FSIN of the angle")]
+pub fn find_plane_creation_coors_port(coors: GPtr<f32>, target: GPtr<f32>, orientation: GPtr<f32>, height: GPtr<f32>, big: u32) {
+    let (dist, base_height) = if big as u8 != 0 { (340.0f32, 200.0f32) } else { (140.0f32, 25.0f32) };
+    let at = |p: GPtr<f32>, i: isize| rd::<f32>(p.cast(), 4 * i);
+    let put = |p: GPtr<f32>, i: isize, v: f32| wr::<f32>(p.cast(), 4 * i, v);
+    let player = |out: GPtr<f32>| {
+        let mut buf = [0f32; 3];
+        let p = find_player_coors(GPtr::from_raw(buf.as_mut_ptr()), -1);
+        for i in 0..3 {
+            put(out, i, at(p, i));
+        }
+    };
+    let mut counter = 0i32;
+    while counter < 500 {
+        let r = rand_at(0x6CD103) % 360;
+        let angle = f32_of(xi(r).fmul_m(g::<f32>(0x8595EC).read()));
+        player(coors);
+        let h = rand_at(0x6CD140) & 0xF;
+        put(height, 0, f32_of(xi(h).fadd(xi(counter)).fadd_m(base_height)));
+        put(coors, 0, f32_of(x(angle).fcos().fmul_m(dist).fadd_m(at(coors, 0))));
+        put(coors, 1, f32_of(x(angle).fsin().fmul_m(dist).fadd_m(at(coors, 1))));
+        put(coors, 2, f32_of(x(at(coors, 2)).fadd_m(at(height, 0))));
+        player(target);
+        let k = xi(rand_at(0x6CD19E) & 0x1F).fadd_m(20.0);
+        let fwd = g::<f32>(CAM_FWD);
+        let fx = x(fwd.read()).fmul(k);
+        let ty = f32_of(x(fwd.byte_add(4).read()).fmul(k));
+        let tz = f32_of(x(fwd.byte_add(8).read()).fmul(k));
+        let sx = fx.fadd_m(at(target, 0));
+        put(target, 0, f32_of(sx));
+        let sy = x(ty).fadd_m(at(target, 1));
+        put(target, 1, f32_of(sy));
+        let sz = x(tz).fadd_m(at(target, 2));
+        put(target, 2, f32_of(sz));
+        put(target, 2, f32_of(sz.fadd_m(at(height, 0))));
+        let ay = f32_of(sy.fsub_m(at(coors, 1)));
+        let ax = f32_of(sx.fsub_m(at(coors, 0)));
+        put(orientation, 0, get_atan_of_xy(ax, ay) as f32);
+        let code = g::<u16>(SCAN_CODE);
+        let dx = x(at(target, 0)).fsub_m(at(coors, 0));
+        let dy = x(at(target, 1)).fsub_m(at(coors, 1));
+        let dz = f32_of(x(at(target, 2)).fsub_m(at(coors, 2)));
+        let mut end = [
+            f32_of(dx.fadd_m(at(target, 0))),
+            f32_of(dy.fadd_m(at(target, 1))),
+            f32_of(x(dz).fadd_m(at(target, 2))),
+        ];
+        if code.read() >= 0xFFFF {
+            clear_scan_codes();
+            code.write(1);
+        } else {
+            code.write(code.read() + 1);
+        }
+        let mut sphere = [0u32; 5];
+        let sp: GPtr<u8> = GPtr::from_raw(sphere.as_mut_ptr()).cast();
+        col_sphere_set(sp, 15.0f32.to_bits(), coors.cast(), 0, 0, 0xFF);
+        let endp: GPtr<u8> = GPtr::from_raw(end.as_mut_ptr()).cast();
+        if world_get_is_line_of_sight_clear(coors.cast(), endp, 1, 0, 0, 0, 0, 0, 0) != 0 {
+            let mut bbox = [0u32; 7];
+            let (iy, ix) = (ftol32(x(at(coors, 1))), ftol32(x(at(coors, 0))));
+            if check_camera_collision_buildings_call(ix, iy, GPtr::from_raw(bbox.as_mut_ptr()).cast(), sp, sp, sp) == 0 {
+                break;
+            }
+        }
+        counter += 10;
+    }
+    put(height, 0, f32_of(x(at(height, 0)).fadd_m(20.0)));
+    put(target, 2, f32_of(x(at(target, 2)).fadd_m(20.0)));
+}
+
+pub const HOOKS: &[HookReg] = &[HOOK_FIND_PLANE_CREATION_COORS_PORT, HOOK_TRAIN_DO_GENERATION_AND_REMOVAL, HOOK_PLANE_DO_GENERATION_AND_REMOVAL, HOOK_AUTOMOBILE_CONSTRUCTOR];
 
 pub const GLOBALS: &[sa_core::mem::GlobalDesc] = &[];

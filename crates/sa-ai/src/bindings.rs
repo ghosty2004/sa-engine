@@ -669,6 +669,11 @@ orig! {
 }
 
 orig! {
+    /// `CPedIntelligence::SetTaskDuckSecondary` (0x601230)
+    pub fn intel_set_task_duck_secondary(i: GPtr<u8>, t: u32) = thiscall 0x601230 => crate::intelrest::intel_set_task_duck_secondary;
+}
+
+orig! {
     /// `CPedIntelligence::IsThreatenedBy` (0x601C30)
     pub fn intel_is_threatened_by(intel: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x601C30 => unported;
 }
@@ -861,6 +866,11 @@ orig! {
 orig! {
     /// `CTaskSimpleUseGun::RequirePistolWhip` (0x61E200)
     pub fn use_gun_require_pistol_whip(ped: GPtr<u8>, target: GPtr<u8>) -> u8 = cdecl 0x61E200 => unported;
+}
+
+orig! {
+    /// `CTaskSimpleThrowControl::Constructor` (0x61F8B0)
+    pub fn throw_control_ctor(t: GPtr<u8>, e: u32, pos: GPtr<u32>) -> GPtr<u8> = thiscall 0x61F8B0 => unported;
 }
 
 orig! {
