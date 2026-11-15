@@ -1960,3 +1960,63 @@
   sniper / shootcar / shootdriver 0 blocked, no crash; verify-all (lanes 1-7, fresh sa-oracle) `intabc-u`
   (frontier2-1..9, b1..b4, c1..c4 on) IDENTICAL 13/13 and `intabc-def` IDENTICAL 13/13 (A+B alone: `intab-u` /
   `intab-def` IDENTICAL 13/13). `target/play/sa-game` and `web/pkg` refreshed.
+
+## 2026-11-15 — FRONTIER-2 turn 2, lane B: WORLD / VEH / RW / RENDER / WEAPON / POP / MATH frontier (agent, branch worktree-agent-a01dd37b0c8f4b2db)
+- Base: master d05f6e24. Lane B of the three-way split (subsystems WORLD, VEH, RW, RENDER, CAM, WEAPON, POP, STREAM, PED,
+  ANIM, CORE, MATH, SAVE, PHYS). Every port from the 1.0 US bytes (gta-reversed read as an aid), every address checked
+  against `inflight.py` before porting and again before hand-back (0 overlaps). The `.HOODLUM` bodies were followed
+  through the no-CD protection: the xor / adc-decoded cells computed from the image, the 0xCB73E0 VM calls evaluated
+  with unicorn on the exe image (the `pop ss` trap probe skipped): TriggerMessage's copy destination 0x96C014,
+  ProcessGunShot's AddExplosion visibility 0, DoWeaponStuffAtStartOf2PlayerGame's player 0 (the VM rewrites its key
+  0x14AA974D; V + K' = 0), RemoveInteriorLinks' 0x96EAC0, RegisterScriptRoadBlock's index 7. 45 new unverified hooks +
+  1 phase B native in five batches:
+  - `frontier2-b5` (25 + native; WORLD / VEH / POP / MATH): CGarages::TriggerMessage 0x447B80 (the end time is
+    inclusive in the bytes), GivePlayerDetonator 0x448660, the hideout restore 0x4485C0 and the other-car test 0x449100
+    (unnamed, called by CGarage::Update), 0x449A50 (a byte copy of StoreAndRemoveCarsForThisHideOut: same port),
+    CGameLogic::RestorePedsWeapons 0x441D30 (checks the first model's load state twice, as the bytes do),
+    DoWeaponStuffAtStartOf2PlayerGame 0x4428B0, ResetStuffUponResurrection 0x442980, CPickup::ExtractAmmoFromPickup
+    0x454BE0 (obfuscated call decoded: GrantAmmo), ProcessGunShot 0x4588B0, CReplay::GoToNextBlock 0x45E2A0,
+    PlayBackThisFrame 0x4604A0, SaveReplayToHD 0x45C340 / PlayReplayFromHD 0x460390 (route split),
+    CCheat::EverybodyAttacksPlayerCheat 0x439C70, CWorld::FindMissionEntitiesIntersectingCube 0x569240 /
+    FindObjectsIntersectingCube 0x568DD0, CShopping::StoreVehicleMods 0x49B280 / RestoreVehicleMods 0x49B3C0 (jump
+    tables decoded), CStuckCarCheck AddCarToCheck 0x465970 / RemoveCarFromCheck 0x463B80 / AttemptToWarpVehicle 0x463A60,
+    CPathFind::RemoveInteriorLinks 0x44DF60 (6 link bytes per node; gta-reversed declares 8),
+    CRoadBlocks::RegisterScriptRoadBlock 0x460DF0, CCompressedMatrixNotAligned::DecompressIntoFullMatrix 0x59B9F0 (turn
+    1's open item); native CCarAI::GetCarToGoToCoorsAccurate 0x41D0E0 (the existing unhookable port's phase B entry).
+  - `frontier2-b6` (VEH, 6): CVehicle::CreateUpgradeAtomic 0x6D3510, AddUpgrade 0x6DFA20, CAutomobile::BoostJumpControl
+    0x6A3A60, CTrain::RemoveRandomPassenger 0x6F6850 (rand site 0x6F6969), CAutomobile::SetTowLink 0x6B4410,
+    CTrailer::SetTowLink 0x6CFDF0.
+  - `frontier2-b7` (WORLD): CWorld::CallOffChaseForArea 0x566A60, FindNearestObjectOfType 0x5693F0,
+    Interior_c::AddPickups 0x591F90, Interior_c::FindBoundingBox 0x5922C0.
+  - `frontier2-b8` (RW / RENDER / WEAPON): _rpSkinBlendPositionsRigid 0x7CA330, _rpSkinBlendPositions1Weight 0x7CA240,
+    _rpSkinGeometryNativeRead 0x7C88B0, the MatFX D3D9 mesh draw 0x812C90, the image depth copy 0x803840,
+    CClouds::MovingFog_Create 0x713760 / MovingFog_Update 0x716B10, CWeapon::FindNearestTargetEntityWithScreenCoors 0x73E240.
+  - `frontier2-b9` (VEH): CVehicle::PossiblyDropFreeFallBombForPlayer 0x6E07E0, GetPlaneOrdnancePosition 0x6D46E0.
+- Hazards recorded where the original keeps values in its own argument slots (stack-residue / "not modelled" notes as
+  turn 1 did), x87-transcendental for the FPATAN / FSQRT users.
+- ADR-003: helpers shared instead of copied (sa-core `field::c_str_eq`; sa-world `mvpb_world` `scan_rect` /
+  `sector_index` / `cell` / `advance_scan_code` made pub(crate); sa-veh `stuck_reset`; garage_update::now), private
+  declarations made pub and imported (mvpd_w1 / mvpd_w4 / automobile_control / mvpd_v6 / sa-pop misc2 / misc3 /
+  interior_bounding_box); bindings: new rows 0x447E40, 0x59B6A0, 0x569240, 0x6E3400, 0x457380, 0x7C7560; moved down to
+  the lowest shared crate 0x4342A0, 0x6C21A0, 0x6DF930, 0x6C2150, 0x63BDD0 (twins where the port sits higher);
+  `make structure` clean.
+- Writer gate (base d05f6e24): the first run (b5 + b6 committed) found a needless late init (clippy), a copied
+  `time_ms`, a second declaration of 0x5922C0 and the stale queue; fixed in the b7 commit. Second run on 01d7ec6b (45 hooks): hooks / queue / bindings / state / dupes / cfg / layers / commits / clippy / i686 /
+  i686clip / wasm32 / hooktest / l1test / l1 all PASS; `make structure` clean.
+- verify-all (lanes 4-5, fresh release sa-oracle): `lb2-u` (SA_UNVERIFIED=frontier2-b5..b9, head 5f8becb6) IDENTICAL
+  13/13; default set `lb2-def` (head 01d7ec6b) IDENTICAL 13/13.
+- Scenarios (`tools/e2e/scenarios/frontier.sh`, i686 native sa-game of this branch, default lengths): pausemenu 416 /
+  0 blocked, solicit 4016 / 0, crossing 1216 / 0, melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0, shootdriver 1216 / 0;
+  no crash.
+- Builds: i686 sa-game with and without `--features samp`, `FEATURES=samp tools/web/build.sh` (wasm-bindgen of
+  ~/sa-engine/target/tools/bin): build.
+- frontier.py, lane B subsystems (to port, rows other branches register left out): 197 at the start → 159 (direct 179,
+  virtual 165, partial 12 overall at the end, +57 / +5 registered on other branches). New rows my ports revealed: the
+  replay callees 0x45D4B0, 0x45D760, 0x45F380, 0x4600F0 and the call-off-chase sector lists 0x563A80 / 0x563D00.
+- Left open: the CCam / CCamera bodies (large x87, FPTAN chains), CWorld::FindObjectsIntersectingAngledCollisionBox, the
+  CallOffChase sector lists, the replay playback chain, Interior_c furnishing (PlaceFurniture's uninitialised outputs),
+  CReplay::RestoreStuffFromMem, SprayPaintWorld, RpLightGetConeAngle (inlined acos), the RW stream writers and D3D9
+  raster helpers, the big vehicle bodies (FlyingControl, ProcessBoatControl, the BlowUpCars / PreRenders / ProcessControls
+  of heli / plane / boat / quad), the remaining WEAPON bodies, GangWars::TellGangMembersTo (event / VM mix),
+  ClitargetOrientationToLink. Names for the unnamed garage entries 0x4485C0 / 0x449100 / 0x449A50 and the RW helpers
+  0x7C88B0 / 0x812C90 / 0x803840 / 0x7CA240 / 0x7CA330 are proposed in the port docs (not added to name-corrections).
