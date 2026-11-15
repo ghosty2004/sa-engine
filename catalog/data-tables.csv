@@ -186,7 +186,7 @@ start,end,slots,pointers,in_catalogue_before,new,kind,kind_evidence,name,members
 0x866f60,0x866fbc,23,23,23,0,vtable-gr:CObject,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 21;game 1;gr-unreversed 1,0x59f660;0x5a1d10;0x5a1d70;0x5a1df0;0x5a1f60,5
 0x867030,0x86708c,23,23,23,0,vtable,base stored into [reg] by a referencing function,,gr-reversed 21;game 1;gr-unreversed 1,0x5a4030;0x5a40e0,2
 0x8670c8,0x8670cc,1,1,1,0,single,,,gr-reversed 1,,0
-0x867170,0x867178,2,2,2,1,vtable,base stored into [reg] by a referencing function,,game 2,0x5a6db0;0x5a6fc0;0x5a7490;0x5a74f0;0x856690,5
+0x867170,0x867178,2,2,2,1,vtable,base stored into [reg] by a referencing function,,game 2,0x5a6db0;0x5a6fc0;0x5a7400;0x5a7490;0x5a74f0,5
 0x867178,0x867180,2,2,2,2,vtable,base stored into [reg] by a referencing function,,game 2,0x5a7570,1
 0x867b30,0x867b34,1,1,0,0,single,,,new 1,,0
 0x867b68,0x867b6c,1,1,1,0,single,,,gr-reversed 1,,0
@@ -220,7 +220,7 @@ start,end,slots,pointers,in_catalogue_before,new,kind,kind_evidence,name,members
 0x86c62c,0x86c644,6,6,6,1,vtable,base stored into [reg] by a referencing function,,gr-reversed 4;game 2,0x5eebd0;0x5eec90,2
 0x86c6d0,0x86c710,16,16,16,4,vtable,base stored into [reg] by a referencing function,,game 16,0x5f6190;0x5f6200,2
 0x86c710,0x86c754,17,17,17,0,vtable-gr:CEventPlayerCommandToGroupAttack,gta-reversed RH_ScopedVirtualClass vtable,,game 14;gr-reversed 3,0x5f6340;0x5f6370;0x5f63f0;0x5f7cc0;0x60a1d0;0x60cd20,6
-0x86c754,0x86c75c,2,2,2,0,vtable,base stored into [reg] by a referencing function,,excluded:crt 2,0x856800;0x856810;0x856820;0x856830;0x856840;0x856850,6
+0x86c754,0x86c75c,2,2,2,0,vtable,base stored into [reg] by a referencing function,,excluded:crt 2,0x5f6460;0x5f6490;0x5f64c0;0x5f64f0;0x5f6520;0x5f6550,6
 0x86c75c,0x86c764,2,2,2,0,vtable,base stored into [reg] by a referencing function,,gr-reversed 2,0x5f6450,1
 0x86c764,0x86c76c,2,2,2,0,vtable,base stored into [reg] by a referencing function,,gr-reversed 2,0x5f6480,1
 0x86c76c,0x86c774,2,2,2,0,vtable,base stored into [reg] by a referencing function,,gr-reversed 2,0x5f64b0,1
@@ -1598,10 +1598,7 @@ start,end,slots,pointers,in_catalogue_before,new,kind,kind_evidence,name,members
 0x8e249c,0x8e24c0,9,7,7,4,rw-device,"RwDevice (gammaCorrection 1.0, fpSystem, zBufferNear/Far, fpRenderStateSet/Get, Im2D/Im3D render functions) returned by 0x7f9c20 `mov eax, 0x8e2498; ret`",,RW 7,,0
 0x8e291c,0x8e2920,1,1,1,1,rw-node-def,RxNodeDefinition 'ImmInstance.csl' at 0x8e2918,,RW 1,,0
 0x8e297c,0x8e2980,1,1,1,1,rw-node-def,RxNodeDefinition 'nodeD3D9SubmitNoLight.csl' at 0x8e2978,,RW 1,,0
-0x8e2a08,0x8e2a0c,1,1,1,0,fnptr-variable,slot read or written by code,,excluded:thirdparty:quicktime-qtml 1,0x4f2fb0,1
-0x8e2a0c,0x8e2a10,1,1,1,1,fnptr-variable,slot read or written by code,,excluded:thirdparty:quicktime-qtml 1,0x4f2fb0,1
-0x8e2a10,0x8e2a14,1,1,1,1,fnptr-variable,slot read or written by code,,excluded:thirdparty:quicktime-qtml 1,0x4f2fb0,1
-0x8e2a14,0x8e2a18,1,1,1,1,fnptr-variable,slot read or written by code,,excluded:thirdparty:quicktime-qtml 1,0x4f2fb0,1
+0x8e2a08,0x8e2a18,4,4,4,3,fnptr-table-unreferenced,,,excluded:thirdparty:quicktime-qtml 4,,0
 0x8e2b74,0x8e2b78,1,1,1,0,single,,,excluded:crt 1,,0
 0x8e2bc0,0x8e2bc4,1,1,1,0,single,,,excluded:crt 1,,0
 0x8e2eb0,0x8e2eb4,1,1,1,0,single,,,excluded:crt 1,,0

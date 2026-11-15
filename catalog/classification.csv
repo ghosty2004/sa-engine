@@ -878,6 +878,7 @@ address,class,subsystem,name,evidence
 0x4385b0,game,WORLD,CCheat::WeaponCheat1,plugin-sdk name CCheat::WeaponCheat1 (plugin_sa/game_sa/meta/meta.CCheat.h); refs=D
 0x438890,game,WORLD,CCheat::WeaponCheat2,plugin-sdk name CCheat::WeaponCheat2 (plugin_sa/game_sa/meta/meta.CCheat.h); refs=D
 0x438b30,game,WORLD,CCheat::WeaponCheat3,plugin-sdk name CCheat::WeaponCheat3 (plugin_sa/game_sa/meta/meta.CCheat.h); refs=D
+0x438d60,game,WORLD,CCheat::HealthCheat,plugin-sdk name CCheat::HealthCheat (plugin_sa/game_sa/meta/meta.CCheat.h); refs=J
 0x438e40,game,WORLD,CCheat::MoneyArmourHealthCheat,plugin-sdk name CCheat::MoneyArmourHealthCheat (plugin_sa/game_sa/meta/meta.CCheat.h); refs=D
 0x438e90,game,WORLD,CCheat::WantedLevelUpCheat,plugin-sdk name CCheat::WantedLevelUpCheat (plugin_sa/game_sa/meta/meta.CCheat.h); refs=D
 0x438f20,game,WORLD,CCheat::WantedLevelDownCheat,plugin-sdk name CCheat::WantedLevelDownCheat (plugin_sa/game_sa/meta/meta.CCheat.h); refs=D
@@ -1044,6 +1045,7 @@ address,class,subsystem,name,evidence
 0x453fa0,game,UNK-game,,no static reference found (dead code or reached through a computed pointer)
 0x453fb0,game,UNK-game,,refs=I
 0x4541e0,game,UNK-game,,game-.text stub to relocated .HOODLUM body 0x1568bf0; refs=C
+0x454200,game,UNK-game,,refs=J
 0x454920,game,WORLD,,"game-.text stub to relocated .HOODLUM body 0x156f730; refs=C; subsystem from its 1 caller(s), all WORLD"
 0x454ae7,excluded:mis-split,,,"SecuROM re-entry point inside 0x454ae0 (CPickups::WeaponForModel): mid-body (previous byte 0xff), only jumped to from protection code (0x40152e)"
 0x4556ca,excluded:mis-split,,,"SecuROM re-entry point inside 0x4556c0 (CPickup::Remove): mid-body (previous byte 0xff), only jumped to from protection code (0x4020c0)"
@@ -1961,6 +1963,13 @@ address,class,subsystem,name,evidence
 0x4c5760,game,UNK-game,,refs=I
 0x4c5790,game,STREAM,,"refs=CI; subsystem from its 1 caller(s), all STREAM"
 0x4c57a0,game,UNK-game,,refs=I
+0x4c5840,game,UNK-game,,refs=J
+0x4c5860,game,UNK-game,,refs=J
+0x4c5880,game,UNK-game,,refs=J
+0x4c58a0,game,UNK-game,,refs=J
+0x4c58c0,game,UNK-game,,refs=J
+0x4c58e0,game,UNK-game,,refs=J
+0x4c5900,game,UNK-game,,refs=J
 0x4c5920,game,STREAM,,"refs=CI; subsystem from its 1 caller(s), all STREAM"
 0x4c5951,excluded:mis-split,,,"SecuROM re-entry point inside 0x4c5940 (CModelInfo::GetModelInfo-full): mid-body (previous byte 0xff), only jumped to from protection code (0x401501)"
 0x4c5cb0,game,UNK-game,,refs=C
@@ -1981,6 +1990,8 @@ address,class,subsystem,name,evidence
 0x4c62d0,game,STREAM,CWeaponModelInfo::vfunc_0,slot 0 of CWeaponModelInfo vtable 0x85bd78 (gta-reversed RH_ScopedVirtualClass); refs=D
 0x4c62f0,game,STREAM,,"refs=CI; subsystem from its 1 caller(s), all STREAM"
 0x4c6350,game,STREAM,CPedModelInfo::vfunc_0,slot 0 of CPedModelInfo vtable 0x85bdc0 (gta-reversed RH_ScopedVirtualClass); refs=D
+0x4c6370,game,UNK-game,,refs=J
+0x4c6390,game,UNK-game,,refs=J
 0x4c67d0,game,UNK-game,,refs=C
 0x4c6b10,game,UNK-game,CModelInfoAccelerator::FreeModelInfoIds,plugin-sdk name CModelInfoAccelerator::FreeModelInfoIds (plugin_sa/game_sa/CModelInfoAccelerator.cpp); no static reference found (dead code or reached through a computed pointer)
 0x4c6b70,game,UNK-game,CModelInfoAccelerator::GetModelInfoIdFile,plugin-sdk name CModelInfoAccelerator::GetModelInfoIdFile (plugin_sa/game_sa/CModelInfoAccelerator.cpp); refs=C
@@ -2121,6 +2132,7 @@ address,class,subsystem,name,evidence
 0x4dc0e0,game,AUDIO,,"refs=J; subsystem from its 2 caller(s), all AUDIO"
 0x4dc190,game,UNK-game,,no static reference found (dead code or reached through a computed pointer)
 0x4dc210,excluded:mis-split,,,"SecuROM re-entry point inside 0x4dc1c0 (CAEDataStream::FillBuffer): mid-body (previous byte 0xff), only jumped to from protection code (0x402343)"
+0x4dc2a0,game,AUDIO,,"refs=J; subsystem from its 1 caller(s), all AUDIO"
 0x4dc550,game,UNK-game,,no static reference found (dead code or reached through a computed pointer)
 0x4dc670,game,AUDIO,,"refs=C; subsystem from its 4 caller(s), all AUDIO"
 0x4dcbe7,excluded:mis-split,,,"SecuROM re-entry point inside 0x4dcbe0 (CAEExplosionAudioEntity::AddAudioEvent): mid-body (previous byte 0xff), only jumped to from protection code (0x40a277)"
@@ -2148,6 +2160,7 @@ address,class,subsystem,name,evidence
 0x4e6aa0,game,PED,,"refs=C; subsystem from its 1 caller(s), all PED"
 0x4e6ac0,game,UNK-game,,refs=C
 0x4e6ae0,game,PED,,"refs=C; subsystem from its 1 caller(s), all PED"
+0x4e7850,game,AUDIO,,"refs=J; subsystem from its 1 caller(s), all AUDIO"
 0x4e7990,game,AUDIO,,"refs=C; subsystem from its 1 caller(s), all AUDIO"
 0x4e7a80,game,AUDIO,,"refs=C; subsystem from its 1 caller(s), all AUDIO"
 0x4e7b80,game,UNK-game,,refs=I
@@ -2160,16 +2173,19 @@ address,class,subsystem,name,evidence
 0x4eb557,excluded:protection,,,"SecuROM displaced epilogue in the dead span of 0x4eb550 (a .HOODLUM stub): unaligned, only jumped to from 0x407497, ends in ret"
 0x4ee652,excluded:mis-split,,,"SecuROM re-entry point inside 0x4eccf0 (CAEScriptAudioEntity::ProcessMissionAudioEvent): mid-body (previous byte 0xff), only jumped to from protection code (0x405bb4)"
 0x4ee9a0,game,UNK-game,,refs=C
+0x4ee9e0,game,UNK-game,,refs=J
 0x4eea80,game,UNK-game,,refs=C
 0x4ef070,game,UNK-game,,refs=I
 0x4ef1ca,excluded:mis-split,,,"SecuROM re-entry point inside 0x4ef1c0 (CAESound::StopSound): mid-body (previous byte 0xff), only jumped to from protection code (0x409732)"
 0x4ef660,game,UNK-game,CAESound,plugin-sdk name CAESound (plugin_sa/game_sa/CAESound.cpp); refs=CJI
 0x4efb20,excluded:mis-split,,,"SecuROM re-entry point inside 0x4efb10 (CAESoundManager::RequestNewSound): mid-body (previous byte 0xff), only jumped to from protection code (0x4018ed)"
 0x4efd30,game,UNK-game,,refs=C
+0x4efd60,game,UNK-game,,refs=J
 0x4f0b10,game,AUDIO,,"refs=C; subsystem from its 1 caller(s), all AUDIO"
 0x4f0b50,game,AUDIO,,"refs=C; subsystem from its 1 caller(s), all AUDIO"
 0x4f1020,game,AUDIO,CAEAudioChannel::~CAEAudioChannel,"slot 0 ~CAEAudioChannel declared by CAEAudioChannel, in the vtable of CAEStaticChannel 0x85f3cc (layout from gta-reversed headers, validated); refs=D"
 0x4f11d0,game,AUDIO,,"refs=C; subsystem from its 1 caller(s), all AUDIO"
+0x4f11e0,game,AUDIO,,"refs=J; subsystem from its 1 caller(s), all AUDIO"
 0x4f1a46,excluded:mis-split,,,"SecuROM re-entry point inside 0x4f1a40 (CAEStreamingChannel::GetActiveTrackID): mid-body (previous byte 0xff), only jumped to from protection code (0x402095)"
 0x4f23fa,excluded:mis-split,,,"SecuROM re-entry point inside 0x4f23d0 (CAEStreamingChannel::PrepareStream): mid-body (previous byte 0xff), only jumped to from protection code (0x40603f)"
 0x4f27f0,game,AUDIO,CAEStreamingChannel::~CAEStreamingChannel,"slot 0 ~CAEStreamingChannel declared by CAEStreamingChannel, in the vtable of CAEStreamingChannel 0x85f3f0 (layout from gta-reversed headers, validated); refs=D"
@@ -2235,6 +2251,7 @@ address,class,subsystem,name,evidence
 0x5052b8,excluded:mis-split,,,"SecuROM re-entry point inside 0x5052b0 (CAEWeatherAudioEntity::StaticReset): mid-body (previous byte 0xff), only jumped to from protection code (0x4064c7)"
 0x506b20,game,UNK-game,,refs=CJ
 0x506b27,excluded:mis-split,,,"SecuROM re-entry point inside 0x506800 (CAEWeatherAudioEntity::AddAudioEvent): mid-body (previous byte 0xff), only jumped to from protection code (0x401545)"
+0x506b90,game,UNK-game,,refs=J
 0x506ba0,game,UNK-game,,refs=CJ
 0x506c30,game,UNK-game,,refs=J
 0x506c40,game,UNK-game,,refs=J
@@ -2263,6 +2280,7 @@ address,class,subsystem,name,evidence
 0x5097d0,game,UNK-game,,refs=I
 0x509800,game,UNK-game,,refs=I
 0x509810,game,UNK-game,,refs=I
+0x509840,game,INPUT,,"refs=J; subsystem from its 1 caller(s), all INPUT"
 0x509a30,game,UNK-game,,refs=C
 0x509a37,excluded:mis-split,,,"SecuROM re-entry point inside 0x5083c0 (CAudioZones::Update): mid-body (previous byte 0xff), only jumped to from protection code (0x4058f5)"
 0x509c50,game,UNK-game,,refs=C
@@ -2598,6 +2616,7 @@ address,class,subsystem,name,evidence
 0x58888a,excluded:mis-split,,,"SecuROM re-entry point inside 0x588880 (CHud::ReInitialise): mid-body (previous byte 0xff), only jumped to from protection code (0x401a69)"
 0x58d12f,excluded:mis-split,,,"SecuROM re-entry point inside 0x58cc80 (CHud::DrawOddJobMessage): mid-body (previous byte 0xff), only jumped to from protection code (0x409709)"
 0x58fd55,excluded:mis-split,,,"SecuROM re-entry point inside 0x58fd50 (CHudColours::GetIntColour): mid-body (previous byte 0xff), only jumped to from protection code (0x401fa5)"
+0x58fd90,game,UNK-game,CHudColours,plugin-sdk name CHudColours (plugin_sa/game_sa/CHudColours.cpp); refs=J
 0x590869,excluded:mis-split,,,"SecuROM re-entry point inside 0x590860 (CLoadingScreen::DoPCTitleFadeIn): mid-body (previous byte 0xff), only jumped to from protection code (0x40646c)"
 0x590de0,game,UNK-game,,refs=I
 0x590df0,game,UNK-game,,refs=I
@@ -2638,6 +2657,7 @@ address,class,subsystem,name,evidence
 0x59d170,game,UNK-game,,refs=I
 0x59d180,game,UNK-game,,refs=I
 0x59e620,game,UNK-game,,refs=C
+0x59e640,game,UNK-game,,refs=J
 0x59ea00,game,STREAM,,"refs=C; subsystem from its 1 caller(s), all STREAM"
 0x59ea20,game,UNK-game,,no static reference found (dead code or reached through a computed pointer)
 0x59eab0,game,WORLD,,"refs=C; subsystem from its 1 caller(s), all WORLD"
@@ -2674,6 +2694,7 @@ address,class,subsystem,name,evidence
 0x5a4037,excluded:mis-split,,,"SecuROM re-entry point inside 0x5a3f70 (ProcObjectMan_c::ProcessTriangleRemoved): mid-body (previous byte 0xff), only jumped to from protection code (0x4037c6)"
 0x5a40e0,game,UNK-game,,refs=C
 0x5a40f0,game,UNK-game,,refs=D
+0x5a4140,game,UNK-game,,refs=J
 0x5a47e0,game,UNK-game,,refs=I
 0x5a5747,excluded:mis-split,,,"SecuROM re-entry point inside 0x5a5730 (CClothesBuilder::CopyTexture): mid-body (previous byte 0xff), only jumped to from protection code (0x407edf)"
 0x5a6db0,game,UNK-game,COctTree,plugin-sdk name COctTree (plugin_sa/game_sa/COctTree.cpp); refs=C
@@ -2685,6 +2706,7 @@ address,class,subsystem,name,evidence
 0x5a72b0,game,UNK-game,,no static reference found (dead code or reached through a computed pointer)
 0x5a7350,game,UNK-game,,refs=CJ
 0x5a73c0,game,UNK-game,,refs=C
+0x5a7400,game,UNK-game,,refs=J
 0x5a7490,game,UNK-game,,refs=C
 0x5a74f0,game,UNK-game,COctTree::RemoveChildren,plugin-sdk name COctTree::RemoveChildren (plugin_sa/game_sa/COctTree.cpp); refs=CJ
 0x5a7570,game,UNK-game,COctTreeBase,plugin-sdk name COctTreeBase (plugin_sa/game_sa/COctTreeBase.cpp); refs=C
@@ -2811,6 +2833,7 @@ address,class,subsystem,name,evidence
 0x5c8690,game,UNK-game,,refs=C
 0x5c87e0,game,UNK-game,,refs=C
 0x5c88f0,game,UNK-game,,refs=I
+0x5c8af0,game,UNK-game,,refs=J
 0x5c8b40,game,UNK-game,,refs=I
 0x5c8b60,game,UNK-game,,refs=I
 0x5c8b70,game,UNK-game,,refs=I
@@ -3177,11 +3200,17 @@ address,class,subsystem,name,evidence
 0x5f6400,game,AI,CEventPlayerCommandToGroupAttack::GetEventPriority,"slot 2 GetEventPriority declared by CEventPlayerCommandToGroupAttack, in the vtable of CEventPlayerCommandToGroupAttack 0x86c710 (layout from gta-reversed headers, validated); refs=D"
 0x5f6410,game,UNK-game,,refs=D
 0x5f6450,game,UNK-game,,refs=C
+0x5f6460,game,UNK-game,,refs=J
 0x5f6480,game,UNK-game,,refs=C
+0x5f6490,game,UNK-game,,refs=J
 0x5f64b0,game,UNK-game,,refs=C
+0x5f64c0,game,UNK-game,,refs=J
 0x5f64e0,game,UNK-game,,refs=C
+0x5f64f0,game,UNK-game,,refs=J
 0x5f6510,game,UNK-game,,refs=C
+0x5f6520,game,UNK-game,,refs=J
 0x5f6540,game,UNK-game,,refs=C
+0x5f6550,game,UNK-game,,refs=J
 0x5f65a0,game,AI,,"refs=C; subsystem from its 3 caller(s), all AI"
 0x5f6660,game,UNK-game,,no static reference found (dead code or reached through a computed pointer)
 0x5f6680,game,UNK-game,,refs=D
@@ -4570,6 +4599,7 @@ address,class,subsystem,name,evidence
 0x6c0560,game,VEH,CBmx::vfunc_41,slot 41 of CBmx vtable 0x871528 (gta-reversed RH_ScopedVirtualClass); refs=D
 0x6c0570,game,VEH,CBmx::vfunc_0,slot 0 of CBmx vtable 0x871528 (gta-reversed RH_ScopedVirtualClass); refs=D
 0x6c2740,game,UNK-game,,refs=C
+0x6c2b80,game,UNK-game,,refs=J
 0x6c34e6,excluded:mis-split,,,"SecuROM re-entry point inside 0x6c34e0 (cBuoyancy::AddSplashParticles): mid-body (previous byte 0xff), only jumped to from protection code (0x401c89)"
 0x6c4130,game,VEH,,"refs=C; subsystem from its 1 caller(s), all VEH"
 0x6c4190,game,UNK-game,CHeli,plugin-sdk name CHeli (plugin_sa/game_sa/CHeli.cpp); refs=C
@@ -4668,6 +4698,7 @@ address,class,subsystem,name,evidence
 0x6e9d75,excluded:mis-split,,,"SecuROM re-entry point inside 0x6e9d70 (CWaterLevel::FindNearestWaterAndItsFlow): mid-body (previous byte 0xff), only jumped to from protection code (0x406b39)"
 0x6ea8a0,game,UNK-game,,refs=C
 0x6ea9f5,excluded:mis-split,,,"SecuROM re-entry point inside 0x6ea9f0 (CWaterLevel::SetUpWaterFog): mid-body (previous byte 0xff), only jumped to from protection code (0x403afe)"
+0x6eab50,game,RENDER,,"refs=J; subsystem from its 1 caller(s), all RENDER"
 0x6eaba0,game,POP,,"refs=C; subsystem from its 1 caller(s), all POP"
 0x6ebec5,excluded:mis-split,,,"SecuROM re-entry point inside 0x6ebec0 (CWaterLevel::RenderFlatWaterRectangle): mid-body (previous byte 0xff), only jumped to from protection code (0x4010cf)"
 0x6ecf0a,excluded:mis-split,,,"SecuROM re-entry point inside 0x6ecf00 (CWaterLevel::SplitWaterTriangleAlongXLine): mid-body (previous byte 0xff), only jumped to from protection code (0x404ca7)"
@@ -4769,6 +4800,7 @@ address,class,subsystem,name,evidence
 0x728b10,game,UNK-game,,refs=I
 0x728b30,game,UNK-game,,refs=I
 0x729b7b,excluded:mis-split,,,"SecuROM re-entry point inside 0x729b60 (CAutomobile::FireTruckControl): mid-body (previous byte 0xff), only jumped to from protection code (0x407298)"
+0x72a400,game,UNK-game,,refs=J
 0x72a4f5,excluded:mis-split,,,"SecuROM re-entry point inside 0x72a4f0 (CWeather::ForceWeatherNow): mid-body (previous byte 0xff), only jumped to from protection code (0x40215c)"
 0x72a620,game,UNK-game,,refs=C
 0x72caf9,excluded:mis-split,,,"SecuROM re-entry point inside 0x72cae0 (known function): mid-body (previous byte 0xff), only jumped to from protection code (0x401517)"
@@ -4784,6 +4816,7 @@ address,class,subsystem,name,evidence
 0x72e3a0,game,UNK-game,,no static reference found (dead code or reached through a computed pointer)
 0x72e570,game,STREAM,,"refs=C; subsystem from its 1 caller(s), all STREAM"
 0x72e620,game,STREAM,,"refs=C; subsystem from its 1 caller(s), all STREAM"
+0x72e860,game,UNK-game,,refs=J
 0x72e870,game,UNK-game,,refs=C
 0x72ec60,game,UNK-game,,no static reference found (dead code or reached through a computed pointer)
 0x72ec80,game,UNK-game,,refs=C
@@ -6694,6 +6727,7 @@ address,class,subsystem,name,evidence
 0x819520,excluded:thirdparty:quicktime-qtml,,,quicktime strings: 'QuickTime.qts' | '_CallComponent' | '_CallComponentFunctionWithStorage'; block 0x818430-0x81e406
 0x8195c0,excluded:thirdparty:quicktime-qtml,,,quicktime strings: 'QuickTime.qts' | '_CallComponent' | '_CallComponentFunctionWithStorage'; block 0x818430-0x81e406
 0x819700,excluded:thirdparty:quicktime-qtml,,,quicktime strings: '_CallComponent' | '_CallComponentFunctionWithStorage' | 'theQuickTimeDispatcher'; block 0x818430-0x81e406
+0x819770,excluded:thirdparty:quicktime-qtml,,,call-graph/vtable component linked to identified functions; block 0x818430-0x81e406
 0x819820,excluded:thirdparty:quicktime-qtml,,,link order only: inside contiguous block between identified functions 0x819700 and 0x81dae0; refs=C; block 0x818430-0x81e406
 0x819840,excluded:thirdparty:quicktime-qtml,,,link order only: inside contiguous block between identified functions 0x819700 and 0x81dae0; refs=C; block 0x818430-0x81e406
 0x819860,excluded:thirdparty:quicktime-qtml,,,link order only: inside contiguous block between identified functions 0x819700 and 0x81dae0; refs=C; block 0x818430-0x81e406

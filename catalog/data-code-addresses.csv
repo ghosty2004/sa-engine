@@ -905,7 +905,7 @@ address,kind,evidence
 0x815c20,code-immediate,immediate at 0x815ede in 0x815e60
 0x8160a0,code-immediate,immediate at 0x815ece in 0x815e60
 0x816120,code-immediate,immediate at 0x815f54 in 0x815e60
-0x8194d0,fnptr-variable,slot 0x8e2a0c of table 0x8e2a0c (+2 more slots)
+0x8194d0,fnptr-table-unreferenced,slot 0x8e2a0c of table 0x8e2a08 (+2 more slots)
 0x819700,code-immediate,immediate at 0x8197df in 0x4f2fb0
 0x826450,code-immediate,immediate at 0x80a294 in 0x80a240
 0x848f10,crt-init:__xc,slot 0x8a4008 of table 0x8a4004

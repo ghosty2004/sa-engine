@@ -560,6 +560,7 @@ address,name,role,subsystem,source,confidence,evidence
 0x4da510,sub_4da510_from_CAEPedAudioEntity__HandlePedHit,,,hint-caller,low,only caller 0x4e1cc0 CAEPedAudioEntity::HandlePedHit
 0x4dbf60,CAECutsceneTrackManager::CheckForPause,,AUDIO,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Audio/Managers/AECutsceneTrackManager.cpp:166
 0x4dc0e0,CAECutsceneTrackManager::PreloadCutsceneTrack,,AUDIO,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Audio/Managers/AECutsceneTrackManager.cpp:146
+0x4dc2a0,sub_4dc2a0_from_CAEVorbisDecoder__CloseCallback,,,hint-caller,low,only caller 0x5025d0 CAEVorbisDecoder::CloseCallback
 0x4defe0,sub_4defe0_from_CAEGlobalWeaponAudioEntity__ServiceAmbientGunFir,,,hint-caller,low,only caller 0x4df210 CAEGlobalWeaponAudioEntity::ServiceAmbientGunFire
 0x4dfb60,sub_4dfb60_from_CAEMP3BankLoader__Initialise,,,hint-caller,low,only caller 0x4e08f0 CAEMP3BankLoader::Initialise
 0x4e0380,CAEMP3BankLoader::GetLoopOffset,,AUDIO,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Audio/Loaders/AEMP3BankLoader.cpp:97
@@ -568,15 +569,18 @@ address,name,role,subsystem,source,confidence,evidence
 0x4e6aa0,CAEPedWeaponAudioEntity::Initialise,,AUDIO,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Audio/Entities/AEPedWeaponAudioEntity.cpp:11
 0x4e6ac0,CAEPedWeaponAudioEntity::Terminate,,AUDIO,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Audio/Entities/AEPedWeaponAudioEntity.cpp:18
 0x4e6ae0,CAEPedWeaponAudioEntity::Service,,AUDIO,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Audio/Entities/AEPedWeaponAudioEntity.cpp:57
+0x4e7850,sub_4e7850_from_CAEUserRadioTrackManager__Shutdown,,,hint-caller,low,only caller 0x4f2fb0 CAEUserRadioTrackManager::Shutdown
 0x4e7990,sub_4e7990_from_CAEMFDecoder__Initialise,,,hint-caller,low,only caller 0x4e7cb0 CAEMFDecoder::Initialise
 0x4e7a80,sub_4e7a80_from_CAEMFDecoder__Initialise,,,hint-caller,low,only caller 0x4e7cb0 CAEMFDecoder::Initialise
 0x4e7c50,CAEMFDecoder::~CAEMFDecoder,,AUDIO,vtable-class,high,slot 6 of vtable 0x85f370; class CAEMFDecoder: constructor CAEMFDecoder::Constructor 0x4e7770 installs it at 0x4e7785 (last of 1 vtable stores); layout of CAEMFDecoder from gta-reversed headers (8 slots = table)
 0x4e7f20,CPad::IsRadioTrackSkipPressed,,INPUT,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Pad.h:325
 0x4eea80,approxEqual,,,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/common.h:216
 0x4efd30,CAESoundManager::CAESoundManager,,AUDIO,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Audio/Managers/AESoundManager.h:39
+0x4efd60,CAESoundManager::~CAESoundManager,,AUDIO,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Audio/Managers/AESoundManager.h:40
 0x4f0b10,sub_4f0b10_from_CAEAudioHardware__Initialise,,,hint-caller,low,only caller 0x4d9930 CAEAudioHardware::Initialise
 0x4f0b50,sub_4f0b50_from_CAEAudioChannel___CAEAudioChannel,,,hint-caller,low,only caller 0x4f1020 CAEAudioChannel::~CAEAudioChannel
 0x4f11d0,CAEStreamThread::CAEStreamThread,,AUDIO,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Audio/AEStreamThread.h:37
+0x4f11e0,CAEStreamThread::~CAEStreamThread,,AUDIO,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Audio/AEStreamThread.cpp:29
 0x4f2860,CAEStreamingDecoder::~CAEStreamingDecoder,,AUDIO,vtable-class,high,slot 6 of vtable 0x85f418; class CAEStreamingDecoder: constructor CAEStreamingDecoder::Constructor 0x4f2810 installs it at 0x4f2819 (last of 1 vtable stores); layout of CAEStreamingDecoder from gta-reversed headers (8 slots = table)
 0x4f2930,CAETwinLoopSoundEntity::StopSound,,AUDIO,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Audio/Entities/AETwinLoopSoundEntity.cpp:104
 0x4f2b80,CAETwinLoopSoundEntity::~CAETwinLoopSoundEntity,,AUDIO,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Audio/Entities/AETwinLoopSoundEntity.cpp:29
@@ -593,6 +597,7 @@ address,name,role,subsystem,source,confidence,evidence
 0x507400,CAudioEngine::StopPoliceScanner,,AUDIO,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Audio/AudioEngine.cpp:584
 0x5074b0,CAEExplosionAudioEntity::CAEExplosionAudioEntity,,AUDIO,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Audio/Entities/AEExplosionAudioEntity.cpp:11
 0x509810,CHandShaker::~CHandShaker,,CAM,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/HandShaker.h:21
+0x509840,CPad::IsLeftShockPressed,,INPUT,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Pad.h:285
 0x509a30,IsLampPost,,,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Cam.cpp:1204
 0x509c50,CCam::ClipBeta,,CAM,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Cam.cpp:508
 0x509ca0,sub_509ca0_from_CCam__LookRight,,,hint-caller,low,only caller 0x520e40 CCam::LookRight
@@ -1378,6 +1383,7 @@ address,name,role,subsystem,source,confidence,evidence
 0x6bf9d0,CBmx::~CBmx,,VEH,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Entity/Vehicle/Bmx.cpp:61
 0x6c0560,CBmx::BlowUpCar,,VEH,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Entity/Vehicle/Bmx.cpp:145
 0x6c2740,cBuoyancy::cBuoyancy,,PHYS,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Buoyancy.h:70
+0x6c2b80,cBuoyancy::~cBuoyancy,,PHYS,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Buoyancy.h:71
 0x6c4130,sub_6c4130_from_CPlane__DoPlaneGenerationAndRemoval,,,hint-caller,low,only caller 0x6cd2f0 CPlane::DoPlaneGenerationAndRemoval
 0x6c4340,CHeli::~CHeli,,VEH,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Entity/Vehicle/Heli.cpp:76
 0x6c4550,CHeli::SetupDamageAfterLoad,,VEH,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Entity/Vehicle/Heli.cpp:331
@@ -1410,6 +1416,7 @@ address,name,role,subsystem,source,confidence,evidence
 0x6e8780,sub_6e8780_from_CWaterLevel__RenderHighDetailWaterTriangle,,,hint-caller,low,only caller 0x6eddc0 CWaterLevel::RenderHighDetailWaterTriangle-
 0x6e91d0,sub_6e91d0_from_CWaterLevel__RenderHighDetailWaterRectangle,,,hint-caller,low,only caller 0x6eb810 CWaterLevel::RenderHighDetailWaterRectangle
 0x6ea8a0,sub_6ea8a0_from_CWaterLevel__GetWaterDepth,,,hint-caller,low,only caller 0x6ea960 CWaterLevel::GetWaterDepth
+0x6eab50,CWaterLevel::HandleBeachToysStuff,,RENDER,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/WaterLevel.cpp:984
 0x6eaba0,CWaterLevel::CreateBeachToy,,RENDER,src-wrapper,medium,src-wrapper plugin-sdk:plugin_sa/game_sa/CWaterLevel.cpp:37; plugin-sdk only
 0x6fba20,sub_6fba20_from_CCoronas__RenderSunReflection,,,hint-caller,low,only caller 0x6fbaa0 CCoronas::RenderSunReflection
 0x6fe260,RoadsignGetLineAndRow,,,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/CustomRoadsignMgr.cpp:384
@@ -1441,12 +1448,14 @@ address,name,role,subsystem,source,confidence,evidence
 0x728ab0,CAEWaterCannonAudioEntity::~CAEWaterCannonAudioEntity,,AUDIO,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Audio/Entities/AEWaterCannonAudioEntity.cpp:12
 0x728b10,CWaterCannon::CWaterCannon,,WEAPON,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/WaterCannon.h:24
 0x728b30,CWaterCannon::~CWaterCannon,,WEAPON,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/WaterCannon.h:25
+0x72a400,CAEWeatherAudioEntity::~CAEWeatherAudioEntity,,AUDIO,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Audio/Entities/AEWeatherAudioEntity.h:19
 0x72a620,CAEWeatherAudioEntity::CAEWeatherAudioEntity,,AUDIO,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Audio/Entities/AEWeatherAudioEntity.cpp:24
 0x72cae0,CWorldScan::ScanWorld,,,src-wrapper,high,src-wrapper gta-reversed:source/game_sa/Renderer.cpp:61
 0x72d5e0,CWorldScan::SetExtraRectangleToScan,,,src-wrapper,high,src-wrapper gta-reversed:source/game_sa/Renderer.cpp:66
 0x72d6d0,sub_72d6d0_from_CCamera__CamControl,,,hint-caller,low,only caller 0x527fa0 CCamera::CamControl
 0x72e570,RpClumpGtaStreamRead1,,,src-wrapper,high,src-wrapper gta-reversed:source/game_sa/RenderWare/rw/rwtexdict.cpp:29
 0x72e620,RpClumpGtaStreamRead2,,,src-wrapper,high,src-wrapper gta-reversed:source/game_sa/RenderWare/rw/rwtexdict.cpp:33
+0x72e860,CMemoryHeap::CMemoryHeap,,,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Memory/MemoryHeap.cpp:26
 0x72e8e0,CMemoryHeap::IntegrityCheck,,,src-wrapper,high,src-wrapper gta-reversed:source/game_sa/Memory/MemoryHeap.cpp:330; gta-reversed:source/game_sa/Memory/MemoryHeap.cpp:329
 0x72ec60,CMemoryHeap::Shutdown,,,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Memory/MemoryHeap.cpp:78
 0x72ec80,CMemoryHeap::FillInBlockData,,,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Memory/MemoryHeap.cpp:236

@@ -1545,9 +1545,9 @@ def load_coverage():
 
 
 def audio_exclusions():
-    """AUDIO-GEN's scope (`tools/gen/audio_patterns.py`): the sound output/decoding classes it leaves
-    original, its excluded and ported-unhooked addresses and its skips (read from the script's source
-    without importing it)."""
+    """AUDIO-GEN's scope (`tools/gen/audio_patterns.py`): its excluded and ported-unhooked addresses and its
+    skips (read from the script's source without importing it), and the classes / addresses that stay original by
+    design (`catalog/stays-original.csv`, shared with audio_patterns.py and frontier.py)."""
     import ast
     path = os.path.join(ROOT, 'tools', 'gen', 'audio_patterns.py')
     addrs, cls = set(), None
@@ -1560,8 +1560,12 @@ def audio_exclusions():
         if k in ('EXCLUDE_ADDR', 'PORTED_UNHOOKED', 'SKIP'):
             v = ast.literal_eval(node.value)
             addrs |= set(v)
-        elif k == 'EXCLUDE_CLASS':
-            cls = re.compile(ast.literal_eval(node.value.args[0]))
+    # the classes and addresses that stay original by design (catalog/stays-original.csv, tools/lib/stays_original.py)
+    sys.path.insert(0, os.path.join(ROOT, 'tools', 'lib'))
+    import stays_original
+    keep_addrs, keep_classes = stays_original.load()
+    addrs |= set(keep_addrs)
+    cls = re.compile('^(?:%s)$' % '|'.join(re.escape(c) for c in sorted(keep_classes))) if keep_classes else None
     return addrs, cls
 
 

@@ -1388,7 +1388,7 @@ value,source,slot_or_sites,verdict,kind,evidence
 0x4c5454,.rdata,0x874b34,rejected,,inside the body of 0x4c5440
 0x4c554d,.data,0x8c84a8,rejected,,inside the body of 0x4c5540
 0x4c554f,.rdata,0x86d240,rejected,,inside the body of 0x4c5540
-0x4c5846,.rdata,0x865494,rejected,,inside the body of 0x856230
+0x4c5846,.rdata,0x865494,rejected,,inside the body of 0x4c5840
 0x4c5a4e,.rdata,0x88ce7c,rejected,,inside the body of 0x4c5a20
 0x4c5a4e,.rdata,0x88ce84,rejected,,inside the body of 0x4c5a20
 0x4c5f45,.rdata,0x86a144,rejected,,not 16-byte aligned
@@ -4870,9 +4870,9 @@ value,source,slot_or_sites,verdict,kind,evidence
 0x817530,.rdata,0x885860,rejected,,decodes hlt at 0x817540
 0x8175e0,.rdata,0x885a68,rejected,single,"not preceded by padding, ret or a switch table (byte 0x00); in table 0x885a68 with too few catalogue / plausible members"
 0x817a97,_TEXT_HA,0xcadf00,rejected,,not 16-byte aligned
-0x8194d0,.data,0x8e2a0c,catalogue,fnptr-variable,table 0x8e2a0c
-0x8194d0,.data,0x8e2a10,catalogue,fnptr-variable,table 0x8e2a10
-0x8194d0,.data,0x8e2a14,catalogue,fnptr-variable,table 0x8e2a14
+0x8194d0,.data,0x8e2a0c,catalogue,fnptr-table-unreferenced,table 0x8e2a08
+0x8194d0,.data,0x8e2a10,catalogue,fnptr-table-unreferenced,table 0x8e2a08
+0x8194d0,.data,0x8e2a14,catalogue,fnptr-table-unreferenced,table 0x8e2a08
 0x81ffff,.data,0x8c8918,rejected,,inside the body of 0x81f360
 0x82000a,.rdata,0x8627e8,rejected,,inside the body of 0x81f360
 0x82000a,.rdata,0x86280c,rejected,,inside the body of 0x81f360

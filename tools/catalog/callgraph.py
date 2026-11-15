@@ -361,6 +361,33 @@ def mem_is_abs(op):
     return op.type == X.X86_OP_MEM and op.mem.base == 0 and op.mem.segment in (0, X.X86_REG_DS)
 
 
+
+def split_tail_target(im, a, site, t, ranges, entries, own):
+    """CAT-12 (FRONTIER-2 turn 2): is the `jmp t` at `site`, whose target lies inside the jumper's own body
+    ranges, a tail jump into a separate function that Ghidra merged into the jumper's extent? Ghidra follows an
+    unconditional jump into code that is not a function yet and adds the target's block to the jumper's body
+    (the `__dtor_` / `__init_` stubs and their bodies, `jmp`-chained helpers), so the target never shows up as a
+    call target and `gaps` never catalogued it. A target qualifies when it starts a body range of its own (not
+    the jump's), sits at a 16-byte boundary after padding or a `ret` (an MSVC function start), and is away from
+    the jumper: before its entry, or another catalogued entry lies between the jump and the target. The jump itself
+    must be in the range that holds the jumper's entry (`own`: the entry and its .HOODLUM body): a no-CD protection
+    fragment Ghidra counts into the body jumps back into the middle of the function, which is not a tail jump (a
+    target reached only from a split-off target is found on the next pass, from its own body). In-function jumps
+    over alignment padding (to the next range of the same body) fail the distance test."""
+    if t % 16 or im.rd(t - 1, 1)[0] not in (0x90, 0xCC, 0xC3):
+        return False
+    rt = [r for r in ranges if r[0] == t]
+    if not rt or any(lo <= site < hi for lo, hi in rt):
+        return False
+    if not any(lo <= site < hi and any(lo <= e < hi for e in own) for lo, hi in ranges):
+        return False
+    if t < a:
+        return True
+    lo_, hi_ = min(site, t), max(site, t)
+    i0, i1 = bisect.bisect_right(entries, lo_), bisect.bisect_right(entries, hi_)
+    return any(e != a for e in entries[i0:i1])
+
+
 def build(cat):
     im = Image(EXE)
     procs = load_procs(cat)
@@ -526,6 +553,10 @@ def build(cat):
                     n_direct += 1
                     c = canon(t)
                     edge(a, c, 'call', cls_of(c), name_of(c))
+                elif inbody(t) and t not in procs and t not in dump \
+                        and split_tail_target(im, a, ins.address, t, f.ranges, entries, {a, f.hood} - {None}):
+                    stats['split_tail_targets'] += 1
+                    edge(a, t, 'tailcall', cls_of(t), name_of(t))
                 elif not inbody(t):
                     if t in procs or t in dump:
                         c = canon(t)

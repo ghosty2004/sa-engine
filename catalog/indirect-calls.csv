@@ -119,8 +119,8 @@ function,site,instruction,resolution,detail
 0x4342a0,0x43439d,call dword ptr [eax + 0x38],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x38]), slot 14, object type not known statically"
 0x438370,0x43837f,jmp ecx,unresolved-computed-jump,
 0x438480,0x43857f,call eax,ghidra-constant-propagation,0x438890
-0x438e40,0x438e12,jmp dword ptr [edx + 0xc8],unresolved-computed-jump,
-0x438e40,0x438e37,jmp dword ptr [edx + 0xc8],unresolved-computed-jump,
+0x438d60,0x438e12,jmp dword ptr [edx + 0xc8],unresolved-computed-jump,
+0x438d60,0x438e37,jmp dword ptr [edx + 0xc8],unresolved-computed-jump,
 0x439d80,0x439db6,call dword ptr [edx + 0xa4],unresolved,"virtual call pattern (mov r,[obj]; call [r+0xa4]), slot 41, object type not known statically"
 0x43a570,0x43a640,call dword ptr [edx + 0xf4],unresolved,"virtual call pattern (mov r,[obj]; call [r+0xf4]), slot 61, object type not known statically"
 0x43a870,0x156a862,call eax,ghidra-constant-propagation,0xcb73e0

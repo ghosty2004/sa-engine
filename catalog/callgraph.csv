@@ -1613,8 +1613,10 @@ caller,callee,kind,callee_class,callee_name,sites
 0x438b30,0x40ea10,call,game,CStreaming::LoadAllRequestedModels,1
 0x438b30,0x56e210,call,game,CWorld::FindPlayerPed,15
 0x438b30,0x5e6080,call,game,CPed::GiveWeapon-,14
-0x438e40,0x56e0d0,call,game,CWorld::FindPlayerVehicle,9
-0x438e40,0x56e210,call,game,CWorld::FindPlayerPed,2
+0x438d60,0x56e0d0,call,game,CWorld::FindPlayerVehicle,9
+0x438d60,0x56e210,call,game,CWorld::FindPlayerPed,1
+0x438e40,0x56e210,call,game,CWorld::FindPlayerPed,1
+0x438e40,0x438d60,tailcall,game,CCheat::HealthCheat,1
 0x438e90,0x56e210,call,game,CWorld::FindPlayerPed,5
 0x438e90,0x609f50,call,game,CPlayerPed::CheatWantedLevel,3
 0x438f20,0x56e210,call,game,CWorld::FindPlayerPed,1
@@ -2781,6 +2783,8 @@ caller,callee,kind,callee_class,callee_name,sites
 0x4541e0,0x821d30,call,excluded:crt,`eh_vector_constructor_iterator',1
 0x4541e0,0x453fa0,fnref,game,(missed by ghidra: data-code-immediate),1
 0x4541e0,0x453fb0,fnref,game,(missed by ghidra: data-code-immediate),1
+0x454200,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
+0x454200,0x453fb0,fnref,game,(missed by ghidra: data-code-immediate),1
 0x454960,0x821b40,call,excluded:crt,FUN_00821b40,3
 0x454ac0,0x743c60,call,game,CWeaponInfo::GetWeaponInfo-original,1
 0x454ae0,,indirect-unresolved,,,1
@@ -4218,7 +4222,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x472310,0x6433e0,call,game,CTaskComplexDrivePointRoute::Constructor,1
 0x472310,0x668120,call,game,CTaskComplexGoToPointAndStandStill::Constructor,1
 0x472310,0x66c450,call,game,CTaskSimpleSlideToCoord::Constructor-Anim,2
-0x472310,0x674930,call,game,FUN_00674930,1
+0x472310,0x674930,call,game,CTaskComplexFollowPatrolRoute::Constructor,1
 0x472310,0x681740,call,game,CTaskManager::FindActiveTaskByType,2
 0x472310,0x6819d0,call,game,CTaskManager::GetSimplestActiveTask,2
 0x472310,0x684210,call,game,CTaskComplexPartnerGreet::Constructor,2
@@ -5853,7 +5857,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x496e00,0x492f60,eh-unwind,game,FUN_00492f60,2
 0x496e00,0x61a5b0,eh-unwind,game,CTask::operator delete,15
 0x4993d0,0x66f450,call,game,CTaskComplexWander::Constructor,1
-0x499440,0x4993d0,call,game,thunk_FUN_0156e930,1
+0x499440,0x4993d0,call,game,CTaskComplexBeCop::Constructor,1
 0x499440,0x61a5a0,call,game,CTask::operator new,1
 0x499440,0x61a5b0,eh-unwind,game,CTask::operator delete,1
 0x499440,,indirect-unresolved,,,1
@@ -5879,7 +5883,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x499a80,0x40fec0,call,game,FUN_0040fec0,4
 0x499a80,0x41be60,call,game,CPlayerPed::GetWantedLevel,7
 0x499a80,0x41c070,call,game,CCarAI::AddPoliceCarOccupants,5
-0x499a80,0x4993d0,call,game,thunk_FUN_0156e930,3
+0x499a80,0x4993d0,call,game,CTaskComplexBeCop::Constructor,3
 0x499a80,0x499690,call,game,CSetPiece::TryToGenerateCopPed,3
 0x499a80,0x4997a0,call,game,CSetPiece::GetSpawnCoord1,7
 0x499a80,0x4997e0,call,game,CSetPiece::GetSpawnCoord2,4
@@ -6692,7 +6696,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x4a93b0,0x4a8df0,tailcall,game,FUN_004a8df0,1
 0x4a93c0,0x4a8e70,call,game,FUN_004a8e70,1
 0x4a9400,0x4a8ec0,call,game,FUN_004a8ec0,1
-0x4a9400,0x4a9010,call,game,FUN_004a9010,1
+0x4a9400,0x4a9010,call,game,List_c::GetItemOffset,1
 0x4a9400,0x4aa1b0,call,game,FxSystemBP_c::FreePrtFromSystem,1
 0x4a9400,0x821b1e,call,excluded:crt,_rand,1
 0x4a9470,0x4a8dd0,call,game,FUN_004a8dd0,3
@@ -7722,32 +7726,32 @@ caller,callee,kind,callee_class,callee_name,sites
 0x4b5ef0,0x4ae3c0,call,game,FUN_004ae3c0,1
 0x4b5f40,0x4ae670,call,game,FUN_004ae670,1
 0x4b5f90,0x4ae7a0,call,game,FUN_004ae7a0,1
-0x4b5fe0,0x4aea50,call,game,FUN_004aea50,1
+0x4b5fe0,0x4aea50,call,game,CEventVehicleHitAndRun::Destructor,1
 0x4b6030,0x4aeb90,call,game,FUN_004aeb90,1
-0x4b6080,0x4aeca0,call,game,FUN_004aeca0,1
+0x4b6080,0x4aeca0,call,game,CEventRevive::Destructor,1
 0x4b60d0,0x4aed60,call,game,FUN_004aed60,1
 0x4b6120,0x4aeea0,call,game,FUN_004aeea0,1
-0x4b6170,0x4af0a0,call,game,FUN_004af0a0,1
+0x4b6170,0x4af0a0,call,game,CEventSexyVehicle::Destructor,1
 0x4b61c0,0x4af1c0,call,game,CEventPedToChase::~CEventPedToChase,1
 0x4b6210,0x4af2d0,call,game,CEventPedToFlee::~CEventPedToFlee,1
 0x4b6260,0x4af400,call,game,FUN_004af400,1
 0x4b62b0,0x4af700,call,game,FUN_004af700,1
 0x4b6300,0x4af890,call,game,FUN_004af890,1
-0x4b6350,0x4afbf0,call,game,FUN_004afbf0,1
+0x4b6350,0x4afbf0,call,game,CEventVehicleThreat::Destructor,1
 0x4b63a0,0x4afe70,call,game,FUN_004afe70,1
 0x4b63f0,0x4b07b0,call,game,CEventGunAimedAt::~CEventGunAimedAt,1
 0x4b6440,0x4b0a50,call,game,FUN_004b0a50,1
 0x4b6490,0x4b5570,call,game,CEventPool::New,1
 0x4b6490,0x4b0aa0,virtual,game,CEventScriptCommand::CloneScriptTask,1
 0x4b64d0,0x4b0d00,call,game,FUN_004b0d00,1
-0x4b6520,0x4b0da0,call,game,FUN_004b0da0,1
+0x4b6520,0x4b0da0,call,game,CEventVehicleDied::Destructor,1
 0x4b6570,0x4b1170,call,game,FUN_004b1170,1
-0x4b65c0,0x4b1320,call,game,FUN_004b1320,1
+0x4b65c0,0x4b1320,call,game,CEventHitByWaterCannon::Destructor,1
 0x4b6610,0x4b13c0,call,game,FUN_004b13c0,1
 0x4b6660,0x4b1520,call,game,FUN_004b1520,1
 0x4b66b0,0x4b17f0,call,game,FUN_004b17f0,1
 0x4b6700,0x4b1990,call,game,FUN_004b1990,1
-0x4b6750,0x4b1b50,call,game,FUN_004b1b50,1
+0x4b6750,0x4b1b50,call,game,CEventSpecial::Destructor,1
 0x4b67a0,0x4b1c10,call,game,FUN_004b1c10,1
 0x4b67f0,0x4b1d50,call,game,FUN_004b1d50,1
 0x4b6840,0x4b1f00,call,game,CEventPotentialWalkIntoFire::Destructor,1
@@ -8762,6 +8766,20 @@ caller,callee,kind,callee_class,callee_name,sites
 0x4c57d0,0x4c54e0,call,game,C2dEffect::DestroyAtomic,1
 0x4c57d0,0x72f430,call,game,CMemoryMgr::Free,1
 0x4c57d0,0x7f3820,call,game,RwTextureDestroy,2
+0x4c5840,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
+0x4c5840,0x4c5590,fnref,game,CAtomicModelInfo::~CAtomicModelInfo,1
+0x4c5860,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
+0x4c5860,0x4c55d0,fnref,game,CDamageAtomicModelInfo::~CDamageAtomicModelInfo,1
+0x4c5880,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
+0x4c5880,0x4c5620,fnref,game,CLodAtomicModelInfo::~CLodAtomicModelInfo,1
+0x4c58a0,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
+0x4c58a0,0x4c5680,fnref,game,CTimeModelInfo::~CTimeModelInfo,1
+0x4c58c0,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
+0x4c58c0,0x4c56e0,fnref,game,CLodTimeModelInfo::~CLodTimeModelInfo,1
+0x4c58e0,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
+0x4c58e0,0x4c5790,fnref,game,CWeaponModelInfo::~CWeaponModelInfo,1
+0x4c5900,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
+0x4c5900,0x4c5750,fnref,game,CClumpModelInfo::~CClumpModelInfo,1
 0x4c5940,0x53cf30,call,game,CKeyGen::GetUppercaseKey-,1
 0x4c59f0,0x4c5940,call,game,CModelInfo::GetModelInfo-full,1
 0x4c5a20,0x53cf30,call,game,CKeyGen::GetUppercaseKey-,1
@@ -8820,6 +8838,10 @@ caller,callee,kind,callee_class,callee_name,sites
 0x4c62f0,0x4c5750,eh-unwind,game,CClumpModelInfo::~CClumpModelInfo,2
 0x4c6350,0x4c62f0,call,game,CPedModelInfo::~CPedModelInfo,1
 0x4c6350,0x8214bd,call,game,_free,1
+0x4c6370,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
+0x4c6370,0x4c5920,fnref,game,CVehicleModelInfo::~CVehicleModelInfo,1
+0x4c6390,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
+0x4c6390,0x4c62f0,fnref,game,CPedModelInfo::~CPedModelInfo,1
 0x4c63b0,0x4c4c20,call,game,CBaseModelInfo::Init2dEffects,1
 0x4c63e0,0x4c6200,call,game,FUN_004c6200,9
 0x4c63e0,0x72f430,call,game,CMemoryMgr::Free,1
@@ -9781,7 +9803,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x4d80b0,0x59bbc0,call,game,CMatrix::operator=,2
 0x4d80b0,0x59acd0,eh-unwind,game,CMatrix,2
 0x4d8340,0x4d80b0,tailcall,game,CAEAudioEnvironment::GetPositionRelativeToCamera-vec,2
-0x4d83a0,KERNEL32.dll!DeleteCriticalSection,import,import,KERNEL32.dll!DeleteCriticalSection,1
+0x4d83a0,0x4f11e0,tailcall,game,CAEStreamThread::~CAEStreamThread,1
 0x4d83e0,0x4f11d0,call,game,CAEStreamThread::CAEStreamThread,1
 0x4d8490,,indirect-unresolved,,,9
 0x4d8670,0x4dfb20,call,game,CAEBankLoader::Deconstructor,1
@@ -9964,6 +9986,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x4dc1c0,KERNEL32.dll!ReadFile,import,import,KERNEL32.dll!ReadFile,1
 0x4dc230,KERNEL32.dll!SetFilePointer,import,import,KERNEL32.dll!SetFilePointer,1
 0x4dc250,KERNEL32.dll!SetFilePointer,import,import,KERNEL32.dll!SetFilePointer,1
+0x4dc2a0,KERNEL32.dll!CloseHandle,import,import,KERNEL32.dll!CloseHandle,1
 0x4dc2b0,KERNEL32.dll!CreateFileA,import,import,KERNEL32.dll!CreateFileA,1
 0x4dc2b0,KERNEL32.dll!GetFileSize,import,import,KERNEL32.dll!GetFileSize,1
 0x4dc2b0,KERNEL32.dll!SetFilePointer,import,import,KERNEL32.dll!SetFilePointer,1
@@ -10418,6 +10441,8 @@ caller,callee,kind,callee_class,callee_name,sites
 0x4e77c0,0x819b20,call,excluded:thirdparty:quicktime-qtml,FUN_00819b20,1
 0x4e77c0,0x8214bd,call,game,_free,1
 0x4e77c0,0x4f2830,eh-unwind,game,CAEStreamingDecoder::Destructor,2
+0x4e7850,0x819840,call,excluded:thirdparty:quicktime-qtml,(missed by ghidra: cat7-call),1
+0x4e7850,0x819770,tailcall,excluded:thirdparty:quicktime-qtml,(missed by ghidra: cat7-call),1
 0x4e7860,0x818570,call,excluded:thirdparty:quicktime-qtml,FUN_00818570,1
 0x4e78e0,0x821b40,call,excluded:crt,FUN_00821b40,1
 0x4e7940,0x821b40,tailcall,excluded:crt,FUN_00821b40,1
@@ -10697,6 +10722,8 @@ caller,callee,kind,callee_class,callee_name,sites
 0x4efd30,0x821d30,call,excluded:crt,`eh_vector_constructor_iterator',1
 0x4efd30,0x446fe0,fnref,game,(missed by ghidra: data-code-immediate),1
 0x4efd30,0x4ef660,fnref,game,CAESound,1
+0x4efd60,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
+0x4efd60,0x4ef660,fnref,game,CAESound,1
 0x4efe50,0x4ef880,call,game,CAESound::SetPosition,1
 0x4efe50,0x571a00,call,game,CEntity::CleanUpOldReference-,1
 0x4eff50,0x4ef880,call,game,CAESound::SetPosition,1
@@ -10742,6 +10769,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x4f1040,,indirect-unresolved,,,3
 0x4f10d0,0x4d7bd0,call,game,CAEAudioChannel::UpdateStatus,1
 0x4f10d0,,indirect-unresolved,,,3
+0x4f11e0,KERNEL32.dll!DeleteCriticalSection,import,import,KERNEL32.dll!DeleteCriticalSection,1
 0x4f11f0,KERNEL32.dll!ResumeThread,import,import,KERNEL32.dll!ResumeThread,1
 0x4f1200,KERNEL32.dll!SuspendThread,import,import,KERNEL32.dll!SuspendThread,1
 0x4f1210,KERNEL32.dll!ResumeThread,import,import,KERNEL32.dll!ResumeThread,1
@@ -10857,17 +10885,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x4f2e90,0x4f2c10,call,game,CAETwinLoopSoundEntity::SwapSounds,1
 0x4f2fb0,0x502bf0,call,game,(missed by ghidra: cat7-call),1
 0x4f2fb0,0x72f430,call,game,CMemoryMgr::Free,1
-0x4f2fb0,0x8194c0,call,excluded:thirdparty:quicktime-qtml,(missed by ghidra: cat7-call),1
-0x4f2fb0,0x819840,call,excluded:thirdparty:quicktime-qtml,(missed by ghidra: cat7-call),1
-0x4f2fb0,0x8194d0,fnref,excluded:thirdparty:quicktime-qtml,(missed by ghidra: data-fnptr-variable),1
-0x4f2fb0,0x819700,fnref,excluded:thirdparty:quicktime-qtml,(missed by ghidra: data-code-immediate),1
-0x4f2fb0,KERNEL32.dll!CloseHandle,import,import,KERNEL32.dll!CloseHandle,1
-0x4f2fb0,KERNEL32.dll!CreateMutexA,import,import,KERNEL32.dll!CreateMutexA,1
-0x4f2fb0,KERNEL32.dll!FreeLibrary,import,import,KERNEL32.dll!FreeLibrary,1
-0x4f2fb0,KERNEL32.dll!GetCurrentProcessId,import,import,KERNEL32.dll!GetCurrentProcessId,1
-0x4f2fb0,KERNEL32.dll!ReleaseMutex,import,import,KERNEL32.dll!ReleaseMutex,1
-0x4f2fb0,KERNEL32.dll!WaitForSingleObject,import,import,KERNEL32.dll!WaitForSingleObject,1
-0x4f2fb0,USER32.dll!wsprintfA,import,import,USER32.dll!wsprintfA,1
+0x4f2fb0,0x4e7850,tailcall,game,(missed by ghidra: cat7-call),1
 0x4f2fd0,0x5387d0,call,game,CFileMgr::SetDir,1
 0x4f2fd0,0x538860,call,game,CFileMgr::SetDirMyDocuments,1
 0x4f2fd0,0x538900,call,game,CFileMgr::OpenFile,1
@@ -11428,7 +11446,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x5024d0,,indirect-unresolved,,,1
 0x502580,0x4dc1c0,call,game,CAEDataStream::FillBuffer,1
 0x5025b0,0x4dc250,call,game,CAEDataStream::Seek-OG,1
-0x5025d0,KERNEL32.dll!CloseHandle,import,import,KERNEL32.dll!CloseHandle,1
+0x5025d0,0x4dc2a0,tailcall,game,(missed by ghidra: cat7-call),1
 0x5025f0,0x4dc230,tailcall,game,CAEDataStream::GetCurrentPosition,1
 0x502610,0x81807a,call,excluded:linker-thunk,VORBISFILE.DLL::ov_time_total,1
 0x502610,0x821b40,tailcall,excluded:crt,FUN_00821b40,1
@@ -11616,6 +11634,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x506800,0x4ef660,eh-unwind,game,CAESound,2
 0x506b20,0x4ef660,call,game,CAESound,1
 0x506b20,0x4f2b80,call,game,CAETwinLoopSoundEntity::~CAETwinLoopSoundEntity,2
+0x506b90,0x4ef660,tailcall,game,CAESound,1
 0x506ba0,0x4ef660,call,game,CAESound,3
 0x506ba0,0x447000,eh-unwind,game,FUN_00447000,2
 0x506ba0,0x447050,eh-unwind,game,FUN_00447050,2
@@ -13836,6 +13855,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x53f530,0x53ef80,call,game,CControllerState::Clear,1
 0x53fa70,0x56e0d0,call,game,CWorld::FindPlayerVehicle,2
 0x53fa70,0x821b40,call,excluded:crt,FUN_00821b40,1
+0x53ff30,0x509840,tailcall,game,CPad::IsLeftShockPressed,1
 0x53ff30,0x53edc0,tailcall,game,CPad::IsLeftShoulder1Pressed,1
 0x53ff30,0x53ee20,tailcall,game,CPad::IsRightShoulder1Pressed,1
 0x53ffe0,0x53edc0,call,game,CPad::IsLeftShoulder1Pressed,1
@@ -16541,6 +16561,8 @@ caller,callee,kind,callee_class,callee_name,sites
 0x58fae0,0x6a0050,call,game,CText::Get,1
 0x58fae0,,indirect-unresolved,,,12
 0x58fae0,0x58ca50,tailcall,game,CHud::DrawBustedWastedMessage,1
+0x58fd90,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
+0x58fd90,0x43ce70,fnref,game,(missed by ghidra: data-code-immediate),1
 0x58fda0,0x821d30,call,excluded:crt,`eh_vector_constructor_iterator',1
 0x58fda0,0x43ce70,fnref,game,(missed by ghidra: data-code-immediate),1
 0x58fda0,0x463360,fnref,game,(missed by ghidra: data-code-immediate),1
@@ -16643,11 +16665,11 @@ caller,callee,kind,callee_class,callee_name,sites
 0x590ec0,0x4a8db0,call,game,ListItem_c::ListItem_c,1
 0x590ed0,0x4a8dc0,tailcall,game,FUN_004a8dc0,1
 0x590ee0,0x4a8ec0,call,game,FUN_004a8ec0,1
-0x590ee0,0x4a9010,call,game,FUN_004a9010,1
+0x590ee0,0x4a9010,call,game,List_c::GetItemOffset,1
 0x590ee0,0x821b1e,call,excluded:crt,_rand,2
 0x590ee0,0x821b40,call,excluded:crt,FUN_00821b40,2
 0x590fd0,0x4a8ec0,call,game,FUN_004a8ec0,1
-0x590fd0,0x4a9010,call,game,FUN_004a9010,1
+0x590fd0,0x4a9010,call,game,List_c::GetItemOffset,1
 0x590fd0,0x821b1e,call,excluded:crt,_rand,2
 0x590fd0,0x821b40,call,excluded:crt,FUN_00821b40,2
 0x5910b0,0x4a8eb0,call,game,FUN_004a8eb0,1
@@ -17123,6 +17145,8 @@ caller,callee,kind,callee_class,callee_name,sites
 0x59e620,0x821d30,call,excluded:crt,`eh_vector_constructor_iterator',1
 0x59e620,0x59d170,fnref,game,BreakObject_c::BreakObject_c,1
 0x59e620,0x59d180,fnref,game,(missed by ghidra: data-code-immediate),1
+0x59e640,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
+0x59e640,0x59d180,fnref,game,(missed by ghidra: data-code-immediate),1
 0x59e670,0x59e220,call,game,BreakObject_c::Update,1
 0x59e6a0,0x59e480,call,game,BreakObject_c::Render,1
 0x59e6a0,,indirect-unresolved,,,4
@@ -17473,6 +17497,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x5a40e0,0x59f660,tailcall,game,CObject,1
 0x5a40f0,0x5a1f20,call,game,delete,1
 0x5a40f0,0x5a40e0,call,game,FUN_005a40e0,1
+0x5a4140,0x5a7400,tailcall,game,(missed by ghidra: cat7-call),1
 0x5a4150,0x7cf600,call,game,RtPNGImageWrite,1
 0x5a4150,0x8026e0,call,game,RwImageCreate,1
 0x5a4150,0x802740,call,game,RwImageDestroy,1
@@ -17649,6 +17674,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x5a70f0,,indirect-unresolved,,,1
 0x5a7280,0x5a70f0,tailcall,game,COctTree::FillPalette,1
 0x5a72b0,0x8214bd,call,game,_free,2
+0x5a7400,0x5a6fc0,tailcall,game,COctTree::empty,1
 0x5a7490,0x5a6fc0,call,game,COctTree::empty,1
 0x5a74f0,0x5a6fc0,call,game,COctTree::empty,1
 0x5a75b0,0x5a6db0,call,game,COctTree,1
@@ -18039,7 +18065,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x5b40c0,0x4c7670,virtual-typed-override,game,CVehicleModelInfo::SetAnimFile,1
 0x5b41c0,0x8220ad,call,excluded:crt,_sscanf,1
 0x5b41f0,0x44d2d0,call,game,FUN_0044d2d0,1
-0x5b41f0,0x44d2e0,call,game,FUN_0044d2e0,1
+0x5b41f0,0x44d2e0,call,game,CPathFind::StoreDetachedNodeInfoPed,1
 0x5b41f0,0x821b40,call,excluded:crt,FUN_00821b40,8
 0x5b41f0,0x8220ad,call,excluded:crt,_sscanf,1
 0x5b4380,0x44d2c0,call,game,FUN_0044d2c0,1
@@ -18884,6 +18910,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x5c88f0,0x823674,call,excluded:crt,_fwrite,1
 0x5c88f0,0x823e86,call,excluded:crt,_fflush,1
 0x5c88f0,,indirect-unresolved,,,2
+0x5c8b40,0x5c8af0,tailcall,game,(missed by ghidra: cat7-call),1
 0x5c8b70,0x5cf940,call,game,FUN_005cf940,1
 0x5c8b70,,indirect-unresolved,,,3
 0x5c8e20,0x5c8b40,fnref,game,(missed by ghidra: data-code-immediate),1
@@ -20532,7 +20559,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x5ecf10,0x5eb2a0,call,game,FUN_005eb2a0,1
 0x5ecf10,0x5eb930,call,game,FUN_005eb930,2
 0x5ecf10,0x5ec070,call,game,FUN_005ec070,1
-0x5ecf10,0x5ecab0,call,game,FUN_005ecab0,1
+0x5ecf10,0x5ecab0,call,game,std::vector<CPed*>::_Xlen,1
 0x5ecf10,0x82119a,call,excluded:crt,operator_new,1
 0x5ecf10,0x8214bd,call,game,_free,1
 0x5ecf10,0x8214bd,eh-unwind,game,_free,1
@@ -20544,7 +20571,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x5ed1b0,0x5eb2e0,call,game,FUN_005eb2e0,1
 0x5ed1b0,0x5eb960,call,game,FUN_005eb960,2
 0x5ed1b0,0x5ec0e0,call,game,FUN_005ec0e0,1
-0x5ed1b0,0x5ecb30,call,game,FUN_005ecb30,1
+0x5ed1b0,0x5ecb30,call,game,std::vector<CPedTaskPair>::_Xlen,1
 0x5ed1b0,0x82119a,call,excluded:crt,operator_new,1
 0x5ed1b0,0x8214bd,call,game,_free,1
 0x5ed1b0,0x8214bd,eh-unwind,game,_free,1
@@ -20555,7 +20582,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x5ed4b0,0x5eb310,call,game,FUN_005eb310,1
 0x5ed4b0,0x5eb990,call,game,FUN_005eb990,2
 0x5ed4b0,0x5ec110,call,game,FUN_005ec110,1
-0x5ed4b0,0x5ecbb0,call,game,FUN_005ecbb0,1
+0x5ed4b0,0x5ecbb0,call,game,std::vector<CTask*>::_Xlen,1
 0x5ed4b0,0x82119a,call,excluded:crt,operator_new,1
 0x5ed4b0,0x8214bd,call,game,_free,1
 0x5ed750,0x5e9850,call,game,FUN_005e9850,1
@@ -20576,7 +20603,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x5eda50,0x5eb390,call,game,FUN_005eb390,1
 0x5eda50,0x5eba00,call,game,FUN_005eba00,2
 0x5eda50,0x5ec1b0,call,game,FUN_005ec1b0,1
-0x5eda50,0x5eccb0,call,game,FUN_005eccb0,1
+0x5eda50,0x5eccb0,call,game,std::vector<CPedAttractor*>::_Xlen,1
 0x5eda50,0x82119a,call,excluded:crt,operator_new,1
 0x5eda50,0x8214bd,call,game,_free,1
 0x5eda50,0x8214bd,eh-unwind,game,_free,1
@@ -20884,7 +20911,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x5f6370,0x4b5620,call,game,CEvent::operator new,1
 0x5f6370,0x4b5630,eh-unwind,game,CEvent::operator delete,1
 0x5f63d0,0x4b5630,call,game,CEvent::operator delete,1
-0x5f63d0,0x5f63f0,call,game,thunk_FUN_0040a472,1
+0x5f63d0,0x5f63f0,call,game,CEventPlayerCommandToGroupAttack::Destructor,1
 0x5f63f0,0x4b2470,tailcall,game,FUN_004b2470,1
 0x5f65a0,0x61abe0,call,game,CTaskSimpleRunTimedAnim::Constructor-2,1
 0x5f65e0,0x61a5a0,call,game,CTask::operator new,1
@@ -21512,7 +21539,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x5fef90,0x4b5620,call,game,CEvent::operator new,1
 0x5fef90,0x4b5630,eh-unwind,game,CEvent::operator delete,1
 0x5feff0,0x4b5630,call,game,CEvent::operator delete,1
-0x5feff0,0x5fef70,call,game,FUN_005fef70,1
+0x5feff0,0x5fef70,call,game,CEventScriptedAttractor::Destructor,1
 0x5ff030,0x4af890,tailcall,game,FUN_004af890,1
 0x5ff050,0x4af820,call,game,CEventAcquaintancePed::Constructor,1
 0x5ff050,0x4b5620,call,game,CEvent::operator new,1
@@ -21537,7 +21564,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x5ff2e0,0x5ff250,call,game,CEventAcquaintancePedHateBadlyLit::Constructor,1
 0x5ff2e0,0x4b5630,eh-unwind,game,CEvent::operator delete,1
 0x5ff360,0x4b5630,call,game,CEvent::operator delete,1
-0x5ff360,0x5ff2c0,call,game,FUN_005ff2c0,1
+0x5ff360,0x5ff2c0,call,game,CEventAcquaintancePedHateBadlyLit::Destructor,1
 0x5ff380,0x4af820,call,game,CEventAcquaintancePed::Constructor,1
 0x5ff3a0,0x4af890,tailcall,game,FUN_004af890,1
 0x5ff3c0,0x4af820,call,game,CEventAcquaintancePed::Constructor,1
@@ -21551,21 +21578,21 @@ caller,callee,kind,callee_class,callee_name,sites
 0x5ff490,0x4b5620,call,game,CEvent::operator new,1
 0x5ff490,0x4b5630,eh-unwind,game,CEvent::operator delete,1
 0x5ff4e0,0x4b5630,call,game,CEvent::operator delete,1
-0x5ff4e0,0x5ff460,call,game,thunk_FUN_00401a42,1
+0x5ff4e0,0x5ff460,call,game,CEventHealthLow::Destructor,1
 0x5ff500,0x4ac450,call,game,CEventEditableResponse::Constructor,1
 0x5ff520,0x4ac480,tailcall,game,CEventEditableResponse::~CEventEditableResponse,1
 0x5ff550,0x4ac450,call,game,CEventEditableResponse::Constructor,1
 0x5ff550,0x4b5620,call,game,CEvent::operator new,1
 0x5ff550,0x4b5630,eh-unwind,game,CEvent::operator delete,1
 0x5ff5a0,0x4b5630,call,game,CEvent::operator delete,1
-0x5ff5a0,0x5ff520,call,game,FUN_005ff520,1
+0x5ff5a0,0x5ff520,call,game,CEventHealthReallyLow::Destructor,1
 0x5ff5c0,0x4ac450,call,game,CEventEditableResponse::Constructor,1
 0x5ff5e0,0x4ac480,tailcall,game,CEventEditableResponse::~CEventEditableResponse,1
 0x5ff610,0x4ac450,call,game,CEventEditableResponse::Constructor,1
 0x5ff610,0x4b5620,call,game,CEvent::operator new,1
 0x5ff610,0x4b5630,eh-unwind,game,CEvent::operator delete,1
 0x5ff660,0x4b5630,call,game,CEvent::operator delete,1
-0x5ff660,0x5ff5e0,call,game,FUN_005ff5e0,1
+0x5ff660,0x5ff5e0,call,game,CEventLowAngerAtPlayer::Destructor,1
 0x5ff680,0x4ac450,call,game,CEventEditableResponse::Constructor,1
 0x5ff6a0,0x4ac480,tailcall,game,CEventEditableResponse::~CEventEditableResponse,1
 0x5ff6d0,0x4ac450,call,game,CEventEditableResponse::Constructor,1
@@ -21579,7 +21606,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x5ff790,0x4b5620,call,game,CEvent::operator new,1
 0x5ff790,0x4b5630,eh-unwind,game,CEvent::operator delete,1
 0x5ff7f0,0x4b5630,call,game,CEvent::operator delete,1
-0x5ff7f0,0x5ff760,call,game,FUN_005ff760,1
+0x5ff7f0,0x5ff760,call,game,CEventOnFire::Destructor,1
 0x5ff820,0x4abfc0,call,game,CEvent::Constructor,1
 0x5ff860,0x4ac010,tailcall,game,FUN_004ac010,1
 0x5ff940,0x63c340,call,game,CTaskSimpleCarDrive::Constructor,1
@@ -21624,9 +21651,9 @@ caller,callee,kind,callee_class,callee_name,sites
 0x6008a0,0x4ac450,call,game,CEventEditableResponse::Constructor,9
 0x6008a0,0x4ac480,call,game,CEventEditableResponse::~CEventEditableResponse,2
 0x6008a0,0x821b40,call,excluded:crt,FUN_00821b40,2
-0x6008a0,0x5ff460,eh-unwind,game,thunk_FUN_00401a42,4
-0x6008a0,0x5ff520,eh-unwind,game,FUN_005ff520,8
-0x6008a0,0x5ff5e0,eh-unwind,game,FUN_005ff5e0,2
+0x6008a0,0x5ff460,eh-unwind,game,CEventHealthLow::Destructor,4
+0x6008a0,0x5ff520,eh-unwind,game,CEventHealthReallyLow::Destructor,8
+0x6008a0,0x5ff5e0,eh-unwind,game,CEventLowAngerAtPlayer::Destructor,2
 0x6008a0,0x5ff6a0,eh-unwind,game,FUN_005ff6a0,4
 0x600cf0,0x608830,call,game,CPedType::GetPedFlag,1
 0x600cf0,0x608970,call,game,CAcquaintance::GetAcquaintances,1
@@ -21782,7 +21809,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x602b90,0x4b5620,call,game,CEvent::operator new,1
 0x602b90,0x4b5630,eh-unwind,game,CEvent::operator delete,1
 0x602be0,0x4b5630,call,game,CEvent::operator delete,1
-0x602be0,0x5ff860,call,game,thunk_FUN_004ac010,1
+0x602be0,0x5ff860,call,game,CEventEscalator::Destructor,1
 0x602c00,0x406da0,call,game,FUN_00406da0,1
 0x602c00,0x40fe30,call,game,FUN_0040fe30,3
 0x602c00,0x40fe60,call,game,VectorSub,3
@@ -21946,7 +21973,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x6060a0,0x8219f0,call,excluded:crt,FUN_008219f0,8
 0x6060a0,0x821b40,call,excluded:crt,FUN_00821b40,8
 0x6060a0,0x4af400,eh-unwind,game,FUN_004af400,2
-0x6060a0,0x5fef70,eh-unwind,game,FUN_005fef70,2
+0x6060a0,0x5fef70,eh-unwind,game,CEventScriptedAttractor::Destructor,2
 0x606580,0x406da0,call,game,FUN_00406da0,3
 0x606580,0x40fd10,call,game,CColSphere::Set,1
 0x606580,0x40fdb0,call,game,CVector::DotProduct-v3d*v3d*,1
@@ -21992,7 +22019,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x606ba0,0x5ff030,eh-unwind,game,FUN_005ff030,2
 0x606ba0,0x5ff0f0,eh-unwind,game,FUN_005ff0f0,2
 0x606ba0,0x5ff1b0,eh-unwind,game,FUN_005ff1b0,2
-0x606ba0,0x5ff2c0,eh-unwind,game,FUN_005ff2c0,2
+0x606ba0,0x5ff2c0,eh-unwind,game,CEventAcquaintancePedHateBadlyLit::Destructor,2
 0x606ba0,0x5ff3a0,eh-unwind,game,FUN_005ff3a0,2
 0x606e70,0x6040d0,call,game,CDecision::MakeDecision,2
 0x606e70,0x606060,call,game,FUN_00606060,2
@@ -22088,8 +22115,8 @@ caller,callee,kind,callee_class,callee_name,sites
 0x607e30,0x4aeb90,eh-unwind,game,FUN_004aeb90,2
 0x607e30,0x4b0d00,eh-unwind,game,FUN_004b0d00,2
 0x607e30,0x4b2210,eh-unwind,game,FUN_004b2210,2
-0x607e30,0x5ff760,eh-unwind,game,FUN_005ff760,2
-0x607e30,0x5ff860,eh-unwind,game,thunk_FUN_004ac010,2
+0x607e30,0x5ff760,eh-unwind,game,CEventOnFire::Destructor,2
+0x607e30,0x5ff860,eh-unwind,game,CEventEscalator::Destructor,2
 0x608260,0x4c3f10,call,game,CEventHandler::HandleEvents,1
 0x608260,0x53d050,call,game,CLoadMonitor::StartTimer,1
 0x608260,0x53d070,call,game,CLoadMonitor::EndTimer,1
@@ -22155,7 +22182,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x6091c0,0x6090e0,call,game,CEventDontJoinPlayerGroup::Constructor,1
 0x6091c0,0x4b5630,eh-unwind,game,CEvent::operator delete,1
 0x609230,0x4b5630,call,game,CEvent::operator delete,1
-0x609230,0x609140,call,game,FUN_00609140,1
+0x609230,0x609140,call,game,CEventDontJoinPlayerGroup::Destructor,1
 0x609250,0x4b23d0,call,game,CEventPlayerCommandToGroup::Constructor,1
 0x609280,0x4b23d0,call,game,CEventPlayerCommandToGroup::Constructor,1
 0x609280,0x4b5620,call,game,CEvent::operator new,1
@@ -22243,7 +22270,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x60a1d0,0x5fbb70,call,game,CPedGroupIntelligence::SetDefaultTaskAllocatorType,1
 0x60a1d0,0x4ae070,eh-unwind,game,CEventGroupEvent::~CEventGroupEvent,2
 0x60a1d0,0x4b5630,eh-unwind,game,CEvent::operator delete,1
-0x60a1d0,0x5f63f0,eh-unwind,game,thunk_FUN_0040a472,2
+0x60a1d0,0x5f63f0,eh-unwind,game,CEventPlayerCommandToGroupAttack::Destructor,2
 0x60a440,0x5f69b0,call,game,CPedGroupMembership::GetMember,1
 0x60a4b0,0x5f69b0,call,game,CPedGroupMembership::GetMember,1
 0x60a530,0x559af0,call,game,CStats::GetFatAndMuscleModifier,1
@@ -22373,7 +22400,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x60c840,0x5fc7e0,call,game,CPedGroup::Process,1
 0x60c840,0x608f70,call,game,CEventNewGangMember::Constructor,1
 0x60c840,0x6090e0,call,game,CEventDontJoinPlayerGroup::Constructor,1
-0x60c840,0x609140,call,game,FUN_00609140,1
+0x60c840,0x609140,call,game,CEventDontJoinPlayerGroup::Destructor,1
 0x60c840,0x609380,call,game,FUN_00609380,1
 0x60c840,0x61a5a0,call,game,CTask::operator new,1
 0x60c840,0x632e50,call,game,CTaskComplexBeInGroup::Constructor,1
@@ -22381,7 +22408,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x60c840,0x4ae070,eh-unwind,game,CEventGroupEvent::~CEventGroupEvent,2
 0x60c840,0x4b0a50,eh-unwind,game,FUN_004b0a50,2
 0x60c840,0x4b5630,eh-unwind,game,CEvent::operator delete,1
-0x60c840,0x609140,eh-unwind,game,FUN_00609140,2
+0x60c840,0x609140,eh-unwind,game,CEventDontJoinPlayerGroup::Destructor,2
 0x60c840,0x61a5b0,eh-unwind,game,CTask::operator delete,1
 0x60cc50,0x49cce0,call,game,CTagManager::IsTag,1
 0x60cc50,0x59f320,call,game,CObject::CanBeTargetted,1
@@ -22415,7 +22442,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x60cd20,0x71d780,call,game,CMBlur::ClearDrunkBlur,1
 0x60cd20,0x4ae070,eh-unwind,game,CEventGroupEvent::~CEventGroupEvent,2
 0x60cd20,0x4b5630,eh-unwind,game,CEvent::operator delete,1
-0x60cd20,0x5f63f0,eh-unwind,game,thunk_FUN_0040a472,2
+0x60cd20,0x5f63f0,eh-unwind,game,CEventPlayerCommandToGroupAttack::Destructor,2
 0x60cd20,0x61a5b0,eh-unwind,game,CTask::operator delete,2
 0x60d000,0x60b460,tailcall,game,CPlayerPed::MakeChangesForNewWeapon-,1
 0x60d020,0x53cc70,call,game,CGeneral::GetATanOfXY,1
@@ -23337,7 +23364,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x61c330,0x4b5620,call,game,CEvent::operator new,1
 0x61c330,0x4b5630,eh-unwind,game,CEvent::operator delete,1
 0x61c390,0x4b5630,call,game,CEvent::operator delete,1
-0x61c390,0x61c310,call,game,FUN_0061c310,1
+0x61c390,0x61c310,call,game,CEventVehicleDamageWeapon::Destructor,1
 0x61c470,0x571b70,call,game,CEntity::RegisterReference-,1
 0x61c470,0x61a390,call,game,FUN_0061a390,1
 0x61c470,0x61a3a0,eh-unwind,game,FUN_0061a3a0,2
@@ -23393,7 +23420,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x61d0b0,0x734a40,call,game,RwHelper::GetAnimHierarchyFromSkinClump,1
 0x61d0b0,0x7c5120,call,game,RpHAnimHierarchyGetMatrixArray,1
 0x61d0b0,0x7c51a0,call,game,RpHAnimIDGetIndex,1
-0x61d0b0,0x61c310,eh-unwind,game,FUN_0061c310,4
+0x61d0b0,0x61c310,eh-unwind,game,CEventVehicleDamageWeapon::Destructor,4
 0x61d0b0,,indirect-unresolved,,,2
 0x61d400,0x49f670,call,game,Fx_c::AddPunchImpact,1
 0x61d400,0x4e2bb0,call,game,CAEPedAudioEntity::AddAudioEvent,1
@@ -27609,7 +27636,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x6564a0,0x4ad830,call,game,CEventDamage::Constructor-1,1
 0x6564a0,0x4ad960,call,game,FUN_004ad960,1
 0x6564a0,0x4ae990,call,game,CEventVehicleHitAndRun::Constructor,1
-0x6564a0,0x4aea50,call,game,FUN_004aea50,1
+0x6564a0,0x4aea50,call,game,CEventVehicleHitAndRun::Destructor,1
 0x6564a0,0x4b35a0,call,game,CEventDamage::AffectsPed,1
 0x6564a0,0x4b5ac0,call,game,CPedDamageResponseCalculator::ComputeDamageResponse,1
 0x6564a0,0x4f6420,call,game,CAEVehicleAudioEntity::AddAudioEvent-0,2
@@ -27621,7 +27648,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x6564a0,0x6563d0,call,game,FUN_006563d0,1
 0x6564a0,0x4ad420,eh-unwind,game,CPedDamageResponseCalculator::~CPedDamageResponseCalculator,2
 0x6564a0,0x4ad960,eh-unwind,game,FUN_004ad960,2
-0x6564a0,0x4aea50,eh-unwind,game,FUN_004aea50,2
+0x6564a0,0x4aea50,eh-unwind,game,CEventVehicleHitAndRun::Destructor,2
 0x656ae0,0x61a5b0,call,game,CTask::operator delete,1
 0x656ae0,0x653f30,call,game,CTaskSimpleHurtPedWithCar::Destructor,1
 0x656b00,0x41b7d0,call,game,CPointRoute::operator delete,1
@@ -27753,9 +27780,9 @@ caller,callee,kind,callee_class,callee_name,sites
 0x6588a0,0x4d1390,fnref,game,(missed by ghidra: data-fnptr-table-unreferenced),1
 0x658900,0x4ab420,call,game,CEventGroup::Add-,1
 0x658900,0x4aec50,call,game,FUN_004aec50,1
-0x658900,0x4aeca0,call,game,FUN_004aeca0,1
+0x658900,0x4aeca0,call,game,CEventRevive::Destructor,1
 0x658900,0x602590,call,game,CInterestingEvents::Add,1
-0x658900,0x4aeca0,eh-unwind,game,FUN_004aeca0,2
+0x658900,0x4aeca0,eh-unwind,game,CEventRevive::Destructor,2
 0x6589b0,0x4cebe0,call,game,CAnimBlendAssociation::SetFinishCallback,1
 0x6589b0,0x4d1390,fnref,game,(missed by ghidra: data-fnptr-table-unreferenced),1
 0x6589b0,,indirect-unresolved,,,8
@@ -28135,7 +28162,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x65d780,0x61c2e0,call,game,CEventVehicleDamageWeapon::Constructor,2
 0x65d780,0x6510d0,call,game,CCarEnterExit::IsVehicleStealable,1
 0x65d780,0x65d2e0,call,game,CTaskComplexFleeAnyMeans::CreateSubTask,1
-0x65d780,0x61c310,eh-unwind,game,FUN_0061c310,4
+0x65d780,0x61c310,eh-unwind,game,CEventVehicleDamageWeapon::Destructor,4
 0x65d780,,indirect-unresolved,,,5
 0x65da70,0x542a50,call,game,CPhysical::ApplyTurnForce,1
 0x65daf0,0x4abfc0,call,game,CEvent::Constructor,1
@@ -29093,10 +29120,10 @@ caller,callee,kind,callee_class,callee_name,sites
 0x66af60,0x82263a,virtual-typed-override,excluded:crt,(missed by ghidra: vtable),1
 0x66afd0,0x4ab420,call,game,CEventGroup::Add-,1
 0x66afd0,0x4af010,call,game,CEventSexyVehicle::Constructor,1
-0x66afd0,0x4af0a0,call,game,FUN_004af0a0,1
+0x66afd0,0x4af0a0,call,game,CEventSexyVehicle::Destructor,1
 0x66afd0,0x56a490,call,game,CWorld::GetIsLineOfSightClear,1
 0x66afd0,0x66af60,call,game,CTaskComplexWanderStandard::SetNextMinScanTime,1
-0x66afd0,0x4af0a0,eh-unwind,game,FUN_004af0a0,2
+0x66afd0,0x4af0a0,eh-unwind,game,CEventSexyVehicle::Destructor,2
 0x66b160,0x562fb0,call,game,CWanted::CanCopJoinPursuit-method,1
 0x66b160,0x56e230,call,game,CWorld::FindPlayerWanted,2
 0x66b1b0,0x56e0d0,call,game,CWorld::FindPlayerVehicle,4
@@ -29719,7 +29746,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x6749f0,0x61a5b0,eh-unwind,game,CTask::operator delete,4
 0x6749f0,,indirect-unresolved,,,1
 0x674bb0,0x61a5a0,call,game,CTask::operator new,1
-0x674bb0,0x674930,call,game,FUN_00674930,1
+0x674bb0,0x674930,call,game,CTaskComplexFollowPatrolRoute::Constructor,1
 0x674bb0,0x61a5b0,eh-unwind,game,CTask::operator delete,1
 0x674c30,0x5effe0,call,game,CPed::Say,1
 0x674c30,0x645700,call,game,CTaskSimpleGoToPoint::UpdatePoint,1
@@ -29744,7 +29771,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x674f00,0x4b5620,call,game,CEvent::operator new,1
 0x674f00,0x4b5630,eh-unwind,game,CEvent::operator delete,1
 0x674f90,0x4b5630,call,game,CEvent::operator delete,1
-0x674f90,0x674ed0,call,game,thunk_FUN_00401ac8,1
+0x674f90,0x674ed0,call,game,CEventInteriorUseInfo::Destructor,1
 0x674fc0,0x61a3b0,call,game,CTaskComplex,1
 0x675000,0x61a3d0,tailcall,game,FUN_0061a3d0,1
 0x675010,0x61a3b0,call,game,CTaskComplex,1
@@ -29774,7 +29801,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x6754d0,0x594a50,call,game,InteriorGroup_c::FindClosestInteriorInfo,1
 0x6754d0,0x618970,call,game,IKChainManager_c::LookAt,1
 0x6754d0,0x674ea0,call,game,FUN_00674ea0,2
-0x6754d0,0x674ed0,eh-unwind,game,thunk_FUN_00401ac8,4
+0x6754d0,0x674ed0,eh-unwind,game,CEventInteriorUseInfo::Destructor,4
 0x675660,0x61a3b0,call,game,CTaskComplex,1
 0x6756a0,0x61a3d0,tailcall,game,FUN_0061a3d0,1
 0x6756c0,0x61a3b0,call,game,CTaskComplex,1
@@ -33459,6 +33486,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x6c2810,0x6eb690,call,game,CWaterLevel::GetWaterLevel-,1
 0x6c28c0,0x59c790,call,game,Multiply3x3,1
 0x6c28c0,0x6eb690,call,game,CWaterLevel::GetWaterLevel-,1
+0x6c2b80,0x59acd0,tailcall,game,CMatrix,1
 0x6c2b90,0x535300,call,game,CEntity::GetColModel,1
 0x6c3030,0x542a50,call,game,CPhysical::ApplyTurnForce,1
 0x6c3030,0x542ce0,call,game,CPhysical::GetSpeed,1
@@ -34044,8 +34072,8 @@ caller,callee,kind,callee_class,callee_name,sites
 0x6d1c80,0x441390,call,game,CGameLogic::IsCoopGameGoingOn,2
 0x6d1c80,0x4ab420,call,game,CEventGroup::Add-,2
 0x6d1c80,0x4b0d10,call,game,CEventVehicleDied::Constructor,2
-0x6d1c80,0x4b0da0,call,game,FUN_004b0da0,2
-0x6d1c80,0x4b0da0,eh-unwind,game,FUN_004b0da0,4
+0x6d1c80,0x4b0da0,call,game,CEventVehicleDied::Destructor,2
+0x6d1c80,0x4b0da0,eh-unwind,game,CEventVehicleDied::Destructor,4
 0x6d1e20,0x5df8f0,call,game,CPed::IsPlayer,1
 0x6d2030,0x6d1f30,virtual,game,CVehicle::CanPedStepOutCar,1
 0x6d21f0,0x821b40,call,excluded:crt,FUN_00821b40,2
@@ -34880,6 +34908,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x6ea960,0x6ea8a0,call,game,FUN_006ea8a0,1
 0x6ea9f0,0x56e010,call,game,CWorld::FindPlayerCoors,1
 0x6ea9f0,0x6e8580,call,game,CWaterLevel::GetWaterLevelNoWaves,1
+0x6eab50,0x56e210,call,game,CWorld::FindPlayerPed,1
 0x6eaba0,0x54ef40,call,game,CSimpleTransform::UpdateRwMatrix,1
 0x6eaba0,0x563220,call,game,CWorld::Add,1
 0x6eaba0,0x59ad70,call,game,CMatrix::UpdateRwMatrix,1
@@ -34904,9 +34933,9 @@ caller,callee,kind,callee_class,callee_name,sites
 0x6eb690,0x6e81e0,call,game,CWaterLevel::AddWaveToResult,1
 0x6eb690,0x6e8580,call,game,CWaterLevel::GetWaterLevelNoWaves,1
 0x6eb710,0x53c4b0,call,game,CGame::CanSeeWaterFromCurrArea,1
-0x6eb710,0x56e210,call,game,CWorld::FindPlayerPed,1
 0x6eb710,0x6e6d10,call,game,CWaterLevel::ScanThroughBlocks,1
 0x6eb710,0x6e9d70,call,game,CWaterLevel::FindNearestWaterAndItsFlow,1
+0x6eb710,0x6eab50,tailcall,game,CWaterLevel::HandleBeachToysStuff,3
 0x6eb810,0x420c40,call,game,CCamera::IsSphereVisible-,2
 0x6eb810,0x6e5280,call,game,lerp,4
 0x6eb810,0x6e73a0,call,game,CWaterLevel::SplitWaterRectangleAlongXLine,1
@@ -36684,9 +36713,9 @@ caller,callee,kind,callee_class,callee_name,sites
 0x7295e0,0x4ab290,call,game,FxPrtMult_c,1
 0x7295e0,0x4ab420,call,game,CEventGroup::Add-,1
 0x7295e0,0x4b1290,call,game,CEventHitByWaterCannon::Constructor,1
-0x7295e0,0x4b1320,call,game,FUN_004b1320,1
+0x7295e0,0x4b1320,call,game,CEventHitByWaterCannon::Destructor,1
 0x7295e0,0x5429f0,call,game,CPhysical::ApplyMoveForce-vec,1
-0x7295e0,0x4b1320,eh-unwind,game,FUN_004b1320,2
+0x7295e0,0x4b1320,eh-unwind,game,CEventHitByWaterCannon::Destructor,2
 0x729b30,0x728da0,call,game,CWaterCannon::Render,1
 0x729b60,0x53fb70,call,game,CPad::GetPad,3
 0x729b60,0x53fc10,call,game,CPad::GetCarGunUpDown,1
@@ -36704,6 +36733,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x72a280,0x7295e0,call,game,CWaterCannon::PushPeds,1
 0x72a3c0,0x5030d0,call,game,CAEWaterCannonAudioEntity::Service,1
 0x72a3c0,0x72a280,call,game,CWaterCannon::Update_OncePerFrame,1
+0x72a400,0x4ef660,tailcall,game,CAESound,1
 0x72a790,0x56e010,call,game,CWorld::FindPlayerCoors,1
 0x72a790,0x72a640,call,game,CWeather::UpdateWeatherRegion,1
 0x72a820,0x4aa440,call,game,FxSystem_c::AddParticle-v3d,1
@@ -37517,7 +37547,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x73b550,0x73a530,call,game,CWeapon::GenerateDamageEvent,1
 0x73b550,0x743c60,call,game,CWeaponInfo::GetWeaponInfo-original,2
 0x73b550,0x821e70,call,excluded:crt,FUN_00821e70,2
-0x73b550,0x61c310,eh-unwind,game,FUN_0061c310,4
+0x73b550,0x61c310,eh-unwind,game,CEventVehicleDamageWeapon::Destructor,4
 0x73b550,,indirect-unresolved,,,3
 0x73c1f0,0x456a70,call,game,CPickups::PictureTaken,1
 0x73c1f0,0x4a9be0,call,game,FxManager_c::CreateFxSystem-4,1
@@ -41762,6 +41792,9 @@ caller,callee,kind,callee_class,callee_name,sites
 0x855510,0x72a620,call,game,CAEWeatherAudioEntity::CAEWeatherAudioEntity,1
 0x855510,0x821d1e,call,excluded:crt,_atexit,1
 0x855510,0x856c10,fnref,game,__dtor_CWeather__m_WeatherAudioEntity,1
+0x855670,0x72e860,tailcall,game,CMemoryHeap::CMemoryHeap,1
+0x855680,0x72e860,tailcall,game,CMemoryHeap::CMemoryHeap,1
+0x855690,0x72e860,tailcall,game,CMemoryHeap::CMemoryHeap,1
 0x8559e0,0x5074b0,call,game,CAEExplosionAudioEntity::CAEExplosionAudioEntity,1
 0x8559e0,0x821d1e,call,excluded:crt,_atexit,1
 0x8559e0,0x856c20,fnref,game,__dtor_CExplosion__m_ExplosionAudioEntity,1
@@ -41802,8 +41835,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x856110,0x4411a0,fnref,game,(missed by ghidra: data-code-immediate),1
 0x856130,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x856130,0x447110,fnref,game,CGarage::~CGarage,1
-0x856150,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
-0x856150,0x453fb0,fnref,game,(missed by ghidra: data-code-immediate),1
+0x856150,0x454200,tailcall,game,(missed by ghidra: cat7-call),1
 0x856160,0x45b110,tailcall,game,CPlayerInfo::~CPlayerInfo,1
 0x856170,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x856170,0x7281e0,fnref,game,CSprite2d::Destructor,1
@@ -41817,31 +41849,22 @@ caller,callee,kind,callee_class,callee_name,sites
 0x8561f0,0x4b2950,fnref,game,FUN_004b2950,1
 0x856210,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x856210,0x4b29a0,fnref,game,CInformGroupEvent::Destructor,1
-0x856230,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
-0x856230,0x4c5590,fnref,game,CAtomicModelInfo::~CAtomicModelInfo,1
-0x856240,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
-0x856240,0x4c55d0,fnref,game,CDamageAtomicModelInfo::~CDamageAtomicModelInfo,1
-0x856250,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
-0x856250,0x4c5620,fnref,game,CLodAtomicModelInfo::~CLodAtomicModelInfo,1
-0x856260,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
-0x856260,0x4c5680,fnref,game,CTimeModelInfo::~CTimeModelInfo,1
-0x856270,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
-0x856270,0x4c56e0,fnref,game,CLodTimeModelInfo::~CLodTimeModelInfo,1
-0x856280,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
-0x856280,0x4c5790,fnref,game,CWeaponModelInfo::~CWeaponModelInfo,1
-0x856290,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
-0x856290,0x4c5750,fnref,game,CClumpModelInfo::~CClumpModelInfo,1
-0x8562a0,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
-0x8562a0,0x4c5920,fnref,game,CVehicleModelInfo::~CVehicleModelInfo,1
-0x8562b0,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
-0x8562b0,0x4c62f0,fnref,game,CPedModelInfo::~CPedModelInfo,1
+0x856230,0x4c5840,tailcall,game,(missed by ghidra: cat7-call),1
+0x856240,0x4c5860,tailcall,game,(missed by ghidra: cat7-call),1
+0x856250,0x4c5880,tailcall,game,(missed by ghidra: cat7-call),1
+0x856260,0x4c58a0,tailcall,game,(missed by ghidra: cat7-call),1
+0x856270,0x4c58c0,tailcall,game,(missed by ghidra: cat7-call),1
+0x856280,0x4c58e0,tailcall,game,(missed by ghidra: cat7-call),1
+0x856290,0x4c5900,tailcall,game,(missed by ghidra: cat7-call),1
+0x8562a0,0x4c6370,tailcall,game,(missed by ghidra: cat7-call),1
+0x8562b0,0x4c6390,tailcall,game,(missed by ghidra: cat7-call),1
 0x8562c0,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x8562c0,0x4cf970,fnref,game,CAnimBlendHierarchy::Destructor,1
 0x8562f0,0x4d83a0,tailcall,game,CAEAudioHardware::Destructor,1
+0x856300,0x4ee9e0,tailcall,game,(missed by ghidra: cat7-call),1
 0x856330,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x856330,0x4e3340,fnref,game,(missed by ghidra: data-code-immediate),1
-0x856360,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
-0x856360,0x4ef660,fnref,game,CAESound,1
+0x856360,0x4efd60,tailcall,game,CAESoundManager::~CAESoundManager,1
 0x856380,0x4f2b80,tailcall,game,CAETwinLoopSoundEntity::~CAETwinLoopSoundEntity,1
 0x856390,0x4f2b80,tailcall,game,CAETwinLoopSoundEntity::~CAETwinLoopSoundEntity,1
 0x8563a0,0x506cd0,tailcall,game,CAudioEngine::Destructor,1
@@ -41855,7 +41878,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x856460,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x856460,0x53ed60,fnref,game,CPad::~CPad,1
 0x856480,0x59acd0,tailcall,game,CMatrix,1
-0x856490,0x54eb70,tailcall,game,FUN_0054eb70,1
+0x856490,0x54eb70,tailcall,game,CMatrixLinkList::~CMatrixLinkList,1
 0x8564c0,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x8564c0,0x43e1a0,fnref,game,thunk_FUN_00552400,1
 0x8564e0,0x552470,tailcall,game,CPtrListDoubleLink::Flush,1
@@ -41873,8 +41896,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x856590,0x7281e0,fnref,game,CSprite2d::Destructor,1
 0x8565b0,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x8565b0,0x7281e0,fnref,game,CSprite2d::Destructor,1
-0x8565d0,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
-0x8565d0,0x43ce70,fnref,game,(missed by ghidra: data-code-immediate),1
+0x8565d0,0x58fd90,tailcall,game,CHudColours,1
 0x8565e0,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x8565e0,0x7281e0,fnref,game,CSprite2d::Destructor,1
 0x856600,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
@@ -41883,11 +41905,10 @@ caller,callee,kind,callee_class,callee_name,sites
 0x856620,0x590ed0,fnref,game,Furniture_c::~Furniture_c,1
 0x856640,0x5912e0,tailcall,game,FurnitureManager_c::~FurnitureManager_c,1
 0x856650,0x598580,tailcall,game,InteriorManager_c::~InteriorManager_c,1
-0x856660,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
-0x856660,0x59d180,fnref,game,(missed by ghidra: data-code-immediate),1
+0x856660,0x59e640,tailcall,game,(missed by ghidra: cat7-call),1
 0x856670,0x5a3090,tailcall,game,ProcObjectMan_c::~ProcObjectMan_c,1
 0x856680,0x5322d0,tailcall,game,CDirectory::Destructor,1
-0x856690,0x5a6fc0,tailcall,game,COctTree::empty,1
+0x856690,0x5a4140,tailcall,game,(missed by ghidra: cat7-call),1
 0x8566a0,0x8214bd,call,game,_free,2
 0x8566f0,0x4ce1d0,tailcall,game,CAnimBlendAssocGroup::Destructor,1
 0x856720,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
@@ -41898,13 +41919,19 @@ caller,callee,kind,callee_class,callee_name,sites
 0x856760,0x5de540,fnref,game,CGangInfo,1
 0x856780,0x8214bd,call,game,_free,1
 0x8567c0,0x8214bd,call,game,_free,1
+0x856800,0x5f6460,tailcall,game,(missed by ghidra: cat7-call),1
+0x856810,0x5f6490,tailcall,game,(missed by ghidra: cat7-call),1
+0x856820,0x5f64c0,tailcall,game,(missed by ghidra: cat7-call),1
+0x856830,0x5f64f0,tailcall,game,(missed by ghidra: cat7-call),1
+0x856840,0x5f6520,tailcall,game,(missed by ghidra: cat7-call),1
+0x856850,0x5f6550,tailcall,game,(missed by ghidra: cat7-call),1
 0x856860,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x856860,0x5fc190,fnref,game,CPedGroup::Destructor,1
 0x856880,0x571a00,call,game,CEntity::CleanUpOldReference-,1
 0x8568b0,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x8568b0,0x6082e0,fnref,game,(missed by ghidra: data-code-immediate),1
 0x8568d0,0x617390,tailcall,game,BoneNodeManager_c::Destructor,1
-0x8568e0,0x618030,tailcall,game,FUN_00618030,1
+0x8568e0,0x618030,tailcall,game,IKChainManager_c::~IKChainManager_c,1
 0x8568f0,0x40f700,tailcall,game,CColModel,1
 0x856900,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x856900,0x62ec50,fnref,game,(missed by ghidra: data-code-immediate),1
@@ -41919,13 +41946,13 @@ caller,callee,kind,callee_class,callee_name,sites
 0x8569c0,0x552470,tailcall,game,CPtrListDoubleLink::Flush,1
 0x856a00,0x6a0140,tailcall,game,CText::Destructor,1
 0x856a10,0x59acd0,tailcall,game,CMatrix,1
-0x856a20,0x59acd0,tailcall,game,CMatrix,1
+0x856a20,0x6c2b80,tailcall,game,cBuoyancy::~cBuoyancy,1
 0x856a30,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x856a30,0x40f700,fnref,game,CColModel,1
 0x856a50,0x40f700,tailcall,game,CColModel,1
 0x856a60,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x856a60,0x5b9e30,fnref,game,(missed by ghidra: data-code-immediate),1
-0x856a80,0x6e3f20,tailcall,game,FUN_006e3f20,1
+0x856a80,0x6e3f20,tailcall,game,WaterCreatureManager_c::~WaterCreatureManager_c,1
 0x856a90,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x856a90,0x6f9e00,fnref,game,(missed by ghidra: data-code-immediate),1
 0x856ab0,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
@@ -41946,8 +41973,8 @@ caller,callee,kind,callee_class,callee_name,sites
 0x856bd0,0x720f70,fnref,game,C3dMarker::~C3dMarker,1
 0x856bf0,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x856bf0,0x728b30,fnref,game,CWaterCannon::~CWaterCannon,1
-0x856c10,0x4ef660,tailcall,game,CAESound,1
-0x856c20,0x4ef660,tailcall,game,CAESound,1
+0x856c10,0x72a400,tailcall,game,CAEWeatherAudioEntity::~CAEWeatherAudioEntity,1
+0x856c20,0x506b90,tailcall,game,(missed by ghidra: cat7-call),1
 0x856c30,0x40f700,tailcall,game,CColModel,1
 0x856c40,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x856c40,0x742aa0,fnref,game,CWeaponEffects,1
