@@ -14,6 +14,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::event_dtors::HOOKS,
     crate::ped_ik_aim::HOOKS,
     crate::cover::HOOKS,
+    crate::ai_frontier_p4::HOOKS,
     crate::misc::HOOKS,
     crate::car_enter::HOOKS,
     crate::car_exit::HOOKS,

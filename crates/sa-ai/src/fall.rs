@@ -7,6 +7,7 @@ use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
 
 use crate::common::*;
+use crate::bindings::in_air_ctor;
 
 /// `CTimer::m_snTimeInMilliseconds`
 const TIME_MS: usize = 0xB7CB84;
@@ -59,8 +60,6 @@ use sa_world::bindings::process_col_models as collision_process_col_models;
 orig! {
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
-    /// `CTaskSimpleInAir::CTaskSimpleInAir(bool, bool, bool)` (0x678CD0, `ret 0xC`)
-    fn in_air_ctor(t: GPtr<u8>, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x678CD0 => unported;
     /// `CTaskSimpleFall::CTaskSimpleFall(AnimationId, AssocGroupId, int32)` (0x6782C0, `ret 0xC`)
     fn fall_ctor(t: GPtr<u8>, anim: u32, group: u32, time: u32) -> GPtr<u8> = thiscall 0x6782C0 => unported;
     /// `CTaskSimpleGetUp::CTaskSimpleGetUp()` (0x677F50)

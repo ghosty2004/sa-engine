@@ -31,12 +31,27 @@ use sa_core::bindings::general_get_node_heading_from_vector;
 use sa_anim::bindings::ik_abort_look_at;
 use sa_world::bindings::ik_look_at;
 use crate::bindings::{go_to_point_shooting_ctor, steal_car_ctor};
+use crate::bindings::{car_enter_exit_is_vehicle_stealable, event_vehicle_damage_dtor, scanner_closest_vehicle};
+use crate::bindings::{tm_get_task_secondary, tm_set_task_secondary, use_gun_control_gun, use_gun_ctor};
+use sa_core::bindings::get_weapon_info;
+use sa_world::bindings::ped_get_weapon_skill;
+use sa_core::bindings::vector_normalise;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::{entity_clean_up_old_reference, entity_register_reference, event_vehicle_damage_weapon_ctor};
 use sa_world::bindings::car_drive_mission_ctor;
 orig! {
     /// `CTaskComplexFleeShooting::CTaskComplexFleeShooting(CEntity*, bool, float, int32, int32, int32, int32, float)`
     /// (0x65C900, `ret 0x20`)
     fn flee_shooting_ctor(t: GPtr<u8>, e: u32, scream: u32, safe: u32, time: u32, shoot: u32, recover: u32, period: u32,
         tolerance: u32) -> GPtr<u8> = thiscall 0x65C900 => unported;
+    /// `CTaskComplexFleeAnyMeans::CreateSubTask(eTaskType, CPed*)` (0x65D2E0, `ret 8`)
+    fn flee_any_create_sub_task_o(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x65D2E0 => flee_any_means_create_sub_task;
+    /// `CVehicle` vtable +0xE4 (`CanPedStepOutCar(bool)`)
+    fn v_vehicle_e4(v: GPtr<u8>, b: u32) -> u8 = thiscall vslot 0xE4 => unported;
+    /// `CTaskComplexSmartFleeEntity::ControlSubTask(CPed*)` (0x65C780, `ret 4`)
+    fn flee_entity_control_sub_task_o(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x65C780 => flee_entity_control_sub_task;
+    /// `CTaskComplex::CreateFirstSubTask(CPed*)` (vtable +0x24)
+    fn v_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
     /// `CTask::GetTaskType()` (vtable +0x10)
     fn v_get_task_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
     /// `CTask::MakeAbortable(CPed*, int32, const CEvent*)` (vtable +0x18)
@@ -374,8 +389,188 @@ pub fn flee_any_means_create_sub_task(this: GPtr<u8>, ty: u32, ped: GPtr<u8>) ->
 }
 
 
+/// A stack `CEventVehicleDamageWeapon(veh, ped, 0x16)` with its +0xE word = 0x2C2, added to `to`'s event group, then
+/// destroyed as the original does (vtable 0x86D640 stored, `CEventVehicleDamage`'s destructor 0x4B1990).
+fn flee_vehicle_damage_event(to: GPtr<u8>, veh: GPtr<u8>, ped: GPtr<u8>) {
+    let mut ev = [0u32; 0x10];
+    let ep: GPtr<u8> = GPtr::from_raw(ev.as_mut_ptr()).cast();
+    event_vehicle_damage_weapon_ctor(ep, veh, ped, 0x16);
+    wr::<u16>(ep, 0xE, 0x2C2);
+    event_group_add(rd::<GPtr<u8>>(to, 0x47C).byte_add(0x68), ep, 0);
+    wr::<u32>(ep, 0, 0x86_D640);
+    event_vehicle_damage_dtor(ep);
+}
+
+/// `CTaskComplexFleeAnyMeans::ControlSubTask(CPed*)` (0x65D780, `ret 4`; FRONTIER-2 part 4, crossing 4000). Without
+/// a flee target (+0xC): null when the sub-task aborts (`MakeAbortable(ped, 0, null)`), else the sub-task. With one, a
+/// running flee-shooting (0x3A0) or wander (0x390) sub-task (the type read twice when the first is not 0x3A0), the
+/// vehicle scanner's closest vehicle, `(dz² + dy²) + dx²` of ped - target (floats) above `+0x4C²`, the normalised
+/// direction to the vehicle (floats) in front of the ped (dot with the matrix forward, summed z, y, x, > 0) and
+/// `CCarEnterExit::IsVehicleStealable(vehicle, ped)`: the vehicle becomes +0x50 (`CleanUpOldReference` of the old one,
+/// `RegisterReference`). Shooting while fleeing (+0x40): the driver and each passenger (count +0x488 re-read) that is
+/// not the player get a `CEventVehicleDamageWeapon(vehicle, ped, 0x16)` (its word +0xE = 0x2C2) and the next task is
+/// go-to-point-shooting (0x385); otherwise the vehicle must pass its vtable +0xE4 (false) test and the task is steal
+/// car (0x2BE). The new sub-task when the current one aborts, else the current one.
+#[hook(addr = 0x65D780, conv = thiscall, name = "CTaskComplexFleeAnyMeans::ControlSubTask", expect = "6A FF 68 80 42 84 00",
+       unverified = "frontier2-9", route = "L2", hazards = "heap-writes")]
+pub fn flee_any_means_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let sub = || rd::<GPtr<u8>>(this, 8);
+    if rd::<u32>(this, 0xC) == 0 {
+        return if v_make_abortable(sub(), ped, 0, 0) != 0 { GPtr::NULL } else { sub() };
+    }
+    let veh = scanner_closest_vehicle(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0xD4));
+    if veh.is_null() {
+        return sub();
+    }
+    if v_get_task_type(sub()) != 0x3A0 && v_get_task_type(sub()) != 0x390 {
+        return sub();
+    }
+    let (pp, tp) = (ent_pos(ped), ent_pos(rd::<GPtr<u8>>(this, 0xC)));
+    let d: [f32; 3] = core::array::from_fn(|k| x(rd::<f32>(pp, 4 * k as isize)).fsub_m(rd::<f32>(tp, 4 * k as isize)).to_f32());
+    let dsq = x(d[2]).fmul_m(d[2]).fadd(x(d[1]).fmul_m(d[1])).fadd(x(d[0]).fmul_m(d[0]));
+    let r = rd::<f32>(this, 0x4C);
+    if !sa_math::fpu::lt(x(r).fmul_m(r), dsq) {
+        return sub();
+    }
+    let (vp, pp) = (ent_pos(veh), ent_pos(ped));
+    let mut v: [f32; 3] = core::array::from_fn(|k| x(rd::<f32>(vp, 4 * k as isize)).fsub_m(rd::<f32>(pp, 4 * k as isize)).to_f32());
+    vector_normalise(GPtr::from_raw(v.as_mut_ptr()).cast());
+    let m = rd::<GPtr<u8>>(ped, 0x14);
+    let dot = x(v[2]).fmul_m(rd::<f32>(m, 0x18)).fadd(x(v[1]).fmul_m(rd::<f32>(m, 0x14))).fadd(x(v[0]).fmul_m(rd::<f32>(m, 0x10)));
+    if !sa_math::fpu::gt(dot, x(0.0)) || car_enter_exit_is_vehicle_stealable(veh, ped) == 0 {
+        return sub();
+    }
+    let slot = this.byte_add(0x50);
+    let old = rd::<GPtr<u8>>(slot, 0);
+    if !old.is_null() {
+        entity_clean_up_old_reference(old, slot);
+    }
+    wr::<GPtr<u8>>(slot, 0, veh);
+    entity_register_reference(veh, slot);
+    let ty = if rd::<u8>(this, 0x40) != 0 {
+        let v = rd::<GPtr<u8>>(this, 0x50);
+        let drv = rd::<GPtr<u8>>(v, 0x460);
+        if !drv.is_null() && ped_is_player(drv) == 0 {
+            flee_vehicle_damage_event(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x50), 0x460), rd::<GPtr<u8>>(this, 0x50), ped);
+        }
+        let mut i = 0isize;
+        while i < isize::from(rd::<u8>(rd::<GPtr<u8>>(this, 0x50), 0x488)) {
+            let p = rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x50), 0x464 + 4 * i);
+            if !p.is_null() && ped_is_player(p) == 0 {
+                flee_vehicle_damage_event(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x50), 0x464 + 4 * i), rd::<GPtr<u8>>(this, 0x50), ped);
+            }
+            i += 1;
+        }
+        0x385
+    } else {
+        if v_vehicle_e4(veh, 0) == 0 {
+            return sub();
+        }
+        0x2BE
+    };
+    if v_make_abortable(sub(), ped, 0, 0) != 0 {
+        flee_any_create_sub_task_o(this, ty, ped)
+    } else {
+        sub()
+    }
+}
+
+/// `CTaskComplexFleeAnyMeans::CreateNextSubTask(CPed*)` (0x65D540, `ret 4`; FRONTIER-2 part 4, crossing 4000). By the
+/// finished sub-task (jump table 0x65D634 / 0x65D648 over 0x2BE..0x3A0):
+/// - 0x2BE steal car: in a vehicle (+0x46C bit 8 and +0x58C) `CreateSubTask(0x2D4)`, else `CreateFirstSubTask`; the
+///   stolen-vehicle slot +0x50 is cleared after the call (gta-reversed clears it first);
+/// - 0x2D4 car drive mission: in a vehicle `CreateSubTask(0x2D4)`, else `CreateFirstSubTask`;
+/// - 0x385 go to point shooting: with a vehicle to steal (+0x50) `CreateSubTask(0x2BE)`, else +0x50 = 0 and
+///   `CreateFirstSubTask`;
+/// - 0x390 wander, 0x3A0 flee shooting: `CreateSubTask(0x516)` (finished); anything else null.
+#[hook(addr = 0x65D540, conv = thiscall, name = "CTaskComplexFleeAnyMeans::CreateNextSubTask", expect = "56 8B F1 8B 4E 08",
+       unverified = "frontier2-9", route = "L2", hazards = "heap-writes")]
+pub fn flee_any_means_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let in_vehicle = || rd::<u32>(ped, 0x46C) & 0x100 != 0 && rd::<u32>(ped, 0x58C) != 0;
+    match v_get_task_type(rd::<GPtr<u8>>(this, 8)) {
+        0x2BE => {
+            let r = if in_vehicle() { flee_any_create_sub_task_o(this, 0x2D4, ped) } else { v_create_first_sub_task(this, ped) };
+            wr::<u32>(this, 0x50, 0);
+            r
+        }
+        0x2D4 => {
+            if in_vehicle() { flee_any_create_sub_task_o(this, 0x2D4, ped) } else { v_create_first_sub_task(this, ped) }
+        }
+        0x385 => {
+            if rd::<u32>(this, 0x50) != 0 {
+                return flee_any_create_sub_task_o(this, 0x2BE, ped);
+            }
+            wr::<u32>(this, 0x50, 0);
+            v_create_first_sub_task(this, ped)
+        }
+        0x390 | 0x3A0 => flee_any_create_sub_task_o(this, 0x516, ped),
+        _ => GPtr::NULL,
+    }
+}
+
+
+/// The inlined `CTaskTimer::IsOutOfTime` of the flee-shooting gun timer (+0x48 start, +0x4C length, +0x50 started,
+/// +0x51 reset requested): false while not started; a pending reset restarts it at now; then `now >= start + length`.
+fn flee_gun_timer_out(this: GPtr<u8>) -> bool {
+    if rd::<u8>(this, 0x50) == 0 {
+        return false;
+    }
+    if rd::<u8>(this, 0x51) != 0 {
+        wr::<u32>(this, 0x48, g::<u32>(0xB7_CB84).read());
+        wr::<u8>(this, 0x51, 0);
+    }
+    g::<u32>(0xB7_CB84).read() >= rd::<u32>(this, 0x4C).wrapping_add(rd::<u32>(this, 0x48))
+}
+
+/// `CTaskComplexFleeShooting::ControlSubTask(CPed*)` (0x65CA90, `ret 4`; FRONTIER-2 part 4, crossing 4000). Without a
+/// secondary attack task: move state (+0x30) sprint (7); once the gun timer is out and the ped's weapon aims with the
+/// arm (info +0x18 bit 1) the timer restarts with the shoot time (+0x40) and a `CTaskSimpleUseGun(target, (0, 0, 0),
+/// fire burst 3, burst 3, false)` becomes the secondary attack task. With one: move state run (6); a use-gun task
+/// (0x3F9) fires a burst at the target (`ControlGun(ped, target, 3)`) until the timer is out, then, when its last command
+/// (+0x10) was a burst, restarts the timer with the recover time (+0x44) and ends the burst (command 6). Then
+/// `CTaskComplexSmartFleeEntity::ControlSubTask`.
+#[hook(addr = 0x65CA90, conv = thiscall, name = "CTaskComplexFleeShooting::ControlSubTask", expect = "64 A1 00 00 00 00 6A FF 68 EB 40 84 00",
+       unverified = "frontier2-9", route = "L2", hazards = "heap-writes")]
+pub fn flee_shooting_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let tm = rd::<GPtr<u8>>(ped, 0x47C).byte_add(4);
+    let attack = tm_get_task_secondary(tm, 0);
+    if attack.is_null() {
+        wr::<u32>(this, 0x30, 7);
+        if flee_gun_timer_out(this) {
+            let slot = isize::from(rd::<i8>(ped, 0x718));
+            let wt = rd::<i32>(ped, 0x5A0 + slot * 0x1C);
+            let wi = get_weapon_info(wt, ped_get_weapon_skill(ped));
+            if (rd::<u32>(wi, 0x18) >> 1) & 1 != 0 {
+                wr::<u32>(this, 0x48, g::<u32>(0xB7_CB84).read());
+                wr::<u32>(this, 0x4C, rd::<u32>(this, 0x40));
+                wr::<u8>(this, 0x50, 1);
+                let t = task_new(0x3C);
+                let t = if t.is_null() { GPtr::NULL } else { use_gun_ctor(t, rd::<GPtr<u8>>(this, 0xC), 0, 0, 0, 3, 3, 0) };
+                tm_set_task_secondary(rd::<GPtr<u8>>(ped, 0x47C).byte_add(4), t, 0);
+            }
+        }
+    } else {
+        wr::<u32>(this, 0x30, 6);
+        if v_get_task_type(attack) == 0x3F9 {
+            if !flee_gun_timer_out(this) {
+                use_gun_control_gun(attack, ped, rd::<GPtr<u8>>(this, 0xC), 3);
+            } else if rd::<u8>(attack, 0x10) == 3 {
+                wr::<u32>(this, 0x48, g::<u32>(0xB7_CB84).read());
+                wr::<u32>(this, 0x4C, rd::<u32>(this, 0x44));
+                wr::<u8>(this, 0x50, 1);
+                use_gun_control_gun(attack, ped, rd::<GPtr<u8>>(this, 0xC), 6);
+            }
+        }
+    }
+    flee_entity_control_sub_task_o(this, ped)
+}
+
+
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_FLEE_ANY_MEANS_CONTROL_SUB_TASK,
+    HOOK_FLEE_ANY_MEANS_CREATE_NEXT_SUB_TASK,
+    HOOK_FLEE_SHOOTING_CONTROL_SUB_TASK,
     HOOK_FLEE_ANY_MEANS_CREATE_SUB_TASK,
     HOOK_FLEE_POINT_CREATE_SUB_TASK_PORT,
     HOOK_FLEE_POINT_CREATE_FIRST_SUB_TASK,

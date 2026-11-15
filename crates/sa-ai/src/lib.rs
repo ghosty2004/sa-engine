@@ -38,6 +38,7 @@ pub mod events;
 pub mod event_dtors;
 pub mod ped_ik_aim;
 pub mod cover;
+pub mod ai_frontier_p4;
 pub mod fight;
 pub mod fight_combo_style;
 pub mod partner_meeting;

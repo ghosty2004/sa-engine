@@ -60,8 +60,9 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-4 | 4 | CAM, WORLD | 1e505863 | master | 4 | 0 | 0 | 0 | 0 | L2 3, L3-only 1 |
 | frontier2-5 | 6 | AI, RENDER | e28ad897 | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
 | frontier2-6 | 12 | AI, VEH | 38680f43 | master | 12 | 0 | 0 | 0 | 0 | L2 12 |
-| frontier2-7 | 21 | AI, UNK-game, WORLD | 827200ce | worktree-agent-accfa614f52d5f0c1 | 21 | 0 | 0 | 0 | 0 | L2 21 |
-| frontier2-8 | 14 | AI, ANIM, UNK-game, WEAPON | 827200ce | worktree-agent-accfa614f52d5f0c1 | 14 | 0 | 0 | 0 | 0 | L2 13, L3-only 1 |
+| frontier2-7 | 21 | AI, UNK-game, WORLD | 0e036130 | worktree-agent-accfa614f52d5f0c1 | 21 | 0 | 0 | 0 | 0 | L2 21 |
+| frontier2-8 | 14 | AI, ANIM, UNK-game, WEAPON | 0e036130 | worktree-agent-accfa614f52d5f0c1 | 14 | 0 | 0 | 0 | 0 | L2 13, L3-only 1 |
+| frontier2-9 | 21 | AI | uncommitted | worktree-agent-accfa614f52d5f0c1 | 21 | 0 | 0 | 0 | 0 | L2 21 |
 | gen2-anim-1 | 1 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | gen2-coll-1 | 20 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 20 | 0 | L2 8, split 12 |
 | gen2-core-1 | 4 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
@@ -2104,6 +2105,41 @@ SA_UNVERIFIED=frontier2-8 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-8 $SA_
 | 0x699FF0 | `CFormation::FindCoverPointsBehindBox` | written | L2 | heap-writes |
 | 0x728DA0 | `CWaterCannon::Render` | written | L3-only | heap-writes |
 | 0x7295E0 | `CWaterCannon::PushPeds` | written | L2 | heap-writes |
+
+## frontier2-9
+
+21 hooks in sa-ai; hazards: ax-al-return (5), heap-writes (17); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-9 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-9 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-9 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-9
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x5F13A0 | `FUN_005f13a0` | written | L2 | heap-writes |
+| 0x600880 | `CDecisionMakerTypesFileLoader::GetGrpDMName` | written | L2 | heap-writes |
+| 0x62F520 | `vt_85b8dc::ProcessPed` | written | L2 | heap-writes |
+| 0x62FA60 | `CTaskSimpleDie::Constructor-2` | written | L2 | heap-writes |
+| 0x632050 | `CTaskComplexSunbathe::Destructor` | written | L2 | heap-writes |
+| 0x632B80 | `vt_86e1dc::ProcessPed` | written | L2 | heap-writes,ax-al-return |
+| 0x639900 | `CTaskSimpleDrown::ProcessPed` | written | L2 | heap-writes |
+| 0x63C320 | `CTaskComplexScreamInCarThenLeave::MakeAbortable` | written | L2 | ax-al-return |
+| 0x63D220 | `CTaskComplexShuffleSeats::MakeAbortable` | written | L2 | ax-al-return |
+| 0x640420 | `CTaskComplexOpenPassengerDoor::~CTaskComplexOpenPassengerDoor` | written | L2 | heap-writes |
+| 0x6492E0 | `CTaskComplexGetOnBoatSeat::MakeAbortable` | written | L2 | ax-al-return |
+| 0x654720 | `CTaskComplexWalkRoundCar::GoingForDoor` | written | L2 | ax-al-return |
+| 0x65B420 | `CTaskComplexFleePoint::MakeAbortable` | written | L2 | heap-writes |
+| 0x65CA90 | `CTaskComplexFleeShooting::ControlSubTask` | written | L2 | heap-writes |
+| 0x65D540 | `CTaskComplexFleeAnyMeans::CreateNextSubTask` | written | L2 | heap-writes |
+| 0x65D780 | `CTaskComplexFleeAnyMeans::ControlSubTask` | written | L2 | heap-writes |
+| 0x661720 | `CTaskComplexGangJoinRespond::Destructor` | written | L2 | heap-writes |
+| 0x675460 | `CTaskInteriorBeInShop::Destructor` | written | L2 | heap-writes |
+| 0x67C2E0 | `CTaskComplexInAirAndLand::Clone` | written | L2 | heap-writes |
+| 0x67C360 | `CTaskSimpleInAir::Clone` | written | L2 | heap-writes |
+| 0x68AA50 | `CTaskSimpleSwim::DestroyFxSystem` | written | L2 | heap-writes |
 
 ## gen2-anim-1
 

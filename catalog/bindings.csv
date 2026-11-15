@@ -2665,3 +2665,4 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x601390,sa-ai,intel_clear_task_duck_secondary,thiscall,,intel:GPtr<u8>,,sa_ai::intelrest::intel_clear_task_duck_secondary,CPedIntelligence::ClearTaskDuckSecondary,
 0x61F8B0,sa-ai,throw_control_ctor,thiscall,,t:GPtr<u8>;e:u32;pos:GPtr<u32>,GPtr<u8>,unported,CTaskSimpleThrowControl::Constructor,
 0x668C70,sa-ai,go_to_point_shooting_ctor,thiscall,,t:GPtr<u8>;mode:u32;pos:GPtr<u32>;e:GPtr<u8>;ox:u32;oy:u32;oz:u32;a:u32;b:u32,GPtr<u8>,unported,CTaskComplexGoToPointShooting::Constructor,
+0x678CD0,sa-ai,in_air_ctor,thiscall,,t:GPtr<u8>;a:u32;b:u32;c:u32,GPtr<u8>,unported,CTaskSimpleInAir::Constructor,

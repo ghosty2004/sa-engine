@@ -486,6 +486,12 @@ pub fn complex_slow_be_dragged_out_create_next_sub_task(this: GPtr<u8>, ped: GPt
 #[hook(addr = 0x6486F0, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOutAndStandUp::MakeAbortable", expect = "83 7C 24 08 02 75 10",
        unverified = "carjack-1", route = "L2", hazards = "ax-al-return", recs = "carjack")]
 pub fn stand_up_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, priority: i32, event: GPtr<u8>) -> u8 {
+    urgent_only_make_abortable(this, ped, priority, event)
+}
+
+/// The `MakeAbortable` body shared by the complex tasks that only give way to an urgent abort: priority 2 → the
+/// sub-task's (+8, not NULL-checked) `MakeAbortable(ped, 2, event)` (a tail jump in the originals); else false.
+pub(crate) fn urgent_only_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, priority: i32, event: GPtr<u8>) -> u8 {
     if priority != 2 {
         return 0;
     }

@@ -1359,6 +1359,11 @@ orig! {
 }
 
 orig! {
+    /// `CTaskSimpleInAir::Constructor` (0x678CD0)
+    pub fn in_air_ctor(t: GPtr<u8>, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x678CD0 => unported;
+}
+
+orig! {
     /// `CTaskSimpleClimb::Constructor` (0x67A110)
     pub fn climb_ctor(t: GPtr<u8>, e: GPtr<u8>, pos: GPtr<u8>, heading: u32, surf: u32, height: u32, force: u32) -> GPtr<u8> = thiscall 0x67A110 => crate::jump_sub_tasks::simple_climb_ctor;
 }
