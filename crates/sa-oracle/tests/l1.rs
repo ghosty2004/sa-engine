@@ -506,6 +506,9 @@ const PRESERVE_SPECS_PENDING: &[u32] = &[
     // FRONTIER-1 batch frontier-1-1: the vtable-only destructor 0x4B1F00 (preserve ecx: its scalar deleting
     // destructor 0x4B6840 reads ECX after the call); spec queued.
     0x4B1F00,
+    // FRONTIER-2 part 4 batch frontier2-7: the vtable-only event destructors 0x4AECA0 / 0x4B1320 / 0x4B1B50 (preserve
+    // ecx: their scalar deleting destructors 0x4B6080 / 0x4B65C0 / 0x4B6750 read ECX after the call); specs queued.
+    0x4AECA0, 0x4B1320, 0x4B1B50,
 ];
 
 /// Preserved registers (VER-2, verifier finding V-9): every spec that declares them names a port
