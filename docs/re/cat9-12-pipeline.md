@@ -38,6 +38,21 @@ hooks (named), 9 are gta-reversed callees (unnamed, `CALLED-ONLY`; 2 of them are
 vtable slots of unvalidated classes (`Class::vfunc_N`), 8 are unnamed game call targets, 2 are
 QuickTime glue, and 0x82263a `_purecall` is CRT. All 153 are now catalogue rows.
 
+### Tail-jump targets inside the jumper's extent (FRONTIER-2 turn 2)
+
+When a `jmp` leads to code that is not a function yet, Ghidra adds the target block to the
+jumper's body. The target was then never a call target and `gaps` never catalogued it (the
+`__dtor_` / `__init_` stubs and their bodies, a few `jmp`-chained helpers; lane C of FRONTIER-2
+had to register 15 of them as phase B natives). `callgraph.py build` (`split_tail_target`) now
+emits a `tailcall` edge for a `jmp` into the jumper's own body when the target starts a body range
+of its own, sits on a 16-byte boundary after padding (0x90 / 0xCC) or a `ret`, the jump lies in
+the range holding the jumper's entry (a no-CD protection fragment that jumps back into the
+function is not a tail jump) and the target lies before the entry or another catalogued entry
+lies between jump and target (in-function jumps over alignment padding fail this test). `gaps`
+appends the target (`cat7-tailcall`); on the next pass `callgraph.py ghidra` creates a function
+there and the jumper's extent ends before it. No Ghidra re-analysis is needed. First run: 34
+targets (33 game rows, 0x819770 QuickTime glue), a second pass adds none.
+
 ### Vtable slot names (`tools/catalog/vtables.py`)
 
 gta-reversed only hooks the out-of-line virtuals. Inline header virtuals (`GetEventType`,

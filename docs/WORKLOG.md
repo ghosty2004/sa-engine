@@ -2020,3 +2020,67 @@
   of heli / plane / boat / quad), the remaining WEAPON bodies, GangWars::TellGangMembersTo (event / VM mix),
   ClitargetOrientationToLink. Names for the unnamed garage entries 0x4485C0 / 0x449100 / 0x449A50 and the RW helpers
   0x7C88B0 / 0x812C90 / 0x803840 / 0x7CA240 / 0x7CA330 are proposed in the port docs (not added to name-corrections).
+## 2026-11-15 — FRONTIER-2 turn 2 lane C: stays-original list, CAT-12 tail targets, generator drift, batches c5 / c6 (agent, branch worktree-agent-afdd623e21965992f)
+- Base: master d05f6e24. Scope: frontier.py rows of AUDIO, UNK-game, SCRIPT, CALLED-ONLY and not-in-catalogue, plus three
+  tooling items. Every port address checked against `tools/gen/inflight.py` first (none in flight).
+- Tooling (a), stays original: `catalog/stays-original.csv` (key = address or `class:NAME`, reason), read through
+  `tools/lib/stays_original.py` by frontier.py (left out of the lists, `stays original N` in the summary line,
+  `--stays-original` lists them with the reason), audio_patterns.py (replaces its EXCLUDE_CLASS regex) and patterns.py
+  (which had parsed that regex out of audio_patterns.py). Rows: the DirectSound channels, the stream / smooth-fade
+  threads, the decoders (streaming base, MF, WMA, Wave, Vorbis), CAEDataStream (its IStream stubs), CAEStreamThread's
+  destructor 0x4F11E0, the class vt_866db0 (a Winsock client: socket / connect / send / closesocket through WS2_32
+  ordinals; its guessed slot names SynchPlayback / Play are wrong, it is not the user-track player), the
+  std::logic_error / length_error virtuals 0x4F3D50 / 0x4F3D60 / 0x4F4110 (reached only through a thrown exception) and
+  the bug-report class 0x862E70 (0x508F90 / 0x509170, development tooling). 0x4F4620, which audio_patterns.py excluded
+  as "user-tracks file output", is a `std::vector<T*>::push_back` (kept generator-local).
+- Tooling (b), CAT-12 tail targets: `callgraph.py build` (`split_tail_target`) emits a `tailcall` edge for a `jmp` into
+  the jumper's own extent when the target starts a body range of its own on a 16-byte boundary after padding or `ret`,
+  the jump sits in the range holding the entry (protection fragments jumping back are not tail jumps; the first version
+  without this test added 0x5BD890, a loop head of LoadHandlingData, removed again) and the target is before the entry
+  or a catalogued entry lies between. No Ghidra re-analysis: `gaps` appends the target, the next pass's Ghidra dump
+  creates the function. 34 rows (33 game, 0x819770 QuickTime): lane C's 15 natives' bodies, CAEStreamThread /
+  CAESoundManager / cBuoyancy / allocator / break-manager / oct-tree destructors, CMemoryHeap::CMemoryHeap,
+  CPad::IsLeftShockPressed, CWaterLevel::HandleBeachToysStuff, CAEWeatherAudioEntity's destructor. Side effect:
+  AUDIO-GEN no longer matches `__dtor_AESmoothFadeThread` 0x856300 (verified) once its tail target 0x4EE9E0 is a
+  function; re-added by hand (frontier2-c5, needs re-verification) with a native for 0x4EE9E0. Notes in
+  `docs/re/cat9-12-pipeline.md`.
+- Tooling (c), generator drift: `cfg_check.py` counted the generators' own test gate `cfg(all(test, not(sa_phase_a)))`
+  in every new generated file (not in the baseline), so lane C left the new sa-audio / sa-hud generated_leaves.rs out and
+  master's `patterns.py --check` differed (plus lane B's natives and new catalogue names never regenerated). Generator
+  output is no longer counted for that gate (baseline 139 → 86 files), all three generators regenerated, and the writer
+  gate has a `gen` step (patterns / ai_patterns / audio_patterns `--check`, project venv).
+- Catalogue: `run_all.sh` three times (CAT-12 change; batch c5 names; batch c6 names); each time `catalog/state.csv` was
+  restored to the base rows except new and renamed addresses (run_all reset 74-75 unrelated rows that state_check had
+  recorded). 23 CAT-17 names in `catalog/name-corrections.csv`.
+- Batch frontier2-c5 (22 hooks): FurnitureManager_c / ProcObjectMan_c / WaterCreatureManager_c / IKChainManager_c /
+  CMatrixLinkList destructors, List_c::GetItemOffset 0x4A9010, CMemoryHeap::Malloc 0x72ED80, CAESoundManager::~ 0x4EFD60,
+  CTheScripts::IsPointWithinSearchLight 0x493280, the streamed-script release 0x40C1C0, CTaskComplexBeCop /
+  FollowPatrolRoute / SeekEntity (0x66CA40) constructors, the looped-middle anim task (vtable 0x86D594) constructors
+  0x61AC90 / 0x61AD10 and anim start 0x61ADF0, the be-kicked-on-ground anim start 0x61FD20, the kill-all-threats scan
+  0x6221D0, the avoid-entity look release 0x66AD10, RpGeometryReplaceOldMaterialWithNewMaterial 0x734DE0, the D3D9 raster
+  format setter 0x4CC580, `__dtor_AESmoothFadeThread` 0x856300.
+- Batch frontier2-c6 (12 hooks): CPatrolRoute::operator new 0x41B810, COctTree::~COctTree 0x5A7400 / FillPalette 0x5A70F0,
+  BreakManager_c::~ 0x59E640, the six CPedGroupDefaultTaskAllocator* destructors 0x5F6460..0x5F6550,
+  FxInfoAttractLine_c::GetValue 0x4A5850, the scripted 2D effect's nearest ped 0x603570.
+- Natives (9): the four `std::vector<...>::_Xlen` 0x5ECAB0.. (they throw length_error; phase B cannot raise a C++
+  exception, the native stops the game), CPathFind::StoreDetachedNodeInfoPed 0x44D2E0 (`ret 0x38`),
+  CAEFrontendAudioEntity's destructor 0x506B20 and CTaskComplexReactToAttack::CreateSubTask 0x620C30 (the protection reads
+  their entry bytes as data; the latter was a hook until the sa-hook keycells / patch_refs tests refused it), the
+  smooth-fade thread destructor 0x4EE9E0, COctTreeBase::~ 0x5A4140 (a 5-byte `jmp` into game .text); AUDIO-GEN's
+  CAEAudioEntity::UpdateParameters 0x4D7E30 registered.
+- Not ported: 0x422F80 (ST0 result called through an `f64` declaration), CMemoryHeap::FillInBlockData 0x72EC80 and
+  0x66D4B0 / 0x603AF0 (protection fragments inside), the big bodies (ProcessMissionAudioEvent, the four aircraft engine
+  audio functions, the weather thunder event, the angled-area checks, ExtractVehicleUpdateData, the D3D9 raster helpers
+  0x4CA5A0 / 0x4CC0C0 / 0x4CD050), 0x61D0B0 / 0x61FF40 / 0x66AB40 / 0x66FD30 / 0x65A110 (stack objects / x87 results),
+  0x477DA0 (still not in the catalogue: reached only through an obfuscated call), the partial script switches (lane A).
+- frontier.py, lane C subsystems: 114 rows at the start (UNK-game 46, AUDIO 51, SCRIPT 11, CALLED-ONLY 3, not in the
+  catalogue 3) → 38 to port (UNK-game 16, AUDIO 9, SCRIPT 9, CALLED-ONLY 3, not in the catalogue 1; 4 of them new callees
+  of the ports: 0x4A4880, 0x4CC1D0, 0x66D4B0, 0x72EC80) + 48 listed as stays original. Whole frontier: to port 456 → 380
+  (`--no-branches`), stays original 48.
+- Gates: writer gate (base d05f6e24, on 1a07f443) green: hooks (37 new, all unverified) / bindings / state / dupes / cfg / gen / layers / commits / clippy / i686 / i686clip / wasm32 / hooktest 59/59 / l1test / l1; queue up to date after its regeneration commit. i686 sa-game with and without `samp`, `FEATURES=samp tools/web/build.sh`
+  built.
+- Scenarios (`frontier.sh`, i686 native, default lengths; output in target/lanec2-scen): pausemenu 416 / 0 blocked,
+  solicit 4016 / 0, crossing 1216 / 0, melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0, shootdriver 1216 / 0; no crash.
+- verify-all (lanes 6-7, fresh sa-oracle, DLL of 1a07f443): `lanec2-c56` (SA_UNVERIFIED=frontier2-c5,frontier2-c6) IDENTICAL
+  13/13; `lanec2-default` (default set) IDENTICAL 13/13. (A first `lanec2-c5` run was stopped after 4/13 IDENTICAL in
+  favour of the combined one.)
