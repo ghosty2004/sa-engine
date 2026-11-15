@@ -424,6 +424,11 @@ orig! {
 }
 
 orig! {
+    /// `CDamageManager::GetCarNodeIndexFromDoor` (0x6C26F0)
+    pub fn get_car_node_index_from_door(d: u32) -> i32 = cdecl 0x6C26F0 => unported;
+}
+
+orig! {
     /// `CVehicle::SetUpDriver` (0x6D1A50)
     pub fn set_up_driver(v: GPtr<u8>, pt: i32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x6D1A50 => unported;
 }

@@ -153,13 +153,12 @@ use crate::bindings::find_player_ped;
 use sa_stream::bindings::ped_is_player;
 use crate::bindings::garages_is_point_within_hide_out_garage;
 use crate::bindings::remove_from_moving_list;
+use crate::bindings::object_delete_all_temp_objects_in_area;
 orig! {
     /// entity virtual +0xC (`Remove`)
     fn v_remove(e: GPtr<u8>) = thiscall vslot 0xC => unported;
     /// entity virtual +0x0 (scalar deleting destructor)
     fn v_delete(e: GPtr<u8>, flags: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
-    /// `CObject::DeleteAllTempObjectsInArea(CVector, float)` (0x5A1980, cdecl)
-    fn object_delete_all_temp_objects_in_area(x: f32, y: f32, z: f32, r: f32) = cdecl 0x5A1980 => unported;
     /// `CShadows::TidyUpShadows()` (0x707770, cdecl)
     fn shadows_tidy_up_shadows() = cdecl 0x707770 => unported;
     /// `CPickups::RemoveUnnecessaryPickups(const CVector&, float)` (0x4563A0, cdecl)

@@ -81,7 +81,7 @@ pub fn gang_wars_update() {
 orig! {
     /// `CRoadBlocks::CreateRoadBlockBetween2Points(CVector a, CVector b, uint32 gang)` (0x4619C0, cdecl, both vectors
     /// by value: six stack dwords, then the flag)
-    fn create_road_block_between_2_points(ax: u32, ay: u32, az: u32, bx: u32, by: u32, bz: u32, gang: u32) = cdecl 0x4619C0 => unported;
+    fn create_road_block_between_2_points(ax: u32, ay: u32, az: u32, bx: u32, by: u32, bz: u32, gang: u32) = cdecl 0x4619C0 => crate::road_block_between::create_road_block_between_2_points;
     /// `CRoadBlocks::GetRoadBlockNodeInfo(CNodeAddress, float&, CVector&)` (0x460EE0, AL)
     fn road_block_node_info(node: u32, width: GPtr<f32>, dir: GPtr<f32>) -> u8 = cdecl 0x460EE0 => crate::misc5::get_road_block_node_info;
 }
@@ -154,7 +154,7 @@ fn offset(n: GPtr<u8>, k: f32, dir: &mut V3, minus: bool, out: &mut V3) -> GPtr<
 /// = 0. Then the script road block of this frame (`aScriptRoadBlocks[m_FrameCounter & 15]`), when active: its
 /// centre `(A + B) * 0.5` (x summed into an f32 first, y / z multiplied on the x87 stack) 90 or more from the player
 /// (3D, NaN included) marks it safe to create; nearer and safe, it is created between its corners with its gang flag
-/// and marked unsafe. The `CRoadBlocks::CreateRoadBlockBetween2Points` calls (0x4619C0) stay on the original.
+/// and marked unsafe.
 #[hook(addr = 0x4629E0, conv = cdecl, name = "CRoadBlocks::GenerateRoadBlocks", expect = "6A FF 68 73 7C 83 00")]
 pub fn generate_road_blocks() {
     // the two stack CMatrix locals (m_pAttachMatrix and m_bOwnsAttachedMatrix cleared by the prologue)

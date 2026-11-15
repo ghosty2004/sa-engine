@@ -2749,6 +2749,11 @@ orig! {
 }
 
 orig! {
+    /// `CObject::DeleteAllTempObjectsInArea` (0x5A1980)
+    pub fn object_delete_all_temp_objects_in_area(x: f32, y: f32, z: f32, r: f32) = cdecl 0x5A1980 => crate::world::object::delete_all_temp_objects_in_area;
+}
+
+orig! {
     /// `CObject::Create-intbool` (0x5A1F60)
     pub fn object_create(model: u32, flag: u32) -> GPtr<u8> = cdecl 0x5A1F60 => unported;
 }

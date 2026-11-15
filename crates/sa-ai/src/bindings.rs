@@ -1549,6 +1549,11 @@ orig! {
 }
 
 orig! {
+    /// `CPointList::Empty` (0x699F00)
+    pub fn point_list_empty_b(l: GPtr<u8>) = thiscall 0x699F00 => crate::cover::point_list_empty;
+}
+
+orig! {
     /// `CTaskAllocatorKillThreatsBasic::ComputeClosestPeds` (0x69C850)
     pub fn compute_closest_peds_o(group: GPtr<u8>, threats: GPtr<u8>, closest: GPtr<u8>) = cdecl 0x69C850 => crate::kill_threats_basic::compute_closest_peds;
 }

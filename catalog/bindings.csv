@@ -291,6 +291,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x691720,sa-ai,hold_entity_play_anim,thiscall,,t:GPtr<u8>;anim:u32;group:u32,,unported,CTaskSimpleHoldEntity::PlayAnim,
 0x6923F0,sa-ai,duck_control_duck_move,thiscall,,d:GPtr<u8>;mx:f32;my:f32,,unported,CTaskSimpleDuck::ControlDuckMove,
 0x6924B0,sa-ai,duck_force_stop_move,thiscall,,d:GPtr<u8>,,unported,CTaskSimpleDuck::ForceStopMove,
+0x699F00,sa-ai,point_list_empty_b,thiscall,,l:GPtr<u8>,,sa_ai::cover::point_list_empty,CPointList::Empty,
 0x69C850,sa-ai,compute_closest_peds_o,cdecl,,group:GPtr<u8>;threats:GPtr<u8>;closest:GPtr<u8>,,sa_ai::kill_threats_basic::compute_closest_peds,CTaskAllocatorKillThreatsBasic::ComputeClosestPeds,
 0x6C2150,sa-world,dm_set_panel_status,thiscall,,dm:GPtr<u8>;panel:u32;status:u32,,unported,CDamageManager::SetPanelStatus,sa_veh::damage::set_panel_status
 0x6C21A0,sa-world,dm_set_wheel_status,thiscall,,dm:GPtr<u8>;wheel:i32;status:u8,,unported,CDamageManager::SetWheelStatus,
@@ -1283,6 +1284,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x612F90,sa-pop,choose_civilian_occupation,cdecl,,male:u8;female:u8;race:i32;exclude:i32;stat:i32;a:u8;b:u8;c:u8;name:GPtr<u8>,i32,sa_pop::population2::choose_civilian_occupation,CPopulation::ChooseCivilianOccupation,
 0x614490,sa-pop,pick_gang_car,cdecl,,gang:i32,i32,sa_pop::population::pick_gang_car,CPopulation::PickGangCar,
 0x615970,sa-pop,generate_peds_at_attractors,cdecl,,px:f32;py:f32;pz:f32;a:f32;b:f32;c:f32;d:f32;dm:i32;n:i32,i32,sa_pop::population2::generate_peds_at_attractors,CPopulation::GeneratePedsAtAttractors,
+0x6C26F0,sa-pop,get_car_node_index_from_door,cdecl,,d:u32,i32,unported,CDamageManager::GetCarNodeIndexFromDoor,sa_veh::automobile2::get_car_node_index_from_door
 0x6D1A50,sa-pop,set_up_driver,thiscall,,v:GPtr<u8>;pt:i32;a:u32;b:u32,GPtr<u8>,unported,CVehicle::SetUpDriver,
 0x6D1AA0,sa-pop,setup_passenger,thiscall,,v:GPtr<u8>;i:i32;pt:i32;a:u32;b:u32,GPtr<u8>,unported,CVehicle::SetupPassenger,
 0x6F5300,sa-pop,get_boat_pointer,thiscall,,mgr:GPtr<u8>;id:u8,GPtr<u8>,unported,cHandlingDataMgr::GetBoatPointer,
@@ -1789,7 +1791,6 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x6C2130,sa-veh,get_light_status,thiscall,,dm:GPtr<u8>;light:u32,u32,sa_veh::damage::get_light_status,CDamageManager::GetLightStatus,
 0x6C24B0,sa-veh,apply_damage,thiscall,,dm:GPtr<u8>;v:GPtr<u8>;comp:i32;intensity:f32;mult:f32,u8,sa_veh::damage::apply_damage,CDamageManager::ApplyDamage,
 0x6C26A0,sa-veh,node_from_panel,cdecl,,p:u32,i32,sa_veh::automobile2::get_car_node_index_from_panel,CDamageManager::GetCarNodeIndexFromPanel,
-0x6C26F0,sa-veh,get_car_node_index_from_door,cdecl,,d:u32,i32,sa_veh::automobile2::get_car_node_index_from_door,CDamageManager::GetCarNodeIndexFromDoor,
 0x6C7D80,sa-veh,call_extend_suspension,thiscall,,a:GPtr<u8>,,sa_veh::vehicle_suspension_nodes::monster_truck_extend_suspension_port,CMonsterTruck::ExtendSuspension,
 0x6D0530,sa-veh,calculate_gear_for_simple_car,thiscall,,t:GPtr<u8>;speed:f32;gear:GPtr<u8>,,sa_veh::mvpb_a2::calculate_gear_for_simple_car,cTransmission::CalculateGearForSimpleCar,
 0x6D05E0,sa-veh,calculate_drive_acceleration,thiscall,,t:GPtr<u8>;gas:GPtr<u8>;gear:GPtr<u8>;change:GPtr<u8>;velocity:GPtr<u8>;i1:GPtr<u8>;i2:GPtr<u8>;wheels:u32;cheat:u32,f64,unported,cTransmission::CalculateDriveAcceleration,
@@ -2353,6 +2354,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x59F2D0,sa-world,try_to_explode,thiscall,,o:GPtr<u8>,u8,unported,CObject::TryToExplode,
 0x59F5C0,sa-world,object_lock_door,thiscall,,o:GPtr<u8>,,sa_world::world::object::lock_door,CObject::LockDoor,
 0x5A0D90,sa-world,object_damage,thiscall,,o:GPtr<u8>;dmg:f32;origin:GPtr<u8>;dir:GPtr<u8>;damager:GPtr<u8>;weapon:u32,,unported,CObject::ObjectDamage,
+0x5A1980,sa-world,object_delete_all_temp_objects_in_area,cdecl,,x:f32;y:f32;z:f32;r:f32,,sa_world::world::object::delete_all_temp_objects_in_area,CObject::DeleteAllTempObjectsInArea,
 0x5A1F60,sa-world,object_create,cdecl,,model:u32;flag:u32,GPtr<u8>,unported,CObject::Create-intbool,
 0x5A2CB0,sa-world,object_set_centre_of_mass,thiscall,,o:GPtr<u8>;x:f32;y:f32;z:f32,,unported,FUN_005a2cb0,
 0x5A5730,sa-world,copy_texture,cdecl,,t:GPtr<u8>,GPtr<u8>,unported,CClothesBuilder::CopyTexture,sa_render::car_dirt::copy_texture

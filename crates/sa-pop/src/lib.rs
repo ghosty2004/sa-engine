@@ -60,3 +60,4 @@ pub mod police_ai;
 pub mod update_car_ai;
 pub mod emergency_occupants;
 pub mod frontier_c;
+pub mod road_block_between;
