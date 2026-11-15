@@ -114,7 +114,7 @@ orig! {
     /// `CPedClothesDesc::HasVisibleTattoo` (0x5A79D0)
     fn clothes_has_visible_tattoo(c: GPtr<u8>) -> u8 = thiscall 0x5A79D0 => unported;
     /// `CPedToPlayerConversations::EndConversation()` (0x43AB10)
-    fn p2p_end_conversation() = cdecl 0x43AB10 => unported;
+    fn p2p_end_conversation() = cdecl 0x43AB10 => end_conversation;
 }
 
 use sa_world::world::garage_update::now;
@@ -789,7 +789,31 @@ pub fn conversations_set_up_conversation_node(name: GPtr<u8>, yes: GPtr<u8>, no:
     g::<i32>(SETUP_NUM_NODES).write(c + 1);
 }
 
+/// `CPedToPlayerConversations::EndConversation()` (0x43AB10, its body at .HOODLUM 0x1566F50): state 0, the player
+/// conversation's audio released, the partner's (`m_pPed` 0x9691C0) speech enabled; the player's and then the
+/// partner's look-at aborted (blend 250 ms) when they look at something. The partner's abort goes through the no-CD
+/// VM (0xCB73E0, descriptor 0x155FF98): `tools/re/vm_eval.py 1566FBB 156704F --call` evaluates its pointer
+/// (`~[0x1560530] ^ [0x72D9F4]` = 0x9691C0, read again), the time (0xFA) and the computed call (AbortLookAt 0x618280).
+#[hook(addr = 0x43AB10, conv = cdecl, name = "CPedToPlayerConversations::EndConversation", expect = "E9 3B C4 12 01",
+       unverified = "frontier2-a7", route = "L2", hazards = "heap-writes")]
+pub fn end_conversation() {
+    let player = find_player_ped(-1);
+    P2P_STATE.set(0);
+    release_player_conversation();
+    if !P2P_PED.get().is_null() {
+        ped_enable_ped_speech(P2P_PED.get());
+    }
+    if ik_is_looking(g(IK_CHAIN_MAN), player) != 0 {
+        ik_abort_look_at(g(IK_CHAIN_MAN), player, 250);
+    }
+    let partner = P2P_PED.get();
+    if !partner.is_null() && ik_is_looking(g(IK_CHAIN_MAN), partner) != 0 {
+        ik_abort_look_at(g(IK_CHAIN_MAN), P2P_PED.get(), 250);
+    }
+}
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_END_CONVERSATION,
     HOOK_CONVERSATIONS_IS_PLAYER_IN_POSITION,
     HOOK_CONVERSATIONS_SET_UP_CONVERSATION_NODE,
     HOOK_P2P_CLEAR,
