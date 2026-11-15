@@ -12,7 +12,7 @@ use crate::checks2::{
 };
 use crate::common::{rd, wr};
 
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use crate::bindings::set_recording_to_point_closest_to_coors;
 
 /// The `ebx += 7` step of the unrolled free-slot search: the original adds the value of the no-CD VM 0xCB73E0

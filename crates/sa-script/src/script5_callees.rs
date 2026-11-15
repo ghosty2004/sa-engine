@@ -11,7 +11,7 @@ use sa_math::x87::X87;
 
 use crate::vm::Scr;
 
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_input::bindings::get_pad;
 use sa_stream::bindings::remove_txd as txd_remove;
 use sa_stream::bindings::sprite2d_delete;

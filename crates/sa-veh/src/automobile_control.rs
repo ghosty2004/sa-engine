@@ -39,7 +39,7 @@ use sa_world::bindings::physical_process_control;
 use sa_world::bindings::vector_magnitude_sqr;
 use crate::bindings::area_check_stub;
 use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
-use sa_core::bindings::entity_register_reference as register_reference;
+use sa_world::bindings::entity_register_reference as register_reference;
 use sa_world::bindings::vector_sub;
 use sa_world::bindings::entity_get_col_model as get_col_model;
 use sa_world::bindings::multiply3x3;

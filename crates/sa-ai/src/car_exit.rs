@@ -772,7 +772,7 @@ pub const HOOKS: &[HookReg] = &[
 ];
 
 use crate::bindings::ped_position_ped_out_of_collision;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_core::bindings::matrix_set_rotate_z_only;
 use sa_world::bindings::vector_add_assign;
 use sa_core::bindings::world_get_is_line_of_sight_clear;

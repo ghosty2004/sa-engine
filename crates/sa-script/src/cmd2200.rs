@@ -57,7 +57,7 @@ use sa_core::bindings::crt_strncpy as strncpy_;
 use sa_core::bindings::cutscene_is_skip_button_being_pressed as is_cutscene_skip_button_being_pressed;
 use sa_world::bindings::find_player_ped;
 use sa_core::bindings::start_extra_colour;
-use sa_core::bindings::streaming_request_model as request_model;
+use sa_stream::bindings::streaming_request_model as request_model;
 use sa_core::bindings::stricmp;
 use sa_core::bindings::strncmp;
 use sa_ai::bindings::task_new;

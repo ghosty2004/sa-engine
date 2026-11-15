@@ -12,7 +12,7 @@ use crate::common::{ftol32, g, jne_mask, jp5, rand_at, rd, wr, x, xi};
 /// Globals owned by this module: none.
 pub const GLOBALS: &[GlobalDesc] = &[];
 
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_world::bindings::find_player_vehicle;
 use sa_core::bindings::random_float_in_range;
 use sa_stream::bindings::car_group_pick_least_used_model as loaded_car_group_pick_least_used_model;

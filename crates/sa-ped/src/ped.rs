@@ -50,7 +50,7 @@ pub use sa_world::bindings::set_seeing_range;
 pub use sa_world::bindings::tm_find_active_task_by_type as find_active_task_by_type;
 pub use crate::bindings::ped_clear_look_flag as clear_look_flag_call;
 pub use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
-pub use sa_core::bindings::entity_register_reference as register_reference;
+pub use sa_world::bindings::entity_register_reference as register_reference;
 pub use sa_world::bindings::get_skill_stat_index;
 pub use crate::bindings::get_weapon_skill_type_call;
 orig! {

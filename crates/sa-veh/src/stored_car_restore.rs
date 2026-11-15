@@ -8,7 +8,7 @@ use sa_core::{hook, orig};
 
 use crate::common::{g, rd, wr, xi};
 
-use sa_core::bindings::streaming_request_model;
+use sa_stream::bindings::streaming_request_model;
 use sa_world::bindings::world_add;
 use sa_stream::bindings::has_vehicle_upgrade_loaded as streaming_has_vehicle_upgrade_loaded;
 use sa_stream::bindings::request_vehicle_upgrade as streaming_request_vehicle_upgrade;

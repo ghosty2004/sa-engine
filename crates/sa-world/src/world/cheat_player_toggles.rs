@@ -17,7 +17,7 @@ use crate::bindings::ped_set_current_weapon;
 use crate::bindings::task_jetpack_ctor;
 use crate::bindings::find_player_ped;
 use sa_stream::bindings::load_all_requested_models;
-use sa_core::bindings::streaming_request_model as request_model;
+use sa_stream::bindings::streaming_request_model as request_model;
 use sa_core::bindings::task_new;
 use sa_stream::bindings::stream_peds_into_random_slots;
 use crate::bindings::beach_party_cheat;

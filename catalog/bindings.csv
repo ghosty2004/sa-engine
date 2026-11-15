@@ -475,7 +475,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x407F20,sa-core,streaming_load_initial_vehicles,cdecl,,,,unported,CStreaming::LoadInitialVehicles,
 0x4082C0,sa-core,vector_magnitude,thiscall,,v:GPtr<u32>,f64,unported,CVector::Magnitude,
 0x4083C0,sa-core,streaming_init_image_list,cdecl,,,,unported,CStreaming::InitImageList,sa_stream::streaming::init_image_list
-0x4087E0,sa-core,streaming_request_model,cdecl,,id:i32;flags:i32,u32,unported,CStreaming::RequestModel,
+0x4087E0,sa-core,streaming_request_model,cdecl,,id:i32;flags:i32,u32,unported,CStreaming::RequestModel,sa_stream::streaming::request_model
 0x4089A0,sa-core,streaming_remove_model,cdecl,,id:i32,,unported,CStreaming::RemoveModel,sa_stream::streaming::remove_model
 0x4090A0,sa-core,call_delete_all_rw_objects,cdecl,,,,unported,CStreaming::DeleteAllRwObjects,sa_stream::streaming::delete_all_rw_objects
 0x409C10,sa-core,set_model_is_deletable,cdecl,,id:i32,,unported,CStreaming::SetModelIsDeletable,sa_stream::streaming::set_model_is_deletable
@@ -720,7 +720,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x571A40,sa-core,entity_resolve_references,thiscall,,e:GPtr<u8>,,unported,CEntity::ResolveReferences,sa_world::world::entity::resolve_references
 0x571A90,sa-core,prune_references,thiscall,,e:GPtr<u8>,,unported,CEntity::PruneReferences,sa_world::world::entity::prune_references
 0x571AD0,sa-core,references_remove_references_to_player,cdecl,,,,unported,CReferences::RemoveReferencesToPlayer,
-0x571B70,sa-core,entity_register_reference,thiscall,,e:GPtr<u8>;slot:GPtr<u8>,u32,unported,CEntity::RegisterReference-,
+0x571B70,sa-core,entity_register_reference,thiscall,,e:GPtr<u8>;slot:GPtr<u8>,u32,unported,CEntity::RegisterReference-,sa_world::world::entity::register_reference
 0x571EE0,sa-core,user_display_init,cdecl,,,,unported,CUserDisplay::Init,
 0x572440,sa-core,zones_fill_zones_with_gang_colours,cdecl,,disable_radar:u8,,unported,CTheZones::FillZonesWithGangColours,sa_world::world::zones::fill_zones_with_gang_colours
 0x572670,sa-core,the_zones_init,cdecl,,,,unported,CTheZones::Init,sa_world::world::zones::init

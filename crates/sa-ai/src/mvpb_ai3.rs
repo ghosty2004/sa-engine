@@ -21,7 +21,7 @@ use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
 use sa_world::bindings::leave_car_ctor;
 use crate::bindings::play_hand_signal_anim_ctor_61b2b0 as play_hand_signal_anim_ctor;
 use crate::bindings::seek_entity_xy_offset_ctor;
-use sa_core::bindings::streaming_request_model as request_model;
+use sa_stream::bindings::streaming_request_model as request_model;
 use crate::bindings::tm_get_task_secondary as task_manager_get_task_secondary;
 use crate::bindings::tm_set_task_secondary as task_manager_set_task_secondary;
 use sa_stream::bindings::get_animation_block_index;

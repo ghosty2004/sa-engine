@@ -25,7 +25,7 @@ pub use crate::bindings::vehicle_is_driver;
 pub use sa_anim::bindings::assoc_set_current_time;
 pub use sa_core::bindings::crt_new;
 pub use sa_world::bindings::entity_clean_up_old_reference;
-pub use sa_core::bindings::entity_register_reference;
+pub use sa_world::bindings::entity_register_reference;
 pub use sa_world::bindings::stats_increment_stat;
 pub use crate::bindings::task_new;
 pub use sa_core::bindings::text_get;

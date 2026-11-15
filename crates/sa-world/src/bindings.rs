@@ -2409,6 +2409,11 @@ orig! {
 }
 
 orig! {
+    /// `CEntity::RegisterReference-` (0x571B70)
+    pub fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) -> u32 = thiscall 0x571B70 => crate::world::entity::register_reference;
+}
+
+orig! {
     /// `CTheZones::InitZonesPopulationSettings` (0x5720D0)
     pub fn init_zones_population_settings() = cdecl 0x5720D0 => crate::world::zones::init_zones_population_settings;
 }

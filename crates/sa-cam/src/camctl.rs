@@ -63,7 +63,7 @@ pub use crate::bindings::process_vector_track_linear;
 pub use sa_core::bindings::crt_free_8214bd as crt_free;
 pub use sa_core::bindings::eh_vector_ctor;
 pub use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
-pub use sa_core::bindings::entity_register_reference as register_reference;
+pub use sa_world::bindings::entity_register_reference as register_reference;
 pub use sa_core::bindings::matrix_assign;
 pub use sa_world::bindings::matrix_dtor;
 pub use sa_core::bindings::matrix_invert_59bdd0 as matrix_invert;

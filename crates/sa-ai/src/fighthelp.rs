@@ -82,7 +82,7 @@ use sa_core::bindings::get_weapon_info as weapon_info_get;
 use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_set_translate_only;
 use sa_core::bindings::ped_is_alive;
-use sa_core::bindings::streaming_request_model;
+use sa_stream::bindings::streaming_request_model;
 use sa_anim::bindings::anim_add_block_ref;
 use sa_stream::bindings::anim_remove_block_ref;
 use sa_stream::bindings::ped_is_player;

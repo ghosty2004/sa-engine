@@ -19,7 +19,7 @@ use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
 use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
-use sa_core::bindings::entity_register_reference as register_reference;
+use sa_world::bindings::entity_register_reference as register_reference;
 use sa_world::bindings::placeable_allocate_matrix;
 use sa_render::bindings::simple_transform_update_matrix;
 use sa_world::bindings::find_ground_z_for_coord;

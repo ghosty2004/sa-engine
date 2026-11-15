@@ -23,7 +23,7 @@ use sa_anim::bindings::assoc_set_finish_callback;
 use crate::bindings::climb_test_for_climb;
 use sa_core::bindings::clump_get_association;
 use sa_anim::bindings::assoc_set_current_time;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_input::bindings::get_pad as pad_get_pad;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::achieve_heading_ctor;

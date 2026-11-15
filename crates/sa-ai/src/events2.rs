@@ -34,7 +34,7 @@ use crate::bindings::walk_round_car_set_new_vehicle;
 use sa_world::bindings::wanted_can_cop_join_pursuit;
 use sa_core::bindings::car_set_ped_out_dtor as task_car_set_ped_out_dtor;
 use sa_core::bindings::car_set_ped_out_process_ped as task_car_set_ped_out_process_ped;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_world::bindings::find_player_ped;
 use sa_core::bindings::general_random_int_in_range as general_get_random_number_in_range_int;
 use sa_core::bindings::get_weapon_info as weapon_info_get;

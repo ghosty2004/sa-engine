@@ -889,7 +889,7 @@ pub fn ped_groups_are_in_same_group_5f7f40(a: u32, b: u32) -> u8 {
 use sa_anim::bindings::assoc_set_finish_callback;
 use crate::bindings::attractor_scanner_clear;
 use crate::bindings::decision_from;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_core::bindings::ped_is_alive;
 use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
 use crate::bindings::task_simple_dtor;

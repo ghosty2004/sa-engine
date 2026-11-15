@@ -45,7 +45,7 @@ use crate::bindings::ik_is_arm_pointing as ug_ik_is_arm_pointing;
 use sa_world::bindings::ped_set_move_state as ug_ped_set_move_state;
 use crate::bindings::ug_abort_ik_orig;
 use sa_world::bindings::entity_clean_up_old_reference as ug_clean_up_old_reference;
-use sa_core::bindings::entity_register_reference as ug_register_reference;
+use sa_world::bindings::entity_register_reference as ug_register_reference;
 use sa_core::bindings::get_weapon_info as ug_get_weapon_info;
 use sa_core::bindings::intel_get_task_use_gun as ug_get_task_use_gun;
 use sa_core::bindings::matrix_mul_vec as ug_matrix_mul_vector;

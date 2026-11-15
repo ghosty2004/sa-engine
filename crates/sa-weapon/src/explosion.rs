@@ -317,7 +317,7 @@ pub fn update() {
 
 pub use crate::bindings::pad_start_shake_distance;
 pub use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
-pub use sa_core::bindings::entity_register_reference as register_reference;
+pub use sa_world::bindings::entity_register_reference as register_reference;
 pub use sa_input::bindings::get_pad as pad_get_pad;
 pub use sa_world::bindings::stats_increment_stat;
 pub use sa_world::bindings::cam_shake;

@@ -8,7 +8,7 @@ use sa_core::hook;
 
 use crate::common::*;
 
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use crate::bindings::task_complex_ctor;
 use crate::bindings::event_vehicle_damage_dtor;
 

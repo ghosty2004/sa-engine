@@ -25,7 +25,7 @@ const SECTORS: usize = 0xB7D0B8;
 const VEHICLE_POOL: usize = 0xB74494;
 const OBJECT_POOL: usize = 0xB7449C;
 
-use sa_core::bindings::entity_register_reference as register_reference;
+use sa_world::bindings::entity_register_reference as register_reference;
 use sa_world::bindings::world_clear_scan_codes;
 use sa_world::bindings::placeable_allocate_matrix as allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;

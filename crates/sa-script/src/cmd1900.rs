@@ -42,7 +42,7 @@ use sa_world::bindings::object_get_ref_;
 use crate::bindings::scripted_task_status;
 use sa_core::bindings::crt_strncpy as strncpy_;
 use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
-use sa_core::bindings::entity_register_reference as register_reference;
+use sa_world::bindings::entity_register_reference as register_reference;
 use sa_weapon::bindings::get_weapon_info;
 use sa_core::bindings::make_upper_case;
 use sa_world::bindings::matrix_dtor;

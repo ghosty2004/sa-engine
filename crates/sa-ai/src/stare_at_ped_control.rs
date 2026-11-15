@@ -14,7 +14,7 @@ use crate::bindings::should_load_gang_anims as gang_should_load_gang_anims;
 use crate::bindings::task_complex_dtor;
 use sa_world::bindings::entity_clean_up_old_reference;
 use sa_core::bindings::general_random_int_in_range;
-use sa_core::bindings::streaming_request_model;
+use sa_stream::bindings::streaming_request_model;
 use crate::bindings::tm_get_task_secondary;
 use crate::bindings::tm_set_task_secondary;
 use sa_anim::bindings::anim_add_block_ref;

@@ -36,7 +36,7 @@ sa_core::globals! {
 const CHEAT_GREEN_LIGHTS: usize = 0x96914E;
 
 pub use crate::bindings::deal_with_weapon_change_at_end_of_frenzy;
-pub use sa_core::bindings::entity_register_reference as register_reference;
+pub use sa_world::bindings::entity_register_reference as register_reference;
 pub use sa_core::bindings::get_atan_of_xy;
 pub use sa_world::bindings::placeable_allocate_matrix as allocate_matrix;
 pub use sa_stream::bindings::simple_transform_update_matrix as update_matrix;

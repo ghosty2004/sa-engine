@@ -353,7 +353,7 @@ use sa_world::bindings::get_ped_flag;
 use sa_world::bindings::set_as_acquaintance;
 use sa_world::bindings::set_char_created_by as ped_set_char_created_by;
 use sa_world::bindings::vehicle_set_created_by;
-use sa_core::bindings::streaming_request_model as request_model;
+use sa_stream::bindings::streaming_request_model as request_model;
 use sa_world::bindings::create_car_for_script;
 use sa_world::bindings::find_ground_z_for_3d_coord;
 use sa_world::bindings::set_entity_blip;
@@ -746,7 +746,7 @@ pub fn clear_space_for_road_block_object(ax: u32, ay: u32, az: u32, bx: u32, by:
     1
 }
 
-use sa_core::bindings::entity_register_reference as register_reference;
+use sa_world::bindings::entity_register_reference as register_reference;
 use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::task_new;
 use sa_world::bindings::world_add;

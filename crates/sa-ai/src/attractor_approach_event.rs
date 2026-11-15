@@ -8,7 +8,7 @@ use sa_core::hook;
 
 use crate::common::*;
 
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_core::bindings::vector_from_multiply;
 use sa_core::bindings::vector_normalise;
 use sa_world::bindings::multiply3x3;

@@ -68,7 +68,7 @@ pub use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
 pub use sa_core::bindings::rw_camera_begin_update;
 pub use sa_core::bindings::rw_camera_end_update;
 pub use sa_core::bindings::set_ambient_colours;
-pub use sa_core::bindings::streaming_request_model as request_model;
+pub use sa_stream::bindings::streaming_request_model as request_model;
 pub use sa_core::bindings::vector_magnitude;
 pub use sa_world::bindings::world_clear_scan_codes as clear_scan_codes;
 pub use sa_stream::bindings::entity_is_visible;

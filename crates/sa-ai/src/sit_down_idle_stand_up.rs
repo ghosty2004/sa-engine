@@ -22,7 +22,7 @@ use sa_anim::bindings::ik_abort_look_at;
 use crate::bindings::ped_scanner_get_closest_ped_in_range as scanner_closest_ped;
 use crate::bindings::task_complex_dtor;
 use sa_core::bindings::general_random_int_in_range as random_int;
-use sa_core::bindings::streaming_request_model;
+use sa_stream::bindings::streaming_request_model;
 use sa_anim::bindings::anim_add_block_ref;
 use sa_stream::bindings::anim_remove_block_ref;
 use sa_stream::bindings::get_animation_block_index as anim_get_block_index;

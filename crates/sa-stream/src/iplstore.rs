@@ -109,7 +109,7 @@ pub use sa_core::bindings::quad_tree_delete_item as quad_delete_item;
 pub use sa_core::bindings::rect_restrict;
 pub use sa_core::bindings::save_data_to_work_buffer;
 pub use crate::bindings::streaming_remove_model as remove_model;
-pub use sa_core::bindings::streaming_request_model as request_model;
+pub use crate::bindings::streaming_request_model as request_model;
 pub use sa_core::bindings::timer_resume;
 pub use sa_core::bindings::timer_suspend;
 pub use sa_core::bindings::crt_new as operator_new;

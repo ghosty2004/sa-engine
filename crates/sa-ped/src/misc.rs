@@ -28,7 +28,7 @@ pub use sa_world::bindings::take_remote_controlled_car_from_player;
 pub use sa_core::bindings::add_big_message;
 pub use sa_core::bindings::add_txd_slot as txd_add_slot;
 pub use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
-pub use sa_core::bindings::entity_register_reference as register_reference;
+pub use sa_world::bindings::entity_register_reference as register_reference;
 pub use crate::bindings::ped_give_weapon;
 pub use sa_core::bindings::text_get;
 pub use sa_stream::bindings::remove_txd_slot as txd_remove_slot;

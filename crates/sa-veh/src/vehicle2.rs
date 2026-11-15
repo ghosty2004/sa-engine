@@ -364,7 +364,7 @@ pub fn can_ped_open_locks(v: Veh, ped: GPtr<u8>) -> u8 {
     1
 }
 
-pub use sa_core::bindings::entity_register_reference;
+pub use sa_world::bindings::entity_register_reference;
 pub use sa_rwcore::bindings::rp_clump_for_all_atomics;
 pub use sa_stream::bindings::txd_store_remove_ref;
 pub use sa_world::bindings::entity_delete_rw_object;
@@ -880,7 +880,7 @@ fn kill_ped_slot(v: Veh, off: isize) {
     event_vehicle_died_dtor(e);
 }
 
-pub use sa_core::bindings::streaming_request_model;
+pub use sa_stream::bindings::streaming_request_model;
 pub use sa_stream::bindings::txd_add_ref as txd_store_add_ref;
 pub use sa_stream::bindings::vmi_set_vehicle_colour;
 pub use sa_world::bindings::cam_no_rain as cull_zones_cam_no_rain;

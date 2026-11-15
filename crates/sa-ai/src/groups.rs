@@ -27,7 +27,7 @@ use crate::bindings::group_intel_process as pgi_process;
 use crate::bindings::membership_process;
 use crate::bindings::membership_remove_member;
 use crate::bindings::pgi_flush;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_core::bindings::ped_is_alive;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::is_player_on_a_mission as scripts_is_player_on_a_mission;

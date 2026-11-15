@@ -9,7 +9,7 @@ use sa_math::x87::X87;
 
 use crate::common::{g, rd, wr};
 
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 orig! {
     /// `CRope::CreateHookObjectForRope()` (0x556070)
     fn rope_create_hook_object(rope: GPtr<u8>) = thiscall 0x556070 => crate::mvpb_r1::rope_create_hook_object;

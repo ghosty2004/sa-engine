@@ -14,7 +14,7 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_core::bindings::matrix_mul_vec;
 use crate::bindings::tm_get_task_secondary;
 use sa_stream::bindings::ped_is_player;

@@ -12,7 +12,7 @@ use crate::bindings::event_base_dtor as event_dtor;
 use crate::bindings::ik_abort_point_arm;
 use crate::bindings::ik_is_arm_pointing;
 use sa_world::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use crate::bindings::tm_set_task_secondary;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::hold_entity_drop_entity;

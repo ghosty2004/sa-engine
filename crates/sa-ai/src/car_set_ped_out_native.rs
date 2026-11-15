@@ -9,7 +9,7 @@ use sa_core::hook;
 use crate::common::*;
 
 use sa_world::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use crate::bindings::task_simple_dtor;
 use crate::bindings::task_simple_ctor;
 

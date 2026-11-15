@@ -169,7 +169,7 @@ pub fn all() -> Vec<Spec> {
             "CStreamingInfo::AddToList",
             0x407480,
             Thiscall,
-            Void,
+            Eax,
         )
         .regions(vec![raw(40)])
         .args(vec![A::I(g_elem), A::I(g_elem)])
@@ -181,8 +181,7 @@ pub fn all() -> Vec<Spec> {
             let base: GPtr<CStreamingInfo> = host(c, 0);
             let this = host_at(c, t);
             let after = host_at(c, a);
-            si::add_to_list_with(base, this, after);
-            ExpRet::Void
+            ExpRet::Eax(si::add_to_list_with(base, this, after) as u32)
         }),
         b(
             "CStreamingInfoRemoveFromList",

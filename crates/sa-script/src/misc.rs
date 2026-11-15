@@ -12,7 +12,7 @@ use sa_core::hook;
 use sa_math::x87::{Cmp, X87};
 
 use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
-use sa_core::bindings::entity_register_reference as register_reference;
+use sa_world::bindings::entity_register_reference as register_reference;
 use sa_world::bindings::get_actual_script_thing_index;
 
 /// `CTheScripts::ScriptSearchLightArray` 0xA94D68 (0x7C bytes per light).

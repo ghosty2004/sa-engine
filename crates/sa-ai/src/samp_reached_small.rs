@@ -17,7 +17,7 @@ const TIME_MS: usize = 0xB7CB84;
 
 use crate::bindings::event_pool_new;
 use sa_world::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_world::bindings::event_base_dtor;
 use crate::bindings::localisation_blood;
 use crate::bindings::task_simple_ctor;

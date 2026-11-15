@@ -25,7 +25,7 @@ const INTERESTING_EVENTS: usize = 0xC0B058;
 const EVENT_BASE_VTBL: u32 = 0x858E68;
 
 use crate::bindings::acquaintance_ped_hate_ctor as event_ped_hate_ctor;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_world::bindings::find_player_ped as world_find_player_ped;
 use sa_core::bindings::general_random_int_in_range;
 use sa_stream::bindings::ped_is_player;

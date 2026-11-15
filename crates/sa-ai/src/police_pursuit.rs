@@ -28,7 +28,7 @@ const K_ZERO: usize = 0x858B50;
 use crate::bindings::event_vehicle_to_steal_ctor;
 use crate::bindings::event_vehicle_to_steal_dtor;
 use sa_world::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_world::bindings::find_player_ped;
 use sa_core::bindings::get_weapon_info as weapon_info_get;
 use sa_core::bindings::vector_difference;

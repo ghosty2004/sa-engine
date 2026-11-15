@@ -19,7 +19,7 @@ use sa_world::bindings::camera_is_sphere_visible;
 use crate::bindings::choose_police_car_model;
 use crate::bindings::get_position as node_get_position;
 use crate::bindings::set_up_driver_and_passengers_for_vehicle;
-use sa_core::bindings::entity_register_reference as register_reference;
+use sa_world::bindings::entity_register_reference as register_reference;
 use sa_core::bindings::task_new;
 use sa_world::bindings::world_add;
 use sa_world::bindings::automobile_place_on_road_properly;

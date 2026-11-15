@@ -26,7 +26,7 @@ use crate::bindings::go_to_point_ctor;
 use crate::bindings::ik_chain_update_target;
 use sa_anim::bindings::vehicle_anim_group_get_group as veh_anim_group_get_group;
 use sa_world::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_core::bindings::fx_play as fx_system_play;
 use sa_input::bindings::get_pad as pad_get_pad;
 use crate::bindings::tm_get_task_secondary;

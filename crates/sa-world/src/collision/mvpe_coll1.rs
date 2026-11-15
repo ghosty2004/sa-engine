@@ -61,7 +61,7 @@ use crate::bindings::uncompress_vector;
 use crate::bindings::vector_add;
 use crate::bindings::vector_mul_scalar as vector_scale;
 use crate::bindings::col_sphere_set;
-use sa_core::bindings::entity_register_reference as register_reference;
+use crate::bindings::entity_register_reference as register_reference;
 use crate::bindings::find_player_ped;
 use crate::bindings::find_player_vehicle;
 use crate::bindings::vector_sub;

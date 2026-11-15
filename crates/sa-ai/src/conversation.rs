@@ -64,7 +64,7 @@ use crate::bindings::pad_conversation_no_just_down;
 use crate::bindings::pad_conversation_yes_just_down;
 use sa_core::bindings::add_message_jump;
 use sa_world::bindings::entity_get_is_on_screen;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_world::bindings::find_player_coors;
 use sa_world::bindings::find_player_ped;
 use sa_world::bindings::find_player_vehicle;

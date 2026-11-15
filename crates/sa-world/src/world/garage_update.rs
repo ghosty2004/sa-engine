@@ -38,7 +38,7 @@ use crate::bindings::find_player_coors;
 use crate::bindings::find_player_ped;
 use crate::bindings::find_player_vehicle;
 use crate::bindings::stats_increment_stat as increment_stat;
-use sa_core::bindings::streaming_request_model as request_model;
+use sa_stream::bindings::streaming_request_model as request_model;
 use sa_core::bindings::text_get;
 use sa_stream::bindings::choose_vehicle_colour;
 use crate::bindings::find_player_wanted;

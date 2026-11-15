@@ -46,19 +46,22 @@ pub fn init(this: GPtr<CStreamingInfo>) {
 }
 
 /// `CStreamingInfo::AddToList(CStreamingInfo* after)` (0x407480 → 0x15674C0, thiscall, `ret 4`).
+/// EAX on return: `movsx eax, word [this]`, the new `m_nNextIndex` (CStreaming::RequestModel and
+/// 0x409C40 return it to their callers).
 #[hook(addr = 0x407480, conv = thiscall, name = "CStreamingInfo::AddToList", expect = "E9 3B 00 16 01", this = "CStreamingInfo")]
-pub fn add_to_list(this: GPtr<CStreamingInfo>, after: GPtr<CStreamingInfo>) {
+pub fn add_to_list(this: GPtr<CStreamingInfo>, after: GPtr<CStreamingInfo>) -> i32 {
     add_to_list_with(STREAMING_INFO_ARRAY_BASE.get(), this, after)
 }
 
-/// `AddToList` with `ms_pArrayBase` passed in (pure: L1).
-pub fn add_to_list_with(base: GPtr<CStreamingInfo>, this: GPtr<CStreamingInfo>, after: GPtr<CStreamingInfo>) {
+/// `AddToList` with `ms_pArrayBase` passed in (pure: L1); returns the EAX the original leaves.
+pub fn add_to_list_with(base: GPtr<CStreamingInfo>, this: GPtr<CStreamingInfo>, after: GPtr<CStreamingInfo>) -> i32 {
     let me = idx(base, this);
     let a = idx(base, after);
     w16(this, NEXT).write(w16(after, NEXT).read());
     w16(this, PREV).write(a);
     w16(after, NEXT).write(me);
     w16(at(base, w16(this, NEXT).read()), PREV).write(me);
+    i32::from(w16(this, NEXT).read())
 }
 
 /// `CStreamingInfo::RemoveFromList()` (0x4074E0 → 0x156CE90, thiscall).

@@ -10,12 +10,12 @@ use crate::projectile::cross_product;
 use crate::weapon::ped_is_player;
 use crate::weapon_fire::{find_player_ped, matrix_dtor, vector_magnitude};
 
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_world::bindings::find_player_vehicle;
 use sa_core::bindings::matrix_assign;
 use sa_core::bindings::memory_malloc as memory_mgr_malloc;
 use sa_core::bindings::object_new;
-use sa_core::bindings::streaming_request_model;
+use sa_stream::bindings::streaming_request_model;
 use sa_world::bindings::world_add;
 use sa_world::bindings::change_blip_colour as radar_change_blip_colour;
 use sa_world::bindings::change_blip_scale as radar_change_blip_scale;

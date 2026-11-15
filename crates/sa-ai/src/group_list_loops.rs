@@ -19,7 +19,7 @@ use crate::bindings::task_complex_ctor;
 use sa_world::bindings::weapon_is_type_melee;
 use crate::bindings::membership_add_member;
 use crate::bindings::membership_remove_member;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_world::bindings::membership_get_member;
 orig! {
     /// `CPedList::FillUpHoles` (0x699E20)

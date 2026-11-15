@@ -87,7 +87,7 @@ fn pool_slot(pool: GPtr<u8>, i: i32, stride: i32) -> GPtr<u8> {
 
 pub use sa_world::bindings::entity_get_is_on_screen;
 pub use sa_world::bindings::entity_resolve_references;
-pub use sa_core::bindings::streaming_request_model as request_model;
+pub use sa_stream::bindings::streaming_request_model as request_model;
 pub use sa_world::bindings::world_add;
 pub use sa_stream::bindings::entity_is_visible;
 pub use sa_stream::bindings::is_object_glass as glass_is_object_glass;

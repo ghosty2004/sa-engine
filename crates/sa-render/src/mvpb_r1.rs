@@ -16,7 +16,7 @@ use sa_core::field::gu as g;
 
 use sa_math::fpu::fbits as f;
 use sa_core::bindings::crt_pow;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_core::bindings::matrix_mul_vec;
 use sa_world::bindings::placeable_allocate_matrix;
 use crate::bindings::simple_transform_update_matrix;

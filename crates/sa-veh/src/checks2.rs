@@ -38,7 +38,7 @@ pub use sa_core::bindings::memory_free;
 pub use sa_core::bindings::memory_malloc;
 pub use sa_rwcore::bindings::stream_read as rw_stream_read;
 pub use sa_stream::bindings::streaming_remove_model;
-pub use sa_core::bindings::streaming_request_model;
+pub use sa_stream::bindings::streaming_request_model;
 pub use sa_world::bindings::crt_printf as printf;
 pub use sa_world::bindings::entity_get_bound_centre as get_bound_centre;
 pub use crate::bindings::mark_surrounding_entities as mark_surrounding_entities_for_collision_with_train;

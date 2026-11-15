@@ -291,6 +291,8 @@ doc:stream-port@[0x8E3FEC]:0x18:RW
 CColStore::LoadCollision@0x8E4CC0:0x807F0:RW
 # INFO_FOR_MODEL
 CIplStore::RequestIplAndIgnore@0x8E4CC0:0x807F0:RW
+# INFO_FOR_MODEL (PORT-EAX: the `after` entry and the new next entry's prev link)
+CStreamingInfo::AddToList@0x8E4CC0:0x807F0:RW
 # RW_OBJECT_INSTANCES
 CStreaming::AddEntity@0x9654F0:0x34:RW
 # ATOMIC_STORE

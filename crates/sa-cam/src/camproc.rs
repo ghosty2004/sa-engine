@@ -644,7 +644,7 @@ pub fn draw_borders_for_wide_screen(this: GPtr<u8>) {
 }
 
 pub use crate::bindings::get_look_behind_for_ped as pad_look_behind_for_ped;
-pub use sa_core::bindings::entity_register_reference as register_reference;
+pub use sa_world::bindings::entity_register_reference as register_reference;
 pub use sa_pop::bindings::clear_cross_hair_immediately;
 pub use sa_pop::bindings::get_look_behind_for_car as pad_look_behind_for_car;
 pub use sa_pop::bindings::pad_get_look_left as pad_look_left;

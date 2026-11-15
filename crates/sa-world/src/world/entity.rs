@@ -1176,15 +1176,22 @@ pub fn replace_with_new_model(this: GPtr<u8>, model: i32) {
 /// without flags 0x4400000 and with +0x2E clear); nothing when `ref` is already registered. Without a
 /// free `CReference`, prunes the references of the used peds, vehicles, then objects (pool slots from
 /// the last down) until one is free; none → nothing. The node is pushed at the head of the list.
-#[hook(addr = 0x571B70, conv = thiscall, name = "CEntity::RegisterReference-", expect = "55 8B E9 8A 45 36", this = "CEntity")]
-pub fn register_reference(this: GPtr<u8>, r: GPtr<u8>) {
+///
+/// EAX on return (callers use it: `CCoverPoint::ReserveCoverPointForPed` returns it): the plain-building
+/// exit leaves `mov al, [this+0x2E]` (0) over the caller's EAX; a `ref` already registered leaves its
+/// node; a new registration returns the node; no free node after pruning leaves `[gEmptyList]` = 0.
+#[hook(addr = 0x571B70, conv = thiscall, name = "CEntity::RegisterReference-", expect = "55 8B E9 8A 45 36", this = "CEntity",
+       entry_eax)]
+pub fn register_reference(this: GPtr<u8>, r: GPtr<u8>) -> u32 {
+    // read before any call: a nested `entry_eax` port overwrites it
+    let entry = sa_core::abi::entry_eax();
     if rd::<u8>(this, 0x36) & 7 == 1 && rd::<u32>(this, 0x1C) & 0x0440_0000 == 0 && rd::<u8>(this, 0x2E) == 0 {
-        return;
+        return entry & 0xFFFF_FF00;
     }
     let mut n = rd::<GPtr<u8>>(this, 0x24);
     while !n.is_null() {
         if rd::<GPtr<u8>>(n, 4) == r {
-            return;
+            return n.addr() as u32;
         }
         n = rd(n, 0);
     }
@@ -1210,13 +1217,14 @@ pub fn register_reference(this: GPtr<u8>, r: GPtr<u8>) {
             }
         }
         if e.is_null() {
-            return;
+            return 0;
         }
     }
     empty.write(rd(e, 0));
     wr::<GPtr<u8>>(e, 0, rd(this, 0x24));
     wr::<GPtr<u8>>(this, 0x24, e);
     wr::<GPtr<u8>>(e, 4, r);
+    e.addr() as u32
 }
 
 /// `CEntity` scalar deleting destructor (0x536C20, `ret 4`): `~CEntity`, then `operator delete`.

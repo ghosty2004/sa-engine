@@ -21,7 +21,7 @@ use crate::bindings::get_stat_value;
 use crate::bindings::hud_help_message_displayed;
 use crate::bindings::is_stat_capped;
 use crate::bindings::update_stats_add_to_health;
-use sa_core::bindings::entity_register_reference as register_reference;
+use crate::bindings::entity_register_reference as register_reference;
 use crate::bindings::find_player_vehicle;
 use sa_input::bindings::get_pad as pad_get_pad;
 use sa_core::bindings::tag_manager_get_percentage_tagged;

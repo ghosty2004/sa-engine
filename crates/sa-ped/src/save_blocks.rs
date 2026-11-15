@@ -32,7 +32,7 @@ use crate::bindings::ped_set_current_weapon_slot as set_current_weapon;
 use sa_world::bindings::set_char_created_by;
 use sa_core::bindings::load_data_from_work_buffer as load_data;
 use sa_core::bindings::save_data_to_work_buffer as save_data;
-use sa_core::bindings::streaming_request_model as request_model;
+use sa_stream::bindings::streaming_request_model as request_model;
 use sa_world::bindings::acquaintance_get as get_acquaintances;
 orig! {
     /// `CPlayerInfoSaveStructure::Construct(CPlayerInfo*)` (0x5D24B0)

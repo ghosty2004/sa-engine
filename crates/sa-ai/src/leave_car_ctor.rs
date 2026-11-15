@@ -7,7 +7,7 @@ use sa_core::hook;
 
 use crate::common::*;
 
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use crate::bindings::task_complex_ctor;
 
 /// `CTaskComplexLeaveCar::CTaskComplexLeaveCar(CVehicle*, int32 door, int32 delay, bool sensible, bool

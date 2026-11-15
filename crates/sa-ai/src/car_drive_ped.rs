@@ -184,7 +184,7 @@ use crate::bindings::task_timer_is_out_of_time;
 use crate::bindings::vehicle_is_passenger;
 use crate::bindings::vehicle_set_getting_out_flags;
 use sa_world::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_world::bindings::find_player_ped as world_find_player_ped;
 use sa_world::bindings::car_drive_wander_ctor;
 use sa_world::bindings::damage_get_door_status;

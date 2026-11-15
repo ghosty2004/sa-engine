@@ -21,7 +21,7 @@ use sa_world::bindings::sequence_ctor;
 use crate::bindings::task_simple_ctor;
 use crate::bindings::event_get_sound_level;
 use crate::bindings::slow_drag_ped_out_compute_anim_id;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use crate::bindings::tm_find_active_task_by_type;
 orig! {
     /// the scalar deleting destructor (vtable +0, `ret 4`)

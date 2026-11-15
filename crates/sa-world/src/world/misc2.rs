@@ -48,7 +48,7 @@ pub use sa_stream::bindings::load_all_requested_models;
 pub use sa_core::bindings::quad_tree_delete_item;
 pub use sa_stream::bindings::set_model_is_deletable;
 pub use sa_core::bindings::set_wanted_level;
-pub use sa_core::bindings::streaming_request_model as request_model;
+pub use sa_stream::bindings::streaming_request_model as request_model;
 pub use sa_anim::bindings::anim_add_block_ref as add_anim_block_ref;
 pub use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
 pub use sa_stream::bindings::get_2d_effect;

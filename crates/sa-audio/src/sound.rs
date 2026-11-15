@@ -24,7 +24,7 @@ pub use crate::bindings::ae_random_float;
 pub use crate::bindings::position_relative_to_camera_vec;
 pub use sa_core::bindings::eh_vector_ctor;
 pub use sa_world::bindings::entity_clean_up_old_reference as cleanup_old_reference;
-pub use sa_core::bindings::entity_register_reference as register_reference;
+pub use sa_world::bindings::entity_register_reference as register_reference;
 pub use crate::bindings::env_distance_attenuation_st0 as distance_attenuation;
 pub use crate::bindings::sound_set_position;
 orig! {

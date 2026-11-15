@@ -330,7 +330,7 @@ pub fn find_z_coor_for_ped(pos: GPtr<f32>) -> u8 {
 /// `TheCamera` (CCamera)
 const THE_CAMERA: u32 = 0xB6F028;
 
-use sa_core::bindings::entity_register_reference as register_reference;
+use sa_world::bindings::entity_register_reference as register_reference;
 use sa_core::bindings::object_new;
 use sa_core::bindings::task_new;
 use sa_core::bindings::tm_set_task_secondary as task_manager_set_task_secondary;

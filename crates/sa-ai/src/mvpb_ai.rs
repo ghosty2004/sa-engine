@@ -24,7 +24,7 @@ use crate::bindings::base_event_takes_priority;
 use crate::bindings::dtor_669d20;
 use crate::bindings::editable_response_dtor;
 use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
-use sa_core::bindings::entity_register_reference as register_reference;
+use sa_world::bindings::entity_register_reference as register_reference;
 use sa_stream::bindings::get_2d_effect;
 use sa_world::bindings::placeable_allocate_matrix as allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix;

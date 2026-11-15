@@ -88,7 +88,7 @@ pub use sa_core::bindings::find_player_vehicle;
 pub use crate::bindings::load_all_requested_models;
 pub use sa_core::bindings::quad_ctor as quad_tree_ctor;
 pub use crate::bindings::streaming_remove_model as remove_model;
-pub use sa_core::bindings::streaming_request_model as request_model;
+pub use crate::bindings::streaming_request_model as request_model;
 pub use sa_core::bindings::timer_resume;
 pub use sa_core::bindings::timer_suspend;
 pub use sa_core::bindings::crt_new as operator_new;

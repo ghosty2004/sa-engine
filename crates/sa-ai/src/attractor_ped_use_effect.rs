@@ -15,7 +15,7 @@ use crate::bindings::eh_handle_events;
 use crate::bindings::scripted_2d_effects_get_index;
 use sa_world::bindings::wanted_can_cop_join_pursuit;
 use sa_world::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_world::bindings::find_player_wanted;
 use sa_world::bindings::get_ped_attractor_manager;
 use crate::bindings::task_simple_ctor;

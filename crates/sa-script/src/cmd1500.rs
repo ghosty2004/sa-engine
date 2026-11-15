@@ -84,7 +84,7 @@ use crate::bindings::start_playback_recorded_car;
 use sa_veh::bindings::stop_playback_recorded_car;
 use sa_world::bindings::task_gun_control_ctor;
 use sa_anim::bindings::assoc_set_current_time as set_current_time;
-use sa_core::bindings::entity_register_reference as register_reference;
+use sa_world::bindings::entity_register_reference as register_reference;
 use sa_core::bindings::membership_set_leader;
 use sa_core::bindings::ped_group_process;
 use sa_core::bindings::rgba_ctor;

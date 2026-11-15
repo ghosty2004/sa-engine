@@ -78,7 +78,7 @@ pub use crate::bindings::pick_up_should_be_invisible as pick_up_should_be_invisi
 pub use crate::bindings::pickup_get_posn as get_posn_call;
 pub use crate::bindings::pickup_remove as remove_call;
 pub use crate::bindings::weapon_for_model as weapon_for_model_call;
-pub use sa_core::bindings::entity_register_reference;
+pub use crate::bindings::entity_register_reference;
 pub use sa_core::bindings::get_weapon_info;
 orig! {
     /// `CEntity` scalar deleting destructor (vtable slot 0, `delete` with flag 1)

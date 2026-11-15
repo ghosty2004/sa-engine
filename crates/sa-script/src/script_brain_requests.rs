@@ -27,7 +27,7 @@ use sa_ai::bindings::task_new;
 use crate::bindings::brains_start_new_streamed_script_brain as start_new_streamed_script_brain;
 use crate::bindings::brains_start_or_request as start_or_request_call;
 use crate::bindings::start_new_streamed_script;
-use sa_core::bindings::streaming_request_model as request_model;
+use sa_stream::bindings::streaming_request_model as request_model;
 use crate::bindings::remove_from_waiting_for_script_brain_array;
 orig! {
     /// `CTheScripts::AddToWaitingForScriptBrainArray(CEntity*, int16 brainIndex)` (0x46AB60, cdecl)

@@ -10,7 +10,7 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use crate::bindings::task_complex_ctor;
 use sa_world::bindings::wander_get_wander_task_by_ped_type;
 use crate::bindings::tm_set_task as task_manager_set_task;

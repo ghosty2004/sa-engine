@@ -116,7 +116,7 @@ use sa_core::bindings::camera_set_fade_colour;
 use sa_core::bindings::destroy_fx_system as fx_destroy_system;
 use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
 use sa_world::bindings::entity_get_is_on_screen;
-use sa_core::bindings::entity_register_reference as register_reference;
+use sa_world::bindings::entity_register_reference as register_reference;
 use sa_core::bindings::entity_update_rp_hanim;
 use sa_core::bindings::fx_play;
 use sa_core::bindings::general_random_int_in_range as general_get_random_number_in_range_i;

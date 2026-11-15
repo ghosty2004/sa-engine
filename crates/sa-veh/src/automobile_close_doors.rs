@@ -52,7 +52,7 @@ pub fn automobile_close_all_doors(this: GPtr<u8>) {
     close(5, 9);
 }
 
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_world::bindings::apply_turn_force_6;
 use sa_world::bindings::physical_apply_turn_force as apply_turn_force;
 

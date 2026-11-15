@@ -33,7 +33,7 @@ use sa_core::bindings::car_set_ped_out_ctor;
 use sa_core::bindings::car_set_ped_out_dtor;
 use sa_core::bindings::car_set_ped_out_process_ped;
 use sa_world::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_world::bindings::find_player_ped;
 use sa_input::bindings::get_pad as pad_get_pad;
 use sa_stream::bindings::ped_is_player;

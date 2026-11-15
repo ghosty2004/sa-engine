@@ -9,7 +9,7 @@ use sa_math::x87::X87;
 
 use crate::common::{f32_of, rd, wr, x, xi};
 
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_world::bindings::find_player_ped;
 use sa_core::bindings::vector_dot_product;
 use sa_core::bindings::vector_magnitude;

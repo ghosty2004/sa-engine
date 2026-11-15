@@ -20,7 +20,7 @@ use crate::bindings::task_complex_dtor;
 use sa_core::bindings::general_random_int_in_range as random_int;
 use sa_core::bindings::object_new;
 use sa_stream::bindings::streaming_remove_model;
-use sa_core::bindings::streaming_request_model;
+use sa_stream::bindings::streaming_request_model;
 use sa_world::bindings::world_add;
 use sa_anim::bindings::anim_add_block_ref;
 use sa_stream::bindings::anim_remove_block_ref;

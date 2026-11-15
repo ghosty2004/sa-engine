@@ -7,7 +7,7 @@ use sa_core::native;
 use crate::common::{g, rd, wr, x};
 
 use sa_world::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 
 /// `CIdleCam::SetTarget(CEntity* target)` (0x50A280, thiscall, `ret 4`). The entry jumps into the protection chunk
 /// 0x403961, which loads `EAX = [rol([0x156077C], [0x5E4224])]` = `[0xB7CB84]` (`CTimer::m_snTimeInMilliseconds`,

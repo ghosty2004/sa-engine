@@ -40,7 +40,7 @@ use sa_weapon::bindings::add_explosion;
 use crate::bindings::switch_ped_roads_off_in_area;
 use sa_core::bindings::general_random_int_in_range as random_int_in_range;
 use sa_stream::bindings::set_mission_doesnt_require_model;
-use sa_core::bindings::streaming_request_model as request_model;
+use sa_stream::bindings::streaming_request_model as request_model;
 use sa_core::bindings::stricmp;
 use sa_ai::bindings::task_new;
 use sa_core::bindings::text_get;

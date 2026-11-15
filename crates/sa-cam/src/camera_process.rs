@@ -20,7 +20,7 @@ use sa_core::bindings::camera_process_fade as process_fade;
 use sa_core::bindings::camera_process_music_fade as process_music_fade;
 use sa_core::bindings::cross_product;
 use sa_core::bindings::draw_set_fov;
-use sa_core::bindings::entity_register_reference as register_reference;
+use sa_world::bindings::entity_register_reference as register_reference;
 use sa_world::bindings::find_player_ped;
 use sa_world::bindings::find_player_vehicle;
 use sa_core::bindings::rw_camera_set_far_clip_plane;

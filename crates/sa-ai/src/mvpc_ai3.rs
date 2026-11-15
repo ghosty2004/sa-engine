@@ -26,7 +26,7 @@ use crate::bindings::car_drive_start_bopping as start_bopping_o;
 use crate::bindings::point_route_new;
 use sa_world::bindings::col_sphere_set;
 use sa_world::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use crate::bindings::task_new as task_new_o;
 use sa_world::bindings::ctor_4aedf0 as event_sexy_ped_ctor;
 use crate::bindings::event_group_add;

@@ -26,7 +26,7 @@ use crate::bindings::vehicle_clear_getting_in_flags;
 use sa_core::bindings::car_set_ped_out_ctor;
 use sa_core::bindings::crt_free_8214bd as crt_free;
 use sa_world::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_world::bindings::find_player_ped;
 use crate::bindings::task_complex_ctor;
 use crate::bindings::task_simple_ctor;

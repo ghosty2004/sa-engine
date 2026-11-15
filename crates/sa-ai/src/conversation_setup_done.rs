@@ -8,7 +8,7 @@ use sa_core::hook;
 
 use crate::common::*;
 
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 
 /// `CConversations::m_SettingUpConversationNumNodes`, `m_pSettingUpConversationPed`, `m_bSettingUpConversation`
 const NUM_TEMP_NODES: usize = 0x9691C8;

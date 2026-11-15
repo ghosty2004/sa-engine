@@ -14,7 +14,7 @@ use crate::bindings::entity_update_anim as update_anim;
 use crate::bindings::population_remove_ped as remove_ped;
 use crate::bindings::remove_from_moving_list;
 use crate::bindings::simple_transform_update_rw_matrix as transform_update_rw;
-use sa_core::bindings::entity_register_reference as register_reference;
+use crate::bindings::entity_register_reference as register_reference;
 use crate::bindings::entity_update_rw_frame as update_rw_frame;
 use crate::bindings::find_player_ped;
 use sa_core::bindings::matrix_update_rw_matrix as matrix_update_rw;

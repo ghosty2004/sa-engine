@@ -22,7 +22,7 @@ use crate::common::*;
 
 use crate::bindings::go_to_attractor_ctor;
 use crate::bindings::peds_push_back;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_core::bindings::general_get_radian_angle_between_points as radian_angle_between_points;
 use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_set_scale;

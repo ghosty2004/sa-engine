@@ -602,7 +602,7 @@ pub fn event_lean_on_vehicle_dtor_65dc10(this: GPtr<u8>) {
     event_base_dtor(this);
 }
 
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 orig! {
     /// scalar deleting destructor (vtable +0)
     fn ev_delete(ev: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
@@ -773,7 +773,7 @@ pub fn inform_friends_event_queue_add_4ac1e0(ped: GPtr<u8>, ev: GPtr<u8>) -> u8 
     1
 }
 
-use sa_core::bindings::entity_register_reference as entity_register_reference_ev;
+use sa_world::bindings::entity_register_reference as entity_register_reference_ev;
 
 /// The first of the ped's active tasks of types 0x4B2, 0x4BF, 0x4B3.
 fn find_chat_task(ped: GPtr<u8>) -> GPtr<u8> {

@@ -70,7 +70,7 @@ pub use sa_world::bindings::crt_floor;
 pub use crate::bindings::clear_actual_blip_call;
 pub use crate::bindings::stream_radar_sections_xy_call;
 pub use sa_stream::bindings::streaming_remove_model as remove_model;
-pub use sa_core::bindings::streaming_request_model as request_model;
+pub use sa_stream::bindings::streaming_request_model as request_model;
 pub use crate::bindings::set_coord_blip as set_coord_blip_call;
 pub use sa_world::bindings::zone_locked_or_unlocked;
 pub use sa_world::bindings::find_player_ped;

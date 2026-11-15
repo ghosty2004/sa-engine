@@ -26,7 +26,7 @@ pub use crate::bindings::vehicle_delete;
 pub use crate::bindings::vehicle_render;
 pub use sa_core::bindings::crt_free as free;
 pub use sa_core::bindings::destroy_fx_system as fx_destroy;
-pub use sa_core::bindings::entity_register_reference;
+pub use sa_world::bindings::entity_register_reference;
 pub use sa_world::bindings::find_player_coors;
 pub use sa_world::bindings::find_player_ped;
 pub use sa_input::bindings::get_pad;

@@ -12,7 +12,7 @@ use crate::common::*;
 use sa_anim::bindings::anim_set_delete_callback as set_delete_callback;
 use sa_anim::bindings::assoc_set_finish_callback as set_finish_callback;
 use crate::bindings::climb_test_for_climb;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::vector_mul_scalar;
 use sa_world::bindings::world_process_vertical_line;

@@ -737,7 +737,7 @@ use sa_world::bindings::vehicle_change_law_enforcer_state as change_law_enforcer
 use crate::bindings::get_new_vehicle_call;
 use crate::bindings::node_address_ne as node_ne;
 use crate::bindings::pick_next_node_randomly;
-use sa_core::bindings::streaming_request_model as request_model;
+use sa_stream::bindings::streaming_request_model as request_model;
 use sa_core::bindings::vector_magnitude;
 use sa_world::bindings::find_objects_kinda_colliding;
 use sa_world::bindings::find_player_speed;

@@ -11,7 +11,7 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
 use sa_veh::bindings::stop_playback_recorded_car as vehicle_recording_stop_playback_recorded_car;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_ai::bindings::task_new;
 use sa_stream::bindings::world_remove_references_to_deleted_object;
 use sa_ai::bindings::event_group_add;

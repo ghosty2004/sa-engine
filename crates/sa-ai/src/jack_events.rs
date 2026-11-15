@@ -11,7 +11,7 @@ use sa_core::hook;
 use crate::common::*;
 
 use sa_world::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 
 /// `CEventPedEnteredMyVehicle::CEventPedEnteredMyVehicle(CPed*, CVehicle*, eTargetDoor)` (0x4AEAC0, catalogue
 /// `FUN_004aeac0`, `ret 0xC`, SEH frame; vtable 0x85AFE8, event type 0x11): the `CEventEditableResponse` part inlined

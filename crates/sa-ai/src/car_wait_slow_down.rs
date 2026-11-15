@@ -10,7 +10,7 @@ use crate::common::*;
 
 use crate::bindings::car_drive_dtor;
 use sa_world::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_world::bindings::ped_set_ped_position_in_car;
 use crate::bindings::task_simple_dtor;
 use crate::bindings::task_new as task_new_c;

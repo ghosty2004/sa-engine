@@ -31,7 +31,7 @@ const CURR_AREA: usize = 0xB72914;
 /// `CScriptResourceManager ScriptResourceManager` 0xA485A8.
 const SCRIPT_RESOURCE_MANAGER: usize = 0xA485A8;
 
-pub use sa_core::bindings::streaming_request_model as request_model;
+pub use sa_stream::bindings::streaming_request_model as request_model;
 pub use sa_stream::bindings::get_animation_block_index;
 pub use sa_stream::bindings::remove_buildings_not_in_area;
 pub use sa_anim::bindings::get_animation_block;

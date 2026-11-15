@@ -162,7 +162,7 @@ pub fn process_swinging_door(this: GPtr<u8>, node: i32, door: i32) {
 
 use crate::bindings::find_closest_track_node;
 use crate::bindings::train_find_position_on_track_from_coors;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_core::bindings::matrix_set_translate;
 use sa_world::bindings::add_ped_in_car;
 use sa_world::bindings::set_ped_decision_maker_type as intel_set_ped_decision_maker_type;

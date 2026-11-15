@@ -61,7 +61,7 @@ use crate::bindings::vehicle_get_ref;
 use sa_world::bindings::vehicle_pool_get_at;
 use sa_ped::bindings::clothes_rebuild_player as rebuild_player;
 use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
-use sa_core::bindings::entity_register_reference as register_reference;
+use sa_world::bindings::entity_register_reference as register_reference;
 use sa_core::bindings::replay_init;
 use sa_core::bindings::rgba_ctor;
 use sa_core::bindings::rp_anim_blend_clump_init;

@@ -17,7 +17,7 @@ use crate::bindings::set_texture_and_model;
 use sa_core::bindings::clothes_rebuild_player as rebuild_player;
 use crate::bindings::find_player_ped;
 use sa_stream::bindings::load_all_requested_models;
-use sa_core::bindings::streaming_request_model as request_model;
+use sa_stream::bindings::streaming_request_model as request_model;
 use sa_stream::bindings::reclassify_loaded_cars;
 use sa_stream::bindings::stream_peds_into_random_slots;
 use crate::bindings::beach_party_cheat;

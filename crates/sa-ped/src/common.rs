@@ -46,7 +46,7 @@ pub fn pool_size(pool: GPtr<u8>) -> i32 {
 
 pub use sa_stream::bindings::set_model_is_deletable;
 pub use sa_world::bindings::stats_increment_stat as increment_stat;
-pub use sa_core::bindings::streaming_request_model as request_model;
+pub use sa_stream::bindings::streaming_request_model as request_model;
 pub use sa_world::bindings::get_stat_value;
 pub use sa_core::bindings::get_weapon_info;
 pub use crate::bindings::ped_is_alive;

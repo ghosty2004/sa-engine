@@ -12,7 +12,7 @@ use crate::common::*;
 use crate::bindings::event_base_dtor as event_dtor;
 use crate::bindings::event_ctor;
 use sa_world::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 
 /// `CEventVehicleDamage::CEventVehicleDamage(CVehicle*, CEntity* attacker, eWeaponType)` (0x4B18D0, thiscall, `ret
 /// 0xC`; entry `push -1; jmp 0x407A45`, the protection fragment pushes the SEH handler). The `CEventEditableResponse`

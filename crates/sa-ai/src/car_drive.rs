@@ -14,7 +14,7 @@ use crate::common::*;
 
 use crate::bindings::car_drive_create_sub_task as car_drive_create_sub_task_orig;
 use sa_world::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_pop::bindings::join_car_with_road_system as car_ctrl_join_car_with_road_system;
 use sa_world::bindings::leave_any_car_ctor;
 use crate::bindings::task_complex_ctor;

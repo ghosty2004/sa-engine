@@ -26,7 +26,7 @@ use sa_world::bindings::player_set_wanted_level_no_drop as set_wanted_level_no_d
 use crate::bindings::can_vehicle_be_damaged;
 use crate::bindings::damage_knock_off_rider;
 use crate::bindings::dmg_draw_car_colliding_particles;
-use sa_core::bindings::entity_register_reference as register_reference;
+use sa_world::bindings::entity_register_reference as register_reference;
 use sa_core::bindings::vector_difference;
 use sa_world::bindings::vector_sub;
 use crate::bindings::apply_damage;

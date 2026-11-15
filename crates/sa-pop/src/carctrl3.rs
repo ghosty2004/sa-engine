@@ -491,7 +491,7 @@ pub fn test_collision_between_2_moving_rects_only_front_bumper(
 // ---------------------------------------------------------------------------------------------------------
 // Slowing down for other cars, peds and objects
 
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_world::bindings::find_player_vehicle;
 use sa_world::bindings::placeable_allocate_matrix as allocate_matrix;
 use sa_stream::bindings::simple_transform_update_matrix as update_matrix;

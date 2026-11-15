@@ -401,7 +401,7 @@ pub use crate::bindings::streaming_init_image_list as call_init_image_list;
 pub use crate::bindings::streaming_make_space_for as call_make_space_for;
 pub use crate::bindings::streaming_remove_current_zones_models as call_remove_current_zones_models;
 pub use crate::bindings::streaming_remove_model as call_remove_model;
-pub use sa_core::bindings::streaming_request_model as call_request_model;
+pub use crate::bindings::streaming_request_model as call_request_model;
 pub use sa_core::bindings::timer_resume;
 pub use sa_core::bindings::timer_suspend;
 pub use crate::bindings::txd_add_ref;
@@ -570,7 +570,7 @@ orig! {
     /// `CLinkList<CEntity*>::Insert(const CEntity*&)` (stub 0x408230)
     pub fn call_link_list_insert(list: GPtr<u8>, data: GPtr<GPtr<u8>>) -> GPtr<u8> = thiscall 0x408230 => link_list_insert;
     /// `CStreamingInfo::AddToList(after)` (0x407480)
-    pub fn call_add_to_list(this: GPtr<CStreamingInfo>, after: GPtr<CStreamingInfo>) = thiscall 0x407480 => si::add_to_list;
+    pub fn call_add_to_list(this: GPtr<CStreamingInfo>, after: GPtr<CStreamingInfo>) -> i32 = thiscall 0x407480 => si::add_to_list;
     /// `CStreamingInfo::RemoveFromList()` (0x4074E0)
     pub fn call_remove_from_list(this: GPtr<CStreamingInfo>) = thiscall 0x4074E0 => si::remove_from_list;
     /// `CStreamingInfo::Init()` (0x407460)
@@ -1080,8 +1080,16 @@ pub fn shutdown() {
 /// `RemoveFromList`), then re-added to the loaded list unless a ped (7) / vehicle (6) model or
 /// game/mission required. Not loaded (0): TXD (full flags dword) and anim (8) requests, added to the
 /// requested list, counters; then (also for unknown states) `flags = 0 | low byte`, state 2.
-#[hook(addr = 0x4087E0, conv = cdecl, name = "CStreaming::RequestModel", expect = "53 8B 5C 24 0C")]
-pub fn request_model(id: i32, flags_arg: i32) {
+///
+/// EAX on return (callers keep parts of it; 0x46A570 tail-jumps here): the exits that only read the load
+/// state leave `mov al, state` over the caller's EAX; a loaded model in a list leaves `prev * 5` (the
+/// unlink's index arithmetic) or, for a model info, the last `GetModelType` result (every implementation is
+/// `mov al, N; ret`, so the upper bytes are those of the vtable pointer the call went through); the two
+/// `AddToList` tails leave its EAX.
+#[hook(addr = 0x4087E0, conv = cdecl, name = "CStreaming::RequestModel", expect = "53 8B 5C 24 0C", entry_eax)]
+pub fn request_model(id: i32, flags_arg: i32) -> u32 {
+    // read before any call: the nested RequestModel / other `entry_eax` ports overwrite it
+    let entry_hi = sa_core::abi::entry_eax() & 0xFFFF_FF00;
     let mut bl = flags_arg as u8;
     let st = load_state(id);
     if st == 2 {
@@ -1094,28 +1102,38 @@ pub fn request_model(id: i32, flags_arg: i32) {
     }
     set_flags(id, flags(id) | bl);
     let p = info(id);
-    match load_state(id) {
+    let st = load_state(id);
+    let mut eax = entry_hi | u32::from(st);
+    match st {
         1 => {
             if next_index(id) == -1 {
-                return;
+                return eax;
             }
             let base = STREAMING_INFO_ARRAY_BASE.get();
             let prev = field::<i16, _>(p, 2).read();
             field::<i16, _>(base.wrapping_index(next_index(id) as i32), 2).write(prev);
+            eax = (i32::from(field::<i16, _>(p, 2).read()).wrapping_mul(5)) as u32;
             let next = next_index(id);
             let base = STREAMING_INFO_ARRAY_BASE.get();
             field::<i16, _>(base.wrapping_index(field::<i16, _>(p, 2).read() as i32), 0).write(next);
             field::<i16, _>(p, 0).write(-1);
             field::<i16, _>(p, 2).write(-1);
-            if id < 20000 && (mi_get_model_type(mi(id)) == 7 || mi_get_model_type(mi(id)) == 6) {
-                return;
+            if id < 20000 {
+                let m = mi(id);
+                for skip in [7, 6] {
+                    let t = mi_get_model_type(m);
+                    eax = (field::<u32, u8>(m, 0).read() & 0xFFFF_FF00) | u32::from(t);
+                    if t == skip {
+                        return eax;
+                    }
+                }
             }
             if flags(id) & 6 == 0 {
-                call_add_to_list(p, START_LOADED_LIST.get());
+                return call_add_to_list(p, START_LOADED_LIST.get()) as u32;
             }
-            return;
+            return eax;
         }
-        2..=4 => return,
+        2..=4 => return eax,
         0 => {
             if id < 20000 {
                 let m = mi(id);
@@ -1130,7 +1148,7 @@ pub fn request_model(id: i32, flags_arg: i32) {
                     call_request_txd_model(parent, flags_arg);
                 }
             }
-            call_add_to_list(p, START_REQUESTED_LIST.get());
+            eax = call_add_to_list(p, START_REQUESTED_LIST.get()) as u32;
             NUM_MODELS_REQUESTED.set(NUM_MODELS_REQUESTED.get().wrapping_add(1));
             if bl & 0x10 != 0 {
                 NUM_PRIORITY_REQUESTS.set(NUM_PRIORITY_REQUESTS.get().wrapping_add(1));
@@ -1141,6 +1159,7 @@ pub fn request_model(id: i32, flags_arg: i32) {
     set_flags(id, 0);
     set_flags(id, flags(id) | bl);
     set_load_state(id, 2);
+    eax
 }
 
 // ----------------------------------------------------------------------------- sectors ---

@@ -6,7 +6,7 @@ use sa_core::hook;
 
 use crate::common::*;
 
-use sa_core::bindings::entity_register_reference as entity_clean_up_old_reference;
+use sa_world::bindings::entity_register_reference as entity_clean_up_old_reference;
 
 /// `CEventCarUpsideDown::~CEventCarUpsideDown` body (0x4B1D50, thiscall; SEH frame): vtable 0x85B660, the
 /// vehicle (+0xC) drops its registered reference to the slot, then the `CEvent` vtable 0x85AB38.

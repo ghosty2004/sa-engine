@@ -104,6 +104,11 @@ orig! {
 }
 
 orig! {
+    /// `CStreaming::RequestModel` (0x4087E0)
+    pub fn streaming_request_model(id: i32, flags: i32) -> u32 = cdecl 0x4087E0 => crate::streaming::request_model;
+}
+
+orig! {
     /// `CStreaming::RemoveModel` (0x4089A0)
     pub fn streaming_remove_model(id: i32) = cdecl 0x4089A0 => crate::streaming::remove_model;
 }

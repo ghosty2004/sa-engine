@@ -59,7 +59,7 @@ pub use crate::bindings::calculate_cached_sin_cos_call;
 pub use crate::bindings::get_radar_trace_colour_call;
 pub use crate::bindings::radar_remove_radar_sections as remove_radar_sections_call;
 pub use sa_stream::bindings::streaming_remove_model as remove_model;
-pub use sa_core::bindings::streaming_request_model as request_model;
+pub use sa_stream::bindings::streaming_request_model as request_model;
 pub use sa_stream::bindings::call_remove_txd_model as remove_txd_model;
 
 fn trace(i: i32) -> GPtr<u8> {

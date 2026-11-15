@@ -1129,7 +1129,7 @@ fn gt_or_nan(a: X87, b: X87) -> bool {
 pub use sa_core::bindings::memory_malloc as mem_malloc;
 pub use sa_rwcore::bindings::stream_read as rw_stream_read;
 pub use sa_stream::bindings::streaming_remove_model as remove_model;
-pub use sa_core::bindings::streaming_request_model as request_model;
+pub use sa_stream::bindings::streaming_request_model as request_model;
 pub use crate::bindings::get_position as get_position_call;
 orig! {
     /// `CPathFind::MarkRegionsForCoors(CVector, float)` (0x44DB60)

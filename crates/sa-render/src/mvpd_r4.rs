@@ -617,7 +617,7 @@ pub fn plant_mgr_render() {
     rs(0x1E, 0);
 }
 
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_core::bindings::memory_malloc as memory_mgr_malloc;
 use sa_world::bindings::entity_get_col_model as get_col_model;
 orig! {

@@ -5,7 +5,7 @@
 
 use crate::common::*;
 
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use crate::bindings::task_complex_ctor;
 
 /// `CTaskComplexChat` vtable

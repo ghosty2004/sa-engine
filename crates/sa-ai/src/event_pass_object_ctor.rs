@@ -7,7 +7,7 @@ use sa_core::hook;
 use crate::common::*;
 
 use crate::bindings::event_ctor;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 
 /// `CEventPassObject::CEventPassObject(CEntity* giver, bool dontPassObject)` (0x65DC70, `ret 8`; the entry `push
 /// -1; jmp 0x4011D8` pushes the SEH handler from a protection chunk): `CEvent` base, vtable 0x86F8B8, +0xC = giver

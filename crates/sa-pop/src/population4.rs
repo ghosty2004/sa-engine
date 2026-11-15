@@ -1182,7 +1182,7 @@ pub fn place_couple(t1: i32, m1: i32, t2: i32, m2: i32, px: f32, py: f32, pz: f3
     }
 }
 
-use sa_core::bindings::entity_register_reference as register_reference;
+use sa_world::bindings::entity_register_reference as register_reference;
 use sa_world::bindings::world_remove;
 use sa_world::bindings::entity_get_col_model;
 use sa_world::bindings::camera_is_sphere_visible_m;

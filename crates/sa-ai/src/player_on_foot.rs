@@ -63,7 +63,7 @@ use sa_core::bindings::general_random_int_in_range;
 use sa_core::bindings::get_weapon_info as weapon_info_get;
 use sa_core::bindings::intel_get_task_use_gun;
 use sa_stream::bindings::set_model_is_deletable as streaming_set_model_is_deletable;
-use sa_core::bindings::streaming_request_model;
+use sa_stream::bindings::streaming_request_model;
 use sa_core::bindings::tm_get_active_task;
 use sa_world::bindings::anim_get_next_association;
 use sa_world::bindings::camera_clear_player_weapon_mode;

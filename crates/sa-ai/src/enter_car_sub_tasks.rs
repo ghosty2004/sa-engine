@@ -28,7 +28,7 @@ use crate::bindings::leave_group_ctor as t_none;
 use crate::bindings::vehicle_clear_getting_in_flags;
 use crate::bindings::vehicle_is_driver;
 use sa_core::bindings::car_set_ped_out_ctor as t_set_ped_out;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_world::bindings::find_player_ped;
 use sa_core::bindings::hud_set_help_message;
 use sa_core::bindings::ped_is_alive;

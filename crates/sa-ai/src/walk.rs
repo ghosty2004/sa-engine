@@ -32,7 +32,7 @@ use sa_world::bindings::player_control_button_sprint;
 use crate::bindings::stand_still_dtor;
 use crate::bindings::stand_still_process_ped;
 use sa_world::bindings::entity_get_is_on_screen;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_world::bindings::find_player_ped;
 use sa_input::bindings::get_pad as pad_get_pad;
 use sa_core::bindings::get_weapon_info as weapon_info_get;

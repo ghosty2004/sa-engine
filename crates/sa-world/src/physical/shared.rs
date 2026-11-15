@@ -439,7 +439,7 @@ sa_core::globals! {
 pub use sa_stream::bindings::rand;
 pub use crate::bindings::entity_get_col_model as get_col_model;
 pub use crate::bindings::entity_clean_up_old_reference as clean_up_old_reference;
-pub use sa_core::bindings::entity_register_reference as register_reference;
+pub use crate::bindings::entity_register_reference as register_reference;
 pub use crate::bindings::multiply3x3;
 pub use sa_core::bindings::cross_product;
 

@@ -258,7 +258,7 @@ const K_DEFAULT_BRAIN_RADIUS: usize = 0x859D9C;
 const SCRIPT_SPACE: usize = 0xA49960;
 
 use sa_render::bindings::effect_2d_init as scripted_2d_effect_reset;
-use sa_core::bindings::streaming_request_model;
+use sa_stream::bindings::streaming_request_model;
 use sa_core::bindings::stricmp as crt_stricmp;
 use crate::bindings::brains_is_object_within_range;
 use crate::bindings::brains_start_new_streamed_script_brain;

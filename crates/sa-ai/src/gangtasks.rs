@@ -43,12 +43,12 @@ use crate::bindings::play_hand_signal_anim_ctor_61b2b0 as play_hand_signal_anim_
 use crate::bindings::seek_entity_xy_offset_ctor;
 use crate::bindings::should_load_gang_anims;
 use crate::bindings::wander_gang_ctor;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_world::bindings::find_player_ped as world_find_player_ped;
 use sa_core::bindings::general_get_radian_angle_between_points as general_radian_angle_between_points;
 use sa_core::bindings::general_limit_radian_angle;
 use sa_core::bindings::general_random_int_in_range;
-use sa_core::bindings::streaming_request_model;
+use sa_stream::bindings::streaming_request_model;
 use crate::bindings::tm_get_task_secondary;
 use crate::bindings::tm_set_task_secondary;
 use sa_core::bindings::vector_from_multiply3x3 as vector_from_multiply_3x3;

@@ -382,7 +382,7 @@ use sa_core::bindings::trailer_ctor;
 use sa_world::bindings::vehicle_new;
 use sa_world::bindings::vehicle_set_created_by;
 use sa_world::bindings::find_player_coors as find_player_coors_out;
-use sa_core::bindings::streaming_request_model as request_model;
+use sa_stream::bindings::streaming_request_model as request_model;
 use sa_world::bindings::find_ground_z_for_coord;
 use sa_world::bindings::set_orientation as placeable_set_orientation;
 use sa_world::bindings::world_process_vertical_line as process_vertical_line;

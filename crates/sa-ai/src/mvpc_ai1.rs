@@ -32,7 +32,7 @@ use crate::bindings::simple_anim_dtor;
 use crate::bindings::task_is_go_to_task;
 use crate::bindings::walk_round_car_ctor;
 use sa_core::bindings::base_model_info_ctor;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_world::bindings::find_player_ped;
 use sa_rwcore::bindings::rp_atomic_destroy;
 use sa_core::bindings::rw_frame_destroy;

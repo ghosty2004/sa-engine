@@ -59,7 +59,7 @@ pub use crate::bindings::entity_get_is_on_screen;
 pub use sa_input::bindings::get_pad;
 pub use crate::bindings::ped_get_transformed_bone_position;
 pub use sa_core::bindings::camera_fade;
-pub use sa_core::bindings::entity_register_reference as register_reference;
+pub use crate::bindings::entity_register_reference as register_reference;
 pub use sa_core::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
 pub use crate::bindings::test_2d_line_against_2d_line;
 

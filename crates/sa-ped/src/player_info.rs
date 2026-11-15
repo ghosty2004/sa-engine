@@ -28,7 +28,7 @@ pub use sa_world::bindings::stats_get_fat_and_muscle_modifier as get_fat_and_mus
 pub use crate::bindings::initialise_call as wanted_initialise;
 pub use crate::bindings::ped_data_set_initial_state;
 pub use sa_world::bindings::entity_clean_up_old_reference as clean_up_old_reference;
-pub use sa_core::bindings::entity_register_reference as register_reference;
+pub use sa_world::bindings::entity_register_reference as register_reference;
 pub use sa_core::bindings::crt_new as operator_new;
 orig! {
     /// `CPlayerSkin::GetSkinTexture(const char*)` (0x6FFA10)

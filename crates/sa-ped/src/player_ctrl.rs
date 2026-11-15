@@ -36,7 +36,7 @@ pub use sa_core::bindings::intel_get_task_use_gun as get_task_use_gun;
 pub use sa_core::bindings::ped_remove_weapon_anims;
 pub use sa_core::bindings::player_ped_ctor;
 pub use sa_stream::bindings::set_model_is_deletable;
-pub use sa_core::bindings::streaming_request_model as request_model;
+pub use sa_stream::bindings::streaming_request_model as request_model;
 pub use sa_core::bindings::task_new as task_operator_new;
 pub use sa_core::bindings::tm_set_task_secondary as task_manager_set_task_secondary;
 pub use sa_world::bindings::world_add;

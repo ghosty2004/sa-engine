@@ -10,7 +10,7 @@ use sa_core::hook;
 use crate::common::*;
 
 use sa_world::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_world::bindings::find_player_ped;
 use sa_core::bindings::vector_normalise_and_mag;
 use sa_core::bindings::world_get_is_line_of_sight_clear;

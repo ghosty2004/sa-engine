@@ -123,7 +123,7 @@ pub use sa_rwcore::bindings::rw_frame_create;
 pub use sa_core::bindings::rw_frame_destroy;
 pub use sa_rwcore::bindings::rw_frame_update_objects;
 pub use sa_stream::bindings::set_current_txd;
-pub use sa_core::bindings::streaming_request_model as request_model;
+pub use sa_stream::bindings::streaming_request_model as request_model;
 pub use sa_core::bindings::vector_normalise;
 pub use sa_stream::bindings::has_collision_loaded;
 pub use sa_core::bindings::load_data_from_work_buffer;

@@ -42,7 +42,7 @@ pub use sa_anim::bindings::assoc_set_current_time;
 pub use sa_core::bindings::display_script_stat_update_message;
 pub use sa_world::bindings::entity_clean_up_old_reference;
 pub use sa_world::bindings::entity_get_is_on_screen;
-pub use sa_core::bindings::entity_register_reference;
+pub use sa_world::bindings::entity_register_reference;
 pub use sa_core::bindings::get_atan_of_xy;
 pub use sa_input::bindings::get_pad;
 pub use sa_core::bindings::intel_get_task_use_gun;

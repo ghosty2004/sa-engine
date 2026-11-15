@@ -8,7 +8,7 @@ use sa_core::hook;
 use crate::common::*;
 
 use sa_world::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 
 /// `CEventVehicleCollision::CEventVehicleCollision(int16 pieceType, float damageIntensity, CVehicle* vehicle, const
 /// CVector& collisionImpactVelocity, const CVector& collisionPos, int8 moveState, int16 evadeType)` (0x4AC840,

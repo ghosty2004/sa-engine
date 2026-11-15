@@ -16,7 +16,7 @@ use sa_world::bindings::ped_set_move_state;
 use crate::bindings::stand_still_dtor;
 use crate::bindings::stand_still_process_ped;
 use crate::bindings::task_timer_is_out_of_time;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_world::bindings::find_player_ped;
 use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_invert;

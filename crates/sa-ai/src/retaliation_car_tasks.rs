@@ -16,7 +16,7 @@ use sa_world::bindings::leave_car_and_flee_ctor;
 use crate::bindings::vehicle_is_driver;
 use crate::bindings::vehicle_is_passenger;
 use sa_world::bindings::entity_clean_up_old_reference;
-use sa_core::bindings::entity_register_reference;
+use sa_world::bindings::entity_register_reference;
 use sa_core::bindings::get_weapon_info as weapon_info_get;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::compute_target_door_to_exit;
