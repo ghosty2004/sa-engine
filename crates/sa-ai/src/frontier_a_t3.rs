@@ -226,7 +226,7 @@ fn arrest_choose(this: GPtr<u8>, ped: GPtr<u8>, suspect: GPtr<u8>, sub: GPtr<u8>
 /// `CEvent::CalcSoundLevelIncrement(float level1, float level2)` (0x4AC050, cdecl, ST0): 0 when `level2` is ±0,
 /// `level2` when `level1` is ±0, else `10 * log10((10^(level2/10) + a) / a)` with `a = f32(10^(level1/10))` (`_CIpow`
 /// 0x822130, FYL2X with FLDLG2); the original stores `a` into its `level1` argument slot.
-#[hook(addr = 0x4AC050, conv = cdecl, name = "CEvent::CalcSoundLevelIncrement", expect = "D9 44 24 08 D8 1D 50 8B",
+#[hook(addr = 0x4AC050, conv = cdecl, name = "CEvent::CalcSoundLevelIncrement", expect = "D9 44 24 08 D8 1D 50 8B 85 00",
        unverified = "frontier2-a6", route = "L2", hazards = "x87-transcendental",
        note = "pure, but _CIpow (orig::x87_binary) is the CRT's only in-process; FYL2X; writes its first argument's stack slot")]
 pub fn calc_sound_level_increment(level1: f32, level2: f32) -> X87 {

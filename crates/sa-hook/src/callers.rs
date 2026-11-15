@@ -280,7 +280,7 @@ fn cpuid_ignores_ecx(leaf: u32) -> bool {
 
 /// ECX/EDX accesses of one instruction, with the scan's exceptions applied: `(reg, read, written
 /// bytes)`. A read is reported only for a register none of whose bytes `written` (the path's mask,
-/// indexed by [`Reg`]) has set. Not counted as reads: `xor/sub/sbb r, r` and `or r, -1` (they set
+/// indexed by [`Reg`]) has set. Not counted as reads: `xor/sub/sbb r, r` and `or r, -1` / `or r8, 0FFh` (they set
 /// the register), the no-ops `lea r, [r]` (alignment), `shl/shr/sar/rol/ror r, 0`, `xchg r, r` and
 /// `mov r, r` (protection-chunk filler), `push r` that is a stack allocation or a save
 /// ([`push_is_allocation`]) or the first instruction of a procedure, and the ECX input of `cpuid`
@@ -303,8 +303,8 @@ fn reg_events(
         || (i.mnemonic() == Mnemonic::Or
             && ops.len() == 2
             && ops[0] == OpKind::Register
-            && matches!(ops[1], OpKind::Immediate8to32 | OpKind::Immediate32)
-            && i.immediate(1) as u32 == u32::MAX);
+            && ((matches!(ops[1], OpKind::Immediate8to32 | OpKind::Immediate32) && i.immediate(1) as u32 == u32::MAX)
+                || (ops[1] == OpKind::Immediate8 && i.immediate(1) as u8 == u8::MAX)));
     let lea_nop = (i.mnemonic() == Mnemonic::Lea
         && i.memory_base() == i.op0_register()
         && i.memory_index() == Register::None
