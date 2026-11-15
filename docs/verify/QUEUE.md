@@ -2302,7 +2302,7 @@ SA_UNVERIFIED=frontier2-a7 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a7 $S
 | 0x43AB10 | `CPedToPlayerConversations::EndConversation` | written | L2 | heap-writes |
 | 0x446610 | `CGangWars::Update` | written | L2 | heap-writes |
 | 0x4619C0 | `CRoadBlocks::CreateRoadBlockBetween2Points` | written | split | heap-writes,uninit-locals |
-| 0x5EE370 | `std::vector<CVector>::push_back` | written | L2 | heap-writes |
+| 0x5EE370 | `FUN_005ee370` | written | L2 | heap-writes |
 | 0x5EF420 | `CPedShelterAttractor::GetDisplacement` | written | L2 | x87-transcendental,heap-writes |
 | 0x601E00 | `CPedIntelligence::TestForStealthKill` | written | L2 | ax-al-return |
 | 0x65F590 | `CTaskComplexTrackEntity::CreateNextSubTask` | written | L2 | heap-writes |
