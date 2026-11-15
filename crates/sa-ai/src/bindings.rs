@@ -409,6 +409,11 @@ orig! {
 }
 
 orig! {
+    /// `CPed::DoWeHaveWeaponAvailable` (0x5DF300)
+    pub fn ped_do_we_have_weapon_available(p: GPtr<u8>, w: u32) -> u8 = thiscall 0x5DF300 => unported;
+}
+
+orig! {
     /// `CPed::SetRadioStation` (0x5DFD90)
     pub fn ped_set_radio_station(p: GPtr<u8>) = thiscall 0x5DFD90 => unported;
 }
@@ -631,6 +636,11 @@ orig! {
 orig! {
     /// `CPedGroupMembership::RemoveMember-ByMemIdx` (0x5F80D0)
     pub fn membership_remove_member(m: GPtr<u8>, idx: i32) -> u32 = thiscall 0x5F80D0 => unported;
+}
+
+orig! {
+    /// `CPedGroupIntelligence::SetEventResponseTask` (0x5F8510)
+    pub fn group_intel_set_event_response_task(gi: GPtr<u8>, ped: GPtr<u8>, has_main: u32, main: GPtr<u8>, has_sec: u32, sec: GPtr<u8>, slot: i32) -> u8 = thiscall 0x5F8510 => unported;
 }
 
 orig! {
@@ -911,6 +921,16 @@ orig! {
 orig! {
     /// `CTaskComplexKillPedOnFootStealth::Constructor` (0x620F70)
     pub fn kill_ped_on_foot_stealth_ctor(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x620F70 => unported;
+}
+
+orig! {
+    /// `CTaskComplexKillPedGroupOnFoot::Constructor` (0x622240)
+    pub fn kill_ped_group_on_foot_ctor(t: GPtr<u8>, gid: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x622240 => unported;
+}
+
+orig! {
+    /// `CTaskComplexKillPedGroupOnFoot::Destructor` (0x6222B0)
+    pub fn kill_ped_group_on_foot_dtor(t: GPtr<u8>) = thiscall 0x6222B0 => unported;
 }
 
 orig! {
@@ -1516,6 +1536,11 @@ orig! {
 orig! {
     /// `CTaskSimpleDuck::ForceStopMove` (0x6924B0)
     pub fn duck_force_stop_move(d: GPtr<u8>) = thiscall 0x6924B0 => unported;
+}
+
+orig! {
+    /// `CTaskAllocatorKillThreatsBasic::ComputeClosestPeds` (0x69C850)
+    pub fn compute_closest_peds_o(group: GPtr<u8>, threats: GPtr<u8>, closest: GPtr<u8>) = cdecl 0x69C850 => crate::kill_threats_basic::compute_closest_peds;
 }
 
 orig! {

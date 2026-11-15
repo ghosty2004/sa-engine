@@ -43,6 +43,7 @@ use sa_world::bindings::wanted_remove_cop as wanted_remove_pursuit_cop;
 use crate::bindings::wanted_is_in_pursuit;
 use sa_world::bindings::ped_set_current_weapon;
 use sa_world::bindings::seek_entity_standard_ctor;
+use crate::bindings::ped_do_we_have_weapon_available;
 orig! {
     /// `CTask::GetTaskType` (vtable +0x10)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
@@ -52,8 +53,6 @@ orig! {
     fn wanted_remove_excess_pursuit_cops(w: GPtr<u8>) = thiscall 0x562C40 => unported;
     /// `CWanted::SetPursuitCop(CCopPed*)` (0x563060, `ret 4`; AL)
     fn wanted_set_pursuit_cop(w: GPtr<u8>, cop: GPtr<u8>) -> u8 = thiscall 0x563060 => unported;
-    /// `CPed::DoWeHaveWeaponAvailable(eWeaponType)` (0x5DF300, `ret 4`)
-    fn ped_do_we_have_weapon_available(p: GPtr<u8>, w: u32) -> u8 = thiscall 0x5DF300 => unported;
     /// `CTaskComplexPolicePursuit::SetPursuit(CPed*)` (0x68BBD0, `ret 4`)
     fn o_set_pursuit(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x68BBD0 => unported;
     /// `CTaskComplexPolicePursuit::ClearPursuit(CCopPed*)` (0x68BD90, `ret 4`)

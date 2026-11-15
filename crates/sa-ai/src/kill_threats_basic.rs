@@ -17,18 +17,13 @@ use crate::bindings::{fight_61c9b0, get_group_id, group_intel_flush_tasks, task_
 use sa_world::bindings::{crt_printf, dtor_6389f0 as sequence_dtor};
 use crate::common::*;
 
+use crate::bindings::compute_closest_peds_o;
+use crate::bindings::group_intel_set_event_response_task;
+use crate::bindings::kill_ped_group_on_foot_ctor;
+use crate::bindings::kill_ped_group_on_foot_dtor;
 orig! {
     /// virtual `CEvent::GetEventPriority()` (vtable +8)
     fn v_event_priority(e: GPtr<u8>) -> i32 = thiscall vslot 0x8 => unported;
-    /// `CTaskAllocatorKillThreatsBasic::ComputeClosestPeds(CPedGroup&, CPedGroup&, CPed** closest)` (0x69C850)
-    fn compute_closest_peds_o(group: GPtr<u8>, threats: GPtr<u8>, closest: GPtr<u8>) = cdecl 0x69C850 => compute_closest_peds;
-    /// `CPedGroupIntelligence::SetEventResponseTask(CPed*, bool, const CTask&, bool, const CTask&, int32)` (0x5F8510)
-    fn group_intel_set_event_response_task(gi: GPtr<u8>, ped: GPtr<u8>, has_main: u32, main: GPtr<u8>, has_sec: u32,
-        sec: GPtr<u8>, slot: i32) -> u8 = thiscall 0x5F8510 => unported;
-    /// `CTaskComplexKillPedGroupOnFoot::Constructor(int32 groupId, CPed*)` (0x622240)
-    fn kill_ped_group_on_foot_ctor(t: GPtr<u8>, gid: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x622240 => unported;
-    /// `CTaskComplexKillPedGroupOnFoot::Destructor` (0x6222B0)
-    fn kill_ped_group_on_foot_dtor(t: GPtr<u8>) = thiscall 0x6222B0 => unported;
 }
 
 /// `CTaskSimpleFight::MakeAbortable(CPed* ped, int32 priority, const CEvent* event)` (0x6239F0, `ret 0xC`).

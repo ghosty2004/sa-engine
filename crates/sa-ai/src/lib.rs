@@ -259,3 +259,4 @@ pub mod frontier_c;
 pub mod frontier_a;
 pub mod frontier_a_subtasks;
 pub mod gang_drive_by;
+pub mod frontier_a_t3;
