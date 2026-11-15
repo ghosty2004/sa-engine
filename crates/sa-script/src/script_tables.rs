@@ -184,7 +184,46 @@ pub fn is_object_within_brain_activation_range(this: GPtr<u8>, obj: GPtr<u8>, po
     u8::from(matches!(dist.fcom(X87::from_f32(r)), Cmp::Less))
 }
 
+/// `CTheScripts::AddToBuildingSwapArray(CBuilding*, int32 old, int32 new)` (stub 0x481140 → 0x1569840, cdecl;
+/// FRONTIER-2 lane C turn 5): nothing for a building with an IPL index (+0x2E). The first of the 0x19 swaps holding
+/// the building: `new == old model (+8)` clears the entry (building 0, both models -1), else its new model (+4) =
+/// `new`. Not held: the first empty entry gets the building, old model `old` and new model `new`; none free: nothing.
+/// Both searches count in 16 bits, as the bytes.
+#[hook(addr = 0x481140, conv = cdecl, name = "CTheScripts::AddToBuildingSwapArray", expect = "E9 FB 86 0E 01",
+       unverified = "frontier2-c11", route = "L2", hazards = "none")]
+pub fn add_to_building_swap_array(building: GPtr<u8>, old: i32, new: i32) {
+    if building.byte_add(0x2E).cast::<u8>().read() != 0 {
+        return;
+    }
+    let e = |i: u16| BUILDING_SWAPS + i as usize * 0xC;
+    let mut i = 0u16;
+    while i < 0x19 && ga::<GPtr<u8>>(e(i)).read() != building {
+        i += 1;
+    }
+    if i < 0x19 {
+        if new == ga::<i32>(e(i) + 8).read() {
+            ga::<u32>(e(i)).write(0);
+            ga::<i32>(e(i) + 8).write(-1);
+            ga::<i32>(e(i) + 4).write(-1);
+        } else {
+            ga::<i32>(e(i) + 4).write(new);
+        }
+        return;
+    }
+    let mut i = 0u16;
+    while i < 0x19 && !ga::<GPtr<u8>>(e(i)).read().is_null() {
+        i += 1;
+    }
+    if i < 0x19 {
+        ga::<GPtr<u8>>(e(i)).write(building);
+        ga::<i32>(e(i) + 8).write(old);
+        ga::<i32>(e(i) + 4).write(new);
+    }
+}
+
+/// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_ADD_TO_BUILDING_SWAP_ARRAY,
     HOOK_IS_OBJECT_WITHIN_BRAIN_ACTIVATION_RANGE,
     HOOK_DRAW_SCRIPT_SPHERES,
     HOOK_GET_STREAMED_SCRIPT_WITH_THIS_START_ADDRESS,

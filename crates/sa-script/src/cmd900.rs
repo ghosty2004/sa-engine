@@ -240,7 +240,7 @@ use sa_core::bindings::vector_magnitude;
 use sa_world::bindings::find_mission_entities_intersecting_cube;
 orig! {
     /// `CTheScripts::AddToBuildingSwapArray(CBuilding*, int32 old, int32 new)` (0x481140)
-    fn add_to_building_swap_array(b: GPtr<u8>, old: u32, new: u32) = cdecl 0x481140 => unported;
+    fn add_to_building_swap_array(b: GPtr<u8>, old: i32, new: i32) = cdecl 0x481140 => crate::script_tables::add_to_building_swap_array;
 }
 
 /// A model operand: a negative value indexes `CTheScripts::UsedObjectArray` backwards
@@ -816,7 +816,7 @@ pub fn process_commands_900_to_999(s: Scr, command: u32) -> i8 {
                 return 0;
             }
             replace_with_new_model(found, m2 as u16);
-            add_to_building_swap_array(found, m1, m2);
+            add_to_building_swap_array(found, m1 as i32, m2 as i32);
         }
         // 03BA CLEAR_AREA_OF_CARS (0x4849EB): each pair (P0,P3), (P1,P4), (P2,P5) ordered by `fld a; fcomp b;
         // test ah,0x41; jne` (swap only when `a > b`, ordered; the moved value goes through `fld; fstp`,
