@@ -169,6 +169,7 @@ pub fn vehicle_get_aircraft_near_position(this: GPtr<u8>, out: GPtr<u8>) -> GPtr
 }
 
 pub const HOOKS: &[HookReg] = &[
+    HOOK_PEDLESS_PLAY_LOADED_SOUND,
     HOOK_SPEECH_ENABLE_PED_SPEECH,
     HOOK_SPEECH_RELEASE_PED_CONVERSATION,
     HOOK_SPEECH_ENABLE_PED_SPEECH_FOR_SCRIPT_SPEECH,
@@ -931,6 +932,61 @@ pub fn fire_update_parameters(this: GPtr<u8>, sound: u32, pos: u32) {
 }
 
 // ---- pass 2, batch 10 ----------------------------------------------------------------------------
+
+/// `CAEPedlessSpeechAudioEntity::PlayLoadedSound()` (0x4E6380, virtual; FRONTIER-2 lane C turn 5): without an entity
+/// (+0x114) it is `StopCurrentSpeech()` (a tail jump). The embedded sound (+8) is initialised with bank slot `+0xA8 +
+/// 0x14` and sfx +0xA4: front end (+0x9B) at (0, 1, 0) with volume `[0x8C80EC]` and flags word 0x387; otherwise at the
+/// entity's position with volume `[0x8C8138]`, flags 0x86 and +0x18 = `[0x8C8134]`; force audible (+0x9C): sound +0x14
+/// = `[0x8C80EC]`. The sound registers with the entity, whose reference is cleaned up and cleared. The requested sound
+/// goes to +0xA0: created -> its speech slot's sound (+8) and status 5; else the slot is cleared, +0x98 = 0 (ped type 2:
+/// `s_bAPlayerSpeaking` = 0), +0xA8 = -1.
+#[hook(addr = 0x4E6380, conv = thiscall, name = "CAEPedlessSpeechAudioEntity::PlayLoadedSound", expect = "83 EC 0C 53 55 56",
+       unverified = "frontier2-c11", route = "L2", hazards = "heap-writes")]
+pub fn pedless_play_loaded_sound(this: GPtr<u8>) {
+    let ent = rd::<u32>(this, 0x114);
+    if ent == 0 {
+        pedless_stop_current_speech(this);
+        return;
+    }
+    let snd = this.byte_add(8);
+    let slot = rd::<u16>(this, 0xA8).wrapping_add(0x14) as u32;
+    let sfx = rd::<u16>(this, 0xA4) as u32;
+    let me = this.addr() as u32;
+    if rd::<u8>(this, 0x9B) != 0 {
+        let vol = g::<u32>(0x8C80EC).read();
+        sound_initialise(snd, slot, sfx, me, 0, FLT_ONE_BITS, 0, vol, FLT_ONE_BITS, FLT_ONE_BITS, FLT_ONE_BITS, 0, 0, 0, 0);
+        wr::<u16>(this, 0x5E, 0x387);
+    } else {
+        let pos = entity_pos(g(ent as usize));
+        let vol = g::<u32>(0x8C8138).read();
+        sound_initialise(snd, slot, sfx, me, pos[0], pos[1], pos[2], vol, FLT_ONE_BITS, FLT_ONE_BITS, FLT_ONE_BITS, 0, 0, 0, 0);
+        wr::<u16>(this, 0x5E, 0x86);
+        wr::<u32>(this, 0x20, g::<u32>(0x8C8134).read());
+    }
+    if rd::<u8>(this, 0x9C) != 0 {
+        wr::<u32>(this, 0x1C, g::<u32>(0x8C80EC).read());
+    }
+    let r = this.byte_add(0x114);
+    let e = rd::<u32>(r, 0);
+    if e != 0 {
+        sound_register_with_physical_entity(snd, g(e as usize));
+        sa_core::bindings::entity_clean_up_old_reference(g(rd::<u32>(r, 0) as usize), r);
+        wr::<u32>(r, 0, 0);
+    }
+    let s = sm_request_new_sound(GPtr::<u8>::addr(g(0xB62CB0)) as u32, snd.addr() as u32);
+    wr::<u32>(this, 0xA0, s);
+    if s != 0 {
+        wr::<u32>(speech_slot(rd::<i16>(this, 0xA8)), 8, s);
+        wr::<u16>(speech_slot(rd::<i16>(this, 0xA8)), 0, 5);
+        return;
+    }
+    clear_speech_slot(speech_slot(rd::<i16>(this, 0xA8)));
+    wr::<u8>(this, 0x98, 0);
+    if rd::<u16>(this, 0x92) == 2 {
+        g::<u8>(0xB613E5).write(0);
+    }
+    wr::<u16>(this, 0xA8, 0xFFFF);
+}
 
 use crate::bindings::hw_is_sound_bank_loaded;
 use crate::bindings::sm_request_new_sound;
