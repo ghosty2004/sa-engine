@@ -11,19 +11,23 @@ use sa_math::fpu::{lt, st0};
 
 use crate::bindings::{
     membership_count_members, ped_groups_get_peds_group, seek_entity_xy_offset_ctor, stand_still_dtor, stand_still_process_ped,
+    use_gun_ctor,
 };
+use sa_core::bindings::{get_weapon_info, tm_get_task_secondary, tm_set_task_secondary};
 use crate::common::*;
 use sa_core::bindings::ped_is_alive;
 use sa_world::bindings::{
     achieve_heading_ctor, enter_car_as_passenger_ctor, entity_clean_up_old_reference, entity_register_reference,
     leave_car_ctor, membership_get_leader, membership_get_member, pause_ctor,
     sequence_add_task, sequence_ctor, simple_car_drive_ctor, stand_still_ctor, turn_to_face_entity_ctor, vector_sub,
-    weapon_is_type_melee,
+    go_to_point_and_stand_still_ctor, ped_get_weapon_skill, weapon_is_type_melee,
 };
 use sa_world::world::common::{entity_pos, ped_active_weapon};
 
 use crate::bindings::task_seek_radius_angle_ctor;
 orig! {
+    /// `CTaskComplexGoToPointAiming::CreateSubTask(int32 type)` (0x6688D0, `ret 4`)
+    fn go_to_point_aiming_create_sub_task(t: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x6688D0 => unported;
     /// `CTaskComplexSeekCoverUntilTargetDead::GetTargetPed()` (0x622CC0)
     fn seek_cover_get_target_ped(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x622CC0 => crate::group_scan_loops::seek_cover_until_target_dead_get_target_ped;
 }
@@ -204,10 +208,49 @@ pub fn wait_until_ped_is_out_car_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u
     (f & 0xFFFF_FF00) | (!f & 1)
 }
 
+/// `CTaskComplexGoToPointAiming::CreateFirstSubTask(CPed* ped)` (0x66DDB0, `ret 4`, SEH frame). +0x34 bit 0 cleared.
+/// The weapon info of the ped's active weapon at its current skill: with flag bit 1 (+0x18) the ped's secondary
+/// attack task (slot 0) is told to abort (`MakeAbortable(ped, urgent, null)`) when there is one, else a
+/// `CTaskSimpleUseGun(target +0x10, the target position +0x14, command 3 / 3 for task type 0x385, else 1 / 1)`
+/// becomes it (`SetTaskSecondary` with a null task too when `new` fails); without bit 1, flag bit 0 and fire type 1
+/// or 3 give `CreateSubTask(0x3FC)`. Otherwise (and after the bit-1 case) the result is
+/// `CTaskComplexGoToPointAndStandStill(move state +0xC, the point +0x20, radius +0x2C, +0x30, false, false)`, null
+/// when `new` fails.
+#[hook(addr = 0x66DDB0, conv = thiscall, name = "CTaskComplexGoToPointAiming::CreateFirstSubTask", expect = "64 A1 00 00 00 00 6A FF 68 0C 55 84 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes")]
+pub fn go_to_point_aiming_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    wr::<u8>(this, 0x34, rd::<u8>(this, 0x34) & 0xFE);
+    let wtype = rd::<i32>(ped_active_weapon(ped), 0);
+    let info = get_weapon_info(wtype, ped_get_weapon_skill(ped));
+    let tm = || rd::<GPtr<u8>>(ped, 0x47C).byte_add(4);
+    if (rd::<u32>(info, 0x18) >> 1) & 1 != 0 {
+        if tm_get_task_secondary(tm(), 0).is_null() {
+            let n = if task_get_type(this) == 0x385 { 3 } else { 1 };
+            let t = task_new(0x3C);
+            let gun = if t.is_null() {
+                GPtr::NULL
+            } else {
+                let (px, py, pz) = (rd::<u32>(this, 0x14), rd::<u32>(this, 0x18), rd::<u32>(this, 0x1C));
+                use_gun_ctor(t, rd::<GPtr<u8>>(this, 0x10), px, py, pz, n, n, 0)
+            };
+            tm_set_task_secondary(tm(), gun, 0);
+        } else {
+            task_make_abortable(tm_get_task_secondary(tm(), 0), ped, 1, GPtr::NULL);
+        }
+    } else if rd::<u32>(info, 0x18) & 1 != 0 && matches!(rd::<u32>(info, 0), 1 | 3) {
+        return go_to_point_aiming_create_sub_task(this, 0x3FC);
+    }
+    new_task(0x28, |m| {
+        let (r, mr) = (rd::<f32>(this, 0x2C), rd::<f32>(this, 0x30));
+        go_to_point_and_stand_still_ctor(m, rd::<u32>(this, 0xC), this.byte_add(0x20).cast(), r, mr, 0, 0)
+    })
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_FOLLOW_LEADER_IN_FORMATION_CREATE_SUB_TASK,
     HOOK_SEEK_COVER_GET_COVER_PED,
     HOOK_SEEK_COVER_UNTIL_TARGET_DEAD_CREATE_FIRST_SUB_TASK,
     HOOK_WAIT_UNTIL_PED_IS_OUT_CAR_PROCESS_PED,
+    HOOK_GO_TO_POINT_AIMING_CREATE_FIRST_SUB_TASK,
 ];
