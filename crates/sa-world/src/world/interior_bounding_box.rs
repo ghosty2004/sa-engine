@@ -11,7 +11,7 @@ use crate::bindings::get_tile_centre;
 orig! {
     /// `Interior_c::FindBoundingBox(int32 x, int32 y, int32* minX, int32* maxX, int32* minY, int32* maxY, int32* visited)` (0x5922C0)
     #[allow(clippy::too_many_arguments)]
-    fn find_bounding_box(this: GPtr<u8>, tx: i32, ty: i32, a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>, d: GPtr<u8>, grid: GPtr<u8>) = thiscall 0x5922C0 => unported;
+    pub(crate) fn find_bounding_box(this: GPtr<u8>, tx: i32, ty: i32, a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>, d: GPtr<u8>, grid: GPtr<u8>) = thiscall 0x5922C0 => unported;
 }
 
 fn p(v: &mut i32) -> GPtr<u8> {

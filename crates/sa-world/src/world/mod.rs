@@ -121,3 +121,4 @@ pub mod world_clear_cars;
 pub mod object_train_crossing;
 pub mod frontier_c;
 pub mod frontier_b2;
+pub mod frontier_b2b;

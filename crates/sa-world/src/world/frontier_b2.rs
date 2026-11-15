@@ -47,10 +47,7 @@ orig! {
     fn player_ped_pick_weapon_allowed_for_2_player(p: GPtr<u8>) = thiscall 0x609800 => unported;
 }
 
-/// `CTimer::m_snTimeInMilliseconds` (0xB7CB84).
-fn time_ms() -> u32 {
-    g::<u32>(0xB7_CB84).read()
-}
+use super::garage_update::now as time_ms;
 
 /// `AudioEngine` (0xB6BC90).
 fn audio_engine() -> GPtr<u8> {
@@ -71,19 +68,18 @@ pub fn garages_trigger_message(tag: GPtr<u8>, n1: u32, time: u32, n2: u32) {
     let id = GPtr::<u8>::from_addr(0x96_C014);
     let now = time_ms();
     let start = g::<u32>(0x96_C020);
-    let end;
-    if !c_str_eq(tag, id) || now < start.read() || now > g::<u32>(0x96_C01C).read() {
+    let end = if !c_str_eq(tag, id) || now < start.read() || now > g::<u32>(0x96_C01C).read() {
         copy_c_string(id, tag);
         start.write(now);
-        end = (time & 0xFFFF).wrapping_add(now);
+        (time & 0xFFFF).wrapping_add(now)
     } else {
         if now.wrapping_sub(start.read()) <= 500 {
             return;
         }
         let s = now.wrapping_sub(500);
         start.write(s);
-        end = (time & 0xFFFF).wrapping_add(s);
-    }
+        (time & 0xFFFF).wrapping_add(s)
+    };
     g::<u32>(0x96_C01C).write(end);
     g::<i32>(0x96_C010).write(i32::from(n1 as i16));
     g::<i32>(0x96_C00C).write(i32::from(n2 as i16));
