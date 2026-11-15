@@ -9,7 +9,7 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-use super::common::{find_player_ped, g, rd, x};
+use super::common::{find_player_ped, g, rd, wr, x};
 
 pub const NUM_CHEATS: usize = 92;
 
@@ -56,7 +56,7 @@ orig! {
     /// `CPlayerPed::CheatWantedLevel(int32)` (0x609F50)
     pub fn player_cheat_wanted_level(ped: GPtr<u8>, level: i32) = thiscall 0x609F50 => unported;
     /// `CCheat::VehicleCheat(eModelID)` (0x43A0B0)
-    pub fn vehicle_cheat(model: i32) -> GPtr<u8> = cdecl 0x43A0B0 => unported;
+    pub fn vehicle_cheat(model: i32) -> GPtr<u8> = cdecl 0x43A0B0 => crate::world::cheat::vehicle_cheat_port;
 }
 
 pub fn add_to_cheat_string_port(c: u32) {
@@ -504,6 +504,108 @@ pub fn gangs_cheat() {
     }
 }
 
+/// `CCheat::VehicleCheat(eModelID)` (stub 0x43A0B0 → 0x407851 → 0x43A0B6; FRONTIER-2 turn 3 lane B, batch
+/// `frontier2-b10`). Null while the player ped is in an interior (area +0x2F) or more than 50 vehicle pool slots are
+/// in use. Requests the model (flags 2), loads everything requested; null unless the model is loaded (state 1). The
+/// streaming flags byte read before the request decides whether the model and its TXD become deletable (bit 1 clear).
+/// Creates the vehicle by the model info's type (+0x3C; jump table 0x43A470): 1 monster truck, 2 quad, 3 heli, 4
+/// plane, 5 boat, 9 bike, 10 BMX (both with +0x614 bit 4), 11 trailer, anything else an automobile (`setup` 1), all
+/// created by 1 (random); a null `new` returns null (the bytes OR the bike flag at a null pointer for the bikes: the
+/// original faults, the port stops). Placed `colModel.radius + 2.0` along the player's forward from the player's
+/// position, heading `player.+0x558 + pi/2`, status 4 (abandoned), +0x4F8 = 1, added to the world, the space cleared
+/// for it, placed on the road (bike: `CBike::PlaceOnRoadProperly`; boat: nothing; otherwise the automobile one).
+#[hook(addr = 0x43A0B0, conv = cdecl, name = "CCheat::VehicleCheat", expect = "90 E9 9B D7 FC FF",
+       unverified = "frontier2-b10", route = "L2", hazards = "heap-writes",
+       note = "creates a vehicle (pool allocation) and loads models; the null-new bike path faults in the original")]
+pub fn vehicle_cheat_port(model: i32) -> GPtr<u8> {
+    use crate::bindings::{
+        automobile_place_on_road_properly, bike_place_on_road_properly, clear_space_for_mission_entity, placeable_set_posn,
+        set_orientation, vehicle_new, world_add,
+    };
+    use sa_core::bindings::{
+        automobile_ctor, bike_ctor, bmx_ctor, boat_ctor, heli_ctor, load_all_requested_models, monster_truck_ctor, plane_ctor,
+        quad_bike_ctor, set_model_is_deletable, set_model_txd_is_deletable, streaming_request_model, trailer_ctor,
+    };
+    if rd::<u8>(find_player_ped(-1), 0x2F) != 0 {
+        return GPtr::NULL;
+    }
+    let pool = g::<GPtr<u8>>(0xB7_4494).read();
+    let size = rd::<i32>(pool, 8);
+    let flags = rd::<GPtr<u8>>(pool, 4);
+    let mut used = 0;
+    for i in 0..size {
+        if rd::<i8>(flags, i as isize) >= 0 {
+            used += 1;
+        }
+    }
+    if used > 0x32 {
+        return GPtr::NULL;
+    }
+    let info = 0x8E_4CC0 + 20 * model as usize;
+    let sflags = g::<u8>(info + 6).read();
+    streaming_request_model(model, 2);
+    load_all_requested_models(0);
+    if g::<u8>(info + 0x10).read() != 1 {
+        return GPtr::NULL;
+    }
+    if sflags & 2 == 0 {
+        set_model_is_deletable(model);
+        set_model_txd_is_deletable(model);
+    }
+    let mi = g::<GPtr<u8>>(0xA9_B0C8 + 4 * model as usize).read();
+    let ty = rd::<i32>(mi, 0x3C);
+    let make = |size: u32, ctor: fn(GPtr<u8>, i32, u32) -> GPtr<u8>| {
+        let mem = vehicle_new(size);
+        if mem.is_null() { mem } else { ctor(mem, model, 1) }
+    };
+    let bike = |v: GPtr<u8>| {
+        if !v.is_null() {
+            wr::<u8>(v, 0x614, rd::<u8>(v, 0x614) | 0x10);
+        }
+        v
+    };
+    let v = match ty {
+        1 => make(0x99C, monster_truck_ctor),
+        2 => make(0x9BC, quad_bike_ctor),
+        3 => make(0xA18, heli_ctor),
+        4 => make(0xA04, plane_ctor),
+        9 => bike(make(0x814, bike_ctor)),
+        10 => bike(make(0x838, bmx_ctor)),
+        11 => make(0x9F4, trailer_ctor),
+        5 => make(0x7E8, boat_ctor),
+        _ => {
+            let mem = vehicle_new(0x988);
+            if mem.is_null() { mem } else { automobile_ctor(mem, model as u32, 1, 1) }
+        }
+    };
+    if v.is_null() {
+        return v;
+    }
+    let vmi = g::<GPtr<u8>>(0xA9_B0C8 + 4 * rd::<i16>(v, 0x22) as usize).read();
+    let radius = rd::<f32>(rd::<GPtr<u8>>(vmi, 0x14), 0x24);
+    let mut pos = super::common::entity_pos3(find_player_ped(-1));
+    let fwd = rd::<GPtr<u8>>(find_player_ped(-1), 0x14).byte_add(0x10);
+    let r = x(radius).fadd_m(2.0);
+    let dy = super::common::f32_of(r.fmul_m(rd::<f32>(fwd, 4)));
+    let dz = super::common::f32_of(r.fmul_m(rd::<f32>(fwd, 8)));
+    pos[0] = super::common::f32_of(r.fmul_m(rd::<f32>(fwd, 0)).fadd_m(pos[0]));
+    pos[1] = super::common::f32_of(x(pos[1]).fadd_m(dy));
+    pos[2] = super::common::f32_of(x(pos[2]).fadd_m(dz));
+    placeable_set_posn(v, GPtr::from_raw(pos.as_mut_ptr()));
+    let heading = super::common::f32_of(x(rd::<f32>(find_player_ped(-1), 0x558)).fadd_m(f32::from_bits(0x3FC9_0FDB)));
+    set_orientation(v, 0.0, 0.0, heading);
+    wr::<u8>(v, 0x36, (rd::<u8>(v, 0x36) & 7) | 0x20);
+    wr::<u32>(v, 0x4F8, 1);
+    world_add(v);
+    clear_space_for_mission_entity(GPtr::from_raw(pos.as_mut_ptr()).cast(), v);
+    match rd::<i32>(v, 0x590) {
+        9 => bike_place_on_road_properly(v),
+        5 => {}
+        _ => automobile_place_on_road_properly(v),
+    }
+    v
+}
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_FAT_CHEAT,
     HOOK_MUSCLE_CHEAT,
@@ -554,4 +656,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_DOZER_CHEAT,
     HOOK_STUNT_PLANE_CHEAT,
     HOOK_MONSTER_TRUCK_CHEAT,
+    HOOK_VEHICLE_CHEAT_PORT,
 ];

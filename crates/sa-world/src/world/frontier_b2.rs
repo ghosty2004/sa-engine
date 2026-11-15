@@ -667,9 +667,9 @@ pub fn shopping_restore_vehicle_mods() {
 
 orig! {
     /// `CWorld::CallOffChaseForAreaSectorListVehicles(list, x1, y1, x2, y2, minX, minY, maxX, maxY)` (0x563A80)
-    fn call_off_chase_for_area_sector_list_vehicles(list: GPtr<u8>, x1: f32, y1: f32, x2: f32, y2: f32, a: f32, b: f32, c: f32, d: f32) = cdecl 0x563A80 => unported;
+    fn call_off_chase_for_area_sector_list_vehicles(list: GPtr<u8>, x1: f32, y1: f32, x2: f32, y2: f32, a: f32, b: f32, c: f32, d: f32) = cdecl 0x563A80 => crate::world::frontier_b3::call_off_chase_sector_list_vehicles;
     /// `CWorld::CallOffChaseForAreaSectorListPeds(list, x1, y1, x2, y2, minX, minY, maxX, maxY)` (0x563D00)
-    fn call_off_chase_for_area_sector_list_peds(list: GPtr<u8>, x1: f32, y1: f32, x2: f32, y2: f32, a: f32, b: f32, c: f32, d: f32) = cdecl 0x563D00 => unported;
+    fn call_off_chase_for_area_sector_list_peds(list: GPtr<u8>, x1: f32, y1: f32, x2: f32, y2: f32, a: f32, b: f32, c: f32, d: f32) = cdecl 0x563D00 => crate::world::frontier_b3::call_off_chase_sector_list_peds;
 }
 
 /// `CWorld::CallOffChaseForArea(float x1, float y1, float x2, float y2)` (0x566A60, cdecl): the rectangle grown by

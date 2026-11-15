@@ -1,0 +1,139 @@
+//! FRONTIER-2 turn 3, lane B (batch `frontier2-b10`): WORLD functions on the phase B frontier. Ported from the
+//! 1.0 US bytes; gta-reversed as a reading aid only (the bytes win). Unverified (docs/verify/HOWTO.md).
+
+use sa_core::abi::HookReg;
+use sa_core::hook;
+use sa_core::mem::GPtr;
+use sa_math::fpu::{ge_or_nan, gt};
+
+use super::common::{entity_pos, f32_of, find_player_ped, find_player_vehicle, g, rd, wr, x};
+use crate::bindings::{
+    entity_get_col_model, event_group_add, event_script_command_ctor, event_script_command_dtor, find_player_wanted,
+    membership_get_leader, ped_groups_get_peds_group, stand_still_ctor, tm_find_active_task_by_type, wanted_remove_cop,
+};
+use sa_core::bindings::{matrix_mul_vec, ped_is_alive, task_new};
+
+/// `CWorld::ms_nCurrentScanCode`
+const SCAN_CODE: usize = 0xB7_CD78;
+
+/// The entity's position strictly inside the open rectangle (`x > x0`, `x < x1`, `y > y0`, `y < y1`, as the x87
+/// compares do; NaN is outside).
+fn pos_inside(e: GPtr<u8>, x0: f32, y0: f32, x1: f32, y1: f32) -> bool {
+    let p = entity_pos(e);
+    gt(x(rd(p, 0)), x(x0)) && !ge_or_nan(x(rd(p, 0)), x(x1)) && gt(x(rd(p, 4)), x(y0)) && !ge_or_nan(x(rd(p, 4)), x(y1))
+}
+
+/// Marks the entity with the current scan code; false when it was already marked.
+fn take_scan_code(e: GPtr<u8>) -> bool {
+    let code = g::<u16>(SCAN_CODE).read();
+    if rd::<u16>(e, 0x2C) == code {
+        return false;
+    }
+    wr::<u16>(e, 0x2C, code);
+    true
+}
+
+/// `CWorld::CallOffChaseForAreaSectorListVehicles(CPtrList&, x1, y1, x2, y2, minX, minY, maxX, maxY)` (0x563A80,
+/// cdecl). Every vehicle of the list not yet scanned and not the player's, inside the grown rectangle, that is a law
+/// enforcer (+0x428 bit 0) on a chase mission (+0x3BA 2, 3, 4, 5, 0x3C, 0x3D) gets temp action 1 (+0x3BB) until
+/// now + 2000 (+0x3BC). When any collision sphere (centre through the matrix, plus/minus its radius) overlaps the
+/// original rectangle, the speed toward the rectangle's centre is cut: `ms.x` = 0 when the car is right of the
+/// centre and moving left (or left and moving right), likewise `ms.y`.
+#[hook(addr = 0x563A80, conv = cdecl, name = "CWorld::CallOffChaseForAreaSectorListVehicles", expect = "8B 44 24 04 8B 00 83 EC 1C",
+       unverified = "frontier2-b10", route = "L2", hazards = "none",
+       note = "the original keeps its sphere-hit bool in its own (caller-owned) list argument slot (not modelled)")]
+#[allow(clippy::too_many_arguments)]
+pub fn call_off_chase_sector_list_vehicles(list: GPtr<u8>, x1: f32, y1: f32, x2: f32, y2: f32, a: f32, b: f32, c: f32, d: f32) {
+    let mut node = rd::<GPtr<u8>>(list, 0);
+    while !node.is_null() {
+        let v = rd::<GPtr<u8>>(node, 0);
+        node = rd::<GPtr<u8>>(node, 4);
+        if !take_scan_code(v) || v == find_player_vehicle(-1, 0) || !pos_inside(v, a, b, c, d) {
+            continue;
+        }
+        if rd::<u8>(v, 0x428) & 1 == 0 || !matches!(rd::<u8>(v, 0x3BA), 2..=5 | 0x3C | 0x3D) {
+            continue;
+        }
+        wr::<u8>(v, 0x3BB, 1);
+        wr::<u32>(v, 0x3BC, g::<u32>(0xB7_CB84).read().wrapping_add(2000));
+        let mut hit = false;
+        let data = rd::<GPtr<u8>>(entity_get_col_model(v), 0x2C);
+        let n = i32::from(rd::<i16>(data, 0));
+        for i in 0..n {
+            let s = rd::<GPtr<u8>>(data, 8).byte_add(0x14 * i as isize);
+            let mut out = [0f32; 3];
+            let op = GPtr::from_raw(out.as_mut_ptr()).cast::<u8>();
+            matrix_mul_vec(op, rd::<GPtr<u8>>(v, 0x14), s);
+            let r = rd::<f32>(rd::<GPtr<u8>>(data, 8).byte_add(0x14 * i as isize), 0xC);
+            if gt(x(out[0]).fadd_m(r), x(x1))
+                && !ge_or_nan(x(out[0]).fsub_m(r), x(x2))
+                && gt(x(out[1]).fadd_m(r), x(y1))
+                && !ge_or_nan(x(out[1]).fsub_m(r), x(y2))
+            {
+                hit = true;
+            }
+        }
+        if !hit {
+            continue;
+        }
+        for (k, (lo, hi)) in [(x1, x2), (y1, y2)].into_iter().enumerate() {
+            let p = entity_pos(v);
+            let centre = x(lo).fadd_m(hi).fmul_m(0.5);
+            let o = 0x44 + 4 * k as isize;
+            let ms = x(rd::<f32>(v, o));
+            let zero = x(0.0);
+            let cut = if ge_or_nan(centre, x(rd(p, 4 * k as isize))) { !ge_or_nan(zero, ms) } else { gt(zero, ms) };
+            wr::<f32>(v, o, if cut { 0.0 } else { f32_of(ms) });
+        }
+    }
+}
+
+/// `CWorld::CallOffChaseForAreaSectorListPeds(CPtrList&, x1, y1, x2, y2, minX, minY, maxX, maxY)` (0x563D00, cdecl).
+/// Every ped of the list not yet scanned, not the player and not in a group led by the player, inside the original
+/// rectangle (the grown one is not used), that is killing / arresting the player (task 0x3E8's target is the player
+/// ped) or chasing the player's vehicle (task 0x3EB's target), and alive: a cop (type 6) leaves the player's pursuit,
+/// and it gets a script-command event (priority 3) with a stand-still task (0 ms, looped, blend 8.0).
+#[hook(addr = 0x563D00, conv = cdecl, name = "CWorld::CallOffChaseForAreaSectorListPeds", expect = "64 A1 00 00 00 00 6A FF 68 D3 CC 83 00",
+       unverified = "frontier2-b10", route = "L2", hazards = "heap-writes",
+       note = "the original keeps the next node in its own (caller-owned) list argument slot (not modelled); adds an event to the ped's event group")]
+#[allow(clippy::too_many_arguments)]
+pub fn call_off_chase_sector_list_peds(list: GPtr<u8>, x1: f32, y1: f32, x2: f32, y2: f32, _a: f32, _b: f32, _c: f32, _d: f32) {
+    let mut node = rd::<GPtr<u8>>(list, 0);
+    while !node.is_null() {
+        let ped = rd::<GPtr<u8>>(node, 0);
+        node = rd::<GPtr<u8>>(node, 4);
+        if !take_scan_code(ped) {
+            continue;
+        }
+        let group = ped_groups_get_peds_group(ped.addr() as u32);
+        let leader = if group == 0 { GPtr::NULL } else { membership_get_leader(GPtr::from_addr(group as usize + 8)) };
+        if ped == find_player_ped(-1) || leader == find_player_ped(-1) || !pos_inside(ped, x1, y1, x2, y2) {
+            continue;
+        }
+        let target = |ty: i32| {
+            let t = tm_find_active_task_by_type(rd::<GPtr<u8>>(ped, 0x47C).byte_add(4), ty);
+            if t.is_null() { GPtr::NULL } else { rd::<GPtr<u8>>(t, 0x10) }
+        };
+        let kill = target(0x3E8);
+        let chase = target(0x3EB);
+        if kill != find_player_ped(-1) && (chase.is_null() || chase != find_player_vehicle(-1, 0)) {
+            continue;
+        }
+        if ped_is_alive(ped) as u8 == 0 {
+            continue;
+        }
+        if rd::<u32>(ped, 0x598) == 6 {
+            wanted_remove_cop(find_player_wanted(-1), ped);
+        }
+        let mem = task_new(0x20);
+        let task = if mem.is_null() { mem } else { stand_still_ctor(mem, 0, 1, 0, 8.0) };
+        let mut ev = [0u32; 10];
+        let e = GPtr::<u8>::from_raw(ev.as_mut_ptr().cast());
+        event_script_command_ctor(e, 3, task, 0);
+        event_group_add(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), e, 0);
+        event_script_command_dtor(e.cast::<u32>());
+    }
+}
+
+/// This module's registrations.
+pub const HOOKS: &[HookReg] = &[HOOK_CALL_OFF_CHASE_SECTOR_LIST_VEHICLES, HOOK_CALL_OFF_CHASE_SECTOR_LIST_PEDS];
