@@ -195,7 +195,7 @@ fn set_heading(e: GPtr<u8>, h: f32) {
 
 /// `LimitRadianAngle(f32(GetRadianAngleBetweenPoints(x, y, 0, 0)))` as ST0.
 fn heading_of(x0: f32, y0: f32) -> X87 {
-    let a = f32_of(X87::from_f64_exact(radian_angle_between_points(x0, y0, 0.0, 0.0)));
+    let a = f32_of(X87::from_f64_exact(radian_angle_between_points(x0, y0, 0.0, 0.0).to_f64()));
     X87::from_f64_exact(limit_radian_angle(a))
 }
 

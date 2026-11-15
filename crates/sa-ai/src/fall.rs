@@ -667,7 +667,7 @@ pub fn evasive_step_create_sub_task(this: GPtr<u8>, ty: u32) -> GPtr<u8> {
             }
             let y = f32_of(x(rd::<f32>(this, 0x10)).fchs());
             let xx = f32_of(x(rd::<f32>(this, 0xC)).fchs());
-            let h = f32_of(X87::from_f64_exact(general_get_radian_angle_between_points(xx, y, 0.0, 0.0)));
+            let h = f32_of(X87::from_f64_exact(general_get_radian_angle_between_points(xx, y, 0.0, 0.0).to_f64()));
             let k = g::<u32>(0x86FC80).read();
             achieve_heading_ctor(t, f32::from_bits(h.to_bits()), 0x4000_0000, k)
         }

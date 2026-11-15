@@ -52,8 +52,10 @@ orig! {
 /// `fild`); in a vehicle (every access through `FindPlayerVehicle(-1, false)` again, as the original): health (+0x4C0)
 /// = 1000.0; an automobile (type +0x590 == 0) gets +0x8E4 = 0, a bike (type 9) +0x7BC = 0, and either is `Fix()`ed
 /// (vtable +0xC8, tail call); other vehicle types stop after the health. Not in the catalogue (the tail of
-/// `CCheat::MoneyArmourHealthCheat`'s extent, CAT-12), so a phase B native.
-#[sa_core::native(addr = 0x438D60, conv = cdecl, name = "CCheat::HealthCheat")]
+/// `CCheat::MoneyArmourHealthCheat`'s extent, CAT-12): a phase B native in turn 1, a hook since it is a catalogue row.
+#[sa_core::hook(addr = 0x438D60, conv = cdecl, name = "CCheat::HealthCheat", expect = "51 0F B6 05 E7 CE",
+       unverified = "frontier2-c8", route = "L2", hazards = "heap-writes",
+       note = "FRONTIER-2 lane C turn 3: was a phase B native until the body became a catalogue row (CAT-12 tail target)")]
 pub fn health_cheat() {
     let h = xi(i32::from(g::<u8>(0xB7CEE7).read())).to_f32();
     wr::<f32>(find_player_ped(-1), 0x540, h);
@@ -80,4 +82,7 @@ pub fn sync_water() {
 }
 
 /// Every `#[native]` of this module.
-pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_HEALTH_CHEAT, NATIVE_SYNC_WATER];
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_SYNC_WATER];
+
+/// The lane C turn-1 natives that became hooks once their bodies were catalogue rows (FRONTIER-2 turn 3).
+pub const HOOKS3: &[HookReg] = &[HOOK_HEALTH_CHEAT];

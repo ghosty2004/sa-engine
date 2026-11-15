@@ -693,70 +693,97 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_DTOR_VEHICLE_STORE,
     HOOK_INIT_PED_STORE,
     HOOK_DTOR_PED_STORE,
+    HOOK_ATOMIC_STORE_DTOR_NATIVE,
+    HOOK_DAMAGE_ATOMIC_STORE_DTOR_NATIVE,
+    HOOK_LOD_ATOMIC_STORE_DTOR_NATIVE,
+    HOOK_TIME_STORE_DTOR_NATIVE,
+    HOOK_LOD_TIME_STORE_DTOR_NATIVE,
+    HOOK_WEAPON_STORE_DTOR_NATIVE,
+    HOOK_CLUMP_STORE_DTOR_NATIVE,
+    HOOK_VEHICLE_STORE_DTOR_NATIVE,
+    HOOK_PED_STORE_DTOR_NATIVE,
 ];
 
-// ---- FRONTIER-2 lane C: the store destructor bodies. Not in the catalogue (each is the tail of its `__dtor_` stub's
-// extent, CAT-12), so phase B gets them as natives: `eh_vector_destructor_iterator(this + 4, size, count, dtor)`.
+// ---- FRONTIER-2 lane C: the store destructor bodies, tail targets of their `__dtor_` stubs: phase B natives in turn 1, hooks
+// since turn 3 (CAT-12 made them catalogue rows): `eh_vector_destructor_iterator(this + 4, size, count, dtor)`.
 
 /// The `atomic` model-info store destructor body (0x4C5840, thiscall; reached by `jmp` from its `__dtor_` stub):
 /// `eh_vector_destructor_iterator(this + 4, 0x20, 0x36B0, 0x4C5590)`.
-#[sa_core::native(addr = 0x4C5840, conv = thiscall, name = "atomic_store_dtor")]
+#[sa_core::hook(addr = 0x4C5840, conv = thiscall, name = "atomic_store_dtor", expect = "68 90 55 4C 00",
+       unverified = "frontier2-c8", route = "split", hazards = "heap-writes",
+       note = "FRONTIER-2 lane C turn 3: was a phase B native until the body became a catalogue row (CAT-12 tail target)")]
 pub fn atomic_store_dtor_native(s: GPtr<u8>) {
     sa_core::bindings::eh_vector_dtor(s.byte_add(4), 0x20, 0x36B0, 0x4C5590);
 }
 
 /// The `damage_atomic` model-info store destructor body (0x4C5860, thiscall; reached by `jmp` from its `__dtor_` stub):
 /// `eh_vector_destructor_iterator(this + 4, 0x24, 0x46, 0x4C55D0)`.
-#[sa_core::native(addr = 0x4C5860, conv = thiscall, name = "damage_atomic_store_dtor")]
+#[sa_core::hook(addr = 0x4C5860, conv = thiscall, name = "damage_atomic_store_dtor", expect = "68 D0 55 4C 00",
+       unverified = "frontier2-c8", route = "split", hazards = "heap-writes",
+       note = "FRONTIER-2 lane C turn 3: was a phase B native until the body became a catalogue row (CAT-12 tail target)")]
 pub fn damage_atomic_store_dtor_native(s: GPtr<u8>) {
     sa_core::bindings::eh_vector_dtor(s.byte_add(4), 0x24, 0x46, 0x4C55D0);
 }
 
 /// The `lod_atomic` model-info store destructor body (0x4C5880, thiscall; reached by `jmp` from its `__dtor_` stub):
 /// `eh_vector_destructor_iterator(this + 4, 0x24, 0x1, 0x4C5620)`.
-#[sa_core::native(addr = 0x4C5880, conv = thiscall, name = "lod_atomic_store_dtor")]
+#[sa_core::hook(addr = 0x4C5880, conv = thiscall, name = "lod_atomic_store_dtor", expect = "68 20 56 4C 00",
+       unverified = "frontier2-c8", route = "split", hazards = "heap-writes",
+       note = "FRONTIER-2 lane C turn 3: was a phase B native until the body became a catalogue row (CAT-12 tail target)")]
 pub fn lod_atomic_store_dtor_native(s: GPtr<u8>) {
     sa_core::bindings::eh_vector_dtor(s.byte_add(4), 0x24, 0x1, 0x4C5620);
 }
 
 /// The `time` model-info store destructor body (0x4C58A0, thiscall; reached by `jmp` from its `__dtor_` stub):
 /// `eh_vector_destructor_iterator(this + 4, 0x24, 0xA9, 0x4C5680)`.
-#[sa_core::native(addr = 0x4C58A0, conv = thiscall, name = "time_store_dtor")]
+#[sa_core::hook(addr = 0x4C58A0, conv = thiscall, name = "time_store_dtor", expect = "68 80 56 4C 00",
+       unverified = "frontier2-c8", route = "split", hazards = "heap-writes",
+       note = "FRONTIER-2 lane C turn 3: was a phase B native until the body became a catalogue row (CAT-12 tail target)")]
 pub fn time_store_dtor_native(s: GPtr<u8>) {
     sa_core::bindings::eh_vector_dtor(s.byte_add(4), 0x24, 0xA9, 0x4C5680);
 }
 
 /// The `lod_time` model-info store destructor body (0x4C58C0, thiscall; reached by `jmp` from its `__dtor_` stub):
 /// `eh_vector_destructor_iterator(this + 4, 0x28, 0x1, 0x4C56E0)`.
-#[sa_core::native(addr = 0x4C58C0, conv = thiscall, name = "lod_time_store_dtor")]
+#[sa_core::hook(addr = 0x4C58C0, conv = thiscall, name = "lod_time_store_dtor", expect = "68 E0 56 4C 00",
+       unverified = "frontier2-c8", route = "split", hazards = "heap-writes",
+       note = "FRONTIER-2 lane C turn 3: was a phase B native until the body became a catalogue row (CAT-12 tail target)")]
 pub fn lod_time_store_dtor_native(s: GPtr<u8>) {
     sa_core::bindings::eh_vector_dtor(s.byte_add(4), 0x28, 0x1, 0x4C56E0);
 }
 
 /// The `weapon` model-info store destructor body (0x4C58E0, thiscall; reached by `jmp` from its `__dtor_` stub):
 /// `eh_vector_destructor_iterator(this + 4, 0x28, 0x33, 0x4C5790)`.
-#[sa_core::native(addr = 0x4C58E0, conv = thiscall, name = "weapon_store_dtor")]
+#[sa_core::hook(addr = 0x4C58E0, conv = thiscall, name = "weapon_store_dtor", expect = "68 90 57 4C 00",
+       unverified = "frontier2-c8", route = "split", hazards = "heap-writes",
+       note = "FRONTIER-2 lane C turn 3: was a phase B native until the body became a catalogue row (CAT-12 tail target)")]
 pub fn weapon_store_dtor_native(s: GPtr<u8>) {
     sa_core::bindings::eh_vector_dtor(s.byte_add(4), 0x28, 0x33, 0x4C5790);
 }
 
 /// The `clump` model-info store destructor body (0x4C5900, thiscall; reached by `jmp` from its `__dtor_` stub):
 /// `eh_vector_destructor_iterator(this + 4, 0x24, 0x5C, 0x4C5750)`.
-#[sa_core::native(addr = 0x4C5900, conv = thiscall, name = "clump_store_dtor")]
+#[sa_core::hook(addr = 0x4C5900, conv = thiscall, name = "clump_store_dtor", expect = "68 50 57 4C 00",
+       unverified = "frontier2-c8", route = "split", hazards = "heap-writes",
+       note = "FRONTIER-2 lane C turn 3: was a phase B native until the body became a catalogue row (CAT-12 tail target)")]
 pub fn clump_store_dtor_native(s: GPtr<u8>) {
     sa_core::bindings::eh_vector_dtor(s.byte_add(4), 0x24, 0x5C, 0x4C5750);
 }
 
 /// The `vehicle` model-info store destructor body (0x4C6370, thiscall; reached by `jmp` from its `__dtor_` stub):
 /// `eh_vector_destructor_iterator(this + 4, 0x308, 0xD4, 0x4C5920)`.
-#[sa_core::native(addr = 0x4C6370, conv = thiscall, name = "vehicle_store_dtor")]
+#[sa_core::hook(addr = 0x4C6370, conv = thiscall, name = "vehicle_store_dtor", expect = "68 20 59 4C 00",
+       unverified = "frontier2-c8", route = "split", hazards = "heap-writes",
+       note = "FRONTIER-2 lane C turn 3: was a phase B native until the body became a catalogue row (CAT-12 tail target)")]
 pub fn vehicle_store_dtor_native(s: GPtr<u8>) {
     sa_core::bindings::eh_vector_dtor(s.byte_add(4), 0x308, 0xD4, 0x4C5920);
 }
 
 /// The `ped` model-info store destructor body (0x4C6390, thiscall; reached by `jmp` from its `__dtor_` stub):
 /// `eh_vector_destructor_iterator(this + 4, 0x44, 0x116, 0x4C62F0)`.
-#[sa_core::native(addr = 0x4C6390, conv = thiscall, name = "ped_store_dtor")]
+#[sa_core::hook(addr = 0x4C6390, conv = thiscall, name = "ped_store_dtor", expect = "68 F0 62 4C 00",
+       unverified = "frontier2-c8", route = "split", hazards = "heap-writes",
+       note = "FRONTIER-2 lane C turn 3: was a phase B native until the body became a catalogue row (CAT-12 tail target)")]
 pub fn ped_store_dtor_native(s: GPtr<u8>) {
     sa_core::bindings::eh_vector_dtor(s.byte_add(4), 0x44, 0x116, 0x4C62F0);
 }

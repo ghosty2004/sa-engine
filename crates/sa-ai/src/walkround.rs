@@ -596,7 +596,7 @@ pub fn car_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     let r = rd::<GPtr<u8>>(this, 0x20).byte_add(4);
     let hx = x(rd::<f32>(r, 0)).fsub_m(rd::<f32>(pp, 0)).to_f32();
     let hy = x(rd::<f32>(r, 4)).fsub_m(rd::<f32>(pp, 4)).to_f32();
-    let a = X87::from_f64_exact(general_get_radian_angle_between_points(hx, hy, 0.0, 0.0)).to_f32();
+    let a = X87::from_f64_exact(general_get_radian_angle_between_points(hx, hy, 0.0, 0.0).to_f64()).to_f32();
     let h = X87::from_f64_exact(general_limit_radian_angle(a)).to_f32();
     let tk = task_new(0x18);
     let res = if tk.is_null() {
@@ -687,7 +687,7 @@ pub fn object_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     let r = rd::<GPtr<u8>>(this, 0x20).byte_add(4);
     let hx = x(rd::<f32>(r, 0)).fsub_m(rd::<f32>(pp, 0)).to_f32();
     let hy = x(rd::<f32>(r, 4)).fsub_m(rd::<f32>(pp, 4)).to_f32();
-    let a = X87::from_f64_exact(general_get_radian_angle_between_points(hx, hy, 0.0, 0.0)).to_f32();
+    let a = X87::from_f64_exact(general_get_radian_angle_between_points(hx, hy, 0.0, 0.0).to_f64()).to_f32();
     let h = X87::from_f64_exact(general_limit_radian_angle(a)).to_f32();
     let tk = task_new(0x18);
     if tk.is_null() {

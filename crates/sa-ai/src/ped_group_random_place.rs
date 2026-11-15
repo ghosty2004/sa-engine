@@ -158,7 +158,7 @@ pub fn place_random_group(_this: GPtr<u8>, ped_type: u32, n: i32, origin: GPtr<u
         }
         placed[count] = ped;
         count += 1;
-        let a = X87::from_f64_exact(general_get_radian_angle_between_points(ox, oy, p[0], p[1])).to_f32();
+        let a = X87::from_f64_exact(general_get_radian_angle_between_points(ox, oy, p[0], p[1]).to_f64()).to_f32();
         wr::<f32>(ped, 0x558, a);
         wr::<f32>(ped, 0x55C, a);
         visibility_set_clump_alpha(GPtr::from_addr(rd::<u32>(ped, 0x18) as usize), 0);

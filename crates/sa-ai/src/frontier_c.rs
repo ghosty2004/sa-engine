@@ -769,8 +769,36 @@ use sa_math::x87::X87;
 use crate::bindings::task_new;
 use sa_world::bindings::fire_find_nearest_fire as find_nearest_fire;
 
+/// The route round a ped group (0x66FD30, thiscall, `ret 4`; unnamed, called by a generated `CreateSubTask`; FRONTIER-2
+/// lane C turn 3): a 16-slot ped list on the stack holds the task's ped (+0xC) and 15 nulls; `FUN_0066f6c0(this,
+/// &sphere, &list)` fills the `CColSphere` around them; its centre z becomes the ped's own position z; then
+/// `CPedGeometryAnalyser::ComputeRouteRoundSphere(ped, &sphere, this+0x14, this+0x20, this+0x38, this+0x2c)`, whose
+/// EAX is returned.
+#[hook(addr = 0x66FD30, conv = thiscall, name = "FUN_0066fd30", expect = "83 EC 54 56 8B F1",
+       unverified = "frontier2-c7", route = "L2", hazards = "uninit-locals,ax-al-return",
+       note = "the sphere's last dword (+0x10 of CColSphere) is whatever FUN_0066f6c0 leaves; EAX = ComputeRouteRoundSphere's")]
+pub fn route_round_group(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
+    let mut list = [0u32; 16];
+    list[0] = rd::<u32>(this, 0xC);
+    let mut sphere = [0u32; 5];
+    let sp: GPtr<u8> = GPtr::from_raw(&raw mut sphere).cast();
+    group_member_bounding_sphere(this, sp, GPtr::from_raw(&raw mut list).cast());
+    wr::<u32>(sp, 8, rd::<u32>(sa_world::world::common::entity_pos(ped), 8));
+    crate::wander::geom_compute_route_round_sphere(
+        ped,
+        sp,
+        this.byte_add(0x14),
+        this.byte_add(0x20),
+        this.byte_add(0x38),
+        this.byte_add(0x2C),
+    )
+}
+
+use crate::bindings::group_member_bounding_sphere;
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_ROUTE_ROUND_GROUP,
     HOOK_AVOID_ENTITY_CTOR,
     HOOK_FALL_AND_STAY_DOWN_CREATE_SUB_TASK,
     HOOK_EXTINGUISH_FIRE_FIND_FIRE,

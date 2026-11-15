@@ -224,6 +224,11 @@ orig! {
 }
 
 orig! {
+    /// `CTheScripts::HighlightImportantAngledArea` (0x485EF0)
+    pub fn highlight_important_angled_area(id: u32, x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32, x4: u32, y4: u32, z: u32) = cdecl 0x485EF0 => unported;
+}
+
+orig! {
     /// `CTheScripts::IsPedStopped` (0x486110)
     pub fn is_ped_stopped(p: GPtr<u8>) -> u8 = cdecl 0x486110 => unported;
 }
@@ -246,6 +251,11 @@ orig! {
 orig! {
     /// `CTheScripts::DrawDebugSquare-` (0x486840)
     pub fn draw_debug_square(x1: u32, y1: u32, x2: u32, y2: u32) = cdecl 0x486840 => unported;
+}
+
+orig! {
+    /// `CTheScripts::DrawDebugAngledSquare` (0x486990)
+    pub fn draw_debug_angled_square(x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32, x4: u32, y4: u32) = cdecl 0x486990 => unported;
 }
 
 orig! {

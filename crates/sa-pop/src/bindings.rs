@@ -99,6 +99,16 @@ orig! {
 }
 
 orig! {
+    /// `FUN_00422e10` (0x422E10)
+    pub fn plane_probe_line(v: GPtr<u8>, pitch: f32, heading: f32, out: GPtr<f32>) -> u8 = cdecl 0x422E10 => crate::frontier_c::plane_probe_line_port;
+}
+
+orig! {
+    /// `FUN_00422f80` (0x422F80)
+    pub fn plane_probe_heading(v: GPtr<u8>, heading: f32) -> sa_math::x87::X87 = reg("args = stack stack") 0x422F80 => crate::frontier_c::plane_probe_heading;
+}
+
+orig! {
     /// `CCarCtrl::IsThisVehicleInteresting` (0x423EA0)
     pub fn car_ctrl_is_this_vehicle_interesting(v: GPtr<u8>) -> u8 = cdecl 0x423EA0 => crate::carctrl::is_this_vehicle_interesting;
 }

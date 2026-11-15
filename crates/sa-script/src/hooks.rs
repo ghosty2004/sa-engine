@@ -69,6 +69,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::mission_cleanup_init::HOOKS,
     crate::search_lights_checkpoints::HOOKS,
     crate::frontier_c::HOOKS,
+    crate::angled_area::HOOKS,
     // SAVE-1
     crate::save::HOOKS,
 ];

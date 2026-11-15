@@ -90,7 +90,7 @@ pub fn wait_for_ped_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> 
         let mut out = [0u32; 3];
         let op: GPtr<u8> = GPtr::from_raw(out.as_mut_ptr()).cast();
         vector_sub(op, t, p);
-        let a = f32_of(X87::from_f64_exact(radian_angle_between_points(f32::from_bits(out[0]), f32::from_bits(out[1]), f32::from_bits(0), f32::from_bits(0))));
+        let a = f32_of(X87::from_f64_exact(radian_angle_between_points(f32::from_bits(out[0]), f32::from_bits(out[1]), f32::from_bits(0), f32::from_bits(0)).to_f64()));
         let h = f32_of(X87::from_f64_exact(limit_radian_angle(f32::from_bits(a.to_bits()))));
         wr::<f32>(ped, 0x55C, h);
     }

@@ -1364,6 +1364,11 @@ orig! {
 }
 
 orig! {
+    /// `FUN_0066f6c0` (0x66F6C0)
+    pub fn group_member_bounding_sphere(t: GPtr<u8>, sphere: GPtr<u8>, peds: GPtr<u8>) = thiscall 0x66F6C0 => unported;
+}
+
+orig! {
     /// `CTaskComplexFollowNodeRoute::SetTarget` (0x671750)
     pub fn fnr_set_target_orig(t: GPtr<u8>, ped: GPtr<u8>, pos: GPtr<u8>, a: u32, b: u32, c: u32, d: u32) = thiscall 0x671750 => unported;
 }

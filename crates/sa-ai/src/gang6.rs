@@ -1060,7 +1060,7 @@ pub fn gang_hassle_vehicle_get_target_heading(this: GPtr<u8>, _ped: GPtr<u8>) ->
         5 => (neg(fx), neg(fy)),
         _ => (rx, ry),
     };
-    let a = f32_of(st0(general_radian_angle_between_points(f32::from_bits(vx.to_bits()), f32::from_bits(vy.to_bits()), f32::from_bits(0), f32::from_bits(0))));
+    let a = f32_of(st0(general_radian_angle_between_points(f32::from_bits(vx.to_bits()), f32::from_bits(vy.to_bits()), f32::from_bits(0), f32::from_bits(0)).to_f64()));
     st0(general_limit_radian_angle(f32::from_bits(a.to_bits())))
 }
 

@@ -62,6 +62,7 @@ use crate::bindings::auto_mipmap;
 use crate::bindings::check_valid_texture_format_call as valid_texture;
 use crate::bindings::clamp_raster_size;
 use crate::bindings::set_texture_internal;
+use crate::bindings::check_valid_camera_texture_format as valid_camera_texture;
 orig! {
     /// `IUnknown::Release()` (+8)
     fn release(o: GPtr<u8>) -> u32 = stdcall vslot 0x8 => unported;
@@ -80,8 +81,6 @@ orig! {
     fn get_client_rect(hwnd: u32, rect: GPtr<i32>) -> i32 = stdcall cell 0x858304 => unported;
     /// `_rwD3D9CheckValidZBufferFormat(fmt)` (0x4CBD80)
     fn valid_zbuffer(f: u32) -> u32 = cdecl 0x4CBD80 => crate::raster::d3d9_check_valid_zbuffer_format;
-    /// `_rwD3D9CheckValidCameraTextureFormat(fmt)` (0x4CBE20)
-    fn valid_camera_texture(f: u32) -> u32 = cdecl 0x4CBE20 => crate::raster::d3d9_check_valid_camera_texture_format;
     /// `_rwD3D9CheckValidZBufferTextureFormat(fmt)` (0x4CBE80)
     fn valid_zbuffer_texture(f: u32) -> u32 = cdecl 0x4CBE80 => crate::raster::d3d9_check_valid_zbuffer_texture_format;
     /// `_rwD3D9CheckAutoMipmapGenTextureFormat(fmt)` (0x4CBFD0)

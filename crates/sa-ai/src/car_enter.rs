@@ -350,7 +350,7 @@ pub fn car_align_fix_heading(this: GPtr<u8>, ped: GPtr<u8>) {
     let b = f32_of(x(rd::<f32>(t, 4)).fsub_m(w[1]).fsub_m(w[1]));
     let ang = f32_of(X87::from_f64_exact(general_get_radian_angle_between_points(
         a, b, 0.0, 0.0,
-    )));
+    ).to_f64()));
     let h = f32_of(X87::from_f64_exact(general_limit_radian_angle(ang)));
     wr::<f32>(ped, 0x55C, h);
     wr::<f32>(ped, 0x558, h);

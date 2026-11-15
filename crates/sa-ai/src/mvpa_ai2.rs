@@ -174,7 +174,7 @@ pub fn walk_round_building_attempt_create_sub_task(this: GPtr<u8>, ty: i32, ped:
             wr::<f32>(vp, 4, f32_of(x(rd::<f32>(r, 4)).fsub_m(rd::<f32>(p, 4))));
             wr::<f32>(vp, 8, f32_of(x(rd::<f32>(r, 8)).fsub_m(rd::<f32>(p, 8))));
             vector_normalise(vp.cast::<[f32;3]>());
-            let a = st0_f32(radian_angle_between_points(rd::<f32>(vp, 0), rd::<f32>(vp, 4), 0.0, 0.0));
+            let a = st0_f32(radian_angle_between_points(rd::<f32>(vp, 0), rd::<f32>(vp, 4), 0.0, 0.0).to_f64());
             let h = st0_f32(limit_radian_angle(a));
             let t = task_new_o(0x18);
             if t.is_null() {

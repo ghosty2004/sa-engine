@@ -110,7 +110,8 @@ pub const FRONTIER_HOOKS: &[crate::abi::HookReg] = &[HOOK_GET_ANGLE_BETWEEN_POIN
 
 /// Phase B entries (STD-6) of the `CGeneral` math ports sa-hook installs itself in phase A (its local
 /// hooks `limit_radian_angle_hook`, `limit_angle_hook`, `get_radian_angle_between_points_hook`,
-/// `get_atan_of_xy_hook`, `solve_quadratic_hook`): the same sa-math functions, ST0 results as f64.
+/// `get_atan_of_xy_hook`, `solve_quadratic_hook`): the same sa-math functions, ST0 results as f64 (as `X87`
+/// where the binding carries all 80 bits: GetRadianAngleBetweenPoints).
 pub mod math_natives {
     use crate::mem::GPtr;
     use sa_math::general as g;
@@ -135,8 +136,8 @@ pub mod math_natives {
 
     /// `CGeneral::GetRadianAngleBetweenPoints(x1, y1, x2, y2)` (0x53CBE0, ST0).
     #[crate::native(addr = 0x53CBE0, conv = cdecl, name = "CGeneral::GetRadianAngleBetweenPoints-")]
-    pub fn get_radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 {
-        g::get_radian_angle_between_points_x87(x1, y1, x2, y2).to_f64()
+    pub fn get_radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> sa_math::x87::X87 {
+        g::get_radian_angle_between_points_x87(x1, y1, x2, y2)
     }
 
     /// `CGeneral::GetATanOfXY(x, y)` (0x53CC70, ST0).

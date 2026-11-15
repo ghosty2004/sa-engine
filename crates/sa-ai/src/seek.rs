@@ -696,7 +696,7 @@ pub const HOOKS: &[HookReg] = &[
 
 /// `general_get_radian_angle_between_points_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
 fn general_get_radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> X87 {
-    X87::from_f64_exact(general_get_radian_angle_between_points_st0(x1, y1, x2, y2))
+    X87::from_f64_exact(general_get_radian_angle_between_points_st0(x1, y1, x2, y2).to_f64())
 }
 
 /// `general_limit_radian_angle_st0` with its ST0 result as `X87` (orig! returns stay register-sized).

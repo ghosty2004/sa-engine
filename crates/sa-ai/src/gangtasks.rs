@@ -472,7 +472,7 @@ pub fn signal_at_ped_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8>
             f32::from_bits(dy.to_bits()),
             f32::from_bits(0),
             f32::from_bits(0),
-        ));
+        ).to_f64());
         let l = st0_f32(general_limit_radian_angle(f32::from_bits(a.to_bits())));
         wr::<f32>(ped, 0x55C, l);
     }

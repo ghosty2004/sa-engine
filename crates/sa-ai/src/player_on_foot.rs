@@ -293,7 +293,7 @@ pub fn on_foot_player_control_zelda(this: GPtr<u8>, ped: GPtr<u8>, no_jump_duck:
     }
     let mut moving = capped || !x(r).fcom(X87::zero()).test_any(0x41);
     if moving {
-        let a0 = X87::from_f64_exact(general_get_radian_angle_between_points(0.0, 0.0, x(lr).fchs().to_f32(), ud));
+        let a0 = X87::from_f64_exact(general_get_radian_angle_between_points(0.0, 0.0, x(lr).fchs().to_f32(), ud).to_f64());
         let a1 = a0.fsub_m(cam).to_f32();
         let a = X87::from_f64_exact(general_limit_radian_angle(a1));
         wr::<f32>(ped, 0x55C, a.to_f32());
@@ -572,7 +572,7 @@ pub fn on_foot_player_control_ducked_port(_this: GPtr<u8>, ped: GPtr<u8>) {
     let targeting = pad_get_target(pad) != 0 && weapon_is_type_melee(ped.byte_add(0x5A0 + slot as isize * 0x1C)) == 0;
     if targeting {
         if game_logic_is_player_use_2player_controls(ped) != 0 {
-            let a0 = X87::from_f64_exact(general_get_radian_angle_between_points(0.0, 0.0, x(sx).fchs().to_f32(), sy));
+            let a0 = X87::from_f64_exact(general_get_radian_angle_between_points(0.0, 0.0, x(sx).fchs().to_f32(), sy).to_f64());
             let a1 = a0.fsub_m(cam).to_f32();
             let a = X87::from_f64_exact(general_limit_radian_angle(a1));
             let af = a.to_f32();
@@ -602,7 +602,7 @@ pub fn on_foot_player_control_ducked_port(_this: GPtr<u8>, ped: GPtr<u8>) {
         return;
     }
     if !x(r).fcom(X87::from_f64_exact(0.0)).test_any(0x41) {
-        let a0 = X87::from_f64_exact(general_get_radian_angle_between_points(0.0, 0.0, x(sx).fchs().to_f32(), sy));
+        let a0 = X87::from_f64_exact(general_get_radian_angle_between_points(0.0, 0.0, x(sx).fchs().to_f32(), sy).to_f64());
         let a1 = a0.fsub_m(cam).to_f32();
         let a = X87::from_f64_exact(general_limit_radian_angle(a1));
         wr::<f32>(ped, 0x55C, a.to_f32());
@@ -673,7 +673,7 @@ pub fn on_foot_player_control_zelda_weapon_port(_this: GPtr<u8>, ped: GPtr<u8>) 
         let rf = r.to_f32();
         if !r.fcom(x(z)).test_any(0x41) {
             let cam = g::<f32>(CAMERA_ORIENTATION).read();
-            let a0 = X87::from_f64_exact(general_get_radian_angle_between_points(0.0, 0.0, x(mx).fchs().to_f32(), my));
+            let a0 = X87::from_f64_exact(general_get_radian_angle_between_points(0.0, 0.0, x(mx).fchs().to_f32(), my).to_f64());
             let a1 = a0.fsub_m(cam).to_f32();
             let a = X87::from_f64_exact(general_limit_radian_angle(a1));
             let s = a.fsin().fchs().to_f32();
@@ -796,7 +796,7 @@ pub fn on_foot_player_control_fighter_port(this: GPtr<u8>, ped: GPtr<u8>) {
     let step = x(g::<f32>(TIMER_TIME_STEP).read()).fmul_m(g::<f32>(K_BLEND_STEP).read()).to_f32();
     let cam = || g::<f32>(CAMERA_ORIENTATION).read();
     let angle = |mx: f32, my: f32| {
-        let a0 = X87::from_f64_exact(general_get_radian_angle_between_points(0.0, 0.0, x(mx).fchs().to_f32(), my));
+        let a0 = X87::from_f64_exact(general_get_radian_angle_between_points(0.0, 0.0, x(mx).fchs().to_f32(), my).to_f64());
         X87::from_f64_exact(general_limit_radian_angle(a0.fsub_m(cam()).to_f32()))
     };
     let locked = |pad: GPtr<u8>| rd::<u32>(ped, 0x71C) != 0 || (g::<u8>(0xB6EC2E).read() != 0 && pad_get_target(pad) != 0);
@@ -866,7 +866,7 @@ pub fn on_foot_player_control_fighter_port(this: GPtr<u8>, ped: GPtr<u8>) {
         fighter_idle_direction(fight, pd);
         return;
     }
-    let a0 = X87::from_f64_exact(general_get_radian_angle_between_points(0.0, 0.0, x(lr).fchs().to_f32(), ud)).to_f32();
+    let a0 = X87::from_f64_exact(general_get_radian_angle_between_points(0.0, 0.0, x(lr).fchs().to_f32(), ud).to_f64()).to_f32();
     let rr = x(mx).fmul_m(mx).fadd(x(my).fmul_m(my)).fsqrt();
     let mut r = rr.to_f32();
     let mut turn = true;

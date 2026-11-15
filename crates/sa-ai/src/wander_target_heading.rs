@@ -32,7 +32,7 @@ pub fn wander_compute_target_heading(this: GPtr<u8>, ped: GPtr<u8>) -> X87 {
     let p = if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) };
     let dx = x(rx).fsub_m(rd::<f32>(p, 0)).to_f32();
     let dy = x(ry).fsub_m(rd::<f32>(p, 4)).to_f32();
-    let a = X87::from_f64_exact(general_radian_angle_between_points(dx, dy, 0.0, 0.0)).to_f32();
+    let a = X87::from_f64_exact(general_radian_angle_between_points(dx, dy, 0.0, 0.0).to_f64()).to_f32();
     X87::from_f64_exact(general_limit_radian_angle(a))
 }
 

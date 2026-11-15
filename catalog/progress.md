@@ -7,9 +7,9 @@ Functions: 22196 (15512 non-excluded, 6684 excluded). States per docs/PLAN.md se
 | Subsystem | unknown | specified | implemented | L1 | L2 | L3 | excluded | total | ≥L2 % |
 |---|---|---|---|---|---|---|---|---|---|
 | AI | 8 | 405 | 2683 | 0 | 1011 | 0 | 0 | 4107 | 24.6 |
-| UNK-game | 589 | 456 | 463 | 3 | 1328 | 0 | 0 | 2839 | 46.8 |
+| UNK-game | 576 | 456 | 476 | 3 | 1328 | 0 | 0 | 2839 | 46.8 |
 | RW | 116 | 286 | 960 | 19 | 423 | 1 | 0 | 1805 | 23.5 |
-| WORLD | 12 | 180 | 448 | 22 | 259 | 0 | 0 | 921 | 28.1 |
+| WORLD | 12 | 179 | 449 | 22 | 259 | 0 | 0 | 921 | 28.1 |
 | AUDIO | 2 | 95 | 309 | 0 | 442 | 0 | 0 | 848 | 52.1 |
 | RENDER | 3 | 159 | 381 | 15 | 274 | 1 | 0 | 833 | 33.0 |
 | VEH | 1 | 111 | 412 | 0 | 190 | 1 | 0 | 715 | 26.7 |
@@ -19,14 +19,14 @@ Functions: 22196 (15512 non-excluded, 6684 excluded). States per docs/PLAN.md se
 | HUD | 0 | 0 | 139 | 24 | 179 | 0 | 0 | 342 | 52.3 |
 | CORE | 0 | 3 | 122 | 56 | 108 | 30 | 0 | 319 | 43.3 |
 | ANIM | 0 | 2 | 123 | 34 | 106 | 1 | 0 | 266 | 40.2 |
-| SCRIPT | 12 | 56 | 91 | 4 | 59 | 1 | 0 | 223 | 26.9 |
+| SCRIPT | 12 | 55 | 92 | 4 | 59 | 1 | 0 | 223 | 26.9 |
 | CAM | 0 | 21 | 95 | 5 | 97 | 0 | 0 | 218 | 44.5 |
 | WEAPON | 1 | 17 | 67 | 11 | 62 | 0 | 0 | 158 | 39.2 |
 | INPUT | 0 | 1 | 43 | 81 | 31 | 0 | 0 | 156 | 19.9 |
 | COLL | 0 | 1 | 22 | 25 | 97 | 0 | 0 | 145 | 66.9 |
 | MATH | 0 | 13 | 1 | 80 | 18 | 2 | 0 | 114 | 17.5 |
 | PHYS | 0 | 3 | 33 | 6 | 32 | 0 | 0 | 74 | 43.2 |
-| CALLED-ONLY | 3 | 13 | 9 | 0 | 12 | 0 | 0 | 37 | 32.4 |
+| CALLED-ONLY | 3 | 12 | 10 | 0 | 12 | 0 | 0 | 37 | 32.4 |
 | SAVE | 1 | 2 | 8 | 0 | 25 | 0 | 0 | 36 | 69.4 |
 | X-eh-funclet | 0 | 0 | 0 | 0 | 0 | 0 | 3556 | 3556 | - |
 | X-d3dx9 | 0 | 0 | 0 | 0 | 0 | 0 | 955 | 955 | - |
@@ -36,11 +36,11 @@ Functions: 22196 (15512 non-excluded, 6684 excluded). States per docs/PLAN.md se
 | X-libpng-1.0.12+zlib-1.1.3 | 0 | 0 | 0 | 0 | 0 | 0 | 197 | 197 | - |
 | X-quicktime-qtml | 0 | 0 | 0 | 0 | 0 | 0 | 39 | 39 | - |
 | X-linker-thunk | 0 | 0 | 0 | 0 | 0 | 0 | 26 | 26 | - |
-| **total** | 750 | 1847 | 7077 | 475 | 5324 | 39 | 6684 | 22196 | 34.57 |
+| **total** | 737 | 1844 | 7093 | 475 | 5324 | 39 | 6684 | 22196 | 34.57 |
 
-`specified` by source: REA 1088, gta-reversed 759
+`specified` by source: REA 1085, gta-reversed 759
 
-## Functions above `specified` (12915)
+## Functions above `specified` (12931)
 
 | address | name | subsystem | state | evidence | updated |
 |---|---|---|---|---|---|
@@ -506,6 +506,8 @@ Functions: 22196 (15512 non-excluded, 6684 excluded). States per docs/PLAN.md se
 | 0x422620 | CCarCtrl::FindPercDependingOnDistToLink | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4226f0 | CCarCtrl::FindIntersection2Lines | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x422b20 | CCarCtrl::SteerAICarBlockingPlayerForwardAndBack | POP | implemented | pop-port-3 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x422e10 |  | UNK-game | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c7 (unverified) | 2026-11-15 |
+| 0x422f80 |  | UNK-game | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c7 (unverified) | 2026-11-15 |
 | 0x423000 | CCarCtrl::FlyAIPlaneInCertainDirection | POP | implemented | pop-port-3 ported; not-ported | 2026-11-11 |
 | 0x423790 | CCarCtrl::SteerAIPlaneTowardsTargetCoors | POP | implemented | pop-port-3 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4237f0 | CCarCtrl::SteerAIPlaneToFollowEntity | POP | implemented | pop-port-3 ported; implemented-needs-L2 | 2026-11-11 |
@@ -604,6 +606,7 @@ Functions: 22196 (15512 non-excluded, 6684 excluded). States per docs/PLAN.md se
 | 0x438370 | CCheat::ApplyCheat | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
 | 0x438450 | CCheat::ResetCheats | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
 | 0x438480 | CCheat::AddToCheatString | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
+| 0x438d60 | CCheat::HealthCheat | WORLD | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
 | 0x438e40 | CCheat::MoneyArmourHealthCheat | WORLD | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x438e90 | CCheat::WantedLevelUpCheat | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
 | 0x438f20 | CCheat::WantedLevelDownCheat | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
@@ -1284,6 +1287,7 @@ Functions: 22196 (15512 non-excluded, 6684 excluded). States per docs/PLAN.md se
 | 0x486b00 | CTheScripts::ClearSpaceForMissionEntity | SCRIPT | L2 | VERIFIER-9: split/L2 0 mismatches + all-ports IDENTICAL 13/13 (docs/verify/verdicts-native.tsv) | 2026-11-12 |
 | 0x486d80 | CRunningScript::LocateCharCommand | SCRIPT | L2 | INTEGRATE-6/VERIFIER-10/11: L2 evidence (docs/verify/verdicts-samp.tsv, verdicts-gen2b.tsv) + all-ports IDENTICAL 13/13 | 2026-11-12 |
 | 0x487720 | CRunningScript::LocateCharObjectCommand | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x487f60 | CRunningScript::CharInAngledAreaCheckCommand | SCRIPT | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c7 (unverified) | 2026-11-15 |
 | 0x4893e0 | CPedIntelligence::GetPedEntities | AI | L2 | AI-GEN (2026-11-11): L2; l2 grove: PASS 6 cases (0 mismatches, 0 undeclared); l2 driving: PASS 16 cases (0 mismatches, 0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x489500 | CRunningScript::ProcessCommands1000To1099 | SCRIPT | implemented | script-port ported; implemented (complete, ADR-002 fallback removed) | 2026-11-11 |
 | 0x48a320 | CRunningScript::ProcessCommands1100To1199 | SCRIPT | implemented | script-port ported; implemented (complete, ADR-002 fallback removed) | 2026-11-11 |
@@ -1497,6 +1501,7 @@ Functions: 22196 (15512 non-excluded, 6684 excluded). States per docs/PLAN.md se
 | 0x4a3ea0 | FxEmitter_c::AddParticle_Reversed-matrix | RENDER | implemented | written, unverified (batch mvpc-fx-2); verification queue | 2026-11-11 |
 | 0x4a41e0 | FxEmitter_c::CreateParticles | RENDER | implemented | written, unverified (batch mvpc-fx-2); verification queue | 2026-11-11 |
 | 0x4a4460 | FxEmitter_c::Update_Reversed | RENDER | implemented | written, unverified (batch mvpa-render-2); verification queue | 2026-11-11 |
+| 0x4a4880 | FindClosestPtOnLine | CALLED-ONLY | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c7 (unverified) | 2026-11-15 |
 | 0x4a4940 | FxInfo_c::~FxInfo_c | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4a4960 | FxInfoManager_c::ProcessEmissionInfo | RENDER | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
 | 0x4a4a10 | FxInfoManager_c::ProcessMovementInfo | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -2465,6 +2470,13 @@ Functions: 22196 (15512 non-excluded, 6684 excluded). States per docs/PLAN.md se
 | 0x4c5790 | CWeaponModelInfo::~CWeaponModelInfo | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c57a0 | CPedModelInfo::CPedModelInfo | STREAM | L2 | STREAM-L2 (agent 2026-11-10, double-run all-frames): PASS, 0 mismatches, 0 undeclared (target/streaml2/h4/verdicts.tsv); main session: keycells merge, all ports IDENTICAL on 3 recordings | 2026-11-10 |
 | 0x4c57c0 | CPedModelInfo::GetModelType | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c5840 |  | UNK-game | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
+| 0x4c5860 |  | UNK-game | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
+| 0x4c5880 |  | UNK-game | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
+| 0x4c58a0 |  | UNK-game | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
+| 0x4c58c0 |  | UNK-game | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
+| 0x4c58e0 |  | UNK-game | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
+| 0x4c5900 |  | UNK-game | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
 | 0x4c5920 | CVehicleModelInfo::~CVehicleModelInfo | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c5940 | CModelInfo::GetModelInfo-full | STREAM | L2 | STREAM-L2 (2026-11-07): main-session port-l2.sh lane 2 all-frames batches sR0-sR2 (SA_L2_FROM=0, 1000/frame, spool drained): every call or >=1000 cases, 0 mismatches, 0 undeclared writes (sR0 l2 trace leaves plain at frame 202 because loader sampling changes heap allocation; per-case comparisons stay original vs Rust from the same restored state); all ports on Rust frame-identical; hook-off not run | 2026-11-07 |
 | 0x4c59b0 | CModelInfo::GetModelInfoFromHashKey | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
@@ -2501,6 +2513,8 @@ Functions: 22196 (15512 non-excluded, 6684 excluded). States per docs/PLAN.md se
 | 0x4c62d0 | CWeaponModelInfo::`scalar deleting destructor' | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c62f0 | CPedModelInfo::~CPedModelInfo | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c6350 | CPedModelInfo::`scalar deleting destructor' | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c6370 |  | UNK-game | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
+| 0x4c6390 |  | UNK-game | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c8 (unverified; a phase B native before) | 2026-11-15 |
 | 0x4c63b0 | CModelInfo::ReInit2dEffects | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c63e0 | CModelInfo::ShutDown | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c6620 | CModelInfo::AddAtomicModel | STREAM | L2 | STREAM-L2 (2026-11-07): main-session port-l2.sh lane 2 all-frames batches sR0-sR2 (SA_L2_FROM=0, 1000/frame, spool drained): every call or >=1000 cases, 0 mismatches, 0 undeclared writes (sR0 l2 trace leaves plain at frame 202 because loader sampling changes heap allocation; per-case comparisons stay original vs Rust from the same restored state); all ports on Rust frame-identical; hook-off not run | 2026-11-07 |
@@ -2645,6 +2659,7 @@ Functions: 22196 (15512 non-excluded, 6684 excluded). States per docs/PLAN.md se
 | 0x4cbf80 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x4cbfd0 | _rwD3D9CheckAutoMipmapGenTextureFormat | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4cc020 | _rwD3D9CheckAutoMipmapGenCubeTextureFormat | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x4cc0c0 |  | UNK-game | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c7 (unverified) | 2026-11-15 |
 | 0x4cc150 | _rxD3D9VideoMemoryRasterListCreate | RW | L2 | split rw4-sb: PASS 1 compared; 0 mismatches; 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings | 2026-11-11 |
 | 0x4cc170 | _rwD3D9RasterClose | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4cc5c0 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
@@ -8373,6 +8388,7 @@ Functions: 22196 (15512 non-excluded, 6684 excluded). States per docs/PLAN.md se
 | 0x66f670 |  | UNK-game | L2 | verifier VERIFIER-2/4: promoted (L2/split evidence + all-ports IDENTICAL on 11; docs/verify/verdicts-mvpb.tsv) | 2026-11-11 |
 | 0x66f680 | CTaskComplexAvoidOtherPedWhileWandering::~CTaskComplexAvoidOtherPedWhileWandering | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 60/60p/60r m0 u0; c-bug:PASS 13/13p/13r m0 u0; weapon-combat:PASS 40/40p/40r m0 u0 | 2026-11-11 |
 | 0x66f6a0 | vt_86ff00::Destructor | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x66fd30 |  | UNK-game | implemented | FRONTIER-2 lane C turn 3: #[hook] frontier2-c7 (unverified) | 2026-11-15 |
 | 0x66fda0 | CTaskComplexWanderStandard::LookForChatPartners | AI | L2 | VERIFIER-8: split PASS + all-ports IDENTICAL 13/13 (docs/verify/verdicts-writers.tsv) | 2026-11-12 |
 | 0x670100 | CTaskComplexWanderStandard::LookForGangMembers | AI | L2 | split ai4v5-grove: PASS 100 cases (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x6702b0 | CTaskComplexWanderCop::ScanForStuff | AI | implemented | ai-port-4 ported; implemented-needs-L2 | 2026-11-11 |

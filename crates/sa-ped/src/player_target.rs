@@ -1331,7 +1331,7 @@ pub fn find_weapon_lock_on_target(this: GPtr<u8>) -> u8 {
     if big(pad_get_ped_walk_left_right(pad)) || big(pad_get_ped_walk_up_down(pad)) {
         let ud = xi(i32::from(pad_get_ped_walk_up_down(pad))).to_f32();
         let lr = xi(-i32::from(pad_get_ped_walk_left_right(pad))).to_f32();
-        let a = X87::from_f64_exact(get_radian_angle_between_points(0.0, 0.0, lr, ud));
+        let a = X87::from_f64_exact(get_radian_angle_between_points(0.0, 0.0, lr, ud).to_f64());
         let a = a.fsub_m(g::<f32>(0xB6F178).read()).fadd_m(f32::from_bits(0x3FC9_0FDB)).to_f32();
         h = X87::from_f64_exact(limit_radian_angle(a)).to_f32();
     }

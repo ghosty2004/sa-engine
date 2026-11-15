@@ -76,7 +76,7 @@ pub fn go_to_vehicle_and_lean_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>
             vx = x(vx).fchs().to_f32();
             vy = x(vy).fchs().to_f32();
         }
-        let heading = general_get_radian_angle_between_points(f32::from_bits(vx.to_bits()), f32::from_bits(vy.to_bits()), f32::from_bits(0), f32::from_bits(0)) as f32;
+        let heading = general_get_radian_angle_between_points(f32::from_bits(vx.to_bits()), f32::from_bits(vy.to_bits()), f32::from_bits(0), f32::from_bits(0)).to_f64() as f32;
         general_limit_radian_angle(f32::from_bits(heading.to_bits()));
         let t = task_new(0x18);
         if t.is_null() {

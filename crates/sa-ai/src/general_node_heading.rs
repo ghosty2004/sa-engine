@@ -18,7 +18,7 @@ use sa_core::field::gf as k;
        unverified = "std11-ai-1", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn general_get_node_heading_from_vector(x_: u32, y_: u32) -> u32 {
     let t = k(0x858CBC);
-    let mut a = X87::from_f64_exact(general_get_radian_angle_between_points(f32::from_bits(x_), f32::from_bits(y_), f32::from_bits(0), f32::from_bits(0)));
+    let mut a = X87::from_f64_exact(general_get_radian_angle_between_points(f32::from_bits(x_), f32::from_bits(y_), f32::from_bits(0), f32::from_bits(0)).to_f64());
     if !a.fcom(x(k(0x858B50))).test_parity(0x05) {
         a = a.fadd_m(t);
     }

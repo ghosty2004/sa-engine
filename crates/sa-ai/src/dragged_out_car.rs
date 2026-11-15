@@ -65,7 +65,7 @@ fn react(this: GPtr<u8>, seq: GPtr<u8>, dragger: GPtr<u8>, ret_site: u32) {
         let dp = pos_ptr(dragger);
         let a = f32_of(X87::from_f64_exact(general_get_radian_angle_between_points(
             f32::from_bits(rd::<u32>(dp, 0)), f32::from_bits(rd::<u32>(dp, 4)), f32::from_bits(rd::<u32>(pp, 0)), f32::from_bits(rd::<u32>(pp, 4)),
-        )));
+        ).to_f64()));
         let heading = f32_of(X87::from_f64_exact(general_limit_radian_angle(f32::from_bits(a.to_bits()))));
         let t = new_task(0x18, |t| achieve_heading_ctor(t, f32::from_bits(heading.to_bits()), gu(HEADING_A), gu(HEADING_B)));
         sequence_add_task(seq, t);

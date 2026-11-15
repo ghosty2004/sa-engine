@@ -465,7 +465,7 @@ fn swim_surface_input(this: GPtr<u8>, ped: GPtr<u8>, lr: &mut f32, ud: &mut f32,
     if two {
         s = x(*lr);
         if !x(*mag).fcom(x(k(K_ZERO))).test_any(0x41) {
-            let a0 = X87::from_f64_exact(general_radian_angle_between_points(f32::from_bits(0), f32::from_bits(0), f32::from_bits(bits(x(*lr).fchs())), f32::from_bits(ud.to_bits())));
+            let a0 = X87::from_f64_exact(general_radian_angle_between_points(f32::from_bits(0), f32::from_bits(0), f32::from_bits(bits(x(*lr).fchs())), f32::from_bits(ud.to_bits())).to_f64());
             let a1 = f32_of(a0.fsub_m(k(0xB6F178)));
             let ang = X87::from_f64_exact(general_limit_radian_angle(f32::from_bits(a1.to_bits())));
             let dir = [f32_of(ang.fsin().fchs()), f32_of(ang.fcos()), 0.0f32];

@@ -50,11 +50,11 @@ pub fn ped_ik_point_gun_at_position(this: GPtr<u8>, at: GPtr<u8>, normalize: u32
     let fy = X87::from_f32(uy).fadd(ay).to_f32();
     let fz = X87::from_f32(uz).fadd_m(az).to_f32();
     let (atx, aty, atz) = (rd::<f32>(at, 0), rd::<f32>(at, 4), rd::<f32>(at, 8));
-    let z_angle = X87::from_f64_exact(get_radian_angle_between_points(atx, aty, fx, fy)).to_f32();
+    let z_angle = X87::from_f64_exact(get_radian_angle_between_points(atx, aty, fx, fy).to_f64()).to_f32();
     let dx = X87::from_f32(fx).fsub_m(atx);
     let dy = X87::from_f32(fy).fsub_m(aty);
     let d = dy.fmul(dy).fadd(dx.fmul(dx)).fsqrt().to_f32();
-    let pitch = X87::from_f64_exact(get_radian_angle_between_points(atz, d, fz, 0.0)).to_f32();
+    let pitch = X87::from_f64_exact(get_radian_angle_between_points(atz, d, fz, 0.0).to_f64()).to_f32();
     point_gun_in_direction_b(this, z_angle.to_bits(), pitch.to_bits(), 0, normalize)
 }
 

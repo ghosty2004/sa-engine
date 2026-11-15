@@ -1141,11 +1141,9 @@ pub fn drag_car_to_point(veh: GPtr<u8>, target: GPtr<f32>) {
 // Planes
 
 use sa_world::bindings::plane_set_gear_up;
-orig! {
-    /// `FUN_00422F80(CVehicle* plane, float heading)` (0x422F80, cdecl, ST0): the terrain probe of the plane
-    /// route planner (the highest ground ahead along `heading`; 100000 when the first probe is blocked)
-    fn plane_probe_heading(v: GPtr<u8>, heading: f32) -> f64 = cdecl 0x422F80 => unported;
-}
+// `FUN_00422F80(CVehicle* plane, float heading)` (0x422F80, cdecl, ST0): the terrain probe of the plane route planner
+// (the highest ground ahead along `heading`; 100000 when the first probe is blocked), bound with its full ST0.
+use crate::bindings::plane_probe_heading;
 
 /// CRT `_CIasin` (0x821E70; operand and result in ST0) on an f32 operand: exact through
 /// [`sa_core::orig::x87_unary`] under the game's 24-bit precision (see sa-weapon `bullet_shot.rs`).
@@ -1229,7 +1227,7 @@ pub fn fly_ai_plane_in_certain_direction(plane: GPtr<u8>) {
                 if inside != (pass == 0) {
                     continue;
                 }
-                let r = X87::from_f64_exact(plane_probe_heading(plane, cand));
+                let r = plane_probe_heading(plane, cand);
                 if ge5(r, x_(150.0)) {
                     continue;
                 }

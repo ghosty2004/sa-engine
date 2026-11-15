@@ -159,7 +159,7 @@ pub fn task_complex_stuck_in_air_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>)
                     let moved = !x(lr).fabs().fcom(z).test_any(0x41) || !x(ud).fabs().fcom(z).test_any(0x41);
                     if moved {
                         let neg_lr = f32_of(x(lr).fchs());
-                        let a = general_get_radian_angle_between_points(f32::from_bits(0), f32::from_bits(0), f32::from_bits(neg_lr.to_bits()), f32::from_bits(ud.to_bits()));
+                        let a = general_get_radian_angle_between_points(f32::from_bits(0), f32::from_bits(0), f32::from_bits(neg_lr.to_bits()), f32::from_bits(ud.to_bits())).to_f64();
                         let a = f32_of(X87::from_f64_exact(a).fsub_m(g::<f32>(0xB6F178).read()));
                         let r = general_limit_radian_angle(a);
                         wr::<f32>(ped, 0x55C, f32_of(X87::from_f64_exact(r)));

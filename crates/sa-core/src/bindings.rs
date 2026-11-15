@@ -915,7 +915,7 @@ orig! {
 
 orig! {
     /// `CGeneral::GetRadianAngleBetweenPoints-` (0x53CBE0)
-    pub fn general_get_radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 = cdecl 0x53CBE0 => unported;
+    pub fn general_get_radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> sa_math::x87::X87 = reg("args = stack stack stack stack") 0x53CBE0 => unported;
 }
 
 orig! {

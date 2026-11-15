@@ -82,7 +82,7 @@ fn heading_to_vehicle(this: GPtr<u8>, veh: GPtr<u8>) -> f32 {
     let vp = pos_ptr(veh);
     let a = f32_of(X87::from_f64_exact(general_get_radian_angle_between_points(
         f32::from_bits(rd::<u32>(vp, 0)), f32::from_bits(rd::<u32>(vp, 4)), f32::from_bits(rd::<u32>(pp, 0)), f32::from_bits(rd::<u32>(pp, 4)),
-    )));
+    ).to_f64()));
     f32_of(X87::from_f64_exact(general_limit_radian_angle(f32::from_bits(a.to_bits()))))
 }
 

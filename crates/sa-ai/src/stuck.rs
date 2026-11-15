@@ -198,7 +198,7 @@ fn push_out(this: GPtr<u8>, ped: GPtr<u8>, cnt: f32, d: &[u32; 3]) -> Next {
         let mut tmp = [0u32; 3];
         let np = vector_add(local(&mut tmp), pos(ped), local(&mut off));
         placeable_set_posn(ped, np.cast::<f32>());
-        let h = f32_of(X87::from_f64_exact(general_get_radian_angle_between_points(f32::from_bits(v[0]), f32::from_bits(v[1]), f32::from_bits(0), f32::from_bits(0))));
+        let h = f32_of(X87::from_f64_exact(general_get_radian_angle_between_points(f32::from_bits(v[0]), f32::from_bits(v[1]), f32::from_bits(0), f32::from_bits(0)).to_f64()));
         wr::<f32>(ped, 0x558, h);
         let h = f32_of(X87::from_f64_exact(general_limit_radian_angle(f32::from_bits(h.to_bits()))));
         wr::<f32>(ped, 0x558, h);

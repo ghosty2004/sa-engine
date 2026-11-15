@@ -167,7 +167,7 @@ pub fn go_to_point_fine_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         return 1;
     }
     go_to_point_fine_set_blended_move_anim(this, ped);
-    let a = X87::from_f64_exact(general_get_radian_angle_between_points(dx, dy, 0.0, 0.0)).to_f32();
+    let a = X87::from_f64_exact(general_get_radian_angle_between_points(dx, dy, 0.0, 0.0).to_f64()).to_f32();
     let a = X87::from_f64_exact(general_limit_radian_angle(a)).to_f32();
     wr::<f32>(ped, 0x55C, a);
     goto_set_up_ik(this, ped);

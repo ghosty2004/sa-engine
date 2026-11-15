@@ -39,15 +39,6 @@ pub const MODULES: &[&[HookReg]] = &[
 /// Every `#[native]` of this crate (phase B entries of ports that cannot be hooked in phase A).
 pub const NATIVES: &[sa_core::abi::NativeReg] = &[
     crate::modelinfo::vehicle::NATIVE_VEHICLE_STRUCTURE_OPERATOR_NEW,
-    crate::modelinfo::model_info::NATIVE_ATOMIC_STORE_DTOR_NATIVE,
-    crate::modelinfo::model_info::NATIVE_DAMAGE_ATOMIC_STORE_DTOR_NATIVE,
-    crate::modelinfo::model_info::NATIVE_LOD_ATOMIC_STORE_DTOR_NATIVE,
-    crate::modelinfo::model_info::NATIVE_TIME_STORE_DTOR_NATIVE,
-    crate::modelinfo::model_info::NATIVE_LOD_TIME_STORE_DTOR_NATIVE,
-    crate::modelinfo::model_info::NATIVE_WEAPON_STORE_DTOR_NATIVE,
-    crate::modelinfo::model_info::NATIVE_CLUMP_STORE_DTOR_NATIVE,
-    crate::modelinfo::model_info::NATIVE_VEHICLE_STORE_DTOR_NATIVE,
-    crate::modelinfo::model_info::NATIVE_PED_STORE_DTOR_NATIVE,
     crate::cdstream::NATIVE_CD_STREAM_OPEN_2,
     crate::modelinfo::vehicle::NATIVE_UPGRADE_DESC_CTOR,
     crate::loaded_car_group::NATIVE_ADD_MEMBER,

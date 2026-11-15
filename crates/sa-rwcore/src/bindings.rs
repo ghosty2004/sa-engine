@@ -19,6 +19,16 @@ orig! {
 }
 
 orig! {
+    /// `_rwD3D9CheckValidCameraTextureFormat` (0x4CBE20)
+    pub fn check_valid_camera_texture_format(fmt: u32) -> u32 = cdecl 0x4CBE20 => crate::raster::d3d9_check_valid_camera_texture_format;
+}
+
+orig! {
+    /// `_rwD3D9CheckValidCameraCubeTextureFormat` (0x4CBF20)
+    pub fn check_valid_camera_cube_texture_format(fmt: u32) -> u32 = cdecl 0x4CBF20 => crate::raster::d3d9_check_valid_camera_cube_texture_format;
+}
+
+orig! {
     /// `thunk_FUN_004cbf8a` (0x4CBF80)
     pub fn auto_mipmap(f: u32) -> u32 = cdecl 0x4CBF80 => crate::d3d9rast::check_auto_mipmap_texture_format;
 }

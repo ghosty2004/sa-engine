@@ -193,7 +193,35 @@ pub fn interp_255_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) {
 
 orig! {
     /// `FindClosestPtOnLine(CVector* out, const CVector* a, const CVector* b, const CVector* p)` (0x4A4880, cdecl)
-    fn find_closest_pt_on_line(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, p: GPtr<u8>) = cdecl 0x4A4880 => unported;
+    fn find_closest_pt_on_line(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, p: GPtr<u8>) = cdecl 0x4A4880 => find_closest_pt_on_line_port;
+}
+
+/// `FindClosestPtOnLine(CVector* out, const CVector* a, const CVector* b, const CVector* p)` (0x4A4880, cdecl; FRONTIER-2
+/// lane C turn 3): `d = b - a` (x from the x87 difference stored to f32, y and z kept / recomputed on the x87 stack),
+/// `t = ((p.z-a.z)(b.z-a.z) + (p.y-a.y)(b.y-a.y) + (p.x-a.x) f32(d.x)) / (d.z² + d.y² + d.x²)` (the x87 `d.x`) clamped to [0, 1]
+/// (`< 0` → 0; `> 1` → 1; NaN kept); `out = a + d t` component by component (x with the f32 `d.x`), each written
+/// before the next is read. The original stores `f32(d.x)` into its own argument slot `b` (not modelled).
+#[hook(addr = 0x4A4880, conv = cdecl, name = "FindClosestPtOnLine", expect = "8B 54 24 0C 8B 4C 24 08",
+       unverified = "frontier2-c7", route = "L2", hazards = "stack-residue",
+       note = "overwrites its own argument slot b (+0xC) with f32(b.x - a.x); not modelled")]
+pub fn find_closest_pt_on_line_port(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, p: GPtr<u8>) {
+    let r = |v: GPtr<u8>, k: isize| sa_core::field::rd::<f32>(v, 4 * k);
+    let d = |k: isize| X87::from_f32(r(b, k)).fsub_m(r(a, k));
+    let dx = d(0).to_f32();
+    let (dy, dz) = (d(1), d(2));
+    let pd = |k: isize| X87::from_f32(r(p, k)).fsub_m(r(a, k));
+    let num = pd(2).fmul(d(2)).fadd(pd(1).fmul(d(1))).fadd(pd(0).fmul_m(dx));
+    let den = dz.fmul(dz).fadd(dy.fmul(dy)).fadd(d(0).fmul(d(0)));
+    let mut t = num.fdiv(den);
+    if !t.fcom(X87::zero()).test_parity(5) {
+        t = X87::zero();
+    } else if !t.fcom(X87::one()).test_any(0x41) {
+        t = X87::one();
+    }
+    let w = |k: isize, v: X87| sa_core::field::wr::<f32>(out, 4 * k, v.fmul(t).fadd_m(r(a, k)).to_f32());
+    w(0, X87::from_f32(dx));
+    w(1, d(1));
+    w(2, d(2));
 }
 
 /// `FxInfoAttractLine_c::GetValue` (0x4A5850; FRONTIER-2 turn 2, batch `frontier2-c6`): `key =
@@ -232,6 +260,7 @@ pub fn fx_info_attract_line_get_value(this: GPtr<u8>, curr: u32, mult: u32, step
 
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_FIND_CLOSEST_PT_ON_LINE_PORT,
     HOOK_FX_INFO_ATTRACT_PT_GET_VALUE,
     HOOK_FX_INFO_SPRITE_RECT_GET_VALUE,
     HOOK_FX_INFO_FLAT_GET_VALUE,

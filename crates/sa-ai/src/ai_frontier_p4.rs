@@ -169,7 +169,7 @@ pub fn vt_85b8dc_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     if m != i32::from(g::<u16>(0x8C_D674).read()) && m != i32::from(g::<u16>(0x8C_D678).read()) {
         return 1;
     }
-    let a = sa_math::x87::X87::from_f64_exact(general_get_radian_angle_between_points(rd::<f32>(e, 0x44), rd::<f32>(e, 0x48), 0.0, 0.0)).to_f32();
+    let a = sa_math::x87::X87::from_f64_exact(general_get_radian_angle_between_points(rd::<f32>(e, 0x44), rd::<f32>(e, 0x48), 0.0, 0.0).to_f64()).to_f32();
     let h = sa_math::x87::X87::from_f64_exact(general_limit_radian_angle(a)).to_f32();
     wr::<f32>(ped, 0x55C, h);
     0

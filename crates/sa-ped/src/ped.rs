@@ -600,7 +600,7 @@ pub fn work_out_heading_for_moving_first_person(this: GPtr<u8>, heading: f32) ->
         }
     } else {
         let pd = rd::<GPtr<u8>>(this, 0x480);
-        let a = get_radian_angle_between_points(f32::from_bits(0), f32::from_bits(0), f32::from_bits(x(lr).fchs().to_f32().to_bits()), f32::from_bits(ud.to_bits()));
+        let a = get_radian_angle_between_points(f32::from_bits(0), f32::from_bits(0), f32::from_bits(x(lr).fchs().to_f32().to_bits()), f32::from_bits(ud.to_bits())).to_f64();
         wr::<f32>(pd, 0x50, X87::from_f64_exact(a).to_f32());
     }
     let pd = rd::<GPtr<u8>>(this, 0x480);
@@ -652,7 +652,7 @@ pub fn turn_body(this: GPtr<u8>) -> u8 {
     if !e.is_null() {
         let s = ent_pos(this).cast::<u32>();
         let t = ent_pos(e).cast::<u32>();
-        let a = get_radian_angle_between_points(f32::from_bits(t.read()), f32::from_bits(t.wrapping_index(1).read()), f32::from_bits(s.read()), f32::from_bits(s.wrapping_index(1).read()));
+        let a = get_radian_angle_between_points(f32::from_bits(t.read()), f32::from_bits(t.wrapping_index(1).read()), f32::from_bits(s.read()), f32::from_bits(s.wrapping_index(1).read())).to_f64();
         wr::<f32>(this, 0x73C, X87::from_f64_exact(a).to_f32());
     }
     let mut f = Fpu::new();

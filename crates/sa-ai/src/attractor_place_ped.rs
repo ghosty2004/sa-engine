@@ -25,7 +25,7 @@ use sa_core::field::ptr_of as pa;
 
 /// `LimitRadianAngle(f32(GetRadianAngleBetweenPoints(x, y, 0, 0)))` stored as f32.
 fn use_angle(dx: u32, dy: u32) -> f32 {
-    let a = f32_of(X87::from_f64_exact(radian_angle_between_points(f32::from_bits(dx), f32::from_bits(dy), f32::from_bits(0), f32::from_bits(0))));
+    let a = f32_of(X87::from_f64_exact(radian_angle_between_points(f32::from_bits(dx), f32::from_bits(dy), f32::from_bits(0), f32::from_bits(0)).to_f64()));
     f32_of(X87::from_f64_exact(limit_radian_angle(f32::from_bits(a.to_bits()))))
 }
 

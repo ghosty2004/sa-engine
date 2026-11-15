@@ -193,7 +193,7 @@ orig! {
     /// `CTaskComplexAvoidOtherPedWhileWandering::ComputeRouteRoundSphere(CPed*, CColSphere&)` (0x66A7B0, `ret 8`)
     fn aop_compute_route_round_sphere(t: GPtr<u8>, ped: GPtr<u8>, s: GPtr<u8>) -> u32 = thiscall 0x66A7B0 => unported;
     /// `CPedGeometryAnalyser::ComputeRouteRoundSphere(ped, sphere, from, to, out1, out2)` (0x5F1890)
-    fn geom_compute_route_round_sphere(
+    pub(crate) fn geom_compute_route_round_sphere(
         ped: GPtr<u8>, s: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, o1: GPtr<u8>, o2: GPtr<u8>
     ) -> u32 = cdecl 0x5F1890 => unported;
     /// `CTaskComplexWanderStandard::LookForGangMembers(CPed*)` (0x670100, `ret 4`, AL)

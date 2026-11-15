@@ -63,5 +63,21 @@ pub fn raster_set_format(raster: GPtr<u8>, format: u32) -> u32 {
     1
 }
 
+/// The D3D9 format check by raster type (0x4CC0C0, registers: cube flag in EAX, raster type in ECX, format in EDX;
+/// unnamed, called by the format resolver 0x4CC1D0; FRONTIER-2 lane C turn 3): type `& 7` 0 (normal) or 4 (texture)
+/// → `CheckDeviceFormat(usage 0, cube ? CUBETEXTURE : TEXTURE, format) >= 0`; 5 (camera texture) →
+/// `_rwD3D9CheckValidCamera[Cube]TextureFormat(format)`; any other type → 0.
+#[hook(addr = 0x4CC0C0, conv = reg("args = eax ecx edx"), name = "FUN_004cc0c0", expect = "56 8B F0 33 C0",
+       unverified = "frontier2-c7", route = "L2", hazards = "none")]
+pub fn raster_check_format_by_type(cube: u32, ty: u32, format: u32) -> u32 {
+    match ty & 7 {
+        0 | 4 => u32::from(crate::raster::check_format(0, if cube != 0 { 5 } else { 3 }, format) >= 0),
+        5 if cube != 0 => crate::bindings::check_valid_camera_cube_texture_format(format),
+        5 => crate::bindings::check_valid_camera_texture_format(format),
+        _ => 0,
+    }
+}
+
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_RP_GEOMETRY_REPLACE_OLD_MATERIAL_WITH_NEW_MATERIAL, HOOK_RASTER_SET_FORMAT];
+pub const HOOKS: &[HookReg] =
+    &[HOOK_RP_GEOMETRY_REPLACE_OLD_MATERIAL_WITH_NEW_MATERIAL, HOOK_RASTER_SET_FORMAT, HOOK_RASTER_CHECK_FORMAT_BY_TYPE];

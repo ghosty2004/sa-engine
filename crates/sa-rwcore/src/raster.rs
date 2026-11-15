@@ -1027,7 +1027,7 @@ pub fn d3d9_raster_sub_raster(r: GPtr<u8>, parent: GPtr<u8>, _flags: u32) -> u32
 }
 
 /// `CheckDeviceFormat(adapter, type, displayFormat, usage, rtype, fmt)`.
-fn check_format(usage: u32, rtype: u32, fmt: u32) -> i32 {
+pub(crate) fn check_format(usage: u32, rtype: u32, fmt: u32) -> i32 {
     d3d_check_device_format(
         d3d(),
         g::<u32>(D3D_ADAPTER_INDEX).read(),

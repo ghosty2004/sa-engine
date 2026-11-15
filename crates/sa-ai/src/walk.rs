@@ -527,7 +527,7 @@ pub fn goto_point_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         goto_quit_ik(this, ped);
         return 1;
     }
-    let a = general_get_radian_angle_between_points(f32::from_bits(dir[0]), f32::from_bits(dir[1]), 0.0, 0.0);
+    let a = general_get_radian_angle_between_points(f32::from_bits(dir[0]), f32::from_bits(dir[1]), 0.0, 0.0).to_f64();
     let a = f32_of(X87::from_f64_exact(a));
     let h = general_limit_radian_angle(a);
     wr::<f32>(ped, 0x55C, f32_of(X87::from_f64_exact(h)));
@@ -852,7 +852,7 @@ pub fn turn_compute_target_heading_port(this: GPtr<u8>, ped: GPtr<u8>) -> X87 {
         f32_of(x(tv[2]).fsub_m(rd::<f32>(p, 8))).to_bits(),
     ];
     vector_normalise(GPtr::<u8>::cast::<[f32;3]>(buf(&mut d)));
-    X87::from_f64_exact(general_get_radian_angle_between_points(f32::from_bits(d[0]), f32::from_bits(d[1]), 0.0, 0.0))
+    X87::from_f64_exact(general_get_radian_angle_between_points(f32::from_bits(d[0]), f32::from_bits(d[1]), 0.0, 0.0).to_f64())
 }
 
 /// `CTaskComplexTurnToFaceEntityOrCoord::Clone()` (0x66D250): a pool copy through the entity constructor (+0x10)

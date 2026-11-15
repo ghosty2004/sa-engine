@@ -115,7 +115,7 @@ pub fn is_player_to_quit_car_enter(ped: GPtr<u8>, veh: GPtr<u8>, start: u32, tas
     }
     let ud = xi(i32::from(pad_get_ped_walk_up_down(pad))).to_f32();
     let lr = xi(i32::from(pad_get_ped_walk_left_right(pad))).to_f32();
-    let mut ang = X87::from_f64_exact(get_radian_angle_between_points(0.0, 0.0, x(lr).fchs().to_f32(), ud))
+    let mut ang = X87::from_f64_exact(get_radian_angle_between_points(0.0, 0.0, x(lr).fchs().to_f32(), ud).to_f64())
         .fsub_m(g::<f32>(0xB6_F178).read());
     let mag = x(ud).fmul_m(ud).fadd(x(lr).fmul_m(lr)).fsqrt().fmul_m(0.0078125);
     if !ang.fcom(x(a).fadd_m(f(PI))).test_any(0x41) {

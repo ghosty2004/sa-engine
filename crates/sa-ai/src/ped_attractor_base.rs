@@ -355,7 +355,7 @@ pub fn compute_attract_heading(this: GPtr<u8>, queue: i32, out: GPtr<u8>) {
         return;
     }
     let dir = if queue != 0 { 0x68 } else { 0x74 };
-    let h = radian_angle_between_points(f32::from_bits(rd::<u32>(this, dir)), f32::from_bits(rd::<u32>(this, dir + 4)), f32::from_bits(0), f32::from_bits(0));
+    let h = radian_angle_between_points(f32::from_bits(rd::<u32>(this, dir)), f32::from_bits(rd::<u32>(this, dir + 4)), f32::from_bits(0), f32::from_bits(0)).to_f64();
     wr::<f32>(out, 0, X87::from_f64_exact(h).to_f32());
     if queue != 0 {
         let v = X87::from_f64_exact(compute_delta_heading_o(this)).fadd_m(rd::<f32>(out, 0)).to_f32();
