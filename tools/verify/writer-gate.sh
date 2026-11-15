@@ -86,6 +86,10 @@ res cfg "$([ $? = 0 ] && echo 1)" "$(head -1 "$OUT/cfg.log")$(grep -m1 '^FAIL' "
 python3 -I "$HERE/crate_layers.py" > "$OUT/layers.log" 2>&1
 res layers "$([ $? = 0 ] && echo 1)" "$(head -1 "$OUT/layers.log")$(grep -m1 '^FAIL' "$OUT/layers.log" | sed 's/^/; /')"
 
+# commit messages since BASE follow Conventional Commits (CLAUDE.md; commits older than the rule are not checked)
+python3 -I "$HERE/commit_lint.py" --range "$BASE..HEAD" > "$OUT/commits.log" 2>&1
+res commits "$([ $? = 0 ] && echo 1)" "$(tail -1 "$OUT/commits.log")$(grep -m1 '^FAIL' "$OUT/commits.log" | cut -c1-160 | sed 's/^/; /')"
+
 # ---- builds and tests ----------------------------------------------------------------------------
 cargo_step clippy "host clippy -D warnings, all targets" clippy "$J" --workspace --all-targets -- -D warnings
 cargo_step i686 "i686-pc-windows-gnu release build of sa-launcher + sa-hook" \

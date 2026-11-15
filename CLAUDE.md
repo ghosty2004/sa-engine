@@ -24,6 +24,14 @@ also build for WebAssembly, and it hosts the Rust SA:MP client samp-rs, which li
   holds only addresses and names.
 - Commits are made by the main session only: plain English messages, no attribution trailers, push only when
   the user asks.
+- **Commit messages (user, 2026-11-15): Conventional Commits.** `<type>(<scope>): <summary>`, the whole first line
+  ≤ 72 characters, imperative, lowercase start, no trailing period. Types: `feat` (new ports, features), `fix`,
+  `refactor`, `perf`, `test`, `docs`, `build`, `ci`, `chore`, `revert`. Scope: the crate (`sa-pop`, `sa-game`,
+  `samp-rs`, …) or the area (`tools`, `catalog`, `roadmap`, `worklog`). Then a blank line and a body (wrapped at
+  100) with the details (addresses, what changed and why), and trailers: `Refs: FRONTIER-2` (the ROADMAP task) and,
+  where it applies, `Verified: verify-all IDENTICAL 13/13 (tag …)`. Example:
+  `feat(sa-pop): port the police path of CCarAI::UpdateCarAI`. Checked by `tools/verify/commit_lint.py`
+  (the `.githooks/commit-msg` hook, `git config core.hooksPath .githooks`, and the writer gate's `commits` step).
 - Every replaced function goes through the parity loop (PLAN.md §3). It is "verified" only after an oracle
   comparison against the original binary. A remaining difference must be recorded in the ROADMAP's
   divergence ledger, never left silent.
