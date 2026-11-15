@@ -452,3 +452,8 @@ orig! {
     /// `C3dMarkers::ForceRender` (0x722870)
     pub fn markers_force_render(b: u32) = cdecl 0x722870 => unported;
 }
+
+orig! {
+    /// `CShotInfo::GetFlameThrowerShotPosn` (0x739DE0)
+    pub fn shot_info_get_flame_thrower_shot_posn(id: u8, out: GPtr<u8>) -> u8 = cdecl 0x739DE0 => sa_weapon::bullet_shot::get_flame_thrower_shot_posn;
+}

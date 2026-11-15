@@ -1600,6 +1600,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x6F5DB0,sa-script,disable_random_trains,cdecl,,b:u32,,unported,CTrain::DisableRandomTrains,
 0x6F6B60,sa-script,release_mission_trains,cdecl,,,,unported,CTrain::ReleaseMissionTrains,
 0x722870,sa-script,markers_force_render,cdecl,,b:u32,,unported,C3dMarkers::ForceRender,
+0x739DE0,sa-script,shot_info_get_flame_thrower_shot_posn,cdecl,,id:u8;out:GPtr<u8>,u8,sa_weapon::bullet_shot::get_flame_thrower_shot_posn,CShotInfo::GetFlameThrowerShotPosn,
 0x403E00,sa-stream,building_ctor,thiscall,,this:GPtr<u8>,GPtr<u8>,unported,CBuilding,
 0x404090,sa-stream,building_new,cdecl,,size:u32,GPtr<u8>,unported,new,
 0x404AC0,sa-stream,find_ipl_slot,cdecl,,name:GPtr<u8>,i32,sa_stream::iplstore::find_ipl_slot,CIplStore::FindIplSlot,
