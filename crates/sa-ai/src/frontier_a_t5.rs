@@ -13,14 +13,15 @@ use crate::bindings::{
     membership_count_members, ped_groups_get_peds_group, seek_entity_xy_offset_ctor, stand_still_dtor, stand_still_process_ped,
     event_base_dtor, event_group_add, use_gun_ctor,
 };
-use sa_core::bindings::{get_weapon_info, tm_get_task_secondary, tm_set_task_secondary};
+use sa_core::bindings::{get_weapon_info, matrix_set_scale, tm_get_task_secondary, tm_set_task_secondary};
 use crate::common::*;
 use sa_core::bindings::ped_is_alive;
 use sa_world::bindings::{
     achieve_heading_ctor, enter_car_as_passenger_ctor, entity_clean_up_old_reference, entity_register_reference,
     leave_car_ctor, membership_get_leader, membership_get_member, pause_ctor,
     sequence_add_task, sequence_ctor, simple_car_drive_ctor, stand_still_ctor, turn_to_face_entity_ctor, vector_sub,
-    go_to_point_and_stand_still_ctor, ik_look_at, ped_get_weapon_skill, weapon_is_type_melee,
+    attractor_manager_has_empty_slot, get_ped_attractor_manager, go_to_point_and_stand_still_ctor, ik_look_at, matrix_dtor,
+    ped_get_weapon_skill, weapon_is_type_melee,
 };
 use sa_world::world::common::{entity_pos, ped_active_weapon};
 
@@ -307,6 +308,53 @@ fn raise_use_info_event(ped: GPtr<u8>, info: GPtr<u8>, interior: GPtr<u8>) {
     event_base_dtor(e);
 }
 
+/// `CTaskComplexUseClosestFreeScriptedAttractor::ComputeClosestFreeScriptedEffect(CPed* ped)` (0x634740, thiscall,
+/// `ret 4`, SEH frame; the task is not read): among the 64 scripted 2D effects (`CScripted2dEffects`: active flags
+/// 0xC3A1A0, the 0x40-byte effects at 0xC3AB00, the 0x24-byte user restrictions at 0xC3A200) the nearest active one
+/// the ped may use (unrestricted (+0x20 clear), or the ped's model among the four models, or a -2 model slot whose
+/// ped type matches +0x598) with an empty attractor slot (`GetPedAttractorManager()->HasEmptySlot(effect, null)`).
+/// The squared distance `(dz^2 + dy^2) + dx^2` (ped - effect on the x87 stack) is stored as an f32 in the argument
+/// slot and must be below the best (from FLT_MAX). A closer candidate also builds a stack `CMatrix` (attach matrix
+/// and ownership cleared, `SetScale(1.0)`), destroyed after the slot test, as the bytes do.
+#[hook(addr = 0x634740, conv = thiscall, name = "CTaskComplexUseClosestFreeScriptedAttractor::ComputeClosestFreeScriptedEffect",
+       expect = "6A FF 68 B8 08 84 00", unverified = "frontier2-a8", route = "L2", hazards = "none")]
+pub fn use_closest_free_scripted_attractor_compute_closest_free_scripted_effect(_this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let mut best = f32::from_bits(0x7F7F_FFFF);
+    let mut found = GPtr::NULL;
+    for i in 0..64usize {
+        if g::<u8>(0xC3A1A0 + i).read() == 0 {
+            continue;
+        }
+        let user = 0xC3A200 + i * 0x24;
+        if g::<u8>(user + 0x20).read() != 0 {
+            let model = i32::from(rd::<i16>(ped, 0x22));
+            let by_model = (0..4).any(|k| g::<i32>(user + 4 * k).read() == model);
+            let ty = rd::<i32>(ped, 0x598);
+            if !by_model && !(0..4).any(|k| g::<i32>(user + 4 * k).read() == -2 && g::<i32>(user + 0x10 + 4 * k).read() == ty) {
+                continue;
+            }
+        }
+        let effect = g::<u8>(0xC3AB00 + i * 0x40);
+        let (pp, ep) = (entity_pos(ped).cast::<f32>(), effect.cast::<f32>());
+        let d = |k: i32| x(pp.wrapping_index(k).read()).fsub_m(ep.wrapping_index(k).read());
+        let (dx, dy, dz) = (d(0), d(1), d(2));
+        let s = dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx));
+        let s32 = s.to_f32();
+        if !lt(s, x(best)) {
+            continue;
+        }
+        let mut m = [0u32; 0x12];
+        let mp = GPtr::from_raw(m.as_mut_ptr()).cast::<u8>();
+        matrix_set_scale(mp, 1.0);
+        if attractor_manager_has_empty_slot(get_ped_attractor_manager(), effect, GPtr::NULL) != 0 {
+            best = s32;
+            found = effect;
+        }
+        matrix_dtor(mp);
+    }
+    found
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_FOLLOW_LEADER_IN_FORMATION_CREATE_SUB_TASK,
@@ -315,4 +363,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_WAIT_UNTIL_PED_IS_OUT_CAR_PROCESS_PED,
     HOOK_GO_TO_POINT_AIMING_CREATE_FIRST_SUB_TASK,
     HOOK_BE_IN_SHOP_SCAN_FOR_STUFF,
+    HOOK_USE_CLOSEST_FREE_SCRIPTED_ATTRACTOR_COMPUTE_CLOSEST_FREE_SCRIPTED_EFFECT,
 ];
