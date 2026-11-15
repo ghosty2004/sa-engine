@@ -239,6 +239,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::frontier_a_subtasks::HOOKS,
     crate::gang_drive_by::HOOKS,
     crate::frontier_a_t3::HOOKS,
+    crate::frontier_a_t4::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

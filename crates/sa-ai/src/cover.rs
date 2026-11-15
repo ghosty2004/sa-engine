@@ -18,12 +18,11 @@ use crate::common::*;
 use sa_core::bindings::{entity_register_reference, matrix_mul_vec, vector_normalise};
 use sa_core::field::gf;
 use sa_world::world::common::entity_pos as pos_of;
+use crate::bindings::point_list_empty_b;
 
 orig! {
     /// `CCover::FindVectorFromDir(uint8)` (0x698D60, cdecl, the vector returned through a hidden pointer)
     fn find_vector_from_dir(out: GPtr<u8>, dir: u32) -> GPtr<u8> = cdecl 0x698D60 => unported;
-    /// `CPointList::Empty()` (0x699F00)
-    fn point_list_empty_b(l: GPtr<u8>) = thiscall 0x699F00 => point_list_empty;
     /// `CFormation::FindCoverPointsBehindBox(CPointList*, CVector, CMatrix*, const CVector*, const CVector*, const CVector*,
     /// float)` (0x699FF0)
     fn find_cover_points_behind_box_b(l: GPtr<u8>, tx: u32, ty: u32, tz: u32, m: GPtr<u8>, c: GPtr<u8>, min: GPtr<u8>,

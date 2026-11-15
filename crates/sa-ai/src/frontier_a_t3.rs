@@ -244,7 +244,7 @@ pub fn calc_sound_level_increment(level1: f32, level2: f32) -> X87 {
 
 /// One event response of the random-group allocator: `main` with a `CTaskSimpleNone` (vtable 0x859CFC) secondary,
 /// as the original builds and destroys it around `SetEventResponseTask`.
-fn set_response(intel: GPtr<u8>, m: GPtr<u8>, main: GPtr<u8>) {
+pub(crate) fn set_response(intel: GPtr<u8>, m: GPtr<u8>, main: GPtr<u8>) {
     let mut none = [0u32; 2];
     let none_p: GPtr<u8> = GPtr::from_raw(none.as_mut_ptr()).cast();
     task_simple_ctor(none_p);
@@ -252,6 +252,32 @@ fn set_response(intel: GPtr<u8>, m: GPtr<u8>, main: GPtr<u8>) {
     group_intel_set_event_response_task(intel, m, 1, main, 0, none_p, -1);
     wr::<u32>(none_p, 0, 0x85_9CFC);
     task_simple_dtor(none_p);
+}
+
+/// The lone-threat response of the kill-threats allocators (0x69D460, 0x69CC30): a stack sequence of
+/// `new CTaskComplexKillPedOnFoot(threat (this +4, read at the call), -1, 0, 0, 0, 1)` and `new
+/// CTaskSimpleLookAbout(GetRandomNumberInRange(1000, 2000))` (a failed `new` adds null) set as the member's event
+/// response, then destroyed.
+pub(crate) fn kill_then_look_about(intel: GPtr<u8>, m: GPtr<u8>, this: GPtr<u8>) {
+    let mut seq = [0u32; 0x10];
+    let sp: GPtr<u8> = GPtr::from_raw(seq.as_mut_ptr()).cast();
+    sequence_ctor(sp);
+    let t = task_new(0x38);
+    let t = if t.is_null() {
+        GPtr::NULL
+    } else {
+        kill_ped_on_foot_ctor(t, rd::<GPtr<u8>>(this, 4), -1, 0, 0, 0, 1)
+    };
+    sequence_add_task(sp, t);
+    let t = task_new(0x34);
+    let t = if t.is_null() {
+        GPtr::NULL
+    } else {
+        look_about_ctor(t, general_random_int_in_range(1000, 2000) as u32)
+    };
+    sequence_add_task(sp, t);
+    set_response(intel, m, sp);
+    sequence_dtor(sp);
 }
 
 /// Whether a member (melee weapon) facing a threat with a gun seeks cover instead (both `CWeapon::IsTypeMelee`).
@@ -318,25 +344,7 @@ pub fn kill_threats_random_group_allocate_tasks(this: GPtr<u8>, intel: GPtr<u8>)
                 seek_cover_dtor(tp);
                 continue;
             }
-            let mut seq = [0u32; 0x10];
-            let sp: GPtr<u8> = GPtr::from_raw(seq.as_mut_ptr()).cast();
-            sequence_ctor(sp);
-            let t = task_new(0x38);
-            let t = if t.is_null() {
-                GPtr::NULL
-            } else {
-                kill_ped_on_foot_ctor(t, rd::<GPtr<u8>>(this, 4), -1, 0, 0, 0, 1)
-            };
-            sequence_add_task(sp, t);
-            let t = task_new(0x34);
-            let t = if t.is_null() {
-                GPtr::NULL
-            } else {
-                look_about_ctor(t, general_random_int_in_range(1000, 2000) as u32)
-            };
-            sequence_add_task(sp, t);
-            set_response(intel, m, sp);
-            sequence_dtor(sp);
+            kill_then_look_about(intel, m, this);
         }
         interesting_events_add(g(0xC0_B058), 0x17, membership_get_leader(members));
     }
