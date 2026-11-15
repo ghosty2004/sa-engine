@@ -251,7 +251,7 @@ pub fn patrol_route_add_point(this: GPtr<u8>, pos: GPtr<u8>, rec: GPtr<u8>) -> u
     1
 }
 
-use crate::bindings::cleanup_remove_entity_from_list;
+use sa_ai::bindings::cleanup_remove_entity_from_list;
 use sa_world::bindings::vehicle_set_created_by;
 
 /// `CTheScripts::IsEntityWithinAnySearchLight(CEntity* entity, int32* out)` (0x493960, cdecl): `*out = -1`; the first

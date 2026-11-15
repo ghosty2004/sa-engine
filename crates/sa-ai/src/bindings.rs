@@ -44,8 +44,18 @@ orig! {
 }
 
 orig! {
+    /// `CMissionCleanup::RemoveEntityFromList` (0x4654B0)
+    pub fn cleanup_remove_entity_from_list(m: GPtr<u8>, handle: i32, ty: u32) = thiscall 0x4654B0 => unported;
+}
+
+orig! {
     /// `CDecisionMakerTypes::GetInstance` (0x4684F0)
     pub fn decision_maker_types_get_instance() -> GPtr<u8> = cdecl 0x4684F0 => crate::misc::decision_maker_types_get_instance_4684f0;
+}
+
+orig! {
+    /// `CTheScripts::CleanUpThisVehicle` (0x486670)
+    pub fn clean_up_this_vehicle(v: GPtr<u8>) = cdecl 0x486670 => unported;
 }
 
 orig! {
@@ -530,7 +540,7 @@ orig! {
 
 orig! {
     /// `CPedGeometryAnalyser::ComputeClosestSurfacePoint-ped` (0x5F3B70)
-    pub fn compute_closest_surface_point_ped(ped: GPtr<u8>, e: GPtr<u8>, out: GPtr<u8>) = cdecl 0x5F3B70 => unported;
+    pub fn compute_closest_surface_point_ped(ped: GPtr<u8>, e: GPtr<u8>, out: GPtr<u8>) -> u32 = cdecl 0x5F3B70 => unported;
 }
 
 orig! {
@@ -964,6 +974,11 @@ orig! {
 }
 
 orig! {
+    /// `CTaskComplexEnterCarAsPassengerTimed::Constructor` (0x63B030)
+    pub fn enter_car_as_passenger_timed_ctor(t: GPtr<u8>, v: GPtr<u8>, door: u32, time: u32, b: u32) -> GPtr<u8> = thiscall 0x63B030 => unported;
+}
+
+orig! {
     /// `CTaskComplexStealCar::Constructor` (0x63B7D0)
     pub fn steal_car_ctor(t: GPtr<u8>, veh: GPtr<u8>) -> GPtr<u8> = thiscall 0x63B7D0 => unported;
 }
@@ -991,6 +1006,11 @@ orig! {
 orig! {
     /// `CTaskComplexCarDrive::Destructor` (0x63CA40)
     pub fn car_drive_dtor_63ca40(t: GPtr<u8>) = thiscall 0x63CA40 => unported;
+}
+
+orig! {
+    /// `CTaskComplexDriveToPoint::CTaskComplexDriveToPoint` (0x63CE00)
+    pub fn drive_to_point_ctor(t: GPtr<u8>, v: GPtr<u8>, pos: GPtr<u8>, speed: u32, mode: u32, model: u32, radius: u32, style: u32) -> GPtr<u8> = thiscall 0x63CE00 => unported;
 }
 
 orig! {
@@ -1054,6 +1074,11 @@ orig! {
 }
 
 orig! {
+    /// `CTaskSimpleCarShuffle::Constructor` (0x646810)
+    pub fn car_shuffle_ctor(t: GPtr<u8>, v: GPtr<u8>, door: u32, lu: u32) -> GPtr<u8> = thiscall 0x646810 => unported;
+}
+
+orig! {
     /// `CTaskSimpleCarWaitForDoorNotToBeInUse::Constructor` (0x646B70)
     pub fn car_wait_for_door_ctor(t: GPtr<u8>, veh: GPtr<u8>, door: u32, other: u32) -> GPtr<u8> = thiscall 0x646B70 => unported;
 }
@@ -1071,6 +1096,11 @@ orig! {
 orig! {
     /// `CTaskSimpleCarSlowBeDraggedOut::ComputeAnimID` (0x648330)
     pub fn slow_be_dragged_out_compute_anim_id(t: GPtr<u8>, group: GPtr<u8>, anim: GPtr<u8>) = thiscall 0x648330 => unported;
+}
+
+orig! {
+    /// `CTaskSimpleWaitUntilPedIsOutCar::Constructor` (0x649450)
+    pub fn t_wait_until_ped_out(t: GPtr<u8>, ped: GPtr<u8>, dir: GPtr<u8>) -> GPtr<u8> = thiscall 0x649450 => unported;
 }
 
 orig! {

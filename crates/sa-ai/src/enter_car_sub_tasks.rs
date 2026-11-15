@@ -70,6 +70,8 @@ use sa_world::bindings::ik_look_at as ped_chat_say;
 use sa_world::bindings::ped_set_move_state;
 use sa_world::bindings::set_ped_in_as_driver_ctor as t_set_in_driver;
 use sa_world::bindings::set_ped_in_as_passenger_ctor as t_set_in_passenger;
+use crate::bindings::car_shuffle_ctor as t_shuffle;
+use crate::bindings::t_wait_until_ped_out;
 orig! {
     /// `CTaskComplex::CreateFirstSubTask` (vtable +0x24)
     fn v_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
@@ -108,9 +110,7 @@ orig! {
     fn t_bike_pick_up(t: GPtr<u8>, v: GPtr<u8>, door: u32, lu: u32) -> GPtr<u8> = thiscall 0x6461B0 => unported;
     fn t_close_door_inside(t: GPtr<u8>, v: GPtr<u8>, door: u32, lu: u32) -> GPtr<u8> = thiscall 0x646300 => unported;
     fn t_get_in(t: GPtr<u8>, v: GPtr<u8>, door: u32, lu: u32) -> GPtr<u8> = thiscall 0x646690 => unported;
-    fn t_shuffle(t: GPtr<u8>, v: GPtr<u8>, door: u32, lu: u32) -> GPtr<u8> = thiscall 0x646810 => unported;
     fn t_slow_drag_ped_out(t: GPtr<u8>, v: GPtr<u8>, door: u32, lu: u32, quit: u32) -> GPtr<u8> = thiscall 0x647FE0 => unported;
-    fn t_wait_until_ped_out(t: GPtr<u8>, ped: u32, dir: GPtr<u8>) -> GPtr<u8> = thiscall 0x649450 => unported;
     fn t_slow_be_dragged_out(t: GPtr<u8>, v: GPtr<u8>, door: u32) -> GPtr<u8> = thiscall 0x648620 => unported;
     fn t_0x648b90(t: GPtr<u8>, v: GPtr<u8>, door: u32, time: u32, ped: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x648B90 => unported;
 }
@@ -433,7 +433,7 @@ pub fn create_sub_task(this: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> {
                 }
             }
             new_task(0x1C, |t| {
-                t_wait_until_ped_out(t, rd::<u32>(this, 0x40), GPtr::from_raw(r.as_mut_ptr()).cast())
+                t_wait_until_ped_out(t, GPtr::<u8>::from_addr(rd::<u32>(this, 0x40) as usize), GPtr::from_raw(r.as_mut_ptr()).cast())
             })
         }
         FINISHED => {

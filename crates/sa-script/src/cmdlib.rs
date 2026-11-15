@@ -182,7 +182,7 @@ pub use sa_world::bindings::ped_get_ref;
 pub use sa_world::bindings::set_blip_sprite;
 pub use sa_world::bindings::vehicle_at_ref;
 pub use crate::bindings::add_new_script_brain;
-pub use crate::bindings::cleanup_remove_entity_from_list as mission_cleanup_remove;
+pub use sa_ai::bindings::cleanup_remove_entity_from_list as mission_cleanup_remove;
 pub use crate::bindings::collect_next as collect_next_parameter_without_increasing_pc;
 pub use crate::bindings::read_label as read_text_label;
 pub use sa_world::bindings::find_ground_z_for_coord;

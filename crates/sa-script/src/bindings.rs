@@ -119,11 +119,6 @@ orig! {
 }
 
 orig! {
-    /// `CMissionCleanup::RemoveEntityFromList` (0x4654B0)
-    pub fn cleanup_remove_entity_from_list(m: GPtr<u8>, handle: i32, ty: u32) = thiscall 0x4654B0 => crate::cleanup::remove_entity_from_list;
-}
-
-orig! {
     /// `CStuckCarCheck::AddCarToCheck` (0x465970)
     pub fn add_car_to_check(m: GPtr<u8>, h: u32, dist: u32, time: u32, a: u32, b: u32, c: u32, d: u32, e: u32) = thiscall 0x465970 => unported;
 }
@@ -241,11 +236,6 @@ orig! {
 orig! {
     /// `CTheScripts::CleanUpThisPed` (0x486300)
     pub fn clean_up_this_ped(p: GPtr<u8>) = cdecl 0x486300 => unported;
-}
-
-orig! {
-    /// `CTheScripts::CleanUpThisVehicle` (0x486670)
-    pub fn clean_up_this_vehicle(v: GPtr<u8>) = cdecl 0x486670 => unported;
 }
 
 orig! {

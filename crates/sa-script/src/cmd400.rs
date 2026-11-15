@@ -51,7 +51,7 @@ use crate::bindings::add_message_jump_q_with_number;
 use crate::bindings::add_message_with_number;
 use crate::bindings::clean_up_this_object;
 use crate::bindings::clean_up_this_ped;
-use crate::bindings::clean_up_this_vehicle;
+use sa_ai::bindings::clean_up_this_vehicle;
 use sa_world::bindings::clear_space_for_mission_entity;
 use sa_pop::bindings::switch_roads_off_in_area;
 use sa_weapon::bindings::get_weapon_info;

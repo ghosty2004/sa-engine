@@ -256,3 +256,5 @@ pub mod kill_threats_basic;
 pub mod gun_control;
 pub mod frontier_c_dtors;
 pub mod frontier_c;
+pub mod frontier_a;
+pub mod frontier_a_subtasks;

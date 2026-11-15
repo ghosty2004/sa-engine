@@ -38,10 +38,8 @@ use sa_world::bindings::leave_car_ctor as task_complex_leave_car_ctor;
 use crate::bindings::give_ped_scripted_task;
 use sa_world::bindings::compute_target_door_to_enter_as_passenger;
 use sa_world::bindings::hands_up_ctor as task_simple_hands_up_ctor;
+use sa_ai::bindings::enter_car_as_passenger_timed_ctor as task_enter_car_as_passenger_timed_ctor;
 orig! {
-    /// `CTaskComplexEnterCarAsPassengerTimed::CTaskComplexEnterCarAsPassengerTimed(CVehicle*, int32 door, int32 time,
-    /// bool)` (0x63B030), returns this
-    fn task_enter_car_as_passenger_timed_ctor(t: GPtr<u8>, v: GPtr<u8>, door: u32, time: u32, b: u32) -> GPtr<u8> = thiscall 0x63B030 => unported;
     /// `CTaskComplexEnterCarAsDriverTimed::CTaskComplexEnterCarAsDriverTimed(CVehicle*, int32 time)` (0x63AD70), returns this
     fn task_enter_car_as_driver_timed_ctor(t: GPtr<u8>, v: GPtr<u8>, time: u32) -> GPtr<u8> = thiscall 0x63AD70 => unported;
 }
@@ -114,6 +112,7 @@ use sa_world::bindings::vector_add_assign;
 use sa_world::bindings::vector_mul_scalar as vector_mul;
 use sa_core::bindings::cross_product;
 use sa_core::bindings::vector_normalise;
+use sa_ai::bindings::drive_to_point_ctor as task_drive_to_point_ctor;
 orig! {
     /// `CStats::RegisterBestPosition(eStats, int32)` (0x55A160)
     fn register_best_position(stat: u32, pos: u32) = cdecl 0x55A160 => unported;
@@ -123,9 +122,6 @@ orig! {
     fn vcall_set_is_static(f: u32, e: GPtr<u8>, b: u32) = thiscall dyn => unported;
     /// `CVector::operator/=(float)` (0x411A30), the float as its raw dword
     fn vector_div_assign(v: GPtr<u32>, k: u32) = thiscall 0x411A30 => unported;
-    /// `CTaskComplexDriveToPoint::CTaskComplexDriveToPoint(CVehicle*, const CVector&, float speed, int32 mode,
-    /// int32 model, float radius, int32 style)` (0x63CE00)
-    fn task_drive_to_point_ctor(t: GPtr<u8>, v: GPtr<u8>, p: GPtr<u32>, speed: u32, mode: u32, model: u32, radius: u32, style: u32) -> GPtr<u8> = thiscall 0x63CE00 => unported;
     /// `CTaskComplexGoToPointAndStandStillTimed::...(int32 moveState, const CVector&, float, float, int32 time)` (0x6685E0)
     fn task_go_to_point_and_stand_still_timed_ctor(t: GPtr<u8>, ms: u32, p: GPtr<u32>, r1: u32, r2: u32, time: u32) -> GPtr<u8> = thiscall 0x6685E0 => unported;
 }
@@ -842,7 +838,7 @@ pub fn process_commands_1400_to_1499(s: Scr, command: u32) -> i8 {
             };
             let (speed, mode, style) = (sp(5), sp(6), sp(8));
             let t = new_task(0x3C, |t| {
-                task_drive_to_point_ctor(t, v, GPtr::from_raw(p.as_mut_ptr()), speed, mode, model, 0xBF80_0000, style)
+                task_drive_to_point_ctor(t, v, GPtr::<u32>::cast::<u8>(GPtr::from_raw(p.as_mut_ptr())), speed, mode, model, 0xBF80_0000, style)
             });
             give_ped_scripted_task(s, ped as i32, t, command);
         }
