@@ -14,11 +14,6 @@ orig! {
 }
 
 orig! {
-    /// `CCarCtrl::SetCoordsOfScriptCar` (0x4342A0)
-    pub fn set_coords_of_script_car(v: GPtr<u8>, x: u32, y: u32, z: u32, a: u32, b: u32) = cdecl 0x4342A0 => unported;
-}
-
-orig! {
     /// `CConversations::SetUpConversationNode` (0x43A870)
     pub fn set_up_conversation_node(a: GPtr<u8>, b: GPtr<u8>, c: GPtr<u8>, x: u32, y: u32, z: u32) = cdecl 0x43A870 => unported;
 }
@@ -441,11 +436,6 @@ orig! {
 orig! {
     /// `CPlane::SwitchAmbientPlanes` (0x6CCC50)
     pub fn plane_switch_ambient_planes(b: u32) = cdecl 0x6CCC50 => unported;
-}
-
-orig! {
-    /// `CVehicle::RemoveVehicleUpgrade` (0x6DF930)
-    pub fn remove_vehicle_upgrade(v: GPtr<u8>, m: i32) = thiscall 0x6DF930 => unported;
 }
 
 orig! {

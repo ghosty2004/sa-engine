@@ -244,11 +244,6 @@ orig! {
 }
 
 orig! {
-    /// `CDamageManager::SetPanelStatus` (0x6C2150)
-    pub fn dm_set_panel_status_6c2150(dm: GPtr<u8>, panel: u32, status: u32) = thiscall 0x6C2150 => crate::damage::set_panel_status;
-}
-
-orig! {
     /// `CDamageManager::GetDoorStatus` (0x6C2230)
     pub fn damage_get_door_status(d: GPtr<u8>, door: i32) -> u32 = thiscall 0x6C2230 => crate::damage::get_door_status;
 }

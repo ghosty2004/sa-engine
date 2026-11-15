@@ -409,11 +409,6 @@ orig! {
 }
 
 orig! {
-    /// `CDamageManager::SetWheelStatus` (0x6C21A0)
-    pub fn dm_set_wheel_status(dm: GPtr<u8>, wheel: i32, status: u8) = thiscall 0x6C21A0 => unported;
-}
-
-orig! {
     /// `CVehicle::SetUpDriver` (0x6D1A50)
     pub fn set_up_driver(v: GPtr<u8>, pt: i32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x6D1A50 => unported;
 }
