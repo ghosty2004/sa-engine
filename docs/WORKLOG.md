@@ -1671,3 +1671,11 @@
   port: CGangWars::Update (active wars), CRoadBlocks::GenerateRoadBlocks (wanted-level road blocks), CCollision::
   ProcessColModels (A's disks), the script switches 1200-1299 (28 opcodes) / 2500-2599 (5). The ~250-function frontier
   turn was not reached.
+
+## 2026-11-15 — integrate FRONTIER-2 part 2 (main session)
+
+- master fast-forwarded 26b094e9 → 1aff4f91 (police path, Process_M16_1stPerson, weapon cheats, IK point arm, Fx_c
+  wheel particles, the four Win32 imports; the agent's verify-all `frontier2-p2b` IDENTICAL 13/13 on the same base).
+- Checked on master: sa-hook lib 59/59, `make structure` clean, i686 sa-game, `FEATURES=samp tools/web/build.sh`;
+  scenarios pausemenu / solicit / crossing / melee / sniper all 0 blocked, no crash. `target/play/sa-game` and
+  `web/pkg` refreshed.
