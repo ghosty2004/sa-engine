@@ -225,7 +225,7 @@ orig! {
 
 orig! {
     /// `CTheScripts::HighlightImportantAngledArea` (0x485EF0)
-    pub fn highlight_important_angled_area(id: u32, x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32, x4: u32, y4: u32, z: u32) = cdecl 0x485EF0 => unported;
+    pub fn highlight_important_angled_area(id: u32, x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32, x4: u32, y4: u32, z: u32) = cdecl 0x485EF0 => crate::search_lights_checkpoints::highlight_important_angled_area;
 }
 
 orig! {
@@ -255,7 +255,7 @@ orig! {
 
 orig! {
     /// `CTheScripts::DrawDebugAngledSquare` (0x486990)
-    pub fn draw_debug_angled_square(x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32, x4: u32, y4: u32) = cdecl 0x486990 => unported;
+    pub fn draw_debug_angled_square(x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32, x4: u32, y4: u32) = cdecl 0x486990 => crate::angled_area::the_scripts_draw_debug_angled_square;
 }
 
 orig! {

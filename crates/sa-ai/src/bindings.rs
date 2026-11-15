@@ -1395,7 +1395,7 @@ orig! {
 
 orig! {
     /// `FUN_0066f6c0` (0x66F6C0)
-    pub fn group_member_bounding_sphere(t: GPtr<u8>, sphere: GPtr<u8>, peds: GPtr<u8>) = thiscall 0x66F6C0 => unported;
+    pub fn group_member_bounding_sphere(t: GPtr<u8>, sphere: GPtr<u8>, peds: GPtr<u8>) = thiscall 0x66F6C0 => crate::frontier_c::bounding_sphere_of_peds;
 }
 
 orig! {

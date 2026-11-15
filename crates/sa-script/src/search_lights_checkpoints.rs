@@ -109,6 +109,55 @@ pub fn highlight_important_area(id: u32, x1: f32, y1: f32, x2: f32, y2: f32, z: 
         side_y.to_bits(), 0);
 }
 
+/// One corner midpoint of `HighlightImportantAngledArea` against the running x bounds: `v` (on the x87) below `min`
+/// (`test ah, 5; jnp`) stores `f32(v)` as the minimum, else above `max` (`test ah, 0x41; je`) as the maximum.
+fn angled_min_max(v: X87, min: &mut f32, max: &mut f32) {
+    if !v.fcom(X87::from_f32(*min)).test_parity(5) {
+        *min = v.to_f32();
+    } else if !v.fcom(X87::from_f32(*max)).test_any(0x41) {
+        *max = v.to_f32();
+    }
+}
+
+/// `CTheScripts::HighlightImportantAngledArea(uint32 id, float x1, float y1, float x2, float y2, float x3, float y3,
+/// float x4, float y4, float z)` (0x485EF0, cdecl): the bounds of the four edge midpoints `((a + b) * 0.5f)` of
+/// (1, 2), (2, 3), (3, 4), (1, 4), starting from the first; the x midpoints are compared as the x87 holds them, the y
+/// midpoints after their f32 store (the minimum y stays on the x87 as that f32). The centre `((max + min) * 0.5f)`
+/// per axis (f32); `z <= -100.0f` (ordered) takes `FindGroundZForCoord(cx, cy)` (no offset, unlike
+/// `HighlightImportantArea`), else `z`; then `CShadows::RenderIndicatorShadow(id, 2, nullptr, &centre, maxX - cx, 0,
+/// 0, cy - maxY, 0)`. The arguments are the floats' bits (the binding's dwords).
+#[hook(addr = 0x485EF0, conv = cdecl, name = "CTheScripts::HighlightImportantAngledArea", expect = "83 EC 20 D9 44 24 28",
+       unverified = "frontier2-c9", route = "L2", hazards = "none")]
+#[allow(clippy::too_many_arguments)]
+pub fn highlight_important_angled_area(id: u32, x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32, x4: u32,
+    y4: u32, z: u32) {
+    let xf = X87::from_f32;
+    let f = f32::from_bits;
+    let half = kf(K_HALF);
+    let mid = |a: u32, b: u32| xf(f(a)).fadd_m(f(b)).fmul_m(half);
+    let a = mid(x1, x2);
+    let (mut min_x, mut max_x) = (a.to_f32(), a.to_f32());
+    let b = mid(y1, y2).to_f32();
+    let (mut min_y, mut max_y) = (b, b);
+    for (xa, xb, ya, yb) in [(x2, x3, y2, y3), (x3, x4, y3, y4), (x1, x4, y1, y4)] {
+        let my = mid(ya, yb).to_f32();
+        angled_min_max(mid(xa, xb), &mut min_x, &mut max_x);
+        angled_min_max(xf(my), &mut min_y, &mut max_y);
+    }
+    let cx = xf(max_x).fadd_m(min_x).fmul_m(half).to_f32();
+    let cy = xf(max_y).fadd(xf(min_y)).fmul_m(half).to_f32();
+    let cz = if xf(f(z)).fcom(xf(kf(K_MINUS_100))).test_parity(0x41) {
+        f(z)
+    } else {
+        X87::from_f64_exact(find_ground_z_for_coord(cx, cy)).to_f32()
+    };
+    let mut c = [cx.to_bits(), cy.to_bits(), cz.to_bits()];
+    let side_y = xf(cy).fsub_m(max_y).to_f32();
+    let front_x = xf(max_x).fsub_m(cx).to_f32();
+    shadows_render_indicator_shadow(id, 2, 0, GPtr::from_raw(c.as_mut_ptr()).cast(), front_x.to_bits(), 0, 0,
+        side_y.to_bits(), 0);
+}
+
 /// `CTheScripts::AddScriptSearchLight(CVector pos, CEntity* entity, CVector target, float targetRadius, float
 /// baseRadius)` (0x493000 → `.HOODLUM` 0x15692C0, cdecl, 9 dwords): the slot is 0 when record 0 is free, else
 /// the first free record from 1 on (up to 8: one past the array when all are used); +1 = 0, +3 = 0x80, +0 = +2 =
@@ -300,6 +349,7 @@ pub fn render_all_search_lights() {
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_HIGHLIGHT_IMPORTANT_AREA,
+    HOOK_HIGHLIGHT_IMPORTANT_ANGLED_AREA,
     HOOK_ADD_SCRIPT_SEARCH_LIGHT,
     HOOK_ATTACH_SEARCHLIGHT_TO_SEARCHLIGHT_OBJECT,
     HOOK_ADD_SCRIPT_CHECKPOINT,

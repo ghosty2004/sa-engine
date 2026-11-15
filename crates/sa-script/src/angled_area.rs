@@ -15,6 +15,7 @@ use crate::bindings::{
 };
 use crate::vm::{collect_parameters_call, update_compare_flag_call};
 use sa_core::bindings::{general_get_radian_angle_between_points, vector2d_normalise};
+use sa_world::bindings::world_process_vertical_line;
 use sa_world::world::common::entity_pos;
 
 /// `ScriptParams[k]` (0xA43C78) as a dword.
@@ -298,9 +299,30 @@ pub fn flame_in_angled_area_check_command(this: GPtr<u8>, command: i32) {
     highlight(this, &Quad { x1, y1, x2, y2, x3, y3, x4, y4 }, on, zr);
 }
 
+/// `CTheScripts::DrawDebugAngledSquare(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float
+/// y4)` (0x486990, cdecl; reached only with the debug flag 0x859CF8 set): for each corner in order a
+/// `CWorld::ProcessVerticalLine((x, y, -1000), 1000, colPoint, &entity, buildings, dummies)`. The first call's line
+/// length is pushed by the SecuROM fragment 0x401B61 (`[0x15606B8] - [0x6D3045]`, 0x447A0000 = 1000.0 from the exe
+/// image), the others as the immediate. The `colPoint.z + 2.0f` the original stores after each probe and the debug
+/// lines the FINAL build compiled out are never read; the entity pointer goes into the original's first argument
+/// slot, which no caller reads after the call (here a local).
+#[hook(addr = 0x486990, conv = cdecl, name = "CTheScripts::DrawDebugAngledSquare", expect = "83 EC 5C 8B 44 24 60",
+       unverified = "frontier2-c9", route = "L2", hazards = "none")]
+#[allow(clippy::too_many_arguments)]
+pub fn the_scripts_draw_debug_angled_square(x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32, x4: u32, y4: u32) {
+    let mut col_point = [0u8; 0x2C];
+    let mut entity = 0u32;
+    for (x, y) in [(x1, y1), (x2, y2), (x3, y3), (x4, y4)] {
+        let mut p = [x, y, 0xC47A_0000u32];
+        world_process_vertical_line(GPtr::from_raw(&raw mut p).cast(), 1000.0, GPtr::from_raw(&raw mut col_point).cast(),
+            GPtr::from_raw(&raw mut entity).cast(), 1, 0, 0, 0, 1, 0, GPtr::NULL);
+    }
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_CHAR_IN_ANGLED_AREA_CHECK_COMMAND,
     HOOK_OBJECT_IN_ANGLED_AREA_CHECK_COMMAND,
     HOOK_FLAME_IN_ANGLED_AREA_CHECK_COMMAND,
+    HOOK_THE_SCRIPTS_DRAW_DEBUG_ANGLED_SQUARE,
 ];

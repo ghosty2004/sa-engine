@@ -796,8 +796,56 @@ pub fn route_round_group(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
 
 use crate::bindings::group_member_bounding_sphere;
 
+/// The bounding sphere of a ped list (0x66F6C0, thiscall, `ret 8`; unnamed, called by the group route-round 0x66FD30;
+/// FRONTIER-2 lane C turn 4; `this` is not read): over the 16 slots of `peds`, the non-null peds' positions summed
+/// per axis (each sum stored, f32) and counted; the centre is `(sumX * (1 / n), sumY * (1 / n), 0)` with the x87
+/// reciprocal of the count (`fild`; n = 0 gives NaN); the squared radius is the largest `dy*dy + dx*dx + r*r` (r the
+/// ped's model's collision bounding radius, colModel +0x24; the distances from the 80-bit differences, a new maximum
+/// kept as its f32 store); `CColSphere::Set(sphere, sqrt(max) + 0.7f, &centre, 0, 0, 0xFF)`.
+#[hook(addr = 0x66F6C0, conv = thiscall, name = "FUN_0066f6c0", expect = "83 EC 1C 53 56 57",
+       unverified = "frontier2-c9", route = "L2", hazards = "none")]
+pub fn bounding_sphere_of_peds(_this: GPtr<u8>, sphere: GPtr<u8>, peds: GPtr<u8>) {
+    let ped = |i: isize| rd::<GPtr<u8>>(peds, 4 * i);
+    let mut c = [0f32; 3];
+    let mut n: i32 = 0;
+    for i in 0..16 {
+        let p = ped(i);
+        if !p.is_null() {
+            n += 1;
+            let q = sa_world::world::common::entity_pos(p);
+            for (k, ck) in c.iter_mut().enumerate() {
+                *ck = X87::from_f32(*ck).fadd_m(rd::<f32>(q, 4 * k as isize)).to_f32();
+            }
+        }
+    }
+    let inv = X87::from_i32(n).fdivr_m(1.0);
+    c[0] = X87::from_f32(c[0]).fmul(inv).to_f32();
+    c[1] = X87::from_f32(c[1]).fmul(inv).to_f32();
+    c[2] = 0.0;
+    let mut max = X87::zero();
+    for i in 0..16 {
+        let p = ped(i);
+        if !p.is_null() {
+            let q = sa_world::world::common::entity_pos(p);
+            let dx = X87::from_f32(rd::<f32>(q, 0)).fsub_m(c[0]);
+            let dy = X87::from_f32(rd::<f32>(q, 4)).fsub_m(c[1]);
+            let col = rd::<GPtr<u8>>(sa_stream::shared::model_info(i32::from(rd::<i16>(p, 0x22))).cast::<u8>(), 0x14);
+            let r = X87::from_f32(rd::<f32>(col, 0x24));
+            let d = dy.fmul(dy).fadd(dx.fmul(dx)).fadd(r.fmul(r));
+            if !d.fcom(max).test_any(0x41) {
+                max = X87::from_f32(d.to_f32());
+            }
+        }
+    }
+    let radius = max.fsqrt().fadd_m(GPtr::<f32>::from_addr(0x86FCC8).read()).to_f32();
+    col_sphere_set(sphere, radius.to_bits(), GPtr::from_raw(&raw mut c).cast(), 0, 0, 0xFF);
+}
+
+use sa_core::bindings::col_sphere_set;
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_BOUNDING_SPHERE_OF_PEDS,
     HOOK_ROUTE_ROUND_GROUP,
     HOOK_AVOID_ENTITY_CTOR,
     HOOK_FALL_AND_STAY_DOWN_CREATE_SUB_TASK,
