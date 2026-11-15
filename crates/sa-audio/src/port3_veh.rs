@@ -3603,6 +3603,21 @@ pub fn process_ai_heli(this: GPtr<u8>, params: GPtr<u8>) {
 /// and 1 (0x13, sfx 3, the distance volume of a) at 1.0.
 #[hook(addr = 0x4FE940, conv = thiscall, name = "CAEVehicleAudioEntity::ProcessDummyHeli", expect = "6A FF 68 48 C4 83 00")]
 pub fn process_dummy_heli(this: GPtr<u8>, params: GPtr<u8>) {
+    heli_engine(this, params, false);
+}
+
+/// `CAEVehicleAudioEntity::ProcessPlayerHeli(cVehicleParams&)` (0x4FE420; FRONTIER-2 lane C turn 4): the bytes of
+/// `ProcessDummyHeli` with two additions: `GetAccelAndBrake(params)` after the two piecewise-linear lookups, and the
+/// speed `f32((W * 0.2 + 1) * (k + 1) * b)` with `k` (f32) = 0, then 0.1 when the gas pedal (params +0x20, int16) is
+/// above 0, then `k - 0.05` when the brake (+0x22) is above 0. See [`heli_engine`].
+#[hook(addr = 0x4FE420, conv = thiscall, name = "CAEVehicleAudioEntity::ProcessPlayerHeli", expect = "6A FF 68 28 C4 83 00",
+       unverified = "frontier2-c10", route = "L2", hazards = "x87-transcendental")]
+pub fn process_player_heli(this: GPtr<u8>, params: GPtr<u8>) {
+    heli_engine(this, params, true);
+}
+
+/// The body of `ProcessDummyHeli` / `ProcessPlayerHeli` (`player` adds the player's accelerator factor).
+fn heli_engine(this: GPtr<u8>, params: GPtr<u8>, player: bool) {
     if is_sound_bank_loaded(g(HW), rd::<u16>(this, 0xDE) as u32, 0x28) == 0
         || is_sound_bank_loaded(g(HW), 0x8A, 0x13) == 0
     {
@@ -3612,6 +3627,9 @@ pub fn process_dummy_heli(this: GPtr<u8>, params: GPtr<u8>) {
     let mut t = clamp01_f32(x(rd::<f32>(veh(), 0x84C)).fmul_m(gf(0x862D1C)).to_f32());
     let a = get_piecewise_linear(t.to_bits(), 5, GPtr::from_addr(0x8CBE40)) as f32;
     let b = get_piecewise_linear(t.to_bits(), 5, GPtr::from_addr(0x8CBE18)) as f32;
+    if player {
+        crate::bindings::get_accel_and_brake(this, params);
+    }
     let cm = g::<u32>(0xB6F03C).read();
     let cam: GPtr<u8> = if cm != 0 {
         g(cm as usize + 0x30)
@@ -3657,7 +3675,18 @@ pub fn process_dummy_heli(this: GPtr<u8>, params: GPtr<u8>) {
         .fmul_m(gf(FLT_20))
         .fadd_m(gf(0x858CA0))
         .to_f32();
-    let mut sp = x(w).fmul_m(gf(0x858CC4)).fadd_m(gf(FLT_1)).fmul_m(b).to_f32();
+    let mut sp = x(w).fmul_m(gf(0x858CC4)).fadd_m(gf(FLT_1));
+    if player {
+        let mut k = 0f32;
+        if rd::<i16>(params, 0x20) > 0 {
+            k = f32::from_bits(0x3DCC_CCCD);
+        }
+        if rd::<i16>(params, 0x22) > 0 {
+            k = x(k).fsub_m(gf(0x858C28)).to_f32();
+        }
+        sp = sp.fmul(x(k).fadd_m(gf(FLT_1)));
+    }
+    let mut sp = sp.fmul_m(b).to_f32();
     if !x(rd::<f32>(veh(), 0x4C0)).fcom(x(gf(0x862D28))).test_parity(0x05) {
         let fc = gf(0x8CBDFC);
         let lo = x(fc).fmul_m(gf(0x858C1C)).to_f32();
@@ -3747,4 +3776,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_PROCESS_AI_PROP,
     HOOK_PROCESS_AI_HELI,
     HOOK_PROCESS_DUMMY_HELI,
+    HOOK_PROCESS_PLAYER_HELI,
 ];
