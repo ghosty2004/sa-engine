@@ -6,7 +6,7 @@ use sa_core::{hook, orig};
 
 use sa_math::x87::X87;
 
-use crate::common::{g, jne_mask, jp5, model_info, rd, wr, x, xi};
+use crate::common::{find_player_coors, g, jne_mask, jp5, model_info, rand_at, rd, wr, x, xi};
 
 /// Globals owned by this module: none.
 pub const GLOBALS: &[GlobalDesc] = &[];
@@ -78,26 +78,290 @@ pub fn gang_wars_update() {
     }
 }
 
-/// `CRoadBlocks::GenerateRoadBlocks()` (0x4629E0, SEH frame for two stack `CMatrix` locals), partial port
-/// (ADR-002 fallback). PORTED: the quiet frame: no wanted level (`FindPlayerWanted(-1)` word +0x1C == 0) or not
-/// in a vehicle (`FindPlayerVehicle(-1, false)` null), and the script road block of this frame
-/// (`ScriptRoadBlocks[m_FrameCounter & 15]`, 0xA43AB8 stride 0x1C, active byte +0x18) inactive:
-/// `bGenerateRoadBlocks`-style byte 0xA43584 = 0 and the two `CMatrix` locals destroyed. NOT PORTED (fallback to
-/// the whole original, decided at entry from the same reads, which have no side effects): the wanted-level
-/// road blocks and the script road blocks.
-#[hook(addr = 0x4629E0, conv = cdecl, name = "CRoadBlocks::GenerateRoadBlocks", expect = "6A FF 68 73 7C 83 00", fallback)]
-pub fn generate_road_blocks() {
-    let wanted = rd::<u16>(find_player_wanted(-1), 0x1C) != 0 && !find_player_vehicle(-1, 0).is_null();
-    let slot = ((frame_counter() & 0xF) * 0x1C) as usize;
-    if wanted || g::<u8>(0xA43AD0 + slot).read() != 0 {
-        return generate_road_blocks_original();
+orig! {
+    /// `CRoadBlocks::CreateRoadBlockBetween2Points(CVector a, CVector b, uint32 gang)` (0x4619C0, cdecl, both vectors
+    /// by value: six stack dwords, then the flag)
+    fn create_road_block_between_2_points(ax: u32, ay: u32, az: u32, bx: u32, by: u32, bz: u32, gang: u32) = cdecl 0x4619C0 => unported;
+    /// `CRoadBlocks::GetRoadBlockNodeInfo(CNodeAddress, float&, CVector&)` (0x460EE0, AL)
+    fn road_block_node_info(node: u32, width: GPtr<f32>, dir: GPtr<f32>) -> u8 = cdecl 0x460EE0 => crate::misc5::get_road_block_node_info;
+}
+
+use crate::bindings::get_position as path_node_get_position;
+use sa_core::bindings::vector_normalise;
+use sa_math::fpu::{fabs, fcom_ne, ge_or_nan, le_or_nan};
+use sa_world::bindings::{process_line_of_sight, vector_add, vector_scale, vector_sub};
+
+/// `CRoadBlocks::InOrOut[325]` (0xA43438)
+const IN_OR_OUT: usize = 0xA43438;
+/// `CRoadBlocks::NumRoadBlocks` (0xA43580; the loop bound reads it through the no-CD protection's obfuscated pointer
+/// at 0x402033, which decodes to this address)
+const NUM_ROAD_BLOCKS: usize = 0xA43580;
+/// `CRoadBlocks::bGenerateDynamicRoadBlocks` (0xA43584)
+const GENERATE_DYNAMIC: usize = 0xA43584;
+/// `CRoadBlocks::RoadBlockNodes[325]` (0xA435A0, `CNodeAddress`: area in the low word, node in the high word)
+const ROAD_BLOCK_NODES: usize = 0xA435A0;
+/// `CRoadBlocks::aScriptRoadBlocks[16]` (0xA43AB8, stride 0x1C: corner A +0, corner B +0xC, active +0x18, safe to create
+/// +0x19, gang +0x1A)
+const SCRIPT_ROAD_BLOCKS: usize = 0xA43AB8;
+
+type V3 = [f32; 3];
+
+use sa_core::field::vec3f_ptr as vp;
+
+fn v3(p: GPtr<u8>, i: i32) -> f32 {
+    p.cast::<f32>().wrapping_index(i).read()
+}
+
+/// `ThePaths.m_pPathNodes[area] + node * 0x1C` of a node address (null when the area is not loaded).
+fn path_node(node: u32) -> GPtr<u8> {
+    let base = g::<u32>(0x96F854 + (node & 0xFFFF) as usize * 4).read();
+    if base == 0 {
+        GPtr::NULL
+    } else {
+        GPtr::from_addr(base.wrapping_add((node >> 16) * 0x1C) as usize)
     }
+}
+
+/// `CPathNode::GetPosition` into `buf`.
+fn node_pos(n: GPtr<u8>, buf: &mut V3) -> GPtr<u8> {
+    path_node_get_position(n, GPtr::from_raw(buf.as_mut_ptr())).cast()
+}
+
+/// `CreateRoadBlockBetween2Points(a, b, gang)` with both vectors copied onto the stack (b first, as the bytes).
+fn create_between(a: GPtr<u8>, b: GPtr<u8>, gang: u32) {
+    let (a, b) = (a.cast::<u32>(), b.cast::<u32>());
+    let (bx, by, bz) = (b.read(), b.wrapping_index(1).read(), b.wrapping_index(2).read());
+    let (ax, ay, az) = (a.read(), a.wrapping_index(1).read(), a.wrapping_index(2).read());
+    create_road_block_between_2_points(ax, ay, az, bx, by, bz, gang);
+}
+
+/// `pos(n) + k * dir` (`operator*(float, CVector)` 0x40FE90, `GetPosition`, `operator+` 0x40FE30) or, with `minus`,
+/// `pos(n) - k * dir` (`operator-` 0x40FE60), into `out`.
+fn offset(n: GPtr<u8>, k: f32, dir: &mut V3, minus: bool, out: &mut V3) -> GPtr<u8> {
+    let (mut s, mut p) = ([0f32; 3], [0f32; 3]);
+    let sc = vector_scale(vp(&mut s), k, vp(dir));
+    let pos = node_pos(n, &mut p);
+    if minus {
+        vector_sub(vp(out), pos, sc)
+    } else {
+        vector_add(vp(out), pos, sc)
+    }
+}
+
+/// `CRoadBlocks::GenerateRoadBlocks()` (0x4629E0, SEH frame for two stack `CMatrix` locals that are only destroyed).
+/// Whole port since FRONTIER-2 turn 2 lane A (the ADR-002 fallback is gone). With a wanted level (`FindPlayerWanted(-1)`
+/// word +0x1C, the road block chance) and a player vehicle: [`dynamic_road_blocks`]; else `bGenerateDynamicRoadBlocks`
+/// = 0. Then the script road block of this frame (`aScriptRoadBlocks[m_FrameCounter & 15]`), when active: its
+/// centre `(A + B) * 0.5` (x summed into an f32 first, y / z multiplied on the x87 stack) 90 or more from the player
+/// (3D, NaN included) marks it safe to create; nearer and safe, it is created between its corners with its gang flag
+/// and marked unsafe. The `CRoadBlocks::CreateRoadBlockBetween2Points` calls (0x4619C0) stay on the original.
+#[hook(addr = 0x4629E0, conv = cdecl, name = "CRoadBlocks::GenerateRoadBlocks", expect = "6A FF 68 73 7C 83 00")]
+pub fn generate_road_blocks() {
     // the two stack CMatrix locals (m_pAttachMatrix and m_bOwnsAttachedMatrix cleared by the prologue)
     let mut m1 = [0u32; 0x12];
     let mut m2 = [0u32; 0x12];
-    g::<u8>(0xA43584).write(0);
+    if rd::<u16>(find_player_wanted(-1), 0x1C) != 0 && !find_player_vehicle(-1, 0).is_null() {
+        dynamic_road_blocks();
+    } else {
+        g::<u8>(GENERATE_DYNAMIC).write(0);
+    }
+    script_road_block();
     matrix_dtor(GPtr::from_raw(m1.as_mut_ptr()).cast());
     matrix_dtor(GPtr::from_raw(m2.as_mut_ptr()).cast());
+}
+
+/// The wanted-level road blocks of 0x4629E0 (0x462A53..0x462D93). The first frame sets every `InOrOut` byte (325) and
+/// `bGenerateDynamicRoadBlocks`; each frame handles the sixteenth `[(F & 15) * 325 / 16, ((F & 15) + 1) * 325 / 16)` of
+/// the nodes, capped by `NumRoadBlocks` (re-read every iteration).
+fn dynamic_road_blocks() {
+    if g::<u8>(GENERATE_DYNAMIC).read() == 0 {
+        for k in 0..0x145 {
+            g::<u8>(IN_OR_OUT + k).write(1);
+        }
+    }
+    let f = (frame_counter() & 0xF) as i32 * 0x145;
+    let mut i = f / 16;
+    let hi = (f + 0x145) / 16;
+    g::<u8>(GENERATE_DYNAMIC).write(1);
+    loop {
+        let n = g::<i32>(NUM_ROAD_BLOCKS).read();
+        if i >= n.min(hi) {
+            break;
+        }
+        road_block_node(i as usize);
+        i += 1;
+    }
+}
+
+/// One node of [`dynamic_road_blocks`]. Skipped while its area is not loaded. Out of range of the player (x or y
+/// difference not inside (-90, 90): the first test on the x87 value, the second on its f32 store; or the 2D distance
+/// of the stored differences 90 or more, NaN included) it is marked out (`InOrOut = 0`). An out node coming in is
+/// marked in and, when `rand() & 127` (return address 0x462BE9) is below the chance and its road block info exists:
+/// with a path width `w` (node +0x16, `w / 16`) two blocks, `pos + dir * (width / 2 + w)` to `pos + dir * w` and
+/// `pos - dir * w` to `pos - dir * (width / 2 + w)`; without, [`join_node`].
+fn road_block_node(i: usize) {
+    let node = g::<u32>(ROAD_BLOCK_NODES + i * 4).read();
+    let main = path_node(node);
+    if main.is_null() {
+        return;
+    }
+    let mut t = [0f32; 3];
+    let out = |i: usize| g::<u8>(IN_OR_OUT + i).write(0);
+    let nx = xi(i32::from(rd::<i16>(main, 8))).fmul_m(0.125).to_f32();
+    let p = find_player_coors(GPtr::from_raw(t.as_mut_ptr()), -1);
+    let dx = x(p.read()).fsub_m(nx);
+    let dxs = dx.to_f32();
+    if le_or_nan(dx, x(-90.0)) || ge_or_nan(x(dxs), x(90.0)) {
+        return out(i);
+    }
+    let ny = xi(i32::from(rd::<i16>(main, 0xA))).fmul_m(0.125).to_f32();
+    let p = find_player_coors(GPtr::from_raw(t.as_mut_ptr()), -1);
+    let dy = x(p.wrapping_index(1).read()).fsub_m(ny);
+    let dys = dy.to_f32();
+    if le_or_nan(dy, x(-90.0)) || ge_or_nan(x(dys), x(90.0)) {
+        return out(i);
+    }
+    let d = x(dys).fmul_m(dys).fadd(x(dxs).fmul_m(dxs)).fsqrt();
+    if ge_or_nan(d, x(90.0)) {
+        return out(i);
+    }
+    if g::<u8>(IN_OR_OUT + i).read() != 0 {
+        return;
+    }
+    g::<u8>(IN_OR_OUT + i).write(1);
+    let chance = i32::from(rd::<u16>(find_player_wanted(-1), 0x1C));
+    if rand_at(0x462BE9) & 0x7F >= chance {
+        return;
+    }
+    let mut width = 0f32;
+    let mut dir = [0f32; 3];
+    if road_block_node_info(node, GPtr::from_raw(&mut width), GPtr::from_raw(dir.as_mut_ptr())) == 0 {
+        return;
+    }
+    let w8 = rd::<u8>(main, 0x16);
+    if w8 == 0 {
+        return join_node(i, main, width, &mut dir);
+    }
+    let wf = xi(i32::from(w8)).fmul_m(0.0625).to_f32();
+    let (mut a, mut b) = ([0f32; 3], [0f32; 3]);
+    let p1 = offset(main, wf, &mut dir, false, &mut a);
+    let h = x(width).fmul_m(0.5).fadd_m(wf).to_f32();
+    let p2 = offset(main, h, &mut dir, false, &mut b);
+    create_between(p2, p1, 0);
+    let (mut a, mut b) = ([0f32; 3], [0f32; 3]);
+    let q2 = offset(main, h, &mut dir, true, &mut a);
+    let q1 = offset(main, wf, &mut dir, true, &mut b);
+    create_between(q1, q2, 0);
+}
+
+/// A road block node without a path width (0x462EBC): the first other node `j` (in index order, `NumRoadBlocks`
+/// re-read every iteration) that is out, loaded, within (-30, 30) in x and y (each difference tested on the x87
+/// stack), whose road block info has exactly the same width and a direction with `|dot| > 0.7` (`fabs`; summed x, z,
+/// y), and that the main node sees (`ProcessLineOfSight` from 1 above the main node to 1 above it, buildings only)
+/// gets the block `pos(j) + d * width / 2` to `pos(main) - d * width / 2` (`d` = their normalised difference, written
+/// over the direction) and is marked in; the search then ends. When no node matches, one block across the main node:
+/// `pos + dir * width / 2` to `pos - dir * width / 2`. gta-reversed differs: no `fabs`, the search goes on after a
+/// match, and the block across the node is made only for the index `NumRoadBlocks`.
+fn join_node(i: usize, main: GPtr<u8>, width: f32, dir: &mut V3) {
+    let mut j = 0usize;
+    while (j as i32) < g::<i32>(NUM_ROAD_BLOCKS).read() {
+        if j != i && try_join(j, main, width, dir) {
+            return;
+        }
+        j += 1;
+    }
+    let h = x(width).fmul_m(0.5).to_f32();
+    let (mut a, mut b) = ([0f32; 3], [0f32; 3]);
+    let e = offset(main, h, dir, true, &mut a);
+    let f = offset(main, h, dir, false, &mut b);
+    create_between(f, e, 0);
+}
+
+/// One candidate of [`join_node`]; true when it made the block.
+fn try_join(j: usize, main: GPtr<u8>, width: f32, dir: &mut V3) -> bool {
+    let nd = g::<u32>(ROAD_BLOCK_NODES + j * 4).read();
+    if g::<u8>(IN_OR_OUT + j).read() != 0 {
+        return false;
+    }
+    let other = path_node(nd);
+    if other.is_null() {
+        return false;
+    }
+    let (mut a, mut b) = ([0f32; 3], [0f32; 3]);
+    for k in 0..2 {
+        let pa = node_pos(main, &mut a);
+        let pb = node_pos(other, &mut b);
+        let d = x(v3(pa, k)).fsub_m(v3(pb, k));
+        if le_or_nan(d, x(-30.0)) || ge_or_nan(d, x(30.0)) {
+            return false;
+        }
+    }
+    let mut w2 = 0f32;
+    let mut dir2 = [0f32; 3];
+    if road_block_node_info(nd, GPtr::from_raw(&mut w2), GPtr::from_raw(dir2.as_mut_ptr())) == 0 {
+        return false;
+    }
+    if fcom_ne(x(width), x(w2)) {
+        return false;
+    }
+    let dot = x(dir2[0]).fmul_m(dir[0]).fadd(x(dir2[2]).fmul_m(dir[2])).fadd(x(dir2[1]).fmul_m(dir[1]));
+    if le_or_nan(fabs(dot), x(0.7)) {
+        return false;
+    }
+    let (mut up1, mut up2, mut s) = ([0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [0f32; 3]);
+    let r = vector_add(vp(&mut s), node_pos(main, &mut a), vp(&mut up1));
+    let mut pa = [v3(r, 0), v3(r, 1), v3(r, 2)];
+    let r = vector_add(vp(&mut s), node_pos(other, &mut b), vp(&mut up2));
+    let mut pb = [v3(r, 0), v3(r, 1), v3(r, 2)];
+    let mut cp = [0u32; 0xB];
+    let mut ent = 0u32;
+    let cpp = GPtr::from_raw(cp.as_mut_ptr()).cast();
+    if process_line_of_sight(vp(&mut pa), vp(&mut pb), cpp, GPtr::from_raw(&mut ent).cast(), 1, 0, 0, 0, 0, 0, 0, 0) != 0 {
+        return false;
+    }
+    let m = node_pos(main, &mut a);
+    let o = node_pos(other, &mut b);
+    let d = vector_sub(vp(&mut s), o, m);
+    *dir = [v3(d, 0), v3(d, 1), v3(d, 2)];
+    vector_normalise(GPtr::from_raw(dir as *mut V3));
+    let h = x(width).fmul_m(0.5).to_f32();
+    let (mut e, mut f) = ([0f32; 3], [0f32; 3]);
+    let e = offset(main, h, dir, true, &mut e);
+    let f = offset(other, h, dir, false, &mut f);
+    create_between(f, e, 0);
+    g::<u8>(IN_OR_OUT + j).write(1);
+    true
+}
+
+/// The script road block of 0x4629E0 (0x462D9F); see [`generate_road_blocks`].
+fn script_road_block() {
+    let b = SCRIPT_ROAD_BLOCKS + ((frame_counter() & 0xF) * 0x1C) as usize;
+    if g::<u8>(b + 0x18).read() == 0 {
+        return;
+    }
+    let f = |o: usize| g::<f32>(b + o).read();
+    let sz = x(f(8)).fadd_m(f(0x14));
+    let sy = x(f(4)).fadd_m(f(0x10));
+    let sx = x(f(0xC)).fadd_m(f(0)).to_f32();
+    let cz = sz.fmul_m(0.5).to_f32();
+    let cy = sy.fmul_m(0.5).to_f32();
+    let cx = x(sx).fmul_m(0.5).to_f32();
+    let mut t = [0f32; 3];
+    let p = find_player_coors(GPtr::from_raw(t.as_mut_ptr()), -1);
+    let dz = x(cz).fsub_m(p.wrapping_index(2).read());
+    let dy = x(cy).fsub_m(p.wrapping_index(1).read());
+    let dx = x(cx).fsub_m(p.read());
+    let d = dx.fmul(dx).fadd(dy.fmul(dy)).fadd(dz.fmul(dz)).fsqrt();
+    if ge_or_nan(d, x(90.0)) {
+        g::<u8>(b + 0x19).write(1);
+        return;
+    }
+    if g::<u8>(b + 0x19).read() == 0 {
+        return;
+    }
+    let gang = u32::from(g::<u8>(b + 0x1A).read());
+    create_between(GPtr::from_addr(b), GPtr::from_addr(b + 0xC), gang);
+    g::<u8>(b + 0x19).write(0);
 }
 
 /// `CCarGenerator::CheckForBlockage(int32 model)` (0x6F32E0, thiscall, `ret 4`, AL): up to 8 vehicles / peds

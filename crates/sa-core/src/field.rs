@@ -245,6 +245,11 @@ pub fn buf_ptr(buf: &mut [u8]) -> GPtr<u8> {
     GPtr::from_raw(buf.as_mut_ptr())
 }
 
+/// A local `CVector` (three f32) as the byte pointer the original passes for a stack vector.
+pub fn vec3f_ptr(v: &mut [f32; 3]) -> GPtr<u8> {
+    GPtr::from_raw(v.as_mut_ptr()).cast()
+}
+
 
 pub fn u16_at(d: &[u8], o: usize) -> u16 {
     u16::from_le_bytes([d[o], d[o + 1]])

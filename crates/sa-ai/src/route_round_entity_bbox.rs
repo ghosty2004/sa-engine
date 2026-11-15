@@ -34,9 +34,7 @@ const MODEL_INFO_PTRS: usize = 0xA9B0C8;
 
 type V3 = [f32; 3];
 
-fn p3(v: &mut V3) -> GPtr<u8> {
-    GPtr::from_raw(v.as_mut_ptr()).cast()
-}
+use sa_core::field::vec3f_ptr as p3;
 
 fn pa<T, const N: usize>(v: &mut [T; N]) -> GPtr<u8> {
     GPtr::from_raw(v.as_mut_ptr()).cast()
