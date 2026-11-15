@@ -299,7 +299,46 @@ orig! {
     /// `CPatrolRoute::CPatrolRoute()` (0x66D440)
     fn patrol_route_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x66D440 => crate::mvpc_ai1::init_c18db8_ctor;
     /// `CPatrolRoute::operator=(const CPatrolRoute&)` (0x66D4B0)
-    fn patrol_route_assign(this: GPtr<u8>, other: GPtr<u8>) -> GPtr<u8> = thiscall 0x66D4B0 => unported;
+    fn patrol_route_assign(this: GPtr<u8>, other: GPtr<u8>) -> u32 = thiscall 0x66D4B0 => patrol_route_assign_port;
+}
+
+/// `CPatrolRoute::operator=(const CPatrolRoute& other)` (0x66D4B0, thiscall, `ret 4`; `FUN_0066d4b0` in the catalogue;
+/// FRONTIER-2 lane C turn 4): the count (+0) copied; then for `i` from 0 while `i < this->count` (signed, re-read): the
+/// position `+0x144 + 0xC i` (three dwords) and the two C strings at `+4 + 0x28 i` and `+0x1C + 0x28 i` (byte copies up
+/// to the NUL) from `other`. The SecuROM fragment 0x401764 only zeroes the loop counter, which lives in the argument's
+/// stack slot. EAX: `other` when the count is not positive, else the final counter.
+#[hook(addr = 0x66D4B0, conv = thiscall, name = "FUN_0066d4b0", expect = "83 EC 08 8B 44 24 0C",
+       unverified = "frontier2-c10", route = "L2", hazards = "none")]
+pub fn patrol_route_assign_port(this: GPtr<u8>, other: GPtr<u8>) -> u32 {
+    let n = rd::<i32>(other, 0);
+    wr::<i32>(this, 0, n);
+    if n <= 0 {
+        return other.addr() as u32;
+    }
+    let copy_str = |off: isize| {
+        let mut k = 0;
+        loop {
+            let c = rd::<u8>(other, off + k);
+            wr::<u8>(this, off + k, c);
+            k += 1;
+            if c == 0 {
+                break;
+            }
+        }
+    };
+    let mut i: i32 = 0;
+    loop {
+        let v = 0x144 + 0xC * i as isize;
+        for k in 0..3 {
+            wr::<u32>(this, v + 4 * k, rd::<u32>(other, v + 4 * k));
+        }
+        copy_str(4 + 0x28 * i as isize);
+        copy_str(0x1C + 0x28 * i as isize);
+        i += 1;
+        if i >= rd::<i32>(this, 0) {
+            return i as u32;
+        }
+    }
 }
 
 /// `CTaskComplexBeCop::Constructor(int32 moveState, uint8 dir, CTaskComplexGoToPointAndStandStill* task)` (stub 0x4993D0
@@ -892,6 +931,7 @@ pub fn create_sub_task_65a110(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8
 
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_PATROL_ROUTE_ASSIGN_PORT,
     HOOK_HEADING_FROM_TASK_ENTITY_TO_PED,
     HOOK_CREATE_SUB_TASK_65A110,
     HOOK_BOUNDING_SPHERE_OF_PEDS,
