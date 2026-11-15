@@ -3394,45 +3394,8 @@ pub fn process_ai_prop(this: GPtr<u8>, params: GPtr<u8>) {
         .fadd(x(pitch).fmul_m(gf(0x858FCC)))
         .fadd_m(gf(FLT_1))
         .to_f32();
-    if !x(rd::<f32>(this, 0x22C)).fcom(x(gf(FLT_0))).test_parity(0x05) {
-        wr::<f32>(this, 0x22C, s);
-    }
-    let cur = rd::<f32>(this, 0x22C);
-    let s = if x(s).fcom(x(cur)).test_any(0x01) {
-        let n = x(cur).fsub_m(gf(0x862D04));
-        if x(s).fcom(n).test_any(0x41) {
-            n.to_f32()
-        } else {
-            s
-        }
-    } else {
-        let n = x(cur).fadd_m(gf(0x862D04));
-        if x(s).fcom(n).test_parity(0x05) {
-            n.to_f32()
-        } else {
-            s
-        }
-    };
-    wr::<f32>(this, 0x22C, s);
-    let cm = g::<u32>(0xB6F03C).read();
-    let cam: GPtr<u8> = if cm != 0 {
-        g(cm as usize + 0x30)
-    } else {
-        g(0xB6F02C)
-    };
-    let vp = veh_pos(this);
-    let dd = |i: usize| x(f32::from_bits(vp[i])).fsub_m(rd::<f32>(cam, i as isize * 4));
-    let (dx, dy, dz) = (dd(0), dd(1), dd(2));
-    let dist = dx.fmul(dx).fadd(dy.fmul(dy)).fadd(dz.fmul(dz)).fsqrt().to_f32();
-    let vol2 = if x(dist).fcom(x(gf(0x858BF4))).test_parity(0x05) {
-        lp().fadd_m(gf(0x859000)).to_f32()
-    } else if x(dist).fcom(x(gf(0x862D38))).test_parity(0x05) {
-        let q = x(dist).fsub_m(gf(0x862D38)).fmul_m(gf(0x85A5C4)).to_f32();
-        let lq = crate::utility::audio_log10(q).fmul_m(gf(FLT_20)).to_f32();
-        lp().fadd_m(lq).fadd_m(gf(0x859000)).to_f32()
-    } else {
-        f32::from_bits(0xC2C8_0000)
-    };
+    let s = smooth_22c(this, s);
+    let vol2 = ai_distance_volume(this, p);
     let slot = || rd::<u16>(this, 0xE0) as u32;
     play_aircraft_sound_call(this, 2, slot(), 1, vol1.to_bits(), s.to_bits());
     play_aircraft_sound_call(this, 1, slot(), 0, vol2.to_bits(), ONE);
@@ -3440,7 +3403,8 @@ pub fn process_ai_prop(this: GPtr<u8>, params: GPtr<u8>) {
 
 use crate::bindings::ae_random_float as ae_random_float_st0;
 
-/// The camera-to-vehicle distance volume of the AI aircraft: `d >= 128` (or NaN) -> `f32(l + 8)`,
+/// The camera-to-vehicle distance volume of the AI aircraft: `d >= 128` (or NaN; the unrounded root, `fst` then
+/// `fcomp`) -> `f32(l + 8)`,
 /// `d >= 48` -> `f32(l + f32(AudioLog10(f32((d - 48) * 0.0125)) * 20) + 8)`, else -100; `l =
 /// AudioLog10(p) * 20`.
 fn ai_distance_volume(this: GPtr<u8>, p: f32) -> f32 {
@@ -3453,9 +3417,10 @@ fn ai_distance_volume(this: GPtr<u8>, p: f32) -> f32 {
     let vp = veh_pos(this);
     let dd = |i: usize| x(f32::from_bits(vp[i])).fsub_m(rd::<f32>(cam, i as isize * 4));
     let (dx, dy, dz) = (dd(0), dd(1), dd(2));
-    let dist = dx.fmul(dx).fadd(dy.fmul(dy)).fadd(dz.fmul(dz)).fsqrt().to_f32();
+    let dist80 = dx.fmul(dx).fadd(dy.fmul(dy)).fadd(dz.fmul(dz)).fsqrt();
+    let dist = dist80.to_f32();
     let lp = || crate::utility::audio_log10(p).fmul_m(gf(FLT_20));
-    if x(dist).fcom(x(gf(0x858BF4))).test_parity(0x05) {
+    if dist80.fcom(x(gf(0x858BF4))).test_parity(0x05) {
         lp().fadd_m(gf(0x859000)).to_f32()
     } else if x(dist).fcom(x(gf(0x862D38))).test_parity(0x05) {
         let q = x(dist).fsub_m(gf(0x862D38)).fmul_m(gf(0x85A5C4)).to_f32();
@@ -3729,6 +3694,107 @@ fn heli_engine(this: GPtr<u8>, params: GPtr<u8>, player: bool) {
     play_aircraft_sound_call(this, 1, 0x13, 3, dv.to_bits(), ONE);
 }
 
+/// `CAEVehicleAudioEntity::ProcessPlayerSeaPlane(cVehicleParams&)` (0x4FF320; FRONTIER-2 lane C turn 5): engine bank
+/// +0xDE in slot 0x28 and bank 0x8A in slot 0x13 must be loaded. `t = f32(vehicle +0x5A4 * [0x862D1C])`, then
+/// `GetAccelAndBrake(params)`; `n` = normalised (vehicle - camera), `S = f32((n . forward + 1) * 0.5)`; pitch
+/// `f32(((f.y + f.x) * 0 + f.z) * [0x862D10])`, roll `(r.y + r.x) * 0 + r.z` (times `[0x862D10]` unless above 0 or
+/// NaN, compared unrounded). `t` above 1 becomes 1; `u = (t - 0.2) * [0x8595F0]` (0 when `t <= 0.2`); `t` at most
+/// `D = [0x862D08]` (double) becomes D, `sf = f32(max(u, D))` (u at most D -> D). Accelerator `k` as the player heli.
+/// Volumes `va = f32(AudioLog10(f32((1 - S) * sf)) * 20 + 8)`, `vb = ...((S * 0.5 + 0.5) * sf)...`, `vc = f32(AudioLog10(
+/// sf) * 20 + 8)`; speed `f32(roll * [0x858B1C] + pitch * [0x858FCC] + k + 1)` smoothed by +0x22C ([`smooth_22c`]);
+/// distance volume of `t` ([`ai_distance_volume`]). Sounds 2 (0x28, sfx 0, va) and 4 (0x28, sfx 1, vb) at the speed,
+/// 3 (0x13, sfx 0x11, vc) and 1 (0x13, sfx 0x10, distance) at 1.0. The stack `CMatrix` the original copies the camera
+/// matrix 0xB6F99C into is never read.
+#[hook(addr = 0x4FF320, conv = thiscall, name = "CAEVehicleAudioEntity::ProcessPlayerSeaPlane", expect = "6A FF 68 88 C4 83 00",
+       unverified = "frontier2-c11", route = "L2", hazards = "x87-transcendental")]
+pub fn process_player_sea_plane(this: GPtr<u8>, params: GPtr<u8>) {
+    if is_sound_bank_loaded(g(HW), rd::<u16>(this, 0xDE) as u32, 0x28) == 0
+        || is_sound_bank_loaded(g(HW), 0x8A, 0x13) == 0
+    {
+        return;
+    }
+    let veh = || -> GPtr<u8> { g(rd::<u32>(params, 0x10) as usize) };
+    let mut t = x(rd::<f32>(veh(), 0x5A4)).fmul_m(gf(0x862D1C)).to_f32();
+    crate::bindings::get_accel_and_brake(this, params);
+    let cm = g::<u32>(0xB6F03C).read();
+    let cam: GPtr<u8> = if cm != 0 {
+        g(cm as usize + 0x30)
+    } else {
+        g(0xB6F02C)
+    };
+    let vp = veh_pos(this);
+    let d = |i: usize| {
+        x(f32::from_bits(vp[i]))
+            .fsub_m(rd::<f32>(cam, i as isize * 4))
+            .to_f32()
+    };
+    let (dz, dy, dx) = (d(2), d(1), d(0));
+    let mut n = [dx, dy, dz];
+    vector_normalise(GPtr::<u8>::cast::<[f32;3]>(GPtr::from_raw(n.as_mut_ptr().cast::<u8>())));
+    let m: GPtr<u8> = g(rd::<u32>(veh(), 0x14) as usize);
+    let dot = x(n[1])
+        .fmul_m(rd::<f32>(m, 0x14))
+        .fadd(x(n[2]).fmul_m(rd::<f32>(m, 0x18)))
+        .fadd(x(n[0]).fmul_m(rd::<f32>(m, 0x10)));
+    let pitch = x(rd::<f32>(m, 0x14))
+        .fadd_m(rd::<f32>(m, 0x10))
+        .fmul_m(gf(FLT_0))
+        .fadd_m(rd::<f32>(m, 0x18))
+        .fmul(gd(0x862D10))
+        .to_f32();
+    let r = x(rd::<f32>(m, 4))
+        .fadd_m(rd::<f32>(m, 0))
+        .fmul_m(gf(FLT_0))
+        .fadd_m(rd::<f32>(m, 8));
+    let mut roll = r.to_f32();
+    if !r.fcom(x(gf(FLT_0))).test_parity(0x05) {
+        roll = x(roll).fmul(gd(0x862D10)).to_f32();
+    }
+    let s = dot.fadd_m(gf(FLT_1)).fmul_m(gf(0x858B8C)).to_f32();
+    let above_one = !x(t).fcom(x(gf(FLT_1))).test_any(0x41);
+    if above_one {
+        t = gf(FLT_1);
+    }
+    let u = if above_one || x(t).fcom(x(gf(0x858CC4))).test_parity(0x05) {
+        x(t).fsub_m(gf(0x858CC4)).fmul_m(gf(0x8595F0))
+    } else {
+        x(gf(FLT_0))
+    };
+    let lo = gd(0x862D08);
+    if x(t).fcom(lo).test_any(0x41) {
+        t = lo.to_f32();
+    }
+    let sf = if u.fcom(lo).test_any(0x41) { lo } else { u }.to_f32();
+    let mut k = 0f32;
+    if rd::<i16>(params, 0x20) > 0 {
+        k = f32::from_bits(0x3DCC_CCCD);
+    }
+    if rd::<i16>(params, 0x22) > 0 {
+        k = x(k).fsub_m(gf(0x858C28)).to_f32();
+    }
+    let vol = |v: f32| {
+        crate::utility::audio_log10(v)
+            .fmul_m(gf(FLT_20))
+            .fadd_m(gf(0x859000))
+            .to_f32()
+    };
+    let va = vol(x(gf(FLT_1)).fsub_m(s).fmul_m(sf).to_f32());
+    let vb = vol(x(s).fmul_m(gf(0x858B8C)).fadd_m(gf(0x858B8C)).fmul_m(sf).to_f32());
+    let vc = vol(sf);
+    let sp = x(roll)
+        .fmul_m(gf(0x858B1C))
+        .fadd(x(pitch).fmul_m(gf(0x858FCC)))
+        .fadd_m(k)
+        .fadd_m(gf(FLT_1))
+        .to_f32();
+    let sp = smooth_22c(this, sp);
+    let dv = ai_distance_volume(this, t);
+    play_aircraft_sound_call(this, 2, 0x28, 0, va.to_bits(), sp.to_bits());
+    play_aircraft_sound_call(this, 4, 0x28, 1, vb.to_bits(), sp.to_bits());
+    play_aircraft_sound_call(this, 3, 0x13, 0x11, vc.to_bits(), ONE);
+    play_aircraft_sound_call(this, 1, 0x13, 0x10, dv.to_bits(), ONE);
+}
+
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
     HOOK_PLAYER_ABOUT_TO_EXIT_VEHICLE_AS_DRIVER,
@@ -3777,4 +3843,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_PROCESS_AI_HELI,
     HOOK_PROCESS_DUMMY_HELI,
     HOOK_PROCESS_PLAYER_HELI,
+    HOOK_PROCESS_PLAYER_SEA_PLANE,
 ];
