@@ -1,0 +1,756 @@
+# old_sha	new_subject	refs
+28ba9b1de473782edd72b33db5bd1f95b3620698	docs: add the feasibility study, plan, roadmap and catalogue tools	
+81fb2458e25cc9ba7b8bbe72b8d4a198207fc2fa	feat(catalog): add the layout and script command tables	
+9101c52d1ba5881660a060350e2dda60f30f0040	feat(sa-formats): parse IMG, DFF/TXD and COL with exact round trip	
+50ee6d3ee67aff36e1a26f7c221cf81a836f6d33	feat(catalog): classify unknown functions (EH, CRT, D3DX9, libs, RW)	
+35d6388f63ec42629012d93f2ad4692a9626b770	feat(sa-hook): add sa-launcher and in-process hooks with live toggling	
+65c6081788fd7f6dfeadbf48970fee5f16a23dbc	feat(sa-formats): add IDE, IPL and DAT/CFG parsers mirroring the exe	
+db44e452ddd8d62bd5c1ef1229a05e40b0c9e251	feat(catalog): add the call graph, read/write sets and leaf-first order	
+031e6cce160bb6f4b48165d3cfcab6049afbb30f	feat(catalog): close gaps, map script opcodes and track function state	
+5deb2a50cd86679b4d72be3529a563d4cf25fc44	feat(sa-oracle): add the L1 oracle and sa-math with x87-faithful ports	
+a5fb73045eb1b6d48c3c5e77be034005cec27609	chore(catalog): mark six sa-math functions as L1-verified	
+3fb10aee55e1d78119d6380a2d5e0d042c9c929e	feat(sa-formats): parse IFP, GXT, SCM, recordings, audio and saves	
+7e4eb44f3c7ae4428ba6c18948bb91bb028f0cf7	feat(catalog): record gta-reversed deviations from the original	
+a2ec448470b4f7328b08a820e6920422c65af5e6	feat(sa-hook): add determinism mode, input replay and frame state hashes	
+fdb68181a2bbef8c98a1d8bc49975d8e5f8d29af	test(sa-oracle): add L1 verifier probes and tighten the L1 definition	
+1703c24dde40ba257ed592a10c1c687d9b69a1ac	feat(catalog): add functions reached only through data tables	
+b8f9404f409aa5b688270b0c5994e8139746f7ee	docs: document the catalogue pipeline and porting inputs	
+d939150b590cba27edea7fe4aaa46f9a0c874ab7	docs(rw): add the RenderWare specification and names for RW functions	
+781ab7605c7665584ab381036752c385a877b64e	feat(sa-hook): add the L2 in-process oracle with fixtures	
+9f3e8e6404701fad90ade53a3da823d5c493774a	docs(samp): classify the GTA addresses and patches SA:MP depends on	
+d0bd68d3b6737d805c04d4a9021dc8d11fd489ae	feat(catalog): name most unknown functions and record x87 stores	
+992daec58a17c69cf464d52e807a4162b8367fbe	feat(sa-math): port all MATH functions with L1 verification	
+dff44d0d16757a1f75dda063f1d07efc184e6de3	chore(sa-formats): fix a clippy lint in the L1 probes and run rustfmt	
+15aa84dbf1b284735184f023c10734aeb3fb4445	feat(sa-core): add the engine foundation and the CORE pilot ports	
+c39c4aae61801c9b763616799164d4cdf1648bee	feat(catalog): detect fall-through and mis-split entries	
+696726a3a47d316f5bf6cd05bf0801a8213a234e	fix(sa-hook): work around the CdStreamSync lost wake-up in game lanes	
+891f7f61d4ccff55927b86fbefbd79acc9af0818	docs(specs): add port-ready specs for STREAM, COLL, PHYS and WORLD	
+8fe5ebbbb25d6f4b0e9d457f397946e507557c32	feat(sa-core): port the CORE subsystem	
+a5212bdcac6be1a9970bbc8e61680815e06f2bb7	docs(roadmap): mark the project as paused	
+376b0896edf31b6662c51ad933189f1f18842a5a	feat(sa-stream): port the STREAM subsystem	
+b9f91b2ffe984061ab3bbd4d36663e9fa9dd2ed1	docs(specs): add port-ready specs for ANIM, CAM, INPUT, PED, WEAPON, VEH	
+b7b654217aa5d3d894866fc00b3fadc50e2f4988	test(e2e): verify the CORE pilots in game and add the port-l2 runner	
+236bc829660bfc3d5faf4ac9197445d81c89eff6	feat(sa-oracle): add the L3 runner with divergence bisection	
+1d268818d4b7ee8a068a9368a15469668874582a	docs(roadmap): refresh the queue and lane table at the pause	
+50c928e473586c2d1583d578043dacab9b0c2209	fix(sa-stream): keep lanes off the desktop and fix two port failures	STREAM-FIX-1
+af53bbc6f1ba1dc26e870a9a85f433d289ac1b49	fix(catalog): apply RE-SPEC name and extent corrections	CAT-17
+5135208867002101458c2e7e88f15ef02c68b8bd	fix(sa-stream): use the determinism-patched QPC site and attribute srand	STREAM-FIX-1
+cf603455111a6522d23ed92f346ab1e1728271fd	docs(roadmap): record the running agent slots	
+10668e595595306414b7ad89b0891c4f981d98e0	test(sa-oracle): integrate the CORE/STREAM L1 verifier audit	V-9,VER-2
+673c57a6648a37a27cc2ee8fdb7225bd61430770	docs(roadmap): record the VER-2 slot and the lane-4 decision	VER-2
+63df71c4f47b373c59a6a09b14eebc0c48aedef9	test(sa-core): verify 81 CORE ports at L2 in game	CORE-L2b,VER-2
+c357184cef69b224fca17716131eae1b0807b08a	docs(roadmap): record the PORT-COLL and harness slots	PORT-COLL
+f5cc484edd513f60cc79ff6dd28096fb60ed2b0f	test(sa-stream): verify 65 STREAM ports at L2 in game	STREAM-L2
+97518a68f1ab18c80e985f8b769ec7abd69e7fe7	docs(roadmap): fix the LoadVehicleObject address in the ledger	
+68908f7995d5a456f62dbde563db496679e463b6	docs(roadmap): record the in-flight work and how to resume	
+8293943f460b19dc368a7d19b912e2835ddff671	docs(roadmap): note the unverified PORT-COLL work in the pause banner	PORT-COLL
+bf56089b50020789a5ae4dd78c27b7a2bf812f73	feat(sa-world): port 121 collision functions, 84 verified at L2	PORT-COLL
+607fdd442af2df0e87384f55107e348d90bbea3e	test(catalog): verify all COLL L1 specs at 10^6 on the real CPU	
+82cf4d9444191e5b768c8a013f1b6448a4d19c12	test(catalog): verify 73 more STREAM ports at L2 in game	STREAM-L2
+0e50b6303a7b1cd070c1769dde7462de7c1ae458	test(catalog): verify 16 more STREAM ports at L2	STREAM-L2
+3bb142af161702298ec780d0922fd2c190f0c9ed	chore(sa-oracle): save the unverified inf10 work at stop	INF-10
+309da4ed188b0d9ae44f673dd585ddd06387c22c	chore(sa-hook): save the unverified harness2 work at stop	HARNESS-2
+80cb3374b3d69f4df98b0d8f65634a6572eaf560	docs(roadmap): note the saved WIP branches in the pause banner	
+557a49f7e5e1399a42cb1d356535fa43ab2712d8	fix(sa-core): run original callees under the game's MXCSR	FPU-GUARD
+33446e7393af4f3a46fa9399d1442a402be408c7	docs(roadmap): record the running lanes	
+fcf4c8068294c33118dad75b2c3c1f1252bc94f6	test(catalog): verify 26 more CORE ports with split-run L2	
+f0545e459b0a4a7a6875dc35ddff35ed0b310bed	docs(roadmap): note the lead for the RsEventHandler divergence	
+5ced9788d1595e63159dbd54df734324c19028d3	perf(e2e): speed up in-game verification	
+bf2e7f7811a2555b2f4909e3ebd66092479ae842	docs(roadmap): record the sccache measurement	
+3770f5fca01a5c31c1abc280ae9b32e45ab71ae7	feat(sa-world): port WORLD part 1, verified in game	
+a6ad91bbaafd2fc6494bfeded2d911fbad2608d0	feat(sa-world): port PHYS, verified in game	
+5da784f35d3481fb9e55f20b21cf9456fd657c97	feat(sa-oracle): finish coverage of the original with subsystem reports	
+a84e02e2fd7a7e78c772e49a3cabc29375662c1c	docs: record the user's SA:MP-first decisions	
+0c08c3f31737447261ef5f8b85595cf75bde6858	fix(sa-hook): redirect protection reads and fix split-run issues	
+ae045ab2715ecfbc9811b3e0f830df08be98184b	fix(sa-hook): check hooks against protection reads and follow callees	
+3f4e149b9dfd27e1df2f7048fe691d71d7e2d409	test(e2e): measure coverage under samp.dll 0.3.7-R4 and rank SA:MP ports	
+d9acaf9e93eb4456667a3eee429a14e8ffb74f8e	feat(sa-viewer): add a native wgpu world viewer	
+6db69b6cfbf8239c29095482ebcb628cb8d9791c	docs(specs): add RE-SPEC-3 specs for POP, RENDER, SCRIPT, AUDIO and HUD	RE-SPEC-3
+de67cce85adba532ae197d3af93789d01f207bce	fix(sa-world): follow the original x87 operand order in move forces	
+ef2ecb5c502267a1c8228effe9b2ddfe4fc114de	feat(sa-samp-api): design the game adapter API for the SA:MP client	
+b5d41ceca454b7e49086d1b44ab5784a99831e05	docs(samp): record the user's answers on the game adapter	
+d666ce06f5e1d717d74c314692485bb052766ab3	refactor(sa-samp-api): refine the adapter after the samp-rs migration	
+a2ee1c0b68488accad8d896ebfbd121e15985b98	docs(plan): allow sub-agents up to two helpers	
+18fc261947cc021c4d0bd9202eeb9ce5ee34e04b	test(e2e): add a c-bug corpus program for weapon and crouch runs	
+5f5fd9bbcb54e95d5229169016ba006ad65d6c7f	feat(sa-pop): port the first POP pass	
+bc7f65170b6546eb01c386a5a28028bb5aaad37c	feat(sa-script): port the SCM VM core and the first opcode switch	
+53d8b5cb22b2451e00f7f93f7355e4b990d50139	test(e2e): complete L2 write sets and promote the clean functions	
+98b768c095c3b0e0c5c5176a5a12d65cec84c8b5	docs(specs): add AI specs for the executed task, event and group code	
+9bad5a9995172978ef65705be2022b44917ed2ac	feat(sa-ped): port the first WEAPON and PED pass	
+12fec06430d3d8b1a8d00c93d3680ef768fb0d87	feat(sa-anim): port the ANIM and INPUT subsystems	
+f298ebe34f4a2820a59082063ebf4af3c7525d22	feat(sa-veh): port the first VEH pass	
+ff389e7ee7445c7706607b76f9d2c4dc54fc9d30	docs(specs): add AI specs for the leftover and unexecuted AI groups	
+6622928c0357774c6cdaedf6c69105948dd286ad	feat(sa-script): add partial ports and port the SA:MP script opcodes	
+f94bb39c9cbe0692147c020982ae56fa18f111e7	feat(sa-hud): port the first HUD pass	
+b26e86acffc54cf2a85cdf2bce0e3e7e07d0d439	feat(sa-hook): add split-run rules for handles, residue and stack args	
+9bfe93fb5d9ca482664f2a1e473ebb92f933bf46	feat(sa-weapon): port fire, bullet, projectile and explosion functions	
+42232b9c4dae26375341dbf0d73dafc983cca5b2	docs(specs): add RW specs for the SA:MP-executed core, world and D3D9	
+f43991b3f2dc585c98e08894dd5ca1b461bf6902	feat(sa-cam): port the first CAM pass	
+73ec3b0d6c6f8bcc6d0a4eb0fe8f156925f7c174	feat(sa-ai): port the first AI pass	
+512c5f381ff0474c034297ce6ce5512aef68f634	feat(sa-audio): port the first AUDIO pass	
+3e3e21f90a2a64e3a84ea27d90aa02e4d50048dd	test(sa-oracle): add L1 specs for the ECX-preserving script VM hooks	
+c6d6aef72950d488e3ec3ec7c2aa0386671d4ff5	docs(plan): allow concurrent read-only REA queries on the shared target	
+11ddbee603af839f58f91d186a4c5e0493ca30b9	docs(specs): add RW specs for D3D9 rasters, device and the plugins	
+8b9a3c996478d10b5f7422f212f3b8de105223a1	feat(sa-rwcore): port the RenderWare core	
+7c8f6e943b095de6e36e095642f6d10f89b07084	docs(specs): add specs from the UNK pass and the remaining subsystems	
+48aeead7013eb46f020a69c64f250f76565e3b31	feat(sa-render): port the first RENDER pass	
+ac281c24a9702ee73adb1eeb9e31b3afe016300d	docs(specs): record the spec QA audit and its corrections	
+a988bffb31747a28fcefdc6c5f5a3e1bfec16d2c	fix(sa-hook): close the callers gap for registers kept across calls	
+32d651514eca188da35a5703d110086e0516d103	feat(sa-ai): port the vehicle entry, exit and driving tasks	
+49bddc2cf206fd4f40e31be39f7b86c9bca7a90f	feat(sa-ai): port the c-bug tasks, task manager and event responses	
+3b2c3582e63dfe415e5bfdbb2bd7975d948ca4a9	docs(specs): add the last RW and remaining-subsystem specs	
+1cfc43352a0c6278f166a0a061ca0c8de1466449	docs(worklog): record the backed-out x87 model merge	
+55d9c6376e2186cc5bed603bbab2605543b5a9e9	fix(sa-hook): fill the stack under sampled split calls	
+d59b63829c746d6b2e097c1bbf25c78fe63fa7f8	refactor(sa-ports): register all port crates in one place	
+011d1a7f93c19e081678233269726557a91203e5	feat(sa-ai): generate 1,584 AI hooks from exact byte patterns	
+100fb7aeb514eda3dd69185f9c1ce3d98bfe33ac	fix(sa-ai): fix CarJumpOut and StreamOneNewCar, pass hook lists by file	
+c3d67341646801730586f26b2105a8e09b0ac4eb	test(sa-oracle): add register-comparing specs for the preserve hooks	
+4dc3c52b284961ebf563bc2d1d30ec7ef7bebfe4	feat(sa-veh): port the remaining VEH functions	VEH-2
+3064b956055c0ab55641e412ac26aee86c6bcdab	fix(sa-math): model FYL2X/FPTAN at 64 bits and scrub FireInstantHit	
+37c7093f24253a4058a0d7148969db5454e958d8	feat(sa-world): port PED-2 helpers and 495 WORLD functions	PED-2,WORLD-2
+8b77953f9555d043a8660813ea59be5ebd327eba	feat(sa-pop): port 250 RENDER functions and 335 POP functions	RENDER-2,POP-2
+8c60a2d669a6a15f1c3a1b79a2a18c0d692be586	feat(sa-ai): integrate AI-4, AI-5, CAM-2 and the writer/verifier split	AI-4,AI-5,CAM-2
+33ac79c71546fd5722da22c7caaba5d44abeb026	feat(sa-hud): integrate AI-6, HUD-2 and SCRIPT-3	AI-6,HUD-2,SCRIPT-3
+f789a8ea4071fdefb27e5b69a094cf728ea31715	feat(sa-audio): integrate AUDIO-2, PED-3, POP-3, RW-4 and RW-5	AUDIO-2,PED-3,POP-3,RW-4,RW-5
+09ffb626281281a8580e1b5ca17496a59c263613	feat(sa-pop): integrate POP-4 and MVP-A/B/C/E and fix a POP-2 offset	POP-4,MVP-A
+7fd59f2eba4564d8957e45f4ef06708d896f86d3	feat(sa-veh): integrate MVP-D/F and the first verifier promotions	MVP-D,VERIFIER-1,VERIFIER-3
+309d8fec22f7770d9bfdae006c8e39f75cb45134	feat(sa-game): integrate the native boot through Init1-3	STD-4,VERIFIER-4
+805751bd95f1f61c380d683a126e1066931e3dd4	fix(sa-veh): promote the big vehicle drivers and fix bike lean recovery	VERIFIER-5
+909b776c915dd433ec98e7a4f663b3209fc66746	feat(sa-hook): add register calling conventions and fitted x87 models	HARNESS-5,X87-2
+c1fb47b5b7400cd8e7d4137b988a2cf842d5d492	feat(sa-script): complete 23 of 25 script switches	PORT-SCRIPT-4
+c58a435c5f0c4635dbd26f7456dfa5dd39fee7f9	test(sa-core): fix three host tests that failed on a 64-bit host	
+13273241ddcbfd6c1677d7aac0afd45b22495d21	docs(arch): document the PORT-SCRIPT-4 integration	PORT-SCRIPT-4
+1c3e9e0c4b9e03834441c6f0a9242164dd531a47	chore(catalog): record the X87-2 promotions	X87-2
+69c799f97afb7328c96f60b581cf1d9e14a55c75	feat(sa-ai): integrate WRITER-MVP-M with the unverified MVP batches	WRITER-MVP-M
+8d70493ae1ff25b4c30c6c1aa18a57b447da1791	feat(sa-render): integrate WRITER-REGCONV register-convention ports	WRITER-REGCONV
+27d24458de3e7649d7b145d8b622d746a4281ee3	test(sa-render): promote 28 render hooks, attribute DrawTriPlants srand	VERIFIER-6
+ed288e85198944d0735e40b8249fa2b27c02db55	feat(tools): integrate the byte-pattern generator with 852 hooks	GEN-ALL-2
+a2a2b59dcae5e368f9d6d4a6f06cf0fae33f8621	fix(catalog): register the full ProcessAllSearchLights port	
+a109d55480126867354b70fd87cd7fc320fac5f9	fix(sa-pop): attribute the remaining srand calls to their call sites	SRAND-FIX
+90b2042692b4c29f6da078fa4aa698307a411428	docs(verify): document the INTEGRATE-2 integration	INTEGRATE-2
+4d484a0c0d419e0b22715a86a8b097e2d306d314	chore(catalog): record the INTEGRATE-2 states	INTEGRATE-2
+da9de7f1ed16ad6a6550f807aef78f44b6198736	feat(sa-game): integrate the native boot into the world	STD-7,STD-8,STD-9
+5e0f61bfcc07216c586ab657c1650fe507417bbe	feat(sa-ai): integrate 53 unverified event, collision and cutscene hooks	WRITER-INTRO
+519494c15d2c9ef348c1207200bd59eecabb44e4	fix(tools): keep generator hooks recorded as implemented and regenerate	
+e5fa9cf68cdfad0046419e3b1d85141059911110	chore(catalog): regenerate the verification queue on the integrated tree	
+8c5f07d40cc6d17c17e4d8cdb0643c21c3f19cfa	docs(verify): document the INTEGRATE-3 integration	INTEGRATE-3
+ca917d63ea23235d45b64821749043abb561c45c	chore(catalog): record the INTEGRATE-3 states	INTEGRATE-3
+14221138d480a7f044191e8e371cf430d4c82ff7	feat(sa-rwcore): port the D3D9 skin node and its CPU skinning	STD-10
+7b7bbf2dc1bea97c03973dfc693064ca3417b816	fix(sa-game): keep texture levels' CPU copy after UnlockRect	
+8b0e0457a370d340ce384fcfeadaaefec360be86	feat(sa-rwcore): port _rwD3D9ImmRenderPrimitiveNode	STD-10
+aa9224ad5291d6a98f8f27e7a6ac8c980fca17b7	feat(sa-render): port the CVisibilityPlugins vehicle render callbacks	STD-10
+13cfc18ee2ad2c93830065e4e919fd0d0724bac9	fix(sa-game): queue the SA_GAME_WALK key-down and improve crash reports	
+8c3ee769649a8817e03c46599ad459efca1426d3	feat(sa-ai): port IntersectSphere, GetEventPriority and RenderWeaponCB	STD-10
+d0bd68167411bda7bdf7021b8971a301786ea20c	feat(sa-audio): port CAEVehicleAudioEntity::AddAudioEvent	
+08075c2b007fa3adec8793487272d3732af65878	feat(sa-render): port FxEmitterBP_c::Render and RenderHeatHaze	
+ab960d06a0a71bfd67ed20b0ff852c4466942652	feat(sa-rwcore): port RtQuat functions, hook RwMatrixOrthoNormalize	
+504fa3f49fb2825311f5dd004a05832bb3fa0749	fix(sa-core): drop natives for 0x6F9DE0 and 0x407F20 already registered	
+dd9f80f5863b437809be66d796b07d4ed206bb69	docs(arch): add std10-ports.csv and platform.md section 16	STD-10,STD-9
+0cf53616384d821be856a5c7358a7735c3fc396a	docs(arch): record a clean i686 clippy run of sa-hook	
+afb1e8ea72a9b7ac50b07d6e0c7e999a22bbb2be	feat(sa-game): run the game loop in a native window with --window	
+7ae9fdffafba25720982823cdd388a923fe0c847	feat(sa-ai): port CTaskSimpleInAir::ProcessPed and attractor functions	STD-11
+bf33506da8c57314f0731646c9a2d216abb771a9	chore(catalog): regenerate the verification queue with STD-10 and STD-11	STD-10,STD-11
+2f6b21c0875bfd600ad28f7a0d27b1481514ad3c	feat(sa-ai): port CEventAttractor::AffectsPed and stuck-in-air sub-task	STD-11
+2db5f176448e87976139e799a9c2a4de9eab82a0	fix(sa-oracle): pass long l3 probe mode lists to the runner as @FILE	
+53fa7a95a548421b5e78fa74d0fb4d6309ab754f	fix(tools): keep void forwarders void and drop unverified on promotion	
+832a60c7ff9c35c764bc830aded5319e18380ba3	test(verify): bring VERIFIER-7's gen2 verdicts and promotion list	VERIFIER-7
+0ba83279357a1535c4601596e07a7259d70058bb	feat(sa-audio): port CAEVehicleAudioEntity::AddAudioEvent	
+c97b6d175e806e1838fedc029ab305553815365f	feat(sa-render): port FxEmitterBP_c::Render and RenderHeatHaze	
+abe5e427e836c95b0dd7fb0487dc5dec8fa08603	feat(sa-rwcore): port RtQuat functions, hook RwMatrixOrthoNormalize	
+e7711347753f96878b245a05405a42a98b521f5b	chore(tools): regenerate exclusions and generated hooks (532 promoted)	
+160b0661f34c6b27b69b47f36924c301fdf239ab	chore(catalog): regenerate the verification queue on the integrated tree	
+db2fde2e706b5f49157874883735bd5882df867d	feat(sa-ai): port ProcessEventHandler and the use-effect sub-tasks	STD-11
+a5a5cbb81f35a4226d420c45f719fe50e73cf46c	feat(sa-anim): port CQuaternion::Get(RwMatrix*)	STD-11
+c013fb70b53e01236f8b8cda56a3d770e850d8af	feat(sa-ai): port MakeAbortable, GetNodeHeadingFromVector, STD-11 docs	STD-11
+09bb6f96b4a750be3ac6f3124a98cc61476afca1	feat(sa-veh): port CDoor::Process, SetRandomDamage and pick-up effects	STD-12
+2077fc014e2d022b5d26c83deb232bf0009a69ea	feat(sa-render): port the remaining boot-path gaps	WRITER-P
+1d1a185ea036c24c6795dbc24e88b845c22f518a	feat(sa-render): port RemoveMember and HeatHazeFX	STD-12,WRITER-P
+88ebf33d2ea81fa65a9cfe936485a710429ae4c8	feat(sa-veh): port CBike::FixHandsToBars	STD-12
+ddda169be96b8150216d60da89eb3e709e47bc4d	feat(sa-ai): port the route-round and attractor ped placer functions	
+6589bddd6bbc1fc19af171f1326f36da9a07472b	feat(sa-game): port IntersectPoint and add SA_GAME_KEYS key presses	STD-12
+16a3e9abf2428f105af9b563912282c948b5fe6b	docs(verify): document the INTEGRATE-4 integration	INTEGRATE-4
+7f7595799eecc49b7ec26f47a1c98f8b216eab5a	chore(catalog): record the VERIFIER-7 promotions	VERIFIER-7
+492d81e01ade3530af2c626a1f8425e5d2cafdb8	feat(sa-ai): port IncrementAnger and WalkRoundObject::ComputeRoute	STD-12
+f77cc70fec25aec534f2c1c38c027590ad19398d	feat(sa-ai): port CTaskComplexSmartFleePoint::MakeAbortable	STD-12
+2e4eaa353392d3d37caac12549e1fe5e93ed439a	fix(sa-script): pass three stack arguments in the FUN_006070F0 port	
+fb363147c2c048c920843e8d2ed6e886d11d7eb9	fix(sa-world): fix see-through flag and poly order in a line scan	
+7f551411f40e756d6d7087d74a5d23c5d30a2ccc	fix(sa-world): test the original's four corners in IsEntityOccluded	
+e16a7a68b08a4148aea45665b3e3c5a219c64d98	chore(catalog): record VERIFIER-8's L3 batch status	VERIFIER-8
+a666fdfe6e36d82e11ddd0730343fdc82b39280c	test(catalog): promote 54 hooks of the mvp, popw4 and regconv batches	VERIFIER-8
+9cc73f6eb60c1f4be30e4dd43cebc1d9fa4816df	test(verify): promote 13 more hooks of the mvp and regconv batches	VERIFIER-8
+fe9f3c1fe94028a3554c1f347a79adebd237b357	feat(sa-ai): port SetFleePosition, line-of-sight and AttachToBone	STD-12
+399478d23497ba1e444d08f90a647b9123f7cc56	feat(sa-render): port the remaining boot-path gaps	WRITER-P
+c492619798504c65a9f510a61850188d2e971162	chore(tools): regenerate exclusions and generated ports	
+ec238b9fcbc1174bc243f9b4368dfd1192a222e0	feat(sa-hook): add harness pokes, save-file capture and a save recording	
+9b1fb21c690d8e678ba7e3c97ef4696bb65c8622	feat(sa-world): port the save game path	SAVE-1,PORT-SAVE
+254e9f864dff03d5dbdc8b0ed700dd7477c15798	fix(sa-world): fix the save ports found in SAVE-1 verification	SAVE-1,PORT-SAVE
+424c7c46352384c72af7349f84bde5e49a3b20db	test(sa-world): promote 59 SAVE-1 ports with split evidence	SAVE-1
+961b28b1c69444129649ed03f0b2b6888811ed5f	docs(arch): document the SAVE-1 save port	SAVE-1
+13d0e7b33aa3c868eff8b1da66bac6ff81b59117	test(e2e): record the SAVE-1 results and accept residue-only differences	SAVE-1
+531ad05dcc4b30500c32f412dc4b5ada52a4e410	feat(sa-pop): cover law enforcers at wanted level 0 in UpdateCarAI	STD-12
+9b2f95707e3ffe72affb0d838f939f93c30b9cd5	chore(tools): regenerate exclusions after the SAVE-1 integration	SAVE-1
+c071917d20a9f94e96c84b8dd4c92948f17c1370	chore(catalog): regenerate the verification queue on the integrated tree	
+2fb94da90d4b56ad10c90151e0e133e2803d7c24	docs(arch): regenerate the platform MVP gap list	
+81e8ce059b71494976313628165762773b386951	feat(sa-ai): port BlendOut and ComputeFleeDir and replace the CRT acos	STD-12
+f2a3c68dcaba4fac37c6e89043188b7898f2ae30	feat(sa-audio): hook GetVehicleNonDriveWheelSkidValue with preserve edx	STD-12
+d577ab7afd2b9b73130fe2bff5b8d46e905b637d	feat(sa-veh): port CBike::ProcessRiderAnims	
+5f21caf0b7e87664125a6d7b13c098e6c1052fd9	feat(sa-world): port TidyUpGarageClose and register two natives	
+5626d260e05a152abfdef79ccd62a47cada4c2aa	feat(sa-ai): port CInterestingEvents::Add and the attractor pool	
+9b393bbadf70dd797c52210ade8ffe0742f8ed11	feat(sa-ai): port the ped-attractor registry lookups	
+be3851cf9b734b6423ce7dc29c5bc5c598da3419	feat(sa-world): register ClearScanCodes natively and hook a skid value	STD-12
+a4490feb4f7e344a83db58f8da0816dfea6fd6c7	chore(catalog): add std12-ports.csv and regenerate the queue	STD-12
+d447cbf30ca287dbee4bb6ef0a9e399533687e4e	docs(arch): add platform.md section 18	STD-12
+f3ec58b351ba5329accfbaf993057807b951ebc9	docs(verify): document the INTEGRATE-5 integration	INTEGRATE-5
+876154470a4a35a853a3f6a3deed2b2b6ed993eb	docs(roadmap): record the SA:MP and WebAssembly priority decision	
+9f712b9add19c64750a242fcb3a51a6b7a1c5999	chore(catalog): record the INTEGRATE-5 promotions and SAVE-1 ledger	INTEGRATE-5,SAVE-1
+18671e681fff4ea3fa5172aab1c369b60c85f8bc	feat(sa-samp): add the native SA:MP adapter backend and --samp skeleton	
+76c533d95f341344acd79d5ae24835b3a54b714b	docs(samp): plan the native SA:MP join and test samp-rs from Linux	
+7fd398cf83640adb2508f521370d2f1ec7fc77cf	feat(sa-samp-api): add v2 with destroy_script_thread and ped_walk	
+351180523cbc3545b6486d569088acb49540bd6c	feat(sa-game): add the deterministic --fixed-step mode	
+cc440ef42145372b53748f1b3c8c5544763924f2	test(samp): add the samp-rs A/B join script	
+b4cf80cd0fa2037cf01fbe6e10acd8ab9e7cff18	feat(sa-samp-api): add v3 with WorldState::force_weather	
+a1e34a65e2d73ccd18677e6f36dadb31ead6b90d	test(samp): probe weather, clock, gravity, area and money in A/B join	
+baa05446a3e75d6a1df5e69c4b91b67e2f9be539	feat(sa-ai): port the CPedAttractor base class	
+d2cdad680a2dfa5b9dde3c6cc4d33366a471be0d	feat(sa-samp): write through the ported interpreter and game state	
+cf6f19414c956cf91d43d25cb128c3c7662dcec0	feat(sa-ai): port the attractor destructors, queues and broadcasts	
+096bf721d3d86280655a84a2107a859fb40091b0	feat(sa-game): let a leading ! in SA_GAME_STUB replace a port	
+37ae688c22a1981f2a686a5d972f2e3cea90d8ec	feat(sa-ai): port CTaskComplexWander::SetDir	STD-13
+5afc47b7668535e7148b094700408655a4c15cd0	feat(sa-ai): port an event destructor and register a tyre volume native	STD-13
+75937c46f160309bdf21988e0310f5b04c6fc743	feat(sa-ai): port CTaskComplexWalkRoundObject::CreateSubTask	STD-13
+721ac540dc1d5d3735b893e4f0e6d261ccdbc72a	feat(sa-ai): port the CEventVehicleDamage and 0x5F6190 constructors	STD-13
+7da5de4746e570f9621a14406a6867bdc6a3a2aa	feat(sa-game): let SA_GAME_STUB stubs pop up to 10 dwords	
+bd91676a55fa5ac63595681105f37b10d0e2a8fb	feat(sa-ai): port the destructor 0x5F6200	STD-13
+b6b7d0d31a66b140c3e0158e54da13a75ef9e854	feat(sa-game): join open.mp natively through the samp-rs network core	
+3933363c11dd31123b4f28fd36b41d7a032ddca5	feat(sa-udp-proxy): add the WebSocket to UDP relay and sa-net transports	
+b9ab5c20b9b23873bfd1d33346f987aefde43456	test(samp): add the proxy join check and browser networking notes	
+8547c4d12b83368775227a1d80746a2755ce5408	feat(sa-samp): hide help boxes, zone names and idle camera in samp mode	
+efe512072d808f61bbd1dcb0ea8c514150da4095	docs(worklog): record the SA:MP groundwork and proxy integration	
+e04a4c18a1d6fc19001734ce6dc5c29fd675e019	fix(sa-ai): write the nine attractor destructors out as plain hooks	
+833c3fc3037a5d0110365ce96bdc441125921a26	chore(catalog): add std13-ports.csv and regenerate the queue	STD-13
+430381262c7a267d164bb079cf0c09e73452864c	feat(sa-render): port AddSparks and two task Clone functions	PORT-VEH-3
+734c95afae011de2176bb95b15934252a0a11f88	docs(arch): add platform.md section 19	STD-13
+1e95e1e282256fb6a8659d4e5f1b3c2c0d35c1bb	test(samp): compare the init thread's game-state lines as a set	
+9e704a635ce0910b8bb971e7b385f6c19dbb9475	docs(arch): record the kept STD-13 evidence directories	
+2b45ef8d8a87513f59e6e8761df38c2dd6686be4	build(sa-game): pin samp-rs at the transport refactor	
+bad8ad3e14a09e514a3b826c120a023c65314688	fix(sa-game): reset the FX matrix stack after an unwound step	
+33236274e72dedbb9a0f8aba82b6306622bd54fb	feat(sa-samp-ui): add the engine-drawn SA:MP UI state and layout	
+ae4ee343db3b1c0fd334d44765666c85ef2f06f6	feat(sa-render): port RenderWeaponCB and show the pad stick in state	
+0632d1fb706fd1502f5090c80dd6d2cde5353c7b	feat(sa-game): add SA_GAME_VEHLIST and SA_GAME_TELEPORT	
+afa0eac8e54a9b04c660bea7c944f941fbacba4a	feat(sa-veh): port car door position and exit-room functions	STD-14
+b6860a800b0cfb52c26e6f0ab3de0a6c05695f88	feat(sa-ai): generate 234 more AI hooks	
+30978c3a245ea43641b6123f25078b3eb8d4a735	feat(sa-ai): port 70 AI functions by hand	
+3b3a489b6dafae425d14814667cb865500edf299	feat(sa-ai): port 25 SA:MP-reached AI functions	
+d5e2be3671636554bfa780f5d3a2d8644109209f	fix(sa-game): send the SA_GAME_WALK key-down that was swallowed	
+0479b3bd52d008b802ee34e5164ec507a38b961c	feat(sa-ai): port the 13 remaining SA:MP-reached AI functions	
+98a57303efdb16206498f9fcfec1c9802a19f586	feat(sa-ai): extend AI-GEN with x87, stack objects and nested calls	AI-GEN
+f1cf127695ad2ac76b14b398a52958b275325eb7	feat(sa-audio): port CAEWeaponAudioEntity::PlayGunSounds	
+985733d285292ad9a60beb53aedc45562cf1bb61	feat(sa-ai): port the sit-down, sit-idle and stand-up tasks	
+51b31c2c7457bb64ce5a60fd9f3ff8c3f9382d25	docs(samp): record SAMP-4 decisions and join results	SAMP-4
+f83190751377f749c8b170974ae76982d5c96604	feat(sa-samp-ui): draw the SA:MP UI through the engine	
+3b5793715a48c337c315100337cb35289942231a	test(samp): compare only the settled game states in A/B	
+746bae559d217291a97c61eac97d0bcd882334cd	feat(sa-game): route platform input through the SA:MP UI	
+7c36e259b545fe42cd89a62928367a5175425cf6	docs(samp): document the engine-drawn SA:MP overlay	
+addfc5efce416142de03c62c853f98463abb5b16	feat(sa-ai): port the CTaskComplexEnterCar sub-task logic	STD-14
+563df52fa46add33db462a533e6ec0554534e6aa	feat(sa-game): list mission vehicles in SA_GAME_VEHLIST	
+3afa29fcf53c34423797bab9b15a7c9a29ff8e63	fix(sa-rw-wgpu): keep alpha 1 in render targets without alpha	
+e6f1aa43c598afee780cfec7c6d95472c1395d46	feat(sa-game): add an env-gated D3D9 draw log and target dumps	
+a669463759840362609a69728d6462668a78c42f	docs(arch): add platform.md section 20 on alpha-less targets	
+17b2cac8c53a122d94fcd90ddcca2018152c292c	feat(sa-samp-ui): draw sprite textdraws through CTxdStore	
+4b7a6b21424ec3e7787e1712f677c2b26b933b57	feat(sa-veh): port DamageKnockOffRider and FxInfoTrail_c::GetValue	
+f88e3ec4dbb299d91d2eed980dea7b0bf7cdfdc0	feat(sa-ai): port two AffectsPed functions and a destructor body	
+cba74a7f72142f221a1aa2fee623a3cdc68a1eec	feat(sa-ai): take PORT-AI-8's knock-off-bike and death anim ports	PORT-AI-8
+ba6c93528c31ad988c055ad3f098b9b2ca01c7fb	feat(sa-ai): port CTaskSimpleCarSetPedOut's constructor and destructor	
+babb88b057d7ba2abae1662d5b1070c4cc241f6b	refactor(sa-ai): drop duplicates of two WRITER-ATTR ports	WRITER-ATTR
+806442d9eb7b63e95b4fdd61a8d199045fdde5d3	feat(sa-veh): port CVehicle::ReactToVehicleDamage	
+47eae19e7c626342c18cc3f35fae05424c29859e	feat(sa-ai): port the CEventVehicleDamage functions	
+5af3e53354dd96f87ee4c3b775d53b0b9ca6474f	feat(sa-render): port FxInfoTrail_c::GetValue	
+097e2f6832966d85ebbaab8bd54dacc2c2dded61	fix(sa-ai): name the 0x4B1990 hook as the catalogue does	
+f3cf72bbca3c2c4369d6505b3cf2c9bc60047e61	feat(sa-veh): port IsVehicleStealable, IsClearToDriveAway and more	
+e3ccdd9b66a4d97f87763a4ee72e3b593376289f	feat(sa-ai): port the CTaskComplexRoadRage constructor	
+4455614c4a18fb13844313361e0b5e29a3564006	feat(sa-ai): port CTaskComplexRoadRage's sub-task creation	
+9f614ddcb6c2f7879d94b658fba9131fcf9a5813	feat(sa-ai): take two PORT-AI-8 functions as single functions	PORT-AI-8
+fbdea3d19b2828e507fb2e0174217740a3e0cf3f	feat(sa-ai): port GetClosestGroupPed and RoadRage::ControlSubTask	
+c041bded786b3b516b221aa68eda100f74ec91f7	feat(sa-ai): port CTaskSimpleCarWaitToSlowDown's constructor	
+61720e51b88cefbdd347b5687d1a3c2b8ceb6509	feat(sa-ai): take PORT-AI-8's CTaskSimpleCarWaitToSlowDown methods	PORT-AI-8
+76dc47c80a5e091c331f0f8c48dc0f3831349339	refactor(sa-ai): drop a duplicate of a WRITER-ATTR destructor	WRITER-ATTR
+3533ddc6542008c2be60abd141a14de6a1c9cbc9	feat(sa-ai): port CTaskComplexChat sub-tasks and a hand-signal Clone	
+794917c74592dfda86f695fc284b9acc0f14666b	feat(sa-ai): port CTaskComplexPlayHandSignalAnim's sub-tasks	
+637493ce79a3f58a1344ca7f98311f473c557d1e	feat(sa-ai): port the lean-point helper 0x664770	
+333204517917f4c69e62f340e6d6416284f1e5db	fix(sa-ai): drop module and hook lines registered twice	WRITER-NATIVE
+7ad9f1a63d5274569c27a25879d4ba41a341fb9f	feat(sa-game): stream server vehicles natively with driver sync	
+fce9826892ad829ef1a2ae1776514dadc5498d1c	feat(sa-rwcore): port the D3D9 skin node and its CPU skinning	STD-10
+987a18c78b52a0be4bae2873b37393b352b736b5	fix(sa-game): keep texture levels' CPU copy after UnlockRect	
+c820e6b4828dd72f79302066d810544852faaca2	feat(sa-rwcore): port _rwD3D9ImmRenderPrimitiveNode	STD-10
+4a9efc57b6d0ba6e915736c4b6d04f9e747c89ce	feat(sa-render): port the CVisibilityPlugins vehicle render callbacks	STD-10
+db21a1a4114ac514b5f5a557e601fc25d730207b	fix(sa-game): queue the SA_GAME_WALK key-down and improve crash reports	
+f10aaf483f6a48a27f076f414e5d5e7440bb2e55	feat(sa-ai): port IntersectSphere, GetEventPriority and RenderWeaponCB	STD-10
+78c0432102edf2092d089147c6456cf3b75f7458	fix(sa-core): drop natives for 0x6F9DE0 and 0x407F20 already registered	
+db8eeee3bb79055177c0f9cd8283b537cffbf504	docs(arch): add std10-ports.csv and platform.md section 16	STD-10,STD-9
+b24c63f42544042ab7c8b5d06960548ca8cd8867	docs(arch): record a clean i686 clippy run of sa-hook	
+069264d50711d5e280e88fbf360e433051fbe009	feat(sa-samp-ui): add UI options, nametag rules and a chat scrollbar	
+12374eb52257331bb05dc3db11ce5d3b6d8ee418	feat(sa-game): run the game loop in a native window with --window	
+55fdf401b00a839ec08b3ffae938191aee556bce	feat(sa-ai): port CTaskSimpleInAir::ProcessPed and attractor functions	STD-11
+f933a91dc38b315dc7b4477c8ac057e0bb05ef92	feat(sa-ai): port CEventAttractor::AffectsPed and stuck-in-air sub-task	STD-11
+47b4d3a5da2a268d8f501f895d5ae5ef3e0bf3b6	feat(sa-ai): port ProcessEventHandler and the use-effect sub-tasks	STD-11
+be75a66b8436c1932b3cb65ee646eff8bfda6d7c	feat(sa-anim): port CQuaternion::Get(RwMatrix*)	STD-11
+3ab9516c5975516a9888c71114fe2a7962655337	refactor(sa-ai): drop PORT-AI-8's generated copies of hand ports	PORT-AI-8
+50d082161c23d246d858d0af646873e826f388f6	feat(sa-ai): port MakeAbortable, GetNodeHeadingFromVector, STD-11 docs	STD-11
+82f41602a8205ffedb7b68c6c25ee470a7d8fe44	feat(sa-veh): port CDoor::Process, SetRandomDamage and pick-up effects	STD-12
+3cc36ebf1937902625be31a7f4fb76bcab9f5d5e	feat(sa-render): port RemoveMember and HeatHazeFX	STD-12,WRITER-P
+e3ece63f727a5de59f407fd4a644cc42f16dcd53	feat(sa-veh): port CBike::FixHandsToBars	STD-12
+9b242d50dd8057154a92ac07ef92b07b499e79b5	feat(sa-ai): port the route-round and attractor ped placer functions	
+10fdb4cb10b4921d73676b3871289660c7b8bcec	feat(sa-game): port IntersectPoint and add SA_GAME_KEYS key presses	STD-12
+725b0f7f59e39afa9702a8ba8e5a0591583901e9	feat(sa-ai): port IncrementAnger and WalkRoundObject::ComputeRoute	STD-12
+a98aba1e9fd1206cc0180f7426b9719464fe9086	feat(sa-ai): port CTaskComplexSmartFleePoint::MakeAbortable	STD-12
+5c10e13139fe0a3cfc314983dc66a79f5c7af039	feat(sa-ai): port SetFleePosition, line-of-sight and AttachToBone	STD-12
+cf6f2d20c86151e206acb23822cbcd2296c55d77	feat(sa-pop): cover law enforcers at wanted level 0 in UpdateCarAI	STD-12
+24ed438977d32da25598f70949d7a4b56492d8f3	feat(sa-ai): port BlendOut and ComputeFleeDir and replace the CRT acos	STD-12
+9df1cc24224b5f7c3c6141b53ee8489319714378	feat(sa-audio): hook GetVehicleNonDriveWheelSkidValue with preserve edx	STD-12
+847b92d941afc7478c30403e7f2fb818745b234e	feat(sa-veh): port CBike::ProcessRiderAnims	
+6154843408498004e3dc013723a80c73ffe41b9d	feat(sa-world): port TidyUpGarageClose and register two natives	
+e554a1393573c6db8015c36d2a717f2b7cd5ce9f	feat(sa-ai): port CInterestingEvents::Add and the attractor pool	
+8bc20769d1646ac700b5a1953397fba82ad2edb5	feat(sa-ai): port the ped-attractor registry lookups	
+30d39f6379328c1dc08fe1cc2a0b6fa87299381b	feat(sa-world): register ClearScanCodes natively and hook a skid value	STD-12
+1ed09a9e61a29256339b9d89a3fb75150ae9c4b8	chore(catalog): add std12-ports.csv and regenerate the queue	STD-12
+c6a4b156ce5420a30ae8a85acf773403904e5540	docs(arch): add platform.md section 18	STD-12
+1082b4a1c36d4cc78f36ce365fcc89360624e5e0	feat(sa-game): add the deterministic --fixed-step mode	
+f228d74a8842e75509cbed4fca10af63a907124c	feat(sa-ai): port the CPedAttractor base class	
+1248d3a9fb00ecb36525b044f848eb8ca6917f0d	feat(sa-ai): port the attractor destructors, queues and broadcasts	
+6a9a6d75e832e0104e6ffe419339e9646af8735a	feat(sa-game): let a leading ! in SA_GAME_STUB replace a port	
+e953e88306b04e151f9a46cbae40d37d69190351	feat(sa-ai): port CTaskComplexWander::SetDir	STD-13
+e5eb49275092d2f035cd9600148f47d7c3e0e4bd	feat(sa-ai): port an event destructor and register a tyre volume native	STD-13
+42dd89c93b3cd2ef5759d9ca84643303335a6eac	feat(sa-ai): port CTaskComplexWalkRoundObject::CreateSubTask	STD-13
+feabb667f4eebd3c8f6c5ed13e6c8fd369426a51	feat(sa-ai): port the CEventVehicleDamage and 0x5F6190 constructors	STD-13
+64ea511206513c5866ff81640a917571fe391adf	feat(sa-game): let SA_GAME_STUB stubs pop up to 10 dwords	
+09acef575d6ff0887634167955d2c68880a4a225	feat(sa-ai): port the destructor 0x5F6200	STD-13
+faf4ff55ad2d93aa79e4b98b346383091f2aeb06	fix(sa-ai): write the nine attractor destructors out as plain hooks	
+3cf2aab6f3fc0fd7f6c0edbb6216f9359186657d	chore(catalog): add std13-ports.csv and regenerate the queue	STD-13
+50bf37b774f9f52989acb15a82ad8110bfeb42b4	feat(sa-render): port AddSparks and two task Clone functions	PORT-VEH-3
+476a756e1df36c67a80183744a78bb2f5560aeeb	docs(arch): add platform.md section 19	STD-13
+5124ef3067c793548daf4af99944c4ef66fd44fd	docs(arch): record the kept STD-13 evidence directories	
+0a05d2e3c058ad29ea10f358e79399ccbd3a9e8c	fix(sa-render): drop lines the STD-13 picks registered twice	STD-13
+fe187de9c86f2c8e9ef2fef71a8efaff44860b49	fix(sa-game): keep the --samp host skeleton on the STD-13 session loop	STD-13
+d1f66edcdb60df7f94675cf96f196175f7df6cbe	feat(sa-game): add SA_GAME_VEHLIST and SA_GAME_TELEPORT	
+14f382eb952f1e615e32e87bd726fcd6dc57c8c0	feat(sa-veh): port car door position and exit-room functions	STD-14
+ac4888bb2460960a3ac13881e21db4e7fa992804	feat(sa-ai): generate 234 more AI hooks	
+c6db91874a31d744f3d7c9ebe7fdfb01bc5fe71d	feat(sa-ai): port 70 AI functions by hand	
+ee6a229f107ba71fa00e66737b223a804ff6c88b	feat(sa-ai): port 25 SA:MP-reached AI functions	
+ee365b519d4c433b56be70eea40ea30e216e05f1	feat(sa-ai): port the 13 remaining SA:MP-reached AI functions	
+4ebaa97b963900b9dad68e9544807aa57f9511d2	feat(sa-ai): extend AI-GEN with x87, stack objects and nested calls	AI-GEN
+8dd6f7c543cd255c564a1d8448ff0a841b1af333	feat(sa-audio): port CAEWeaponAudioEntity::PlayGunSounds	
+b76de359cbf2de2fa0528dc2333a3f72ad94b8bc	feat(sa-ai): port the sit-down, sit-idle and stand-up tasks	
+9e54b559f9a2ccd90863d284448f485a075e0429	feat(sa-ai): port the CTaskComplexEnterCar sub-task logic	STD-14
+f77dbe95e983fb37f07157c1d912bf3bee256a2c	feat(sa-game): list mission vehicles in SA_GAME_VEHLIST	
+63d8171020d495f54fac591ec21709603380759e	fix(sa-rw-wgpu): keep alpha 1 in render targets without alpha	
+6a319f16097dd70cd919276684a155e152b2df25	feat(sa-game): add an env-gated D3D9 draw log and target dumps	
+36f45a2ddba34403dd203c2d689354f6959763af	docs(arch): add platform.md section 20 on alpha-less targets	
+f970a3eb4f48f0b17066694c6734d781b7365bc9	feat(sa-veh): port DamageKnockOffRider and FxInfoTrail_c::GetValue	
+371774c40bb2d1d9e1762e283f416b5144da2574	feat(sa-ai): port two AffectsPed functions and a destructor body	
+cc81b4833d663eb784a46adc1387d577d7672a91	feat(sa-ai): take PORT-AI-8's knock-off-bike and death anim ports	PORT-AI-8
+262ee60ce89098dc8ddf5e1a86929b162a2f4118	feat(sa-ai): port CTaskSimpleCarSetPedOut's constructor and destructor	
+2baadbce1a3011b001302509966eb94d1b9a3a46	refactor(sa-ai): drop duplicates of two WRITER-ATTR ports	WRITER-ATTR
+9b2fecc9e31416b17e9276a8f3fac673fd34ca53	feat(sa-veh): port CVehicle::ReactToVehicleDamage	
+aaa228a439081a1cd5c8523176a8f471134395bd	feat(sa-ai): port the CEventVehicleDamage functions	
+a46487a7892b29c9465f62cce1be4b7199fcd4ee	feat(sa-render): port FxInfoTrail_c::GetValue	
+0ab227e6b37de09a6ceec4ba5e8744202b02ee31	fix(sa-ai): name the 0x4B1990 hook as the catalogue does	
+d9151579a8c71b90e006e0b6d075ac7d2afa2834	feat(sa-veh): port IsVehicleStealable, IsClearToDriveAway and more	
+b4b5acddde7df872216022e501dacce5ddfe910f	feat(sa-ai): port the CTaskComplexRoadRage constructor	
+6c36f72f54a07924749e9b951593c87f188c9d35	feat(sa-ai): port CTaskComplexRoadRage's sub-task creation	
+7b41d9ada9eb3d264738e863bfb609189c3ad025	feat(sa-ai): take two PORT-AI-8 functions as single functions	PORT-AI-8
+8348c8afb0ee1461ddd4e59af515ff1d48796cf5	feat(sa-ai): port GetClosestGroupPed and RoadRage::ControlSubTask	
+2fe0a6e8985ccc1d2f770c1b7db34a3640bedefc	feat(sa-ai): port CTaskSimpleCarWaitToSlowDown's constructor	
+40323f8c3a312b426ee2ce4611347e069bb85df1	feat(sa-ai): take PORT-AI-8's CTaskSimpleCarWaitToSlowDown methods	PORT-AI-8
+f36be20d1905844f644e73b13c0680a106b67fe5	refactor(sa-ai): drop a duplicate of a WRITER-ATTR destructor	WRITER-ATTR
+f189b48e13f6ec04dc3f7a3a2dc201c239637c48	feat(sa-ai): port CTaskComplexChat sub-tasks and a hand-signal Clone	
+3c721f0cbf1bfbd9aef601afb7725be29028d5f2	feat(sa-ai): port CTaskComplexPlayHandSignalAnim's sub-tasks	
+56dc0174d564e8ad8b6aa762e70bdf125eb2f36e	feat(sa-ai): port the lean-point helper 0x664770	
+bba6e54d423f20320cea594d290cbcb890a8f790	fix(sa-ai): drop module and hook lines registered twice	WRITER-NATIVE
+662ca61430ad4da80aa726e4f8067a6a6c0bbc9d	refactor(sa-ai): drop PORT-AI-8's generated copies of hand ports	PORT-AI-8
+e6ec561f548bbf391a42f9cdab114482011ccae1	build(sa-game): pin samp-rs at the step 5 peds commit	
+7db104861a6583195aaa20cd66e199d34186616a	feat(sa-pop): route cruise-path missions through the UpdateCarAI port	
+2eda99927e0648a769ad7549ec112c722dd95756	feat(sa-ai): port CTaskComplexPartnerDeal's destructor	
+7fe88b6eb50874c9764eede2383904cfaaa0db4a	feat(sa-ai): port CTaskSimplePlayHandSignalAnim::StartAnim	
+fa3dd542b067d27534b5ddb3062d3e2390fbfc73	feat(sa-ai): port CTaskComplexPlayHandSignalAnim's destructor	
+80046b17dccd99661e6755d6c48303cb5fa944d1	feat(sa-world): port CHandObject and RwTexDictionaryFindHashNamedTexture	
+6a6f54adff6711183b2e02238833f22032cc25ef	chore(sa-ai): regenerate AI-GEN, hooks and the queue on STD-10..14	AI-GEN
+a02a2fee742ac5ec37b6348cc4880ec4eca0baf7	feat(sa-ai): port CTaskComplexPartnerDeal's destructor	
+f9e92d9feea37cbc08947baf5b6653805e878c18	feat(sa-ai): port CTaskSimplePlayHandSignalAnim::StartAnim	
+1aa7be3e0118a374c512f514548254d77e0a5a10	feat(sa-ai): port CTaskComplexPlayHandSignalAnim's destructor	
+7cbeceac4675edf78d6f8e97f91888d52b3a3db3	feat(sa-world): port CHandObject and RwTexDictionaryFindHashNamedTexture	
+cbad29bef2ca1d446d8841cf06af556661b81ff5	feat(sa-pop): port the WeaveForOtherCar heading test 0x421A50	
+641711af8e8bae6ce7543da127dbd6fa9e5fdb3c	chore(sa-ai): regenerate the AI-GEN modules without hand-ported hooks	AI-GEN
+53a886d2172c3a6c48866c45fcfc3a016b700bce	feat(sa-pop): port the WeaveForOtherCar heading test 0x421A50	
+99a295f1250e7a0817ab96c3f734a82b59a43cac	fix(sa-anim): put the ANPK header back before LoadAnimFile's fallback	
+cb87ed0032542542e7027b95687e22edcf53c792	test(e2e): record L1 results and L2 extras for the native-path batches	
+7c0e6667f9033076bcc0d0888ff6c9d3601e0e3a	test(e2e): add L2 extras for std7, std8 and intro hooks	VERIFIER-9
+f7b7540e5dffc15e2d1726ed208abea87a184ac4	test(catalog): promote 163 native-path hooks	VERIFIER-9
+df6592215dbaa39fedcff8c0e0097a2a55f2a12a	fix(sa-ai): exclude three geometry bodies that drop cdecl arguments	AI-GEN
+2ae30d99c1b5f9103e3d693863ae67c6713494e0	feat(sa-ai): port 30 more AI loop bodies and widen AI-GEN	AI-GEN
+02269e03ecd0878317c9721b3292bda74df66f07	chore(catalog): keep 0x5F1FA0 unverified and regenerate the queue	
+35a056ba79972605c593f4116ac3d4b5c1ae7cbf	feat(sa-world): port 75 VEH/WORLD functions as unverified batches	
+c379e7782bdcdf542e8211d5db0f847949afc229	feat(sa-veh): port 19 more VEH/WORLD functions as unverified batches	
+21dfdc40701c4959e2193f3f8fbb58ed8303d0f8	feat(sa-world): port 12 SA:MP-executed WORLD functions (world5-1)	
+1212c39d4590087dcae0a19e0b779f89534080c5	feat(sa-world): port 13 more WORLD functions (world5-2)	
+bd192190de22993a4b6d8bd69044bada671c2b5b	chore(sa-ai): regenerate the AI-GEN modules after the PORT-AI-8 pick	AI-GEN,PORT-AI-8
+963962e3f36039d8553773b3690a85a7cf37f786	fix(sa-ai): register PositionPedOutOfCollision natively	PORT-AI-3
+87822502d7705c078c90be2f44bf37f9a195b04f	feat(sa-render): port 63 SA:MP-executed functions outside AI/VEH/WORLD	WRITER-SAMP
+7565a73abeb385a27ea65714eb259aac71735009	fix(sa-render): keep one registration for 0x734E50 and the particles	WRITER-ATTR
+dcc5cf3fd4bef785ca29e2065d739bf8ecf047d5	feat(sa-samp-ui): draw the SA:MP UI at Present and add chat bubbles	
+8985b5a5e1a9c6311e7c747953b98f74014e17ab	feat(sa-ai): port 30 more AI loop bodies and widen AI-GEN	AI-GEN
+6f54784583e0bad7044f26e469cd9733bb45cbae	feat(sa-ai): port CEventLeaderEnteredCarAsDriver's destructor	STD-14
+85192f8eef7935f7df782dfa8e6b2b099d4d6187	test(samp): add pickup, map icon, object and checkpoints to the A/B run	
+03ef5421adb30491ed9d30f92d668bdcda4193bd	feat(sa-ai): port GoToCarDoorAndStandStill::ControlSubTask	STD-14
+737adce96ff9731c8922e37c81a91dcd2fc024eb	feat(sa-samp-ui): lock the mouse for the UI and pass key releases	
+c98aa577b4bb8dd5c56ace1c60220e8293c6e16c	feat(sa-world): port 75 VEH/WORLD functions as unverified batches	
+c6aa8b9dc19a210e378fc7d93ec848a2778a2aea	feat(sa-veh): port 19 more VEH/WORLD functions as unverified batches	
+64663f151267a60182b4ceb47942e430a2558868	feat(sa-world): port NitrousControl, BreakObject_c and more (veh4-1)	
+419315e328be6a58606b10b6a5f47f13418d2f9e	feat(sa-veh): port heli/boat render, quad controls and more (veh4-2)	
+b4d726cc0bae0f0c2be960c617989ec6563170dc	docs(samp): describe the SA:MP UI input lock	
+079d060eef7c35425d6feba55e501e121fff6db1	chore(catalog): regenerate exclusions, generated hooks and the queue	
+90afa23e00262b2988d26b1ac46d1e3fb0f132e9	fix(sa-samp): free the old glyph atlas raster on font size changes	
+31c1a281e99576152cee4b022293f90782ee0351	docs(samp): record native step 5 progress and pin samp-rs fb89010	
+d6d8ecd8c6acfb76e11385ac0c04f90015bc95b8	refactor(sa-veh): merge PORT-VEH-3/4's keycell readers with ours	PORT-VEH-3
+35ef39b088238fbc470902208790c3ff0daefea7	fix(sa-audio): register QueueUpTracksForStation natively	STD-14
+4f4804166b6be24d3c4894cc905b7697285d7c38	feat(sa-veh): port vehicle control inputs, drive-by and helpers (veh4)	
+50fa6af814cb98631b608bc2aabc94bc8b456b3f	feat(sa-game): show server chat, dialogs and game text in the SA:MP UI	
+8764b4d52ad1318d99e8a35144fe8e948af29434	refactor(sa-veh): keep one registration per address across the lanes	STD-13,WRITER-NATIVE,WRITER-ATTR,WRITER-SAMP,PORT-VEH-3,WRITER-WORLD
+6b6d50485e95a634bfa0098306380cec074c700d	docs(samp): record native chat and the 32-bit X library need	
+7f7af765908640154a36d47de32034372dc37b43	feat(sa-world): port NitrousControl, BreakObject_c and more (veh4-1)	
+6c771f75cb759c5e4bf2874b15299089c0440395	feat(sa-veh): port heli/boat render, quad controls and more (veh4-2)	
+bc843646fe5836d753d111151b17c33d874bcf3d	feat(sa-veh): port vehicle control inputs, drive-by and helpers (veh4)	
+604dd1bb16e334c12b8f0a0803d2923741a63945	feat(sa-samp-ui): add the engine-drawn SA:MP UI state and layout	
+65ca23743b6479f2c8c76bd1b5f52aae0ae07e3a	feat(sa-samp-ui): draw the SA:MP UI through the engine	
+1297ca1515aef1cf86ba8c1c1f94d5a320e99800	feat(sa-game): route platform input through the SA:MP UI	
+30ceba86551be00ccfd2465a46b0ddf01f395fa0	docs(samp): document the engine-drawn SA:MP overlay	
+c2fa13b85df28aeab655c48063b958c5f58ca8f5	feat(sa-samp-ui): draw sprite textdraws through CTxdStore	
+64bffdcdb22851a79a509ddc31c3b75aacb0970e	feat(sa-samp-ui): add UI options, nametag rules and a chat scrollbar	
+16f53456c0ac61208acde21347f12896fded74bb	feat(sa-samp-ui): draw the SA:MP UI at Present and add chat bubbles	
+7260c6e10ebb8af0e1c2fc8b3651aba8646ce772	feat(sa-samp-ui): lock the mouse for the UI and pass key releases	
+d4b4ef1c299c08ed5160bc6c1dc8dc120ec37126	docs(samp): describe the SA:MP UI input lock	
+134f0d7963e737f50c2c66210c4fd91fc73b0a65	fix(sa-samp): free the old glyph atlas raster on font size changes	
+5895c4e7f5ecb2095a43ffe1a7a7fb0c21308b2c	refactor(sa-veh): align with STD-14's settlement on duplicate ports	STD-14,PORT-VEH-3
+712dda30f203de512c1893fde7239c51d44b69e0	feat(sa-pop): route cruise-path missions through the UpdateCarAI port	
+3c9d958e3414fbcd783af4cf43f307de8811c0ae	fix(sa-ai): exclude three geometry bodies that drop cdecl arguments	AI-GEN
+add97e0dba7b41161d7c1faa7b3428a86c5b520d	fix(sa-ai): register PositionPedOutOfCollision natively	PORT-AI-3
+3d3e49dc6a2a4a7d1ba374478c933941094342d6	feat(sa-ai): port CEventLeaderEnteredCarAsDriver's destructor	STD-14
+b792d508424d4a0f8e5075df170d7df3058524dd	feat(sa-ai): port GoToCarDoorAndStandStill::ControlSubTask	STD-14
+4358cc5b6df286c0a2a5efc187fba5599b8b7e15	fix(sa-audio): register QueueUpTracksForStation natively	STD-14
+d0d29eeb436c6de2e52ac9f5b4677191dae84d2e	chore(sa-ai): rustfmt the STD-14 modules and add std14-ports.csv	STD-14
+fe9a0e5ef07920e5b61364804f4404985da3b0ea	chore(catalog): regenerate exclusions, generated hooks and the queue	
+3f2b6d7f21a087f99039d86b9f78e23d7db73df6	feat(sa-game): serve the game heap from the fixed region in window runs	
+382bdb1aea559246fd034644cce1f3f960f65597	feat(sa-ped): port IsPedPointerValid 0x5E8A30	
+24fca02401345030eeaef5b777327b864bf9376d	feat(sa-pop): port CCarCtrl's per-ped weave 0x426970	
+99c333a90ee45d4cf49772d4cfdaf00a4b36edfb	feat(sa-cam): port CIdleCam::ProcessSlerp	
+9ac74e5ef41ad20290f2e52454d0a83456eb2738	feat(sa-ai): port the CEventPassObject constructor	
+5b8e593cae23685b1679b796ddd920df712b1b3f	feat(sa-ai): port the CEventPassObject destructor and first sub-task	
+41c251932d7897ce5478fe33eb03dc9fcc5dc38f	feat(sa-ai): port ScanForNearbyEntities and PassObject::ControlSubTask	
+3ae759805c124b291fa3a8fd882de45c80815fb7	fix(sa-ai): register the fight attack choosers natively	PORT-AI-5,WRITER-SAMP
+9b7e8ab80f9ba757d9bc4da359997c4ee77c62b2	feat(sa-ped): port CPlayerPed::GetButtonSprintResults	
+911f640e48aefa136f68193cc644c021db6affd3	feat(sa-game): hold the left mouse button with SA_GAME_LMB	
+ae638b182d7f6f526b650a6d835db82cbd4c82e6	chore(sa-game): merge the --system-heap and SA_GAME_LMB help lines	
+b34c610dae180938e219b4df7714471779703abc	fix(sa-ai): declare two CPedAttractor orig results as f64 (ST0)	
+acffe572dcb33ff2d03e070aa2335d099c34ed56	feat(sa-ai): port CTaskSimpleSlideToCoord::ProcessPed	STD-14
+7e489a15d2dcb83b192df5fa162d1b57ffe2fd1a	feat(sa-samp-ui): draw dialogs, chat, scoreboard, cursor from the skin	
+7fee65b3a721307d439b35da1c4a85865fa2aebc	build(sa-game): add sa-samp-ui to the lock file	
+1960fec6eb035f2d8fc53474f05defc93c9ae72e	feat(sa-veh): port CVehicle::ProcessOpenDoor	STD-14
+9fce5a0896b748e44933154b5482914904b031c0	fix(sa-samp-ui): match samp's kill list, F7 order and GDI font sizes	
+a7e67120764ae68daff704e850707d74fd01a349	docs(arch): record ProcessOpenDoor, the car15 run and next gaps	
+a449ffb331e1032718a2397d256f7ecb83075367	docs(arch): record the line-up task size and the play-package refresh	
+23ee4454bd25c202311645b69244075e04266723	docs(samp): compare the SA:MP UI with the original and fix clippy	
+c55db68e5aed75e6fc146f60cc3ac8be526467da	fix(sa-core): drop two WRITER-SAMP natives registered twice	WRITER-SAMP
+b2ff491d5c26230f435a98319b54385e8b2ad9b6	feat(web): build sa-game for wasm32 with the legacy address arena	
+70d93babb8b21d5161baeabe53c975e2dc1dda2d	feat(web): run the web build in a browser worker	
+c7261b2379e5f61eb8fed7085d741d413470f780	feat(web): add loading progress, stack sampling and headless GPU options	
+2e6a8f918b29bd85fb034b05ebed4b6d722fc272	feat(web): reach the world in the browser with WebGL2	
+33a31c70e878aed32191e28a32c79b1c1e1b24ff	fix(web): zero the C heap, keep trap stacks and add platform.md 20	
+b5ded62f733a44f3120421fc87b477bbea2d6e5d	docs(arch): record CJ walking in the browser with a real W key	
+9351d5f213c32dff74ec84111e4786c86049075f	fix(web): end the iteration, not the session, on an unported callee	
+efac430166987190e7b245a876616d9942c26211	docs(arch): regenerate the platform MVP gap list	
+6d9cdfc8d6601c1932f03b92893c3c94c4c14f86	fix(web): rebase the web build on STD-14 and fix clippy	STD-14
+bf30f86ebe63df16752300ea21ede340ca83c49e	feat(web): run headless.mjs on the native GPU with --gpu native	
+f1dcf1d2192c15c49a1ee406f5574f1cbe4a9ed6	docs(arch): add platform.md 22 on the web build	STD-14
+72e98b6445edd2fa2efc6c1ac2fcf0c6a54040d2	feat(sa-ai): port the fists ground-target test and stare-at-ped Clone	
+18ca94a482aa78c0c812703e23c56bc9293ee705	feat(sa-ai): port stare-at-ped, jump sub-task and climb constructor	
+389dc50572103121496f768b06a73206f0bf7ee6	feat(sa-ai): port the fists strike damage and Fx_c::AddPunchImpact	
+32d433f1011da4503760c5724531aa6500628b6a	feat(sa-ai): port the CEventVehicleCollision constructor 0x4AC840	
+b6b814099ee75b4e201e343c4895f255709e2e55	feat(sa-ai): port ComputeClosestSurfacePoint and a smart-flee sub-task	
+f7ce6492d626a27ad191e53045df5fd204e8faac	feat(sa-ai): port the vehicle-collision event destructor body 0x4AE270	
+5a94b57cc4f80f98af51b252288f32a912254d67	feat(sa-ai): port CTaskSimpleJump::ProcessPed and StartLaunchAnim	
+a46da0b56b263dd8df26103af15f498cda10b178	test(sa-oracle): queue preserve-edx specs for STD-12's skid-value hooks	STD-12
+355a2ff26be0a3d06f7a916837f1fca2e68d2f3e	fix(web): seed the SA:MP serial from browser randomness	WEB-SAMP
+6903f0a01c5eff0f72d0d0f04984fa604c301728	fix(web): deliver input to the frames that read it and keep looping	
+154be4996f94f3f1abcad6dcff1239fbb9ebe4f9	docs(arch): record web input handling, picked natives and blockers	
+36d709cbb9d68a859ce0503ca8405e93caad59b0	docs(web): update the web README after WEB-2	WEB-2
+c492cb4e4a0023962e3dec463f2a0490e5af9a2b	feat(sa-ai): port CTaskSimpleJump::CheckIfJumpBlocked	
+7c69112e74ecfbb00bdaf9a38fc22833dc876742	feat(sa-ai): port CTaskSimpleJump::Launch	
+4685309b03c994c4b039125a1927838c2d51256f	fix(web): stub TestForClimb by default so a jump launches	
+c48beb956b0cb6f2145c470ab88b75dfe1269c34	docs(web): record the browser joining open.mp through sa-udp-proxy	WEB-SAMP
+cca6b5a1a0b5fd2cababc145bf13f07e360a6385	feat(sa-veh): port CStoredCar::RestoreCar and hideout car restore	
+9d305b81464e4f7ca59c7e521f647a6c764f6bbd	docs(arch): record the final web runs and the next blockers	
+5da91adae1e937e6cbe79097e33c9b73c19afb53	feat(sa-ai): port CTaskSimpleClimb::TestForClimb	
+6936087c63aba56bdd72badbbe86efe5740ce10d	feat(sa-cam): port CIdleCam::ProcessFOVZoom	
+af2ed4eaa5f693fec303507bedc81ec14a0c5435	feat(sa-ai): port CTaskComplexWander::ComputeTargetHeading	
+ee29f80d74ebfb97bf1891cebaab5b8c1f629b66	feat(sa-world): port CGarage::SlideDoorOpen and FindDoorsWithGarage	
+63fdf0e7c1c3d6c1d3d29226a5c335565e7f4cad	feat(sa-ai): port CPedGeometryAnalyser::CanPedJumpObstacle	
+3da831847695783a1d8b4dcce6a72fb029d29fd7	fix(web): drop the ProcessFOVZoom stub now that it is ported	
+eae258352e732320324be350db4c61370410d9f5	feat(sa-ai): port CTaskSimpleClimb::ScanToGrab and its sector scan	
+8c92df63b419b1a31c5d862d3253925bd45031c6	fix(web): drop the TestForClimb stub now that ScanToGrab is ported	
+2c460985e35bf8b00c970581cb88e21f55a61ef8	feat(sa-ai): port climb StartAnim, TestForVault and TestForStandUp	
+7ea0db860650324e505e08a0e9ca269202401f46	feat(sa-cam): port CIdleCam::FinaliseIdleCamera	
+c8d8c565b6f10410a341b0ad32fbcd42817e0f57	feat(sa-veh): port CVehicle::CanPedEnterCar 0x6D1E80	
+9f5e84b03024fdc2e88ecd32a115eff545b3366f	feat(sa-ai): port CTaskSimpleClimb::ProcessPed	
+94017b9e52d4effd59408bce52264b2073ea9aaf	feat(sa-render): pick WRITER-SAMP's FxInfo GetValue ports for the web	WRITER-SAMP
+5dadefc686272df0680be535be8f26cdcad4049f	test(e2e): add samp-start-ref.sh to record the original SA:MP startup	
+0dbe4704c38c30befd71a00f04a6c7d9ff313bbf	feat(sa-game): add the SA:MP startup scene and class selection in --samp	
+3881dab6a4fbf9a3bacd6cf7d8045c483bbef27e	feat(sa-game): toggle off logos, intro and main menu in samp mode	
+356457eaebad03af9cbfe8651f1f88f0e4b5c794	docs(verify): document the INTEGRATE-7 integration	INTEGRATE-7,VERIFIER-9
+14f4b7a3d46c24007c4bc4722d4790c5a3d298d5	chore(catalog): record the INTEGRATE-7 states	INTEGRATE-7
+55e5e24185808380363f0b3245f8f033471ca6fe	feat(web): spawn with Shift in class selection, port event destructors	
+9a4a4418d1236fc872f63ab60de3ff895ffcbfa7	feat(sa-world): pick the GenerateAmbientPeds port instead of a page stub	
+4a3ac8326a0f23c11c8b1ecdece21101702518eb	fix(sa-game): count the SA:MP connect tick from the first game frame	
+f6c7b3fe3c9d3658b56ae81a8a874fd55182fc01	feat(sa-game): show samp's loading screen and splash in samp mode	
+ecb128cf2fbe29d75fb128f91de1eb29964c75ec	feat(sa-world): pick the interior manager batch world6-2 for the web	
+5b27ec1339b08cc179c7b6abae6718ab3ccc28ee	fix(sa-game): name the samp_saa served-entry type for clippy	
+c6a3713f5efb9a6258a8e7db0d9493b815525d41	docs(samp): document the samp.saa redirect and splash patches	
+1356caba80d6db6f96e39df693a3dbf6f9b6fd3b	fix(sa-world): drop module lines the world6-2 pick brought without files	
+156bca34bdb349aea7d4ef59106676dedcb8674a	feat(sa-ai): port the climb camera target and stick modifier	
+09987e179dcd4239152acc62ed11a649e5e0c5d0	feat(sa-world): port the garage car-blocks-door test 0x4494F0	
+17d80a5db9985f22c4d0c6717f2ab6588149693e	feat(sa-world): port CGarage::IsEntityTouching3D	
+aa33ce4e08d22972438fc8ceaa4d4f075c1d42ee	feat(sa-world): port CGarage::SlideDoorClosed	
+10b24ec272b58f817b26c3ae848793948f7f7df6	feat(sa-ai): port CTaskComplexFollowNodeRoute::CalcBlendRatio	
+3713e6ca4f5aaa3b7e2fc38b168ae5936f3e01ba	feat(sa-ai): port the fight hit-object 0x61D400	
+88a72154690134298c5a41e28a9f0dfd5cb64103	feat(sa-world): take WRITER-WORLD's CObject::ObjectDamage	WRITER-WORLD
+a8e10f2b6a7b9bff46675356419ffda21fefa77a	fix(sa-world): reach ArePathsLoaded through the registry in world6-2	
+33f6e81a12f103bca24d1e0a14ccf5acda3d6b22	feat(web): add full window and fullscreen with menu mouse input	
+85e1464ef50026eb5a8536af0a2455f58cd26e31	feat(web): add --menu-mouse and --window to headless.mjs	
+b2d609d0e3914772207e4362ae547013f8478750	feat(sa-world): port CGarage::StoreAndRemoveCarsForThisHideOut	
+3f76508d9a80a9992788a9b5c2d9995b1b5e3d78	feat(sa-ai): port the line-up-with-car task and door position helper	STD-15
+476280a5eea61d2b9c361a372228ec7dedcdb535	feat(sa-audio): port ProcessPlayerVehicleEngine	STD-15
+eab54a4bef9e79a9d7abce5f1d5bdfa804019098	fix(sa-game): release critical sections when a game thread panics	
+664e77a892c7ae66c07a12cf33192f52c19d2d9a	feat(sa-ai): port three geometry functions by hand	STD-15,AI-GEN
+9cb48ff8cc905e8da6b0973f690b955c211ba125	feat(sa-ai): port an event destructor and ChoosePolicePedOccupation	STD-15
+cd8aaddf13e7661a075f3b4fa923fbfaf42e473f	feat(sa-render): port CPostEffects::SpeedFX and DrawQuad	STD-15
+152f9687d6493d9f6ef7ab817fe92f773d550d47	feat(sa-render): port AddDebris, AddWheelGrass and the stunt-jump GetAt	STD-15
+572a1369c4e17c6895ce11a57119fc8f52779ed6	feat(sa-render): take WRITER-SAMP-2's CSkidmarks::RegisterOne	WRITER-SAMP-2
+5ed865f5a4acc92ad7ff43c391d7f5a8b41b4bd0	feat(sa-ai): port the CEventCarUpsideDown destructor body	STD-15
+04faa480d8f1a89a450d5e4b88b8e02a60816c19	feat(sa-render): port the colour FxInfo GetValue and register natives	STD-15
+ae38155984d7bb108c66b04ad65a97428bbada21	feat(sa-ai): port a car-exit destructor body and add std15-ports.csv	STD-15
+e612072cccfd2abc9ceb8d938409951e577fb047	feat(sa-input): port the CPad mouse-steering reader 0x540E80	STD-15
+db76dc81062287a75af0ce6bb8e958bf9eb18dc2	feat(sa-input): port the CPad mouse-steering reader 0x540F80	STD-15
+d1d5b7b01adf0b9f332ce688cf09dc33e2a78356	fix(sa-ai): fix STD-15 clippy findings	STD-15
+567c163b38bc7195f0b49d91a93117194e2e269c	refactor(sa-render): drop picked duplicates of two STD-15 ports	STD-15
+7125eff08a88ffde75af056968b11e79bc54a502	fix(sa-render): drop an unused ftol32 import	
+26c4b2bec56dd54073b2605da5df96ad3f394edc	fix(sa-game): read every shift word in class selection	
+61ae28ec18820ef961c373983c3af03a20c93e9d	feat(sa-game): read SA_SAMP_AUTO_SPAWN through crate::env	
+9e3323dbc64bab013061a8c9176fc6e4d553a524	feat(web): mix DirectSound into the page with cooperative audio threads	
+45033f96a6377b860419423fc246b104e4e4d431	feat(web): output audio through an AudioWorklet ring buffer	
+0bd8a6ea10c80ce7ebede9da5867babd0137c28c	docs(web): document full window, menu mouse and WEB-3 results	WEB-3
+f10a8428dfef8a6dd74e2412b65801fc48437f0d	test(sa-ai): fix sa-hook table tests for 0x4A6860, 0x4ADE90, 0x661570	
+421ba072029175f29fb1832dd5860c6a2c818653	docs(arch): document the browser audio output and its evidence	
+b239e888b5f536800d62a7d68c840c7d5aea1e80	docs(worklog): record the hand-off state and the unmerged branches	
+65557b1c26198ced331d15e629611186fabb6038	fix(catalog): keep one registration for RenderWeaponCB 0x733670	STD-10,SAMP-4
+9bb545a7c12ed844ff60b1697990b6c9d7e0f27d	fix(sa-veh): drop SAMP-4's phase B natives registered twice	SAMP-4
+907043d67d07963971e02082f4d0f24e350a69ea	test(sa-oracle): queue a preserve-edx spec for GetButtonSprintResults	WRITER-NATIVE
+f94f1ee36479c87d6498d24fdf628bcb160d8191	docs(verify): document the INTEGRATE-8 integration	INTEGRATE-8,WEB-3
+03e20313c33b9782b350a2d6aa43438b4814ef0b	docs: list the branches finished after the first hand-off note	
+c61e97813df51f0fc8499ae114a21741305d3b7d	test(catalog): record L1 evidence for 0x70FA70 and 0x6FD7C0	
+f320ebdb96931ea6c56ec9bcb2d7ffd00594319b	fix(tools): generate forwarders returning a void port's EAX as void	VERIFIER-10
+187403da6854ba154f6a8443b1dc4dc85708b5a9	test(catalog): promote 12 gen2 and 11 writero hooks	VERIFIER-10
+1d56be42417fbc485befe85b27a9faacea0a203a	fix(sa-audio): resume audio thread starts through the original sites	
+932ea486adba4f64206d2395c09101af1384d051	chore(catalog): record L3 status of 157 SA:MP-priority batches	
+63859ea59cf785e7d96d8bea6be16c639ffa87b1	test(catalog): promote 370 SA:MP-priority hooks	VERIFIER-11
+671bcb9bf0b0ff45fbce863745f4f62f2dd346a1	docs(verify): document the INTEGRATE-6 integration	INTEGRATE-6,PORT-AI-7,VERIFIER-10
+b68cfa93f2f15728132998e992b924d8e5143e19	docs(verify): record the INTEGRATE-6 rebase and all-ports check	INTEGRATE-7
+fd4a5a16fda4c56b825ccc57105292823d077a7c	chore(catalog): record the INTEGRATE-6 promotions	INTEGRATE-6
+cf78cf2e7fbbf4f5fb9dc0afed1b6f8693a0a9f0	docs: record INTEGRATE-8 and INTRO-1 in the hand-off note	INTEGRATE-8,INTRO-1
+6cd40a5d50e239927543e8e56c30eaeb9304feea	docs: add a README and a getting-started guide	
+d08cbd86ad908b285d8c6068762ba3fea6b22a8a	docs: give the exe's full SHA-256 in the getting-started guide	
+8d57ff7b5153ba0c573553cd331a6aaf1f6bfc25	feat(samp-rs): bring the SA:MP client into the repository as samp-rs/	
+f0d0851f752244340e03cbf5b4a3b70188227c45	build(samp-rs): take sa-samp-api and sa-net from this repository	
+e70899baf70c85089e34709a066c4c8855d679d8	fix(sa-samp): keep force_weather and drop the Unsupported stub	
+cb717f23b7cd80e57a44abe625b28397ed8eeb47	build(sa-game): take the samp-rs crates by path	
+dd815843e7fe49fb2fe04a25dfc539c46842540b	docs: point every document and script at samp-rs/ in this repository	
+c28e0198ae68a7f445ce3f378860aee8076e33f5	fix(tools): keep unverified hooks unverified until L1/L2/L3	
+30df2074b078fa0091daf9418d06f09c17a3a086	chore(catalog): regenerate the verification queue on the combined tree	
+7748bfe7585c55b9d496a953d99a9efeead216a0	docs(verify): document the INTEGRATE-9 integration	INTEGRATE-9,INTEGRATE-8
+d60bbee9327a0da90d91ad0e96e7dbd1aa9e72af	docs(worklog): record INTEGRATE-9	INTEGRATE-9
+5a169fd45b7a81538e46b01071c3b64232784e53	perf(web): shorten the audio output latency and measure the delay	
+5e86e431b15804590d2b444698e50745e414099a	feat(sa-game): set the 12:00 clock and serve samp main.scm in samp mode	
+89b3de9630225fe1c7f9d7be661bb95433e51188	feat(sa-samp): serve ped model and animation commands natively	
+0a5248ee512664b800f7fc0fc72f9ff3e6e46df0	fix(sa-ai): call the ported HasTaskSecondary from scripted task update	
+0dc4e04274f10a1ae8381668d0cc64b894fcf380	feat(web): serve a SA:MP client folder with --samp-dir	
+8081afeadb95c443b2a95cc26cec270a66162ec6	feat(sa-samp): play frontend-only mission sounds in one_off_sound	
+cf2ceeb38896718921eb70ae9f29aaa2a947c033	feat(sa-game): add the game clock runtime toggle for samp mode	
+d03bc0d51cee30e5ae4842ade508fe488f3fcf65	docs(samp): record class skin, arrow sounds and clock toggle as native	
+c9536706c82f0e4c5f287cb5e71d5c10cebf2098	feat(sa-samp): start hands-up, phone and car tasks for special actions	
+e13e9f181ac1f077a63227b70cbd3d10413f43d6	feat(web): pass a SA:MP client folder to serve.py with SAMP_DIR	
+09bc8f042b6137652c5e0637d69ec53fec4823b4	test(sa-samp): check the skin, animation and hands-up commands	
+b729fb207adc4c2d7fb747693aefac75c0ba51c7	feat(sa-veh): port CHeli::SearchLightCone	
+6e958fe30425943bbaaadfddf795991399261f24	feat(sa-game): serve samp's main.scm and script.img by default	
+7380f7f2640b90db2f5c04445baaaf8a526b330c	fix(sa-samp): load the weapon model before arming it like samp	
+2927a6125645cc10c3ad589903c2c81cb0f1fb33	fix(samp): move the sampcov class-selection camera to Grove Street	
+39f0c61e460355a8e9174f444d3692ad94f2bbe2	feat(web): default SAMP_DIR to re/samp/client when present	
+75a9e6beee77c4ac98e2c7952317a6c0c96cfa8e	chore(catalog): regenerate exclusions and the queue with SAMP-FX	SAMP-FX
+ed875a8b6dda9df2a7b216a7650a15924c864362	docs(verify): document the INTEGRATE-10 integration	INTEGRATE-10,SAMP-FX
+e52b9fcf41c2ebb1075714f0a599fc29204e665d	docs(worklog): record INTEGRATE-10	INTEGRATE-10
+a20be4992af801f9b28916ac4d1724de144fd8bf	docs(roadmap): add the mod compatibility objective	MOD-1
+0a592b0e05122120f658251b1019e3c47d321744	fix(sa-game): prefer an 8-bit UNORM surface format in --window	
+78a01a5578728de4b6936bf487f1132380b8b552	fix(sa-game): release the pointer in the menus in --window	
+63b156bd3e04a7fc7bf39f74bd5a43c3a6c3f8da	feat(sa-audio): port GetBeatInfo and GetTrackInfo	
+58a1c75b7f12e07183cca9efb82a624aa152c7fc	docs(roadmap): choose route A for mod compatibility	MOD-1
+722abe1710eea6899a2a1bf3203a701a1c83b3d9	feat(sa-audio): port CAEDataStream and replace vorbisfile.dll	
+2dbaa6c883ec30e642e63a92e15894a017c72494	feat(sa-game): resample the DirectSound mix with a windowed sinc	
+2502c61e29ab7476ed6f2ee78a6d198df0e73c70	fix(sa-audio): port CAEVorbisDecoder::GetStreamID	
+d041f1966e2ef392410c2576f14a78a5ebb484e5	fix(sa-game): keep audio streams closed on wasm32 unless enabled	
+de23768108084a45d9a195cdf05641c542e8c355	docs(arch): document the AUDIO-STREAM work	AUDIO-STREAM
+648a8fb85048964e7726e641d88c928b8243579d	fix(sa-ped): register ResetSprintEnergy with its key-cell reader	
+1aa93e5980e4b6ec915b88237c27673e944fc6b6	feat(sa-anim): port the ANPK branch of LoadAnimFile	
+36f308f262a721c0316c37e1a5d7c494990464fa	feat(sa-anim): port the skinned 3D velocity frame callback	
+cab6517352daf30e0bbec5ab75e65bcc053ed2ec	feat(sa-anim): port FrameUpdateCallBackCompressedSkinned	
+a4e56d4f1aa0bb138abf9ef4cdf74fddb293ac0b	feat(sa-anim): port the compressed skinned velocity frame callback	
+d57bd80bfb031323215c82a9d7cd089e8f6b79d3	feat(sa-anim): port the non-skinned 3D velocity frame callback	
+14da190fda3036992c77f1f36930b97c597fb60c	feat(sa-anim): port FrameUpdateCallBackCompressedNonSkinned	
+111fee7f93b7ced1ee645d610a203bd2e17ad51d	feat(sa-anim): port the compressed non-skinned velocity frame callback	
+6612b2ca375a8760d08f56687dd9ba75f59fdcb7	fix(sa-anim): allow indexed loops in the non-skinned frame callbacks	
+9dc8498d8a8449f51ccb5dd9427de1d425c7d7c5	feat(sa-ai): port CTaskComplexUseEffect::MakeAbortable	
+662679cc9ad19953606e8fd909d129357268fef0	feat(sa-ai): port the car-drive subclass destructor 0x63CE70	
+7ff4d4e0b223a2615e1f129fee50206b6317e237	feat(sa-script): port the LOCATE helpers and two ped/vehicle checks	SCRIPT-5
+f5e3feac92343d2551c8f17c2fc35c58acc0eae6	feat(sa-script): port GetPadState, GetAvailableSlot and more	SCRIPT-5
+c32097f857e867326237f1365d03ef9683b486bd	feat(sa-script): port route, phone and suppressed-model helpers	SCRIPT-5
+f164773bf47ee8afb737dbc2e4d4bbb5cfeb8705	feat(sa-script): port the CTaskSimpleTriggerLookAt constructor	SCRIPT-5
+f617f2cec47bf686b6f7200d820f9832cc00f634	feat(sa-script): port CTheScripts::CleanUpThisPed	SCRIPT-5
+ddadfafb5f544c70e60ae40c92eafc1ba6ede756	feat(sa-script): port five small script callees	SCRIPT-5
+ecc23dcde46ea466891a91ff99119738889656e9	feat(sa-script): port AddEventResponse and AddScriptEffectSystem	SCRIPT-5
+4d9346ec1f4cbe05d03e2a7f74b6ade685cd1160	feat(sa-script): port CTheScripts::RemoveScriptSearchLight	SCRIPT-5
+db11e2d2233a2fe3a4202da0cc90c9302a12f6ed	feat(sa-veh): port the automatic-seat CVehicle::AddPassenger	SCRIPT-5
+ca8fe925b9d4bd16ef88791035b4bbb30bb05b35	feat(sa-script): port CTheScripts::IsPedStopped	SCRIPT-5
+4d52557d03154ea419a1d4ea870056d4e2d90514	feat(sa-script): port StoreCarInNearestImpoundingGarage	SCRIPT-5
+9ef7928cf84cdf005f20d5dd7050b3bea1e62802	feat(sa-script): port TryToFreeUpWaterCreatures	SCRIPT-5
+db58e54c22f8ad6eb52c1e17e6075f89f68c6130	feat(sa-script): port the vtable constructor at 0x492F60	SCRIPT-5
+13f0cf362edcfc1593224640c41357b4b20540a2	chore(catalog): regenerate exclusions and the queue with three lanes	AUDIO-STREAM,INTRO-1,SCRIPT-5
+063f00873a53514b26955c0720af2bbcb88e67db	feat(sa-veh): port StartPlaybackRecordedCar for the police-car ride	
+a1b58e7b6607b652aa6702d735314c03f4cbe529	feat(sa-anim): port the non-skinned planar velocity frame callback	
+a07550888549a300ee3afdfca148cbb6bb300604	feat(sa-ai): port drive-to-point tests, evasive dive and conversation	
+f10905b2ba86cb0fcdc8c83ad963fe754c4c5f62	feat(sa-pop): port JoinCarWithRoadSystemGotoCoors and extend UpdateCarAI	
+85e5180bfbcc2c65edb81b688fca6057e7abc4e6	feat(sa-render): port CastShadowSectorList and the water rectangle layer	
+5a7473fdc002ece5bfcdfc831ed663777352047e	feat(sa-ped): port CreateDeadPedMoney and CPickups::CreateSomeMoney	
+6ce79fe53c9d25d437d49fda59aef2be7c6d6532	feat(sa-game): run audio threads cooperatively in deterministic mode	
+4f2a2eebde51a0457e42ef59a36f1ea5c19246f6	feat(sa-ai): port hassle, track-entity, flee and footstep tasks	
+91f460c1cbf12146416d044f18c65c6ffd4a68fa	chore(catalog): queue two preserve specs and regenerate the queue	
+9a98127ecaca2f840ca8dd7ac55e0b888c5ff67a	feat(sa-input): port the key-code font character FUN_00719360	
+6c5e2fd521f7d63552b531a4162b9d63753ff8bd	fix(sa-game): call the cooperative audio pass closure mutably on wasm32	
+0946ed8dcd03a96e0cfb75a6c8e5d88ad70dfeab	docs(verify): document INTRO-2 through the start of the BMX ride	INTRO-2
+1fa2bd6cb443170c48da4e227e49f48bb66fc9f8	chore(catalog): regenerate exclusions and the queue on master 58a1c75b	
+cf15f334bdcb285cfc4fd8856123fa7ae0cbb396	docs(verify): record INTRO-2's rebase onto 58a1c75b and verify-all	INTRO-2
+555c616aff7111cef0969151ee3b0b5434858f5b	docs(worklog): record INTRO-2's integration	INTRO-2
+0e66feb2b6b85207430ffe9eb9ee2747aa6fd6f6	fix(tools): count a doc comment as a port only when a fn follows it	
+a266cc61d079aae3fc8e33f51e6c7ae5ecfb220c	fix(sa-game): accumulate mouse motion until GetDeviceState reads it	
+4b8a01b9a1f5f7243d132a645fbc0c41728aecab	feat(sa-render): port ReInit for the native frame limiter toggle	FRAMELIMIT
+5460de1e6bd25c8a106cb2bef76a77d270405df5	docs(worklog): record FRAMELIMIT	FRAMELIMIT
+d4460426100f28a4d18f535b0c4b0cb5185b0906	chore(catalog): regenerate the verification queue with FRAMELIMIT	FRAMELIMIT
+8592d839d627ed9a9ce74253b7536c3d62b21d32	docs(worklog): record FRAMELIMIT's rebase and verify-all	FRAMELIMIT
+2ab733fe024b102bec7f21dff724bb7a0781638e	docs(worklog): record FRAMELIMIT's integration	FRAMELIMIT
+87c1b470a30df0df7c2a059611a7a5bda7085add	feat(sa-veh): port CVehicle::DoHeadLightReflectionSingle	
+ca5f89516ef567b3d5a666c18ddbe755258e18fe	feat(sa-ai): port car-jack drag-out tasks and add SA_GAME_JACK	CARJACK
+468af0325245c5aacb05cbe494e22040abf1606d	fix(sa-ai): match carjack hook names to the catalogue	CARJACK
+234db43ed5c2180cfd21fda993d802153744fe9c	feat(sa-ai): port the leave-car-and-flee task	
+4663d924fe4f94f13683c27a24960319ace3d50b	feat(sa-ai): port the kill-ped-on-foot base task and gang taunt	
+a7b38946ad0b569ecb9649ad08398a2ac59911d9	feat(sa-ai): port DestroyCar and DragPedFromCar sub-tasks	
+414413286f67b26d1944a9be00397c2235afaa7d	docs(worklog): record CARJACK	CARJACK
+cb79edf48eb8cd8e67189c72d28e8476ff9f5e93	feat(sa-ai): port destroy-car-armed, scream-in-car and open-door tasks	
+3aede2ded87acab354e273599e4f6e789d283100	feat(sa-ai): port DestroyCarArmed::CalculateSearchPositionAndRanges	
+436066d0e94ea5f8681dc3afd2667be8bbf48317	chore(catalog): regenerate the queue with carjack-1 and record evidence	CARJACK
+91e86966517576583323c8c0e5d2e86884998278	docs(worklog): record CARJACK's gates and verify-all	CARJACK
+ba14f5d7eecfa6674cce852cafdf6aba4fa7ea11	docs(worklog): record CARJACK's integration and a ledger entry	CARJACK
+13103babb563488f0373d7e4762f27e17cca4fa3	feat(sa-samp-ui): add the class-selection panel and a trilinear skin	
+8d003fe5b563c92c80229d69e467aba08d8ce452	feat(sa-game): act on class-selection panel clicks	
+a08f44789c346c142e3955c08b35912e00da79f8	docs(samp): document the SA:MP class-selection panel	
+4f446863780e53f04b07dfb3eb193399dc21e59e	fix(sa-game): release the pointer while the SA:MP UI shows its cursor	
+90a18dff6f47b29db564009fb579143967e58604	docs(worklog): record SAMP-CLASSPANEL's integration	SAMP-CLASSPANEL
+4d08426a625ab3f76b38d66b7ef84eaf0ee83d96	feat(sa-game): teleport vehicles and list peds in exploration options	
+dc80ac3a324d5af5a1ce2b2a50093191ef1a61cb	feat(sa-ped): port CPed::KillPedWithCar and the ped-hit blockers	PEDHIT
+6f5f2d07fe3c28fd5719245880c83b6dafa60e03	chore(catalog): regenerate the verification queue with PEDHIT	PEDHIT
+4ee67c46290828f7ad40a1f67039869ea0f67fa9	test(e2e): merge KillPedWithCar branches and add the pedhit scenario	PEDHIT
+604ba3595e409d779081f24e41960dfbb70e3b1f	chore(catalog): regenerate the verification queue on the PEDHIT head	PEDHIT
+3e213b72c26685084b61cf95bb4914ccee2e734b	docs(worklog): record PEDHIT	PEDHIT
+d2bfa672e14cf5425eb778a91358e764901743af	chore(catalog): regenerate the queue on master ba14f5d7 with PEDHIT	PEDHIT
+e083f9bdc7c65bfa0bd6966a2c542ccbf00aac83	chore(catalog): regenerate the queue on master 90a18dff with PEDHIT	PEDHIT
+4776d188943483e2be40eab0dfb7622d4ead0dea	docs(worklog): record PEDHIT's rebase, gate and verify-all	PEDHIT
+4f558734b62c15e66b465d0bb4f173c2caa52bd5	fix(sa-game): fix the remaining clippy failures and regenerate the queue	
+4b47e7154f176c19498291bcbf7375a5ff3994c9	feat(sa-hud): port CMenuSystem::Initialise as a phase B native	NEWGAME
+10a5f212bc33ade3dd214a3b89e57980403d64a2	fix(sa-ai): reach the world again from New Game in the pause menu	NEWGAME
+509ef90bc7d28685251c0615cd16c6e45b2a6a0d	fix(sa-game): keep one esc arm in SA_GAME_KEYS and regenerate the queue	NEWGAME
+57adb1b7f8d9513f6cbaa03788692862731999bb	docs(worklog): record PEDHIT, the clippy clean-up and NEWGAME	PEDHIT,NEWGAME
+f70bec991977472eb87b5c2e64e5a2fa5d06505c	fix(sa-game): restore parse_args's wasm32 cfg	PEDHIT
+d500209b2060400a0f785c788bb240ec970384ac	fix(web): hand mouse motion and wheel to Session::iterate once	
+d58a9b7ea5881852c3635c77d834dd6b0dfe84b2	fix(web): pass Esc to the game when it releases the pointer lock	
+02c4a953d2d4f9b10a0779d3ea33264ce2b19c65	fix(web): treat the pause menu as a menu for pointer input	
+e82b38295b579493113380a2af561bba96ac1cbc	fix(web): capture the pointer again after leaving a menu	
+07cfbb936857f75f60725ec3c31f8329ad0a2a4b	refactor(sa-audio): use sa-core's string helpers in beat_info	
+6102d540bb4f36b2fe5de9bc73ecdd22ba1b6cd5	docs(roadmap): add the no-duplicate-code rule and DEDUP tasks	SAMP-UI-DEDUP,DEDUP-1
+7dafc63992ecd660afbf2623a4832ec36bccf9e7	docs(roadmap): make SAMP-UI-DEDUP one UI behind a renderer trait	SAMP-UI-DEDUP
+ad76c2bd540ce8335432afd8314800c8e94cb465	docs(arch): add ADR-003 on code architecture and patterns	ADR-003,DEDUP-1
+19af342745edd71b69a953382d20b6760937fda3	docs: add the sa-engine logo to the README	
+892cc7d9702dd852946d21830ccdaa2e479fa846	docs(roadmap): add FRONTIER-2 and the catalogue-state check	FRONTIER-2,DEDUP-1
+0ba4906fb9a0af1e7f7c2cc84348f1f6598d7710	docs: add the README front page, Makefile and GitHub templates	
+5127738c868c43cc60b1cd61cc2cbd8ed2e67bb2	docs(roadmap): keep the README current with structural changes	DEDUP-1,SAMP-UI-DEDUP
+20bfdd321889a7e9b62e621465ecac01197d2998	refactor(samp-rs): draw the UI through a backend trait	
+533c1a5a1bb5e50187f15fbad7d1890e40534bc5	refactor(sa-samp): add the engine backend and remove sa-samp-ui	
+385f4dfd5df44fc8a81aa0d9dfd549248f39abf7	build: update Cargo.lock for the samp-ui move	
+7e2da8b99131729db8abd7e119621f22dda662e6	fix(sa-samp): fix D3DX centring and symbol glyphs and add backend tests	
+1f3213a20bb7e44a73004ee8c53209bf11a54022	fix(samp-rs): take wall-clock time through web_time on wasm32	
+27d899520d3c2abac17fc75289b06e894c2f45ce	docs(worklog): record SAMP-UI-DEDUP's integration	SAMP-UI-DEDUP
+e397fa76c829c72fc4a7cdb20be36851bf488a63	feat(sa-world): port 10 WORLD functions as batch world6-1	
+ce1209557260bb048f0e3df5a11d3ebc8b30f64b	feat(sa-world): port 34 WORLD functions as batch world6-3	
+51f761948142b87ff9b055574720a89111f20017	feat(sa-world): port 11 WORLD functions as batch world6-4	
+8e2289242fc737b85c333a2cce26e006dbb60b60	feat(sa-world): port 4 WORLD functions as batch world6-5	
+4c5c83ca7860847b5f4daad07f7df12581d6a07a	feat(sa-weapon): port the SA:MP shooting path	WRITER-SAMP-2
+4a9d857f6c3fde7a9b142928d9f35e3bb2dc7773	feat(sa-render): port SA:MP-executed water, boat, effect and fight code	WRITER-SAMP-2
+652a1cab4d269e3573bcbeb01236de8f6014c033	fix(sa-render): finish the WRITER-WORLD-2 and WRITER-SAMP-2 integration	WRITER-WORLD-2,WRITER-SAMP-2
+ff64c850e2c933712510afb9a0cacf1cdaf4bebf	feat(tools): add frontier.py to rank unported reachable functions	
+3f9810e2144153c9efc9b4fa32e2f8b1099c2647	feat(sa-world): take BreakObject_c::DoCollision from WRITER-WORLD-2	WRITER-WORLD-2
+8c05af73e81f54181055a249e22a06009ae8c9c1	fix(sa-core): call register-convention originals through a RegFrame	
+8c92bd74fd4534842dd393faeb493430c8986b3a	feat(sa-ai): port prostitute, train crossing and bike-jacked tasks	FRONTIER-1
+1b3e492451278a7c3fb4ff97403e9fc9ef7f4d3c	feat(sa-ai): port the walk-into-fire and player-collision destructors	
+747e579667c3b624946ec71ca910718bdb82335e	feat(sa-ai): port melee kill tasks and IsSphereTouchingVehicle	FRONTIER-1
+5054ae23cb07f82234c16666b0417c82afb17248	chore(catalog): regenerate the queue, exclusions and gen_dtors	
+4e5ce1717516df973582fa47bf908b797c02f72d	feat(sa-ai): port FightHitPed, ComputePedShotSide and Fx_c::AddBlood	FRONTIER-1
+0b43e5ed1f3cb5d306386168ec8a7bd9e534eaef	fix(sa-math): fix clippy findings in SetBlendedMoveAnim and ci_acos	
+ef9f6fdcf460dfbee9f17f4382df420d04b6414b	chore(catalog): regenerate the queue with frontier-1-2	FRONTIER-1
+0b0ed2f218cd384aecce708e58373ef14fa9444c	test(e2e): sprint into Grove Street peds and punch in frontier.sh	PEDHIT
+00255eb79cfa52e8824703508284a4cb70d5f041	docs(worklog): record FRONTIER-1 and queue a preserved-ECX spec	FRONTIER-1
+9ff30303c69e877b3f51435e8707d41a2ca1a217	docs(worklog): record FRONTIER-1's gates, verify-all and repros	FRONTIER-1
+606b1434ff7522f61a7ea16476746ce287925305	docs(worklog): add a blank line before the FRONTIER-1 entry	FRONTIER-1
+ecc59c5b5b414a0c0d253e1f5b7a78b8a4f4338f	docs(worklog): record FRONTIER-1's integration	FRONTIER-1,FRONTIER-2
+bc608646c4dc0e1fb9b5be258f38a5016bf2f729	docs(roadmap): extend FRONTIER-2 to the partial ports' fallbacks	FRONTIER-2,ADR-002
+a38f3ba173dc65b95ab87ca489dfbfcf9c802f3b	docs(roadmap): add pointer compression for 64-bit targets to STD-3	STD-3
+2012ce4bed85994c4776c4d2830f38351368f8f0	feat(tools): add dupes.py to detect duplicated free functions	ADR-003
+37492d730cfdff3161bc49ab58e331dbb05f9210	refactor(sa-core): move shared helpers into their owning crates	DEDUP-1
+c3e619a259926f6e731c0ddcfed192adf8dd1255	refactor(sa-game): share one front end between window and browser	DEDUP-1
+81066f1f90742ccf0fc3fc68f1c7646903e0b372	refactor(tools): generate one orig! binding per original address	DEDUP-1
+b07ed0b76587a1b1914b92dd68077d45f45e53f4	docs(worklog): record DEDUP-1 pass 1	DEDUP-1
+3e761b124de579a1d0bfbd8140d225b3a89c6b57	docs(arch): add build flavours and memory to ADR-003	ADR-003,UNVERIFIED-WC
+11eece4d4960db6ac17da3af58bc49d7231d7ad8	refactor(tools): take one binding signature per original address	DEDUP-1
+7e89e5fcb6cab8afbd07ba24d51ca659ed91ba10	refactor(sa-ai): move the remaining orig! declarations onto bindings	DEDUP-1
+2637faf53f9891d75d019e398a731298c98cbd19	refactor(sa-game): move platform cfgs into platform/ backends	DEDUP-1
+541c46ea3ac0c62d721265a343813469e786fd64	refactor(sa-formats): retire the demo viewer stack	DEDUP-1
+21cf78a568a2a09aeb3769436e7cefe015ce7c8a	refactor(sa-core): share helpers and the build script	DEDUP-1
+74531a50a83e5d066a6e083a79f999f2d1781136	refactor(sa-core): merge more helpers by resolved meaning	DEDUP-1
+063033137bf5b36a8033fd9516ddd42e40b4487b	refactor(sa-hook): keep one copy of the hooks.rs test helpers	DEDUP-1
+498bf9b2a89a142e740406ee3aa6242711a330f8	build(tools): enforce ADR-003 in the writer gate	DEDUP-1,ADR-003
+825c2d099549f2a24e57d3bb3fc43dca71771be6	fix(sa-core): keep the registry's CRT stand-ins in phase B	DEDUP-1
+6a76af1f4070bcddc5c4849161c71d55edaedfb5	refactor(sa-oracle): use the CRT stand-ins in the L1 harness	DEDUP-1
+c372e77d32a05a010fc5f21353b3fa49a95ef26b	docs(worklog): record DEDUP-1 pass 2 integrated	DEDUP-1
+116968e32ecebdda7442d9e2967c95dbc5be2fea	fix(sa-veh): keep ECX and the unrounded dy in FindTyreNearestPoint	UNVERIFIED-WC
+d09c620a2e0652745ccec0324d5b76b47698f0d5	docs(roadmap): mark UNVERIFIED-WC done	UNVERIFIED-WC
+9b3a309513e614dfa533a4f1553fba270628fba7	feat(sa-ai): port user-hit blockers, window longs and partial ports	FRONTIER-2
+23785dc842845873bed08e682bbec9528d6751ce	feat(sa-render): port post-effect switches and police choices	FRONTIER-2
+509d947dddc87e3b2cf89078f4b78ec7a29e889a	docs(worklog): record FRONTIER-2 frontier2-2 verification	FRONTIER-2
+26b094e998c91114e01102704eb39e2303698f17	docs(worklog): record UNVERIFIED-WC and FRONTIER-2 part 1 integrated	UNVERIFIED-WC,FRONTIER-2
+11e8cd0fe1cc240faaf5c2495e0133d62f82b9e5	feat(sa-pop): port the police path of CCarAI::UpdateCarAI	FRONTIER-2
+6d209fd3c00626aad50cbae6ac46d3c53db7f8b4	feat(sa-render): port the IK point-arm chain and wheel particles	FRONTIER-2
+bd5ca91dfe31a518ccb4a7a232cfedfd5ed95402	chore(catalog): regenerate the queue for frontier2-3..5	FRONTIER-2
+1aff4f913ff48ece16f18e8439dc35b43e2433dc	docs(worklog): record FRONTIER-2 part 2 verification	FRONTIER-2
+11105949f47aa6fb9593f9cefb1e4f9288e9db00	docs(worklog): record FRONTIER-2 part 2 integrated	FRONTIER-2
+b1fff3fba1991ce26fb44bd203df0b51c5a5ff89	build(tools): enforce Conventional Commits messages	GIT-1
+03319d70a8ab32d01a220ca39edc03922ab96ca5	docs(roadmap): add GIT-1, Conventional Commits and the history rewrite	GIT-1

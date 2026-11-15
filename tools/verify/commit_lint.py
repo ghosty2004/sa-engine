@@ -3,6 +3,7 @@
 
     commit_lint.py --file MSGFILE        check one message (the commit-msg hook: .githooks/commit-msg)
     commit_lint.py --range BASE..HEAD    check every non-merge commit of a range (the writer gate's `commits` step)
+    commit_lint.py --range R --all       the same, also commits older than CUTOFF (used after the history rewrite)
 
 The format:
 
@@ -14,6 +15,10 @@ The format:
 
 Commits committed before CUTOFF (when the rule was introduced) are not checked by --range, so branches that were
 already in progress keep passing; the history rewrite (tools/git/rewrite_history.py) handles those.
+
+A message that carries an `Original-commit: <sha>` trailer was written by the history rewrite: its body is the
+original message kept verbatim (docs/history/README.md), so the body width rule does not apply to it; the subject
+and the blank line after it are still checked.
 """
 import argparse
 import re
@@ -24,6 +29,7 @@ TYPES = ("feat", "fix", "refactor", "perf", "test", "docs", "build", "ci", "chor
 SUBJECT = re.compile(r"^(?P<type>[a-z]+)(?:\((?P<scope>[a-z0-9][a-z0-9._/-]*)\))?(?P<bang>!)?: (?P<summary>\S.*)$")
 MAX_SUBJECT = 72
 MAX_BODY = 100
+ORIGINAL_TRAILER = re.compile(r"^Original-commit: [0-9a-f]{40}$", re.M)
 # 2026-11-15 08:12 +0200: the rule's introduction
 CUTOFF = 1794723141
 
@@ -51,7 +57,8 @@ def problems(msg: str) -> list[str]:
         out.append(f"subject is {len(subject)} characters (at most {MAX_SUBJECT})")
     if len(lines) > 1 and lines[1].strip():
         out.append("no blank line between the subject and the body")
-    for i, ln in enumerate(lines[2:], 3):
+    verbatim = ORIGINAL_TRAILER.search("\n".join(lines)) is not None
+    for i, ln in enumerate([] if verbatim else lines[2:], 3):
         if len(ln) > MAX_BODY and not re.match(r"^\s*(https?://|\S+$)", ln):
             out.append(f"body line {i} is {len(ln)} characters (at most {MAX_BODY})")
             break
@@ -67,6 +74,7 @@ def main() -> int:
     g = ap.add_mutually_exclusive_group(required=True)
     g.add_argument("--file")
     g.add_argument("--range")
+    ap.add_argument("--all", action="store_true", help="with --range: also check commits older than CUTOFF")
     a = ap.parse_args()
     if a.file:
         with open(a.file, encoding="utf-8") as f:
@@ -78,16 +86,19 @@ def main() -> int:
                   file=sys.stderr)
         return 1 if p else 0
     shas = git("rev-list", "--no-merges", "--reverse", a.range).split()
-    checked = bad = 0
+    checked = bad = older = 0
     for sha in shas:
         if int(git("show", "-s", "--format=%ct", sha)) < CUTOFF:
-            continue
+            older += 1
+            if not a.all:
+                continue
         checked += 1
         p = problems(git("show", "-s", "--format=%B", sha))
         if p:
             bad += 1
             print(f"FAIL {sha[:8]}: {'; '.join(p)}")
-    print(f"commits: {checked} checked in {a.range} ({len(shas) - checked} older than the rule), {bad} bad")
+    note = "checked too: --all" if a.all else "not checked"
+    print(f"commits: {checked} checked in {a.range} ({older} older than the rule, {note}), {bad} bad")
     return 1 if bad else 0
 
 
