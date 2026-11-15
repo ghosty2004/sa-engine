@@ -10,20 +10,23 @@ use sa_core::{hook, orig};
 use sa_math::fpu::{lt, st0};
 
 use crate::bindings::{
-    membership_count_members, ped_groups_get_peds_group, seek_entity_xy_offset_ctor, stand_still_dtor, stand_still_process_ped,
+    climb_test_for_climb, membership_count_members, ped_groups_get_peds_group, seek_entity_xy_offset_ctor, stand_still_dtor,
+    stand_still_process_ped,
     event_base_dtor, event_group_add, use_gun_ctor,
 };
 use sa_core::bindings::{
     get_weapon_info, matrix_set_scale, tm_get_task_secondary, tm_set_task_secondary, world_get_is_line_of_sight_clear,
 };
 use sa_core::crt::rand_at;
+use sa_stream::bindings::ped_is_player;
 use crate::common::*;
 use sa_core::bindings::ped_is_alive;
 use sa_world::bindings::{
     achieve_heading_ctor, enter_car_as_passenger_ctor, entity_clean_up_old_reference, entity_register_reference,
     leave_car_ctor, membership_get_leader, membership_get_member, pause_ctor,
     sequence_add_task, sequence_ctor, simple_car_drive_ctor, stand_still_ctor, turn_to_face_entity_ctor, vector_sub,
-    attractor_manager_has_empty_slot, get_ped_attractor_manager, go_to_point_and_stand_still_ctor, ik_look_at, matrix_dtor,
+    attractor_manager_has_empty_slot, get_ped_attractor_manager, get_task_swim, go_to_point_and_stand_still_ctor, ik_look_at,
+    matrix_dtor,
     ped_get_weapon_skill, weapon_is_type_melee,
 };
 use sa_world::world::common::{entity_pos, ped_active_weapon};
@@ -446,6 +449,118 @@ pub fn fall_to_death_calc_fall(ped: GPtr<u8>, dir: GPtr<i32>, fall_to_death: GPt
     0
 }
 
+/// `x == 0.0` after `fcomp; test ah, 44h; jp` (ordered equality).
+fn eq0(v: f32) -> bool {
+    !x(v).fcom(x(0.0)).test_parity(0x44)
+}
+
+/// `sqrt(dy^2 + dx^2)` of the swim target (+0x14) minus the ped's position, on the x87 stack (x first).
+fn swim_target_dist_2d(this: GPtr<u8>, ped: GPtr<u8>) -> X87 {
+    let p = entity_pos(ped).cast::<f32>();
+    let dx = x(rd::<f32>(this, 0x14)).fsub_m(p.read());
+    let dy = x(rd::<f32>(this, 0x18)).fsub_m(p.wrapping_index(1).read());
+    dy.fmul(dy).fadd(dx.fmul(dx)).fsqrt()
+}
+
+/// `CTaskSimpleSwim::ProcessControlAI(CPed* ped)` (0x689640, `ret 4`). Swim state (+0xA) 0. With a ped to follow
+/// (+0x20): the normalised direction to it (f32 stores, `CVector::Normalise`), the follow distance (+0x50, when 0.0:
+/// `(rand() & 3) * 0.5 + 1.5`, return address 0x6896B4) and the target (+0x14) = its position minus direction *
+/// distance. With a target other than (0, 0, 0): the aimed heading (+0x55C) = `atan2(-(dx), dy)` (FPATAN), and beyond
+/// 1.0 (0.5 for the player; 2D, FSQRT) state 1; then when the followed ped leads the ped's group (the flag kept in the
+/// argument slot) and swims in state 2, state 2 beyond 5.0 of the target (`VectorSub`, 2D); without that leader, state
+/// 2 when the speed (+0x10) is above 1.0 and the target beyond 2.0. A climb test every 128 frames (`(+0x20 byte +
+/// FrameCounter - 4) & 0x7F == 0`; `TestForClimb(ped, +0x3C, +0x48, +0x4C, true)` → state 5) runs when the followed
+/// ped is on the ground (+0x46C bit 0) and not +0x40 bit 8, or the ped has +0x478 bit 13, the followed ped not +0x40
+/// bit 8 (read through the pointer even when null, as the bytes) and the target within 1.0. +0x2C / +0x30 cleared;
+/// unless led or the player, a negative speed halves the ped's +0x4D8 / +0x4DC (0x8D2FF4).
+#[hook(addr = 0x689640, conv = thiscall, name = "CTaskSimpleSwim::ProcessControlAI", expect = "83 EC 28 56 8B F1 8B 46 20",
+       unverified = "frontier2-a8", route = "L2", hazards = "x87-transcendental")]
+pub fn swim_process_control_ai(this: GPtr<u8>, ped: GPtr<u8>) {
+    wr::<u16>(this, 0xA, 0);
+    let follow = rd::<GPtr<u8>>(this, 0x20);
+    if !follow.is_null() {
+        let (pp, tp) = (entity_pos(ped).cast::<f32>(), entity_pos(follow).cast::<f32>());
+        let d = |k: i32| x(tp.wrapping_index(k).read()).fsub_m(pp.wrapping_index(k).read()).to_f32();
+        let (dz, dy, dx) = (d(2), d(1), d(0));
+        let mut dir = [dx, dy, dz];
+        vector_normalise(GPtr::from_raw(dir.as_mut_ptr()).cast());
+        if eq0(rd::<f32>(this, 0x50)) {
+            let r = rand_at(0x6896B4) & 3;
+            wr::<f32>(this, 0x50, xi(r).fmul_m(g::<f32>(0x858B8C).read()).fadd_m(g::<f32>(0x858CE8).read()).to_f32());
+        }
+        let f = rd::<f32>(this, 0x50);
+        let ox = x(dir[0]).fmul_m(f).to_f32();
+        let oy = x(dir[1]).fmul_m(f).to_f32();
+        let oz = x(f).fmul_m(dir[2]);
+        let tp = entity_pos(rd::<GPtr<u8>>(this, 0x20)).cast::<f32>();
+        let tx = x(tp.read()).fsub_m(ox).to_f32();
+        let ty = x(tp.wrapping_index(1).read()).fsub_m(oy).to_f32();
+        let tz = x(tp.wrapping_index(2).read()).fsub(oz).to_f32();
+        wr::<f32>(this, 0x14, tx);
+        wr::<f32>(this, 0x18, ty);
+        wr::<f32>(this, 0x1C, tz);
+    }
+    let mut led = false;
+    if !(eq0(rd::<f32>(this, 0x14)) && eq0(rd::<f32>(this, 0x18)) && eq0(rd::<f32>(this, 0x1C))) {
+        let p = entity_pos(ped).cast::<f32>();
+        let dy = x(rd::<f32>(this, 0x18)).fsub_m(p.wrapping_index(1).read());
+        let dx = x(rd::<f32>(this, 0x14)).fsub_m(p.read());
+        wr::<f32>(ped, 0x55C, dx.fchs().fpatan(dy).to_f32());
+        let far = g::<f32>(0x870874).read();
+        let thr = if ped_is_player(ped) != 0 { g::<f32>(0x870878).read() } else { far };
+        if !swim_target_dist_2d(this, ped).fcom(x(thr)).test_any(0x41) {
+            wr::<u16>(this, 0xA, 1);
+            let follow = rd::<GPtr<u8>>(this, 0x20);
+            let grp = if follow.is_null() { 0 } else { ped_groups_get_peds_group(ped.addr() as u32) };
+            if grp != 0
+                && membership_get_leader(GPtr::from_addr(ped_groups_get_peds_group(ped.addr() as u32) as usize + 8))
+                    == rd::<GPtr<u8>>(this, 0x20)
+            {
+                led = true;
+                let leader = rd::<GPtr<u8>>(this, 0x20);
+                if !get_task_swim(rd::<GPtr<u8>>(leader, 0x47C)).is_null() {
+                    let ts = get_task_swim(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x20), 0x47C));
+                    if rd::<u16>(ts, 0xA) == 2 {
+                        let mut out = [0f32; 3];
+                        let o = vector_sub(GPtr::from_raw(out.as_mut_ptr()).cast(), this.byte_add(0x14), entity_pos(ped)).cast::<f32>();
+                        let (oy, ox) = (x(o.wrapping_index(1).read()), x(o.read()));
+                        let s = ox.fmul(ox).fadd(oy.fmul(oy)).fsqrt();
+                        if !s.fcom(x(g::<f32>(0x858C80).read())).test_any(0x41) {
+                            wr::<u16>(this, 0xA, 2);
+                        }
+                    }
+                }
+            } else if !x(rd::<f32>(this, 0x10)).fcom(x(g::<f32>(0x858624).read())).test_any(0x41)
+                && !swim_target_dist_2d(this, ped).fcom(x(g::<f32>(0x858CA0).read())).test_any(0x41)
+            {
+                wr::<u16>(this, 0xA, 2);
+            }
+        }
+    }
+    let follow = rd::<GPtr<u8>>(this, 0x20);
+    let on_ground = !follow.is_null() && rd::<u8>(follow, 0x46C) & 1 != 0 && rd::<u32>(follow, 0x40) & 0x100 == 0;
+    let climb = on_ground
+        || (rd::<u32>(ped, 0x478) & 0x2000 != 0
+            && rd::<u32>(follow, 0x40) & 0x100 == 0
+            && !swim_target_dist_2d(this, ped).fcom(x(g::<f32>(0x858624).read())).test_parity(5));
+    if climb
+        && (u32::from(rd::<u8>(ped, 0x20)).wrapping_add(g::<u32>(0xB7CB4C).read()).wrapping_sub(4)) & 0x7F == 0
+        && !climb_test_for_climb(ped, this.byte_add(0x3C), this.byte_add(0x48), this.byte_add(0x4C), 1).is_null()
+    {
+        wr::<u16>(this, 0xA, 5);
+    }
+    wr::<u32>(this, 0x30, 0);
+    wr::<u32>(this, 0x2C, 0);
+    if led || ped_is_player(ped) != 0 {
+        return;
+    }
+    if !x(rd::<f32>(this, 0x10)).fcom(x(0.0)).test_parity(5) {
+        let k = g::<f32>(0x8D2FF4).read();
+        wr::<f32>(ped, 0x4D8, x(k).fmul_m(rd::<f32>(ped, 0x4D8)).to_f32());
+        wr::<f32>(ped, 0x4DC, x(k).fmul_m(rd::<f32>(ped, 0x4DC)).to_f32());
+    }
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_FOLLOW_LEADER_IN_FORMATION_CREATE_SUB_TASK,
@@ -456,4 +571,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_BE_IN_SHOP_SCAN_FOR_STUFF,
     HOOK_USE_CLOSEST_FREE_SCRIPTED_ATTRACTOR_COMPUTE_CLOSEST_FREE_SCRIPTED_EFFECT,
     HOOK_FALL_TO_DEATH_CALC_FALL,
+    HOOK_SWIM_PROCESS_CONTROL_AI,
 ];
