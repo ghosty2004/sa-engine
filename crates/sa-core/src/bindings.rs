@@ -1615,12 +1615,12 @@ orig! {
 
 orig! {
     /// `COctTree` (0x5A6DB0)
-    pub fn oct_tree_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x5A6DB0 => unported;
+    pub fn oct_tree_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x5A6DB0 => crate::pools::oct_tree_ctor;
 }
 
 orig! {
     /// `FUN_005a7350` (0x5A7350)
-    pub fn oct_tree_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x5A7350 => unported;
+    pub fn oct_tree_pool_new(pool: GPtr<u8>) -> GPtr<u8> = thiscall 0x5A7350 => crate::pools::oct_tree_pool_new;
 }
 
 orig! {
@@ -1630,7 +1630,7 @@ orig! {
 
 orig! {
     /// `COctTree::RemoveChildren` (0x5A74F0)
-    pub fn oct_tree_remove_children(t: GPtr<u8>) = thiscall 0x5A74F0 => unported;
+    pub fn oct_tree_remove_children(this: GPtr<u8>) = thiscall 0x5A74F0 => crate::pools::oct_tree_remove_children;
 }
 
 orig! {

@@ -827,10 +827,10 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x5A1EE0,sa-core,object_new,cdecl,,size:u32,GPtr<u8>,unported,new,
 0x5A1EF0,sa-core,object_new_at,cdecl,,size:u32;pool_ref:i32,GPtr<u8>,unported,new,
 0x5A3EA0,sa-core,proc_object_man_init,thiscall,,m:GPtr<u8>,u8,unported,ProcObjectMan_c::Init,
-0x5A6DB0,sa-core,oct_tree_ctor,thiscall,,t:GPtr<u8>,GPtr<u8>,unported,COctTree,
-0x5A7350,sa-core,oct_tree_pool_new,thiscall,,pool:GPtr<u8>,GPtr<u8>,unported,FUN_005a7350,
+0x5A6DB0,sa-core,oct_tree_ctor,thiscall,,this:GPtr<u8>,GPtr<u8>,crate::pools::oct_tree_ctor,COctTree,
+0x5A7350,sa-core,oct_tree_pool_new,thiscall,,pool:GPtr<u8>,GPtr<u8>,crate::pools::oct_tree_pool_new,FUN_005a7350,
 0x5A7490,sa-core,oct_tree_deleting_dtor,thiscall,,this:u32;a0:u32,u32,crate::generated::generated_dtors::g_coct_tree_coct_tree_5a7490,COctTree::~COctTree,
-0x5A74F0,sa-core,oct_tree_remove_children,thiscall,,t:GPtr<u8>,,unported,COctTree::RemoveChildren,
+0x5A74F0,sa-core,oct_tree_remove_children,thiscall,,this:GPtr<u8>,,crate::pools::oct_tree_remove_children,COctTree::RemoveChildren,
 0x5A80D0,sa-core,clothes_init,cdecl,,,,unported,CClothes::Init,
 0x5A82C0,sa-core,clothes_rebuild_player,cdecl,,ped:GPtr<u8>;ignore_fat_and_muscle:u32,,unported,CClothes::RebuildPlayer,sa_ped::clothes::rebuild_player
 0x5A8390,sa-core,clothes_rebuild_player_if_needed,cdecl,,p:GPtr<u8>,,unported,CClothes::RebuildPlayerIfNeeded,

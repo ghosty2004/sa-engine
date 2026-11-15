@@ -1251,6 +1251,58 @@ pub fn oct_tree_fill_palette(this: GPtr<u8>, palette: GPtr<u8>) {
     }
 }
 
+/// `CPool<COctTree>::New()` (0x5A7350, thiscall; FRONTIER-2 lane C turn 5): the generic pool `New` (0x28-byte slots,
+/// the same bytes as `CPatrolRoutePool::New`).
+#[hook(addr = 0x5A7350, conv = thiscall, name = "FUN_005a7350", expect = "8B 51 08 56 32 C0", this = "CPool<int32>",
+       unverified = "frontier2-c11", route = "L2", hazards = "none")]
+pub fn oct_tree_pool_new(pool: GPtr<u8>) -> GPtr<u8> {
+    pool::pool_new::<QuadTreeNodeSlot>(pool.cast()).cast()
+}
+
+/// `COctTree::COctTree()` (0x5A6DB0, thiscall; FRONTIER-2 lane C turn 5): vtable 0x867170, +4 / +0x1C / +0x20 / +0x24 =
+/// 0, the eight child indices -1 (four dword stores from +0xA), leaf byte +8 = 0; returns `this`.
+#[hook(addr = 0x5A6DB0, conv = thiscall, name = "COctTree", expect = "8B C1 33 C9 C7 00 70 71 86 00",
+       unverified = "frontier2-c11", route = "L2", hazards = "none")]
+pub fn oct_tree_ctor(this: GPtr<u8>) -> GPtr<u8> {
+    use crate::field::wr;
+    wr::<u32>(this, 0, 0x867170);
+    wr::<u32>(this, 4, 0);
+    wr::<u32>(this, 0x1C, 0);
+    wr::<u32>(this, 0x20, 0);
+    wr::<u32>(this, 0x24, 0);
+    for k in 0..4isize {
+        wr::<u32>(this, 0xA + 4 * k, 0xFFFF_FFFF);
+    }
+    wr::<u8>(this, 8, 0);
+    this
+}
+
+/// `COctTree::RemoveChildren()` (0x5A74F0, thiscall; FRONTIER-2 lane C turn 5): each child index (int16 at +0xA + 2k)
+/// that is not negative: a used pool slot's node gets vtable 0x867170, is emptied (`COctTree::empty`) and returned to
+/// the pool inline (map byte |= 0x80, first free lowered); the index becomes -1.
+#[hook(addr = 0x5A74F0, conv = thiscall, name = "COctTree::RemoveChildren", expect = "53 56 57 8D 79 0A",
+       unverified = "frontier2-c11", route = "L2", hazards = "heap-writes")]
+pub fn oct_tree_remove_children(this: GPtr<u8>) {
+    use crate::field::{rd, wr};
+    let pool = GPtr::<u8>::from_addr(OCT_TREE_POOL);
+    for k in 0..8isize {
+        let child = rd::<i16>(this, 0xA + 2 * k);
+        if child < 0 {
+            continue;
+        }
+        let i = isize::from(child);
+        if (rd::<GPtr<u8>>(pool, 4).byte_add(i).read() as i8) >= 0 {
+            let node = rd::<GPtr<u8>>(pool, 0).byte_add(i * 0x28);
+            if !node.is_null() {
+                wr::<u32>(node, 0, 0x867170);
+                oct_tree_empty_o(node);
+                pool_delete_exact::<QuadTreeNodeSlot>(pool.cast(), node.cast());
+            }
+        }
+        wr::<i16>(this, 0xA + 2 * k, -1);
+    }
+}
+
 orig! {
     /// `COctTree::InsertTree(uint8, uint8, uint8)` through the node's vtable (slot 0)
     fn oct_tree_insert_tree_v(t: GPtr<u8>, r: u32, g: u32, b: u32) -> u8 = thiscall vslot 0x0 => unported;
@@ -1339,6 +1391,9 @@ pub const HOOKS: &[crate::abi::HookReg] = &[
     HOOK_OCT_TREE_DTOR,
     HOOK_OCT_TREE_FILL_PALETTE,
     HOOK_OCT_TREE_INSERT_TREE,
+    HOOK_OCT_TREE_POOL_NEW,
+    HOOK_OCT_TREE_CTOR,
+    HOOK_OCT_TREE_REMOVE_CHILDREN,
     HOOK_OBJECT_POOL_CREATE_AT_REF,
     HOOK_VEHICLE_POOL_CREATE_AT_REF,
     HOOK_ENTRY_INFO_NODE_OPERATOR_NEW,
