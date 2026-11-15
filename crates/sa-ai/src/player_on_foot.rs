@@ -986,7 +986,7 @@ orig! {
     /// `CPad::GetMeleeAttack(bool)` (0x540340, `ret 4`)
     fn pad_get_melee_attack(pad: GPtr<u8>, b: u32) -> u8 = thiscall 0x540340 => unported;
     /// `CPedIntelligence::TestForStealthKill(CPed*, bool)` (0x601E00, `ret 8`)
-    fn intel_test_for_stealth_kill(i: GPtr<u8>, target: GPtr<u8>, full: u32) -> u8 = thiscall 0x601E00 => unported;
+    fn intel_test_for_stealth_kill(i: GPtr<u8>, target: GPtr<u8>, full: u32) -> u8 = thiscall 0x601E00 => crate::frontier_a_t4::test_for_stealth_kill;
     /// `CTaskSimpleThrowProjectile::ControlThrow(bool, CEntity*, CVector*)` (0x61F810, `ret 0xC`)
     fn throw_control_throw(t: GPtr<u8>, b: u32, target: GPtr<u8>, pos: GPtr<u8>) -> u8 = thiscall 0x61F810 => unported;
     /// `CTaskSimpleThrowProjectile::CTaskSimpleThrowProjectile(CEntity*, CVector)` (0x61F660, `ret 0x10`)

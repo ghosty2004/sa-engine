@@ -20,6 +20,9 @@ use sa_core::crt::rand_at;
 use sa_math::fpu::{fbits, ftol32};
 use crate::bindings::{go_to_point_fine_ctor_b, ped_replace_weapon_when_exiting_vehicle};
 use sa_world::bindings::{follow_node_route_ctor, fx_kill, ped_audio_turn_off_jet_pack};
+use crate::bindings::history_get_current_event;
+use sa_core::bindings::{ped_get_bone_position, tm_get_active_task};
+use sa_world::bindings::{acquaintance_get, get_ped_flag, ped_groups_get_peds_group, vector_magnitude_sqr, vector_sub};
 use sa_core::bindings::vector_normalise;
 use crate::bindings::find_cover_points_behind_box_b;
 use sa_world::bindings::object_can_be_used_to_take_cover_behind;
@@ -769,8 +772,88 @@ pub fn track_entity_create_next_sub_task(this: GPtr<u8>, _ped: GPtr<u8>) -> GPtr
     follow_node_route_ctor(t, 6, pos, 0x3F00_0000, 0x3E4C_CCCD, g::<u32>(0x86FCA8).read(), 0, u32::MAX, 1)
 }
 
+orig! {
+    /// event virtual +0x28 (`GetSourceEntity`)
+    fn v_event_source(e: GPtr<u8>) -> u32 = thiscall vslot 0x28 => unported;
+}
+
+/// Whether the target ped knows the owner as a hater or a disliked one: acquaintance sets 4 and 3 (+0x4E0) against
+/// the owner's ped type flag.
+fn stealth_hates_owner(target: GPtr<u8>, owner: GPtr<u8>) -> bool {
+    let acq = target.addr() as u32 + 0x4E0;
+    if acquaintance_get(acq, 4) & get_ped_flag(rd::<i32>(owner, 0x598)) != 0 {
+        return true;
+    }
+    acquaintance_get(acq, 3) & get_ped_flag(rd::<i32>(owner, 0x598)) != 0
+}
+
+/// `CPedIntelligence::TestForStealthKill(CPed* target, bool quick)` (0x601E00, `ret 8`, AL): false for a target in a
+/// vehicle, with +0x46C bit 26, below 1.0 health (ordered) or whose head (bone 5) is below its position; true with
+/// `quick`. Else false when the target's state (+0x534) is 6 or more, it is farther than 2.5 from the owner (squared,
+/// ordered), the owner is not behind it (`dot(target - owner, forward) <= 0`, ordered), its active task is a
+/// kill-on-foot (0x3E8) of the owner, or it hates / dislikes the owner while its current event comes from the owner or
+/// its group's (+0x34) event does; else true.
+#[hook(addr = 0x601E00, conv = thiscall, name = "CPedIntelligence::TestForStealthKill", expect = "83 EC 18 53 56",
+       this = "CPedIntelligence", unverified = "frontier2-a7", route = "L2", hazards = "ax-al-return")]
+pub fn test_for_stealth_kill(this: GPtr<u8>, target: GPtr<u8>, quick: u32) -> u8 {
+    if rd::<u32>(target, 0x46C) & 0x100 != 0 {
+        return 0;
+    }
+    let mut bone = [0f32; 3];
+    ped_get_bone_position(target, GPtr::from_raw(bone.as_mut_ptr()).cast(), 5, 0);
+    if rd::<u32>(target, 0x46C) & 0x400_0000 != 0 {
+        return 0;
+    }
+    if !x(rd::<f32>(target, 0x540)).fcom(x(1.0)).test_parity(5) {
+        return 0;
+    }
+    let tm = rd::<GPtr<u8>>(target, 0x14);
+    if !x(bone[2]).fcom(x(rd::<f32>(entity_pos(target), 8))).test_parity(5) {
+        return 0;
+    }
+    if quick as u8 != 0 {
+        return 1;
+    }
+    if rd::<i32>(target, 0x534) >= 6 {
+        return 0;
+    }
+    let owner = rd::<GPtr<u8>>(this, 0);
+    let mut d = [0f32; 3];
+    vector_sub(GPtr::from_raw(d.as_mut_ptr()).cast(), entity_pos(target), entity_pos(owner));
+    let msq = vector_magnitude_sqr(GPtr::from_raw(d.as_mut_ptr()).cast());
+    let c = x(fbits(0x4020_0000));
+    if !c.fmul(c).fcom(msq).test_parity(5) {
+        return 0;
+    }
+    let dot = x(d[1]).fmul_m(rd::<f32>(tm, 0x14)).fadd(x(d[2]).fmul_m(rd::<f32>(tm, 0x18))).fadd(x(d[0]).fmul_m(rd::<f32>(tm, 0x10)));
+    if !dot.fcom(x(0.0)).test_parity(0x41) {
+        return 0;
+    }
+    let active = tm_get_active_task(rd::<GPtr<u8>>(target, 0x47C).byte_add(4));
+    if !active.is_null() && v_task_type(active) == 0x3E8 && rd::<GPtr<u8>>(active, 0x10) == owner {
+        return 0;
+    }
+    let hist = || rd::<GPtr<u8>>(target, 0x47C).byte_add(0x38);
+    if !history_get_current_event(hist()).is_null()
+        && v_event_source(history_get_current_event(hist())) == owner.addr() as u32
+        && stealth_hates_owner(target, owner)
+    {
+        return 0;
+    }
+    let grp = ped_groups_get_peds_group(target.addr() as u32);
+    if grp == 0 {
+        return 1;
+    }
+    let ev = rd::<GPtr<u8>>(GPtr::from_addr(grp as usize), 0x34);
+    if ev.is_null() || v_event_source(ev) != owner.addr() as u32 {
+        return 1;
+    }
+    u8::from(!stealth_hates_owner(target, owner))
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_TEST_FOR_STEALTH_KILL,
     HOOK_JET_PACK_MAKE_ABORTABLE,
     HOOK_TRACK_ENTITY_CREATE_NEXT_SUB_TASK,
     HOOK_FORMATION_DISTRIBUTE_DESTINATIONS_COVER_POINTS,
