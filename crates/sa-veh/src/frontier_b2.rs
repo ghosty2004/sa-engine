@@ -86,17 +86,18 @@ pub fn stuck_attempt_to_warp_vehicle(_this: GPtr<u8>, v: GPtr<u8>, origin: GPtr<
     let mut max = [x(o(0)).fadd_m(four).to_f32(), x(o(4)).fadd_m(four).to_f32(), x(o(8)).fadd_m(four).to_f32()];
     let mut min = [x(o(0)).fsub_m(four).to_f32(), x(o(4)).fsub_m(four).to_f32(), x(o(8)).fsub_m(four).to_f32()];
     let mut count = [0u16; 2];
+    let cp = GPtr::from_raw(count.as_mut_ptr());
     find_mission_entities_intersecting_cube(
         GPtr::from_raw(min.as_mut_ptr()).cast(),
         GPtr::from_raw(max.as_mut_ptr()).cast(),
-        GPtr::from_raw(count.as_mut_ptr()),
+        cp,
         2,
         0,
         1,
         1,
         1,
     );
-    if count[0] != 0 {
+    if cp.read() != 0 {
         return 0;
     }
     set_coords_of_script_car(v, rd(origin, 0), rd(origin, 4), rd(origin, 8), 1, 1);

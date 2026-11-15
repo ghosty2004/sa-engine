@@ -77,6 +77,7 @@ pub mod automobile_control;
 pub mod fire_truck;
 pub mod frontier_b;
 pub mod frontier_b2;
+pub mod frontier_b2_veh;
 pub mod automobile_wheels;
 pub mod automobile_damage;
 pub mod automobile_ai;

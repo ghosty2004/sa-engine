@@ -179,7 +179,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x63B7D0,sa-ai,steal_car_ctor,thiscall,,t:GPtr<u8>;veh:GPtr<u8>,GPtr<u8>,unported,CTaskComplexStealCar::Constructor,
 0x63B970,sa-ai,dtor_63b970,thiscall,,this:GPtr<u8>,,unported,CTaskComplexLeaveCar::~CTaskComplexLeaveCar,
 0x63BB60,sa-ai,leave_boat_ctor,thiscall,,t:GPtr<u8>;veh:u32;delay:u32,GPtr<u8>,unported,CTaskComplexLeaveBoat::Constructor,
-0x63BDD0,sa-ai,leave_car_and_wander_ctor,thiscall,,t:GPtr<u8>;veh:GPtr<u8>;a:u32;b:u32;c:u32,GPtr<u8>,unported,CTaskComplexLeaveCarAndWander::Constructor,
+0x63BDD0,sa-world,leave_car_and_wander_ctor,thiscall,,t:GPtr<u8>;veh:GPtr<u8>;a:u32;b:u32;c:u32,GPtr<u8>,unported,CTaskComplexLeaveCarAndWander::Constructor,sa_ai::gang6::leave_car_and_wander_ctor
 0x63C460,sa-ai,car_drive_dtor,thiscall,,t:GPtr<u8>,,unported,CTaskSimpleCarDrive::Destructor,
 0x63CA40,sa-ai,car_drive_dtor_63ca40,thiscall,,t:GPtr<u8>,,unported,CTaskComplexCarDrive::Destructor,
 0x63E040,sa-ai,create_sub_task_o_63e040,thiscall,,t:GPtr<u8>;ty:u32;ped:GPtr<u8>,GPtr<u8>,sa_ai::enter_car_sub_tasks::create_sub_task,CTaskComplexEnterCar::CreateSubTask,

@@ -263,7 +263,7 @@ pub(crate) fn sector_index(v: X87) -> i32 {
 }
 
 /// The sector rectangle the range scans visit (x0, y0, x1, y1), and the scan-code advance they do first.
-fn scan_rect(pos: GPtr<u8>, r: f32) -> (i32, i32, i32, i32) {
+pub(crate) fn scan_rect(pos: GPtr<u8>, r: f32) -> (i32, i32, i32, i32) {
     let x0 = sector_index(x(rd::<f32>(pos, 0)).fsub_m(r));
     let y0 = sector_index(x(rd::<f32>(pos, 4)).fsub_m(r));
     let x1 = sector_index(x(r).fadd_m(rd::<f32>(pos, 0)));

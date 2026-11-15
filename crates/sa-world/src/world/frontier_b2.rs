@@ -9,7 +9,7 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
 use super::common::{entity_pos, g, placeable_heading, rd, wr, x};
-use super::mvpb_world::{advance_scan_code, cell, sector_index};
+use super::mvpb_world::{advance_scan_code, cell, scan_rect, sector_index};
 use super::mvpd_w1::replay_trigger_playback;
 use super::mvpd_w4::{game_logic_restore_player_stuff, game_logic_sort_out_streaming_and_memory, pad_stop_shaking};
 use crate::bindings::{
@@ -669,8 +669,90 @@ pub fn shopping_restore_vehicle_mods() {
     }
 }
 
+orig! {
+    /// `CWorld::CallOffChaseForAreaSectorListVehicles(list, x1, y1, x2, y2, minX, minY, maxX, maxY)` (0x563A80)
+    fn call_off_chase_for_area_sector_list_vehicles(list: GPtr<u8>, x1: f32, y1: f32, x2: f32, y2: f32, a: f32, b: f32, c: f32, d: f32) = cdecl 0x563A80 => unported;
+    /// `CWorld::CallOffChaseForAreaSectorListPeds(list, x1, y1, x2, y2, minX, minY, maxX, maxY)` (0x563D00)
+    fn call_off_chase_for_area_sector_list_peds(list: GPtr<u8>, x1: f32, y1: f32, x2: f32, y2: f32, a: f32, b: f32, c: f32, d: f32) = cdecl 0x563D00 => unported;
+}
+
+/// `CWorld::CallOffChaseForArea(float x1, float y1, float x2, float y2)` (0x566A60, cdecl): the rectangle grown by
+/// 10 (0x85862C; `x1 - 10`, `y1 - 10`, `x2 + 10`, `y2 + 10`), its sector rectangle, the scan code advanced; per
+/// repeat sector (y outer, x inner, not clamped) the vehicle list then the ped list through the sector-list
+/// functions with the original and the grown corners. Kept original detail: a loop value lives in the caller's `y2`
+/// argument slot (not modelled).
+#[hook(addr = 0x566A60, conv = cdecl, name = "CWorld::CallOffChaseForArea", expect = "83 EC 20 D9 44 24 24",
+       unverified = "frontier2-b7", route = "L2", hazards = "none",
+       note = "overwrites its own (caller-owned) y2 argument slot with a loop value")]
+pub fn world_call_off_chase_for_area(x1: f32, y1: f32, x2: f32, y2: f32) {
+    let ten = g::<f32>(0x85_862C).read();
+    let a = x(x1).fsub_m(ten).to_f32();
+    let c = x(x2).fadd_m(ten).to_f32();
+    let b = x(y1).fsub_m(ten).to_f32();
+    let d = x(y2).fadd_m(ten).to_f32();
+    let sx0 = sector_index(x(a));
+    let sy0 = sector_index(x(b));
+    let sx1 = sector_index(x(c));
+    let sy1 = sector_index(x(d));
+    advance_scan_code();
+    for ys in sy0..=sy1 {
+        for xs in sx0..=sx1 {
+            let rep = GPtr::<u8>::from_addr(0xB9_92B8 + 12 * (((ys & 0xF) << 4) + (xs & 0xF)) as usize);
+            call_off_chase_for_area_sector_list_vehicles(rep, x1, y1, x2, y2, a, b, c, d);
+            call_off_chase_for_area_sector_list_peds(rep.byte_add(4), x1, y1, x2, y2, a, b, c, d);
+        }
+    }
+}
+
+orig! {
+    /// `CWorld::FindNearestObjectOfTypeSectorList(model, list, pos, radius, b2D, CEntity** nearest, float* dist)`
+    /// (0x565450)
+    fn find_nearest_object_of_type_sector_list(model: i32, list: GPtr<u8>, pos: GPtr<u8>, r: f32, two_d: u32, nearest: GPtr<u8>, dist: GPtr<u8>) = cdecl 0x565450 => unported;
+}
+
+/// `CWorld::FindNearestObjectOfType(int32 model, const CVector& pos, float radius, bool b2D, bool buildings, bool
+/// vehicles, bool peds, bool objects, bool dummies)` (0x5693F0, cdecl): the sector rectangle of `pos ± radius`, the
+/// scan code advanced; the nearest distance starts at the radius (kept in the caller's `pos` argument slot, not
+/// modelled), the result at null; per cell (y outer, x inner) the selected lists (sector buildings +0, repeat-sector
+/// vehicles / peds / objects, sector dummies +4, the sector clamped to 0..119) through
+/// `FindNearestObjectOfTypeSectorList`. Returns the nearest entity.
+#[hook(addr = 0x5693F0, conv = cdecl, name = "CWorld::FindNearestObjectOfType", expect = "83 EC 24 53 55 56 57",
+       unverified = "frontier2-b7", route = "L2", hazards = "none",
+       note = "the nearest distance lives in the caller's pos argument slot")]
+#[allow(clippy::too_many_arguments)]
+pub fn world_find_nearest_object_of_type(model: i32, pos: GPtr<u8>, r: f32, two_d: u32, b: u32, v: u32, p: u32, o: u32, d: u32) -> GPtr<u8> {
+    let (x0, y0, x1, y1) = scan_rect(pos, r);
+    let mut dist = [r];
+    let mut found = [0u32];
+    let dp = GPtr::from_raw(dist.as_mut_ptr()).cast::<u8>();
+    let fp = GPtr::from_raw(found.as_mut_ptr()).cast::<u8>();
+    for ys in y0..=y1 {
+        for xs in x0..=x1 {
+            let (sector, rep) = cell(xs, ys);
+            if b as u8 != 0 {
+                find_nearest_object_of_type_sector_list(model, sector, pos, r, two_d, fp, dp);
+            }
+            if v as u8 != 0 {
+                find_nearest_object_of_type_sector_list(model, rep, pos, r, two_d, fp, dp);
+            }
+            if p as u8 != 0 {
+                find_nearest_object_of_type_sector_list(model, rep.byte_add(4), pos, r, two_d, fp, dp);
+            }
+            if o as u8 != 0 {
+                find_nearest_object_of_type_sector_list(model, rep.byte_add(8), pos, r, two_d, fp, dp);
+            }
+            if d as u8 != 0 {
+                find_nearest_object_of_type_sector_list(model, sector.byte_add(4), pos, r, two_d, fp, dp);
+            }
+        }
+    }
+    rd::<GPtr<u8>>(fp, 0)
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_WORLD_FIND_NEAREST_OBJECT_OF_TYPE,
+    HOOK_WORLD_CALL_OFF_CHASE_FOR_AREA,
     HOOK_SHOPPING_STORE_VEHICLE_MODS,
     HOOK_SHOPPING_RESTORE_VEHICLE_MODS,
     HOOK_WORLD_FIND_MISSION_ENTITIES_INTERSECTING_CUBE,

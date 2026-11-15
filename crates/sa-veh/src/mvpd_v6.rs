@@ -18,7 +18,7 @@ use sa_world::bindings::get_special_col_model;
 use sa_world::bindings::max_f;
 orig! {
     /// `CPad::HornJustDown()` (0x53FF30)
-    fn horn_just_down(p: GPtr<u8>) -> u8 = thiscall 0x53FF30 => unported;
+    pub fn horn_just_down(p: GPtr<u8>) -> u8 = thiscall 0x53FF30 => unported;
     /// `CPad::GetHydraulicJump()` (0x53FF70)
     fn get_hydraulic_jump(p: GPtr<u8>) -> u8 = thiscall 0x53FF70 => unported;
 }

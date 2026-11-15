@@ -980,7 +980,7 @@ orig! {
 
 orig! {
     /// `CTaskComplexLeaveCarAndWander::Constructor` (0x63BDD0)
-    pub fn leave_car_and_wander_ctor(t: GPtr<u8>, veh: GPtr<u8>, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x63BDD0 => unported;
+    pub fn leave_car_and_wander_ctor(t: GPtr<u8>, veh: GPtr<u8>, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x63BDD0 => crate::gang6::leave_car_and_wander_ctor;
 }
 
 orig! {
