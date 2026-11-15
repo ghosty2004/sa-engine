@@ -117,8 +117,32 @@ pub fn birds_handle_gun_shot(start: GPtr<u8>, end: GPtr<u8>) {
     }
 }
 
+/// `CShadows::RemoveOilInArea(float x1, float x2, float y1, float y2)` (0x7074F0; FRONTIER-2 lane B): every permanent
+/// shadow (0x38 bytes from 0xC4AC08; type byte +0x2E) of type 8 or 4 whose position (+0x28, +0x2C) lies strictly
+/// inside `(x1, x2) × (y1, y2)` (NaN outside) gets type 0.
+#[hook(addr = 0x7074F0, conv = cdecl, name = "CShadows::RemoveOilInArea", expect = "B9 34 AC C4 00",
+       unverified = "frontier2-b1", route = "L2", hazards = "none")]
+pub fn shadows_remove_oil_in_area(x1: f32, x2: f32, y1: f32, y2: f32) {
+    use sa_math::fpu::x as xf;
+    let mut p = 0xC4_AC34usize;
+    while p < 0xC4_B6B4 {
+        let s = gp::<u8>(p);
+        let t = rd::<u8>(s, 0x2E);
+        if (t == 8 || t == 4)
+            && !xf(rd::<f32>(s, -4)).fcom(xf(x1)).test_any(0x41)
+            && !xf(rd::<f32>(s, -4)).fcom(xf(x2)).test_parity(5)
+            && !xf(rd::<f32>(s, 0)).fcom(xf(y1)).test_any(0x41)
+            && !xf(rd::<f32>(s, 0)).fcom(xf(y2)).test_parity(5)
+        {
+            wr::<u8>(s, 0x2E, 0);
+        }
+        p += 0x38;
+    }
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_SHADOWS_REMOVE_OIL_IN_AREA,
     HOOK_SHADOWS_RENDER_INDICATOR_SHADOW,
     HOOK_SHADOWS_GUN_SHOT_SETS_OIL_ON_FIRE,
     HOOK_BIRDS_HANDLE_GUN_SHOT,

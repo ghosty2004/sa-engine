@@ -155,6 +155,9 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::proc_objects::HOOKS,
     // FRONTIER-2
     crate::posteffects_switches::HOOKS,
+    // FRONTIER-2 lane B
+    crate::fx_lifecycle::HOOKS,
+    crate::posteffects_filters::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

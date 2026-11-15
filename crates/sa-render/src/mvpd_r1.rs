@@ -281,6 +281,34 @@ pub fn update_clump(this: GPtr<u8>, clump: GPtr<u8>) -> GPtr<u8> {
     rd::<GPtr<u8>>(this, 0)
 }
 
+/// `CShadowCamera::Update(RpAtomic*)` (0x705C80, thiscall, `ret 4`; FRONTIER-2 lane B): as the clump form, but the
+/// atomic's own geometry flags (+8) are masked with 0xFFFFFF03 while its render callback (+0x48) is set to
+/// `AtomicDefaultRenderCallBack` (0x7491C0) and that callback is called directly; the old callback is put back (null:
+/// the default). Returns the RwCamera.
+#[hook(addr = 0x705C80, conv = thiscall, name = "CShadowCamera::Update-Atomic", this = "CShadowCamera", expect = "51 B0 FF 53 88 44 24 04",
+       unverified = "frontier2-b1", route = "L2", hazards = "heap-writes",
+       note = "masks and restores the atomic's geometry flags (RW heap)")]
+pub fn update_atomic(this: GPtr<u8>, atomic: GPtr<u8>) -> GPtr<u8> {
+    let mut col: [u8; 4] = [0xFF, 0xFF, 0xFF, 0];
+    rw_camera_clear(rd::<GPtr<u8>>(this, 0), lp(&mut col), 3);
+    if !rw_camera_begin_update(rd::<GPtr<u8>>(this, 0)).is_null() {
+        let geom = rd::<GPtr<u8>>(atomic, 0x18);
+        let flags = rd::<u32>(geom, 8);
+        wr::<u32>(geom, 8, flags & 0xFFFF_FF03);
+        let cb = rd::<u32>(atomic, 0x48);
+        wr::<u32>(atomic, 0x48, 0x7491C0);
+        crate::bindings::atomic_default_render(atomic);
+        wr::<u32>(atomic, 0x48, cb);
+        if cb == 0 {
+            wr::<u32>(atomic, 0x48, 0x7491C0);
+        }
+        wr::<u32>(geom, 8, flags);
+        invert_raster_o(this);
+        rw_camera_end_update(rd::<GPtr<u8>>(this, 0));
+    }
+    rd::<GPtr<u8>>(this, 0)
+}
+
 /// `CShadowCamera::RasterResample(RwRaster* src)` (0x706070, thiscall, `ret 4`): NULL without a camera.
 /// Inside `RwCameraBeginUpdate`: (10,2), (11,1), (6,0), (9,2), (1,src), `Im2DRenderQuad(0, 0, w, w,
 /// nearZ, 1/nearPlane, 0.5/w)` with w the frame buffer width as f32 (used for both axes), (6,1),
@@ -1398,6 +1426,7 @@ pub fn render_extra_player_shadows() {
 }
 
 pub const HOOKS: &[HookReg] = &[
+    HOOK_UPDATE_ATOMIC,
     HOOK_RENDER_EXTRA_PLAYER_SHADOWS,
     HOOK_RENDER_STATIC_SHADOWS,
     HOOK_GENERATE_POLYS_FOR_STATIC_SHADOW_PORT,

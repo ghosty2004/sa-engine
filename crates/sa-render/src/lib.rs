@@ -162,3 +162,5 @@ pub mod water_wake_segment;
 pub mod fx_add_blood;
 pub mod proc_objects;
 pub mod posteffects_switches;
+pub mod fx_lifecycle;
+pub mod posteffects_filters;

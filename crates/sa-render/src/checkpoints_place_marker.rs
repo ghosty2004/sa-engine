@@ -130,4 +130,39 @@ pub fn checkpoints_place_marker(id: u32, ty: u32, pos: GPtr<f32>, dir: GPtr<f32>
 }
 
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_CHECKPOINTS_PLACE_MARKER];
+/// The checkpoint with `id` (+4), searched over the 32 slots (FRONTIER-2 lane B).
+fn find_checkpoint(id: u32) -> Option<GPtr<u8>> {
+    (0..32).map(cp).find(|c| rd::<u32>(*c, 4) == id)
+}
+
+/// `CCheckpoints::UpdatePos(uint32 id, CVector& pos)` (0x722900; FRONTIER-2 lane B): the checkpoint's x / y (+0x10,
+/// +0x14) = `pos`; its z (+0x18) = `pos.z` plus the stored +0x34 (f32 sum) for type 7, unchanged for type 8, else
+/// `pos.z`.
+#[hook(addr = 0x722900, conv = cdecl, name = "CCheckpoints::UpdatePos", expect = "8B 54 24 04 33 C0",
+       unverified = "frontier2-b1", route = "L2", hazards = "none")]
+pub fn checkpoints_update_pos(id: u32, pos: GPtr<u8>) {
+    let Some(c) = find_checkpoint(id) else { return };
+    wr::<u32>(c, 0x10, rd(pos, 0));
+    wr::<u32>(c, 0x14, rd(pos, 4));
+    let t = rd::<u16>(c, 0);
+    if t == 7 {
+        wr(c, 0x18, xf(rd::<f32>(c, 0x34)).fadd_m(rd(pos, 8)).to_f32());
+    } else if t != 8 {
+        wr::<u32>(c, 0x18, rd(pos, 8));
+    }
+}
+
+/// `CCheckpoints::SetHeading(uint32 id, float heading)` (0x722970; FRONTIER-2 lane B): the direction (+0x1C, +0x20)
+/// = `(cos a, sin a)` of `a = heading * 0.017453292` (x87 `fcos` / `fsin`), then `CVector::Normalise` of it (a tail
+/// jump).
+#[hook(addr = 0x722970, conv = cdecl, name = "CCheckpoints::SetHeading", expect = "8B 54 24 04 33 C9",
+       unverified = "frontier2-b1", route = "L2", hazards = "x87-transcendental")]
+pub fn checkpoints_set_heading(id: u32, heading: f32) {
+    let Some(c) = find_checkpoint(id) else { return };
+    let a = xf(heading).fmul_m(f32::from_bits(sa_core::field::gu::<u32>(0x8595EC).read()));
+    wr(c, 0x1C, a.fcos().to_f32());
+    wr(c, 0x20, a.fsin().to_f32());
+    vector_normalise(c.byte_add(0x1C).cast());
+}
+
+pub const HOOKS: &[HookReg] = &[HOOK_CHECKPOINTS_PLACE_MARKER, HOOK_CHECKPOINTS_UPDATE_POS, HOOK_CHECKPOINTS_SET_HEADING];

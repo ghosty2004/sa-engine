@@ -468,7 +468,7 @@ orig! {
     /// `CFileLoader::LoadClumpFile(RwStream*, uint32 model)` (0x5372D0)
     pub fn fl_load_clump_file(stream: GPtr<u8>, model: i32) -> u8 = cdecl 0x5372D0 => unported;
     /// `RpClumpGtaCancelStream()` (0x72E700)
-    pub fn rp_clump_gta_cancel_stream() = cdecl 0x72E700 => unported;
+    pub fn rp_clump_gta_cancel_stream() = cdecl 0x72E700 => crate::rw_gta_stream::rp_clump_gta_cancel_stream;
     // --- RenderWare (not ported)
     /// `_rwStreamInitialize(RwStream*, rwOwned, type, access, data)` (0x7EC810)
     pub fn rw_stream_initialize(s: GPtr<u8>, owned: i32, kind: i32, access: i32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EC810 => unported;

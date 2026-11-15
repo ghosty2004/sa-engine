@@ -93,6 +93,60 @@ pub fn emitter_add_particle(this: GPtr<u8>, pos: GPtr<u8>, a2: u32, a3: u32, a4:
     mdestroy(m1);
 }
 
+/// `FxEmitter_c::AddParticle(RwMatrix* mat, a2, a3, a4, float brightness, a6, a7)` (0x4A4050, thiscall, `ret
+/// 0x1C`; virtual; FRONTIER-2 lane B): the overload of 0x4A3EA0 that takes a whole matrix: m3 is set to the
+/// identity (flags +0xC `|= 0x20003`) and then overwritten by the 16 dwords of `*mat` (`rep movsd`) before
+/// `RwMatrixUpdate`; everything else as 0x4A3EA0.
+#[hook(addr = 0x4A4050, conv = thiscall, name = "FxEmitter_c::AddParticle_Reversed-", expect = "83 EC 70 53 55",
+       this = "FxEmitter_c", unverified = "frontier2-b1", route = "L2", hazards = "heap-writes",
+       note = "uses four pooled FX matrices; creates a particle")]
+#[allow(clippy::too_many_arguments)]
+pub fn emitter_add_particle_mat(this: GPtr<u8>, mat: GPtr<u8>, a2: u32, a3: u32, a4: u32, brightness: u32, a6: u32, a7: u32) {
+    let mut ei = [0u32; 0x20];
+    let eip = GPtr::from_raw(ei.as_mut_ptr()).cast::<u8>();
+    let sys = rd::<GPtr<u8>>(this, 8);
+    let bp = rd::<GPtr<u8>>(sys, 8);
+    let prim = rd::<GPtr<u8>>(this, 4);
+    process_emission_info(prim.byte_add(0x2C), 0, 0, rd::<u32>(bp, 0xC), u32::from(rd::<u8>(sys, 0x52)), eip);
+    let m1 = mcreate();
+    let m2 = mcreate();
+    let m3 = mcreate();
+    let flags = rd::<u32>(m3, 0xC);
+    for o in [0x10, 8, 4, 0x24, 0x20, 0x18, 0x38, 0x34, 0x30] {
+        wr::<u32>(m3, o, 0);
+    }
+    wr::<u32>(m3, 0xC, flags | 0x20003);
+    for o in [0x28, 0x14, 0] {
+        wr::<u32>(m3, o, 0x3F80_0000);
+    }
+    for o in 0..16isize {
+        wr::<u32>(m3, 4 * o, rd::<u32>(mat, 4 * o));
+    }
+    rw_matrix_update(m3);
+    let parent = rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 8), 0xC);
+    if parent.is_null() {
+        for o in 0..16isize {
+            wr::<u32>(m2, 4 * o, rd::<u32>(m3, 4 * o));
+        }
+    } else {
+        rw_matrix_multiply(m2, m3, parent);
+    }
+    let m4 = mcreate();
+    prim_bp_get_rw_matrix(rd::<GPtr<u8>>(this, 4), m4);
+    rw_matrix_multiply(m1, m4, m2);
+    mdestroy(m4);
+    let p = create_particle(this, eip, m1, GPtr::from_addr(a2 as usize), a3, GPtr::from_addr(a4 as usize), a6, a7);
+    if !p.is_null() {
+        let b = X87::from_f32(f32::from_bits(brightness));
+        if !b.fcom(X87::zero()).test_any(1) {
+            wr::<u8>(p, 0x36, ftol32(b.fmul_m(f32::from_bits(0x3F00_0000))) as u8);
+        }
+    }
+    mdestroy(m3);
+    mdestroy(m2);
+    mdestroy(m1);
+}
+
 pub use crate::bindings::update_particle;
 pub use sa_core::bindings::list_add_item;
 pub use sa_core::bindings::rw_v3d_normalize;
@@ -492,6 +546,7 @@ pub fn fx_render_add_tri(
 
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_EMITTER_ADD_PARTICLE_MAT,
     HOOK_FX_RENDER_ADD_TRI,
     HOOK_EMITTER_ADD_PARTICLE,
     HOOK_EMITTER_CREATE_PARTICLE,

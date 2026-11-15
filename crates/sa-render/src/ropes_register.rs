@@ -169,4 +169,21 @@ pub fn ropes_register_rope(
     1
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_ROPES_REGISTER_ROPE];
+/// `CRopes::IsCarriedByRope(CPhysical*)` (0x555F80, cdecl; FRONTIER-2 lane B): true (AL = 1) when an active rope
+/// (byte +0x325) holds the entity (+0x318); a null entity is never carried.
+#[hook(addr = 0x555F80, conv = cdecl, name = "CRopes::IsCarriedByRope", expect = "8B 4C 24 04 85 C9",
+       unverified = "frontier2-b1", route = "L2", hazards = "none")]
+pub fn ropes_is_carried_by_rope(e: u32) -> u8 {
+    if e == 0 {
+        return 0;
+    }
+    for i in 0..ROPE_COUNT {
+        let r = g::<u8>(ROPES + ROPE_SIZE * i);
+        if rd::<u8>(r, 0x325) != 0 && rd::<u32>(r, 0x318) == e {
+            return 1;
+        }
+    }
+    0
+}
+
+pub const HOOKS: &[HookReg] = &[HOOK_ROPES_REGISTER_ROPE, HOOK_ROPES_IS_CARRIED_BY_ROPE];

@@ -801,6 +801,44 @@ pub fn create_fx_system_bp(this: GPtr<u8>, bp_: GPtr<u8>, pos: GPtr<u8>, parent:
     sys
 }
 
+/// `FxManager_c::CreateFxSystem(FxSystemBP_c* bp, RwMatrix* m, RwMatrix* parent, bool ignoreBounds)` (0x4A95C0,
+/// thiscall, `ret 0x10`; FRONTIER-2 lane B): the matrix overload of 0x4A96B0 without the matrix pool: null bp or
+/// `ShouldCreate(bp, m, parent, ignoreBounds)` false → null; else `new(0x104)` + constructor (null stays null),
+/// `Init(bp, m, parent)`, `List_c::AddItem(this + 0xC, sys)`, the rate multiplier by `g_fx.GetFxQuality()` (0: 0.5,
+/// 1: 0.75, >= 2: 1.0, negative: none, asked up to three times); returns sys. (SEH frame not reproduced.)
+#[hook(addr = 0x4A95C0, conv = thiscall, name = "FxManager_c::CreateFxSystem-1", expect = "64 A1 00 00 00 00",
+       this = "FxManager_c", unverified = "frontier2-b1", route = "L2", hazards = "heap-writes",
+       note = "allocates an FxSystem_c")]
+pub fn create_fx_system_mat(this: GPtr<u8>, bp_: GPtr<u8>, m: GPtr<u8>, parent: GPtr<u8>, ignore: u32) -> GPtr<u8> {
+    if bp_.is_null() || should_create(this, bp_, m, parent, ignore) == 0 {
+        return GPtr::NULL;
+    }
+    let mut sys = operator_new(0x104);
+    if !sys.is_null() {
+        sys = system_ctor(sys);
+    }
+    system_init_call(sys, bp_, m, parent);
+    list_add_item(this.byte_add(0xC), sys);
+    let fx = GPtr::from_addr(G_FX);
+    if get_fx_quality(fx) as i32 == 0 {
+        system_set_rate_mult(sys, 0x3F00_0000);
+    } else if get_fx_quality(fx) as i32 == 1 {
+        system_set_rate_mult(sys, 0x3F40_0000);
+    } else if get_fx_quality(fx) as i32 >= 2 {
+        system_set_rate_mult(sys, 0x3F80_0000);
+    }
+    sys
+}
+
+/// `FxManager_c::CreateFxSystem(const char* name, RwMatrix* m, RwMatrix* parent, bool ignoreBounds)` (0x4A9BB0;
+/// FRONTIER-2 lane B): `CreateFxSystem(FindFxSystemBP(name), m, parent, ignoreBounds)` (the matrix overload).
+#[hook(addr = 0x4A9BB0, conv = thiscall, name = "FxManager_c::CreateFxSystem-2", expect = "8B 44 24 10 8B 54 24 08",
+       this = "FxManager_c", unverified = "frontier2-b1", route = "L2", hazards = "heap-writes")]
+pub fn create_fx_system_name_mat(this: GPtr<u8>, name: GPtr<u8>, m: GPtr<u8>, parent: GPtr<u8>, ignore: u32) -> GPtr<u8> {
+    let bp_ = crate::bindings::find_fx_system_bp(this, name);
+    create_fx_system_mat(this, bp_, m, parent, ignore)
+}
+
 /// `FxSystem_c::Init(FxSystemBP_c* bp, RwMatrix* local, RwMatrix* parent)` (0x4AA750, thiscall, `ret
 /// 0xC`, 1 in AL): +8 = bp, the 16 dwords of `local` → +0x10, +0xC = parent; +0x50 = 1, +0x51 = +0x52 =
 /// 0, +0x54 = 0, word +0x5C = 0, +0x5E = +0x60 = 1000, +0x68 .. +0x74 = 0, byte +0x62 = `(b & 0xFC) |
@@ -1227,6 +1265,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_INTERP_255_LOAD,
     HOOK_FX_INIT_STATIC_SYSTEMS,
     HOOK_CREATE_FX_SYSTEM_BP,
+    HOOK_CREATE_FX_SYSTEM_MAT,
+    HOOK_CREATE_FX_SYSTEM_NAME_MAT,
     HOOK_SYSTEM_INIT,
     HOOK_FX_CREATE_ENTITY_FX,
     HOOK_FX_ROTATE_VEC_INTO_VEC,

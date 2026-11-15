@@ -302,6 +302,17 @@ fn geometry_list_deinitialise(list: GPtr<PtrList>) -> GPtr<PtrList> {
     list
 }
 
+/// `RpClumpGtaCancelStream()` (0x72E700, cdecl; FRONTIER-2 lane B, batch `frontier2-b1`): the geometry list
+/// (0xC87B00) deinitialised (0x72E360, ESI = list), `_rwFrameListDeinitialize(0xC87AF4)`, then the frame count
+/// (0xC87AF8) = 0.
+#[hook(addr = 0x72E700, conv = cdecl, name = "RpClumpGtaCancelStream", expect = "56 BE 00 7B C8 00",
+       unverified = "frontier2-b1", route = "L2", hazards = "heap-writes")]
+pub fn rp_clump_gta_cancel_stream() {
+    geometry_list_deinitialise(GEOM_LIST.ptr());
+    rw_frame_list_deinitialize(GPtr::<PtrList>::cast::<u8>(FRAME_LIST.ptr()));
+    field::<i32, _>(FRAME_LIST.ptr(), 4).write(0);
+}
+
 /// `RpClumpGtaStreamRead1(stream)` (0x72E570, cdecl, AL).
 #[hook(addr = 0x72E570, conv = cdecl, name = "RpClumpGtaStreamRead1", expect = "83 EC 0C 56 8B 74 24 14")]
 pub fn rp_clump_gta_stream_read1(stream: GPtr<u8>) -> u8 {
@@ -491,6 +502,7 @@ pub const HOOKS: &[sa_core::abi::HookReg] = &[
     HOOK_GEOMETRY_LIST_STREAM_READ2,
     HOOK_RP_CLUMP_GTA_STREAM_READ1,
     HOOK_RP_CLUMP_GTA_STREAM_READ2,
+    HOOK_RP_CLUMP_GTA_CANCEL_STREAM,
     HOOK_RW_TEXTURE_GTA_STREAM_READ,
     HOOK_RW_TEX_DICTIONARY_GTA_STREAM_READ,
     HOOK_RW_TEX_DICTIONARY_GTA_STREAM_READ1,

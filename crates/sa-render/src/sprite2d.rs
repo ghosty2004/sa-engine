@@ -504,6 +504,20 @@ pub fn draw_rect_coloured(this: GPtr<u8>, r: GPtr<u8>, c: GPtr<u8>) {
     rw_render_state_set(RS_TEXTURERASTER, 0);
 }
 
+/// `CSprite2d::Draw(float x, float y, float w, float h, const CRGBA& c)` (0x7282C0, thiscall, `ret 0x14`; FRONTIER-2
+/// lane B): the rect `{left x, bottom y + h, right x + w, top y}` (sums stored as f32) drawn as 0x728350 does.
+#[hook(addr = 0x7282C0, conv = thiscall, name = "CSprite2d::Draw-ffffCRGBA", expect = "83 EC 10 8B 44 24 14",
+       this = "CSprite2d", unverified = "frontier2-b1", route = "L2", hazards = "none")]
+pub fn draw_xywh_coloured(this: GPtr<u8>, px: f32, py: f32, w: f32, h: f32, c: GPtr<u8>) {
+    let mut r = [px, sa_math::fpu::x(py).fadd_m(h).to_f32(), sa_math::fpu::x(px).fadd_m(w).to_f32(), py];
+    set_vertices_rect_call(GPtr::from_raw(r.as_mut_ptr()).cast(), c, c, c, c);
+    let tex = rd::<GPtr<u8>>(this, 0);
+    let raster = if tex.is_null() { 0 } else { rd::<u32>(tex, 0) };
+    rw_render_state_set(RS_TEXTURERASTER, raster);
+    rw_im2d_render_primitive(5, GPtr::from_addr(VERTICES), 4);
+    rw_render_state_set(RS_TEXTURERASTER, 0);
+}
+
 /// `CSprite2d::AddToBuffer(const CRect& r, const CRGBA& c, u1, v1, u2, v2, u3, v3, u4, v4)` (0x728200):
 /// the quad into `aRadiosityVertexBuffer[nextBufferVertex]` (`SetVertices` 0x727A00 with c four times),
 /// six indices `v, v+1, v+2, v+3, v, v+2` (u16, stored in the order +1, +0, +4, +2, +3, +5), vertex
@@ -670,6 +684,7 @@ pub fn draw_bar_chart(x: f32, y: f32, width: u32, height: u32, progress: f32, pr
 pub const HOOKS: &[HookReg] = &[
     HOOK_DRAW_BAR_CHART,
     HOOK_DRAW_RECT_COLOURED,
+    HOOK_DRAW_XYWH_COLOURED,
     HOOK_ADD_TO_BUFFER,
     HOOK_CONSTRUCTOR,
     HOOK_DELETE,
