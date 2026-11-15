@@ -80,6 +80,7 @@ use sa_world::bindings::intel_find_task_by_type as intel_find_task_by_type_ws;
 use sa_world::bindings::leave_car_ctor;
 use sa_world::bindings::node_eq as node_address_eq_420920;
 use sa_world::bindings::ped_say;
+use crate::bindings::fpr_get_last_waypoint;
 orig! {
     // ---- virtual slots ----
     /// `CTask::GetTaskType` (vtable +0x10)
@@ -174,9 +175,6 @@ orig! {
     fn cop_look_for_stolen_cop_cars_orig(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x66B290 => unported;
     /// `CTaskComplexWanderCop::LookForCriminals(CPed*)` (0x66B300, `ret 4`)
     fn cop_look_for_criminals_orig(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x66B300 => unported;
-
-    /// `CTaskComplexFollowPointRoute::GetLastWaypoint(CVector* out, CPed*)` (0x669340, `ret 8`)
-    fn fpr_get_last_waypoint(t: GPtr<u8>, out: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x669340 => unported;
     /// `CTaskComplexFollowPointRoute::GetNextWaypoint(CVector* out, CPed*)` (0x669420, `ret 8`)
     fn fpr_get_next_waypoint(t: GPtr<u8>, out: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x669420 => unported;
     /// `CTaskComplexFollowNodeRoute::GetNextWaypoint(CVector* out, CPed*)` (0x669980, `ret 8`)

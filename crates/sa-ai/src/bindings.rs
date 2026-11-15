@@ -1359,6 +1359,11 @@ orig! {
 }
 
 orig! {
+    /// `CTaskComplexFollowPointRoute::GetLastWaypoint` (0x669340)
+    pub fn fpr_get_last_waypoint(t: GPtr<u8>, out: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x669340 => unported;
+}
+
+orig! {
     /// `CTaskComplexFollowNodeRoute::GetLastWaypoint` (0x6698E0)
     pub fn fnr_get_last_waypoint(t: GPtr<u8>, out: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x6698E0 => unported;
 }

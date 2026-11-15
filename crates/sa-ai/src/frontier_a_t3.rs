@@ -7,7 +7,7 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-use crate::bindings::{get_group_id, group_intel_flush_tasks, task_simple_ctor, task_simple_dtor, tm_find_active_task_by_type};
+use crate::bindings::{get_group_id, go_to_point_fine_base_ratio, group_intel_flush_tasks, task_simple_ctor, task_simple_dtor, tm_find_active_task_by_type};
 use sa_core::bindings::{general_random_int_in_range, task_new};
 use sa_world::bindings::{crt_printf, dtor_6389f0 as sequence_dtor};
 use sa_world::bindings::{
@@ -29,6 +29,7 @@ use crate::bindings::group_intel_set_event_response_task;
 use crate::bindings::kill_ped_group_on_foot_ctor;
 use crate::bindings::kill_ped_group_on_foot_dtor;
 use crate::bindings::ped_do_we_have_weapon_available;
+use crate::bindings::fpr_get_last_waypoint;
 orig! {
     /// virtual `CTask::CreateFirstSubTask(CPed*)` of a complex task (vtable +0x24)
     fn v_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
@@ -341,9 +342,54 @@ pub fn kill_threats_random_group_allocate_tasks(this: GPtr<u8>, intel: GPtr<u8>)
     }
 }
 
+/// `CTaskComplexFollowPointRoute::CalcBlendRatio(CPed*, bool slowing)` (0x66E710, `ret 8`, ST0). The squared distance
+/// from the ped to the current point (+0x20 route, +0x24 index; slowing) or the last waypoint, against the slow-down
+/// (+0x2C) / speed-up (+0x30) distance squared: -1 at or beyond it, else `t` = their ratio clamped to [0, 1] and
+/// `m = f32((cos(t * pi) * 0.5 + 0.5) * (+0x34 slowing / +0x38))` (stored over the ped argument); the result is
+/// `BaseRatio(4)` when it exceeds `v = f32(BaseRatio(move state +0x14) - m)` (stored over `slowing`), else `v`.
+#[hook(addr = 0x66E710, conv = thiscall, name = "CTaskComplexFollowPointRoute::CalcBlendRatio", expect = "83 EC 0C 53 8A 5C 24 18",
+       unverified = "frontier2-a6", route = "L2", hazards = "x87-transcendental",
+       note = "FCOS; writes both argument slots")]
+pub fn follow_point_route_calc_blend_ratio(this: GPtr<u8>, ped: GPtr<u8>, slowing: u8) -> X87 {
+    let sqd = |a: GPtr<u8>, b: GPtr<u8>| {
+        let dx = x(rd::<f32>(a, 0)).fsub_m(rd::<f32>(b, 0));
+        let dy = x(rd::<f32>(a, 4)).fsub_m(rd::<f32>(b, 4));
+        let dz = x(rd::<f32>(a, 8)).fsub_m(rd::<f32>(b, 8));
+        dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx))
+    };
+    let (sq, r) = if slowing != 0 {
+        let pt = rd::<GPtr<u8>>(this, 0x20).byte_add(4 + rd::<i32>(this, 0x24) as isize * 12);
+        (sqd(pt, entity_pos(ped)), x(rd::<f32>(this, 0x2C)))
+    } else {
+        let pp = entity_pos(ped);
+        let mut wp = [0f32; 3];
+        let w = fpr_get_last_waypoint(this, vec3f_ptr(&mut wp), ped);
+        (sqd(pp, w), x(rd::<f32>(this, 0x30)))
+    };
+    let r2 = r.fmul(r);
+    if sq.fcom(r2).test_parity(5) {
+        return x(-1.0);
+    }
+    let mut t = sq.fdiv(r2);
+    if lt(t, X87::zero()) {
+        t = X87::zero();
+    } else if !t.fcom(X87::one()).test_any(0x41) {
+        t = X87::one();
+    }
+    let k = t.fmul_m(fbits(0x40490FDB)).fcos().fmul_m(0.5).fadd_m(0.5);
+    let m = k.fmul_m(rd::<f32>(this, if slowing != 0 { 0x34 } else { 0x38 })).to_f32();
+    let v = st0(go_to_point_fine_base_ratio(rd::<u32>(this, 0x14))).fsub_m(m).to_f32();
+    let b4 = st0(go_to_point_fine_base_ratio(4));
+    if !b4.fcom(x(v)).test_any(0x41) {
+        return b4;
+    }
+    x(v)
+}
+
 /// Registrations of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_ARREST_PED_CONTROL_SUB_TASK,
     HOOK_CALC_SOUND_LEVEL_INCREMENT,
     HOOK_KILL_THREATS_RANDOM_GROUP_ALLOCATE_TASKS,
+    HOOK_FOLLOW_POINT_ROUTE_CALC_BLEND_RATIO,
 ];

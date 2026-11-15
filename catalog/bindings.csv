@@ -257,6 +257,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x667CA0,sa-ai,goto_quit_ik,thiscall,,t:GPtr<u8>;ped:GPtr<u8>,,unported,CTaskSimpleGoTo::QuitIK,
 0x667CD0,sa-ai,go_to_point_ctor,thiscall,,t:GPtr<u8>;ms:u32;pos:GPtr<u8>;radius:u32;a:u8;b:u8,GPtr<u8>,sa_ai::walk::goto_point_ctor,CTaskSimpleGoToPoint::Constructor,
 0x668C70,sa-ai,go_to_point_shooting_ctor,thiscall,,t:GPtr<u8>;mode:u32;pos:GPtr<u32>;e:GPtr<u8>;ox:u32;oy:u32;oz:u32;a:u32;b:u32,GPtr<u8>,unported,CTaskComplexGoToPointShooting::Constructor,
+0x669340,sa-ai,fpr_get_last_waypoint,thiscall,,t:GPtr<u8>;out:GPtr<u8>;ped:GPtr<u8>,GPtr<u8>,unported,CTaskComplexFollowPointRoute::GetLastWaypoint,
 0x6698E0,sa-ai,fnr_get_last_waypoint,thiscall,,t:GPtr<u8>;out:GPtr<u8>;ped:GPtr<u8>,GPtr<u8>,unported,CTaskComplexFollowNodeRoute::GetLastWaypoint,
 0x669D20,sa-ai,dtor_669d20,thiscall,,this:GPtr<u8>,,unported,thunk_FUN_0040387c,
 0x66A100,sa-ai,avoid_other_ped_ctor,thiscall,,t:GPtr<u8>;ped:GPtr<u8>;target:GPtr<u8>;ms:u32,GPtr<u8>,unported,CTaskComplexAvoidOtherPedWhileWandering::Constructor,
