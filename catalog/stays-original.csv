@@ -1,0 +1,14 @@
+key,reason
+class:CAEAudioChannel,sound output: DirectSound buffer channels stay original (PORT-AUDIO scope; docs/arch/audio-port.md)
+class:CAEStaticChannel,sound output: DirectSound buffer channels stay original (PORT-AUDIO scope)
+class:CAEStreamingChannel,sound output: DirectSound streaming channel stays original (PORT-AUDIO scope)
+class:CAEStreamThread,sound output: the audio stream thread stays original (PORT-AUDIO scope)
+class:CAESmoothFadeThread,sound output: the smooth-fade thread stays original (PORT-AUDIO scope)
+class:CAEStreamingDecoder,decoding: the streaming decoder base stays original (PORT-AUDIO scope)
+class:CAEMFDecoder,decoding: Media Foundation decoder stays original (PORT-AUDIO scope)
+class:CAEWMADecoder,decoding: WMA decoder stays original (PORT-AUDIO scope)
+class:CAEWaveDecoder,decoding: WAV decoder stays original (PORT-AUDIO scope)
+class:CAEVorbisDecoder,decoding: Ogg Vorbis decoder stays original (PORT-AUDIO scope)
+class:CAEDataStream,decoding: the decoders' IStream data source (its IStream stubs included) stays original (PORT-AUDIO scope)
+class:vt_866db0,"OS networking: a Winsock client (socket / connect / send / closesocket through WS2_32 ordinals; the vtable-class slot names are guesses, not its methods), not a game port"
+0x4F11E0,"sound output: CAEStreamThread's destructor (DeleteCriticalSection(this + 0x38); tail of CAEAudioHardware::Destructor 0x4D83A0)"

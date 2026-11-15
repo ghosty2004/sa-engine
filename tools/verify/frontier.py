@@ -2,7 +2,7 @@
 """The phase B porting frontier: unported functions that already-ported code can reach.
 
 Usage: python3 -I tools/verify/frontier.py [--all] [--csv FILE] [--limit N] [--direct|--virtual|--imports|--partial]
-                                           [--no-branches]
+                                           [--no-branches] [--stays-original]
 
 Four lists (a native run "blocks" on any of them when it reaches it):
 
@@ -29,6 +29,10 @@ entries (crt.rs, rw_standin.rs, d3d9_shader.rs, com.rs, vorbisfile.rs). Excluded
 `cell` / `dyn` / `vslot` forms (imports, runtime pointers), excluded catalogue rows (subsystem X-*)
 and targets outside game `.text` 0x401000-0x857000 (the no-CD protection's code).
 
+Functions that stay original by design (`catalog/stays-original.csv`, read through tools/lib/stays_original.py:
+the audio decoders, data streams, channels and threads, ...) are not work: they are left out of the lists and
+counted in the summary line (`stays original N`); `--stays-original` lists them instead, with their reason.
+
 Addresses that another branch or agent worktree already registers (tools/gen/inflight.py: master,
 every worktree-agent-* branch, uncommitted agent worktrees) are marked with that branch and left out
 of the to-port list; `--all` lists them too. Never hand-port those: integrate the branch's port.
@@ -46,6 +50,8 @@ import sys
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 MAIN = ROOT.split('/.claude/worktrees/')[0]
 sys.path.insert(0, os.path.join(ROOT, 'tools', 'gen'))
+sys.path.insert(0, os.path.join(ROOT, 'tools', 'lib'))
+import stays_original  # noqa: E402
 
 HEX = r'0x[0-9A-Fa-f_]+'
 CONV = r'(?:cdecl|thiscall|stdcall|fastcall|reg\(\s*"[^"]*"\s*\))'
@@ -273,11 +279,18 @@ def main():
         import inflight
         where = inflight.elsewhere()
 
-    table = []
+    keep = stays_original.load()
+    table, original = [], []
     for a, kind in rows.items():
         st, pr = state.get(a, {}), proc.get(a, {})
         name = (st.get('name') or pr.get('name') or pr.get('gr_name') or pr.get('ghidra_name')
                 or ('?not-in-catalogue' if a not in proc else ''))
+        why = stays_original.reason(a, name, keep)
+        if why:
+            original.append(dict(kind=kind, address='0x%X' % a, name=name, subsystem=st.get('subsystem', ''),
+                                 state=st.get('state', ''), callers=len(callers.get(a, ())), uses=uses.get(a, 0),
+                                 elsewhere=why))
+            continue
         table.append(dict(kind=kind, address='0x%X' % a, name=name, subsystem=st.get('subsystem', ''),
                           state=st.get('state', ''), callers=len(callers.get(a, ())), uses=uses.get(a, 0),
                           elsewhere=where.get(a, '')))
@@ -294,15 +307,18 @@ def main():
                               state=st.get('state', ''), callers=len(callers.get(a, ())), uses=n, elsewhere=''))
     todo = [r for r in table if not r['elsewhere']]
     shown = table if show_all else todo
+    if '--stays-original' in args:
+        shown = sorted(original, key=lambda r: h(r['address']))
     counts = {}
     for r in table:
         k = (r['kind'] if r['kind'] in ('virtual', 'import', 'partial') else 'direct') + (
             '-elsewhere' if r['elsewhere'] else '')
         counts[k] = counts.get(k, 0) + 1
     print('# frontier: direct %d (+%d registered on other branches), virtual %d (+%d), imports %d, partial %d; '
-          'to port %d' % (counts.get('direct', 0), counts.get('direct-elsewhere', 0), counts.get('virtual', 0),
-                          counts.get('virtual-elsewhere', 0), counts.get('import', 0), counts.get('partial', 0),
-                          len(todo)))
+          'to port %d; stays original %d (catalog/stays-original.csv, not listed)' % (
+              counts.get('direct', 0), counts.get('direct-elsewhere', 0), counts.get('virtual', 0),
+              counts.get('virtual-elsewhere', 0), counts.get('import', 0), counts.get('partial', 0), len(todo),
+              len(original)))
     cols = ['kind', 'address', 'name', 'subsystem', 'state', 'callers', 'uses', 'elsewhere']
     if out_csv:
         with open(out_csv, 'w', newline='') as f:
@@ -312,7 +328,8 @@ def main():
     for r in shown[:limit]:
         print('%-7s %-9s %4d %3d  %-12s %-10s %s%s' % (
             r['kind'], r['address'], r['callers'], r['uses'], r['subsystem'], r['state'], r['name'],
-            ('  [on ' + r['elsewhere'] + ']') if r['elsewhere'] else ''))
+            ('  [' + ('stays original: ' if '--stays-original' in args else 'on ') + r['elsewhere'] + ']')
+            if r['elsewhere'] else ''))
 
 
 if __name__ == '__main__':

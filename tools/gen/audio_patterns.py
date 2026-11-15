@@ -7,10 +7,10 @@ rules and body-hash test); only the candidate set and the output location differ
 
 - candidates: catalogue subsystem AUDIO, plus the UNK rows `catalog/unk-classification-proposal.csv`
   assigns to AUDIO, minus every address already ported in `crates/*/src` (`#[hook(addr`), the
-  PORT-AUDIO-1 functions ported without a hook (`PORTED_UNHOOKED`), the out-of-scope classes (sound
-  output and decoding stay original in phase A: DirectSound channels, the stream thread, decoders,
-  data streams, the smooth-fade thread; `EXCLUDE_CLASS`) and `EXCLUDE_ADDR` (determinism-mode
-  hooks, patched OS call sites, `AudioLog10`);
+  PORT-AUDIO-1 functions ported without a hook (`PORTED_UNHOOKED`), the functions that stay original
+  by design (`catalog/stays-original.csv`: DirectSound channels, the stream thread, decoders, data
+  streams, the smooth-fade thread, the Winsock client) and `EXCLUDE_ADDR` (hand-ported
+  determinism-mode hooks, patched OS call sites, `AudioLog10`);
 - every function the interpreter executes completely is emitted, not only AI-GEN's named families: a
   body outside every family goes to `gen_bodies.rs` (family `body`);
 - output: `crates/sa-audio/src/gen_*.rs`, reports in `target/audio-gen/{report,rest}.tsv`.
@@ -33,15 +33,15 @@ A.FAMILY_FILE['body'] = 'gen_bodies'
 A.FILE_DOC['gen_bodies'] = ('bodies outside the named families that the interpreter executed completely\n'
                             '//! (forwarders, small dispatchers, field updates with calls)')
 
-# Sound output and decoding stay original in phase A (PORT-AUDIO scope).
-EXCLUDE_CLASS = re.compile(r'^(CAEAudioChannel|CAEStaticChannel|CAEStreamingChannel|CAEStreamThread|'
-                           r'CAE\w*Decoder|CAEDataStream\w*|CAESmoothFadeThread|CAEMFDecoder)$')
-# CAEAudioHardware::Service (determinism hook), the thread Starts (patched ResumeThread sites),
-# CAEAudioUtility::GetCurrentTimeInMS (patched QPC site), AudioLog10 (x87 fyl2x, waits for the X87 branch).
-# The user-track player (vt_866db0: Destructor 0x59CB70, Play 0x59CD50) decodes the player's own audio files and
-# 0x4F4620 writes the user-tracks file: sound decoding and OS file output stay original like the decoders
-# (catalog/state.csv: specified, "not-ported"; DEDUP-1 pass 2).
-EXCLUDE_ADDR = {0x4D9870, 0x4F11F0, 0x4EEA10, 0x4D9E80, 0x4D9E50, 0x59CB70, 0x59CD50, 0x4F4620}
+# Sound output, decoding and OS networking stay original by design: `catalog/stays-original.csv` (classes and
+# addresses, one list shared with tools/verify/frontier.py; tools/lib/stays_original.py).
+sys.path.insert(0, os.path.join(ROOT, 'tools', 'lib'))
+import stays_original  # noqa: E402
+STAYS_ORIGINAL = stays_original.load()
+# Generator-only exclusions, ported by hand: CAEAudioHardware::Service (determinism hook), the thread Starts
+# (patched ResumeThread sites), CAEAudioUtility::GetCurrentTimeInMS (patched QPC site), AudioLog10 (x87 fyl2x).
+# 0x4F4620 (a `std::vector<T*>::push_back`, catalog/state.csv "not-ported") stays out of the generated set.
+EXCLUDE_ADDR = {0x4D9870, 0x4F11F0, 0x4EEA10, 0x4D9E80, 0x4D9E50, 0x4F4620}
 # PORT-AUDIO-1 ports reached through orig! only (docs/arch/audio-port.md "Not hooked").
 PORTED_UNHOOKED = {0x4D9E10, 0x4E37B0, 0x4EF880, 0x4E44F0, 0x4E4600, 0x4F4FF0, 0x4F6000, 0x4F5F30,
                    0x4F5D00, 0x4F5C60, 0x4F60B0, 0x4F6150, 0x4F51F0, 0x4F53D0, 0x4FA0C0, 0x4F8DF0}
@@ -109,7 +109,7 @@ def main():
             continue
         if a in SKIP:
             continue
-        if EXCLUDE_CLASS.match(A.cls_of(name)):
+        if stays_original.reason(a, name, STAYS_ORIGINAL):
             continue
         cand.append((a, name))
     gens, rest, seen = {}, [], set()
