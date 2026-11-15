@@ -45,7 +45,7 @@ use sa_world::bindings::clump_get_association;
 use sa_anim::bindings::clump_is_initialized;
 use crate::bindings::get_proper_index_from_index_used_by_script as get_proper_index;
 use sa_world::bindings::object_get_ref_;
-use crate::bindings::set_coords_of_script_car;
+use sa_pop::bindings::set_coords_of_script_car;
 use sa_world::bindings::set_entity_blip;
 use crate::bindings::start_playback_recorded_car;
 use sa_core::bindings::crt_strncpy as strncpy_;

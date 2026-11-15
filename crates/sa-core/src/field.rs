@@ -295,3 +295,19 @@ pub fn copy_dwords(dst: GPtr<u8>, src: GPtr<u8>, n: isize) {
 pub fn rdata_one() -> f32 {
     g::<f32>(0x858624).read()
 }
+
+/// The inlined MSVC `strcmp(a, b) == 0`: the two C strings compared byte by byte up to the first difference or
+/// the terminator.
+pub fn c_str_eq(a: GPtr<u8>, b: GPtr<u8>) -> bool {
+    let mut i = 0isize;
+    loop {
+        let c = a.byte_add(i).read();
+        if c != b.byte_add(i).read() {
+            return false;
+        }
+        if c == 0 {
+            return true;
+        }
+        i += 1;
+    }
+}

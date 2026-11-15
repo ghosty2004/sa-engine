@@ -48,7 +48,7 @@ use sa_world::bindings::clear_space_for_mission_entity;
 use crate::bindings::get_new_unique_script_thing_index;
 use crate::bindings::get_proper_index_from_index_used_by_script as get_proper_index;
 use crate::bindings::physical_45afb0 as set_turn_speed;
-use crate::bindings::remove_vehicle_upgrade;
+use sa_world::bindings::remove_vehicle_upgrade;
 use crate::bindings::task_drive_point_route_ctor;
 use sa_core::bindings::crt_strncpy as strncpy_;
 use sa_core::bindings::rgba_ctor;

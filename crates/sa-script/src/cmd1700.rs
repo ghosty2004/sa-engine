@@ -32,7 +32,7 @@ const USED_OBJECT_ARRAY_RULE_BASE: u32 = 0xA44B88;
 use crate::bindings::disable_random_trains;
 use crate::bindings::release_mission_trains;
 use crate::bindings::remove_script_checkpoint;
-use crate::bindings::remove_vehicle_upgrade;
+use sa_world::bindings::remove_vehicle_upgrade;
 use sa_stream::bindings::has_vehicle_upgrade_loaded;
 use sa_stream::bindings::request_vehicle_upgrade;
 use sa_world::bindings::get_actual_script_thing_index;

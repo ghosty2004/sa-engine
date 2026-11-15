@@ -21,7 +21,7 @@ pub use crate::bindings::automobile_destructor;
 pub use crate::bindings::automobile_process_control;
 pub use crate::bindings::bouncing_panel_set_panel;
 pub use sa_world::bindings::dm_set_door_status as set_door_status;
-pub use sa_pop::bindings::dm_set_wheel_status as set_wheel_status;
+pub use sa_world::bindings::dm_set_wheel_status as set_wheel_status;
 pub use crate::bindings::vehicle_delete;
 pub use crate::bindings::vehicle_render;
 pub use sa_core::bindings::crt_free as free;

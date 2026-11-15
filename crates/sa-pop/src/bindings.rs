@@ -174,6 +174,11 @@ orig! {
 }
 
 orig! {
+    /// `CCarCtrl::SetCoordsOfScriptCar` (0x4342A0)
+    pub fn set_coords_of_script_car(v: GPtr<u8>, x: u32, y: u32, z: u32, a: u32, b: u32) = cdecl 0x4342A0 => unported;
+}
+
+orig! {
     /// `CCarCtrl::FindMaximumSpeedForThisCarInTraffic` (0x434400)
     pub fn find_maximum_speed_call(v: GPtr<u8>) -> f64 = cdecl 0x434400 => crate::carctrl3::find_maximum_speed_abi;
 }

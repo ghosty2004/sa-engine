@@ -13,7 +13,7 @@ use sa_world::bindings::dm_get_panel_status;
 use crate::bindings::dm_reset_damage_status;
 use sa_world::bindings::dm_set_door_status;
 use crate::bindings::dm_set_panel_status;
-use sa_pop::bindings::dm_set_wheel_status;
+use sa_world::bindings::dm_set_wheel_status;
 use sa_world::bindings::door_open;
 use crate::bindings::set_component_visibility;
 use crate::bindings::spawn_flying_component;

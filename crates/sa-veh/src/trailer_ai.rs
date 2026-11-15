@@ -9,7 +9,7 @@ use sa_math::fpu::{gt, le_or_nan, lt};
 use sa_math::x87::X87;
 use sa_pop::bindings::fabsf;
 use sa_math::vector::CVector;
-use sa_pop::bindings::dm_set_wheel_status;
+use sa_world::bindings::dm_set_wheel_status;
 use sa_world::bindings::{apply_spring_collision_alt, apply_spring_dampening, find_objects_in_range, get_wheel_status, physical_get_speed};
 
 use crate::common::*;

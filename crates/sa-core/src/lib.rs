@@ -83,6 +83,7 @@ pub mod quadtree;
 pub mod references;
 pub mod save;
 pub mod object_save;
+pub mod frontier_b2;
 pub mod regconv;
 pub mod timer;
 pub mod video;

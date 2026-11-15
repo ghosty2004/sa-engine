@@ -165,6 +165,8 @@ pub const MODULES: &[&[HookReg]] = &[
     world::save_blocks::HOOKS,
     world::stats_strings::HOOKS,
     world::entry_exit_ambient_peds::HOOKS,
+    // FRONTIER-2 turn 2, lane B
+    world::frontier_b2::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

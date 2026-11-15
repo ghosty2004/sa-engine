@@ -237,10 +237,8 @@ fn script_rect(ty: u32, sprite: u16, x: u32, y: u32, w: u32, h: u32, c: [u32; 4]
 use sa_world::bindings::building_replace_with_new_model as replace_with_new_model;
 use sa_core::bindings::find_objects_of_type_in_range;
 use sa_core::bindings::vector_magnitude;
+use sa_world::bindings::find_mission_entities_intersecting_cube;
 orig! {
-    /// `CWorld::FindMissionEntitiesIntersectingCube(const CVector& min, const CVector& max, int16* count,
-    /// int16 max, CEntity** out, bool vehicles, bool peds, bool objects)` (0x569240)
-    fn find_mission_entities_intersecting_cube(min: GPtr<u32>, max: GPtr<u32>, count: GPtr<u16>, max_count: u32, out: u32, v: u32, p: u32, o: u32) = cdecl 0x569240 => unported;
     /// `CTheScripts::AddToBuildingSwapArray(CBuilding*, int32 old, int32 new)` (0x481140)
     fn add_to_building_swap_array(b: GPtr<u8>, old: u32, new: u32) = cdecl 0x481140 => unported;
 }

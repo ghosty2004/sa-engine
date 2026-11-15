@@ -766,10 +766,9 @@ pub const HOOKS: &[HookReg] = &[
 ];
 
 pub use crate::bindings::set_next_scan_code;
+pub use sa_core::bindings::matrix_reorthogonalise;
 pub use crate::bindings::physical_remove_and_add as remove_and_add_call;
 orig! {
-    /// `CMatrix::Reorthogonalise()` (0x59B6A0)
-    pub fn matrix_reorthogonalise(m: Ent) = thiscall 0x59B6A0 => unported;
     /// `CPhysical::ProcessShiftSectorList(int32 x, int32 y)` (0x546670)
     pub fn process_shift_sector_list(e: Ent, x: i32, y: i32) -> u8 = thiscall 0x546670 => crate::physical::mvpe_phys1::process_shift_sector_list;
 }

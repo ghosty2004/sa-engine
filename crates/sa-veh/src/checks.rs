@@ -104,7 +104,7 @@ pub fn is_playback_paused_for_car(_v: GPtr<u8>) -> u32 {
 
 type Stuck = GPtr<u8>;
 
-fn stuck_reset(e: GPtr<u8>) {
+pub(crate) fn stuck_reset(e: GPtr<u8>) {
     wr::<u32>(e, 0, 0xFFFF_FFFF);
     for k in 0..3 {
         wr::<u32>(e, 4 + 4 * k, 0xC59C_4000); // -5000.0

@@ -11,7 +11,7 @@ use crate::common::{rd, wr};
 
 use crate::bindings::dm_reset_damage_status;
 use sa_world::bindings::dm_set_door_status;
-use sa_pop::bindings::dm_set_wheel_status;
+use sa_world::bindings::dm_set_wheel_status;
 use sa_world::bindings::get_wheel_status as dm_get_wheel_status;
 use sa_world::bindings::matrix_dtor;
 use sa_core::bindings::matrix_set_translate;

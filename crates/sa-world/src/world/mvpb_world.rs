@@ -257,7 +257,7 @@ pub fn garage_dist_sq_to_box(this: GPtr<u8>, px: f32, py: f32) -> X87 {
 }
 
 /// `_ftol(floor((v * 0.02 + 60)))` with `v` an x87 value (PC 24), as the range scans compute sector indices.
-fn sector_index(v: X87) -> i32 {
+pub(crate) fn sector_index(v: X87) -> i32 {
     let s = v.fmul_m(g::<f32>(0x858B38).read()).fadd_m(g::<f32>(0x858B34).read());
     X87::from_f64_exact(floor_f64(s.to_f64())).ftol() as u32 as i32
 }
@@ -268,6 +268,13 @@ fn scan_rect(pos: GPtr<u8>, r: f32) -> (i32, i32, i32, i32) {
     let y0 = sector_index(x(rd::<f32>(pos, 4)).fsub_m(r));
     let x1 = sector_index(x(r).fadd_m(rd::<f32>(pos, 0)));
     let y1 = sector_index(x(r).fadd_m(rd::<f32>(pos, 4)));
+    advance_scan_code();
+    (x0, y0, x1, y1)
+}
+
+/// `CWorld::AdvanceCurrentScanCode()` as the scans inline it: the scan code (0xB7CD78) incremented, or the codes
+/// cleared and restarted at 1 when it is 0xFFFF.
+pub(crate) fn advance_scan_code() {
     let sc = CURRENT_SCAN_CODE.get();
     if sc < 0xFFFF {
         CURRENT_SCAN_CODE.set(sc + 1);
@@ -275,11 +282,10 @@ fn scan_rect(pos: GPtr<u8>, r: f32) -> (i32, i32, i32, i32) {
         world_clear_scan_codes();
         CURRENT_SCAN_CODE.set(1);
     }
-    (x0, y0, x1, y1)
 }
 
 /// The sector (0xB7D0B8, 8 bytes, clamped to 0..119) and repeat sector (0xB992B8, 12 bytes, & 15) of a cell.
-fn cell(xs: i32, ys: i32) -> (GPtr<u8>, GPtr<u8>) {
+pub(crate) fn cell(xs: i32, ys: i32) -> (GPtr<u8>, GPtr<u8>) {
     let cx = xs.clamp(0, 0x77);
     let cy = ys.clamp(0, 0x77);
     let sector = GPtr::from_addr(0xB7D0B8 + 8 * (cy * 0x78 + cx) as usize);

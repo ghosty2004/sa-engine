@@ -24,7 +24,7 @@ pub use sa_world::bindings::world_add;
 pub use sa_world::bindings::world_remove;
 pub use crate::bindings::damage_get_door_status as dm_get_door_status;
 pub use crate::bindings::door_is_closed;
-pub use sa_pop::bindings::dm_set_wheel_status;
+pub use sa_world::bindings::dm_set_wheel_status;
 pub use sa_world::bindings::set_orientation;
 orig! {
     /// `CDoor::GetAngleOpenRatio()` (0x6F47E0), float in ST0

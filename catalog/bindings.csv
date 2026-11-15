@@ -2,8 +2,10 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x41B7C0,sa-ai,point_route_new,cdecl,,size:u32,GPtr<u8>,sa_world::world::mvpa2::point_route_new,CPointRoute::operator new,
 0x420E30,sa-ai,task_timer_is_out_of_time,thiscall,,t:GPtr<u8>,u8,unported,CTaskTimer::IsOutOfTime,
 0x420E70,sa-ai,acquaintance_ped_hate_ctor,thiscall,,e:u32;ped:u32,u32,sa_ai::gen_ctors::g_event_acquaintance_ped_hate_constructor2_420e70,CEventAcquaintancePedHate::Constructor2,
+0x4342A0,sa-pop,set_coords_of_script_car,cdecl,,v:GPtr<u8>;x:u32;y:u32;z:u32;a:u32;b:u32,,unported,CCarCtrl::SetCoordsOfScriptCar,
 0x43A710,sa-ai,conversation_node_clear_recursively,thiscall,,n:GPtr<u8>,,sa_ai::attractor_scanner::conversation_node_clear_recursively,CConversationNode::ClearRecursively,
 0x43AC40,sa-ai,conv_is_player_in_position,thiscall,,c:GPtr<u8>;random:u32,u8,unported,CConversationForPed::IsPlayerInPositionForConversation,
+0x447E40,sa-world,stored_car_restore_car,thiscall,,s:GPtr<u8>,GPtr<u8>,unported,CStoredCar::RestoreCar,sa_veh::stored_car_restore::stored_car_restore
 0x4509A0,sa-ai,path_take_width_for_wandering,thiscall,,pf:GPtr<u8>;out:GPtr<u8>;node:u32;seed:u32,GPtr<u8>,unported,CPathFind::TakeWidthIntoAccountForWandering,
 0x463540,sa-ai,leave_group_ctor,thiscall,,t:GPtr<u8>,GPtr<u8>,unported,CTaskSimpleLeaveGroup::Constructor,
 0x4684F0,sa-ai,decision_maker_types_get_instance,cdecl,,,GPtr<u8>,sa_ai::misc::decision_maker_types_get_instance_4684f0,CDecisionMakerTypes::GetInstance,
@@ -67,6 +69,8 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x5411D0,sa-ai,pad_conversation_yes_just_down,thiscall,,p:GPtr<u8>,u8,unported,CPad::ConversationYesJustDown,
 0x541200,sa-ai,pad_conversation_no_just_down,thiscall,,p:GPtr<u8>,u8,unported,CPad::ConversationNoJustDown,
 0x562330,sa-ai,wanted_is_in_pursuit,thiscall,,w:GPtr<u8>;ped:GPtr<u8>,u8,unported,CWanted::IsInPursuit,
+0x569240,sa-world,find_mission_entities_intersecting_cube,cdecl,,min:GPtr<u32>;max:GPtr<u32>;count:GPtr<u16>;max_count:u32;out:u32;v:u32;p:u32;o:u32,,unported,CWorld::FindMissionEntitiesIntersectingCube,
+0x59B6A0,sa-core,matrix_reorthogonalise,thiscall,,m:GPtr<u8>,,sa_core::matrix_orthonormal::matrix_reorthogonalise,CMatrix::Reorthogonalise,
 0x5DFD90,sa-ai,ped_set_radio_station,thiscall,,p:GPtr<u8>,,unported,CPed::SetRadioStation,
 0x5E01B0,sa-ai,ped_update_stat_leaving_vehicle,thiscall,,p:GPtr<u8>,,unported,CPed::UpdateStatLeavingVehicle,
 0x5E0460,sa-ai,ped_is_playing_hand_signal,thiscall,,p:GPtr<u8>,u8,unported,CPed::IsPlayingHandSignal,
@@ -269,6 +273,8 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x691720,sa-ai,hold_entity_play_anim,thiscall,,t:GPtr<u8>;anim:u32;group:u32,,unported,CTaskSimpleHoldEntity::PlayAnim,
 0x6923F0,sa-ai,duck_control_duck_move,thiscall,,d:GPtr<u8>;mx:f32;my:f32,,unported,CTaskSimpleDuck::ControlDuckMove,
 0x6924B0,sa-ai,duck_force_stop_move,thiscall,,d:GPtr<u8>,,unported,CTaskSimpleDuck::ForceStopMove,
+0x6C2150,sa-world,dm_set_panel_status,thiscall,,dm:GPtr<u8>;panel:u32;status:u32,,unported,CDamageManager::SetPanelStatus,sa_veh::damage::set_panel_status
+0x6C21A0,sa-world,dm_set_wheel_status,thiscall,,dm:GPtr<u8>;wheel:i32;status:u8,,unported,CDamageManager::SetWheelStatus,
 0x6C21E0,sa-ai,damage_manager_set_door_status,thiscall,,d:GPtr<u8>;door:u32;status:u32,,unported,CDamageManager::SetDoorStatus_Component,
 0x6C2250,sa-ai,damage_get_door_status_component,thiscall,,d:GPtr<u8>;door:u32,u32,unported,CDamageManager::GetDoorStatus_Component,
 0x6D1BD0,sa-ai,vehicle_is_passenger,thiscall,,v:GPtr<u8>;ped:GPtr<u8>,u8,unported,CVehicle::IsPassenger-Ped,
@@ -278,6 +284,8 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x6D3060,sa-ai,vehicle_clear_getting_out_flags,thiscall,,v:GPtr<u8>;doors:u32,,unported,CVehicle::ClearGettingOutFlags,
 0x6D3AE0,sa-ai,veh_spare_hassle_pos,thiscall,,v:GPtr<u8>,i32,unported,CVehicle::GetSpareHasslePosId,
 0x6D3B30,sa-ai,vehicle_set_hassle_pos_id,thiscall,,v:GPtr<u8>;id:i32;b:u32,,unported,CVehicle::SetHasslePosId,
+0x6DF930,sa-world,remove_vehicle_upgrade,thiscall,,v:GPtr<u8>;m:i32,,unported,CVehicle::RemoveVehicleUpgrade,sa_veh::vehicle_upgrade_remove::remove_vehicle_upgrade
+0x6E3400,sa-world,vehicle_setup_upgrades_after_load,thiscall,,v:GPtr<u8>,,unported,CVehicle::SetupUpgradesAfterLoad,sa_veh::vehicle2::setup_upgrades_after_load
 0x6E3C80,sa-ai,veh_anim_group_compute_critical_blend_time,thiscall,,g:GPtr<u8>;anim:u32,f64,unported,CVehicleAnimGroup::ComputeCriticalBlendTime,
 0x6F9F60,sa-ai,scripted_2d_effects_get_index,cdecl,,effect:GPtr<u8>,i32,sa_ai::attractor_registry::scripted_2d_effects_get_index,CScripted2dEffects::GetIndex,
 0x742300,sa-ai,weapon_fire,thiscall,,w:GPtr<u8>;owner:GPtr<u8>;origin:GPtr<u8>;muzzle:GPtr<u8>;target:GPtr<u8>;tpos:GPtr<u8>;alt:GPtr<u8>,u32,unported,CWeapon::Fire,

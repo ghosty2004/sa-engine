@@ -215,7 +215,7 @@ use sa_world::bindings::car_ctrl_possibly_remove_vehicle as possibly_remove_vehi
 use sa_world::bindings::find_player_centre_of_world;
 use sa_world::bindings::is_law_enforcement_vehicle;
 use sa_world::bindings::la_riots_active_here;
-use crate::bindings::dm_set_wheel_status as damage_set_wheel_status;
+use sa_world::bindings::dm_set_wheel_status as damage_set_wheel_status;
 use crate::bindings::dont_create_civilians;
 orig! {
     /// `CRoadBlocks::GenerateRoadBlockPedsForCar(CVehicle*, int32, ePedType)` (0x461170)

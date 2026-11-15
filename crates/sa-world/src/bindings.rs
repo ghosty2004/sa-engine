@@ -569,6 +569,11 @@ orig! {
 }
 
 orig! {
+    /// `CStoredCar::RestoreCar` (0x447E40)
+    pub fn stored_car_restore_car(s: GPtr<u8>) -> GPtr<u8> = thiscall 0x447E40 => unported;
+}
+
+orig! {
     /// `CGarage::IsPointInsideGarage-CVector` (0x448740)
     pub fn garage_is_point_inside(gr: GPtr<u8>, p: sa_math::vector::CVector) -> u8 = thiscall 0x448740 => unported;
 }
@@ -2284,6 +2289,11 @@ orig! {
 }
 
 orig! {
+    /// `CWorld::FindMissionEntitiesIntersectingCube` (0x569240)
+    pub fn find_mission_entities_intersecting_cube(min: GPtr<u32>, max: GPtr<u32>, count: GPtr<u16>, max_count: u32, out: u32, v: u32, p: u32, o: u32) = cdecl 0x569240 => unported;
+}
+
+orig! {
     /// `CWorld::FindGroundZForCoord` (0x569660)
     pub fn find_ground_z_for_coord(x: f32, y: f32) -> f64 = cdecl 0x569660 => unported;
 }
@@ -3889,8 +3899,18 @@ orig! {
 }
 
 orig! {
+    /// `CDamageManager::SetPanelStatus` (0x6C2150)
+    pub fn dm_set_panel_status(dm: GPtr<u8>, panel: u32, status: u32) = thiscall 0x6C2150 => unported;
+}
+
+orig! {
     /// `CDamageManager::GetPanelStatus` (0x6C2180)
     pub fn dm_get_panel_status(dm: GPtr<u8>, panel: u32) -> u32 = thiscall 0x6C2180 => unported;
+}
+
+orig! {
+    /// `CDamageManager::SetWheelStatus` (0x6C21A0)
+    pub fn dm_set_wheel_status(dm: GPtr<u8>, wheel: i32, status: u8) = thiscall 0x6C21A0 => unported;
 }
 
 orig! {
@@ -4044,6 +4064,11 @@ orig! {
 }
 
 orig! {
+    /// `CVehicle::RemoveVehicleUpgrade` (0x6DF930)
+    pub fn remove_vehicle_upgrade(v: GPtr<u8>, m: i32) = thiscall 0x6DF930 => unported;
+}
+
+orig! {
     /// `new` (0x6E2D50)
     pub fn vehicle_new(size: u32) -> GPtr<u8> = cdecl 0x6E2D50 => unported;
 }
@@ -4051,6 +4076,11 @@ orig! {
 orig! {
     /// `CVehicle::AddVehicleUpgrade` (0x6E3290)
     pub fn add_vehicle_upgrade(v: GPtr<u8>, mi: i32) -> i32 = thiscall 0x6E3290 => unported;
+}
+
+orig! {
+    /// `CVehicle::SetupUpgradesAfterLoad` (0x6E3400)
+    pub fn vehicle_setup_upgrades_after_load(v: GPtr<u8>) = thiscall 0x6E3400 => unported;
 }
 
 orig! {

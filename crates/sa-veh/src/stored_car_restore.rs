@@ -4,7 +4,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::{g, rd, wr, xi};
 
@@ -19,16 +19,12 @@ use sa_core::bindings::bike_ctor;
 use sa_core::bindings::bmx_ctor;
 use sa_core::bindings::boat_ctor;
 use crate::bindings::heli_ctor;
+use crate::bindings::stored_car_restore_car;
 use sa_core::bindings::monster_truck_ctor;
 use crate::bindings::plane_ctor;
 use sa_core::bindings::quad_bike_ctor;
 use sa_core::bindings::trailer_ctor;
-orig! {
-    /// `CVehicle::SetupUpgradesAfterLoad()` (0x6E3400)
-    fn vehicle_setup_upgrades_after_load(v: GPtr<u8>) = thiscall 0x6E3400 => unported;
-    /// `CStoredCar::RestoreCar()` (0x447E40)
-    fn stored_car_restore_c(s: GPtr<u8>) -> GPtr<u8> = thiscall 0x447E40 => stored_car_restore;
-}
+use crate::bindings::vehicle_setup_upgrades_after_load;
 
 /// `CVehicle* CStoredCar::RestoreCar()` (0x447E40, SEH frame).
 ///
@@ -184,7 +180,7 @@ pub fn restore_cars_for_this_hideout(_this: GPtr<u8>, cars: GPtr<u8>) -> u8 {
         if rd::<u16>(car, 0x12) == 0 {
             continue;
         }
-        let v = stored_car_restore_c(car);
+        let v = stored_car_restore_car(car);
         if v.is_null() {
             continue;
         }

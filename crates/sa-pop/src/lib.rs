@@ -21,6 +21,7 @@ pub use sa_core::hook;
 pub mod common;
 pub mod hooks;
 pub mod frontier_c_natives;
+pub mod frontier_b2;
 
 pub mod carctrl;
 pub mod cargen;

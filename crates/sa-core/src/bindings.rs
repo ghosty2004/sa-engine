@@ -1479,6 +1479,11 @@ orig! {
 }
 
 orig! {
+    /// `CMatrix::Reorthogonalise` (0x59B6A0)
+    pub fn matrix_reorthogonalise(m: GPtr<u8>) = thiscall 0x59B6A0 => crate::matrix_orthonormal::matrix_reorthogonalise;
+}
+
+orig! {
     /// `CMatrix::ForceUpVector` (0x59B7E0)
     pub fn matrix_force_up_vector(m: GPtr<u8>, up: sa_math::vector::CVector) = thiscall 0x59B7E0 => unported;
 }

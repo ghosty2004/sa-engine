@@ -340,7 +340,7 @@ orig! {
     /// `CControllerConfigManager::GetIsKeyboardKeyJustDown(RsKeyCodes)` (0x52E450, `ret 4`)
     fn get_is_keyboard_key_just_down(m: GPtr<u8>, key: u32) -> u8 = thiscall 0x52E450 => unported;
     /// `CReplay::TriggerPlayback(eReplayCamMode, CVector fixedCamPos, bool loadScene)` (0x4600F0, cdecl)
-    fn replay_trigger_playback(mode: u32, px: f32, py: f32, pz: f32, load_scene: u32) = cdecl 0x4600F0 => unported;
+    pub fn replay_trigger_playback(mode: u32, px: f32, py: f32, pz: f32, load_scene: u32) = cdecl 0x4600F0 => unported;
     /// `CReplay::SaveReplayToHD()` (0x45C340, cdecl)
     fn replay_save_replay_to_hd() = cdecl 0x45C340 => unported;
     /// `CReplay::PlayReplayFromHD()` (0x460390, cdecl)

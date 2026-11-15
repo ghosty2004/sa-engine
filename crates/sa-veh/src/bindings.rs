@@ -19,6 +19,11 @@ orig! {
 }
 
 orig! {
+    /// `CStoredCar::RestoreCar` (0x447E40)
+    pub fn stored_car_restore_car(s: GPtr<u8>) -> GPtr<u8> = thiscall 0x447E40 => crate::stored_car_restore::stored_car_restore;
+}
+
+orig! {
     /// `CVehicleRecording::Init` (0x459390)
     pub fn vehicle_recording_init() = cdecl 0x459390 => crate::checks::recording_init;
 }
@@ -239,6 +244,11 @@ orig! {
 }
 
 orig! {
+    /// `CDamageManager::SetPanelStatus` (0x6C2150)
+    pub fn dm_set_panel_status_6c2150(dm: GPtr<u8>, panel: u32, status: u32) = thiscall 0x6C2150 => crate::damage::set_panel_status;
+}
+
+orig! {
     /// `CDamageManager::GetDoorStatus` (0x6C2230)
     pub fn damage_get_door_status(d: GPtr<u8>, door: i32) -> u32 = thiscall 0x6C2230 => crate::damage::get_door_status;
 }
@@ -429,6 +439,11 @@ orig! {
 }
 
 orig! {
+    /// `CVehicle::RemoveVehicleUpgrade` (0x6DF930)
+    pub fn remove_vehicle_upgrade(v: GPtr<u8>, m: i32) = thiscall 0x6DF930 => crate::vehicle_upgrade_remove::remove_vehicle_upgrade;
+}
+
+orig! {
     /// `CVehicle::ProcessSirenAndHorn` (0x6E0950)
     pub fn process_siren_and_horn(v: GPtr<u8>, check: u32) = thiscall 0x6E0950 => crate::vehicle2::process_siren_and_horn;
 }
@@ -456,6 +471,11 @@ orig! {
 orig! {
     /// `delete` (0x6E2D90)
     pub fn vehicle_delete(p: GPtr<u8>) = cdecl 0x6E2D90 => crate::vehicle2::operator_delete;
+}
+
+orig! {
+    /// `CVehicle::SetupUpgradesAfterLoad` (0x6E3400)
+    pub fn vehicle_setup_upgrades_after_load(v: GPtr<u8>) = thiscall 0x6E3400 => crate::vehicle2::setup_upgrades_after_load;
 }
 
 orig! {

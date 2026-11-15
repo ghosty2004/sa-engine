@@ -61,7 +61,7 @@ const K_INV_65536: u32 = 0x3780_0000;
 use sa_stream::bindings::rand as crt_rand;
 
 use crate::bindings::highlight_important_area;
-use crate::bindings::set_coords_of_script_car;
+use sa_pop::bindings::set_coords_of_script_car;
 use sa_veh::bindings::vehicle_41bdd0;
 use sa_core::bindings::add_big_message;
 use sa_core::bindings::add_message_jump;

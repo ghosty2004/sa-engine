@@ -55,11 +55,11 @@ orig! {
     /// `CGameLogic::Remove2ndPlayerIfPresent()` (0x4413C0, cdecl)
     fn game_logic_remove_2nd_player_if_present() = cdecl 0x4413C0 => unported;
     /// `CGameLogic::RestorePlayerStuffDuringResurrection(CPlayerPed*, CVector, float)` (0x442060, cdecl)
-    fn game_logic_restore_player_stuff(p: GPtr<u8>, x: f32, y: f32, z: f32, h: f32) = cdecl 0x442060 => unported;
+    pub fn game_logic_restore_player_stuff(p: GPtr<u8>, x: f32, y: f32, z: f32, h: f32) = cdecl 0x442060 => unported;
     /// `CGameLogic::SortOutStreamingAndMemory(const CVector&, float)` (0x441440, cdecl)
-    fn game_logic_sort_out_streaming_and_memory(p: GPtr<u8>, h: f32) = cdecl 0x441440 => unported;
+    pub fn game_logic_sort_out_streaming_and_memory(p: GPtr<u8>, h: f32) = cdecl 0x441440 => unported;
     /// `CPad::StopShaking(int16)` (0x53FB50, `ret 4`)
-    fn pad_stop_shaking(p: GPtr<u8>, n: u32) = thiscall 0x53FB50 => unported;
+    pub fn pad_stop_shaking(p: GPtr<u8>, n: u32) = thiscall 0x53FB50 => unported;
     /// `CGameLogic::StopPlayerMovingFromDirection(int32, CVector)` (0x441290, cdecl)
     fn game_logic_stop_player_moving_from_direction(id: i32, x: f32, y: f32, z: f32) = cdecl 0x441290 => unported;
 }

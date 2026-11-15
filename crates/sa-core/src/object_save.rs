@@ -9,7 +9,7 @@ use crate::{hook, orig};
 
 orig! {
     /// `CCompressedMatrixNotAligned::DecompressIntoFullMatrix(CMatrix&)` (0x59B9F0)
-    fn decompress_into_full_matrix(c: GPtr<u8>, m: GPtr<u8>) = thiscall 0x59B9F0 => unported;
+    fn decompress_into_full_matrix(c: GPtr<u8>, m: GPtr<u8>) = thiscall 0x59B9F0 => crate::frontier_b2::decompress_into_full_matrix;
 }
 
 /// The object flag bits (`CObject` +0x40) and the save structure's flag byte bits (+0x2F), in the original's order.
