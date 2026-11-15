@@ -2390,3 +2390,51 @@
   ProcessFlyingCarStuff, a boat scenario (the pier teleport hang), CCamera::IsItTimeForNewcam / TryToStartNewCamMode, item 4
   (Interior_c::PlaceObject chain, replay playback, RW leftovers, WEAPON bodies incl. FireOneInstantHitRound 0x73AF00 now
   bound in sa-veh).
+
+## 2026-11-16 — FRONTIER-2 turn 4, lane A: road blocks between two points, gang wars, allocators, AI frontier (agent, branch worktree-agent-a198f2e01294e8cc9)
+- Base: worktree-agent-a79dbccbc537c6d52 (7f81981d, lane A turn 3). Every port from the 1.0 US bytes (gta-reversed read as an
+  aid; where it differs the bytes win), every address checked against `inflight.py` first. One batch, `frontier2-a7` (16
+  hooks: 15 new + CGangWars::Update made whole; spans AI and POP).
+- CRoadBlocks::CreateRoadBlockBetween2Points 0x4619C0 (sa-pop road_block_between.rs, ~1,000 instructions): split into
+  helpers that follow the original's blocks (line set-up / vehicle model / slot count / one slot / cones); the SEH-guarded
+  stack CMatrix is modelled as the original makes it (the inlined constructor's two cleared fields, the destructor 0x59ACD0
+  on every exit, including the riot-car -1 and cop-bike exits). GenerateRoadBlocks now reaches it. Hazard uninit-locals:
+  the first slot's RotateZ rotates the matrix's uninitialised position (overwritten right after).
+- CGangWars::Update 0x446610: whole port (the ADR-002 fallback removed; partial ports 11 → 10): provocation timer, the
+  offensive state machine (waves 0..2, GW_CLR1/2, victory), the presence test (GW_WARN; GW_FLEE queued with GW_WARN in the
+  brief array, as the bytes), the 30000 cap, the defensive war (GW_WON / GW_SLOW / GW_NOSH, stat 0x44), the blinking blip
+  (RadarBlip read through the protection's obfuscated pointer at 0x406434, decoded to 0x96AB98) and the gang streaming. No
+  scenario starts a war: bGangWarsActive is set by the story script (no cheat or start-in-world path reaches it); the
+  inactive path runs every frame (796 calls in roadblocks under gdb).
+- Allocators: CTaskAllocatorKillOnFoot::AllocateTasks 0x69BCA0 (flag byte 0xC1A554 and SetTask for the second list: both
+  differ from gta-reversed), CTaskAllocatorPlayerCommandAttack::AllocateTasks 0x69C4D0 (a negative ped type defers to
+  CTaskAllocatorAttack; SetTask), CTaskAllocatorKillThreatsDriveby::AllocateTasks 0x69CC30; the CPedList helpers Empty
+  0x699DB0 and BuildListOfPedsOfPedType 0x69A3B0; the CFormation calls they reach: FindCoverPoints 0x69B860,
+  DistributeDestinations_CoverPoints 0x69B5B0, DistributeDestinations_PedsToAttack 0x69B700 (the best pair is not reset and
+  starts from an uninitialised slot). The lone-threat sequence / event-response helpers are shared with 0x69D460.
+- EndConversation 0x43AB10: new tool `tools/re/vm_eval.py` (unicorn on the exe image; the `.venv`'s unicorn, else
+  `SA_UNICORN_PATH` / `target/pyunicorn`, see its docs) evaluates a 0xCB73E0 call site: `vm_eval.py 1566FBB 156704F --call`
+  gives the partner pointer `~[0x1560530] ^ [0x72D9F4]` = 0x9691C0 (read again), the blend time 0xFA and the computed call
+  IKChainManager_c::AbortLookAt 0x618280.
+- CPedShelterAttractor::GetDisplacement 0x5EF420 (FCOS / FSIN) with the vector push_back 0x5EE370 (FUN_005ee370; it calls
+  the unported UNK-game fill 0x5EB340, lane C). Then AI frontier entries: CTaskSimpleJetPack::MakeAbortable 0x67E6E0,
+  CTaskComplexTrackEntity::CreateNextSubTask 0x65F590, CPedIntelligence::TestForStealthKill 0x601E00.
+- Bindings (ADR-003): 0x5A1980, 0x583D20, 0x5A1B60, 0x4E2A70 (sa-audio twin) bound in sa-world; 0x699F00, 0x699FF0, 0x65EEB0
+  bound in sa-ai; 0x6C26F0 moved down to sa-pop (sa-veh twin); the local declarations replaced by imports. No new `st0()`
+  wrappers on 0x53CBE0 (the new `st0()` uses wrap f64 vtable / FindGroundZFor3DCoord results).
+- frontier.py: AI 103 (12 direct + 91 virtual) → 95 (8 + 87); total to port 319 → 310; partial 11 → 10. New rows outside
+  lane A: 0x5EB340 (UNK-game, lane C), 0x6A27F0 CAutomobile::SetTotalDamage (VEH, lane B).
+- Evidence: port-l2 police-gang 0x4619C0 (split + rust IDENTICAL over 5200 frames, NOCASES); the allocators and CPedList
+  helpers on police-gang / weapon-combat (l2 + rust IDENTICAL, NOCALLS). The corpus calls none of the war / allocator /
+  road-block paths; the roadblocks scenario does not create a block in its 2000 frames (gdb: 0 calls of 0x4619C0; new
+  tools/e2e/scenarios/frontier2-a4-counts.gdb).
+- Scenarios (frontier.sh, i686 native, final tree): pausemenu 416 / 0 blocked, solicit 4016 / 0, crossing 1216 / 0,
+  crossing-long 4016 / 0, melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0, shootdriver 1216 / 0, roadblocks 875 / 1141
+  blocked only on lane B (CCam::ArrestCamOne 0x518500 1135, CHeli::GenerateHeli 0x6C6520 6); no crash.
+- verify-all (lanes 1-3, fresh sa-oracle): `f2a4-u2` (SA_UNVERIFIED=frontier2-a7) IDENTICAL 13/13 and `f2a4-def` (default
+  set; CGangWars::Update is now in frontier2-a7, so the default set runs the original there) IDENTICAL 13/13; save-load
+  identical except the SAVE-1 stack residue. Both ran on the DLL built before the hook-name-only fix 694d7c3e (0x5EE370's
+  name string; no code change).
+- Writer gate (base 7f81981d, target dir target/gate): all 16 steps PASS (hooks 15 new, all unverified, batch frontier2-a7;
+  queue up to date). The first run failed hooktest: 0x5EE370 was named `std::vector<CVector>::push_back`, the catalogue has
+  FUN_005ee370 (fixed).
