@@ -2257,3 +2257,42 @@
   13/13; `lb3-u2` (SA_UNVERIFIED=frontier2-b10,frontier2-b11, DLL of 425166bf) IDENTICAL 13/13; default set `lb3-def` (same head) IDENTICAL 13/13.
 - Builds: i686 sa-game (scenarios), the i686 DLL (verify-all), wasm32 sa-ports (gate). Coordinator heads-up on the
   0x53CBE0 binding change: no code of this branch calls it.
+## 2026-11-15 — FRONTIER-2 turn 3, lane A: the gang drive-by, the roadblocks AI chain (agent, branch worktree-agent-a79dbccbc537c6d52)
+- Base: worktree-agent-a3af6b88de448512f (07c98248, lane A turn 2). Every port from the 1.0 US bytes (gta-reversed read as an
+  aid; it reverses none of the drive-by bodies, and its unhooked ArrestPed::ControlSubTask draft differs from the bytes),
+  every address checked against `inflight.py` first.
+- Batch `frontier2-a5` (6 hooks): CTaskSimpleGangDriveBy::ProcessPed 0x62D3B0 (the command state machine, the anim
+  crossings at 0.2667 / 0.3 / 0.4333, the attack timer, the player's pad, the speed `Say`s) and its helpers: the player's
+  anim choice 0x621960 and the AI's 0x627600 (FPATAN of the aim / target direction minus the vehicle heading, the
+  quadrant by `_ftol`; the AI's side / front flags, one of which can never be set), the line-of-sight test 0x621B10, the
+  shot 0x627CC0 (the muzzle through the hand bone, the vehicle side / front plane crossing, the no-CD island at 0x628234
+  that ORs ped +0x528 with 1, CWeapon::Fire, DoGunFlash) and the gun pointing 0x628350 (FSIN / FCOS of the bike lean,
+  `_CIasin` through orig::x87_unary). sa-world common gained `ped_active_weapon` (sa-ped player_target's copy imports it).
+- Batch `frontier2-a6` (8 hooks): the roadblocks scenario's next blocks, one after the other:
+  CTaskComplexArrestPed::ControlSubTask 0x68D350 / CreateNextSubTask 0x690220, CTaskSimpleArrestPed::ProcessPed 0x68B8A0
+  (an uninitialised bone local without a suspect: zero here), CTaskAllocatorKillThreatsBasicRandomGroup::AllocateTasks
+  0x69D460, CTaskComplexDestroyCarArmed::CreateNextSubTask 0x62DF20; plus CEvent::CalcSoundLevelIncrement 0x4AC050
+  (`_CIpow`, FYL2X; route L2 since `_CIpow` is the CRT's only in-process), CTaskComplexFollowPointRoute::CalcBlendRatio
+  0x66E710 (FCOS), CTaskComplexGoToPointAndStandStillTimed::Clone 0x66CF30.
+- Bindings (bindings.py --resolve): 0x627B20, 0x6D3080, 0x6D5CF0, 0x5DF300, 0x5F8510, 0x622240, 0x6222B0, 0x69C850, 0x669340
+  bound in sa-ai; 0x5E5ED0 moved down to sa-pop with its sa-ped twin (port column set).
+- sa-hook callers scan: `or r8, 0FFh` counts as a write of the byte, like `or r, -1` (0x627828 after the call to 0x621B10).
+- Scenarios (frontier.sh, i686 native, default lengths): pausemenu 416 / 0 blocked, solicit 4016 / 0, crossing 1216 / 0,
+  melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0, shootdriver 1216 / 0, crossing-long 4016 / 0, roadblocks 291 ok /
+  1725 blocked → 875 / 1141, blocked only on lane B's CCam::ArrestCamOne 0x518500 (1135, reached once the arrest runs) and
+  CHeli::GenerateHeli 0x6C6520 (6); no crash.
+- frontier.py: AI 112 (14 direct + 98 virtual) → 103 (12 + 91); total to-port 346 → 330.
+- Left open: CRoadBlocks::CreateRoadBlockBetween2Points 0x4619C0 (~1,000 instructions with SEH-guarded CMatrix locals, not
+  started), EndConversation 0x43AB10 (its AbortLookAt time comes through the 0xCB73E0 decoder: needs the unicorn
+  evaluation), CPedShelterAttractor::GetDisplacement 0x5EF420 (calls the unported vector push_back 0x5EE370), the
+  allocators 0x69BCA0 / 0x69CC30 / 0x69C4D0, CGangWars::Update's wars, ProcessColModels' disks, the rest of the AI
+  frontier.
+- verify-all (lanes 1-3, fresh sa-oracle): the first `f2a3-u` run (SA_UNVERIFIED=frontier2-a5,frontier2-a6) diverged on
+  car-ai at frame 2069 (randcalls); bisect-batch: a6 IDENTICAL, a5's culprit 0x621B10 alone (its `rand()` was not
+  attributed to the original call site): fixed with `orig::at_site(0x621B99, rand)`. Then `f2a3-u2` (a5 + a6) IDENTICAL
+  13/13 and `f2a3-def2` (default set) IDENTICAL 13/13; save-load identical except the SAVE-1 stack residue.
+- Writer gate (base 07c98248): all 16 steps PASS (hooks 14 new, all unverified; queue up to date at HEAD). The first run
+  failed hooktest: 0x4AC050's expect ended inside an instruction, and the callers scan read `or dl, 0FFh` at 0x627828 as
+  a use of EDX (fixed in sa-hook callers.rs: `or r8, 0FFh` is a write).
+- Integration note: lane C turn 3 makes the 0x53CBE0 binding return X87; the `st0(general_get_radian_angle_between_points
+  (..))` sites here (frontier_a_t3.rs ArrestPed ProcessPed, gang_drive_by.rs point-gun x2) drop `st0()` then.
