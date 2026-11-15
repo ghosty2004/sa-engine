@@ -6,16 +6,25 @@ use sa_core::abi::HookReg;
 use sa_core::bindings::{general_get_radian_angle_between_points, general_limit_radian_angle, general_random_int_in_range};
 use sa_core::bindings::{task_new, vector_normalise};
 use sa_core::mem::GPtr;
-use sa_core::hook;
-use sa_math::fpu::st0;
+use sa_core::{hook, orig};
+use sa_math::fpu::{lt, st0};
 
-use crate::bindings::{membership_count_members, seek_entity_xy_offset_ctor};
+use crate::bindings::{membership_count_members, ped_groups_get_peds_group, seek_entity_xy_offset_ctor};
 use crate::common::*;
+use sa_core::bindings::ped_is_alive;
 use sa_world::bindings::{
-    achieve_heading_ctor, enter_car_as_passenger_ctor, leave_car_ctor, membership_get_leader, membership_get_member,
-    pause_ctor, simple_car_drive_ctor, stand_still_ctor, vector_sub,
+    achieve_heading_ctor, enter_car_as_passenger_ctor, entity_clean_up_old_reference, entity_register_reference,
+    leave_car_ctor, membership_get_leader, membership_get_member, pause_ctor,
+    sequence_add_task, sequence_ctor, simple_car_drive_ctor, stand_still_ctor, turn_to_face_entity_ctor, vector_sub,
+    weapon_is_type_melee,
 };
-use sa_world::world::common::entity_pos;
+use sa_world::world::common::{entity_pos, ped_active_weapon};
+
+use crate::bindings::task_seek_radius_angle_ctor;
+orig! {
+    /// `CTaskComplexSeekCoverUntilTargetDead::GetTargetPed()` (0x622CC0)
+    fn seek_cover_get_target_ped(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x622CC0 => crate::group_scan_loops::seek_cover_until_target_dead_get_target_ped;
+}
 
 /// `CTaskComplexFollowLeaderInFormation::CreateSubTask(int32 type, CPed* ped)` (0x6962A0, `ret 8`; the entry is a
 /// `nop; jmp` to the island 0x401913 that fetches the SEH link and jumps back to 0x6962A6). +0xC the group, +0x10 the
@@ -89,5 +98,88 @@ fn follow_leader_turn_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     new_task(0x18, |m| achieve_heading_ctor(m, rd::<f32>(ped, 0x558), rate(), tol()))
 }
 
+/// `CTaskComplexSeekCoverUntilTargetDead::GetCoverPed(CPed* ped)` (0x622D50, thiscall, `ret 4`; the task is not read):
+/// the nearest member (slots 0..7) of the ped's group other than the ped that is alive and whose active weapon is
+/// not a melee weapon; the squared distance `(dz^2 + dx^2) + dy^2` (ped - member, on the x87 stack) must be below the
+/// best so far (from FLT_MAX, stored as an f32). Null without a group.
+#[hook(addr = 0x622D50, conv = thiscall, name = "CTaskComplexSeekCoverUntilTargetDead::GetCoverPed", expect = "83 EC 08 53 8B 5C 24 10",
+       unverified = "frontier2-a8", route = "L2", hazards = "none")]
+pub fn seek_cover_get_cover_ped(_this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let mut best = f32::from_bits(0x7F7F_FFFF);
+    let mut found = GPtr::NULL;
+    let grp = ped_groups_get_peds_group(ped.addr() as u32);
+    if grp == 0 {
+        return GPtr::NULL;
+    }
+    let ms = GPtr::<u8>::from_addr(grp as usize + 8);
+    for i in 0..8 {
+        let m = membership_get_member(ms, i);
+        if m.is_null() || m == ped || weapon_is_type_melee(ped_active_weapon(m)) != 0 || ped_is_alive(m) as u8 == 0 {
+            continue;
+        }
+        let (mp, pp) = (entity_pos(m).cast::<f32>(), entity_pos(ped).cast::<f32>());
+        let d = |k: i32| x(pp.wrapping_index(k).read()).fsub_m(mp.wrapping_index(k).read());
+        let (dx, dy, dz) = (d(0), d(1), d(2));
+        let s = dz.fmul(dz).fadd(dx.fmul(dx)).fadd(dy.fmul(dy));
+        if lt(s, x(best)) {
+            best = s.to_f32();
+            found = m;
+        }
+    }
+    found
+}
+
+/// `CTaskComplexSeekCoverUntilTargetDead::CreateFirstSubTask(CPed* ped)` (0x62E6C0, `ret 4`, SEH frame). The old
+/// target (+0x10) and cover ped (+0x14) references are released; cover = [`seek_cover_get_cover_ped`], target =
+/// `GetTargetPed()`; without either: null (the new pointers stay, unregistered). Else both references are registered
+/// (target first) and a sequence is built: `CTaskComplexSeekEntityRadiusAngleOffset(cover, 50000, 1000, 1.0, the
+/// radii at 0x85A410 / 0x85A414, true, true)` with its calculator's radius 1.5 and angle pi written over +0x44 / +0x48
+/// (through the result even when `new` failed, as the bytes), `CTaskComplexTurnToFaceEntityOrCoord(target, the rates
+/// at 0x86FC7C / 0x86FC80)`, `CTaskSimpleStandStill(2000, 0, 0, 8.0)`; `AddTask` runs on a null sequence and with
+/// null tasks too. The bytes also build the calculator as a stack temporary (vtable 0x85A384) that nothing reads.
+#[hook(addr = 0x62E6C0, conv = thiscall, name = "CTaskComplexSeekCoverUntilTargetDead::CreateFirstSubTask", expect = "64 A1 00 00 00 00 6A FF 68 A4 01 84 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes")]
+pub fn seek_cover_until_target_dead_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let (target_slot, cover_slot) = (this.byte_add(0x10), this.byte_add(0x14));
+    for slot in [target_slot, cover_slot] {
+        let e = rd::<GPtr<u8>>(slot, 0);
+        if !e.is_null() {
+            entity_clean_up_old_reference(e, slot);
+        }
+    }
+    let cover = seek_cover_get_cover_ped(this, ped);
+    wr::<GPtr<u8>>(cover_slot, 0, cover);
+    let target = seek_cover_get_target_ped(this);
+    wr::<GPtr<u8>>(target_slot, 0, target);
+    if rd::<u32>(cover_slot, 0) == 0 || target.is_null() {
+        return GPtr::NULL;
+    }
+    entity_register_reference(target, target_slot);
+    entity_register_reference(rd::<GPtr<u8>>(cover_slot, 0), cover_slot);
+    let seq = new_task(0x40, sequence_ctor);
+    let t = task_new(0x54);
+    let seek = if t.is_null() {
+        GPtr::NULL
+    } else {
+        let (r1, r2) = (g::<u32>(0x85A410).read(), g::<u32>(0x85A414).read());
+        task_seek_radius_angle_ctor(t, rd::<GPtr<u8>>(cover_slot, 0), 0xC350, 0x3E8, 0x3F80_0000, r1, r2, 1, 1)
+    };
+    wr::<u32>(seek, 0x44, 0x3FC0_0000);
+    wr::<u32>(seek, 0x48, 0x4049_0FDB);
+    sequence_add_task(seq, seek);
+    let turn = new_task(0x28, |m| {
+        let (a, b) = (g::<u32>(0x86FC7C).read(), g::<u32>(0x86FC80).read());
+        turn_to_face_entity_ctor(m, rd::<GPtr<u8>>(target_slot, 0), a, b)
+    });
+    sequence_add_task(seq, turn);
+    let stand = new_task(0x20, |m| stand_still_ctor(m, 0x7D0, 0, 0, 8.0));
+    sequence_add_task(seq, stand);
+    seq
+}
+
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_FOLLOW_LEADER_IN_FORMATION_CREATE_SUB_TASK];
+pub const HOOKS: &[HookReg] = &[
+    HOOK_FOLLOW_LEADER_IN_FORMATION_CREATE_SUB_TASK,
+    HOOK_SEEK_COVER_GET_COVER_PED,
+    HOOK_SEEK_COVER_UNTIL_TARGET_DEAD_CREATE_FIRST_SUB_TASK,
+];

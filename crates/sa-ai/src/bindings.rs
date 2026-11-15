@@ -64,6 +64,11 @@ orig! {
 }
 
 orig! {
+    /// `CTaskComplexSeekEntityRadiusAngleOffset::Constructor` (0x493730)
+    pub fn task_seek_radius_angle_ctor(t: GPtr<u8>, e: GPtr<u8>, time: u32, period: u32, a: u32, b: u32, c: u32, d: u32, f: u32) -> GPtr<u8> = thiscall 0x493730 => unported;
+}
+
+orig! {
     /// `CEventGroup::Add-` (0x4AB420)
     pub fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u8) -> GPtr<u8> = thiscall 0x4AB420 => crate::group::event_group_add;
 }

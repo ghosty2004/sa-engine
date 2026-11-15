@@ -98,12 +98,10 @@ use sa_world::bindings::set_entity_blip;
 use sa_veh::bindings::set_train_speed;
 use sa_ai::bindings::sit_ctor_o as task_sit_down_ctor;
 use sa_world::bindings::task_turn_to_face_ctor;
+use sa_ai::bindings::task_seek_radius_angle_ctor;
 orig! {
     /// `CPed::AttachPedToBike(CEntity*, CVector offset, uint16 pos, float, float, eWeaponType)` (0x5E7E60), 8 dwords
     fn attach_ped_to_bike(p: GPtr<u8>, v: GPtr<u8>, x: u32, y: u32, z: u32, pos: u32, a: u32, b: u32, w: u32) = thiscall 0x5E7E60 => unported;
-    /// `CTaskComplexSeekEntityRadiusAngleOffset::CTaskComplexSeekEntityRadiusAngleOffset(CEntity*, int32 time,
-    /// int32 period, float, float, float, bool, bool)` (0x493730)
-    fn task_seek_radius_angle_ctor(t: GPtr<u8>, e: GPtr<u8>, time: u32, period: u32, a: u32, b: u32, c: u32, d: u32, f: u32) -> GPtr<u8> = thiscall 0x493730 => unported;
     /// `CPed::ReplaceWeaponForScriptedCutscene()` (0x5E6530)
     fn replace_weapon_for_scripted_cutscene(p: GPtr<u8>) = thiscall 0x5E6530 => unported;
     /// `CPed::RemoveWeaponForScriptedCutscene()` (0x5E6550)
