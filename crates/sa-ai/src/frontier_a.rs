@@ -560,6 +560,70 @@ pub fn jet_pack_apply_roll_and_pitch(this: GPtr<u8>, ped: GPtr<u8>) {
     wr::<u32>(ped, 0x470, rd::<u32>(ped, 0x470) | 0x4000);
 }
 
+orig! {
+    /// `CTask::GetTaskType()` (vtable +0x10)
+    fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
+}
+
+/// `CTaskSimpleHoldEntity::ChoosePutDownHeight(CPed* ped)` (0x693440, `ret 4`): a vertical line (`ProcessVerticalLine`,
+/// buildings and objects) from `ped position + forward * 0.65` (x / y stored as f32; z on the x87 stack, + 0.2) down to
+/// 1.5 below; a hit whose z is at least `ped z - 0.2` gives the put-down anim 0x53, at least `ped z - 0.7` 0x52, else
+/// (and without a hit) 0x51 (+0x24); for task type 0x135 the anim's time (+0x3C) is taken from 0x870A70 / 0x870A6C /
+/// 0x870A68. The forward vector is read from the matrix before its null test, as the original.
+#[hook(addr = 0x693440, conv = thiscall, name = "CTaskSimpleHoldEntity::ChoosePutDownHeight", expect = "83 EC 38 56 8B 74 24 40",
+       unverified = "frontier2-a4", route = "L2", hazards = "heap-writes")]
+pub fn hold_entity_choose_put_down_height(this: GPtr<u8>, ped: GPtr<u8>) {
+    let m = rd::<GPtr<u8>>(ped, 0x14);
+    let k = g::<f32>(0x858F50).read();
+    let fx = x(rd::<f32>(m, 0x10)).fmul_m(k).to_f32();
+    let fy = x(rd::<f32>(m, 0x14)).fmul_m(k).to_f32();
+    let fz = x(rd::<f32>(m, 0x18)).fmul_m(k);
+    let pos = sa_world::world::common::entity_pos(ped);
+    let z = fz.fadd_m(rd::<f32>(pos, 8));
+    let y = x(fy).fadd_m(rd::<f32>(pos, 4)).to_f32();
+    let xx = x(fx).fadd_m(rd::<f32>(pos, 0)).to_f32();
+    let c1 = g::<f32>(0x858CC4).read();
+    let mut start = [xx, y, z.fadd_m(c1).to_f32()];
+    let min_z = x(start[2]).fsub_m(g::<f32>(0x858CE8).read()).to_f32();
+    let mut cp = [0u32; 0xB];
+    let mut ent = 0u32;
+    let hit = sa_world::bindings::world_process_vertical_line(
+        sa_core::field::vec3f_ptr(&mut start),
+        min_z,
+        GPtr::from_raw(cp.as_mut_ptr()).cast(),
+        GPtr::from_raw(&mut ent).cast(),
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        GPtr::NULL,
+    );
+    let anim = if hit != 0 {
+        let cz = x(f32::from_bits(cp[2]));
+        let pz = rd::<f32>(sa_world::world::common::entity_pos(ped), 8);
+        if sa_math::fpu::fcom_jnp(x(pz).fsub_m(c1), cz, 0x41) {
+            0x53
+        } else if sa_math::fpu::fcom_jnp(x(pz).fsub_m(g::<f32>(0x858CB0).read()), cz, 0x41) {
+            0x52
+        } else {
+            0x51
+        }
+    } else {
+        0x51
+    };
+    wr::<u32>(this, 0x24, anim);
+    if v_task_type(this) == 0x135 {
+        let src = match rd::<u32>(this, 0x24) {
+            0x53 => 0x870A70,
+            0x52 => 0x870A6C,
+            _ => 0x870A68,
+        };
+        wr::<u32>(this, 0x3C, g::<u32>(src).read());
+    }
+}
+
 /// Phase B registrations of this module.
 pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_WANDER_MEDIC_CTOR];
 
@@ -582,4 +646,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_JET_PACK_DROP_JET_PACK,
     HOOK_CONVERSATIONS_IS_CONVERSATION_AT_NODE,
     HOOK_JET_PACK_APPLY_ROLL_AND_PITCH,
+    HOOK_HOLD_ENTITY_CHOOSE_PUT_DOWN_HEIGHT,
 ];
