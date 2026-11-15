@@ -1949,3 +1949,14 @@
   0x620C30 / 0x6221D0 / 0x65A110 / 0x66CA40 / 0x674930 / 0x4993D0 / 0x603570 / 0x603AF0 / 0x61D0B0). The partial script
   switches 0x47A760 / 0x48B590 were left to lane A. The CAT-12 gap behind the not-in-catalogue rows (tail-jump targets
   merged into their jumper's extent) is not fixed in the catalogue tooling; the natives cover phase B.
+
+## 2026-11-15 — integrate FRONTIER-2 part 4 and lanes B and C (main session)
+
+- Lane A (part 4) fast-forwarded onto 8c9cbf77; lane B rebased on it (conflicts: sa-ports NATIVES lists unioned,
+  queue regenerated, the ROADMAP FRONTIER-2 row merged); lane C rebased on top (bindings.csv / name-corrections.csv
+  unioned; 10 binding rows the union duplicated dropped; queue regenerated) — head 5ec1cfdb.
+- Checked on the combined tree: sa-hook lib 59/59, host clippy, `make structure`, bindings `--check` (2,668),
+  state_check 0 inconsistent, queue `--check`, i686 sa-game; scenarios pausemenu / solicit / crossing / melee /
+  sniper / shootcar / shootdriver 0 blocked, no crash; verify-all (lanes 1-7, fresh sa-oracle) `intabc-u`
+  (frontier2-1..9, b1..b4, c1..c4 on) IDENTICAL 13/13 and `intabc-def` IDENTICAL 13/13 (A+B alone: `intab-u` /
+  `intab-def` IDENTICAL 13/13). `target/play/sa-game` and `web/pkg` refreshed.
