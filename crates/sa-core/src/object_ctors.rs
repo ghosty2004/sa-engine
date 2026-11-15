@@ -364,7 +364,8 @@ pub fn furniture_manager_ctor(this: GPtr<u8>) -> GPtr<u8> {
 
 /// `InteriorManager_c::InteriorManager_c()` (0x5984C0): 8 interiors of 0x794 (0x5921D0 / 0x591360),
 /// the `List_c` at +0x3CA0, 8 groups of 0xBC at +0x3CAC (0x597FE0 / 0x597FF0), the `List_c`s at
-/// +0x428C and +0x4298.
+/// +0x428C and +0x4298, then the bounds at +0x4740 = 1e6, +0x4744 = -1e6, +0x4748 = -1e6, +0x474C = 1e6
+/// (f32 bit patterns 0x49742400 / 0xC9742400, stored in that order: +0x4740, +0x474C, +0x4748, +0x4744).
 #[hook(addr = 0x5984C0, conv = thiscall, name = "InteriorManager_c::InteriorManager_c", expect = "6A FF 68 2D D1 83 00",
        unverified = "std5-ctor-1", route = "L2", hazards = "none", recs = "boot")]
 pub fn interior_manager_ctor(this: GPtr<u8>) -> GPtr<u8> {
@@ -373,6 +374,10 @@ pub fn interior_manager_ctor(this: GPtr<u8>) -> GPtr<u8> {
     eh_vector_ctor(this.byte_add(0x3CAC), 0xBC, 8, 0x597FE0, 0x597FF0);
     list_ctor_call(this.byte_add(0x428C));
     list_ctor_call(this.byte_add(0x4298));
+    wr::<u32>(this, 0x4740, 0x4974_2400);
+    wr::<u32>(this, 0x474C, 0x4974_2400);
+    wr::<u32>(this, 0x4748, 0xC974_2400);
+    wr::<u32>(this, 0x4744, 0xC974_2400);
     this
 }
 

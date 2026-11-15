@@ -84,7 +84,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x5F1600,sa-ai,bbox_centre_uncached,cdecl,,z:u32;corners:GPtr<u8>;out:GPtr<u8>,,sa_ai::mvpa_ai1::compute_entity_bounding_box_centre_uncached,CPedGeometryAnalyser::ComputeEntityBoundingBoxCentreUncached,
 0x5F1670,sa-ai,bbox_planes_uncached,cdecl,,z:u32;corners:GPtr<u8>;normals:GPtr<u8>;ds:GPtr<u8>,,sa_ai::mvpa_ai1::compute_entity_bounding_box_planes_uncached,CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanesUncached,
 0x5F1750,sa-ai,bbox_segment_planes_uncached,cdecl,,corners:GPtr<u8>;centre:GPtr<u8>;normals:GPtr<u8>;d:GPtr<u8>,,sa_ai::mvpa_ai1::compute_entity_bounding_box_segment_planes_uncached,CPedGeometryAnalyser::ComputeEntityBoundingBoxSegmentPlanesUncached,
-0x5F1C40,sa-ai,can_ped_target_ped,cdecl,,a:GPtr<u8>;b:GPtr<u8>;c:u32,u32,sa_ai::mvpa_ai1::can_ped_target_ped,CPedGeometryAnalyser::CanPedTargetPed,
+0x5F1C40,sa-ai,can_ped_target_ped,cdecl,,a:GPtr<u8>;b:GPtr<u8>;c:u32,u8,sa_ai::mvpa_ai1::can_ped_target_ped,CPedGeometryAnalyser::CanPedTargetPed,
 0x5F1E70,sa-ai,compute_ped_hit_side_pos,cdecl,,ped:GPtr<u8>;pos:GPtr<u8>,i32,unported,CPedGeometryAnalyser::ComputePedHitSide-pos,
 0x5F1FA0,sa-ai,bbox_corners_uncached,cdecl,,z:f32;e:GPtr<u8>;corners:GPtr<u8>,u8,unported,CPedGeometryAnalyser::ComputeEntityBoundingBoxCornersUncached,
 0x5F2F70,sa-ai,is_wander_path_clear,cdecl,,a:GPtr<u8>;b:GPtr<u8>;max_height_diff:f32;max_steps:i32,u32,unported,CPedGeometryAnalyser::IsWanderPathClear,

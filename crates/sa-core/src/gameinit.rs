@@ -728,7 +728,7 @@ pub fn env_map_pool_new(pool: GPtr<u8>) -> GPtr<u8> {
 /// (0x5D9660): `len` bytes read into the 0x18-byte record (`len` is not clamped in the original),
 /// converted (0x5D8BE0); data equal to the default (0xC02D18) points the material extension at the
 /// default, else at a new pool entry (`[0xC02D28]`; full: the default) holding the data. Returns the
-/// material.
+/// stream (`mov eax, [esp+0x38]` / `[esp+0x2C]`: the first argument on both exits).
 #[hook(addr = 0x5D9660, conv = cdecl, name = "CCustomCarEnvMapPipeline::pluginEnvMatStreamReadCB", expect = "8B 44 24 08 8B 54 24 04",
        unverified = "std4-load-1", route = "L2", hazards = "none", recs = "new-game")]
 pub fn env_mat_stream_read_cb(s: GPtr<u8>, len: u32, obj: GPtr<u8>, offset: i32, _size: i32) -> GPtr<u8> {
@@ -756,11 +756,11 @@ pub fn env_mat_stream_read_cb(s: GPtr<u8>, len: u32, obj: GPtr<u8>, offset: i32,
             for (k, v) in data.iter().enumerate() {
                 p.cast::<u32>().wrapping_index(k as i32).write(*v);
             }
-            return obj;
+            return s;
         }
     }
     ext.write(0xC02D18);
-    obj
+    s
 }
 
 /// `BreakablePlugin::BreakableStreamRead(stream, len, geometry, offset, size)` (0x59CEC0): the

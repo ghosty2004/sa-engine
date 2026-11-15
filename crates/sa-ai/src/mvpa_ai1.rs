@@ -41,7 +41,7 @@ orig! {
     fn v_delete(t: GPtr<u8>, flags: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
     /// `CPedGeometryAnalyser::CanPedTargetPoint(const CPed&, const CVector&, bool)` (0x5F1B70, cdecl; AL, full EAX
     /// passed on)
-    fn can_ped_target_point_o(ped: GPtr<u8>, point: GPtr<u8>, check: u32) -> u32 = cdecl 0x5F1B70 => unported;
+    fn can_ped_target_point_o(ped: GPtr<u8>, point: GPtr<u8>, check: u32) -> u8 = cdecl 0x5F1B70 => unported;
 }
 
 /// `CPools::ms_pPedPool`
@@ -592,10 +592,11 @@ pub fn compute_route_round_entity_bounding_box_entity(ped: GPtr<u8>, e: GPtr<u8>
 
 /// `CPedGeometryAnalyser::CanPedTargetPed(const CPed& ped, const CPed& target, bool checkDirection)` (0x5F1C40,
 /// cdecl): point = target position with z + [0x858F34] (f32); when the target's task manager (+0x47C, +4) has a
-/// secondary task in slot 1 (ducking), z -= [0x858624]. Returns `CanPedTargetPoint(ped, point, check)` (full EAX).
+/// secondary task in slot 1 (ducking), z -= [0x858624]. Returns `CanPedTargetPoint(ped, point, check)` (AL: every
+/// caller tests AL only; the upper bytes are whatever the line-of-sight test left).
 #[hook(addr = 0x5F1C40, conv = cdecl, name = "CPedGeometryAnalyser::CanPedTargetPed", expect = "8B 4C 24 08 8B 41 14",
        unverified = "mvpa-ai-1", route = "L2", hazards = "none", recs = "grove-walk")]
-pub fn can_ped_target_ped(ped: GPtr<u8>, target: GPtr<u8>, check: u32) -> u32 {
+pub fn can_ped_target_ped(ped: GPtr<u8>, target: GPtr<u8>, check: u32) -> u8 {
     let p = pos(target);
     let mut pt = [0u32; 3];
     let pp = local(&mut pt);
@@ -614,10 +615,11 @@ pub fn can_ped_target_ped(ped: GPtr<u8>, target: GPtr<u8>, check: u32) -> u32 {
 /// cdecl, AL): d = point - ped position. With the check, false unless `(dz*fwd.z + dy*fwd.y) + dx*fwd.x` >
 /// [0x858B50] or unordered (the matrix is read without a null test). False when `C*C < (dz*dz + dx*dx) + dy*dy`
 /// (C = [0x86C69C]). Else `CWorld::GetIsLineOfSightClear(ped position with z + [0x858F34], point, 1, 0, 0, 1, 0, 1,
-/// 0)` (full EAX). The false paths leave the FPU status word in AH and the position pointer's upper half in EAX.
+/// 0). The false paths leave the FPU status word in AH and the position pointer's upper half in EAX; the only
+/// caller (CanPedTargetPed, whose callers test AL) uses AL.
 #[hook(addr = 0x5F1B70, conv = cdecl, name = "CPedGeometryAnalyser::CanPedTargetPoint", expect = "83 EC 0C 56 8B 74 24 14",
        unverified = "mvpa-ai-1", route = "L2", hazards = "ax-al-return", recs = "grove-walk")]
-pub fn can_ped_target_point(ped: GPtr<u8>, point: GPtr<u8>, check: u32) -> u32 {
+pub fn can_ped_target_point(ped: GPtr<u8>, point: GPtr<u8>, check: u32) -> u8 {
     let m = rd::<GPtr<u8>>(ped, 0x14);
     let p = pos(ped);
     let dx = x(rd::<f32>(point, 0)).fsub_m(rd::<f32>(p, 0));
@@ -644,7 +646,7 @@ pub fn can_ped_target_point(ped: GPtr<u8>, point: GPtr<u8>, check: u32) -> u32 {
     wr::<u32>(op, 0, rd::<u32>(p, 0));
     wr::<u32>(op, 4, rd::<u32>(p, 4));
     wr::<f32>(op, 8, z);
-    world_get_is_line_of_sight_clear(op, point, 1, 0, 0, 1, 0, 1, 0) as u32
+    world_get_is_line_of_sight_clear(op, point, 1, 0, 0, 1, 0, 1, 0)
 }
 
 /// Every registration of this module.

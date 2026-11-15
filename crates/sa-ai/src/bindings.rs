@@ -475,7 +475,7 @@ orig! {
 
 orig! {
     /// `CPedGeometryAnalyser::CanPedTargetPed` (0x5F1C40)
-    pub fn can_ped_target_ped(a: GPtr<u8>, b: GPtr<u8>, c: u32) -> u32 = cdecl 0x5F1C40 => crate::mvpa_ai1::can_ped_target_ped;
+    pub fn can_ped_target_ped(a: GPtr<u8>, b: GPtr<u8>, c: u32) -> u8 = cdecl 0x5F1C40 => crate::mvpa_ai1::can_ped_target_ped;
 }
 
 orig! {
