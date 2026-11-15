@@ -19,7 +19,7 @@ use sa_stream::bindings::fill_frame_array;
 use sa_core::bindings::matrix_assign;
 orig! {
     /// `CRideAnimData::CRideAnimData()` (0x6D0B10)
-    fn ride_anim_data_ctor(r: GPtr<u8>) -> GPtr<u8> = thiscall 0x6D0B10 => crate::bike2::ride_anim_data_constructor;
+    pub fn ride_anim_data_ctor(r: GPtr<u8>) -> GPtr<u8> = thiscall 0x6D0B10 => crate::bike2::ride_anim_data_constructor;
     /// `CVehicleModelInfo` virtual +0x38 (`GetAnimFileIndex`)
     fn mi_get_anim_file_index(mi: GPtr<u8>) -> i32 = thiscall vslot 0x38 => unported;
     /// `CBike::SetupSuspensionLines()` (0x6B89B0)

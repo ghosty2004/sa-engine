@@ -145,5 +145,39 @@ pub fn automobile_blow_up_car(this: GPtr<u8>, damager: GPtr<u8>, hide: u32) {
     add_explosion(this, damager, ty as i32, f32::from_bits(px.to_bits()), f32::from_bits(py.to_bits()), f32::from_bits(pz.to_bits()), 0, 1, f32::from_bits(0xBF80_0000), hide as u8);
 }
 
+/// `CBike::BlowUpCar(CEntity* damager, bool hideExplosion)` (0x6BEA10; FRONTIER-2 lane B, batch `frontier2-b3`): the
+/// bike version: only when it can be damaged (+0x42A bit 5); `ms.z += 0.13`, status 5, flag +0x40 bit 29, clump
+/// flags 0x4000, health and +0x4DE cleared, a 0.4 camera shake at the bike, occupants killed, +0x4A8 `&= 0xE7`,
+/// +0x428 `&= 0xAF`, law enforcer state off, an explosion (type 4, no lifetime, sound, shake -1, the hide flag) at
+/// the bike's position and the player's Darkel kill registered (no fire, no bonus, no rand).
+#[hook(addr = 0x6BEA10, conv = thiscall, name = "CBike::BlowUpCar", this = "CBike",
+       expect = "56 8B F1 F6 86 2A 04 00 00 20",
+       unverified = "frontier2-b3", route = "L2", hazards = "heap-writes")]
+pub fn bike_blow_up_car(this: GPtr<u8>, damager: GPtr<u8>, hide: u32) {
+    if rd::<u8>(this, 0x42A) & 0x20 == 0 {
+        return;
+    }
+    let z = f32_of(x(rd::<f32>(this, 0x4C)).fadd_m(f32::from_bits(0x3E05_1EB8)));
+    wr::<f32>(this, 0x4C, z);
+    wr::<u8>(this, 0x36, (rd::<u8>(this, 0x36) & 7) | 0x28);
+    wr::<u32>(this, 0x40, rd::<u32>(this, 0x40) | 0x2000_0000);
+    clump_set_flags_7322f0(rd::<GPtr<u8>>(this, 0x18), 0x4000);
+    wr::<u32>(this, 0x4C0, 0);
+    wr::<u16>(this, 0x4DE, 0);
+    let pos = || {
+        let m = rd::<GPtr<u8>>(this, 0x14);
+        if m.is_null() { this.byte_add(4) } else { m.byte_add(0x30) }
+    };
+    let p = pos();
+    cam_shake(GPtr::from_addr(0xB6_F028), f32::from_bits(0x3ECC_CCCD), f32::from_bits(rd::<u32>(p, 0)), f32::from_bits(rd::<u32>(p, 4)), f32::from_bits(rd::<u32>(p, 8)));
+    kill_peds_in_vehicle(this);
+    wr::<u8>(this, 0x4A8, rd::<u8>(this, 0x4A8) & 0xE7);
+    wr::<u8>(this, 0x428, rd::<u8>(this, 0x428) & 0xAF);
+    change_law_enforcer_state(this, 0);
+    let p = pos();
+    add_explosion(this, damager, 4, f32::from_bits(rd::<u32>(p, 0)), f32::from_bits(rd::<u32>(p, 4)), f32::from_bits(rd::<u32>(p, 8)), 0, 1, f32::from_bits(0xBF80_0000), hide as u8);
+    darkel_register_car_blown_up(this, 0);
+}
+
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_AUTOMOBILE_BLOW_UP_CAR];
+pub const HOOKS: &[HookReg] = &[HOOK_AUTOMOBILE_BLOW_UP_CAR, HOOK_BIKE_BLOW_UP_CAR];

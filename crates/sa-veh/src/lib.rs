@@ -75,6 +75,7 @@ pub mod mvpd_v7;
 // WRITER-VEH-BIG (unverified batches)
 pub mod automobile_control;
 pub mod fire_truck;
+pub mod frontier_b;
 pub mod automobile_wheels;
 pub mod automobile_damage;
 pub mod automobile_ai;
