@@ -1611,3 +1611,63 @@
   tree: sa-hook lib 59/59, `make structure` clean, bindings `--check` (2,649), i686 sa-game; scenarios pausemenu /
   solicit / melee 0 blocked, crossing 345 blocked on `update_car_ai_original (0x0)` (police path, open), no crash;
   verify-all `f2-int` (lanes 1-3) IDENTICAL 13/13. `target/play/sa-game` and `web/pkg` refreshed.
+
+
+## 2026-11-15 — FRONTIER-2 part 2: police path, first-person aim, user-hit IK point arm / wheel particles, imports (agent, branch worktree-agent-acb224bd5911fd3a7)
+- Base: master 26b094e9. Every port from the 1.0 US bytes (gta-reversed read as an aid; it reverses neither UpdateCarAI's
+  whole switch faithfully nor ControlSubTask / Process_M16_1stPerson), checked with `tools/gen/inflight.py` first.
+- Batch `frontier2-3` (police path; scenario `crossing` was 345 blocked on `update_car_ai_original`):
+  - `CCarAI::UpdateCarAI` 0x41DA30 is now a whole port (new module sa-pop update_car_ai.rs; the ADR-002 fallback is gone):
+    the mission switch of status 2/3/12 (jump tables 0x420694 / 0x420708: ram / block the player far / close, goto
+    coordinates and straight line (plain / accurate), target far / close (ram / block / follow car, kill ped, drive-by),
+    slowly drive to the player, block forward and back, boat attack / circle, approach the player (with the cop bike's
+    drive-by sequence), escorts, the law-enforcer default), the pre-switch mission 0x3B and police cruise speed, the
+    `PoliceAbandonCars` give-up, and the tail (stuck test, bridge physics, bike → block, chase steering 0x41FE46 with the
+    steer angle, the player's land / water vehicle test, gang-area cruise speed). Bytes over gta-reversed: switch distances
+    are 2D lengths vs the straight-line byte / `FindSwitchDistanceFar`, mission 0x3B also sets mission 0x16, the cop-bike
+    exit time is 20 s, mission 18 switches to 17 when far.
+  - `CCarCtrl::SteerAICarWithPhysics_OnlyMission` 0x436A90 whole (was partial): ram the player (mission 3, the side aim,
+    passenger `Say(0x26)`), approach close (0x2C), follow car close (0x35), block (5 / 6 / 0x12), escorts 0x1D..0x20,
+    circle target (0x3C), the heli / plane / boat entries. The hook was verified before; it is now `unverified =
+    "frontier2-3"` (the default set runs the original body until it is promoted).
+  - `CCarAI::TellOccupantsToLeaveCar` 0x41C760 (passengers draw an unused `rand()` at 0x1569B68; the driver's leave-car
+    task size / bool come through no-CD code: 0x34 decoded, the bool taken as the passengers' 1),
+    `AddAmbulanceOccupants` 0x41C4A0 / `AddFiretruckOccupants` 0x41C600 (the last `SetTask` bool comes from the no-CD
+    decoder 0xCB73E0, taken as 0).
+  - `CTaskComplexKillCriminal::ControlSubTask` 0x68E950 (1,179 instructions, unreversed in gta-reversed),
+    `ChangeTarget` 0x68C6E0, `FindNextCriminalToKill` 0x68C3C0 (its reference distance is never updated: the last
+    nearer entry wins, original quirk) in sa-ai killtasks.rs.
+  - Cleanups (ADR-003): carctrl2's unused copies of 0x41CAA0 / 0x41C9D0 removed (police_ai.rs has the natives); new
+    bindings 0x41C760, 0x41CAA0, 0x41C9D0, 0x41CA50, 0x56E120 (FindPlayerEntity), 0x72DD60 (PoliceAbandonCars), 0x6A2450.
+- Batch `frontier2-4`: `CCam::Process_M16_1stPerson` 0x5105C0 (new sa-cam m16.rs, Fpu machine, frame at the original's
+  B offsets: zoom by wheel / pad, drive-by turn, mouse / pad look with `pow` smoothing, shake, drive-by source and beta /
+  alpha limits by seat, on-foot source, line-of-sight near clip, camera-mode near clip); `CCheat::WeaponCheat1/2/3`
+  0x4385B0 / 0x438890 / 0x438B30 (reached by the new scenario's KJKSZPJ).
+- Batch `frontier2-5` (user-hit, from the coordinator): `CTaskSimpleIKPointArm::CreateIKChain` 0x6342F0 and
+  `UpdatePointArmInfo` 0x634370 (sa-ai ik_tasks.rs / bike_door_swim_samp.rs, next to their LookAt twins);
+  `Fx_c::AddWheelGravel` 0x4A0170 / `AddWheelMud` 0x4A03C0 (byte-identical to AddWheelGrass except the colour: one shared
+  body `wheel_bits`, rand sites offset 0x250 / 0x4A0) and `AddWheelSand` 0x4A0610 / `AddWheelDust` 0x4A09C0 (one shared
+  `wheel_cloud`, they differ in colour and the life formula). No deterministic scenario reaches them yet: `solicit` calls
+  `IKChainManager_c::PointArm` twice (CanAccept refuses), and the scenarios' tyres touch grass only.
+- Imports (FRONTIER-2 (a)): sa-game implements `DeleteFileA` (VFS remove), `GetLocalTime` (host UTC, as `_strdate`),
+  `GetVolumeInformationA` (FALSE; only reached for CD drives, which `GetDriveTypeA` never reports) and `DialogBoxParamA`
+  (IDOK, selection unchanged). frontier.py --imports: 0.
+- Scenario `sniper` in tools/e2e/scenarios/frontier.sh (weapon cheat, six `e`, right mouse button held: Process_M16_1stPerson
+  runs 750 times); `SA_GAME_RMB` added to sa-game's evidence input (next to `SA_GAME_LMB`);
+  tools/e2e/scenarios/frontier2-3-counts.gdb counts this part's ports.
+- Repros (native, --fixed-step 40): crossing 1216 / 0 blocked (was 871 / 345); melee 2616 / 0; solicit 4016 / 0; pausemenu
+  416 / 0; sniper 1216 / 0; no crash. A 4000-frame crossing run reaches further unported code (firetruck tasks:
+  `vslot_18` MakeAbortable, 0x729B60, CreateFirstSubTask 0x62BF00) and a pistol shot at a car `SetUpWheelColModel`
+  0x6A3060: left for the frontier turn.
+- Gates: writer gate green (26b094e9..), `make structure` clean, bindings `--check` 2,656; verify-all `frontier2-p2b`
+  (lanes 1-3, SA_UNVERIFIED=frontier2-1..frontier2-5) IDENTICAL 13/13; i686 sa-game with and without `samp`, `FEATURES=samp
+  tools/web/build.sh` (wasm-bindgen 0.2.130) built.
+- frontier.py before / after: direct 480 + virtual 211 + imports 4 + partial 14 → direct 476 + virtual 210 + imports 0 +
+  partial 12.
+- Left open: the 12 remaining partial ports. Only unreachable / undefined cases fall back in CHud::DrawVehicleName (state
+  outside 0..4), CWaterLevel AddWaterLevelQuad / RenderFlat*_OneLayer (stack-garbage cases), GenerateRoadBlockPedsForCar
+  (offset indices beyond the tables), CPopulation::AddPed (types < 4, 21, > 31 read a stale argument slot) and
+  CCarGenerator::DoInternalProcessing (hotdog vans: AddPed's makeWander is the caller's EDI); reachable ones still to
+  port: CGangWars::Update (active wars), CRoadBlocks::GenerateRoadBlocks (wanted-level road blocks), CCollision::
+  ProcessColModels (A's disks), the script switches 1200-1299 (28 opcodes) / 2500-2599 (5). The ~250-function frontier
+  turn was not reached.
