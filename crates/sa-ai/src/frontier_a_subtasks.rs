@@ -545,6 +545,166 @@ pub fn kill_ped_group_on_foot_compute_nearest_living_group_ped(this: GPtr<u8>, p
     if best.is_null() { excluded } else { best }
 }
 
+// ---------------------------------------------------------------------------------------------------------
+// Batch `frontier2-a4`: CTaskComplexCopInCar::ControlSubTask (the roadblocks scenario's next block).
+
+orig! {
+    /// `CTask::GetTaskType()` (vtable +0x10)
+    fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
+    /// `CTask::MakeAbortable(CPed*, int32, const CEvent*)` (vtable +0x18)
+    fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
+    /// `CTaskComplex::CreateFirstSubTask(CPed*)` (vtable +0x20)
+    fn v_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x20 => unported;
+    /// `CTaskComplexCopInCar::CreateSubTask(int32, CPed*)` (0x68C9E0, `ret 8`)
+    fn cop_in_car_create_sub_task_call(t: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x68C9E0 => cop_in_car_create_sub_task;
+}
+
+use crate::bindings::task_timer_is_out_of_time;
+use sa_math::fpu::{ge_or_nan, gt};
+use sa_world::bindings::{vehicle_is_on_its_side, vehicle_is_upside_down};
+
+/// `|move speed|² * TimeStep * 50 > 1` (the vehicle's +0x44 copied into a local), else `|offset|² > 100` (`test ah,
+/// 41h` on both: NaN fails).
+fn far_or_fast(veh: GPtr<u8>, offset: GPtr<u8>) -> bool {
+    let mut s = [rd::<f32>(veh, 0x44), rd::<f32>(veh, 0x48), rd::<f32>(veh, 0x4C)];
+    let fast = vector_magnitude_sqr(sa_core::field::vec3f_ptr(&mut s))
+        .fmul_m(g::<f32>(0xB7CB5C).read())
+        .fmul_m(g::<f32>(0x858B40).read());
+    gt(fast, x(g::<f32>(0x858624).read())) || gt(vector_magnitude_sqr(offset), x(g::<f32>(0x858628).read()))
+}
+
+/// Flag byte +0x30 with bit 3 set to the target's in-vehicle bit (+0x46C bit 8), as the bytes' xor sequence.
+fn with_target_in_vehicle_bit(this: GPtr<u8>, f: u8) -> u8 {
+    let b = (((rd::<u32>(rd::<GPtr<u8>>(this, 0x14), 0x46C) >> 8) as u8) << 3 ^ f) & 8;
+    f ^ b
+}
+
+/// `CTaskComplexCopInCar::ControlSubTask(CPed* ped)` (0x68FD50, `ret 4`). +8 the sub-task, +0xC the cop's vehicle, +0x10
+/// the partner, +0x14 the target, +0x18 / +0x24 timers (`CTaskTimer`, +0x20 the first one's set flag), +0x30 flags (bit 0
+/// partner gone, 1 chase on foot allowed, 2 short timer, 3 target was in a vehicle). No target or a dead one (state
+/// 0x37): finished (0x516) when the sub-task aborts. An empty vehicle's siren flag +0x3BA is cleared; a missing or dead
+/// partner sets bit 0. By the sub-task's type: 0x2D4 car-drive mission: a change of the target's in-vehicle bit
+/// restarts the mission (bit 3 updated); else with bit 1 a simple car drive (0x2C5). 0x2C5: with bit 1 and bit 0 clear
+/// the first sub-task again (bit 1 cleared); with bit 0 the timer +0x18 starts (3000 + rand 0..2000 with bit 2, else
+/// 250 + rand 0..1250); once started, a target in another vehicle that moves fast or is more than 10 away restarts the
+/// mission (bits 1 / 2 cleared, timer off, bit 3 updated), else the timer's end restarts the first sub-task. 0x390:
+/// when the timer +0x24 ends, police pursuit (0x44F). 0x44F: a target in another vehicle, the cop's vehicle alive (+0x4C0
+/// > 0), not burning (+0x490), upright and not on its side, bit 0 set, the target vehicle fast or far, and the cop's
+/// vehicle within 4 of the ped (squared distance stored as f32, below 16): enter as driver (0x2BD). Every switch needs
+/// the sub-task's `MakeAbortable(ped, 1, null)`; otherwise the sub-task stays.
+#[hook(addr = 0x68FD50, conv = thiscall, name = "CTaskComplexCopInCar::ControlSubTask", expect = "83 EC 1C 53 56 8B F1",
+       unverified = "frontier2-a4", route = "L2", hazards = "heap-writes")]
+pub fn cop_in_car_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let sub = rd::<GPtr<u8>>(this, 8);
+    let target = rd::<GPtr<u8>>(this, 0x14);
+    let abort = || v_make_abortable(sub, ped, 1, GPtr::NULL) != 0;
+    let create = |ty: i32| cop_in_car_create_sub_task_call(this, ty, ped);
+    if target.is_null() || rd::<i32>(target, 0x530) == 0x37 {
+        return if abort() { create(0x516) } else { sub };
+    }
+    let v = rd::<GPtr<u8>>(this, 0xC);
+    if !v.is_null() && rd::<u32>(v, 0x460) == 0 && rd::<u8>(v, 0x3BA) != 0 {
+        wr::<u8>(v, 0x3BA, 0);
+    }
+    let f = rd::<u8>(this, 0x30);
+    if f & 1 == 0 {
+        let p = rd::<GPtr<u8>>(this, 0x10);
+        if p.is_null() || rd::<i32>(p, 0x530) == 0x37 {
+            wr::<u8>(this, 0x30, f | 1);
+        }
+    }
+    match v_task_type(rd::<GPtr<u8>>(this, 8)) {
+        0x2D4 => {
+            let t = rd::<GPtr<u8>>(this, 0x14);
+            if ((rd::<u32>(t, 0x46C) >> 5) ^ u32::from(rd::<u8>(this, 0x30))) & 8 != 0 && abort() {
+                let nf = with_target_in_vehicle_bit(this, rd::<u8>(this, 0x30));
+                wr::<u8>(this, 0x30, nf);
+                return create(0x2D4);
+            }
+            if rd::<u8>(this, 0x30) & 2 != 0 && abort() {
+                return create(0x2C5);
+            }
+            sub
+        }
+        0x2C5 => {
+            let f = rd::<u8>(this, 0x30);
+            if f & 2 == 0 {
+                return sub;
+            }
+            if f & 1 == 0 {
+                if !abort() {
+                    return sub;
+                }
+                wr::<u8>(this, 0x30, rd::<u8>(this, 0x30) & 0xFD);
+                return v_create_first_sub_task(this, ped);
+            }
+            if rd::<u8>(this, 0x20) == 0 {
+                let d = if f & 4 != 0 {
+                    general_random_int_in_range(0, 0x7D0) + 0xBB8
+                } else {
+                    general_random_int_in_range(0, 0x4E2) + 0xFA
+                };
+                wr::<i32>(this, 0x1C, d);
+                wr::<u32>(this, 0x18, g::<u32>(0xB7CB84).read());
+                wr::<u8>(this, 0x20, 1);
+                return sub;
+            }
+            let t = rd::<GPtr<u8>>(this, 0x14);
+            let tv = rd::<GPtr<u8>>(t, 0x58C);
+            if in_vehicle(t) && !tv.is_null() && tv != rd::<GPtr<u8>>(this, 0xC) {
+                let mut a = [0f32; 3];
+                let ap = sa_core::field::vec3f_ptr(&mut a);
+                vector_sub(ap, entity_pos(tv), entity_pos(ped));
+                if far_or_fast(tv, ap) && abort() {
+                    let nf = rd::<u8>(this, 0x30) & 0xF9;
+                    wr::<u8>(this, 0x30, nf);
+                    wr::<u8>(this, 0x20, 0);
+                    let nf = with_target_in_vehicle_bit(this, nf);
+                    wr::<u8>(this, 0x30, nf);
+                    return create(0x2D4);
+                }
+            }
+            if task_timer_is_out_of_time(this.byte_add(0x18)) != 0 && abort() {
+                wr::<u8>(this, 0x30, rd::<u8>(this, 0x30) & 0xFD);
+                wr::<u8>(this, 0x20, 0);
+                return v_create_first_sub_task(this, ped);
+            }
+            sub
+        }
+        0x390 => {
+            if task_timer_is_out_of_time(this.byte_add(0x24)) != 0 && abort() {
+                return create(0x44F);
+            }
+            sub
+        }
+        0x44F => {
+            let t = rd::<GPtr<u8>>(this, 0x14);
+            let tv = rd::<GPtr<u8>>(t, 0x58C);
+            let cv = rd::<GPtr<u8>>(this, 0xC);
+            if !in_vehicle(t) || tv.is_null() || tv == cv || cv.is_null() || rd::<u8>(this, 0x30) & 1 == 0 {
+                return sub;
+            }
+            if le_or_nan(x(rd::<f32>(cv, 0x4C0)), x(0.0)) || rd::<u32>(cv, 0x490) != 0 {
+                return sub;
+            }
+            if vehicle_is_upside_down(cv) != 0 || vehicle_is_on_its_side(rd::<GPtr<u8>>(this, 0xC)) != 0 {
+                return sub;
+            }
+            let tv = rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x14), 0x58C);
+            let mut a = [0f32; 3];
+            let ap = sa_core::field::vec3f_ptr(&mut a);
+            vector_sub(ap, entity_pos(rd::<GPtr<u8>>(this, 0xC)), entity_pos(ped));
+            let near = vector_magnitude_sqr(ap).to_f32();
+            vector_sub(ap, entity_pos(tv), entity_pos(ped));
+            if !far_or_fast(tv, ap) || ge_or_nan(x(near), x(g::<f32>(0x8599D0).read())) {
+                return sub;
+            }
+            if abort() { create(0x2BD) } else { sub }
+        }
+        _ => sub,
+    }
+}
+
 /// Phase B registrations of this module.
 pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_USE_SWAT_ROPE_CREATE_SUB_TASK];
 
@@ -561,4 +721,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_ENTER_CAR_AS_PASSENGER_WAIT_CREATE_SUB_TASK,
     HOOK_REACT_TO_GUN_AIMED_AT_CREATE_SUB_TASK,
     HOOK_KILL_PED_GROUP_ON_FOOT_COMPUTE_NEAREST_LIVING_GROUP_PED,
+    HOOK_COP_IN_CAR_CONTROL_SUB_TASK,
 ];
