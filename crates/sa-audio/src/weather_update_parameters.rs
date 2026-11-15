@@ -92,10 +92,8 @@ fn fade_out(sound: GPtr<u8>) {
 /// `log10((pos - reqPos) * (1 - p) * 0.005 + p) * 20`; otherwise `min'(req, 0)`.
 fn thunder(sound: GPtr<u8>, pos: i32) {
     let dur = g::<u32>(LIGHTNING_DURATION).read();
-    let v = fild_u32(dur).fmul_m(c(0x862E40)).fadd(X87::from_f64_exact(0.25));
-    let def = event_volume(0x8D);
     let req_pos = 600u32.wrapping_sub((dur / 20).wrapping_mul(500));
-    let req = f32_of(log10(v).fmul_m(c(0x858BA4)).fadd(xi(def)));
+    let req = thunder_volume();
     let p = pos as u32;
     let vol = if p <= req_pos {
         let r = xi(pos).fdiv(fild_u32(req_pos));
@@ -113,6 +111,64 @@ fn thunder(sound: GPtr<u8>, pos: i32) {
     };
     wr::<f32>(sound, 0x14, f32_of(vol));
 }
+
+/// The thunder volume (inlined in `UpdateParameters` and `AddAudioEvent`): `f32(log10(dur * 0.0375f + 0.25) * 20 +
+/// default(+0x8D))`, dur = `LightningDuration` as unsigned, the 0.25 a double.
+fn thunder_volume() -> f32 {
+    let dur = g::<u32>(LIGHTNING_DURATION).read();
+    let v = fild_u32(dur).fmul_m(c(0x862E40)).fadd(X87::from_f64_exact(0.25));
+    f32_of(log10(v).fmul_m(c(0x858BA4)).fadd(xi(event_volume(0x8D))))
+}
+
+/// `CAEWeatherAudioEntity::AddAudioEvent(eAudioEvents event)` (0x506800, thiscall, `ret 4`; FRONTIER-2 lane C turn 4):
+/// only thunder (0x8D) outside interiors (`CGame::currArea == 0`) when neither `CCullZones::PlayerNoRain` nor
+/// `CamNoRain`; bank 0x34 in slot 4 not loaded: `LoadSoundBank` and nothing else. The volume as [`thunder_volume`];
+/// the variation counter (int8 +0x7C) := `(counter + 1) % 3` (signed `idiv`), `f = THUNDER_FREQUENCIES[counter]`
+/// (0x8CC300). One stack `CAESound` (only +8 cleared by the inlined constructor, destroyed at the end) is
+/// `Initialise`d and requested four times, at `(-+0.906, 0.423, 0)`: sfx 4 at -100 with flags 7 and event 1, then
+/// sfx 1 at `min'(volume, 0)` (0 unless below) with flags 0x407 and event 2; the left one at speed `f32(f *
+/// 0.35636)`, the right one at `f32(f * 0.4)`; max distance 1.0, time scale 1.0.
+#[hook(addr = 0x506800, conv = thiscall, name = "CAEWeatherAudioEntity::AddAudioEvent", expect = "6A FF 68 48 C5 83 00",
+       unverified = "frontier2-c10", route = "L2", hazards = "x87-transcendental")]
+pub fn weather_add_audio_event(this: GPtr<u8>, event: i32) {
+    let mut local = StackSound::new();
+    if event == 0x8D
+        && g::<u32>(CURR_AREA).read() == 0
+        && player_no_rain() == 0
+        && cam_no_rain() == 0
+    {
+        if hw_is_sound_bank_loaded(g(HW), 0x34, 4) == 0 {
+            hw_load_sound_bank(g(HW), 0x34, 4);
+        } else {
+            let vol = thunder_volume();
+            let k = (i32::from(rd::<i8>(this, 0x7C)) + 1) % 3;
+            wr::<u8>(this, 0x7C, k as u8);
+            let freq = rd::<f32>(g(THUNDER_FREQUENCIES), 4 * k as isize);
+            let sp = local.ptr();
+            let play = |sfx: u32, px: u32, vol: u32, speed: usize, flags: u32, ev: u32| {
+                let speed = f32_of(x(freq).fmul_m(c(speed)));
+                sound_initialise(sp, 4, sfx, this.addr() as u32, px, 0x3ED8_9375, 0, vol, 0x3F80_0000, speed.to_bits(),
+                    0x3F80_0000, 0, flags, 0, 0);
+                wr::<u32>(sp, 0xC, ev);
+                sm_request_new_sound(SM as u32, sp.addr() as u32);
+            };
+            play(4, 0xBF67_EF9E, 0xC2C8_0000, 0x862E44, 7, 1);
+            play(4, 0x3F67_EF9E, 0xC2C8_0000, 0x858EE8, 7, 1);
+            let v = if x(vol).fcom(x(c(0x858B50))).test_parity(0x05) { 0 } else { vol.to_bits() };
+            play(1, 0xBF67_EF9E, v, 0x862E44, 0x407, 2);
+            let v = if x(vol).fcom(x(c(0x858B50))).test_parity(0x05) { 0 } else { vol.to_bits() };
+            play(1, 0x3F67_EF9E, v, 0x858EE8, 0x407, 2);
+        }
+    }
+    sound_dtor(local.ptr());
+}
+
+/// `THUNDER_FREQUENCIES` (1.15, 1.0, 0.85; 0x8CC300)
+const THUNDER_FREQUENCIES: usize = 0x8CC300;
+
+use crate::bindings::{hw_is_sound_bank_loaded, hw_load_sound_bank, sm_request_new_sound, sound_initialise};
+use crate::port3_ent::{StackSound, HW, SM};
+use sa_world::bindings::{cam_no_rain, player_no_rain, sound_dtor};
 
 /// One side of the city noise (two inlined copies in the original, 0x505CC1 right and 0x5060D8 left): the line of
 /// sight from `origin` to `target` (buildings, vehicles, objects, dummies). A hit entity other than the side's last
@@ -393,4 +449,4 @@ pub fn weather_update_parameters(_this: GPtr<u8>, sound: GPtr<u8>, cur_play_pos:
 }
 
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_WEATHER_UPDATE_PARAMETERS];
+pub const HOOKS: &[HookReg] = &[HOOK_WEATHER_UPDATE_PARAMETERS, HOOK_WEATHER_ADD_AUDIO_EVENT];

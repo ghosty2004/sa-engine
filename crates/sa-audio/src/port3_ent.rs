@@ -19,8 +19,8 @@ sa_core::globals! {
 }
 
 /// `AEAudioHardware`, `AESoundManager`, `g_surfaceInfos`
-const HW: usize = 0xB5F8B8;
-const SM: usize = 0xB62CB0;
+pub(crate) const HW: usize = 0xB5F8B8;
+pub(crate) const SM: usize = 0xB62CB0;
 const SURFACE_INFOS: usize = 0xB79538;
 /// Pointer whose byte +0x74 (int8) is the audio volume offset the collision sounds add (`[0xBD00F8]+0x74`).
 const VOLUME_OFFSET_PTR: usize = 0xBD00F8;
@@ -222,13 +222,13 @@ pub fn collision_update_looping(
 /// `CAESound::operator=` (inside `RequestNewSound`) copies. The four it never writes (+0x55, +0x5A,
 /// +0x6A, +0x72) are not copied by `operator=` and not read by the destructor, so their residue never
 /// leaves the local.
-struct StackSound([u32; 0x74 / 4]);
+pub(crate) struct StackSound([u32; 0x74 / 4]);
 
 impl StackSound {
-    fn new() -> StackSound {
+    pub(crate) fn new() -> StackSound {
         StackSound([0; 0x74 / 4])
     }
-    fn ptr(&mut self) -> GPtr<u8> {
+    pub(crate) fn ptr(&mut self) -> GPtr<u8> {
         GPtr::from_raw(self.0.as_mut_ptr()).cast()
     }
 }
