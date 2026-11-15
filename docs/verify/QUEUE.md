@@ -60,9 +60,9 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-4 | 4 | CAM, WORLD | 1e505863 | master | 4 | 0 | 0 | 0 | 0 | L2 3, L3-only 1 |
 | frontier2-5 | 6 | AI, RENDER | e28ad897 | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
 | frontier2-6 | 12 | AI, VEH | 38680f43 | master | 12 | 0 | 0 | 0 | 0 | L2 12 |
-| frontier2-c1 | 47 | AI, UNK-game | uncommitted | worktree-agent-a9ea24442dceda2e3 | 47 | 0 | 0 | 0 | 0 | L2 47 |
-| frontier2-c2 | 35 | AI, MATH, SCRIPT, UNK-game, VEH | uncommitted | worktree-agent-a9ea24442dceda2e3 | 35 | 0 | 0 | 0 | 0 | L2 35 |
-| frontier2-c3 | 11 | AI, SCRIPT, UNK-game | uncommitted | worktree-agent-a9ea24442dceda2e3 | 11 | 0 | 0 | 0 | 0 | L2 11 |
+| frontier2-c1 | 44 | AI, UNK-game | 1b07e010 | worktree-agent-a9ea24442dceda2e3 | 44 | 0 | 0 | 0 | 0 | L2 44 |
+| frontier2-c2 | 35 | AI, MATH, SCRIPT, UNK-game, VEH | 1b07e010 | worktree-agent-a9ea24442dceda2e3 | 35 | 0 | 0 | 0 | 0 | L2 35 |
+| frontier2-c3 | 11 | AI, SCRIPT, UNK-game | 1b07e010 | worktree-agent-a9ea24442dceda2e3 | 11 | 0 | 0 | 0 | 0 | L2 11 |
 | gen2-anim-1 | 1 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | gen2-coll-1 | 20 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 20 | 0 | L2 8, split 12 |
 | gen2-core-1 | 4 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
@@ -2045,7 +2045,7 @@ SA_UNVERIFIED=frontier2-6 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-6 $SA_
 
 ## frontier2-c1
 
-47 hooks in sa-ai, sa-core, sa-world; hazards: heap-writes (44); recordings calling them: grove-walk (17), new-game (1).
+44 hooks in sa-ai, sa-core, sa-world; hazards: heap-writes (41); recordings calling them: grove-walk (17), new-game (1).
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -2058,7 +2058,6 @@ SA_UNVERIFIED=frontier2-c1 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c1 $S
 |---|---|---|---|---|
 | 0x41B820 | `CPatrolRoute::operator delete` | written | L2 | none |
 | 0x492D40 | `CTaskSimpleTogglePedThreatScanner::Destructor` | written | L2 | heap-writes |
-| 0x4994E0 | `CTaskComplexBeCop::Destructor` | written | L2 | heap-writes |
 | 0x4B8750 | `CTaskSimpleOnEscalator::Destructor` | written | L2 | heap-writes |
 | 0x552520 | `CQuadTreeNode::~CQuadTreeNode` | written | L2 | heap-writes |
 | 0x552BC0 | `CQuadTreeNodePool::Delete` | written | L2 | none |
@@ -2081,7 +2080,6 @@ SA_UNVERIFIED=frontier2-c1 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c1 $S
 | 0x5EC110 | `FUN_005ec110` | written | L2 | heap-writes |
 | 0x5EC1B0 | `FUN_005ec1b0` | written | L2 | heap-writes |
 | 0x5F67E0 | `CTaskSimpleWaitUntilLeaderAreaCodesMatch::Destructor` | written | L2 | heap-writes |
-| 0x61BCA0 | `thunk_FUN_0061a6f0` | written | L2 | heap-writes |
 | 0x61FC50 | `CTaskSimpleBeKickedOnGround::Destructor` | written | L2 | heap-writes |
 | 0x61FE70 | `CTaskSimpleBeHitWhileMoving::Destructor` | written | L2 | heap-writes |
 | 0x620B90 | `CTaskComplexReactToAttack::Destructor` | written | L2 | heap-writes |
@@ -2095,7 +2093,6 @@ SA_UNVERIFIED=frontier2-c1 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c1 $S
 | 0x658850 | `CTaskComplexWanderMedic::Destructor` | written | L2 | heap-writes |
 | 0x659240 | `CTaskComplexPresentIDToCop::Destructor` | written | L2 | heap-writes |
 | 0x6598B0 | `CTaskComplexExtinguishFireOnFoot::Destructor` | written | L2 | heap-writes |
-| 0x659E00 | `thunk_FUN_0061a6f0` | written | L2 | heap-writes |
 | 0x66AAE0 | `CTaskComplexAvoidEntity::Destructor` | written | L2 | heap-writes |
 | 0x66CBB0 | `FUN_0066cbb0` | written | L2 | heap-writes |
 | 0x6709F0 | `CTaskComplexFollowPatrolRoute::Destructor` | written | L2 | heap-writes |
