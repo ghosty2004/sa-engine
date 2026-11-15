@@ -116,6 +116,11 @@ pub fn p8(addr: u32) -> GPtr<u8> {
 
 /// Reads the f32 at a fixed address (an `.rdata` constant or a global).
 #[inline]
+/// A pointer to a Rust `[f32; 3]` (a stack `CVector` of a port) as the game pointer the callee takes.
+pub fn v3_ptr(v: &mut [f32; 3]) -> GPtr<u8> {
+    GPtr::from_raw(v.as_mut_ptr()).cast()
+}
+
 pub fn gf(addr: usize) -> f32 {
     GPtr::<f32>::from_addr(addr).read()
 }

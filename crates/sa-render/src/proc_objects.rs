@@ -163,9 +163,7 @@ fn mp(m: &mut Mat) -> GPtr<u8> {
     GPtr::from_raw(m.as_mut_ptr()).cast()
 }
 
-fn vp(v: &mut [f32; 3]) -> GPtr<u8> {
-    GPtr::from_raw(v.as_mut_ptr()).cast()
-}
+use sa_core::field::v3_ptr as vp;
 
 /// `ProcSurfaceInfo_c::AddObject(CVector pos, CVector normal, tColLighting lighting)` (0x5A32D0, `ret 0x1C`).
 ///

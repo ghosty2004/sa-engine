@@ -31,7 +31,9 @@ use sa_world::bindings::{
     duck_ctor, go_to_point_and_stand_still_ctor, pause_ctor, ped_get_transformed_bone_position, ped_get_weapon_skill,
     ped_say, seek_entity_standard_ctor, stand_still_ctor, task_gun_control_ctor, weapon_is_type_melee,
 };
-use sa_world::world::common::entity_pos;
+use sa_core::field::gf as fc;
+use sa_world::world::common::{entity_pos, entity_pos3 as pos3};
+use sa_world::world::garage_update::now;
 
 orig! {
     /// `CPed::ReleaseCoverPoint()` (0x5E0270)
@@ -52,20 +54,12 @@ orig! {
     fn duck_set_duck_timer(d: GPtr<u8>, t: u32) = thiscall 0x692530 => unported;
 }
 
-/// `CTimer::m_snTimeInMilliseconds`
-const TIME_MS: usize = 0xB7CB84;
 
-fn now() -> u32 {
-    g::<u32>(TIME_MS).read()
-}
 
 fn target(this: GPtr<u8>) -> GPtr<u8> {
     rd::<GPtr<u8>>(this, 0xC)
 }
 
-fn fc(addr: usize) -> f32 {
-    g::<f32>(addr).read()
-}
 
 /// The `CWeaponInfo` of the ped's current weapon at its current skill.
 fn current_weapon_info(ped: GPtr<u8>) -> GPtr<u8> {
@@ -74,10 +68,6 @@ fn current_weapon_info(ped: GPtr<u8>) -> GPtr<u8> {
     get_weapon_info(wt, ped_get_weapon_skill(ped))
 }
 
-fn pos3(e: GPtr<u8>) -> [f32; 3] {
-    let p = entity_pos(e);
-    [rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8)]
-}
 
 /// `ped.Say(id, offset, 1.0, 0, 0, 0)`
 fn say(ped: GPtr<u8>, id: u32, offset: u32) -> i16 {
@@ -457,18 +447,11 @@ pub fn armed_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
             let dist = st0(vector_magnitude(d.cast()));
             let d2 = f32_of(dist);
             let range = rd::<f32>(wi, 4);
-            let fire = if gt(dist, x(range)) {
-                true
-            } else if !ge_or_nan(x(range).fmul_m(fc(0x858B8C)), x(d2))
+            let half_late = !ge_or_nan(x(range).fmul_m(fc(0x858B8C)), x(d2))
                 && !staying()
-                && now() > rd::<u32>(this, 0x14).wrapping_add(2500)
-            {
-                true
-            } else if !le_or_nan(x(d2), x(fc(0x858B90))) && !staying() && now() > rd::<u32>(this, 0x10) {
-                true
-            } else {
-                los_clear_for_attack_o(this, ped) == 0
-            };
+                && now() > rd::<u32>(this, 0x14).wrapping_add(2500);
+            let timer_out = !le_or_nan(x(d2), x(fc(0x858B90))) && !staying() && now() > rd::<u32>(this, 0x10);
+            let fire = gt(dist, x(range)) || half_late || timer_out || los_clear_for_attack_o(this, ped) == 0;
             if fire {
                 let sub = rd::<GPtr<u8>>(this, 8);
                 if rd::<u8>(sub, 0x2E) != 6 {

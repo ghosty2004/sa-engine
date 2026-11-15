@@ -1017,7 +1017,7 @@ pub fn find_plane_creation_coors_port(coors: GPtr<f32>, target: GPtr<f32>, orien
             f32_of(dy.fadd_m(at(target, 1))),
             f32_of(x(dz).fadd_m(at(target, 2))),
         ];
-        if code.read() >= 0xFFFF {
+        if code.read() == 0xFFFF {
             clear_scan_codes();
             code.write(1);
         } else {

@@ -5,6 +5,7 @@
 //! Fields: +0x94C cannon heading (relative to the vehicle), +0x950 cannon pitch, +0x698 the cannon's frame.
 
 use sa_core::abi::HookReg;
+use sa_core::field::{gf as fc, rd3f as v3, v3_ptr as ptr};
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::fpu::{fabs, ge_or_nan, gt, le_or_nan, lt};
@@ -28,17 +29,6 @@ const TIME_STEP: usize = 0xB7CB5C;
 const PI: usize = 0x858CB8;
 const TWO_PI: usize = 0x858CBC;
 
-fn fc(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
-
-fn v3(p: GPtr<u8>) -> [f32; 3] {
-    [rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8)]
-}
-
-fn ptr(v: &mut [f32; 3]) -> GPtr<u8> {
-    GPtr::from_raw(v.as_mut_ptr()).cast()
-}
 
 /// An angle brought within pi of `around` (one 2pi step either way; `a > around + pi` → -2pi, `a < around - pi`
 /// → +2pi), as the x87 sequences do it.
