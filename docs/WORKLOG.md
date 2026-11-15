@@ -2311,3 +2311,44 @@
   `intab3-def` IDENTICAL 13/13. Master fast-forwarded to 48633fb3.
 - frontier.py --no-branches: 309 → 287 to port (172 direct, 104 virtual, 11 partial) + 48 staying original.
 - Play package: target/play/sa-game refreshed from this tree (audio build); web/pkg rebuilt (FEATURES=samp).
+## 2026-11-16 — FRONTIER-2 turn 4 lane C: angled areas, aircraft / weather audio, heap, natives to hooks, batches c9 / c10 (agent, branch worktree-agent-a8e8e96036c1da50f)
+- Base: lane C turn 3 head 77a7c29d (branch worktree-agent-a04a02581f061bd35). Every port address checked against
+  `tools/gen/inflight.py` first (none in flight).
+- Batch frontier2-c9 (5 hooks): CRunningScript::ObjectInAngledAreaCheckCommand 0x4883F0 and
+  FlameInAngledAreaCheckCommand 0x488780 with their own area data flow (the object check keeps dx and the squared length
+  on the x87 and takes len2 from the stored side vector; the flame check normalises the stored edge and side vectors in
+  place for every flame-thrower shot it tests, so they are re-normalised per shot); the corner computation, the parameter
+  layout, the z test and the highlight / debug tails are now shared helpers with the Char check (`corners`,
+  `area_params`, `z_ok`, `highlight`; the Char data flow unchanged). The callees: CTheScripts::HighlightImportantAngledArea
+  0x485EF0 (x midpoints compared as the x87 holds them, y after the f32 store; no +2 on the ground z, unlike
+  HighlightImportantArea), DrawDebugAngledSquare 0x486990 (four vertical-line probes; the first probe's length is pushed
+  by the SecuROM fragment 0x401B61, `[0x15606B8] - [0x6D3045]` = 0x447A0000 = 1000.0 from the exe image), the ped-list
+  bounding sphere 0x66F6C0 (sa-ai). New binding CShotInfo::GetFlameThrowerShotPosn 0x739DE0; the three callee bindings
+  now reach the ports.
+- Batch frontier2-c10 (9 hooks): CAEVehicleAudioEntity::ProcessPlayerHeli 0x4FE420 (ProcessDummyHeli's bytes plus
+  GetAccelAndBrake and the accelerator factor; both hooks share one body `heli_engine`); the last three tail-target
+  natives as hooks with CAT-17 names (dtor_977be8_body 0x454200, CAEExplosionAudioEntity::~CAEExplosionAudioEntity
+  0x506B90: keycells checked, only 0x506B22 inside its neighbour is read as data; CHudColours::~CHudColours 0x58FD90;
+  catalogue regenerated with run_all, state guard 0 lowered); the sub-task factory 0x65A110 and its heading helper
+  0x6592A0 (X87 binding `task_heading_to_ped`; the original pushes the rate / tolerance before the heading call, whose
+  `ret 4` leaves them as the constructor's arguments); CMemoryHeap::FillInBlockData 0x72EC80 (protection fragment
+  0x40687B = plain `cmp ecx, 0x400`) and its callee CombineFreeBlocks 0x72E870; CPatrolRoute::operator= 0x66D4B0
+  (fragment 0x401764 zeroes the loop counter kept in the argument slot).
+- Native (not a hook): CAEWeatherAudioEntity::AddAudioEvent 0x506800 (the thunder event; shares `thunder_volume` with
+  UpdateParameters). The hook failed sa-hook's INF-20 install test: its 7-byte steal is seen by the sweep-decoded indexed
+  reader 0x14274C2 in the executable `.data` (`fmul qword ptr [ebx + 0x506805]`), which keycells cannot redirect; it is a
+  phase B native until that reader is shown to be junk.
+- Not ported (time): ProcessMissionAudioEvent 0x4ECCF0 (6.5 KB), ProcessPlayerProp / DummyProp 0x4FD290 / 0x4FD8F0
+  (137 differing lines between the two, no shared ported body; AIProp differs in 442), ProcessPlayerSeaPlane 0x4FF320,
+  ExtractVehicleUpdateData 0x45BA90 / 0x45DEF0, the D3D9 raster helpers 0x4CA5A0 / 0x4CD050 / 0x4CC1D0, 0x603AF0,
+  0x61D0B0 / 0x61FF40 / 0x66AB40, 0x477DA0 (CAT-12 not extended).
+- Gates: writer gate (base 77a7c29d, on 603d48d8) all PASS (hooks: 14 new, all unverified, notes: c9 spans SCRIPT /
+  UNK-game, c10 AUDIO / HUD / UNK-game). The first gate run caught a clippy type_complexity and the 0x506800 INF-20 read.
+- Scenarios (`frontier.sh`, i686 native sa-game of 01832503, before only the 0x506800 hook→native switch; target/lc4/scen):
+  pausemenu 416 / 0 blocked, solicit 4016 / 0, crossing 1216 / 0, melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0,
+  shootdriver 1216 / 0; crossing 4000 frames 4014 / 2 blocked (lane A's KillCriminal::CreateNextSubTask 0x68E4F0, as
+  before); no crash.
+- verify-all (lanes 6-7): `lanec4-c910` (SA_UNVERIFIED=frontier2-c9,frontier2-c10; DLL of e80796bb) IDENTICAL 13/13;
+  `lanec4-default` (default set) IDENTICAL 13/13 (DLL of 603d48d8).
+- frontier.py: lane C subsystems 36 → 26 rows (2 of them lane A's partial switches); whole frontier 285 → 263 at the
+  end (other branches' registrations included).
