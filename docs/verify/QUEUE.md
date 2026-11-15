@@ -68,8 +68,8 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-a3 | 5 | AI | 7104be38 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | frontier2-a4 | 2 | AI | 4b0ec921 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | frontier2-b1 | 32 | MATH, RENDER, RW | ebd33c14 | master | 32 | 0 | 0 | 0 | 0 | L1-pure 1, L2 31 |
-| frontier2-b10 | 10 | RENDER, VEH, WORLD | 5f3e9ad4 | worktree-agent-a75c5759aead26958 | 10 | 0 | 0 | 0 | 0 | L2 10 |
-| frontier2-b11 | 3 | VEH | 22e90eda | worktree-agent-a75c5759aead26958 | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| frontier2-b10 | 10 | RENDER, VEH, WORLD | b6aa3f43 | (no branch) | 10 | 0 | 0 | 0 | 0 | L2 10 |
+| frontier2-b11 | 3 | VEH | b19f1c20 | (no branch) | 3 | 0 | 0 | 0 | 0 | L2 3 |
 | frontier2-b2 | 23 | RW | 2f47ba34 | master | 23 | 0 | 0 | 0 | 0 | L2 23 |
 | frontier2-b3 | 7 | VEH | 221f09a0 | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
 | frontier2-b4 | 5 | RW, SAVE | 2f47ba34 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
