@@ -181,7 +181,111 @@ pub fn heap_init(heap: GPtr<u8>, mem: GPtr<u8>, size: u32, init_sizes: u8) {
 
 orig! {
     /// `CMemoryHeap::FillInBlockData(HeapFreeBlockDesc* block, HeapFreeBlockDesc* next, uint32 size)` (0x72EC80, thiscall)
-    fn heap_fill_in_block_data(heap: GPtr<u8>, block: GPtr<u8>, next: GPtr<u8>, size: u32) = thiscall 0x72EC80 => unported;
+    fn heap_fill_in_block_data(heap: GPtr<u8>, block: GPtr<u8>, next: GPtr<u8>, size: u32) = thiscall 0x72EC80 => heap_fill_in_block_data_port;
+    /// `CMemoryHeap::CombineFreeBlocks(HeapFreeBlockDesc*)` (0x72E870, thiscall)
+    fn heap_combine_free_blocks(heap: GPtr<u8>, block: GPtr<u8>) -> GPtr<u8> = thiscall 0x72E870 => heap_combine_free_blocks_port;
+}
+
+/// The 32-bit address `a` as a heap pointer.
+fn at(a: u32) -> GPtr<u8> {
+    GPtr::from_addr(a as usize)
+}
+
+/// Unlinks a free block from its list: `next->prev = prev`, `prev->next = next` (+0x10 next, +0x14 prev).
+fn unlink_free(b: GPtr<u8>) {
+    w32(hp(b, 0x10), 0x14, crate::field::rd32(b, 0x14));
+    w32(hp(b, 0x14), 0x10, crate::field::rd32(b, 0x10));
+}
+
+/// Links free block `b` after `after`: `b->next = after->next`, `after->next->prev = b`, `b->prev = after`,
+/// `after->next = b`.
+fn link_free_after(b: GPtr<u8>, after: GPtr<u8>) {
+    w32(b, 0x10, crate::field::rd32(after, 0x10));
+    w32(hp(after, 0x10), 0x14, b.addr() as u32);
+    w32(b, 0x14, after.addr() as u32);
+    w32(after, 0x10, b.addr() as u32);
+}
+
+/// `CMemoryHeap::CombineFreeBlocks(HeapFreeBlockDesc* block)` (0x72E870, thiscall, `ret 4`; `this` not read; unnamed in
+/// the catalogue; FRONTIER-2 lane C turn 4): the following block (`block + size + 0x10`) when free is unlinked and
+/// absorbed; the previous block (+0xC) when set and free is unlinked and becomes the result; the result's size spans to
+/// the block after, whose previous pointer becomes the result.
+#[hook(addr = 0x72E870, conv = thiscall, name = "FUN_0072e870", expect = "8B 44 24 04 8B 08",
+       unverified = "frontier2-c10", route = "L2", hazards = "heap-writes")]
+pub fn heap_combine_free_blocks_port(_heap: GPtr<u8>, block: GPtr<u8>) -> GPtr<u8> {
+    let mut r = block.addr() as u32;
+    let mut end = r.wrapping_add(crate::field::rd32(block, 0)).wrapping_add(0x10);
+    let prev = crate::field::rd32(block, 0xC);
+    if at(end).byte_add(4).read() == 0 {
+        unlink_free(at(end));
+        end = end.wrapping_add(crate::field::rd32(at(end), 0)).wrapping_add(0x10);
+    }
+    if prev != 0 && at(prev).byte_add(4).read() == 0 {
+        unlink_free(at(prev));
+        r = prev;
+    }
+    w32(at(r), 0, end.wrapping_sub(r).wrapping_sub(0x10));
+    w32(at(end), 0xC, r);
+    at(r)
+}
+
+/// `CMemoryHeap::FillInBlockData(HeapFreeBlockDesc* block, HeapFreeBlockDesc* next, uint32 size)` (0x72EC80, thiscall,
+/// `ret 0xC`; FRONTIER-2 lane C turn 4; the SecuROM fragment 0x40687B in its body is a plain `cmp ecx, 0x400`): `block`
+/// gets `size`; when the rest (`block + size + 0x10`) does not leave room for a block header before `next` (unsigned
+/// `>= next - 0x10`) the block keeps the whole span up to `next` (when it ends before it), `next->prev = block`, and the
+/// block is marked used (byte +4 = 1, word +6 = the heap's memory id +0x44, the heap's used size +0x40 += its size +
+/// 0x10). Otherwise the block is marked used with `size`, the rest becomes a free block (prev = block, size up to
+/// `next`, byte +4 = 0; `next->prev` = it), `CombineFreeBlocks(rest)` merges it, and the merged block goes into the
+/// common-size list `size / 16 - 1` (0x3C each, count +0x38 += 1, at the head) when the heap has the cache (+0x38) and
+/// its size is at most 0x400, else into the free list from +0x18 before the first block not smaller than it.
+#[hook(addr = 0x72EC80, conv = thiscall, name = "CMemoryHeap::FillInBlockData", expect = "8B 54 24 08 53 56 57",
+       unverified = "frontier2-c10", route = "L2", hazards = "heap-writes")]
+pub fn heap_fill_in_block_data_port(heap: GPtr<u8>, block: GPtr<u8>, next: GPtr<u8>, size: u32) {
+    let b = block.addr() as u32;
+    let n = next.addr() as u32;
+    let rest = b.wrapping_add(size).wrapping_add(0x10);
+    w32(block, 0, size);
+    let mark_used = |used: u32| {
+        block.byte_add(4).write(1);
+        block.byte_add(6).cast::<u16>().write(heap.byte_add(0x44).cast::<u16>().read());
+        w32(heap, 0x40, crate::field::rd32(heap, 0x40).wrapping_add(used.wrapping_add(0x10)));
+    };
+    if rest >= n.wrapping_sub(0x10) {
+        if rest < n {
+            w32(block, 0, n.wrapping_sub(b).wrapping_sub(0x10));
+        }
+        w32(next, 0xC, b);
+        mark_used(crate::field::rd32(block, 0));
+        return;
+    }
+    mark_used(size);
+    let r = at(rest);
+    w32(r, 0xC, b);
+    w32(r, 0, n.wrapping_sub(rest).wrapping_sub(0x10));
+    r.byte_add(4).write(0);
+    w32(next, 0xC, rest);
+    let m = heap_combine_free_blocks(heap, r);
+    let cs = crate::field::rd32(heap, 0x38);
+    if cs != 0 {
+        let sz = crate::field::rd32(m, 0);
+        if sz <= 0x400 {
+            let list = at(cs.wrapping_add((sz >> 4).wrapping_mul(0x3C)).wrapping_sub(0x3C));
+            link_free_after(m, list);
+            w32(list, 0x38, crate::field::rd32(list, 0x38).wrapping_add(1));
+            return;
+        }
+    }
+    let mut e = hp(heap, 0x18);
+    let want = crate::field::rd32(m, 0);
+    if crate::field::rd32(e, 0) < want {
+        loop {
+            e = hp(e, 0x10);
+            if crate::field::rd32(e, 0) >= want {
+                break;
+            }
+        }
+    }
+    link_free_after(m, hp(e, 0x14));
 }
 
 /// The heap pointer field at `off` of `p` as a pointer (a 32-bit address).
@@ -252,6 +356,8 @@ pub fn heap_malloc_port(heap: GPtr<u8>, size: u32) -> GPtr<u8> {
 
 /// This module's registrations (collected by [`crate::hooks`]).
 pub const HOOKS: &[crate::abi::HookReg] = &[
+    HOOK_HEAP_COMBINE_FREE_BLOCKS_PORT,
+    HOOK_HEAP_FILL_IN_BLOCK_DATA_PORT,
     HOOK_MGR_MALLOC,
     HOOK_MGR_FREE,
     HOOK_MGR_REALLOC,
