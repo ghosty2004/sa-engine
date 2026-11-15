@@ -734,6 +734,11 @@ orig! {
 }
 
 orig! {
+    /// `CPickups::CreatePickupCoorsCloseToCoors-` (0x458A80)
+    pub fn create_pickup_coors_close_to_coors(x: u32, y: u32, z: u32, ox: GPtr<u8>, oy: GPtr<u8>, oz: GPtr<u8>) = cdecl 0x458A80 => unported;
+}
+
+orig! {
     /// `CPed::CreateDeadPedPickupCoors-` (0x459180)
     pub fn create_dead_ped_pickup_coors(p: GPtr<u8>, x: GPtr<u8>, y: GPtr<u8>, z: GPtr<u8>) = thiscall 0x459180 => unported;
 }

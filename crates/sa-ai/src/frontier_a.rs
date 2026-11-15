@@ -417,6 +417,149 @@ pub fn create_car_and_get_in_dtor(this: GPtr<u8>) {
     crate::bindings::task_simple_dtor(this);
 }
 
+// ---------------------------------------------------------------------------------------------------------
+// Batch `frontier2-a3`: small direct entries (attractor lookup, office info, jet-pack drop, conversation node).
+
+use sa_world::bindings::create_pickup_coors_close_to_coors;
+orig! {
+    /// `InteriorGroup_c::FindInteriorInfo(int32 type, InteriorInfo_t**, Interior_c**)` (0x594970, `ret 0xC`, AL)
+    fn find_interior_info(g: GPtr<u8>, ty: i32, info: GPtr<u8>, interior: GPtr<u8>) -> u8 = thiscall 0x594970 => unported;
+    /// `CTask::MakeAbortable(CPed*, int32 priority, const CEvent*)` (vtable +0x18)
+    fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
+}
+
+use sa_core::bindings::make_upper_case;
+use sa_core::crt::rand_at;
+use sa_stream::bindings::generate_new_one;
+
+/// `CPedAttractorManager::GetPedUsingEffect<CPedAttractor>(const C2dEffect*, const CEntity*, const
+/// std::vector<CPedAttractor*>&)` (0x5EB740, `ret 0xC`; `this` unused): the first attractor of the vector with that
+/// effect (+4) and entity (+8); its first ped (+0x20 vector) or null when it has none; null without a match.
+#[hook(addr = 0x5EB740, conv = thiscall, name = "CPedAttractorManager::GetPedUsingEffect<CPedAttractor>", expect = "8B 44 24 0C 8B 50 04",
+       unverified = "frontier2-a3", route = "L2", hazards = "none")]
+pub fn attractor_manager_get_ped_using_effect(_this: GPtr<u8>, effect: u32, entity: u32, vec: GPtr<u8>) -> GPtr<u8> {
+    let begin = rd::<u32>(vec, 4);
+    let n = if begin == 0 { 0 } else { (rd::<u32>(vec, 8).wrapping_sub(begin) as i32) >> 2 };
+    for i in 0..n {
+        let a = g::<GPtr<u8>>(begin as usize + i as usize * 4).read();
+        if rd::<u32>(a, 4) == effect && rd::<u32>(a, 8) == entity {
+            let d = rd::<u32>(a, 0x20);
+            if d == 0 || (rd::<u32>(a, 0x24).wrapping_sub(d) as i32) >> 2 == 0 {
+                return GPtr::NULL;
+            }
+            return g::<GPtr<u8>>(d as usize).read();
+        }
+    }
+    GPtr::NULL
+}
+
+/// `ftol((rand() & 0xFFFF) * 1/32768 * k)` with the `rand` return address `site`.
+fn rand_scaled(site: u32, k: usize) -> i32 {
+    let r = rand_at(site) & 0xFFFF;
+    ftol32(xi(r).fmul_m(g::<f32>(0x858B14).read()).fmul_m(g::<f32>(k).read()))
+}
+
+/// `CTaskInteriorBeInOffice::GetInfoForPedToUse(int32* time)` (0x675300, `ret 4`): repeated until an info is found
+/// (+0x14): `FindInteriorInfo(type, &+0x14, &+0x10)` on the interior group (+0xC) with type 7 when the current info's
+/// type byte is 6, else 6. Type 6: `*time = -1` when `rand` scaled to 100 (0x675338) exceeds 20, else `5000 + rand
+/// scaled to 25000` (0x675368, the constant is -25000); type 7: `5000 + rand scaled to 5000` (0x67539B).
+#[hook(addr = 0x675300, conv = thiscall, name = "CTaskInteriorBeInOffice::GetInfoForPedToUse", expect = "53 8B 5C 24 08 55",
+       unverified = "frontier2-a3", route = "L2", hazards = "heap-writes")]
+pub fn interior_be_in_office_get_info_for_ped_to_use(this: GPtr<u8>, time: GPtr<i32>) {
+    loop {
+        let cur = rd::<GPtr<u8>>(this, 0x14);
+        let ty = if !cur.is_null() && cur.read() == 6 { 7 } else { 6 };
+        find_interior_info(rd::<GPtr<u8>>(this, 0xC), ty, this.byte_add(0x14), this.byte_add(0x10));
+        if ty == 6 {
+            if rand_scaled(0x67533D, 0x858628) > 0x14 {
+                time.write(-1);
+            } else {
+                time.write(0x1388 - rand_scaled(0x67536D, 0x870214));
+            }
+        } else {
+            time.write(0x1388 - rand_scaled(0x6753A0, 0x86E630));
+        }
+        if rd::<u32>(this, 0x14) != 0 {
+            break;
+        }
+    }
+}
+
+/// `CTaskSimpleJetPack::DropJetPack(CPed* ped)` (0x67B660, `ret 4`): unless already dropped (+8), a jet-pack pickup
+/// (model 370, type 5, ammo 0, `GenerateNewOne(pos, 370, 5, 0, 0, true, null)`) at `CreatePickupCoorsCloseToCoors` of
+/// the ped's position; then the task's own `MakeAbortable(ped, 1, null)` and +0xD / +0xE / +0x10 cleared.
+#[hook(addr = 0x67B660, conv = thiscall, name = "CTaskSimpleJetPack::DropJetPack", expect = "83 EC 0C 55 56 8B F1",
+       unverified = "frontier2-a3", route = "L2", hazards = "heap-writes")]
+pub fn jet_pack_drop_jet_pack(this: GPtr<u8>, ped: GPtr<u8>) {
+    if rd::<u8>(this, 8) == 0 {
+        let p = sa_world::world::common::entity_pos(ped);
+        let mut o = [0u32; 3];
+        let op: GPtr<u8> = GPtr::from_raw(o.as_mut_ptr()).cast();
+        create_pickup_coors_close_to_coors(rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8), op, op.byte_add(4), op.byte_add(8));
+        generate_new_one(f32::from_bits(o[0]), f32::from_bits(o[1]), f32::from_bits(o[2]), 0x172, 5, 0, 0, 1, GPtr::NULL);
+    }
+    v_make_abortable(this, ped, 1, GPtr::NULL);
+    wr::<u8>(this, 0xD, 0);
+    wr::<u8>(this, 0xE, 0);
+    wr::<u32>(this, 0x10, 0);
+}
+
+/// `CConversations::IsConversationAtNode(const char* name, CPed* ped)` (0x43B000: `.HOODLUM` stub to 0x156C500, AL):
+/// the ped's conversation (`m_aConversations` 0x9691D8, 14 entries of 0x1C, the ped at +8; none: read at null as the
+/// original); false while its node (+4) is negative or its status (+0x14) is 1; else the name is upper-cased
+/// (`MakeUpperCase`) and compared with the node's name (`m_aNodes` 0x969570, stride 0x18). The result is in AL; the
+/// upper EAX bytes follow the original's paths (the node index on the early false, the compare's -1 / 1 / 0).
+#[hook(addr = 0x43B000, conv = cdecl, name = "CConversations::IsConversationAtNode", expect = "E9 FB 14 13 01",
+       unverified = "frontier2-a3", route = "L2", hazards = "ax-al-return")]
+pub fn conversations_is_conversation_at_node(name: GPtr<u8>, ped: GPtr<u8>) -> u32 {
+    let mut conv = GPtr::<u8>::NULL;
+    for i in 0..14usize {
+        if g::<GPtr<u8>>(0x9691E0 + i * 0x1C).read() == ped {
+            conv = GPtr::from_addr(0x9691D8 + i * 0x1C);
+            break;
+        }
+    }
+    let node = rd::<i32>(conv, 4);
+    if node < 0 || rd::<i32>(conv, 0x14) == 1 {
+        return node as u32 & 0xFFFF_FF00;
+    }
+    make_upper_case(name);
+    let mut a = name;
+    let mut b = GPtr::<u8>::from_addr(0x969570 + rd::<i32>(conv, 4) as usize * 0x18);
+    loop {
+        let (ca, cb) = (a.read(), b.read());
+        if ca != cb {
+            // sbb eax, eax; sbb eax, -1: -1 below, 1 above
+            return if ca < cb { 0xFFFF_FF00 } else { 0 };
+        }
+        if ca == 0 {
+            return 1;
+        }
+        a = a.byte_add(1);
+        b = b.byte_add(1);
+    }
+}
+
+/// `CTaskSimpleJetPack::ApplyRollAndPitch(CPed* ped)` (0x67B720, `ret 4`): unless the ped's +0x46C bit 0 or 1 is set,
+/// both thigh bones (`m_apBones` +0x4A4 / +0x4A8, their +0x10 quaternions) are rotated (`RtQuatRotate`, combine 2) by
+/// +0x18 * 57.29578 about the axis at 0x8D2344 and +0x1C * 57.29578 about the axis at 0x8D2338 (each angle stored as
+/// f32), and the ped's +0x470 bit 0x4000 set.
+#[hook(addr = 0x67B720, conv = thiscall, name = "CTaskSimpleJetPack::ApplyRollAndPitch", expect = "56 8B 74 24 08 F6 86 6C 04 00 00 01",
+       unverified = "frontier2-a3", route = "L2", hazards = "heap-writes")]
+pub fn jet_pack_apply_roll_and_pitch(this: GPtr<u8>, ped: GPtr<u8>) {
+    let f = rd::<u32>(ped, 0x46C);
+    if f & 1 != 0 || (f >> 1) & 1 != 0 {
+        return;
+    }
+    let deg = |o: isize| x(rd::<f32>(this, o)).fmul_m(g::<f32>(0x859878).read()).to_f32();
+    for bone in [0x4A4isize, 0x4A8] {
+        let q = rd::<GPtr<u8>>(rd::<GPtr<u8>>(ped, bone), 0x10);
+        sa_core::bindings::rt_quat_rotate(q, GPtr::from_addr(0x8D2344), deg(0x18), 2);
+        sa_core::bindings::rt_quat_rotate(q, GPtr::from_addr(0x8D2338), deg(0x1C), 2);
+    }
+    wr::<u32>(ped, 0x470, rd::<u32>(ped, 0x470) | 0x4000);
+}
+
 /// Phase B registrations of this module.
 pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_WANDER_MEDIC_CTOR];
 
@@ -434,4 +577,9 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_GANG_DRIVE_BY_MAKE_ABORTABLE,
     HOOK_GANG_DRIVE_BY_START_ANIM,
     HOOK_CREATE_CAR_AND_GET_IN_DTOR,
+    HOOK_ATTRACTOR_MANAGER_GET_PED_USING_EFFECT,
+    HOOK_INTERIOR_BE_IN_OFFICE_GET_INFO_FOR_PED_TO_USE,
+    HOOK_JET_PACK_DROP_JET_PACK,
+    HOOK_CONVERSATIONS_IS_CONVERSATION_AT_NODE,
+    HOOK_JET_PACK_APPLY_ROLL_AND_PITCH,
 ];

@@ -1957,6 +1957,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x4564F0,sa-world,give_player_goodies,cdecl,,model:u32;player:i32,u8,unported,CPickups::GivePlayerGoodiesWithPickUpMI,
 0x4567E0,sa-world,give_us_a_pick_up_object,thiscall,,this:GPtr<u8>;out:GPtr<GPtr<u8>>;slot:i32,,sa_world::world::pickups::give_us_a_pick_up_object_port,CPickup::GiveUsAPickUpObject,
 0x458970,sa-world,create_some_money,cdecl,,px:f32;py:f32;pz:f32;amount:u32,,unported,CPickups::CreateSomeMoney,
+0x458A80,sa-world,create_pickup_coors_close_to_coors,cdecl,,x:u32;y:u32;z:u32;ox:GPtr<u8>;oy:GPtr<u8>;oz:GPtr<u8>,,unported,CPickups::CreatePickupCoorsCloseToCoors-,
 0x459180,sa-world,create_dead_ped_pickup_coors,thiscall,,p:GPtr<u8>;x:GPtr<u8>;y:GPtr<u8>;z:GPtr<u8>,,unported,CPed::CreateDeadPedPickupCoors-,
 0x45AE80,sa-world,take_remote_controlled_car_from_player,cdecl,,b:u32,,unported,CRemote::TakeRemoteControlledCarFromPlayer,
 0x45B730,sa-world,make_vehicle_update_data,thiscall,,b:GPtr<u8>;v:GPtr<u8>;i:i32,,unported,tReplayVehicleBlock::MakeVehicleUpdateData,

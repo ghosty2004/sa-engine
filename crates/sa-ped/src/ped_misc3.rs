@@ -27,6 +27,7 @@ use sa_world::bindings::create_dead_ped_pickup_coors as create_dead_ped_pickup_c
 use crate::bindings::get_weapon_skill_type_call as ped_get_weapon_skill_type;
 use sa_world::bindings::give_delayed_weapon as ped_give_delayed_weapon;
 use sa_world::bindings::weapon_audio_initialise;
+use sa_world::bindings::create_pickup_coors_close_to_coors as pickups_create_pickup_coors_close_to_coors;
 orig! {
     /// `CAEWeaponAudioEntity::PlayFlameThrowerIdleGasLoop(CPhysical*)` (0x503870)
     fn weapon_audio_play_flame_thrower_idle_gas_loop(a: GPtr<u8>, p: GPtr<u8>) = thiscall 0x503870 => unported;
@@ -36,8 +37,6 @@ orig! {
     fn speech_v1(s: GPtr<u8>, id: u32, a: u32, b: u32, c: u32, d: u32) -> u32 = thiscall vslot 0x4 => unported;
     /// `CAEPedSpeechAudioEntity::AddSayEvent(int32, int16, uint32, float, uint8, uint8, uint8)` (0x4E6550)
     fn speech_add_say_event(s: GPtr<u8>, ev: u32, ctx: u32, off: u32, vol: u32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x4E6550 => unported;
-    /// `CPickups::CreatePickupCoorsCloseToCoors(float, float, float, float*, float*, float*)` (0x458A80)
-    fn pickups_create_pickup_coors_close_to_coors(x: u32, y: u32, z: u32, ox: GPtr<u8>, oy: GPtr<u8>, oz: GPtr<u8>) = cdecl 0x458A80 => unported;
     /// `CPickups::TryToMerge_WeaponType(CVector, eWeaponType, ePickupType, uint32, bool)` (0x4555A0, AL)
     fn pickups_try_to_merge_weapon_type(x: u32, y: u32, z: u32, ty: i32, pt: i32, ammo: i32, b: u32) -> u8 = cdecl 0x4555A0 => unported;
 }
