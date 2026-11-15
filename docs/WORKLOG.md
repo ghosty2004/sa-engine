@@ -1581,4 +1581,14 @@
   from frame 912); pausemenu 0 blocked; solicit 0 blocked; crossing: the trailers, the moving collision and the damage
   now run; it stops at frame ~855 on `update_car_ai_original (0x0)` — the damage the car does reports a crime, the
   police come and CCarAI::UpdateCarAI's law-enforcer path is still the original's (see the ROADMAP).
+- Batch `frontier2-2` (8 hooks + 4 natives): the CPostEffects switches / light passes / day-night balance / screen-mode
+  init (0x701120, 0x701140, 0x701160, 0x7012E0, 0x701410, 0x701430, 0x7034D0, 0x7046D0; 0x7034B0 native: the no-CD
+  chunk at 0x4084D2 reads its jmp) and the police choices CCarAI::FindPoliceCarMissionForWantedLevel 0x41C9D0 /
+  FindPoliceBikeMissionForWantedLevel 0x41CA40 / FindPoliceCarSpeedForWantedLevel 0x41CAA0 (natives: protection
+  code reads or calls into their entries, and 0x41CA40 is 3 bytes long).
+- verify-all `frontier2-1` (lanes 1-3, SA_UNVERIFIED=frontier2-1): 12/13 IDENTICAL; the grove walk diverged at frame
+  4888 (randcalls). `tools/verify/bisect-batch.sh frontier2-1 grove-walk 6`: single culprit
+  ProcSurfaceInfo_c::AddObjects 0x5A3850, the rest of the batch identical. Cause: its two `srand` calls carried a Rust
+  return address in the determinism rand log; they now run `at_site` the original's return addresses (0x5A3C82,
+  0x5A3E00), as CGame::InitialiseRenderWare does.
 

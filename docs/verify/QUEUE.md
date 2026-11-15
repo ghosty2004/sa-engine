@@ -55,7 +55,8 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | framelimit-render | 1 | RENDER | 4b8a01b9 | master | 1 | 0 | 0 | 0 | 0 | L3-only 1 |
 | frontier-1-1 | 15 | AI, UNK-game, VEH, WORLD | 8c92bd74 | master | 15 | 0 | 0 | 0 | 0 | L2 15 |
 | frontier-1-2 | 5 | AI, RENDER, UNK-game | 4e5ce171 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
-| frontier2-1 | 34 | AI, AUDIO, RENDER, UNK-game, VEH | uncommitted | worktree-agent-acdd0a918985c68f5 | 34 | 0 | 0 | 0 | 0 | L2 34 |
+| frontier2-1 | 34 | AI, AUDIO, RENDER, UNK-game, VEH | 5a54d2cc | worktree-agent-acdd0a918985c68f5 | 34 | 0 | 0 | 0 | 0 | L2 34 |
+| frontier2-2 | 8 | RENDER | uncommitted | worktree-agent-acdd0a918985c68f5 | 8 | 0 | 0 | 0 | 0 | L2 8 |
 | gen2-anim-1 | 1 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | gen2-coll-1 | 20 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 20 | 0 | L2 8, split 12 |
 | gen2-core-1 | 4 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
@@ -1972,6 +1973,28 @@ SA_UNVERIFIED=frontier2-1 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-1 $SA_
 | 0x6CFAC0 | `CTrailer::PreRender` | written | L2 | heap-writes |
 | 0x6D7C90 | `CVehicle::InflictDamage` | written | L2 | heap-writes,stack-residue,entry-protection-read |
 | 0x6DF3D0 | `CVehicle::GetSpecialColModel` | written | L2 | heap-writes |
+
+## frontier2-2
+
+8 hooks in sa-render; hazards: none; recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-2 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-2
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x701120 | `CPostEffects::ScriptNightVisionSwitch` | written | L2 | none |
+| 0x701140 | `CPostEffects::ScriptInfraredVisionSwitch` | written | L2 | none |
+| 0x701160 | `CPostEffects::ScriptHeatHazeFXSwitch` | written | L2 | none |
+| 0x7012E0 | `CPostEffects::NightVisionSetLights` | written | L2 | none |
+| 0x701410 | `CPostEffects::InfraredVisionRestoreLightsForHeatObjects` | written | L2 | none |
+| 0x701430 | `CPostEffects::InfraredVisionSetLightsForDefaultObjects` | written | L2 | none |
+| 0x7034D0 | `CPostEffects::FilterFX_RestoreDayNightBalance` | written | L2 | none |
+| 0x7046D0 | `CPostEffects::DoScreenModeDependentInitializations` | written | L2 | none |
 
 ## gen2-anim-1
 

@@ -153,6 +153,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::water_wake_segment::HOOKS,
     crate::fx_add_blood::HOOKS,
     crate::proc_objects::HOOKS,
+    // FRONTIER-2
+    crate::posteffects_switches::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

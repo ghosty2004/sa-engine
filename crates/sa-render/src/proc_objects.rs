@@ -12,6 +12,7 @@ use sa_core::bindings::{
     world_add, world_remove,
 };
 use sa_core::crt::{rand_at, srand};
+use sa_core::orig::at_site;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::fpu::{fcom_parity, ge_or_nan, gt, le_or_nan, lt};
@@ -327,7 +328,7 @@ pub fn add_object(this: GPtr<u8>, px: f32, py: f32, pz: f32, nx: f32, ny: f32, n
 /// the nine coordinates + model))`, `rand`'s previous draw restored with `srand` at the end.
 #[hook(addr = 0x5A3850, conv = thiscall, name = "ProcSurfaceInfo_c::AddObjects", expect = "83 EC 7C 53 55 56 8B B4",
        unverified = "frontier2-1", route = "L2", hazards = "heap-writes",
-       note = "rand at_site 0x5A3C7A/0x5A3CBE/0x5A3CE0/0x5A3CF7; srand")]
+       note = "rand at_site 0x5A3C7A/0x5A3CBE/0x5A3CE0/0x5A3CF7; srand at_site 0x5A3C82/0x5A3E00")]
 #[allow(clippy::too_many_lines)]
 pub fn add_objects(this: GPtr<u8>, tri: GPtr<u8>) -> i32 {
     let v = |o: isize| rd::<f32>(tri, o);
@@ -426,9 +427,9 @@ pub fn add_objects(this: GPtr<u8>, tri: GPtr<u8>) -> i32 {
     let c = x(v(8)).fadd_m(v(4)).fadd_m(v(0));
     let seed = ftol32(a.fadd(b).fadd(c).fadd(xi(rd::<i32>(this, 4))));
     let old = rand_at(0x5A_3C7A);
-    srand(seed as u32);
+    at_site(0x5A_3C82, || srand(seed as u32));
     if le_or_nan(x(density), zero) {
-        srand(old as u32);
+        at_site(0x5A_3E00, || srand(old as u32));
         return count;
     }
     let k = gf(0x85_8C7C);
@@ -456,7 +457,7 @@ pub fn add_objects(this: GPtr<u8>, tri: GPtr<u8>) -> i32 {
             break;
         }
     }
-    srand(old as u32);
+    at_site(0x5A_3E00, || srand(old as u32));
     count
 }
 
