@@ -377,7 +377,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | veh4-1 | 2 | VEH | 64663f15 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | veh4-2 | 8 | VEH | 419315e3 | master | 8 | 0 | 0 | 0 | 0 | L2 7, L3-only 1 |
 | veh4-3 | 12 | VEH | 4f480416 | master | 12 | 0 | 0 | 0 | 0 | L2 11, split 1 |
-| veh4-4 | 9 | VEH | 4f480416 | master | 9 | 0 | 0 | 0 | 0 | L2 8, L3-only 1 |
+| veh4-4 | 9 | VEH | 4f480416 | master | 8 | 0 | 1 | 0 | 0 | L2 8, L3-only 1 |
 | world3-1 | 11 | WORLD | 35a056ba | master | 11 | 0 | 0 | 0 | 0 | L2 10, split 1 |
 | world3-2 | 20 | WORLD | 35a056ba | master | 20 | 0 | 0 | 0 | 0 | L2 17, split 3 |
 | world3-3 | 3 | WORLD | c379e778 | master | 3 | 0 | 0 | 0 | 0 | L2 2, split 1 |
@@ -7981,7 +7981,7 @@ SA_UNVERIFIED=veh4-3 LANE=$LANE tools/e2e/port-l2.sh batch:veh4-3 $SA_ROOT/targe
 
 ## veh4-4
 
-9 hooks in sa-veh; hazards: heap-writes (3); recordings calling them: no coverage data.
+9 hooks in sa-veh; hazards: heap-writes (3), preserved-regs (1); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -7999,7 +7999,7 @@ SA_UNVERIFIED=veh4-4 LANE=$LANE tools/e2e/port-l2.sh batch:veh4-4 $SA_ROOT/targe
 | 0x6D3650 | `CVehicle::GetUpgrade` | written | L2 | none |
 | 0x6D40E0 | `CVehicle::GetPlaneGunsRateOfFire` | written | L2 | none |
 | 0x6D4590 | `CVehicle::GetPlaneOrdnanceRateOfFire` | written | L2 | none |
-| 0x6D7BC0 | `CVehicle::FindTyreNearestPoint` | written | L2 | none |
+| 0x6D7BC0 | `CVehicle::FindTyreNearestPoint` | L2 | L2 | preserved-regs |
 | 0x6F20E0 | `CBoat::Teleport` | written | L2 | heap-writes |
 
 ## world3-1

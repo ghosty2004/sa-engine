@@ -22,7 +22,7 @@ use crate::mspec::*;
 use crate::specs::{ExpRet, RetKind::*, Spec};
 use sa_core::abi::{PRESERVE_ECX, PRESERVE_EDX};
 use sa_core::mem::GPtr;
-use sa_veh::{enterexit, heli};
+use sa_veh::{enterexit, heli, vehicle_misc_queries};
 
 /// Guest address of region `r` of a spec with regions of `words` dwords (the `B::layout` rule).
 fn g_addr(words: &[usize], r: usize) -> u32 {
@@ -114,6 +114,28 @@ fn gear_rust(c: &mut Ctx) -> ExpRet {
     ExpRet::Void
 }
 
+/// FindTyreNearestPoint: vehicle head +0x0..+0x18 (`m_placement`, `m_matrix`) and `m_nVehicleSubType`
+/// (+0x590), which is too far for the window: its displacement is patched to +0x18 (word 6).
+const TYRE_WORDS: [usize; 2] = [7, 16];
+const TYRE_SUBTYPE_TO: u32 = 0x18;
+
+/// The Rust side of FindTyreNearestPoint on a host vehicle: the guest head and matrix copied, the
+/// matrix pointer (+0x14) widened to a host pointer, +0x590 from the patched word. The port only reads.
+fn tyre_rust(c: &mut Ctx) -> ExpRet {
+    let mut veh = vec![0u8; 0x5A0];
+    let mut mat = [0f32; 16];
+    for w in 1..4 {
+        veh[4 * w..4 * w + 4].copy_from_slice(&c.u(0, w).to_le_bytes());
+    }
+    for (w, m) in mat.iter_mut().enumerate() {
+        *m = c.fl(1, w);
+    }
+    veh[0x14..0x1C].copy_from_slice(&(mat.as_mut_ptr().addr() as u64).to_le_bytes());
+    veh[0x590..0x594].copy_from_slice(&c.u(0, 6).to_le_bytes());
+    let r = vehicle_misc_queries::vehicle_find_tyre_nearest_point(GPtr::from_raw(veh.as_mut_ptr()), c.f(1), c.f(2));
+    ExpRet::Eax(r as u32)
+}
+
 pub fn all() -> Vec<Spec> {
     let handling = g_addr(&PI_WORDS, 1) - 0xCC;
     vec![
@@ -167,5 +189,29 @@ pub fn all() -> Vec<Spec> {
             ])
             .preserve(PRESERVE_ECX)
             .rust(gear_rust),
+        // CVehicle::InflictDamage 0x6D7E84 makes the virtual BurstTyre call with `this` still in ECX
+        // (UNVERIFIED-WC)
+        b("VehFindTyreNearestPoint", "CVehicle::FindTyreNearestPoint", 0x6D7BC0, Thiscall, Eax)
+            .regions(vec![
+                Region {
+                    words: vec![W::R, W::F, W::F, W::F, W::R, W::P(1), W::R],
+                    kind: Kind::Any,
+                },
+                Region {
+                    words: vec![W::F; TYRE_WORDS[1]],
+                    kind: Kind::Matrix,
+                },
+            ])
+            .args(vec![A::K(g_addr(&TYRE_WORDS, 0)), A::F, A::F])
+            // `mov eax, [ecx+0x590]` -> [ecx+0x18]
+            .patch(vec![(0x6D7C1A, TYRE_SUBTYPE_TO.to_le_bytes().to_vec())])
+            .fix(|v, l| {
+                // the vehicle sub-type: bike (9) often
+                let s = l.word_slot[0][6].unwrap();
+                let h = hash(v);
+                v[s] = if h.is_multiple_of(3) { 9 } else { (h >> 2) % 11 };
+            })
+            .preserve(PRESERVE_ECX)
+            .rust(tyre_rust),
     ]
 }

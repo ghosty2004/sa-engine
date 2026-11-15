@@ -570,7 +570,11 @@ pub fn callee_effect(
 /// `ret`, indirect calls and jumps and invalid instructions end the path. Indirect calls are not
 /// followed: their convention is unknown (imports and RenderWare's function tables are stdcall/cdecl;
 /// treating them as ECX reads gave 60+ false reports), and a virtual call on the object still in ECX
-/// first reads ECX to load the vtable, which is reported by itself.
+/// first reads ECX to load the vtable, which is reported by itself. Except (UNVERIFIED-WC): a virtual
+/// call whose vtable the path loaded from ANOTHER register's copy of the object (`mov r, [s]`, then
+/// `call [r+disp]`) passes the callee's ECX as `this` without reading it: CVehicle::InflictDamage
+/// 0x6D7E80 `mov ebp, [esi]; mov ecx, esi; call FindTyreNearestPoint; add al, 0xD; push eax;
+/// call [ebp+0xB0]` (BurstTyre with `this` still in ECX). Such a call is a use of ECX.
 pub fn uses_after(exe: &crate::testexe::Exe, starts: &[u32], site: u32) -> Vec<Use> {
     let mut memo = BTreeMap::new();
     uses_after_memo(exe, starts, site, &mut memo, &|_| None)
@@ -593,16 +597,36 @@ pub fn uses_after_memo(
 ) -> Vec<Use> {
     let mut f = InstructionInfoFactory::new();
     let mut out: BTreeSet<Use> = BTreeSet::new();
-    // (ip, written ECX bytes, written EDX bytes, steps)
-    let mut work = vec![(site + 5, 0u8, 0u8, 0usize)];
+    // (ip, written ECX bytes, written EDX bytes, steps, vtable registers): the last field is the mask
+    // ([`vt_bit`]) of the registers that still hold the vtable of the hooked call's `this`
+    // ([`vtables_before`])
+    let mut work = vec![(site + 5, 0u8, 0u8, 0usize, vtables_before(exe, starts, site))];
     let mut seen = BTreeSet::new();
-    while let Some((ip, mut wc, mut wd, steps)) = work.pop() {
-        if steps >= MAX_STEPS || (wc != 0 && wd != 0) || !seen.insert((ip, wc, wd)) {
+    while let Some((ip, mut wc, mut wd, steps, mut vt)) = work.pop() {
+        if steps >= MAX_STEPS || (wc != 0 && wd != 0) || !seen.insert((ip, wc, wd, vt)) {
             continue;
         }
         let i = decode_at(exe, ip);
         if i.is_invalid() {
             continue;
+        }
+        if i.flow_control() == FlowControl::IndirectCall
+            && wc != 0xF
+            && i.op0_kind() == OpKind::Memory
+            && i.memory_index() == Register::None
+            && vt_bit(i.memory_base()) & vt != 0
+        {
+            out.insert(Use {
+                site,
+                reg: Reg::Ecx,
+                at: ip,
+                text: format!("virtual call through {:?} (the vtable of the call's `this`, loaded before it)", i.memory_base()),
+            });
+        }
+        for r in f.info(&i).used_registers() {
+            if matches!(r.access(), OpAccess::Write | OpAccess::CondWrite | OpAccess::ReadWrite | OpAccess::ReadCondWrite) {
+                vt &= !vt_bit(r.register().full_register32());
+            }
         }
         for (reg, read, w) in reg_events(exe, starts, &mut f, &i, [wc, wd]) {
             if read {
@@ -617,18 +641,20 @@ pub fn uses_after_memo(
         }
         let next = i.next_ip32();
         match i.flow_control() {
-            FlowControl::Next => work.push((next, wc, wd, steps + 1)),
+            FlowControl::Next => work.push((next, wc, wd, steps + 1, vt)),
             FlowControl::UnconditionalBranch if i.op0_kind() == OpKind::NearBranch32 => {
-                work.push((i.near_branch32(), wc, wd, steps + 1))
+                work.push((i.near_branch32(), wc, wd, steps + 1, vt))
             }
             FlowControl::ConditionalBranch => {
-                work.push((next, wc, wd, steps + 1));
+                work.push((next, wc, wd, steps + 1, vt));
                 if matches!(i.op0_kind(), OpKind::NearBranch32) {
-                    work.push((i.near_branch32(), wc, wd, steps + 1));
+                    work.push((i.near_branch32(), wc, wd, steps + 1, vt));
                 }
             }
             FlowControl::Call if i.op0_kind() == OpKind::NearBranch32 => {
                 let t = i.near_branch32();
+                // the callee may return anything in EAX/EDX
+                vt &= !(vt_bit(Register::EAX) | vt_bit(Register::EDX));
                 for (reg, w) in [(Reg::Ecx, &mut wc), (Reg::Edx, &mut wd)] {
                     if *w != 0 {
                         continue;
@@ -651,16 +677,100 @@ pub fn uses_after_memo(
                         Effect::Clobbers => *w = 0xF,
                     }
                 }
-                work.push((next, wc, wd, steps + 1));
+                work.push((next, wc, wd, steps + 1, vt));
             }
             FlowControl::IndirectBranch if let Some(ts) = switch_targets(exe, &i) => {
-                work.extend(ts.into_iter().map(|t| (t, wc, wd, steps + 1)))
+                work.extend(ts.into_iter().map(|t| (t, wc, wd, steps + 1, vt)))
             }
             // ret, indirect calls and jumps, interrupts: end of the path
             _ => {}
         }
     }
     out.into_iter().collect()
+}
+
+/// Registers ([`vt_bit`] mask) holding the vtable of the object a thiscall at `site` gets in ECX:
+/// on the straight-line code of the containing procedure before the call (a linear decode from its
+/// start, the last [`VT_WINDOW`] instructions), `mov r, [s]` loads the vtable and `mov ecx, s` passes
+/// the object, with neither register written in between (CVehicle::InflictDamage 0x6D7E80: `mov
+/// ebp, [esi]; mov ecx, esi; call 0x6D7BC0`). A later `call [r+disp]` with ECX untouched calls a
+/// virtual function of that object with the hooked callee's ECX as `this`.
+fn vtables_before(exe: &crate::testexe::Exe, starts: &[u32], site: u32) -> u8 {
+    let k = starts.partition_point(|&a| a <= site);
+    if k == 0 {
+        return 0;
+    }
+    let start = starts[k - 1];
+    let code = exe.bytes(start, (site - start) as usize);
+    let mut d = Decoder::with_ip(32, code, start as u64, DecoderOptions::NONE);
+    let mut window = Vec::new();
+    while d.can_decode() {
+        window.push(d.decode());
+    }
+    if window.last().is_none_or(|i| i.next_ip32() != site) {
+        return 0;
+    }
+    let mut f = InstructionInfoFactory::new();
+    // per register: the register its vtable was loaded from (index by `vt_bit` position)
+    let mut src: [Option<Register>; 6] = [None; 6];
+    let mut this: Option<Register> = None;
+    for i in &window[window.len().saturating_sub(VT_WINDOW)..] {
+        if i.flow_control() != FlowControl::Next {
+            src = [None; 6];
+            this = None;
+            continue;
+        }
+        for r in f.info(i).used_registers() {
+            if matches!(r.access(), OpAccess::Write | OpAccess::CondWrite | OpAccess::ReadWrite | OpAccess::ReadCondWrite) {
+                let w = r.register().full_register32();
+                for (n, s) in src.iter_mut().enumerate() {
+                    if vt_bit(w) == 1 << n || *s == Some(w) {
+                        *s = None;
+                    }
+                }
+                if this == Some(w) || w == Register::ECX {
+                    this = None;
+                }
+            }
+        }
+        if i.code() == Code::Mov_r32_rm32
+            && i.op1_kind() == OpKind::Memory
+            && i.memory_index() == Register::None
+            && i.memory_displacement32() == 0
+            && vt_bit(i.memory_base()) != 0
+            && vt_bit(i.op0_register()) != 0
+            && i.op0_register() != i.memory_base()
+        {
+            src[vt_bit(i.op0_register()).trailing_zeros() as usize] = Some(i.memory_base());
+        }
+        if matches!(i.code(), Code::Mov_r32_rm32 | Code::Mov_rm32_r32)
+            && i.op0_kind() == OpKind::Register
+            && i.op0_register() == Register::ECX
+            && i.op1_kind() == OpKind::Register
+            && vt_bit(i.op1_register()) != 0
+        {
+            this = Some(i.op1_register());
+        }
+    }
+    let Some(t) = this else { return 0 };
+    src.iter().enumerate().filter(|(_, s)| **s == Some(t)).fold(0, |m, (n, _)| m | 1 << n)
+}
+
+/// Instructions before a call site that [`vtables_before`] looks at.
+const VT_WINDOW: usize = 16;
+
+/// [`uses_after_memo`]'s vtable mask bit of a 32-bit register (ECX and ESP have none: a vtable loaded
+/// through ECX is a read of ECX, reported as such).
+fn vt_bit(r: Register) -> u8 {
+    match r {
+        Register::EAX => 1,
+        Register::EDX => 2,
+        Register::EBX => 4,
+        Register::EBP => 8,
+        Register::ESI => 0x10,
+        Register::EDI => 0x20,
+        _ => 0,
+    }
 }
 
 /// Catalogued procedure starts (functions.csv + procedures.csv) and the start of every code range
@@ -889,6 +999,24 @@ mod tests {
         // the gap itself: without either, the path ends at the second call
         let u = uses_after_memo(&exe, &starts, 0x5BF1FD, &mut memo, &|_| None);
         assert!(!u.iter().any(|x| x.reg == Reg::Ecx), "{u:?}");
+    }
+
+    /// Negative test (UNVERIFIED-WC): without its `preserve = "ecx"`, CVehicle::FindTyreNearestPoint
+    /// (0x6D7BC0) is reported at CVehicle::InflictDamage's 0x6D7E84: the vtable was loaded from the
+    /// same object before the call (`mov ebp, [esi]; mov ecx, esi`), and the virtual BurstTyre call
+    /// `call [ebp+0xB0]` at 0x6D7E8C takes `this` from the callee's ECX. Before, an indirect call
+    /// ended the path and only an L3 crash (weapon-combat, all batches on) found it.
+    #[test]
+    fn virtual_call_on_this_after_a_hook_is_flagged() {
+        let Some(exe) = crate::testexe::load() else { return };
+        let (_, undeclared) = scan(&exe, &|a| if a == 0x6D7BC0 { 0 } else { preserved(a) });
+        let flagged: Vec<(u32, u32)> = undeclared
+            .iter()
+            .filter(|(t, u)| *t == 0x6D7BC0 && u.reg == Reg::Ecx)
+            .map(|(_, u)| (u.site, u.at))
+            .collect();
+        assert_eq!(flagged, [(0x6D7E84, 0x6D7E8C)]);
+        assert_eq!(vtables_before(&exe, &procedure_starts(), 0x6D7E84), vt_bit(Register::EBP));
     }
 
     /// Upper bound (HARNESS-3): uses that appear when EVERY hooked callee on a path is assumed to keep

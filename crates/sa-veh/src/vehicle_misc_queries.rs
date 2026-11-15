@@ -20,16 +20,24 @@ use sa_world::bindings::can_physical_be_damaged as physical_can_be_damaged;
 ///
 /// Kept as in the original: the position falls back to the placement without a matrix, but the axes
 /// are read from the (null) matrix.
+///
+/// The original never writes ECX, and CVehicle::InflictDamage relies on it: 0x6D7E80 `mov ebp,
+/// [esi]; mov ecx, esi; call FindTyreNearestPoint; add al, 0xD; push eax; call [ebp+0xB0]` calls
+/// the virtual BurstTyre with `this` still in ECX (UNVERIFIED-WC: without `preserve` the Rust
+/// return left a stale ECX there and BurstTyre crashed in the weapon-combat recording).
 #[hook(addr = 0x6D7BC0, conv = thiscall, name = "CVehicle::FindTyreNearestPoint", this = "CVehicle",
-       expect = "8B 41 14 83 EC 0C",
-       unverified = "veh4-4", route = "L2", hazards = "none",
+       expect = "8B 41 14 83 EC 0C", preserve = "ecx",
+       unverified = "veh4-4", route = "L2", hazards = "preserved-regs",
        note = "stores the right component into its own argument slot")]
 pub fn vehicle_find_tyre_nearest_point(this: GPtr<u8>, px: f32, py: f32) -> i32 {
     let m = rd::<GPtr<u8>>(this, 0x14);
     let p = if m.is_null() { this.byte_add(4) } else { m.byte_add(0x30) };
     let dx = f32_of(x(px).fsub_m(rd::<f32>(p, 0)));
-    let dy = f32_of(x(py).fsub_m(rd::<f32>(p, 4)));
-    let fwd = x(dy)
+    // `fst [esp+4]`: the forward component goes on with the unrounded difference, the right one
+    // reloads the stored f32
+    let dy80 = x(py).fsub_m(rd::<f32>(p, 4));
+    let dy = f32_of(dy80);
+    let fwd = dy80
         .fmul_m(rd::<f32>(m, 0x14))
         .fadd(x(dx).fmul_m(rd::<f32>(m, 0x10)))
         .fadd(x(rd::<f32>(m, 0x18)).fmul_m(0.0));
