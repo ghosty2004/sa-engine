@@ -1174,8 +1174,7 @@ pub fn fx_4a8d90(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
     this
 }
 
-/// This module's registrations.
-// ---- frontier2-c1: the complete destructors the scalar deleting destructors above call ----
+// ---- frontier2-c2: the complete destructors the scalar deleting destructors above call ----
 
 /// `FxInfoEmWeather_c::~FxInfoEmWeather_c()` (0x4A6DA0, catalogued `FUN_004a6da0`): the member at +0x8 destroyed (0x4a8460), then the base vtable
 /// 0x85a7dc. The SEH frame is not reproduced.
@@ -1284,6 +1283,7 @@ pub fn fx_4a2b20(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
     this
 }
 
+/// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
     HOOK_FX_4A2B20,
     HOOK_FX_4A6DA0,

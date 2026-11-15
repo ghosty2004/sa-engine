@@ -106,6 +106,7 @@ pub const NATIVES: &[&[&[sa_core::abi::NativeReg]]] = &[
     // FRONTIER-2 lane B
     &[sa_pop::carctrl2::NATIVES],
     &[sa_ped::frontier_b_natives::NATIVES],
+    &[sa_ai::frontier_c_dtors::NATIVES],
 ];
 
 /// Every `#[native]` registration of every crate.

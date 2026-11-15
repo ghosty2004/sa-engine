@@ -67,8 +67,7 @@ pub fn toggle_ped_threat_scanner_dtor(this: GPtr<u8>) {
 }
 
 /// `CTaskComplexBeCop::Destructor` (0x4994E0): vtable 0x85A428, then the `CTaskComplexWanderCop` destructor 0x460D80.
-#[hook(addr = 0x4994E0, conv = thiscall, name = "CTaskComplexBeCop::Destructor", expect = "C7 01 28 A4 85 00",
-       unverified = "frontier2-c1", route = "L2", hazards = "heap-writes")]
+#[sa_core::native(addr = 0x4994E0, conv = thiscall, name = "CTaskComplexBeCop::Destructor")]
 pub fn be_cop_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85A428);
     dtor_460d80(this);
@@ -94,8 +93,7 @@ pub fn wait_until_leader_area_codes_match_dtor(this: GPtr<u8>) {
 
 /// The destructor of vtable 0x86D594 (0x61BCA0): a jump to `CTaskSimpleAnim::~CTaskSimpleAnim` 0x61A6F0 (no vtable of
 /// its own is installed).
-#[hook(addr = 0x61BCA0, conv = thiscall, name = "thunk_FUN_0061a6f0", expect = "E9 4B EA FF FF",
-       unverified = "frontier2-c1", route = "L2", hazards = "heap-writes")]
+#[sa_core::native(addr = 0x61BCA0, conv = thiscall, name = "thunk_FUN_0061a6f0")]
 pub fn anim_86d594_dtor(this: GPtr<u8>) {
     simple_anim_dtor(this);
 }
@@ -226,8 +224,7 @@ pub fn extinguish_fire_on_foot_dtor(this: GPtr<u8>) {
 }
 
 /// The destructor of vtable 0x86F45C (0x659E00): a jump to `CTaskSimpleAnim::~CTaskSimpleAnim` 0x61A6F0.
-#[hook(addr = 0x659E00, conv = thiscall, name = "thunk_FUN_0061a6f0", expect = "E9 EB 08 FC FF",
-       unverified = "frontier2-c1", route = "L2", hazards = "heap-writes")]
+#[sa_core::native(addr = 0x659E00, conv = thiscall, name = "thunk_FUN_0061a6f0")]
 pub fn anim_86f45c_dtor(this: GPtr<u8>) {
     simple_anim_dtor(this);
 }
@@ -314,13 +311,15 @@ pub fn duck_while_shots_whizzing_dtor(this: GPtr<u8>) {
     duck_dtor_orig(this);
 }
 
+/// Every `#[native]` of this module: phase B entries of the destructors sa-hook cannot patch (0x4994E0: a branch
+/// lands inside its first instruction; 0x61BCA0 / 0x659E00: 5-byte `jmp` thunks into game `.text`, not `.HOODLUM`).
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_BE_COP_DTOR, NATIVE_ANIM_86D594_DTOR, NATIVE_ANIM_86F45C_DTOR];
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_TOGGLE_PED_THREAT_SCANNER_DTOR,
-    HOOK_BE_COP_DTOR,
     HOOK_ON_ESCALATOR_DTOR,
     HOOK_WAIT_UNTIL_LEADER_AREA_CODES_MATCH_DTOR,
-    HOOK_ANIM_86D594_DTOR,
     HOOK_BE_KICKED_ON_GROUND_DTOR,
     HOOK_BE_HIT_WHILE_MOVING_DTOR,
     HOOK_REACT_TO_ATTACK_DTOR,
@@ -334,7 +333,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_WANDER_MEDIC_DTOR,
     HOOK_PRESENT_ID_TO_COP_DTOR,
     HOOK_EXTINGUISH_FIRE_ON_FOOT_DTOR,
-    HOOK_ANIM_86F45C_DTOR,
     HOOK_AVOID_ENTITY_DTOR,
     HOOK_SEEK_ENTITY_87004C_DTOR,
     HOOK_FOLLOW_PATROL_ROUTE_DTOR,

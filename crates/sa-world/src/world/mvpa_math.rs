@@ -289,7 +289,7 @@ sa_core::orig! {
     fn quad_tree_node_pool_delete(pool: GPtr<u8>, obj: GPtr<u8>) = thiscall 0x552BC0 => quad_pool_delete_port;
 }
 
-fn quad_pool_delete_port(pool: GPtr<u8>, obj: GPtr<u8>) {
+pub fn quad_pool_delete_port(pool: GPtr<u8>, obj: GPtr<u8>) {
     sa_core::pools::quad_tree_node_pool_delete(pool.cast(), obj.cast())
 }
 

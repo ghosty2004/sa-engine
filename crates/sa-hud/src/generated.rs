@@ -16,9 +16,6 @@ use sa_core::{hook, orig};
 #[allow(unused_imports)]
 use sa_math::x87::X87;
 
-#[path = "generated_leaves.rs"]
-pub mod generated_leaves;
-
 // The shared field / global / x87 helpers (ADR-003 §3.2), named as the generated bodies use them.
 #[allow(unused_imports)]
 use sa_core::field::{g, p8 as p, rd, wr};
@@ -32,7 +29,7 @@ pub type Body = (u32, u64, &'static [(u32, u32)]);
 pub const HOOKS: &[HookReg] = &[];
 
 /// Every generated body of this crate.
-pub const BODIES: &[&[Body]] = &[generated_leaves::BODIES];
+pub const BODIES: &[&[Body]] = &[];
 
 #[cfg(all(test, not(sa_phase_a)))]
 mod tests {

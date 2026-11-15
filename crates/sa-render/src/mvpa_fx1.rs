@@ -337,8 +337,8 @@ pub fn fx_info_smoke_get_value(this: GPtr<u8>, curr: u32, mult: u32, _step: u32,
     let mut b = [0f32; 16];
     interp_u255_get_val(this.byte_add(8), GPtr::from_raw(b.as_mut_ptr()).cast(), t);
     wr::<u8>(out, 0x7B, ftol32(X87::from_f32(b[0])) as u8);
-    for k in 1..8 {
-        wr::<u32>(out, 0x88 + 4 * (k as isize - 1), b[k].to_bits());
+    for (k, v) in b[1..8].iter().enumerate() {
+        wr::<u32>(out, 0x88 + 4 * k as isize, v.to_bits());
     }
 }
 
