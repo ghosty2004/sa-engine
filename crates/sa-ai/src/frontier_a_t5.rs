@@ -9,7 +9,9 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::fpu::{lt, st0};
 
-use crate::bindings::{membership_count_members, ped_groups_get_peds_group, seek_entity_xy_offset_ctor};
+use crate::bindings::{
+    membership_count_members, ped_groups_get_peds_group, seek_entity_xy_offset_ctor, stand_still_dtor, stand_still_process_ped,
+};
 use crate::common::*;
 use sa_core::bindings::ped_is_alive;
 use sa_world::bindings::{
@@ -177,9 +179,35 @@ pub fn seek_cover_until_target_dead_create_first_sub_task(this: GPtr<u8>, ped: G
     seq
 }
 
+/// `CTaskSimpleWaitUntilPedIsOutCar::ProcessPed(CPed*)` (0x649550, `ret 4`, SEH frame). No ped to wait for (+8): AL =
+/// 1 (EAX = 1). With the first-time flag (+0xC, cleared): a stack `CTaskSimpleStandStill(0, false, false, 8.0)` is
+/// processed once for the ped (its result unused) and destroyed, and the ped's aimed heading (+0x55C) becomes
+/// `LimitRadianAngle(GetRadianAngleBetweenPoints(+0x10, +0x14, 0, 0))` (both through f32 stores). AL = the waited-for
+/// ped is not in a vehicle (+0x46C bit 8 clear), with `flags >> 8`'s upper bits in EAX.
+#[hook(addr = 0x649550, conv = thiscall, name = "CTaskSimpleWaitUntilPedIsOutCar::ProcessPed", expect = "64 A1 00 00 00 00 6A FF 68 78 2B 84 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "ax-al-return")]
+pub fn wait_until_ped_is_out_car_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
+    if rd::<u32>(this, 8) == 0 {
+        return 1;
+    }
+    if rd::<u8>(this, 0xC) != 0 {
+        wr::<u8>(this, 0xC, 0);
+        let mut stand = [0u32; 8];
+        let st = GPtr::from_raw(stand.as_mut_ptr()).cast::<u8>();
+        stand_still_ctor(st, 0, 0, 0, 8.0);
+        stand_still_process_ped(st, ped);
+        let a = general_get_radian_angle_between_points(rd::<f32>(this, 0x10), rd::<f32>(this, 0x14), 0.0, 0.0).to_f32();
+        wr::<f32>(ped, 0x55C, st0(general_limit_radian_angle(a)).to_f32());
+        stand_still_dtor(st);
+    }
+    let f = rd::<u32>(rd::<GPtr<u8>>(this, 8), 0x46C) >> 8;
+    (f & 0xFFFF_FF00) | (!f & 1)
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_FOLLOW_LEADER_IN_FORMATION_CREATE_SUB_TASK,
     HOOK_SEEK_COVER_GET_COVER_PED,
     HOOK_SEEK_COVER_UNTIL_TARGET_DEAD_CREATE_FIRST_SUB_TASK,
+    HOOK_WAIT_UNTIL_PED_IS_OUT_CAR_PROCESS_PED,
 ];
