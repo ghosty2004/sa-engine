@@ -2206,3 +2206,54 @@
   frontier2-c8) IDENTICAL 13/13; `lanec3-default` (default set) IDENTICAL 13/13 (DLL of cc15a52c).
 - frontier.py: whole frontier to port 302 → 288 (direct 175 → 168, virtual 115 → 108); lane C subsystems 38 → 36 rows
   (0x485EF0 HighlightImportantAngledArea, 0x486990 DrawDebugAngledSquare and 0x66F6C0 are new callees of the ports).
+
+## 2026-11-15 — FRONTIER-2 turn 3, lane B: VehicleCheat, aircraft / boat blow-ups, GenerateHeli, glass, call-off-chase (agent, branch worktree-agent-a75c5759aead26958)
+- Base: worktree-agent-a01dd37b0c8f4b2db 92ae87f1 (turn 2 lane B, being integrated in parallel). Lane B subsystems; every
+  port from the 1.0 US bytes (gta-reversed read as an aid), addresses checked against `inflight.py` / frontier.py's
+  other-branch exclusions (0 overlaps). Two batches, 14 hooks:
+  - `frontier2-b11` (user-hit, coordinator-added, first): CQuadBike::ProcessControl 0x6CDCC0 (the user hit it in the
+    SA:MP web build: every iteration blocked with a quad nearby; gta-reversed only calls the original, ported from the
+    bytes: the player quad's damping, two `_CIpow(x, timeStep)` through orig::x87_binary, two turn forces with the bytes'
+    f32 stores) and what the new `frontier.sh quad` scenario (quad cheat AKJJYGLC, CJ gets on and drives) reached next:
+    CQuadBike::ProcessAI 0x6CE460 (lean forces, air steering, wheelie angle; the bytes differ from gta-reversed's
+    reading: tasks 0x329 / 0x337 / 0x339 or state 0x3F brake, air steering only when not accelerating, at
+    `centreOfMass + up`) and CQuadBike::PreRender 0x6CEAD0 (axles by FPATAN, handlebars), plus sa-game's DirectSound
+    IDirectSoundBuffer8::SetFX (removing succeeds, adding fails as on a buffer without FX control; the radio's bass EQ
+    reached it). Scenario quad: 1216 steps, 0 blocked (ProcessControl / ProcessAI 998 calls, PreRender 555,
+    ProcessControlInputs 216);
+  - `frontier2-b10` (10 hooks):
+  - priority 1: CCheat::VehicleCheat 0x43A0B0 (the `nop; jmp` protection stub entry; jump table 0x43A470 decoded: model
+    info type 1 monster truck, 2 quad, 3 heli, 4 plane, 5 boat, 9 bike, 10 BMX, 11 trailer, the rest automobiles; the
+    null-`new` bike path faults in the original, the port stops), CPlane::BlowUpCar 0x6CCCF0 / CHeli::BlowUpCar 0x6C6D30
+    (crash start for AI aircraft, player bonus with rand sites 0x6CCD82 / 0x6C6DC8, body damage (the plane checks the
+    bonnet frame, the heli does not), fire, explosion type 12 for the RC models else 7, the hide flag never used),
+    CBoat::BlowUpCar 0x6F21B0 (explosion type 6 with the hide flag, the moving part thrown off as a temporary CObject),
+    CHeli::GenerateHeli 0x6C6520 (added by the coordinator for lane A's `roadblocks`; FSIN / FCOS through sa_math::x87,
+    the cosine taken of the unrounded product as the bytes do);
+  - priority 2: CWorld::CallOffChaseForAreaSectorListVehicles 0x563A80 (grown rectangle, law-enforcer chase missions,
+    the speed toward the area cut) and ...Peds 0x563D00 (the original rectangle; kill / chase targets, stand-still
+    script-command event), FindObjectsIntersectingAngledCollisionBox 0x568FF0, CGlass::WindowRespondsToCollision
+    0x71BC40 (minZ / maxZ and the farthest vertex with the x87 compares' NaN choices);
+  - priority 3: CReplay::StreamAllNecessaryCarsAndPeds 0x45D4B0 (.HOODLUM body 0x156A8C0).
+- Hazards: stack-residue where the original keeps values in its own argument slots (blow-ups, GenerateHeli, the glass
+  port), x87-transcendental for GenerateHeli; notes as turn 2.
+- ADR-003: the automobile blow-up / flying-component declarations made pub(crate) and shared; sa-world
+  `mvpd_w3::ensure_matrix` made pub and reused by the glass port (the gate's dupes step caught a copy); the existing
+  callers' orig! declarations (cheat.rs, frontier_b2.rs, air2.rs) now target the ports; bindings.csv: 0x71BC40 gets its
+  sa-render twin (port column, regenerated).
+- frontier.py, lane B subsystems: 159 → 146 rows (overall direct 178 → 165, virtual 165 → 152; other branches now
+  register +64 / +12); no new lane B rows revealed by the ports.
+- Scenarios (`frontier.sh`, i686 native sa-game of this branch, default lengths): pausemenu 416 / 0 blocked, solicit
+  4016 / 0, crossing 1216 / 0, melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0, shootdriver 1216 / 0, quad (new)
+  1216 / 0 (b11 build; the same seven were 0 blocked on the b10 build too). Lane A's
+  `roadblocks` (definition copied from worktree-agent-a3af6b88de448512f, not committed): 254 / 1762 blocked: 4 on lane
+  A's GenerateRoadBlocks fallback (not in this branch), then CHeli::ProcessControl 0x6C7050 (the generated police heli
+  now exists; next lane B target).
+- Writer gate (base 92ae87f1): b10 run all PASS but queue (line numbers moved by the dupes fix; regenerated and
+  `queue.py --check` up to date); final run on 425166bf (b10 + b11) with `GATE_SKIP=i686` (verify-all was using the DLL):
+  hooks (13) / queue / bindings / state / dupes / cfg / layers / commits / clippy / wasm32 / hooktest / l1test / l1 PASS;
+  i686clip run by hand afterwards: PASS; the i686 DLL build is the one verify-all lb3-u2 made.
+- verify-all (lanes 4-5, fresh release sa-oracle): `lb3-u` (SA_UNVERIFIED=frontier2-b10, DLL of 747a33d8) IDENTICAL
+  13/13; `lb3-u2` (SA_UNVERIFIED=frontier2-b10,frontier2-b11, DLL of 425166bf) IDENTICAL 13/13; default set `lb3-def` (same head) IDENTICAL 13/13.
+- Builds: i686 sa-game (scenarios), the i686 DLL (verify-all), wasm32 sa-ports (gate). Coordinator heads-up on the
+  0x53CBE0 binding change: no code of this branch calls it.
