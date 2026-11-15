@@ -625,7 +625,7 @@ orig! {
 
 orig! {
     /// `CStoredCar::StoreCar` (0x449760)
-    pub fn stored_car_store(slot: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x449760 => unported;
+    pub fn stored_car_store(this: GPtr<u8>, v: GPtr<u8>) = thiscall 0x449760 => crate::world::garage_store_cars::store_car;
 }
 
 orig! {

@@ -75,4 +75,78 @@ pub fn store_and_remove_cars_for_this_hide_out(this: GPtr<u8>, stored: GPtr<u8>,
 }
 
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_STORE_AND_REMOVE_CARS_FOR_THIS_HIDE_OUT];
+/// `CStoredCar::StoreCar(CVehicle* v)` (0x449760, thiscall, `ret 4`; FRONTIER-2 lane C turn 5): model (+0x12) from the
+/// vehicle's +0x22; the position (+0 / +4 / +8, each read from the matrix +0x30 or the placement +4); the forward
+/// vector bytes +0x3C..+0x3E = `ftol(matrix +0x10 / +0x14 / +0x18 * [0x858628])`; the colours +0x32..+0x35 (vehicle
+/// +0x434..), +0x36 (+0x1D2), the handling flags +0xC (+0x38C), +0x37 / +0x38 (+0x438 / +0x439); the flag word +0x10
+/// from the physical flags +0x40 (0x40000 -> 1, 0x80000 -> 2, 0x800000 -> 4, 0x100000 -> 8, 0x200000 -> 0x10), the
+/// byte +0x42E bit 0x10 (0x20) and the handling flags 0x20000 (0x40) / 0x80000 (0x80); for a vehicle sub-class (+0x590)
+/// 0 or 9 the byte +0x39 = `+0x4A8 & 7` (else untouched); the 15 upgrade words +0x43A to +0x14; +0x3A =
+/// `GetRemapIndex()`, +0x3B = +0x48A.
+#[hook(addr = 0x449760, conv = thiscall, name = "CStoredCar::StoreCar", expect = "53 56 8B 74 24 0C",
+       unverified = "frontier2-c11", route = "L2", hazards = "none")]
+pub fn store_car(this: GPtr<u8>, v: GPtr<u8>) {
+    wr::<u16>(this, 0x12, rd::<u16>(v, 0x22));
+    let pos = || {
+        let m = rd::<u32>(v, 0x14);
+        if m != 0 {
+            g::<u8>(m as usize + 0x30)
+        } else {
+            v.byte_add(4)
+        }
+    };
+    wr::<u32>(this, 0, rd::<u32>(pos(), 0));
+    wr::<u32>(this, 4, rd::<u32>(pos(), 4));
+    wr::<u32>(this, 8, rd::<u32>(pos(), 8));
+    for k in 0..3isize {
+        let m: GPtr<u8> = g(rd::<u32>(v, 0x14) as usize);
+        let b = super::common::ftol32(super::common::x(rd::<f32>(m, 0x10 + 4 * k)).fmul_m(g::<f32>(0x858628).read()));
+        wr::<u8>(this, 0x3C + k, b as u8);
+    }
+    for k in 0..4isize {
+        wr::<u8>(this, 0x32 + k, rd::<u8>(v, 0x434 + k));
+    }
+    wr::<u8>(this, 0x36, rd::<u8>(v, 0x1D2));
+    wr::<u32>(this, 0xC, rd::<u32>(v, 0x38C));
+    wr::<u8>(this, 0x37, rd::<u8>(v, 0x438));
+    wr::<u8>(this, 0x38, rd::<u8>(v, 0x439));
+    wr::<u16>(this, 0x10, 0);
+    let flags = |bit: u32| rd::<u32>(v, 0x40) & bit != 0;
+    if flags(0x40000) {
+        wr::<u16>(this, 0x10, 1);
+    }
+    let or = |b: u8| wr::<u8>(this, 0x10, rd::<u8>(this, 0x10) | b);
+    if flags(0x80000) {
+        or(2);
+    }
+    if flags(0x800000) {
+        or(4);
+    }
+    if flags(0x100000) {
+        or(8);
+    }
+    if flags(0x200000) {
+        wr::<u16>(this, 0x10, rd::<u16>(this, 0x10) | 0x10);
+    }
+    if rd::<u8>(v, 0x42E) & 0x10 != 0 {
+        or(0x20);
+    }
+    if rd::<u32>(v, 0x38C) & 0x20000 != 0 {
+        or(0x40);
+    }
+    if rd::<u32>(v, 0x38C) & 0x80000 != 0 {
+        or(0x80);
+    }
+    let sub = rd::<u32>(v, 0x590);
+    if sub == 0 || sub == 9 {
+        wr::<u8>(this, 0x39, rd::<u8>(v, 0x4A8) & 7);
+    }
+    for k in 0..15isize {
+        wr::<u16>(this, 0x14 + 2 * k, rd::<u16>(v, 0x43A + 2 * k));
+    }
+    let remap = crate::bindings::get_remap_index(v);
+    wr::<u8>(this, 0x3A, remap as u8);
+    wr::<u8>(this, 0x3B, rd::<u8>(v, 0x48A));
+}
+
+pub const HOOKS: &[HookReg] = &[HOOK_STORE_AND_REMOVE_CARS_FOR_THIS_HIDE_OUT, HOOK_STORE_CAR];

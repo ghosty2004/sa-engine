@@ -1966,7 +1966,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x448D30,sa-world,garage_is_entity_entirely_outside,thiscall,,gp:GPtr<u8>;e:GPtr<u8>;margin:f32,u8,sa_world::world::mvpb_world2::garage_is_entity_entirely_outside,CGarage::IsEntityEntirelyOutside,
 0x448EE0,sa-world,garage_is_entity_touching_3d,thiscall,,gr:GPtr<u8>;e:GPtr<u8>,u8,sa_world::world::garage_car_blocking::garage_is_entity_touching_3d_port,CGarage::IsEntityTouching3D,
 0x449690,sa-world,remove_cars_blocking_door_not_inside,thiscall,,gp:GPtr<u8>,,unported,CGarage::RemoveCarsBlockingDoorNotInside,
-0x449760,sa-world,stored_car_store,thiscall,,slot:GPtr<u8>;v:GPtr<u8>,GPtr<u8>,unported,CStoredCar::StoreCar,
+0x449760,sa-world,stored_car_store,thiscall,,this:GPtr<u8>;v:GPtr<u8>,,crate::world::garage_store_cars::store_car,CStoredCar::StoreCar,
 0x449900,sa-world,store_and_remove_cars,thiscall,,gp:GPtr<u8>;stored:GPtr<u8>;max:i32,,sa_world::world::garage_store_cars::store_and_remove_cars_for_this_hide_out,CGarage::StoreAndRemoveCarsForThisHideOut,
 0x449FF0,sa-world,find_doors_with_garage,thiscall,,gar:GPtr<u8>;first:GPtr<u8>;second:GPtr<u8>,,sa_world::world::garage_slide_door::find_doors_with_garage,FUN_00449ff0,
 0x44A170,sa-world,garages_close_hide_out_garages_before_save,cdecl,,,,sa_world::world::save_blocks::close_hide_out_garages_before_save,CGarages::CloseHideOutGaragesBeforeSave,
