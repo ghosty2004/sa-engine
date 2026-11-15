@@ -84,9 +84,8 @@ use sa_world::bindings::clear_blip_call as clear_blip;
 use sa_world::bindings::placeable_set_heading as set_heading;
 use sa_world::bindings::set_entity_blip;
 use sa_world::bindings::take_control_no_entity;
+use sa_world::bindings::change_blip_display;
 orig! {
-    /// `CRadar::ChangeBlipDisplay(int32, eBlipDisplay)` (0x583D20)
-    fn change_blip_display(h: i32, d: u32) = cdecl 0x583D20 => unported;
     /// `CRestart::AddHospitalRestartPoint(const CVector&, float, int32 town)` (0x460730)
     fn add_hospital_restart_point(pos: GPtr<u32>, angle: u32, town: i32) = cdecl 0x460730 => unported;
     /// `CRestart::AddPoliceRestartPoint(const CVector&, float, int32 town)` (0x460780)

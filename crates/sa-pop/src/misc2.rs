@@ -27,9 +27,9 @@ use sa_world::bindings::vehicle_set_created_by;
 use crate::bindings::release_cars_in_attack_wave_o;
 orig! {
     /// `CGangWars::ReleasePedsInAttackWave(bool, bool)` (0x445C30)
-    fn release_peds_in_attack_wave(a: u32, b: u32) -> i32 = cdecl 0x445C30 => unported;
+    pub(crate) fn release_peds_in_attack_wave(a: u32, b: u32) -> i32 = cdecl 0x445C30 => unported;
     /// `CGangWars::MakeEnemyGainInfluenceInZone(int32 gang, int32 amount)` (0x445FD0)
-    fn make_enemy_gain_influence_in_zone_o(gang: i32, amount: i32) = cdecl 0x445FD0 => unported;
+    pub(crate) fn make_enemy_gain_influence_in_zone_o(gang: i32, amount: i32) = cdecl 0x445FD0 => unported;
 }
 
 /// `CGangWars::TimeTillNextAttack` (0x96AB48)

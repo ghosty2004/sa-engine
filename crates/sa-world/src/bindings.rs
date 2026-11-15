@@ -2544,6 +2544,11 @@ orig! {
 }
 
 orig! {
+    /// `CRadar::ChangeBlipDisplay` (0x583D20)
+    pub fn change_blip_display(h: i32, d: u32) = cdecl 0x583D20 => unported;
+}
+
+orig! {
     /// `CRadar::SetBlipSprite` (0x583D70)
     pub fn set_blip_sprite(blip: i32, sprite: i32) = cdecl 0x583D70 => unported;
 }

@@ -53,18 +53,18 @@ fn frame_counter() -> u32 {
     g::<u32>(0xB7CB4C).read()
 }
 
-/// `CGangWars::Update()` (0x446610), partial port (ADR-002 fallback). PORTED: the prologue and the
-/// "gang wars inactive" exit: `EndGangWar(true)` when the player is on a mission, the previous-frame mission
-/// flag 0x96ABA0 is clear and `State` (0x96AB94) is 0; `0x96ABA0 = IsPlayerOnAMission()`; return when
-/// 0xB5F852 is set; `UpdateTerritoryUnderControlPercentage()` when the frame counter byte 0xB7CB4C is 0x38;
-/// return when `bGangWarsActive` (0x96AB90) is 0. NOT PORTED (fallback to the whole original body, decided at
-/// entry): `bGangWarsActive != 0` (co-op test, the war timer, the state machine, attack waves). None of the
-/// prologue's callees writes 0x96AB90, so the entry test selects the same path the original takes at 0x446662.
-#[hook(addr = 0x446610, conv = cdecl, name = "CGangWars::Update", expect = "83 EC 34 53 E8 37 E7 01 00", fallback)]
+/// `CGangWars::Update()` (0x446610), whole port since FRONTIER-2 turn 4 lane A (the ADR-002 fallback is gone). The
+/// prologue: `EndGangWar(true)` when the player is on a mission, the previous-frame mission flag 0x96ABA0 is clear and
+/// 0x96AB94 is 0; `0x96ABA0 = IsPlayerOnAMission()`; return when 0xB5F852 is set; `UpdateTerritoryUnderControlPercentage()`
+/// when the frame counter byte 0xB7CB4C is 0x38; return while gang wars are inactive (0x96AB90) or a co-op game runs.
+/// The provocation timer (0x96AB5C) counts down by `TimeStep * 0.0005` (not below 0, NaN kept). Then the offensive war
+/// ([`gang_war_offensive`]); while one runs, the player's presence in its zone ([`gang_war_presence`]); while one still
+/// runs, or on a mission, or above z 950, the time till the next attack is raised to 30000 when not above it; then
+/// the defensive war ([`gang_war_defensive`]), the war blip and the gang streaming ([`gang_war_blip_and_streaming`]).
+#[hook(addr = 0x446610, conv = cdecl, name = "CGangWars::Update", expect = "83 EC 34 53 E8 37 E7 01 00",
+       unverified = "frontier2-a7", route = "L2", hazards = "heap-writes",
+       note = "the war paths run only with gang wars on (0x96AB90); no corpus recording has one")]
 pub fn gang_wars_update() {
-    if g::<u8>(0x96AB90).read() != 0 {
-        return gang_wars_update_original();
-    }
     if is_player_on_a_mission() != 0 && g::<u8>(0x96ABA0).read() == 0 && g::<u32>(0x96AB94).read() == 0 {
         end_gang_war(1);
     }
@@ -76,7 +76,349 @@ pub fn gang_wars_update() {
     if g::<u8>(0xB7CB4C).read() == 0x38 {
         update_territory_under_control_percentage();
     }
+    if g::<u8>(GW_ACTIVE).read() == 0 || is_coop_game_going_on() != 0 {
+        return;
+    }
+    let t = x(g::<f32>(GW_PROVOCATION_TIMER).read()).fsub(x(g::<f32>(TIME_STEP).read()).fmul_m(fbits(0x3A03126F)));
+    if le_or_nan(x(0.0), t) {
+        g::<f32>(GW_PROVOCATION_TIMER).write(t.to_f32());
+    } else {
+        g::<u32>(GW_PROVOCATION_TIMER).write(0);
+    }
+    gang_war_offensive();
+    if g::<u32>(GW_STATE).read() != 0 {
+        gang_war_presence();
+    }
+    if (g::<u32>(GW_STATE).read() != 0 || gang_war_cap_wanted())
+        && !gt(x(g::<f32>(GW_TIME_TILL_NEXT_ATTACK).read()), x(30000.0))
+    {
+        g::<u32>(GW_TIME_TILL_NEXT_ATTACK).write(0x46EA_6000);
+    }
+    gang_war_defensive();
+    gang_war_blip_and_streaming();
 }
+
+/// 0x446AB2: with no offensive war, the cap applies when the player is on a mission or above z 950 (ordered).
+fn gang_war_cap_wanted() -> bool {
+    if is_player_on_a_mission() != 0 {
+        return true;
+    }
+    let mut t = [0f32; 3];
+    let p = find_player_coors(GPtr::from_raw(t.as_mut_ptr()), -1);
+    gt(x(p.wrapping_index(2).read()), x(950.0))
+}
+
+/// `CText::Get(key)` queued as a message (4500 ms) and `CText::Get(brief)` recorded in the previous-brief array.
+fn gang_war_message(key: u32, brief: u32) {
+    add_message_q(text_get(g::<u8>(0xC1B340), GPtr::from_addr(key as usize)), 0x1194, 1, 1);
+    add_to_previous_brief_array(text_get(g::<u8>(0xC1B340), GPtr::from_addr(brief as usize)), -1, -1, -1, -1, -1, -1, GPtr::NULL);
+}
+
+/// `max(ferocity + k, 0)` as the bytes compute it (`setl; dec; and`).
+fn ferocity_plus(k: i32) -> i32 {
+    let v = g::<i32>(GW_FEROCITY).read().wrapping_add(k);
+    if v < 0 { 0 } else { v }
+}
+
+/// The offensive war's state machine (0x4466B0..0x446916, `State` 0x96AB64): 0 starts one when the provocation timer
+/// exceeds 2.1; 1 / 3 / 5 create attack wave 0 / 1 / 2 (ferocity + 0 / 1 / 2) 10 s after the last state change; 2 / 4
+/// release the overcome wave and, unless the player won the zone (influence 0.3), queue `GW_CLR1` / `GW_CLR2`; 6 gains
+/// influence 1.0 once the last wave is overcome; a won zone runs `DoStuffWhenPlayerVictorious`.
+#[allow(clippy::collapsible_match)]
+fn gang_war_offensive() {
+    let now = || g::<u32>(TIME_MS).read();
+    let set_state = |s: u32| {
+        g::<u32>(GW_STATE).write(s);
+        g::<u32>(GW_LAST_STATE_TIME).write(now());
+    };
+    let after_10s = || now() > g::<u32>(GW_LAST_STATE_TIME).read().wrapping_add(10_000);
+    match g::<u32>(GW_STATE).read() {
+        0 => {
+            if gt(x(g::<f32>(GW_PROVOCATION_TIMER).read()), x(fbits(0x40066666))) {
+                start_offensive_gang_war_o();
+            }
+        }
+        s @ (1 | 3 | 5) => {
+            let wave = (s / 2) as i32;
+            if after_10s() && create_attack_wave_o(ferocity_plus(wave), wave) != 0 {
+                set_state(s + 1);
+            }
+        }
+        s @ (2 | 4) => {
+            if attack_wave_overcome_o() != 0 {
+                release_peds_in_attack_wave(0, 0);
+                release_cars_in_attack_wave_o();
+                if make_player_gain_influence_in_zone_o(fbits(0x3E99999A)) & 0xFF != 0 {
+                    do_stuff_when_player_victorious_o();
+                } else {
+                    let key = if s == 2 { 0x85996C } else { 0x859964 };
+                    gang_war_message(key, key);
+                    set_state(s + 1);
+                }
+            }
+        }
+        6 => {
+            if attack_wave_overcome_o() != 0 {
+                make_player_gain_influence_in_zone_o(1.0);
+                do_stuff_when_player_victorious_o();
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Whether the player is inside the fought-over zone (0x96AB88) widened by 50: each bound tested against a fresh
+/// `FindPlayerCoors` (`min - 50 <= p` and `max + 50 >= p`, ordered; x then y).
+fn gang_war_in_zone() -> bool {
+    let p = |i: isize| -> X87 {
+        let mut t = [0f32; 3];
+        x(find_player_coors(GPtr::from_raw(t.as_mut_ptr()), -1).wrapping_index(i as i32).read())
+    };
+    let bound = |off: isize| xi(i32::from(rd::<i16>(g::<GPtr<u8>>(GW_ZONE).read(), off)));
+    let low_ok = |off: isize, i: isize| {
+        let pv = p(i);
+        !bound(off).fsub_m(50.0).fcom(pv).test_parity(0x41)
+    };
+    let high_ok = |off: isize, i: isize| {
+        let pv = p(i);
+        !bound(off).fadd_m(50.0).fcom(pv).test_any(1)
+    };
+    low_ok(0x10, 0) && high_ok(0x16, 0) && low_ok(0x12, 1) && high_ok(0x18, 1)
+}
+
+/// The player's presence (0x44691C..0x446AAA): in the zone (or 0xB72914 set) refreshes the last-seen time; away more
+/// than 30 s ends the war (state 0, provocation 0, the attack wave released, the zones recoloured, `GW_FLEE` queued
+/// with `GW_WARN` in the brief array); away more than 10 s for the first frame warns (`GW_WARN`).
+fn gang_war_presence() {
+    let inside = gang_war_in_zone();
+    let now = g::<u32>(TIME_MS).read();
+    if g::<u32>(0xB72914).read() != 0 || inside {
+        g::<u32>(GW_LAST_SEEN).write(now);
+        return;
+    }
+    let seen = g::<u32>(GW_LAST_SEEN).read();
+    let d = now.wrapping_sub(seen);
+    let dp = g::<u32>(0xB7CB78).read().wrapping_sub(seen);
+    if d > 30_000 {
+        g::<u32>(GW_STATE).write(0);
+        g::<u32>(GW_PROVOCATION_TIMER).write(0);
+        release_peds_in_attack_wave(1, 0);
+        release_cars_in_attack_wave_o();
+        fill_zones_with_gang_colours(0);
+        gang_war_message(0x85995C, 0x859954);
+    } else if d > 10_000 && dp <= 10_000 {
+        gang_war_message(0x859954, 0x859954);
+    }
+}
+
+/// `fild` of an int32 as an unsigned value (+ 2^32 when negative).
+fn fild_unsigned(v: i32) -> X87 {
+    if v < 0 { xi(v).fadd_m(4_294_967_296.0) } else { xi(v) }
+}
+
+/// `CalculateTimeTillNextAttack()`'s EAX as an unsigned float into `TimeTillNextAttack`.
+fn store_next_attack_time() {
+    let v = calculate_time_till_next_attack_o() as u32 as i32;
+    g::<f32>(GW_TIME_TILL_NEXT_ATTACK).write(fild_unsigned(v).to_f32());
+}
+
+/// `_ftol(TimeStep * 0.02 * k)`.
+fn step_ms(k: f32) -> i32 {
+    ftol32(x(g::<f32>(TIME_STEP).read()).fmul_m(fbits(0x3CA3D70A)).fmul_m(k))
+}
+
+/// `timer += step_ms(-1000)`; true when the sum is negative (`jns`).
+fn defence_timer_runs_out() -> bool {
+    let v = g::<i32>(GW_DEFENCE_TIMER).read().wrapping_add(step_ms(-1000.0));
+    g::<i32>(GW_DEFENCE_TIMER).write(v);
+    v < 0
+}
+
+/// The defensive war (`State2` 0x96AB4C, 0x446AF7..0x446E4B). 0: off a mission, without the 0x96AB91 flag and not in
+/// a vehicle of type 3 / 4, the time till the next attack counts down (`TimeStep * 0.02 * 1000` ms, times 0.06 unless
+/// the word 0xC81314 is 1) while no offensive war runs, and below 0 starts one. 1: the player within 70 (2D) of the
+/// war's start creates the defending group (timer + 30 s, state 2); else when the timer runs out: `GW_NOSH`, the
+/// enemy gains 30, a new attack time, stat 0x44 - 30. 2: the wave overcome: a new attack time, `GW_WON`, influence +10,
+/// the peds released; else when the timer runs out: a new attack time, `GW_SLOW`, the enemy gains three times the
+/// released peds, stat 0x44 - 30.
+fn gang_war_defensive() {
+    match g::<u32>(GW_STATE2).read() {
+        0 => {
+            if is_player_on_a_mission() != 0 || g::<u8>(0x96AB91).read() != 0 {
+                return;
+            }
+            if !find_player_vehicle(-1, 0).is_null()
+                && (rd::<u32>(find_player_vehicle(-1, 0), 0x594) == 3 || rd::<u32>(find_player_vehicle(-1, 0), 0x594) == 4)
+            {
+                return;
+            }
+            if g::<u32>(GW_STATE).read() == 0 {
+                let mut f = fild_unsigned(step_ms(1000.0));
+                if g::<u16>(0xC81314).read() != 1 {
+                    f = f.fmul_m(fbits(0x3D75C28F));
+                }
+                let t = x(g::<f32>(GW_TIME_TILL_NEXT_ATTACK).read()).fsub(f);
+                g::<f32>(GW_TIME_TILL_NEXT_ATTACK).write(t.to_f32());
+            }
+            if !ge_or_nan(x(g::<f32>(GW_TIME_TILL_NEXT_ATTACK).read()), x(0.0)) {
+                start_defensive_gang_war_o();
+            }
+        }
+        1 => {
+            let mut t = [0f32; 3];
+            let mut d = [0f32; 3];
+            let p = find_player_coors(GPtr::from_raw(t.as_mut_ptr()), -1);
+            let r = vector_sub(GPtr::from_raw(d.as_mut_ptr()).cast(), p.cast(), g::<u8>(GW_START_COORS));
+            let dx = x(rd::<f32>(r, 0));
+            let dy = x(rd::<f32>(r, 4));
+            if !ge_or_nan(dx.fmul(dx).fadd(dy.fmul(dy)).fsqrt(), x(70.0)) {
+                if create_defending_group_o(0) != 0 {
+                    g::<i32>(GW_DEFENCE_TIMER).write(g::<i32>(GW_DEFENCE_TIMER).read().wrapping_add(30_000));
+                    g::<u32>(GW_STATE2).write(2);
+                }
+                return;
+            }
+            if !defence_timer_runs_out() {
+                return;
+            }
+            gang_war_message(0x859938, 0x859938);
+            g::<u32>(GW_STATE2).write(0);
+            make_enemy_gain_influence_in_zone_o(g::<i32>(GW_GANG1).read(), 0x1E);
+            fill_zones_with_gang_colours(0);
+            store_next_attack_time();
+            decrement_stat(0x44, 30f32.to_bits());
+        }
+        2 => {
+            if attack_wave_overcome_o() != 0 {
+                g::<u32>(GW_STATE2).write(0);
+                store_next_attack_time();
+                gang_war_message(0x85994C, 0x85994C);
+                strengthen_player_influence_in_zone_o(10);
+                fill_zones_with_gang_colours(0);
+                release_peds_in_attack_wave(1, 0);
+                return;
+            }
+            if !defence_timer_runs_out() {
+                return;
+            }
+            g::<u32>(GW_STATE2).write(0);
+            store_next_attack_time();
+            gang_war_message(0x859940, 0x859940);
+            let n = release_peds_in_attack_wave(1, 0);
+            make_enemy_gain_influence_in_zone_o(g::<i32>(GW_GANG1).read(), n.wrapping_mul(3));
+            fill_zones_with_gang_colours(0);
+            decrement_stat(0x44, 30f32.to_bits());
+        }
+        _ => {}
+    }
+}
+
+/// The war blip and the gang streaming (0x446E4B..0x446F46). The blip (`RadarBlip`, read through the no-CD
+/// protection's obfuscated pointer at 0x406434, decoded to 0x96AB98): cleared with no defensive war or in state 2,
+/// else blinking (`ChangeBlipDisplay` 0 / 2 by bit 7..10 of the time, slower as the timer grows). During a defensive
+/// war, the player within 150 (2D) of its start streams the gang models once (0x96AB92); farther away clears the flag.
+fn gang_war_blip_and_streaming() {
+    let blip = g::<i32>(GW_RADAR_BLIP).read();
+    if blip != 0 {
+        let s2 = g::<u32>(GW_STATE2).read();
+        if s2 == 0 || s2 == 2 {
+            clear_blip_call(blip);
+            g::<u32>(GW_RADAR_BLIP).write(0);
+        } else {
+            let d = g::<i32>(GW_DEFENCE_TIMER).read();
+            let cl = if d > 120_000 {
+                10
+            } else if d > 60_000 {
+                9
+            } else if d > 30_000 {
+                8
+            } else {
+                7
+            };
+            let disp = if (g::<u32>(TIME_MS).read() >> cl) & 1 != 0 { 0 } else { 2 };
+            change_blip_display(blip, disp);
+        }
+    }
+    if g::<u32>(GW_STATE2).read() == 0 {
+        return;
+    }
+    let mut t = [0f32; 3];
+    let p = find_player_coors(GPtr::from_raw(t.as_mut_ptr()), -1);
+    let dx = x(p.read()).fsub_m(g::<f32>(GW_START_COORS).read());
+    let dy = x(p.wrapping_index(1).read()).fsub_m(g::<f32>(GW_START_COORS + 4).read());
+    if ge_or_nan(dx.fmul(dx).fadd(dy.fmul(dy)).fsqrt(), x(150.0)) {
+        g::<u8>(0x96AB92).write(0);
+        return;
+    }
+    if g::<u8>(0x96AB92).read() != 0 {
+        return;
+    }
+    let mut t = [0f32; 3];
+    call_stream_zone_models_gangs(find_player_coors(GPtr::from_raw(t.as_mut_ptr()), -1));
+    g::<u8>(0x96AB92).write(1);
+}
+
+/// `CGangWars::bGangWarsActive` (0x96AB90)
+const GW_ACTIVE: usize = 0x96AB90;
+/// `CTimer::ms_fTimeStep` (0xB7CB5C)
+const TIME_STEP: usize = 0xB7CB5C;
+/// `CTimer::m_snTimeInMilliseconds` (0xB7CB84)
+const TIME_MS: usize = 0xB7CB84;
+/// `CGangWars::TimeTillNextAttack` (0x96AB48, float)
+const GW_TIME_TILL_NEXT_ATTACK: usize = 0x96AB48;
+/// `CGangWars::State2` (defensive war, 0x96AB4C)
+const GW_STATE2: usize = 0x96AB4C;
+/// The defensive war's timer (0x96AB44, int32)
+const GW_DEFENCE_TIMER: usize = 0x96AB44;
+/// The time the player was last seen in the fought-over zone (0x96AB54)
+const GW_LAST_SEEN: usize = 0x96AB54;
+/// The offensive war's ferocity (0x96AB58)
+const GW_FEROCITY: usize = 0x96AB58;
+/// The provocation timer (0x96AB5C, float)
+const GW_PROVOCATION_TIMER: usize = 0x96AB5C;
+/// The time of the offensive war's last state change (0x96AB60)
+const GW_LAST_STATE_TIME: usize = 0x96AB60;
+/// `CGangWars::State` (offensive war, 0x96AB64)
+const GW_STATE: usize = 0x96AB64;
+/// `CGangWars::Gang1` (0x96AB84)
+const GW_GANG1: usize = 0x96AB84;
+/// The zone fought over (0x96AB88; its int16 bounds +0x10 / +0x12 / +0x16 / +0x18)
+const GW_ZONE: usize = 0x96AB88;
+/// `CGangWars::RadarBlip` (0x96AB98)
+const GW_RADAR_BLIP: usize = 0x96AB98;
+/// The player's position at the start of a defensive war (0x96ABC8)
+const GW_START_COORS: usize = 0x96ABC8;
+
+orig! {
+    /// `CGangWars::StartOffensiveGangWar()` (0x446050)
+    fn start_offensive_gang_war_o() = cdecl 0x446050 => crate::misc5::start_offensive_gang_war;
+    /// `CGangWars::StartDefensiveGangWar()` (0x444300)
+    fn start_defensive_gang_war_o() = cdecl 0x444300 => crate::misc5::start_defensive_gang_war;
+    /// `CGangWars::CreateAttackWave(int32 ferocity, int32 wave)` (0x444810, AL)
+    fn create_attack_wave_o(ferocity: i32, wave: i32) -> u8 = cdecl 0x444810 => crate::misc5::create_attack_wave;
+    /// `CGangWars::CreateDefendingGroup(int32)` (0x4453D0, AL)
+    fn create_defending_group_o(unused: i32) -> u8 = cdecl 0x4453D0 => crate::misc5::create_defending_group;
+    /// `CGangWars::AttackWaveOvercome()` (0x445B30, AL)
+    fn attack_wave_overcome_o() -> u8 = cdecl 0x445B30 => attack_wave_overcome;
+    /// `CGangWars::MakePlayerGainInfluenceInZone(float)` (0x445E80, AL)
+    fn make_player_gain_influence_in_zone_o(removal: f32) -> u32 = cdecl 0x445E80 => crate::misc2::make_player_gain_influence_in_zone;
+    /// `CGangWars::DoStuffWhenPlayerVictorious()` (0x446400)
+    fn do_stuff_when_player_victorious_o() = cdecl 0x446400 => crate::misc2::do_stuff_when_player_victorious;
+    /// `CGangWars::CalculateTimeTillNextAttack()` (0x443DB0, EAX)
+    fn calculate_time_till_next_attack_o() -> u64 = cdecl 0x443DB0 => crate::misc2::calculate_time_till_next_attack;
+    /// `CGangWars::StrengthenPlayerInfluenceInZone(int32)` (0x445F50)
+    fn strengthen_player_influence_in_zone_o(amount: i32) = cdecl 0x445F50 => strengthen_player_influence_in_zone;
+}
+
+use crate::bindings::release_cars_in_attack_wave_o;
+use sa_core::bindings::text_get;
+use crate::misc2::{make_enemy_gain_influence_in_zone_o, release_peds_in_attack_wave};
+use sa_math::fpu::{fbits, ftol32, gt};
+use sa_stream::streaming::call_stream_zone_models_gangs;
+use sa_world::bindings::{
+    add_message_q, add_to_previous_brief_array, change_blip_display, clear_blip_call, is_coop_game_going_on,
+    zones_fill_zones_with_gang_colours as fill_zones_with_gang_colours,
+};
 
 orig! {
     /// `CRoadBlocks::CreateRoadBlockBetween2Points(CVector a, CVector b, uint32 gang)` (0x4619C0, cdecl, both vectors
@@ -429,7 +771,6 @@ use sa_core::bindings::font_set_edge;
 use sa_core::bindings::font_set_font_style;
 use sa_core::bindings::font_set_orientation;
 use sa_core::bindings::font_set_proportional;
-use sa_core::bindings::text_get;
 use sa_core::bindings::font_set_drop_color;
 use sa_core::bindings::font_set_right_justify_wrap;
 use sa_core::bindings::font_set_scale;

@@ -2319,6 +2319,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x583EB0,sa-world,radar_set_blip_friendly,cdecl,,b:u32;f:u32,,unported,CRadar::SetBlipFriendly,
 0x587C60,sa-world,clear_blip_for_entity,cdecl,,ty:u32;handle:i32,,unported,CRadar::ClearBlipForEntity-OG,
 0x587CE0,sa-world,clear_blip_call,cdecl,,h:i32,,unported,CRadar::ClearBlip,
+0x583D20,sa-world,change_blip_display,cdecl,,h:i32;d:u32,,unported,CRadar::ChangeBlipDisplay,
 0x588B50,sa-world,hud_help_message_displayed,cdecl,,,u8,unported,CHud::HelpMessageDisplayed,
 0x588BB0,sa-world,hud_set_zone_name,cdecl,,s:u32;b:u8,,unported,CHud::SetZoneName,sa_hud::hud::set_zone_name
 0x588F60,sa-world,hud_set_message,cdecl,,text:GPtr<u8>,,unported,CHud::SetMessage,
