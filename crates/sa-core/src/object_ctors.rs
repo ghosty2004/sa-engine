@@ -15,6 +15,7 @@ use crate::field::wr;
 use crate::field::rd;
 
 use crate::bindings::eh_vector_ctor;
+use crate::bindings::{eh_vector_dtor, list_dtor};
 use crate::bindings::pad_clear;
 use crate::bindings::base_model_info_ctor as base_model_info_ctor_call;
 use crate::bindings::list_ctor as list_ctor_call;
@@ -392,6 +393,56 @@ pub fn proc_object_man_ctor(this: GPtr<u8>) -> GPtr<u8> {
     this
 }
 
+// ---- FRONTIER-2 turn 2, lane C (batch `frontier2-c5`): the managers' destructors and `List_c::GetItemOffset` ----
+
+/// `FurnitureManager_c::~FurnitureManager_c()` (0x5912E0, thiscall; the `__dtor_` stub's target): the `List_c` at
+/// +0x206C (0x4A8DE0), the 0x200 items of 0x10 at +0x6C (0x590E10), the 9 groups of 0xC (0x590DF0), each through
+/// `eh_vector_destructor_iterator`. The SEH frame is not modelled.
+#[hook(addr = 0x5912E0, conv = thiscall, name = "FurnitureManager_c::~FurnitureManager_c", expect = "6A FF 68 2C CF 83 00",
+       unverified = "frontier2-c5", route = "L2", hazards = "heap-writes")]
+pub fn furniture_manager_dtor(this: GPtr<u8>) {
+    list_dtor(this.byte_add(0x206C));
+    eh_vector_dtor(this.byte_add(0x6C), 0x10, 0x200, 0x590E10);
+    eh_vector_dtor(this, 0xC, 9, 0x590DF0);
+}
+
+/// `ProcObjectMan_c::~ProcObjectMan_c()` (0x5A3090, thiscall): the `List_c` at +0x4C08, the 0x200 objects of 0x14 at
+/// +0x2408 (0x5A3080), the 0x80 surface infos of 0x48 at +8 (0x5A2EA0). The SEH frame is not modelled.
+#[hook(addr = 0x5A3090, conv = thiscall, name = "ProcObjectMan_c::~ProcObjectMan_c", expect = "6A FF 68 84 D3 83 00",
+       unverified = "frontier2-c5", route = "L2", hazards = "heap-writes")]
+pub fn proc_object_man_dtor(this: GPtr<u8>) {
+    list_dtor(this.byte_add(0x4C08));
+    eh_vector_dtor(this.byte_add(0x2408), 0x14, 0x200, 0x5A3080);
+    eh_vector_dtor(this.byte_add(8), 0x48, 0x80, 0x5A2EA0);
+}
+
+/// `List_c::GetItemOffset(bool fromHead, int32 n)` (0x4A9010, thiscall, `ret 8`): from the head (+0) following `next`
+/// (+4) or, with `fromHead` 0 (AL), from the tail (+4) following `prev` (+0), `n` steps; a NULL reached before the
+/// last step gives NULL. `n <= 0` returns the head / tail itself.
+#[hook(addr = 0x4A9010, conv = thiscall, name = "List_c::GetItemOffset", expect = "8A 44 24 04 84 C0",
+       unverified = "frontier2-c5", route = "L2", hazards = "none")]
+pub fn list_get_item_offset(this: GPtr<u8>, from_head: u32, n: i32) -> GPtr<u8> {
+    let (mut p, link) = if from_head as u8 != 0 { (rd::<GPtr<u8>>(this, 0), 4) } else { (rd::<GPtr<u8>>(this, 4), 0) };
+    let mut i = 0;
+    while i < n {
+        if p.is_null() {
+            return GPtr::NULL;
+        }
+        p = rd::<GPtr<u8>>(p, link);
+        i += 1;
+    }
+    p
+}
+
+/// `BreakManager_c::~BreakManager_c()` (0x59E640, thiscall; `__dtor_g_breakMan`'s target, catalogued by the CAT-12
+/// tail-target split): the 64 break objects of 0x20 (`BreakObject_c::~BreakObject_c` 0x59D180) through
+/// `eh_vector_destructor_iterator`.
+#[hook(addr = 0x59E640, conv = thiscall, name = "BreakManager_c::~BreakManager_c", expect = "68 80 D1 59 00",
+       unverified = "frontier2-c6", route = "L2", hazards = "heap-writes")]
+pub fn break_manager_dtor(this: GPtr<u8>) {
+    eh_vector_dtor(this, 0x20, 0x40, 0x59D180);
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_BASE_MODEL_INFO_CTOR,
@@ -420,6 +471,10 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_FX_PARTICLE_SLOT_CTOR,
     HOOK_SCRIPT_ELEMENT_CTOR,
     HOOK_EFFECT_SLOT_CTOR,
+    HOOK_FURNITURE_MANAGER_DTOR,
+    HOOK_PROC_OBJECT_MAN_DTOR,
+    HOOK_LIST_GET_ITEM_OFFSET,
+    HOOK_BREAK_MANAGER_DTOR,
 ];
 
 /// Every `#[native]` of this module.

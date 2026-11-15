@@ -32,34 +32,9 @@ pub fn g_fun_0044d2d0_44d2d0(
 ) {
 }
 
-/// `FUN_0044d2e0` (0x44D2E0, STREAM): empty, thiscall, `ret 56`; 1 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_fun_0044d2e0_44d2e0(
-    _this: u32,
-    _a0: u32,
-    _a1: u32,
-    _a2: u32,
-    _a3: u32,
-    _a4: u32,
-    _a5: u32,
-    _a6: u32,
-    _a7: u32,
-    _a8: u32,
-    _a9: u32,
-    _a10: u32,
-    _a11: u32,
-    _a12: u32,
-    _a13: u32,
-) {
-}
-
 /// (address, 64-bit FNV-1a of the matched bytes, the matched spans `(va, len)`: the stub, every
 /// executed instruction, switch tables): the bodies this file was generated from.
-pub const BODIES: &[Body] = &[
-    (0x44D2D0, 0x6A5F681C2468C4FD, &[(0x44D2D0, 3)]),
-    (0x44D2E0, 0x6A7A981C247FDE45, &[(0x44D2E0, 3)]),
-];
+pub const BODIES: &[Body] = &[(0x44D2D0, 0x6A5F681C2468C4FD, &[(0x44D2D0, 3)])];
 
 #[cfg(all(test, not(sa_phase_a)))]
 mod tests {
@@ -69,6 +44,5 @@ mod tests {
     #[test]
     fn pattern_empty() {
         g_fun_0044d2d0_44d2d0(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-        g_fun_0044d2e0_44d2e0(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     }
 }

@@ -191,6 +191,45 @@ pub fn interp_255_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) {
     crate::mvpc_fx1::interp_short_get_val(this, out, t, true, 0x3C00_0000);
 }
 
+orig! {
+    /// `FindClosestPtOnLine(CVector* out, const CVector* a, const CVector* b, const CVector* p)` (0x4A4880, cdecl)
+    fn find_closest_pt_on_line(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, p: GPtr<u8>) = cdecl 0x4A4880 => unported;
+}
+
+/// `FxInfoAttractLine_c::GetValue` (0x4A5850; FRONTIER-2 turn 2, batch `frontier2-c6`): `key =
+/// FxInterpInfo32_c::GetVal(t)`; `FindClosestPtOnLine(&c, &key[0..3], &key[3..6], &out.pos)`; `v = c - out.pos` (f32
+/// each); then as `FxInfoAttractPt_c::GetValue`: `len = RwV3dLength(&v)` (stored as f32), `RwV3dNormalize(&v, &v)`
+/// when the unrounded length is > 0, and when `len > 0.1f`: `s = key[6] * timeStep` (x87), `out.vel.x += v.x * s`
+/// (unrounded product), `out.vel.y += f32(v.y * s)`, `out.vel.z += f32(v.z * s)`.
+#[hook(addr = 0x4A5850, conv = thiscall, name = "FxInfoAttractLine_c::GetValue", expect = "8A 41 06 83 EC 74",
+       unverified = "frontier2-c6", route = "L2", hazards = "heap-writes", note = "writes the particle movement info")]
+pub fn fx_info_attract_line_get_value(this: GPtr<u8>, curr: u32, mult: u32, step: u32, total: u32, _use_const: u32, out: GPtr<u8>) {
+    let t = key_time(this, curr, mult, total);
+    let mut b = eval(this, t, interp_32_get_val);
+    let mut c = [0f32; 3];
+    let bp = GPtr::from_raw(b.as_mut_ptr()).cast::<u8>();
+    find_closest_pt_on_line(GPtr::from_raw(c.as_mut_ptr()).cast(), bp, bp.byte_add(0xC), out);
+    let mut v = [0f32; 3];
+    for (k, e) in v.iter_mut().enumerate() {
+        *e = xf(c[k]).fsub_m(rd::<f32>(out, 4 * k as isize)).to_f32();
+    }
+    let vp = GPtr::from_raw(v.as_mut_ptr()).cast::<u8>();
+    let len = X87::from_f64_exact(rw_v3d_length(vp));
+    let len32 = len.to_f32();
+    if !len.fcom(xf(0.0)).test_any(0x41) {
+        rw_v3d_normalize(vp, vp);
+    }
+    if !xf(len32).fcom(xf(k(0x3DCC_CCCD))).test_any(0x41) {
+        let s = xf(b[6]).fmul_m(f32::from_bits(step));
+        let px = xf(v[0]).fmul(s);
+        let py = s.fmul_m(v[1]).to_f32();
+        let pz = s.fmul_m(v[2]).to_f32();
+        wr::<f32>(out, 0xC, px.fadd_m(rd::<f32>(out, 0xC)).to_f32());
+        wr::<f32>(out, 0x10, xf(py).fadd_m(rd::<f32>(out, 0x10)).to_f32());
+        wr::<f32>(out, 0x14, xf(pz).fadd_m(rd::<f32>(out, 0x14)).to_f32());
+    }
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_FX_INFO_ATTRACT_PT_GET_VALUE,
@@ -198,4 +237,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_FX_INFO_FLAT_GET_VALUE,
     HOOK_FX_INFO_GROUND_COLLIDE_GET_VALUE,
     HOOK_INTERP_255_GET_VAL,
+    HOOK_FX_INFO_ATTRACT_LINE_GET_VALUE,
 ];

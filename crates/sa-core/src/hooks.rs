@@ -101,6 +101,7 @@ pub const NATIVES: &[crate::abi::NativeReg] = &[
     crate::pool_ctors::NATIVES[0],
     crate::matrix_ops::NATIVES[0],
     crate::matrix_ops::NATIVES[1],
+    crate::pools::NATIVES[0],
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

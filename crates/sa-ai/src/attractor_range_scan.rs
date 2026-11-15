@@ -196,7 +196,7 @@ use sa_world::bindings::placeable_get_matrix;
 use sa_world::bindings::transform_from_object_space as entity_transform_from_object_space;
 orig! {
     /// `CPedAttractorManager::IsApproachable(C2dEffect*, const CMatrix&, int32, CPed*)` (0x5EA220)
-    fn attractor_manager_is_approachable(effect: GPtr<u8>, m: GPtr<u8>, unused: u32, ped: GPtr<u8>) -> u8 = cdecl 0x5EA220 => unported;
+    pub(crate) fn attractor_manager_is_approachable(effect: GPtr<u8>, m: GPtr<u8>, unused: u32, ped: GPtr<u8>) -> u8 = cdecl 0x5EA220 => unported;
 }
 
 /// `CWeather::Rain` (0xC81324) and the rain level (0x858CC4) from which only shelter attractors (type 4) count

@@ -19,6 +19,7 @@
 use crate::mem::{GBool, GPtr, GameData, Global};
 use crate::pool::{self, ByteMap, CPool, FREE, ObjectSlot, PedSlot, VehicleSlot};
 use crate::{globals, hook, orig};
+use sa_math::x87::X87;
 
 /// Storage of one pool slot of `N` bytes (the original's `sizeof(S)`).
 #[repr(C, align(4))]
@@ -1169,6 +1170,90 @@ pub fn ret_44d0e0() {}
 /// 0x60F8C0: a lone `ret` (unhookable).
 pub fn ret_60f8c0() {}
 
+// ---- FRONTIER-2 turn 2, lane C (batch `frontier2-c6`) ----
+
+orig! {
+    /// `CPatrolRoutePool::New()` (0x41B660, through its hook toggle)
+    fn patrol_route_pool_new_o(p: PoolPtr<PatrolRouteSlot>) -> GPtr<PatrolRouteSlot> = thiscall 0x41B660 => patrol_route_pool_new;
+    /// `COctTree::~COctTree()` (0x5A7400, through its hook toggle)
+    fn oct_tree_dtor_o(t: GPtr<u8>) = thiscall 0x5A7400 => oct_tree_dtor;
+}
+
+/// `CPatrolRoute::operator new(uint32)` (0x41B810, cdecl): `CPatrolRoutePool::New()` on `CPools::ms_pPatrolRoutePool`
+/// (0xB744B4, a tail jump; the size is not read).
+#[hook(addr = 0x41B810, conv = cdecl, name = "CPatrolRoute::operator new", expect = "8B 0D B4 44 B7 00",
+       unverified = "frontier2-c6", route = "L2", hazards = "heap-writes")]
+pub fn patrol_route_operator_new(_size: u32) -> GPtr<PatrolRouteSlot> {
+    patrol_route_pool_new_o(PATROL_ROUTE_POOL.get())
+}
+
+/// `COctTree::~COctTree()` (0x5A7400, thiscall; catalogued by the CAT-12 tail-target split): vtable 0x867170, then
+/// `COctTree::empty()` (a tail jump).
+#[hook(addr = 0x5A7400, conv = thiscall, name = "COctTree::~COctTree", expect = "C7 01 70 71 86 00",
+       unverified = "frontier2-c6", route = "L2", hazards = "heap-writes")]
+pub fn oct_tree_dtor(this: GPtr<u8>) {
+    crate::field::wr::<u32>(this, 0, 0x867170);
+    oct_tree_empty_o(this);
+}
+
+/// `COctTreeBase::~COctTreeBase()` (0x5A4140, thiscall; `__dtor_gOctTreeBase`'s target): `jmp COctTree::~COctTree`. A
+/// 5-byte `jmp` into game `.text`, which sa-hook does not patch: a phase B native.
+#[crate::native(addr = 0x5A4140, conv = thiscall, name = "COctTreeBase::~COctTreeBase")]
+pub fn oct_tree_base_dtor(this: GPtr<u8>) {
+    oct_tree_dtor_o(this);
+}
+
+orig! {
+    /// `COctTree::FillPalette(RwRGBA* palette)` through the node's vtable (slot 1)
+    fn oct_tree_fill_palette_v(t: GPtr<u8>, palette: GPtr<u8>) = thiscall vslot 0x4 => unported;
+}
+
+/// `COctTree::ms_level` (0xBC12E0): the next palette index
+const OCT_TREE_LEVEL: usize = 0xBC12E0;
+
+/// `COctTree::FillPalette(RwRGBA* palette)` (0x5A70F0, thiscall, `ret 4`; batch `frontier2-c6`). A leaf (byte +8 == 1):
+/// palette entry `[ms_level]` gets r / g / b = `ftol(sum / count)` of the unsigned colour sums +0x1C / +0x20 / +0x24
+/// (`fild`, + 2^32 when negative, `fidiv` the count +4) and alpha 0x80; the node's +4 becomes its palette index
+/// `ms_level` (re-read), then `ms_level += 1`. Otherwise each of the 8 child indices (int16 at +0xA + 2k) that is not
+/// negative: the pool node (0x28 each; a free slot gives NULL, which the original dereferences) fills the palette
+/// through its vtable (slot 1).
+#[hook(addr = 0x5A70F0, conv = thiscall, name = "COctTree::FillPalette", expect = "51 56 8B F1 80 7E 08 01",
+       unverified = "frontier2-c6", route = "L2", hazards = "heap-writes")]
+pub fn oct_tree_fill_palette(this: GPtr<u8>, palette: GPtr<u8>) {
+    use crate::field::{g, rd, wr};
+    if rd::<u8>(this, 8) == 1 {
+        for (k, off) in [0x1Cisize, 0x20, 0x24].into_iter().enumerate() {
+            let sum = rd::<i32>(this, off);
+            let mut v = X87::from_i32(sum);
+            if sum < 0 {
+                v = v.fadd_m(f32::from_bits(0x4F80_0000));
+            }
+            let c = sa_math::fpu::ftol32(v.fdiv(X87::from_i32(rd::<i32>(this, 4))));
+            let level = g::<i32>(OCT_TREE_LEVEL).read();
+            wr::<u8>(palette, 4 * level as isize + k as isize, c as u8);
+        }
+        let level = g::<i32>(OCT_TREE_LEVEL).read();
+        wr::<u8>(palette, 4 * level as isize + 3, 0x80);
+        wr::<i32>(this, 4, g::<i32>(OCT_TREE_LEVEL).read());
+        g::<i32>(OCT_TREE_LEVEL).write(g::<i32>(OCT_TREE_LEVEL).read().wrapping_add(1));
+        return;
+    }
+    for k in 0..8isize {
+        let idx = rd::<i16>(this, 0xA + 2 * k);
+        if idx < 0 {
+            continue;
+        }
+        let pool = GPtr::<u8>::from_addr(OCT_TREE_POOL);
+        let i = i32::from(idx);
+        let free = rd::<GPtr<u8>>(pool, 4).byte_add(i as isize).read() & 0x80 != 0;
+        let child = if free { GPtr::NULL } else { rd::<GPtr<u8>>(pool, 0).byte_add(i.wrapping_mul(0x28) as isize) };
+        oct_tree_fill_palette_v(child, palette);
+    }
+}
+
+/// This module's `#[native]`s (listed in [`crate::hooks::NATIVES`]).
+pub const NATIVES: &[crate::abi::NativeReg] = &[NATIVE_OCT_TREE_BASE_DTOR];
+
 /// This module's registrations (collected by [`crate::hooks`]).
 pub const HOOKS: &[crate::abi::HookReg] = &[
     HOOK_BUILDING_POOL_NEW,
@@ -1187,6 +1272,9 @@ pub const HOOKS: &[crate::abi::HookReg] = &[
     HOOK_QUAD_TREE_NODE_POOL_DELETE,
     HOOK_OCT_TREE_POOL_DELETE,
     HOOK_OCT_TREE_EMPTY,
+    HOOK_PATROL_ROUTE_OPERATOR_NEW,
+    HOOK_OCT_TREE_DTOR,
+    HOOK_OCT_TREE_FILL_PALETTE,
     HOOK_OBJECT_POOL_CREATE_AT_REF,
     HOOK_VEHICLE_POOL_CREATE_AT_REF,
     HOOK_ENTRY_INFO_NODE_OPERATOR_NEW,

@@ -12,13 +12,36 @@ pub fn is_female_ped_type(ty: u32) -> u32 {
     u32::from(ty == 0x16 || ty == 5)
 }
 
+/// `WaterCreatureManager_c::~WaterCreatureManager_c()` (0x6E3F20, thiscall; `__dtor_g_waterCreatureMan`'s target): the
+/// `List_c`s at +0x1A0C and +0x1A00 (0x4A8DE0), then the 0x80 creatures of 0x34 (0x6E3E50) through
+/// `eh_vector_destructor_iterator`. The SEH frame is not modelled (FRONTIER-2 turn 2).
+#[hook(addr = 0x6E3F20, conv = thiscall, name = "WaterCreatureManager_c::~WaterCreatureManager_c",
+       expect = "6A FF 68 84 88 84 00", unverified = "frontier2-c5", route = "L2", hazards = "heap-writes")]
+pub fn water_creature_manager_dtor(this: GPtr<u8>) {
+    list_dtor(this.byte_add(0x1A0C));
+    list_dtor(this.byte_add(0x1A00));
+    eh_vector_dtor(this, 0x34, 0x80, 0x6E3E50);
+}
+
+/// `CMatrixLinkList::~CMatrixLinkList()` (0x54EB70, thiscall; `__dtor_gMatrixList`'s target): the six sentinel links'
+/// `CMatrix` destructors (0x59ACD0), +0x1A4, +0x150, +0xFC, +0xA8, +0x54, +0 in that order. The SEH frame is not
+/// modelled (FRONTIER-2 turn 2).
+#[hook(addr = 0x54EB70, conv = thiscall, name = "CMatrixLinkList::~CMatrixLinkList", expect = "6A FF 68 FD CA 83 00",
+       unverified = "frontier2-c5", route = "L2", hazards = "heap-writes")]
+pub fn matrix_link_list_dtor(this: GPtr<u8>) {
+    for off in [0x1A4, 0x150, 0xFC, 0xA8, 0x54, 0] {
+        matrix_dtor(this.byte_add(off));
+    }
+}
+
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_IS_FEMALE_PED_TYPE];
+pub const HOOKS: &[HookReg] = &[HOOK_IS_FEMALE_PED_TYPE, HOOK_WATER_CREATURE_MANAGER_DTOR, HOOK_MATRIX_LINK_LIST_DTOR];
 
 use sa_core::mem::GPtr;
 use sa_core::orig;
 use super::common::{g, rd, wr, xi};
-use crate::bindings::{find_player_ped, find_player_vehicle};
+use crate::bindings::{find_player_ped, find_player_vehicle, matrix_dtor};
+use sa_core::bindings::{eh_vector_dtor, list_dtor};
 
 orig! {
     /// virtual slot +0xC8 (`CVehicle::Fix()`)

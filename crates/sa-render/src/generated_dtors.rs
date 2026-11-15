@@ -23,18 +23,18 @@ orig! {
     fn c_4a90a0_t0(this: u32) -> u32 = thiscall 0x4A90A0 => unported;
     /// `FxPrimBP_c::~FxPrimBP_c` (0x4A9D20), thiscall, 0 stack argument(s)
     fn c_4a9d20_t0(this: u32) -> u32 = thiscall 0x4A9D20 => unported;
-    /// `CAESound` (0x4EF660), thiscall, 0 stack argument(s)
-    fn c_4ef660_t0(this: u32) -> u32 = thiscall 0x4EF660 => unported;
     /// `CMatrix` (0x59ACD0), thiscall, 0 stack argument(s)
     fn c_59acd0_t0(this: u32) -> u32 = thiscall 0x59ACD0 => unported;
-    /// `COctTree::empty` (0x5A6FC0), thiscall, 0 stack argument(s)
-    fn c_5a6fc0_t0(this: u32) -> u32 = thiscall 0x5A6FC0 => unported;
+    /// `COctTreeBase::~COctTreeBase` (0x5A4140), thiscall, 0 stack argument(s)
+    fn c_5a4140_t0(this: u32) -> u32 = thiscall 0x5A4140 => unported;
     /// `CShadowCamera::Destroy` (0x705400), thiscall, 0 stack argument(s)
     fn c_705400_t0(this: u32) -> u32 = thiscall 0x705400 => unported;
     /// `CRealTimeShadow::Destroy` (0x705990), thiscall, 0 stack argument(s)
     fn c_705990_t0(this: u32) -> u32 = thiscall 0x705990 => unported;
     /// `FUN_007067a0` (0x7067A0), thiscall, 0 stack argument(s)
     fn c_7067a0_t0(this: u32) -> u32 = thiscall 0x7067A0 => unported;
+    /// `CAEWeatherAudioEntity::~CAEWeatherAudioEntity` (0x72A400), thiscall, 0 stack argument(s)
+    fn c_72a400_t0(this: u32) -> u32 = thiscall 0x72A400 => unported;
     /// `RwTextureDestroy` (0x7F3820), cdecl, 1 stack argument(s)
     fn c_7f3820_c1(a0: u32) -> u32 = cdecl 0x7F3820 => unported;
 }
@@ -256,11 +256,10 @@ pub fn g_dtor_g_fx_man_8561e0() {
 #[allow(dead_code)]
 pub fn g_dtor_84e6e0_8564a0() {}
 
-/// `__dtor_gOctTreeBase` (0x856690, RENDER): dtor, cdecl, `ret`; 5 instruction(s) matched.
-#[hook(addr = 0x856690, conv = cdecl, name = "__dtor_gOctTreeBase", expect = "B9 90 12 BC 00", unverified = "gen2-render-1", route = "split", hazards = "heap-writes")]
+/// `__dtor_gOctTreeBase` (0x856690, RENDER): dtor, cdecl, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x856690, conv = cdecl, name = "__dtor_gOctTreeBase", expect = "B9 90 12 BC 00", unverified = "gen2-render-1", route = "split", hazards = "none")]
 pub fn g_dtor_g_oct_tree_base_856690() {
-    wr::<u32>(p(0xBC_1290), 0, 0x86_7170);
-    let _v1 = c_5a6fc0_t0(0xBC_1290);
+    let _v1 = c_5a4140_t0(0xBC_1290);
 }
 
 /// `__dtor_g_c03970` (0x856700, RENDER): dtor, cdecl, `ret`; 1 instruction(s) matched.
@@ -279,11 +278,10 @@ pub fn g_dtor_g_real_time_shadow_man_856ad0() {
     let _v1 = c_7067a0_t0(0xC4_0350);
 }
 
-/// `__dtor_CWeather__m_WeatherAudioEntity` (0x856C10, RENDER): dtor, cdecl, `ret`; 5 instruction(s) matched.
-#[hook(addr = 0x856C10, conv = cdecl, name = "__dtor_CWeather__m_WeatherAudioEntity", expect = "B9 60 13 C8 00", unverified = "gen2-render-1", route = "split", hazards = "heap-writes")]
+/// `__dtor_CWeather__m_WeatherAudioEntity` (0x856C10, RENDER): dtor, cdecl, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x856C10, conv = cdecl, name = "__dtor_CWeather__m_WeatherAudioEntity", expect = "B9 60 13 C8 00", unverified = "gen2-render-1", route = "split", hazards = "none")]
 pub fn g_dtor_cweather_m_weather_audio_entity_856c10() {
-    wr::<u32>(p(0xC8_1360), 0, 0x85_9988);
-    let _v1 = c_4ef660_t0(0xC8_1368);
+    let _v1 = c_72a400_t0(0xC8_1360);
 }
 
 /// (address, 64-bit FNV-1a of the matched bytes, the matched spans `(va, len)`: the stub, every
@@ -301,13 +299,9 @@ pub const BODIES: &[Body] = &[
     (0x8561D0, 0x6DE566D024007B49, &[(0x8561D0, 10)]),
     (0x8561E0, 0x902F37C46E3068FA, &[(0x8561E0, 10)]),
     (0x8564A0, 0xAF647E4C8602FFD2, &[(0x8564A0, 1)]),
-    (
-        0x856690,
-        0x8A6E1D89DF4DFFF8,
-        &[(0x5A4140, 5), (0x5A7400, 11), (0x856690, 10)],
-    ),
+    (0x856690, 0x882F4BC945752980, &[(0x856690, 10)]),
     (0x856700, 0xAF647E4C8602FFD2, &[(0x856700, 1)]),
     (0x856710, 0xAF647E4C8602FFD2, &[(0x856710, 1)]),
     (0x856AD0, 0x96F02AD2F36AFEB5, &[(0x856AD0, 10)]),
-    (0x856C10, 0xE96EF388991C61BB, &[(0x72A400, 14), (0x856C10, 10)]),
+    (0x856C10, 0x41BF9349AE0EF947, &[(0x856C10, 10)]),
 ];

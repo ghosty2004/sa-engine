@@ -2025,6 +2025,8 @@ pub fn ped_audio_destructor(this: GPtr<u8>) {
 /// chunk only pushes the SEH handler, `[0x1560648] ^ [0x6541B2]`): vtable 0x862E54, the twin loops
 /// +0x144 and +0x9C destroyed, vtable 0x859988, the entity sound (+8) destroyed.
 /// Not hooked (protection): 0x4021F5 `adc eax, [0x506B22]` reads the entry bytes as data (sa-hook INF-20 / keycells tests); reached through `orig!` only.
+/// Registered as a phase B native (FRONTIER-2 turn 2).
+#[sa_core::native(addr = 0x506B20, conv = thiscall, name = "FUN_00506b20")]
 pub fn frontend_audio_destructor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x862E54);
     twin_destructor(this.byte_add(0x144));

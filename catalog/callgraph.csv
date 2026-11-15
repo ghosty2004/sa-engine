@@ -17497,7 +17497,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x5a40e0,0x59f660,tailcall,game,CObject,1
 0x5a40f0,0x5a1f20,call,game,delete,1
 0x5a40f0,0x5a40e0,call,game,FUN_005a40e0,1
-0x5a4140,0x5a7400,tailcall,game,(missed by ghidra: cat7-call),1
+0x5a4140,0x5a7400,tailcall,game,COctTree::~COctTree,1
 0x5a4150,0x7cf600,call,game,RtPNGImageWrite,1
 0x5a4150,0x8026e0,call,game,RwImageCreate,1
 0x5a4150,0x802740,call,game,RwImageDestroy,1
@@ -24005,14 +24005,14 @@ caller,callee,kind,callee_class,callee_name,sites
 0x625be0,0x620810,call,game,CTaskSimpleBeHit::Destructor,1
 0x625c00,0x61a5b0,call,game,CTask::operator delete,1
 0x625c00,0x620b90,call,game,CTaskComplexReactToAttack::Destructor,1
-0x625c20,0x620c30,call,game,thunk_FUN_004020ff,1
+0x625c20,0x620c30,call,game,CTaskComplexReactToAttack::CreateSubTask,1
 0x625c20,,indirect-unresolved,,,1
 0x625c70,0x44e480,call,game,CVector2D::Normalise,1
 0x625c70,0x53fb70,call,game,CPad::GetPad,1
 0x625c70,0x540670,call,game,CPad::GetTarget,1
 0x625c70,0x5429f0,call,game,CPhysical::ApplyMoveForce-vec,1
 0x625c70,0x5df8f0,call,game,CPed::IsPlayer,2
-0x625c70,0x620c30,call,game,thunk_FUN_004020ff,3
+0x625c70,0x620c30,call,game,CTaskComplexReactToAttack::CreateSubTask,3
 0x625e20,0x61a5b0,call,game,CTask::operator delete,1
 0x625e20,0x620ef0,call,game,FUN_00620ef0,1
 0x625e70,0x407180,call,game,CGeneral::GetRandomNumberInRange_int32,1
@@ -29731,7 +29731,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x674860,0x66cea0,virtual-typed,game,CTaskComplexGoToPointAndStandStill::Clone,2
 0x674860,0x66cf30,virtual-typed-override,game,CTaskComplexGoToPointAndStandStillTimed::Clone,2
 0x674920,0x6740e0,tailcall,game,CTaskComplexWander::CreateFirstSubTask,1
-0x674930,0x41b810,call,game,FUN_0041b810,1
+0x674930,0x41b810,call,game,CPatrolRoute::operator new,1
 0x674930,0x61a3b0,call,game,CTaskComplex,1
 0x674930,0x66d440,call,game,FUN_0066d440,1
 0x674930,0x66d4b0,call,game,FUN_0066d4b0,1
@@ -41905,10 +41905,10 @@ caller,callee,kind,callee_class,callee_name,sites
 0x856620,0x590ed0,fnref,game,Furniture_c::~Furniture_c,1
 0x856640,0x5912e0,tailcall,game,FurnitureManager_c::~FurnitureManager_c,1
 0x856650,0x598580,tailcall,game,InteriorManager_c::~InteriorManager_c,1
-0x856660,0x59e640,tailcall,game,(missed by ghidra: cat7-call),1
+0x856660,0x59e640,tailcall,game,BreakManager_c::~BreakManager_c,1
 0x856670,0x5a3090,tailcall,game,ProcObjectMan_c::~ProcObjectMan_c,1
 0x856680,0x5322d0,tailcall,game,CDirectory::Destructor,1
-0x856690,0x5a4140,tailcall,game,(missed by ghidra: cat7-call),1
+0x856690,0x5a4140,tailcall,game,COctTreeBase::~COctTreeBase,1
 0x8566a0,0x8214bd,call,game,_free,2
 0x8566f0,0x4ce1d0,tailcall,game,CAnimBlendAssocGroup::Destructor,1
 0x856720,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
@@ -41919,12 +41919,12 @@ caller,callee,kind,callee_class,callee_name,sites
 0x856760,0x5de540,fnref,game,CGangInfo,1
 0x856780,0x8214bd,call,game,_free,1
 0x8567c0,0x8214bd,call,game,_free,1
-0x856800,0x5f6460,tailcall,game,(missed by ghidra: cat7-call),1
-0x856810,0x5f6490,tailcall,game,(missed by ghidra: cat7-call),1
-0x856820,0x5f64c0,tailcall,game,(missed by ghidra: cat7-call),1
-0x856830,0x5f64f0,tailcall,game,(missed by ghidra: cat7-call),1
-0x856840,0x5f6520,tailcall,game,(missed by ghidra: cat7-call),1
-0x856850,0x5f6550,tailcall,game,(missed by ghidra: cat7-call),1
+0x856800,0x5f6460,tailcall,game,CPedGroupDefaultTaskAllocatorFollowAnyMeans::~CPedGroupDefaultTaskAllocatorFollowAnyMeans,1
+0x856810,0x5f6490,tailcall,game,CPedGroupDefaultTaskAllocatorFollowLimited::~CPedGroupDefaultTaskAllocatorFollowLimited,1
+0x856820,0x5f64c0,tailcall,game,CPedGroupDefaultTaskAllocatorStandStill::~CPedGroupDefaultTaskAllocatorStandStill,1
+0x856830,0x5f64f0,tailcall,game,CPedGroupDefaultTaskAllocatorChat::~CPedGroupDefaultTaskAllocatorChat,1
+0x856840,0x5f6520,tailcall,game,CPedGroupDefaultTaskAllocatorRandom::~CPedGroupDefaultTaskAllocatorRandom,1
+0x856850,0x5f6550,tailcall,game,CPedGroupDefaultTaskAllocatorSitInLeaderCar::~CPedGroupDefaultTaskAllocatorSitInLeaderCar,1
 0x856860,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x856860,0x5fc190,fnref,game,CPedGroup::Destructor,1
 0x856880,0x571a00,call,game,CEntity::CleanUpOldReference-,1

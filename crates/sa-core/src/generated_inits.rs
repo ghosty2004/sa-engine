@@ -12,6 +12,11 @@
 #[allow(unused_imports)]
 use super::*;
 
+orig! {
+    /// `CMemoryHeap::CMemoryHeap` (0x72E860), thiscall, 0 stack argument(s)
+    fn c_72e860_t0(this: u32) -> u32 = thiscall 0x72E860 => unported;
+}
+
 /// `__init_g_b714f0` (0x84D930, CORE): static-init, cdecl, `ret`; 4 instruction(s) matched.
 #[hook(addr = 0x84D930, conv = cdecl, name = "__init_g_b714f0", expect = "D9 05 60 38 86 00", route = "split", hazards = "none", recs = "grove-walk,pause-restart")]
 pub fn g_init_g_b714f0_84d930() {
@@ -545,18 +550,18 @@ pub fn g_init_g_c87b0c_855630() {
     );
 }
 
-/// `__init_g_Heaps` (0x855670, CORE): static-init, cdecl, `ret`; 5 instruction(s) matched.
-#[hook(addr = 0x855670, conv = cdecl, name = "__init_g_Heaps", expect = "B9 40 7B C8 00", route = "split", hazards = "heap-writes", recs = "grove-walk,pause-restart")]
+/// `__init_g_Heaps` (0x855670, CORE): static-init, cdecl, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x855670, conv = cdecl, name = "__init_g_Heaps", expect = "B9 40 7B C8 00", route = "split", hazards = "none", recs = "grove-walk,pause-restart")]
 pub fn g_init_g_heaps_855670() -> u32 {
-    wr::<u32>(p(0xC8_7B40), 0, 0);
-    0xC8_7B40
+    let v1 = c_72e860_t0(0xC8_7B40);
+    v1
 }
 
-/// `__init_g_c87b88` (0x855680, CORE): static-init, cdecl, `ret`; 5 instruction(s) matched.
-#[hook(addr = 0x855680, conv = cdecl, name = "__init_g_c87b88", expect = "B9 88 7B C8 00", route = "split", hazards = "heap-writes", recs = "grove-walk,pause-restart")]
+/// `__init_g_c87b88` (0x855680, CORE): static-init, cdecl, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x855680, conv = cdecl, name = "__init_g_c87b88", expect = "B9 88 7B C8 00", route = "split", hazards = "none", recs = "grove-walk,pause-restart")]
 pub fn g_init_g_c87b88_855680() -> u32 {
-    wr::<u32>(p(0xC8_7B88), 0, 0);
-    0xC8_7B88
+    let v1 = c_72e860_t0(0xC8_7B88);
+    v1
 }
 
 /// `__init_g_c8cdd0` (0x855E40, CORE): static-init, cdecl, `ret`; 4 instruction(s) matched.
@@ -668,8 +673,8 @@ pub const BODIES: &[Body] = &[
     (0x851CB0, 0x429179CADFD514BA, &[(0x851CB0, 19)]),
     (0x851CD0, 0x6247FC0B71573A39, &[(0x851CD0, 19)]),
     (0x855630, 0xA2A3B929FDFDC356, &[(0x855630, 19)]),
-    (0x855670, 0x1CCFF3D91D79AE0B, &[(0x72E860, 9), (0x855670, 10)]),
-    (0x855680, 0x5B660850F23D6D83, &[(0x72E860, 9), (0x855680, 10)]),
+    (0x855670, 0x617D2D244FCBC665, &[(0x855670, 10)]),
+    (0x855680, 0x3B4D8353AF2C511D, &[(0x855680, 10)]),
     (0x855E40, 0xFCDE63738B9E8F04, &[(0x855E40, 19)]),
     (0x855E60, 0x01A3DA2EF67F7B00, &[(0x855E60, 19)]),
     (0x855E80, 0x8B726061EBD1B05C, &[(0x855E80, 19)]),

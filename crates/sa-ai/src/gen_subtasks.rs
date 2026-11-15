@@ -159,7 +159,7 @@ orig! {
     fn c_61f3f0_t6(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) -> u32 = thiscall 0x61F3F0 => unported;
     /// `CTaskSimpleThrowControl::Constructor` (0x61F8B0), thiscall, 2 stack argument(s)
     fn c_61f8b0_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x61F8B0 => unported;
-    /// `thunk_FUN_004020ff` (0x620C30), thiscall, 1 stack argument(s)
+    /// `CTaskComplexReactToAttack::CreateSubTask` (0x620C30), thiscall, 1 stack argument(s)
     fn c_620c30_t1(this: u32, a0: u32) -> u32 = thiscall 0x620C30 => unported;
     /// `CTaskComplexKillPedOnFoot::Constructor` (0x620E30), thiscall, 6 stack argument(s)
     fn c_620e30_t6(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) -> u32 = thiscall 0x620E30 => unported;

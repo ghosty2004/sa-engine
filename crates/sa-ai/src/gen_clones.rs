@@ -30,7 +30,7 @@ orig! {
     fn c_48e4f0_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x48E4F0 => unported;
     /// `CTaskComplexSeekEntityRadiusAngleOffset::Constructor` (0x493730), thiscall, 8 stack argument(s)
     fn c_493730_t8(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32) -> u32 = thiscall 0x493730 => unported;
-    /// `thunk_FUN_0156e930` (0x4993D0), thiscall, 3 stack argument(s)
+    /// `CTaskComplexBeCop::Constructor` (0x4993D0), thiscall, 3 stack argument(s)
     fn c_4993d0_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x4993D0 => unported;
     /// `CEvent::Constructor` (0x4ABFC0), thiscall, 0 stack argument(s)
     fn c_4abfc0_t0(this: u32) -> u32 = thiscall 0x4ABFC0 => unported;
@@ -358,7 +358,7 @@ orig! {
     fn c_66f5c0_t5(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 = thiscall 0x66F5C0 => unported;
     /// `CTaskComplexFollowPointRoute::Constructor` (0x671510), thiscall, 8 stack argument(s)
     fn c_671510_t8(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32) -> u32 = thiscall 0x671510 => unported;
-    /// `FUN_00674930` (0x674930), thiscall, 5 stack argument(s)
+    /// `CTaskComplexFollowPatrolRoute::Constructor` (0x674930), thiscall, 5 stack argument(s)
     fn c_674930_t5(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 = thiscall 0x674930 => unported;
     /// `CTaskInteriorBeInShop::Constructor` (0x6753E0), thiscall, 1 stack argument(s)
     fn c_6753e0_t1(this: u32, a0: u32) -> u32 = thiscall 0x6753E0 => unported;

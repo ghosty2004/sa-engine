@@ -60,7 +60,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-4 | 4 | CAM, WORLD | 1e505863 | master | 4 | 0 | 0 | 0 | 0 | L2 3, L3-only 1 |
 | frontier2-5 | 6 | AI, RENDER | e28ad897 | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
 | frontier2-6 | 12 | AI, VEH | 38680f43 | master | 12 | 0 | 0 | 0 | 0 | L2 12 |
-| frontier2-7 | 21 | AI, UNK-game, WORLD | 0e036130 | master | 21 | 0 | 0 | 0 | 0 | L2 21 |
+| frontier2-7 | 21 | AI, WORLD | 0e036130 | master | 21 | 0 | 0 | 0 | 0 | L2 21 |
 | frontier2-8 | 14 | AI, ANIM, UNK-game, WEAPON | 0e036130 | master | 14 | 0 | 0 | 0 | 0 | L2 13, L3-only 1 |
 | frontier2-9 | 21 | AI | a06f78e1 | master | 21 | 0 | 0 | 0 | 0 | L2 21 |
 | frontier2-b1 | 32 | MATH, RENDER, RW | ebd33c14 | master | 32 | 0 | 0 | 0 | 0 | L1-pure 1, L2 31 |
@@ -71,11 +71,15 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-c2 | 35 | AI, MATH, SCRIPT, UNK-game, VEH | 49bdb6d2 | master | 35 | 0 | 0 | 0 | 0 | L2 35 |
 | frontier2-c3 | 11 | AI, SCRIPT, UNK-game | 49bdb6d2 | master | 11 | 0 | 0 | 0 | 0 | L2 11 |
 | frontier2-c4 | 10 | AUDIO, CALLED-ONLY, SCRIPT, UNK-game | d18327f1 | master | 10 | 0 | 0 | 0 | 0 | L2 9, split 1 |
+| frontier2-c5 | 22 | AI, ANIM, AUDIO, CALLED-ONLY, MATH, SCRIPT, UNK-game, WORLD | uncommitted | worktree-agent-afdd623e21965992f | 22 | 0 | 0 | 0 | 0 | L2 21, split 1 |
+| frontier2-c6 | 12 | AI, UNK-game, WORLD | uncommitted | worktree-agent-afdd623e21965992f | 12 | 0 | 0 | 0 | 0 | L2 12 |
 | gen2-anim-1 | 1 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
+| gen2-audio-1 | 1 | AUDIO | uncommitted | worktree-agent-afdd623e21965992f | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | gen2-coll-1 | 20 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 20 | 0 | L2 8, split 12 |
 | gen2-core-1 | 4 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
+| gen2-input-1 | 1 | INPUT | 327954b9 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | gen2-ped-1 | 3 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
-| gen2-phys-1 | 1 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 1 | 0 | split 1 |
+| gen2-phys-1 | 2 | PHYS, UNK-game | 327954b9 | master | 1 | 0 | 0 | 1 | 0 | L2 1, split 1 |
 | gen2-render-1 | 11 | RENDER, UNK-game | 327954b9 | master | 0 | 0 | 0 | 11 | 0 | L2 6, split 5 |
 | gen2-render-4 | 31 | RENDER, UNK-game | 327954b9 | master | 0 | 0 | 0 | 31 | 0 | L2 31 |
 | gen2-rw-1 | 10 | RW | 327954b9 | master | 0 | 0 | 0 | 10 | 0 | L2 9, split 1 |
@@ -87,7 +91,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | gen2-stream-1 | 5 | STREAM, UNK-game | 327954b9 | master | 0 | 0 | 0 | 5 | 0 | L2 5 |
 | gen2-veh-1 | 16 | UNK-game, VEH | 327954b9 | master | 0 | 0 | 0 | 16 | 0 | L2 15, split 1 |
 | gen2-weapon-1 | 1 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| gen2-world-1 | 24 | UNK-game, WORLD | 327954b9 | master | 0 | 0 | 0 | 24 | 0 | L2 17, split 7 |
+| gen2-world-1 | 25 | UNK-game, WORLD | 327954b9 | master | 1 | 0 | 0 | 24 | 0 | L2 17, split 8 |
 | harness5-1 | 1 | RENDER | 21fec30b | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | intro-ai-1 | 1 | AI | 0657df0a | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | intro-ai-2 | 28 | AI | 0657df0a | master | 0 | 0 | 1 | 27 | 0 | L2 28 |
@@ -2428,6 +2432,68 @@ SA_UNVERIFIED=frontier2-c4 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c4 $S
 | 0x66AA20 | `FUN_0066aa20` | written | L2 | heap-writes |
 | 0x678BD0 | `FUN_00678bd0` | written | L2 | heap-writes |
 
+## frontier2-c5
+
+22 hooks in sa-ai, sa-anim, sa-audio, sa-core, sa-rwcore, sa-script, sa-world; hazards: heap-writes (19), stack-residue (1), uninit-locals (1); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-c5 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-c5 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c5 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-c5
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x40C1C0 | `FUN_0040c1c0` | written | L2 | heap-writes |
+| 0x493280 | `CTheScripts::IsPointWithinSearchLight` | written | L2 | none |
+| 0x4993D0 | `CTaskComplexBeCop::Constructor` | written | L2 | heap-writes |
+| 0x4A9010 | `List_c::GetItemOffset` | written | L2 | none |
+| 0x4CC580 | `FUN_004cc580` | written | L2 | heap-writes |
+| 0x4EFD60 | `CAESoundManager::~CAESoundManager` | written | L2 | heap-writes |
+| 0x54EB70 | `CMatrixLinkList::~CMatrixLinkList` | written | L2 | heap-writes |
+| 0x5912E0 | `FurnitureManager_c::~FurnitureManager_c` | written | L2 | heap-writes |
+| 0x5A3090 | `ProcObjectMan_c::~ProcObjectMan_c` | written | L2 | heap-writes |
+| 0x618030 | `IKChainManager_c::~IKChainManager_c` | written | L2 | heap-writes |
+| 0x61AC90 | `FUN_0061ac90` | written | L2 | heap-writes |
+| 0x61AD10 | `FUN_0061ad10` | written | L2 | heap-writes |
+| 0x61ADF0 | `FUN_0061adf0` | written | L2 | heap-writes |
+| 0x61FD20 | `FUN_0061fd20` | written | L2 | heap-writes |
+| 0x6221D0 | `FUN_006221d0` | written | L2 | heap-writes,uninit-locals,stack-residue |
+| 0x66AD10 | `FUN_0066ad10` | written | L2 | heap-writes |
+| 0x66CA40 | `FUN_0066ca40` | written | L2 | heap-writes |
+| 0x674930 | `CTaskComplexFollowPatrolRoute::Constructor` | written | L2 | heap-writes |
+| 0x6E3F20 | `WaterCreatureManager_c::~WaterCreatureManager_c` | written | L2 | heap-writes |
+| 0x72ED80 | `CMemoryHeap::Malloc` | written | L2 | heap-writes |
+| 0x734DE0 | `RpGeometryReplaceOldMaterialWithNewMaterial` | written | L2 | heap-writes |
+| 0x856300 | `__dtor_AESmoothFadeThread` | written | split | none |
+
+## frontier2-c6
+
+12 hooks in sa-ai, sa-core, sa-render; hazards: heap-writes (5), uninit-locals (1); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-c6 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-c6 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c6 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-c6
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x41B810 | `CPatrolRoute::operator new` | written | L2 | heap-writes |
+| 0x4A5850 | `FxInfoAttractLine_c::GetValue` | written | L2 | heap-writes |
+| 0x59E640 | `BreakManager_c::~BreakManager_c` | written | L2 | heap-writes |
+| 0x5A70F0 | `COctTree::FillPalette` | written | L2 | heap-writes |
+| 0x5A7400 | `COctTree::~COctTree` | written | L2 | heap-writes |
+| 0x5F6460 | `CPedGroupDefaultTaskAllocatorFollowAnyMeans::~CPedGroupDefaultTaskAllocatorFollowAnyMeans` | written | L2 | none |
+| 0x5F6490 | `CPedGroupDefaultTaskAllocatorFollowLimited::~CPedGroupDefaultTaskAllocatorFollowLimited` | written | L2 | none |
+| 0x5F64C0 | `CPedGroupDefaultTaskAllocatorStandStill::~CPedGroupDefaultTaskAllocatorStandStill` | written | L2 | none |
+| 0x5F64F0 | `CPedGroupDefaultTaskAllocatorChat::~CPedGroupDefaultTaskAllocatorChat` | written | L2 | none |
+| 0x5F6520 | `CPedGroupDefaultTaskAllocatorRandom::~CPedGroupDefaultTaskAllocatorRandom` | written | L2 | none |
+| 0x5F6550 | `CPedGroupDefaultTaskAllocatorSitInLeaderCar::~CPedGroupDefaultTaskAllocatorSitInLeaderCar` | written | L2 | none |
+| 0x603570 | `FUN_00603570` | written | L2 | uninit-locals |
+
 ## gen2-anim-1
 
 1 hooks in sa-anim; hazards: none; recordings calling them: no coverage data.
@@ -2442,6 +2508,21 @@ SA_UNVERIFIED=gen2-anim-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-anim-1 $SA_
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x5B1A90 | `FUN_005b1a90` | L3-batch | L2 | none |
+
+## gen2-audio-1
+
+1 hooks in sa-audio; hazards: heap-writes (1); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh gen2-audio-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=gen2-audio-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-audio-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag gen2-audio-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x72A400 | `CAEWeatherAudioEntity::~CAEWeatherAudioEntity` | written | L2 | heap-writes |
 
 ## gen2-coll-1
 
@@ -2495,6 +2576,21 @@ SA_UNVERIFIED=gen2-core-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-core-1 $SA_
 | 0x5A7490 | `COctTree::~COctTree` | L3-batch | L2 | heap-writes |
 | 0x5A7710 | `COctTreeBase::InsertTree` | L3-batch | L2 | heap-writes |
 
+## gen2-input-1
+
+1 hooks in sa-input; hazards: none; recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh gen2-input-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=gen2-input-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-input-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag gen2-input-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x509840 | `CPad::IsLeftShockPressed` | written | L2 | none |
+
 ## gen2-ped-1
 
 3 hooks in sa-ped; hazards: heap-writes (2); recordings calling them: no coverage data.
@@ -2514,7 +2610,7 @@ SA_UNVERIFIED=gen2-ped-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-ped-1 $SA_RO
 
 ## gen2-phys-1
 
-1 hooks in sa-world; hazards: none; recordings calling them: no coverage data.
+2 hooks in sa-world; hazards: none; recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -2525,11 +2621,12 @@ SA_UNVERIFIED=gen2-phys-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-phys-1 $SA_
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
+| 0x6C2B80 | `cBuoyancy::~cBuoyancy` | written | L2 | none |
 | 0x856A20 | `__dtor_mod_Buoyancy` | L3-batch | split | none |
 
 ## gen2-render-1
 
-11 hooks in sa-render; hazards: heap-writes (8); recordings calling them: no coverage data.
+11 hooks in sa-render; hazards: heap-writes (6); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -2548,9 +2645,9 @@ SA_UNVERIFIED=gen2-render-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-render-1 
 | 0x7281E0 | `CSprite2d::Destructor` | L3-batch | L2 | heap-writes |
 | 0x8561D0 | `__dtor_g_fx` | L3-batch | split | none |
 | 0x8561E0 | `__dtor_g_fxMan` | L3-batch | split | none |
-| 0x856690 | `__dtor_gOctTreeBase` | L3-batch | split | heap-writes |
+| 0x856690 | `__dtor_gOctTreeBase` | L3-batch | split | none |
 | 0x856AD0 | `__dtor_g_realTimeShadowMan` | L3-batch | split | none |
-| 0x856C10 | `__dtor_CWeather__m_WeatherAudioEntity` | L3-batch | split | heap-writes |
+| 0x856C10 | `__dtor_CWeather__m_WeatherAudioEntity` | L3-batch | split | none |
 
 ## gen2-render-4
 
@@ -2927,7 +3024,7 @@ SA_UNVERIFIED=gen2-weapon-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-weapon-1 
 
 ## gen2-world-1
 
-24 hooks in sa-world; hazards: heap-writes (6); recordings calling them: no coverage data.
+25 hooks in sa-world; hazards: heap-writes (6); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -2960,6 +3057,7 @@ SA_UNVERIFIED=gen2-world-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-world-1 $S
 | 0x856490 | `__dtor_gMatrixList` | L3-batch | split | none |
 | 0x856640 | `__dtor_g_furnitureMan` | L3-batch | split | none |
 | 0x856650 | `__dtor_g_interiorMan` | L3-batch | split | none |
+| 0x856660 | `__dtor_g_breakMan` | written | split | none |
 | 0x856670 | `__dtor_g_procObjMan` | L3-batch | split | none |
 | 0x856A80 | `__dtor_g_waterCreatureMan` | L3-batch | split | none |
 

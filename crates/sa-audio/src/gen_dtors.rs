@@ -181,11 +181,6 @@ pub fn g_dtor_aeaudio_hardware_8562f0() {
     let _v1 = c_4d83a0_t0(0xB5_F8B8);
 }
 
-/// `__dtor_AESmoothFadeThread` (0x856300): dtor, cdecl, `ret`; 3 instruction(s) matched.
-#[hook(addr = 0x856300, conv = cdecl, name = "__dtor_AESmoothFadeThread", expect = "B9 D0 08 B6 00")]
-pub fn g_dtor_aesmooth_fade_thread_856300() {
-}
-
 /// `__dtor_84c4f0` (0x856310): dtor, cdecl, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
 #[sa_core::native(addr = 0x856310, conv = cdecl, name = "__dtor_84c4f0")]
@@ -241,7 +236,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_CAEWEAPON_AUDIO_ENTITY_DESTRUCTOR_507560,
     HOOK_G_CAEWATER_CANNON_AUDIO_ENTITY_CAEWATER_CANNON_AUDIO_ENTITY_728AB0,
     HOOK_G_DTOR_AEAUDIO_HARDWARE_8562F0,
-    HOOK_G_DTOR_AESMOOTH_FADE_THREAD_856300,
     HOOK_G_DTOR_M_S_RAIN_SOUND_L_856380,
     HOOK_G_DTOR_M_S_RAIN_SOUND_R_856390,
     HOOK_G_DTOR_AUDIO_ENGINE_8563A0,
@@ -263,7 +257,6 @@ pub const BODIES: &[Body] = &[
     (0x728AB0, 0x2A054839B42AC328, &[(0x728AB0, 86)]),
     (0x8562E0, 0xAF647E4C8602FFD2, &[(0x8562E0, 1)]),
     (0x8562F0, 0x8931AB929897A75F, &[(0x8562F0, 10)]),
-    (0x856300, 0x459AB5BE8167C03E, &[(0x4EE9E0, 1), (0x856300, 10)]),
     (0x856310, 0xAF647E4C8602FFD2, &[(0x856310, 1)]),
     (0x856320, 0xAF647E4C8602FFD2, &[(0x856320, 1)]),
     (0x856350, 0xAF647E4C8602FFD2, &[(0x856350, 1)]),

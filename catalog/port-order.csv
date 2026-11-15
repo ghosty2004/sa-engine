@@ -1314,7 +1314,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x4d7a70,CAEAudioChannel::SetOriginalFrequency,AUDIO,0,1312,1
 0x4d7aa0,CAEAudioChannel::SetReverbAndDepth,AUDIO,0,1313,1
 0x4d7b50,CAEAudioChannel::SetNotInRoom,AUDIO,0,1314,1
-0x4d7e30,,UNK-game,0,1315,1
+0x4d7e30,CAEAudioEntity::UpdateParameters,AUDIO,0,1315,1
 0x4d7f20,CAEAudioEnvironment::GetDistanceAttenuation,AUDIO,0,1316,1
 0x4d8010,CAEAudioEnvironment::GetReverbEnvironmentAndDepth,AUDIO,0,1317,1
 0x4d8490,CAEAudioHardware::Query3DSoundEffects,AUDIO,0,1318,1
@@ -2281,7 +2281,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x59d170,BreakObject_c::BreakObject_c,WORLD,0,2279,1
 0x59d180,,UNK-game,0,2280,1
 0x59e620,,UNK-game,0,2281,1
-0x59e640,,UNK-game,0,2282,1
+0x59e640,BreakManager_c::~BreakManager_c,WORLD,0,2282,1
 0x59e650,BreakManager_c::Init,WORLD,0,2283,1
 0x59e660,BreakManager_c::Exit,WORLD,0,2284,1
 0x59f050,,WORLD,0,2285,1
@@ -2650,22 +2650,22 @@ address,name,subsystem,level,scc_id,scc_size
 0x5f6400,CEventPlayerCommandToGroupAttack::GetEventPriority,AI,0,2648,1
 0x5f6410,vt_86c6d0::GetEventPriority,AI,0,2649,1
 0x5f6450,,UNK-game,0,2650,1
-0x5f6460,,UNK-game,0,2651,1
+0x5f6460,CPedGroupDefaultTaskAllocatorFollowAnyMeans::~CPedGroupDefaultTaskAllocatorFollowAnyMeans,AI,0,2651,1
 0x5f6470,CPedGroupDefaultTaskAllocatorFollowAnyMeans::GetType,AI,0,2652,1
 0x5f6480,,UNK-game,0,2653,1
-0x5f6490,,UNK-game,0,2654,1
+0x5f6490,CPedGroupDefaultTaskAllocatorFollowLimited::~CPedGroupDefaultTaskAllocatorFollowLimited,AI,0,2654,1
 0x5f64a0,CPedGroupDefaultTaskAllocatorFollowLimited::GetType,AI,0,2655,1
 0x5f64b0,,UNK-game,0,2656,1
-0x5f64c0,,UNK-game,0,2657,1
+0x5f64c0,CPedGroupDefaultTaskAllocatorStandStill::~CPedGroupDefaultTaskAllocatorStandStill,AI,0,2657,1
 0x5f64d0,CPedGroupDefaultTaskAllocatorStandStill::GetType,AI,0,2658,1
 0x5f64e0,,UNK-game,0,2659,1
-0x5f64f0,,UNK-game,0,2660,1
+0x5f64f0,CPedGroupDefaultTaskAllocatorChat::~CPedGroupDefaultTaskAllocatorChat,AI,0,2660,1
 0x5f6500,CPedGroupDefaultTaskAllocatorChat::GetType,AI,0,2661,1
 0x5f6510,,UNK-game,0,2662,1
-0x5f6520,,UNK-game,0,2663,1
+0x5f6520,CPedGroupDefaultTaskAllocatorRandom::~CPedGroupDefaultTaskAllocatorRandom,AI,0,2663,1
 0x5f6530,CPedGroupDefaultTaskAllocatorRandom::GetType,AI,0,2664,1
 0x5f6540,,UNK-game,0,2665,1
-0x5f6550,,UNK-game,0,2666,1
+0x5f6550,CPedGroupDefaultTaskAllocatorSitInLeaderCar::~CPedGroupDefaultTaskAllocatorSitInLeaderCar,AI,0,2666,1
 0x5f6560,CPedGroupDefaultTaskAllocatorSitInLeaderCar::GetType,AI,0,2667,1
 0x5f6650,CTaskSimpleChat::IsInterruptable,AI,0,2668,1
 0x5f66d0,CTaskComplexBeStill::GetTaskType,AI,0,2669,1
@@ -6711,7 +6711,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x418100,CCollision::ClosestPointsOnPoly,COLL,1,6707,1
 0x418150,CCollision::ClosestPointOnPoly,COLL,1,6708,1
 0x41b7c0,CPointRoute::operator new,UNK-game,1,6709,1
-0x41b810,,UNK-game,1,6710,1
+0x41b810,CPatrolRoute::operator new,UNK-game,1,6710,1
 0x41b860,CNodeRoute::operator new,CORE,1,6711,1
 0x41c9d0,CCarAI::FindPoliceCarMissionForWantedLevel,POP,1,6712,1
 0x41ca50,CCarAI::FindPoliceBoatMissionForWantedLevel,POP,1,6713,1
@@ -9704,7 +9704,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x5a4190,CClothesBuilder::LoadCdDirectory,RW,2,9698,1
 0x5a44c0,CClothesBuilder::PreprocessClothesDesc,RW,2,9699,1
 0x5a5730,CClothesBuilder::CopyTexture,RW,2,9700,1
-0x5a7400,,UNK-game,2,9701,1
+0x5a7400,COctTree::~COctTree,UNK-game,2,9701,1
 0x5a7490,COctTree::~COctTree,UNK-game,2,9702,1
 0x5a74f0,COctTree::RemoveChildren,UNK-game,2,9703,1
 0x5a7b30,CClothes::LoadClothesFile,PED,2,9704,1
@@ -11284,7 +11284,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x5a3140,ProcObjectMan_c::LoadDataFile,RENDER,3,11278,1
 0x5a3270,ProcSurfaceInfo_c::Exit,RENDER,3,11279,1
 0x5a3f70,ProcObjectMan_c::ProcessTriangleRemoved,RENDER,3,11280,1
-0x5a4140,,UNK-game,3,11281,1
+0x5a4140,COctTreeBase::~COctTreeBase,UNK-game,3,11281,1
 0x5a4150,Common::WriteRaster,CORE,3,11282,1
 0x5a4380,CClothesBuilder::nullptr,RW,3,11283,1
 0x5a44a0,CClothesBuilder::nullptr,RW,3,11284,1
@@ -11460,7 +11460,7 @@ address,name,subsystem,level,scc_id,scc_size
 0x61e040,CTaskSimpleUseGun::ControlGun,AI,3,11454,1
 0x61e190,CTaskSimpleUseGun::ClearAnim,AI,3,11455,1
 0x61f9f0,CTaskSimpleThrowControl::ProcessPed,AI,3,11456,1
-0x620c30,,UNK-game,3,11457,1
+0x620c30,CTaskComplexReactToAttack::CreateSubTask,AI,3,11457,1
 0x620f70,CTaskComplexKillPedOnFootStealth::Constructor,AI,3,11458,1
 0x620ff0,CTaskComplexKillPedOnFootStealth::Destructor,AI,3,11459,1
 0x622320,CTaskComplexKillPedGroupOnFoot::CreateSubTask,AI,3,11460,1

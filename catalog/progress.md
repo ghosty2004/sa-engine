@@ -6,11 +6,11 @@ Functions: 22196 (15512 non-excluded, 6684 excluded). States per docs/PLAN.md se
 
 | Subsystem | unknown | specified | implemented | L1 | L2 | L3 | excluded | total | ≥L2 % |
 |---|---|---|---|---|---|---|---|---|---|
-| AI | 8 | 398 | 2683 | 0 | 1011 | 0 | 0 | 4100 | 24.7 |
-| UNK-game | 606 | 448 | 463 | 3 | 1328 | 0 | 0 | 2848 | 46.6 |
+| AI | 8 | 405 | 2683 | 0 | 1011 | 0 | 0 | 4107 | 24.6 |
+| UNK-game | 594 | 451 | 463 | 3 | 1328 | 0 | 0 | 2839 | 46.8 |
 | RW | 116 | 286 | 960 | 19 | 423 | 1 | 0 | 1805 | 23.5 |
-| WORLD | 12 | 179 | 448 | 22 | 259 | 0 | 0 | 920 | 28.2 |
-| AUDIO | 5 | 91 | 309 | 0 | 442 | 0 | 0 | 847 | 52.2 |
+| WORLD | 12 | 180 | 448 | 22 | 259 | 0 | 0 | 921 | 28.1 |
+| AUDIO | 5 | 92 | 309 | 0 | 442 | 0 | 0 | 848 | 52.1 |
 | RENDER | 3 | 159 | 381 | 15 | 274 | 1 | 0 | 833 | 33.0 |
 | VEH | 1 | 111 | 412 | 0 | 190 | 1 | 0 | 715 | 26.7 |
 | STREAM | 0 | 3 | 209 | 70 | 271 | 0 | 0 | 553 | 49.0 |
@@ -36,9 +36,9 @@ Functions: 22196 (15512 non-excluded, 6684 excluded). States per docs/PLAN.md se
 | X-libpng-1.0.12+zlib-1.1.3 | 0 | 0 | 0 | 0 | 0 | 0 | 197 | 197 | - |
 | X-quicktime-qtml | 0 | 0 | 0 | 0 | 0 | 0 | 39 | 39 | - |
 | X-linker-thunk | 0 | 0 | 0 | 0 | 0 | 0 | 26 | 26 | - |
-| **total** | 770 | 1827 | 7077 | 475 | 5324 | 39 | 6684 | 22196 | 34.57 |
+| **total** | 758 | 1839 | 7077 | 475 | 5324 | 39 | 6684 | 22196 | 34.57 |
 
-`specified` by source: REA 1068, gta-reversed 759
+`specified` by source: REA 1080, gta-reversed 759
 
 ## Functions above `specified` (12915)
 

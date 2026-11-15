@@ -318,6 +318,42 @@ pub fn start_new_script_indexed(ip: u32, index: u32) -> GPtr<u8> {
 
 use crate::bindings::running_script_init;
 
+/// The streamed-script release (0x40C1C0, cdecl; unnamed, script command 0910 REMOVE_STREAMED_SCRIPT's callee):
+/// `CStreaming::RemoveModel(index + 0x6676)` (the streamed scripts' model ids start at 26230). The original adds into
+/// its own argument slot and tail-jumps (FRONTIER-2 turn 2).
+#[hook(addr = 0x40C1C0, conv = cdecl, name = "FUN_0040c1c0", expect = "8B 44 24 04 05 76 66 00 00",
+       unverified = "frontier2-c5", route = "L2", hazards = "heap-writes")]
+pub fn remove_streamed_script(index: i32) {
+    sa_core::bindings::streaming_remove_model(index.wrapping_add(0x6676));
+}
+
+/// `CTheScripts::IsPointWithinSearchLight(const CVector& point, int32 index)` (0x493280, cdecl, AL; FRONTIER-2 turn 2).
+/// The search light `index` (0x7C each from 0xA94DC0: position +0, two direction vectors +0xC and +0x18): local copies
+/// of both directions are normalised (`CVector::NormaliseAndMag`; the first magnitude kept as f32, the second on the x87
+/// stack); with `d = point - position` (x87), `a = (d.z*A.z + d.y*A.y + d.x*A.x) / |A|` (stored f32) and `b = (d.z*B.z +
+/// d.y*B.y + d.x*B.x) / |B|`; AL = 1 when `b*b + a*a <= 1.0` (`test ah, 0x41` / `jnp`), else 0 (NaN → 0).
+#[hook(addr = 0x493280, conv = cdecl, name = "CTheScripts::IsPointWithinSearchLight", expect = "83 EC 18 53 56",
+       unverified = "frontier2-c5", route = "L2", hazards = "none")]
+pub fn is_point_within_search_light_port(point: GPtr<u8>, index: i32) -> u8 {
+    let sl = GPtr::<u8>::from_addr(0xA94DC0).byte_add(index.wrapping_mul(0x7C) as isize);
+    let mut a: [u32; 3] = core::array::from_fn(|k| at::<u32>(sl, 0xC + 4 * k as isize).read());
+    let mut b: [u32; 3] = core::array::from_fn(|k| at::<u32>(sl, 0x18 + 4 * k as isize).read());
+    let ap: GPtr<u8> = GPtr::from_raw(&raw mut a).cast();
+    let bp: GPtr<u8> = GPtr::from_raw(&raw mut b).cast();
+    let mag_a = vector_normalise_and_mag(ap).to_f32();
+    let mag_b = vector_normalise_and_mag(bp);
+    let f = |p: GPtr<u8>, k: isize| at::<f32>(p, 4 * k).read();
+    let d: [X87; 3] = core::array::from_fn(|k| X87::from_f32(f(point, k as isize)).fsub_m(f(sl, k as isize)));
+    let dot = |v: GPtr<u8>| X87::from_f32(f(v, 2)).fmul(d[2]).fadd(X87::from_f32(f(v, 1)).fmul(d[1])).fadd(X87::from_f32(f(v, 0)).fmul(d[0]));
+    let pa = dot(ap).fdiv_m(mag_a).to_f32();
+    let pb = dot(bp).fdiv(mag_b);
+    let r = pb.fmul(pb).fadd(X87::from_f32(pa).fmul_m(pa));
+    u8::from(!r.fcom(X87::from_f32(1.0)).test_parity(0x41))
+}
+
+use sa_core::bindings::vector_normalise_and_mag;
+use sa_math::x87::X87;
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_IS_ENTITY_WITHIN_ANY_SEARCH_LIGHT,
@@ -333,4 +369,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_THIS_IS_A_VALID_RANDOM_PED,
     HOOK_SWITCH_ALL_OBJECT_BRAINS_WITH_THIS_ID,
     HOOK_SCRIPT_ATTRACTOR_ADD_PED_TYPE,
+    HOOK_REMOVE_STREAMED_SCRIPT,
+    HOOK_IS_POINT_WITHIN_SEARCH_LIGHT_PORT,
 ];

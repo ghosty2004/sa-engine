@@ -186,6 +186,18 @@ orig! {
     fn c_5eebc0_t0(this: u32) -> u32 = thiscall 0x5EEBC0 => unported;
     /// `CEventPlayerCommandToGroupAttack::Destructor` (0x5F63F0), thiscall, 0 stack argument(s)
     fn c_5f63f0_t0(this: u32) -> u32 = thiscall 0x5F63F0 => unported;
+    /// `CPedGroupDefaultTaskAllocatorFollowAnyMeans::~CPedGroupDefaultTaskAllocatorFollowAnyMeans` (0x5F6460), thiscall, 0 stack argument(s)
+    fn c_5f6460_t0(this: u32) -> u32 = thiscall 0x5F6460 => unported;
+    /// `CPedGroupDefaultTaskAllocatorFollowLimited::~CPedGroupDefaultTaskAllocatorFollowLimited` (0x5F6490), thiscall, 0 stack argument(s)
+    fn c_5f6490_t0(this: u32) -> u32 = thiscall 0x5F6490 => unported;
+    /// `CPedGroupDefaultTaskAllocatorStandStill::~CPedGroupDefaultTaskAllocatorStandStill` (0x5F64C0), thiscall, 0 stack argument(s)
+    fn c_5f64c0_t0(this: u32) -> u32 = thiscall 0x5F64C0 => unported;
+    /// `CPedGroupDefaultTaskAllocatorChat::~CPedGroupDefaultTaskAllocatorChat` (0x5F64F0), thiscall, 0 stack argument(s)
+    fn c_5f64f0_t0(this: u32) -> u32 = thiscall 0x5F64F0 => unported;
+    /// `CPedGroupDefaultTaskAllocatorRandom::~CPedGroupDefaultTaskAllocatorRandom` (0x5F6520), thiscall, 0 stack argument(s)
+    fn c_5f6520_t0(this: u32) -> u32 = thiscall 0x5F6520 => unported;
+    /// `CPedGroupDefaultTaskAllocatorSitInLeaderCar::~CPedGroupDefaultTaskAllocatorSitInLeaderCar` (0x5F6550), thiscall, 0 stack argument(s)
+    fn c_5f6550_t0(this: u32) -> u32 = thiscall 0x5F6550 => unported;
     /// `CTaskComplexBeStill::~CTaskComplexBeStill` (0x5F6700), thiscall, 0 stack argument(s)
     fn c_5f6700_t0(this: u32) -> u32 = thiscall 0x5F6700 => unported;
     /// `CTaskSimpleWaitUntilLeaderAreaCodesMatch::Destructor` (0x5F67E0), thiscall, 0 stack argument(s)
@@ -9254,41 +9266,41 @@ pub fn g_dtor_g_c09870_8567c0() -> u32 {
     }
 }
 
-/// `__dtor_CPedGroupDefaultTaskAllocators__ms_FollowAnyMeansAllocator` (0x856800): dtor, cdecl, `ret`; 4 instruction(s) matched.
+/// `__dtor_CPedGroupDefaultTaskAllocators__ms_FollowAnyMeansAllocator` (0x856800): dtor, cdecl, `ret`; 2 instruction(s) matched.
 #[hook(addr = 0x856800, conv = cdecl, name = "__dtor_CPedGroupDefaultTaskAllocators__ms_FollowAnyMeansAllocator", expect = "B9 08 99 C0 00")]
 pub fn g_dtor_cped_group_default_task_allocators_ms_follow_any_means_allocator_856800() {
-    wr::<u32>(p(0xC0_9908), 0, 0x86_C754);
+    let _v1 = c_5f6460_t0(0xC0_9908);
 }
 
-/// `__dtor_CPedGroupDefaultTaskAllocators__ms_FollowLimitedAllocator` (0x856810): dtor, cdecl, `ret`; 4 instruction(s) matched.
+/// `__dtor_CPedGroupDefaultTaskAllocators__ms_FollowLimitedAllocator` (0x856810): dtor, cdecl, `ret`; 2 instruction(s) matched.
 #[hook(addr = 0x856810, conv = cdecl, name = "__dtor_CPedGroupDefaultTaskAllocators__ms_FollowLimitedAllocator", expect = "B9 0C 99 C0 00")]
 pub fn g_dtor_cped_group_default_task_allocators_ms_follow_limited_allocator_856810() {
-    wr::<u32>(p(0xC0_990C), 0, 0x86_C754);
+    let _v1 = c_5f6490_t0(0xC0_990C);
 }
 
-/// `__dtor_CPedGroupDefaultTaskAllocators__ms_StandStillAllocator` (0x856820): dtor, cdecl, `ret`; 4 instruction(s) matched.
+/// `__dtor_CPedGroupDefaultTaskAllocators__ms_StandStillAllocator` (0x856820): dtor, cdecl, `ret`; 2 instruction(s) matched.
 #[hook(addr = 0x856820, conv = cdecl, name = "__dtor_CPedGroupDefaultTaskAllocators__ms_StandStillAllocator", expect = "B9 10 99 C0 00")]
 pub fn g_dtor_cped_group_default_task_allocators_ms_stand_still_allocator_856820() {
-    wr::<u32>(p(0xC0_9910), 0, 0x86_C754);
+    let _v1 = c_5f64c0_t0(0xC0_9910);
 }
 
-/// `__dtor_CPedGroupDefaultTaskAllocators__ms_ChatAllocator` (0x856830): dtor, cdecl, `ret`; 4 instruction(s) matched.
+/// `__dtor_CPedGroupDefaultTaskAllocators__ms_ChatAllocator` (0x856830): dtor, cdecl, `ret`; 2 instruction(s) matched.
 #[hook(addr = 0x856830, conv = cdecl, name = "__dtor_CPedGroupDefaultTaskAllocators__ms_ChatAllocator", expect = "B9 14 99 C0 00")]
 pub fn g_dtor_cped_group_default_task_allocators_ms_chat_allocator_856830() {
-    wr::<u32>(p(0xC0_9914), 0, 0x86_C754);
+    let _v1 = c_5f64f0_t0(0xC0_9914);
 }
 
-/// `__dtor_CPedGroupDefaultTaskAllocators__ms_RandomAllocator` (0x856840): dtor, cdecl, `ret`; 4 instruction(s) matched.
+/// `__dtor_CPedGroupDefaultTaskAllocators__ms_RandomAllocator` (0x856840): dtor, cdecl, `ret`; 2 instruction(s) matched.
 /// Not hookable: protection code reads the patched bytes (INF-20, `catalog/code-data-reads.csv` reader 0x67dd06).
 #[sa_core::native(addr = 0x856840, conv = cdecl, name = "__dtor_CPedGroupDefaultTaskAllocators__ms_RandomAllocator")]
 pub fn g_dtor_cped_group_default_task_allocators_ms_random_allocator_856840() {
-    wr::<u32>(p(0xC0_9918), 0, 0x86_C754);
+    let _v1 = c_5f6520_t0(0xC0_9918);
 }
 
-/// `__dtor_CPedGroupDefaultTaskAllocators__ms_SitInLeaderCarAllocator` (0x856850): dtor, cdecl, `ret`; 4 instruction(s) matched.
+/// `__dtor_CPedGroupDefaultTaskAllocators__ms_SitInLeaderCarAllocator` (0x856850): dtor, cdecl, `ret`; 2 instruction(s) matched.
 #[hook(addr = 0x856850, conv = cdecl, name = "__dtor_CPedGroupDefaultTaskAllocators__ms_SitInLeaderCarAllocator", expect = "B9 1C 99 C0 00")]
 pub fn g_dtor_cped_group_default_task_allocators_ms_sit_in_leader_car_allocator_856850() {
-    wr::<u32>(p(0xC0_991C), 0, 0x86_C754);
+    let _v1 = c_5f6550_t0(0xC0_991C);
 }
 
 /// `__dtor_col1` (0x8568F0): dtor, cdecl, `ret`; 2 instruction(s) matched.
@@ -10398,12 +10410,12 @@ pub const BODIES: &[Body] = &[
     (0x69DB00, 0xDAC48B6D46091F19, &[(0x69DB00, 59)]),
     (0x69DB40, 0x9367C6D8E3F52AD9, &[(0x69DB40, 11)]),
     (0x8567C0, 0x5D75CBEC56332547, &[(0x8567C0, 49)]),
-    (0x856800, 0xCB5A9F4D9500D38A, &[(0x5F6460, 7), (0x856800, 10)]),
-    (0x856810, 0x2C12FBF0CCA88B46, &[(0x5F6490, 7), (0x856810, 10)]),
-    (0x856820, 0x87C034F4B7FCAB52, &[(0x5F64C0, 7), (0x856820, 10)]),
-    (0x856830, 0xEEF01FDD8983A92E, &[(0x5F64F0, 7), (0x856830, 10)]),
-    (0x856840, 0x143F51B5D18284DA, &[(0x5F6520, 7), (0x856840, 10)]),
-    (0x856850, 0x4C7B1F35AA0DAD16, &[(0x5F6550, 7), (0x856850, 10)]),
+    (0x856800, 0xBB15EAC63331157C, &[(0x856800, 10)]),
+    (0x856810, 0x3077663768D460D8, &[(0x856810, 10)]),
+    (0x856820, 0x43E18B1052410E24, &[(0x856820, 10)]),
+    (0x856830, 0x109E0B5C7732FD00, &[(0x856830, 10)]),
+    (0x856840, 0x26A181BFDDE238EC, &[(0x856840, 10)]),
+    (0x856850, 0x09FC4BFD79FFBC48, &[(0x856850, 10)]),
     (0x8568F0, 0x8673333E014CCC0E, &[(0x8568F0, 10)]),
     (0x856960, 0x96B99B6CA07FEDE2, &[(0x856960, 10)]),
     (0x856970, 0x7B778C5DA00B69A2, &[(0x856970, 10)]),

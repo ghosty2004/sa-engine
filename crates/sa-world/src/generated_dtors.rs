@@ -23,7 +23,7 @@ orig! {
     fn c_4a8dc0_t0(this: u32) -> u32 = thiscall 0x4A8DC0 => unported;
     /// `FUN_004a8de0` (0x4A8DE0), thiscall, 0 stack argument(s)
     fn c_4a8de0_t0(this: u32) -> u32 = thiscall 0x4A8DE0 => unported;
-    /// `FUN_0054eb70` (0x54EB70), thiscall, 0 stack argument(s)
+    /// `CMatrixLinkList::~CMatrixLinkList` (0x54EB70), thiscall, 0 stack argument(s)
     fn c_54eb70_t0(this: u32) -> u32 = thiscall 0x54EB70 => unported;
     /// `FurnitureManager_c::~FurnitureManager_c` (0x5912E0), thiscall, 0 stack argument(s)
     fn c_5912e0_t0(this: u32) -> u32 = thiscall 0x5912E0 => unported;
@@ -31,9 +31,13 @@ orig! {
     fn c_598580_t0(this: u32) -> u32 = thiscall 0x598580 => unported;
     /// `CMatrix` (0x59ACD0), thiscall, 0 stack argument(s)
     fn c_59acd0_t0(this: u32) -> u32 = thiscall 0x59ACD0 => unported;
+    /// `BreakManager_c::~BreakManager_c` (0x59E640), thiscall, 0 stack argument(s)
+    fn c_59e640_t0(this: u32) -> u32 = thiscall 0x59E640 => unported;
     /// `ProcObjectMan_c::~ProcObjectMan_c` (0x5A3090), thiscall, 0 stack argument(s)
     fn c_5a3090_t0(this: u32) -> u32 = thiscall 0x5A3090 => unported;
-    /// `FUN_006e3f20` (0x6E3F20), thiscall, 0 stack argument(s)
+    /// `cBuoyancy::~cBuoyancy` (0x6C2B80), thiscall, 0 stack argument(s)
+    fn c_6c2b80_t0(this: u32) -> u32 = thiscall 0x6C2B80 => unported;
+    /// `WaterCreatureManager_c::~WaterCreatureManager_c` (0x6E3F20), thiscall, 0 stack argument(s)
     fn c_6e3f20_t0(this: u32) -> u32 = thiscall 0x6E3F20 => unported;
 }
 
@@ -106,6 +110,12 @@ pub fn g_furniture_sub_group_c_furniture_sub_group_c_590e70(this: u32) {
 pub fn g_interior_c_destructor_591360(this: u32) {
     c_4a8de0_t0(this.wrapping_add(0x5C));
     let _v2 = c_4a8dc0_t0(this);
+}
+
+/// `cBuoyancy::~cBuoyancy` (0x6C2B80, PHYS): dtor, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x6C2B80, conv = thiscall, name = "cBuoyancy::~cBuoyancy", expect = "83 C1 0C E9 48 81 ED FF", unverified = "gen2-phys-1", route = "L2", hazards = "none")]
+pub fn g_c_buoyancy_c_buoyancy_6c2b80(this: u32) {
+    let _v1 = c_59acd0_t0(this.wrapping_add(0xC));
 }
 
 /// `__dtor_CTempColModels__ms_colModelBBox` (0x856030, COLL): dtor, cdecl, `ret`; 2 instruction(s) matched.
@@ -210,16 +220,22 @@ pub fn g_dtor_g_interior_man_856650() {
     let _v1 = c_598580_t0(0xBA_F670);
 }
 
+/// `__dtor_g_breakMan` (0x856660, WORLD): dtor, cdecl, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x856660, conv = cdecl, name = "__dtor_g_breakMan", expect = "B9 40 42 BB 00", unverified = "gen2-world-1", route = "split", hazards = "none")]
+pub fn g_dtor_g_break_man_856660() {
+    let _v1 = c_59e640_t0(0xBB_4240);
+}
+
 /// `__dtor_g_procObjMan` (0x856670, WORLD): dtor, cdecl, `ret`; 2 instruction(s) matched.
 #[hook(addr = 0x856670, conv = cdecl, name = "__dtor_g_procObjMan", expect = "B9 B0 7C BB 00", unverified = "gen2-world-1", route = "split", hazards = "none")]
 pub fn g_dtor_g_proc_obj_man_856670() {
     let _v1 = c_5a3090_t0(0xBB_7CB0);
 }
 
-/// `__dtor_mod_Buoyancy` (0x856A20, PHYS): dtor, cdecl, `ret`; 4 instruction(s) matched.
+/// `__dtor_mod_Buoyancy` (0x856A20, PHYS): dtor, cdecl, `ret`; 2 instruction(s) matched.
 #[hook(addr = 0x856A20, conv = cdecl, name = "__dtor_mod_Buoyancy", expect = "B9 90 C8 C1 00", unverified = "gen2-phys-1", route = "split", hazards = "none")]
 pub fn g_dtor_mod_buoyancy_856a20() {
-    let _v1 = c_59acd0_t0(0xC1_C89C);
+    let _v1 = c_6c2b80_t0(0xC1_C890);
 }
 
 /// `__dtor_g_waterCreatureMan` (0x856A80, WORLD): dtor, cdecl, `ret`; 2 instruction(s) matched.
@@ -244,6 +260,7 @@ pub const BODIES: &[Body] = &[
     (0x45CD10, 0xB19D60E95C836E09, &[(0x45CD10, 5), (0x156A610, 159)]),
     (0x590E70, 0xB8A75F6B50F8C65A, &[(0x590E70, 76)]),
     (0x591360, 0x9C277C4416D17171, &[(0x591360, 76)]),
+    (0x6C2B80, 0x663BFEC030CD174D, &[(0x6C2B80, 8)]),
     (0x856030, 0x5C05740AA07BF909, &[(0x856030, 10)]),
     (0x856060, 0x1451D6AF8A27BDA2, &[(0x856060, 10)]),
     (0x856070, 0x516FCAE6227BBAA5, &[(0x856070, 10)]),
@@ -261,8 +278,9 @@ pub const BODIES: &[Body] = &[
     (0x856490, 0x50F8A911CCE16D8E, &[(0x856490, 10)]),
     (0x856640, 0x128A6342DCB82232, &[(0x856640, 10)]),
     (0x856650, 0xD95D10C647BBED1D, &[(0x856650, 10)]),
+    (0x856660, 0x5C33A7AEB6986B62, &[(0x856660, 10)]),
     (0x856670, 0xEF996DA366021E7B, &[(0x856670, 10)]),
-    (0x856A20, 0xE327787BF471D57A, &[(0x6C2B80, 8), (0x856A20, 10)]),
+    (0x856A20, 0x49BD57D54FB97C12, &[(0x856A20, 10)]),
     (0x856A80, 0x610CB2E4BEAA538C, &[(0x856A80, 10)]),
     (0x856B00, 0xAF647E4C8602FFD2, &[(0x856B00, 1)]),
     (0x856B10, 0xAF647E4C8602FFD2, &[(0x856B10, 1)]),

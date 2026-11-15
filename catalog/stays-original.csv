@@ -12,3 +12,8 @@ class:CAEVorbisDecoder,decoding: Ogg Vorbis decoder stays original (PORT-AUDIO s
 class:CAEDataStream,decoding: the decoders' IStream data source (its IStream stubs included) stays original (PORT-AUDIO scope)
 class:vt_866db0,"OS networking: a Winsock client (socket / connect / send / closesocket through WS2_32 ordinals; the vtable-class slot names are guesses, not its methods), not a game port"
 0x4F11E0,"sound output: CAEStreamThread's destructor (DeleteCriticalSection(this + 0x38); tail of CAEAudioHardware::Destructor 0x4D83A0)"
+0x4F3D50,"C++ runtime: std::logic_error::what (vtables 0x887D5C / 0x887D68), reached only through a thrown std::length_error, which phase B cannot raise (the vector _Xlen natives stop the game there)"
+0x4F3D60,"C++ runtime: std::logic_error's scalar deleting destructor (vtable 0x887D5C), reached only through a thrown exception (see 0x4F3D50)"
+0x4F4110,"C++ runtime: std::length_error's scalar deleting destructor (vtable 0x887D68), reached only through a thrown exception (see 0x4F3D50)"
+0x508F90,"development tooling: the bug-report writer of vtable 0x862E70 (fields method / user_name / target_name / target_ip / ScreenShot / bugs, wprintf-formatted), not game logic"
+0x509170,"development tooling: the scalar deleting destructor of the bug-report class (vtable 0x862E70, see 0x508F90)"

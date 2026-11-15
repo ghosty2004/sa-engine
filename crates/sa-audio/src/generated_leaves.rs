@@ -12,11 +12,6 @@
 #[allow(unused_imports)]
 use super::*;
 
-/// `(missed by ghidra: data-vtable)` (0x4D7E30, AUDIO): empty, thiscall, `ret 8`; 1 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_missed_by_ghidra_data_vtable_4d7e30(_this: u32, _a0: u32, _a1: u32) {}
-
 /// `(missed by ghidra: data-code-immediate)` (0x5B9330, AUDIO): getter, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
 #[allow(dead_code)]
@@ -26,18 +21,4 @@ pub fn g_missed_by_ghidra_data_code_immediate_5b9330(this: u32) -> u32 {
 
 /// (address, 64-bit FNV-1a of the matched bytes, the matched spans `(va, len)`: the stub, every
 /// executed instruction, switch tables): the bodies this file was generated from.
-pub const BODIES: &[Body] = &[
-    (0x4D7E30, 0x69D7781C23F54695, &[(0x4D7E30, 3)]),
-    (0x5B9330, 0x7B290C1B0B7F4D96, &[(0x5B9330, 3)]),
-];
-
-#[cfg(all(test, not(sa_phase_a)))]
-mod tests {
-    use super::*;
-
-    /// Pattern `empty`: every port returns the constant the bytes load (no memory access).
-    #[test]
-    fn pattern_empty() {
-        g_missed_by_ghidra_data_vtable_4d7e30(0, 0, 0);
-    }
-}
+pub const BODIES: &[Body] = &[(0x5B9330, 0x7B290C1B0B7F4D96, &[(0x5B9330, 3)])];

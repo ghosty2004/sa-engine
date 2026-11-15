@@ -34,6 +34,12 @@ pub fn g_fun_004d7990_4d7990(this: u32) -> u32 {
     (v1 & 1)
 }
 
+/// `CAEAudioEntity::UpdateParameters` (0x4D7E30): empty, thiscall, `ret 8`; 1 instruction(s) matched.
+/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4D7E30, conv = thiscall, name = "CAEAudioEntity::UpdateParameters")]
+pub fn g_caeaudio_entity_update_parameters_4d7e30(_this: u32, _a0: u32, _a1: u32) {
+}
+
 /// `CAEAudioHardware::GetDVDDriveLetter` (0x4D95D0): leaf, thiscall, `ret`; 4 instruction(s) matched.
 #[hook(addr = 0x4D95D0, conv = thiscall, name = "CAEAudioHardware::GetDVDDriveLetter", expect = "8B 81 9C 0D 00 00")]
 pub fn g_caeaudio_hardware_get_dvddrive_letter_4d95d0(this: u32) -> u32 {
@@ -256,6 +262,7 @@ pub const HOOKS: &[HookReg] = &[
 pub const BODIES: &[Body] = &[
     (0x4D6D50, 0x8F8C54DFFA461B3E, &[(0x4D6D50, 10)]),
     (0x4D7990, 0xE702D3D2576DAD84, &[(0x4D7990, 7)]),
+    (0x4D7E30, 0x69D7781C23F54695, &[(0x4D7E30, 3)]),
     (0x4D95D0, 0xFE535DF4ABD34513, &[(0x4D95D0, 12)]),
     (0x4DBE70, 0xC20DCDD114219EA8, &[(0x4DBE70, 8)]),
     (0x4E1170, 0x69D7781C23F54695, &[(0x4E1170, 3)]),
@@ -307,6 +314,7 @@ mod tests {
     /// Pattern `empty`: every port returns the constant the bytes load (no memory access).
     #[test]
     fn pattern_empty() {
+        g_caeaudio_entity_update_parameters_4d7e30(0, 0, 0);
         g_caeped_audio_entity_play_wind_rush_4e1170(0, 0, 0);
         g_caepedless_speech_audio_entity_add_script_say_event_4e6080(0, 0, 0, 0, 0, 0);
         g_caeradio_track_manager_play_radio_announcement_4e8400(0, 0);

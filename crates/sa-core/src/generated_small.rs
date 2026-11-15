@@ -21,20 +21,20 @@ orig! {
 
 /// `COctTreeBase::FillPalette` (0x5A7280, CORE): small, thiscall, `ret 4`; 12 instruction(s) matched.
 #[hook(addr = 0x5A7280, conv = thiscall, name = "COctTreeBase::FillPalette", expect = "33 D2 89 15 E0 12 BC 00", unverified = "gen2-core-1", route = "L2", hazards = "heap-writes")]
-pub fn g_coct_tree_base_fill_palette_5a7280(this: u32, a0: u32) -> u32 {
+pub fn g_coct_tree_base_fill_palette_5a7280(this: u32, a0: u32) {
     g::<u32>(0xBC_12E0).write(0);
     let v1 = rd::<u32>(p(this), 0x2C);
     if v1 == 0 {
-        let v2 = c_5a70f0_t1(this, a0);
-        return v2;
+        let _v2 = c_5a70f0_t1(this, a0);
+        return;
     } else {
         wr::<u8>(p(a0), 0, 0 as u8);
         wr::<u8>(p(a0), 1, 0 as u8);
         wr::<u8>(p(a0), 2, 0 as u8);
         wr::<u8>(p(a0), 3, 0 as u8);
         g::<u32>(0xBC_12E0).write(1);
-        let v3 = c_5a70f0_t1(this, a0);
-        return v3;
+        let _v3 = c_5a70f0_t1(this, a0);
+        return;
     }
 }
 

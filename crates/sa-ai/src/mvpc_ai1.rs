@@ -196,7 +196,7 @@ orig! {
     fn acq_scanner_can_scan_o(s: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x603A30 => crate::mvpc_ai1::acq_scanner_can_scan;
     /// `FUN_00607a90` (0x607A90, `ret 0x18`): the acquaintance scan over the nearby entities
     #[allow(clippy::too_many_arguments)]
-    fn acq_scanner_scan_entities(s: GPtr<u8>, ped: GPtr<u8>, ty: i32, ents: GPtr<u8>, n: i32, out_a: GPtr<u8>, out_b: GPtr<u8>) = thiscall 0x607A90 => unported;
+    pub(crate) fn acq_scanner_scan_entities(s: GPtr<u8>, ped: GPtr<u8>, ty: i32, ents: GPtr<u8>, n: i32, out_a: GPtr<u8>, out_b: GPtr<u8>) = thiscall 0x607A90 => unported;
 }
 
 /// `CTimer::m_snTimeInMilliseconds`

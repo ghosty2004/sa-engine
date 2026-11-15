@@ -79,7 +79,7 @@ orig! {
     /// `CEventDamage::WasHeadShot(bool* out)` (0x4ADD60, `ret 4`)
     fn damage_was_head_shot(e: GPtr<u8>, out: GPtr<u8>) = thiscall 0x4ADD60 => unported;
     /// `CTaskSimpleBeHit::Constructor(CPed*, int32, uint8, int32)` (0x620780, `ret 0x10`)
-    fn be_hit_ctor(t: GPtr<u8>, src: u32, a: u32, piece: u32, time: i32) -> GPtr<u8> = thiscall 0x620780 => unported;
+    pub(crate) fn be_hit_ctor(t: GPtr<u8>, src: u32, a: u32, piece: u32, time: i32) -> GPtr<u8> = thiscall 0x620780 => unported;
     /// `CTaskSimpleChoking::Constructor(CPed*, bool)` (0x6202C0, `ret 8`)
     fn choking_ctor(t: GPtr<u8>, src: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x6202C0 => unported;
     /// `CTaskSimpleChoking::UpdateChoke(CPed*, CPed*, bool)` (0x620660, `ret 0xC`)

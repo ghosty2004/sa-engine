@@ -16,6 +16,8 @@ use sa_core::{hook, orig};
 #[allow(unused_imports)]
 use sa_math::x87::X87;
 
+#[path = "generated_dtors.rs"]
+pub mod generated_dtors;
 #[path = "generated_leaves.rs"]
 pub mod generated_leaves;
 
@@ -29,10 +31,11 @@ use sa_math::fpu::x;
 pub type Body = (u32, u64, &'static [(u32, u32)]);
 
 /// Every generated registration of this crate.
-pub const HOOKS: &[HookReg] = &[];
+pub const HOOKS: &[HookReg] =
+    &[generated_dtors::HOOK_G_CAEWEATHER_AUDIO_ENTITY_CAEWEATHER_AUDIO_ENTITY_72A400];
 
 /// Every generated body of this crate.
-pub const BODIES: &[&[Body]] = &[generated_leaves::BODIES];
+pub const BODIES: &[&[Body]] = &[generated_dtors::BODIES, generated_leaves::BODIES];
 
 #[cfg(all(test, not(sa_phase_a)))]
 mod tests {

@@ -599,6 +599,17 @@ pub fn manager_constructor(this: GPtr<u8>) -> GPtr<u8> {
     this
 }
 
+/// `IKChainManager_c::~IKChainManager_c()` (0x618030, thiscall; `__dtor_g_ikChainMan`'s target): the `List_c`s at
+/// +0xB0C and +0xB00 (0x4A8DE0), then the 32 chains of 0x58 (0x617860) through `eh_vector_destructor_iterator`. The
+/// SEH frame is not modelled (FRONTIER-2 turn 2).
+#[hook(addr = 0x618030, conv = thiscall, name = "IKChainManager_c::~IKChainManager_c", expect = "6A FF 68 91 F0 83 00",
+       unverified = "frontier2-c5", route = "L2", hazards = "heap-writes")]
+pub fn manager_destructor(this: GPtr<u8>) {
+    sa_core::bindings::list_dtor(this.byte_add(0xB0C));
+    sa_core::bindings::list_dtor(this.byte_add(0xB00));
+    sa_core::bindings::eh_vector_dtor(this, 0x58, 0x20, 0x617860);
+}
+
 /// `IKChainManager_c::Init()` (0x6180A0): every chain onto the free list; AL = 1.
 #[hook(addr = 0x6180A0, conv = thiscall, name = "IKChainManager_c::Init", expect = "53 56 57 8D 99 0C 0B 00 00")]
 pub fn manager_init(this: GPtr<u8>) -> u8 {
@@ -1031,6 +1042,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_GET_BONE_SPEED,
     HOOK_SET_BONE_SPEED,
     HOOK_MANAGER_CONSTRUCTOR,
+    HOOK_MANAGER_DESTRUCTOR,
     HOOK_MANAGER_INIT,
     HOOK_MANAGER_EXIT,
     HOOK_MANAGER_RESET,

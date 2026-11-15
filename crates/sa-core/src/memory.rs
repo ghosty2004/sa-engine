@@ -179,6 +179,77 @@ pub fn heap_init(heap: GPtr<u8>, mem: GPtr<u8>, size: u32, init_sizes: u8) {
     }
 }
 
+orig! {
+    /// `CMemoryHeap::FillInBlockData(HeapFreeBlockDesc* block, HeapFreeBlockDesc* next, uint32 size)` (0x72EC80, thiscall)
+    fn heap_fill_in_block_data(heap: GPtr<u8>, block: GPtr<u8>, next: GPtr<u8>, size: u32) = thiscall 0x72EC80 => unported;
+}
+
+/// The heap pointer field at `off` of `p` as a pointer (a 32-bit address).
+fn hp(p: GPtr<u8>, off: isize) -> GPtr<u8> {
+    GPtr::from_addr(p.byte_add(off).cast::<u32>().read() as usize)
+}
+
+/// `CMemoryHeap::Malloc(uint32 size)` (0x72ED80, thiscall, `ret 4`; FRONTIER-2 turn 2). The size is rounded up to 16.
+/// With a common-size cache (+0x38) and size <= 0x400 the cache lists from index `size / 16 - 1` (signed, below 0x40)
+/// upwards are scanned (0x3C each, up to offset 0xF00; `[heap + 0x38]` re-read each step): an empty list (`first`
+/// +0x10 == its own end +0x18) counts a miss (+0x34 += 1); the first non-empty one gives its first block: the list's
+/// count +0x38 -= 1, the block unlinked (+0x10 next / +0x14 prev), marked used (byte +4 = 1, word +6 = the heap's
+/// memory id +0x44), the heap's used size +0x40 += block size + 0x10; returns the block + 0x10. Otherwise the free list
+/// from +0x18 up to its end +0x20: the first block of at least `size` is unlinked and `FillInBlockData(block, block +
+/// block size + 0x10, size)` splits it; returns the block + 0x10. None: NULL.
+#[hook(addr = 0x72ED80, conv = thiscall, name = "CMemoryHeap::Malloc", expect = "53 8B 5C 24 08 F6 C3 0F",
+       unverified = "frontier2-c5", route = "L2", hazards = "heap-writes")]
+pub fn heap_malloc_port(heap: GPtr<u8>, size: u32) -> GPtr<u8> {
+    let mut n = size;
+    if n & 0xF != 0 {
+        n = (n & 0xFFFF_FFF0).wrapping_add(0x10);
+    }
+    if heap.byte_add(0x38).cast::<u32>().read() != 0 && n <= 0x400 {
+        let i = ((n >> 4) as i32).wrapping_sub(1);
+        if i < 0x40 {
+            let mut off = i.wrapping_mul(0x3C);
+            loop {
+                let list = hp(heap, 0x38).byte_add(off as isize);
+                let first = list.byte_add(0x10).cast::<u32>().read();
+                if first != (list.addr() as u32).wrapping_add(0x18) {
+                    let b = GPtr::<u8>::from_addr(first as usize);
+                    w32(list, 0x38, list.byte_add(0x38).cast::<u32>().read().wrapping_sub(1));
+                    let prev = b.byte_add(0x14).cast::<u32>().read();
+                    w32(hp(b, 0x10), 0x14, prev);
+                    let next = b.byte_add(0x10).cast::<u32>().read();
+                    w32(hp(b, 0x14), 0x10, next);
+                    b.byte_add(4).write(1);
+                    b.byte_add(6).cast::<u16>().write(heap.byte_add(0x44).cast::<u16>().read());
+                    let used = b.cast::<u32>().read().wrapping_add(0x10);
+                    w32(heap, 0x40, heap.byte_add(0x40).cast::<u32>().read().wrapping_add(used));
+                    return b.byte_add(0x10);
+                }
+                w32(list, 0x34, list.byte_add(0x34).cast::<u32>().read().wrapping_add(1));
+                off = off.wrapping_add(0x3C);
+                if off >= 0xF00 {
+                    break;
+                }
+            }
+        }
+    }
+    let end = (heap.addr() as u32).wrapping_add(0x20);
+    let mut b = heap.byte_add(0x18).cast::<u32>().read();
+    while b != end {
+        let bp = GPtr::<u8>::from_addr(b as usize);
+        if bp.cast::<u32>().read() >= n {
+            let prev = bp.byte_add(0x14).cast::<u32>().read();
+            w32(hp(bp, 0x10), 0x14, prev);
+            let next = bp.byte_add(0x10).cast::<u32>().read();
+            w32(hp(bp, 0x14), 0x10, next);
+            let after = bp.byte_add(bp.cast::<u32>().read().wrapping_add(0x10) as i32 as isize);
+            heap_fill_in_block_data(heap, bp, after, n);
+            return bp.byte_add(0x10);
+        }
+        b = bp.byte_add(0x10).cast::<u32>().read();
+    }
+    GPtr::NULL
+}
+
 /// This module's registrations (collected by [`crate::hooks`]).
 pub const HOOKS: &[crate::abi::HookReg] = &[
     HOOK_MGR_MALLOC,
@@ -189,6 +260,7 @@ pub const HOOKS: &[crate::abi::HookReg] = &[
     HOOK_MALLOC_ALIGN,
     HOOK_FREE_ALIGN,
     HOOK_HEAP_INIT,
+    HOOK_HEAP_MALLOC_PORT,
 ];
 
 // Host tests use Rust-owned memory; a phase A build cannot run them.

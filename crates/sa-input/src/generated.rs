@@ -20,6 +20,8 @@ use sa_math::x87::X87;
 pub mod generated_dtors;
 #[path = "generated_inits.rs"]
 pub mod generated_inits;
+#[path = "generated_leaf_logic.rs"]
+pub mod generated_leaf_logic;
 
 // The shared field / global / x87 helpers (ADR-003 §3.2), named as the generated bodies use them.
 #[allow(unused_imports)]
@@ -47,10 +49,15 @@ pub const HOOKS: &[HookReg] = &[
     generated_inits::HOOK_G_INIT_G_B73448_84E170,
     generated_inits::HOOK_G_INIT_G_B73450_84E1B0,
     generated_inits::HOOK_G_INIT_G_B73454_84E1D0,
+    generated_leaf_logic::HOOK_G_CPAD_IS_LEFT_SHOCK_PRESSED_509840,
 ];
 
 /// Every generated body of this crate.
-pub const BODIES: &[&[Body]] = &[generated_dtors::BODIES, generated_inits::BODIES];
+pub const BODIES: &[&[Body]] = &[
+    generated_dtors::BODIES,
+    generated_inits::BODIES,
+    generated_leaf_logic::BODIES,
+];
 
 #[cfg(all(test, not(sa_phase_a)))]
 mod tests {

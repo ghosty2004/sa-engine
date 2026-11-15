@@ -80,6 +80,7 @@ pub const NATIVE_MODULES: &[&[sa_core::abi::NativeReg]] = &[
     crate::port4_service::NATIVES,
     crate::bicycle_tyre_volume::NATIVES,
     crate::player_vehicle_engine::NATIVES,
+    crate::frontier_c::NATIVES,
 ];
 
 use sa_core::hooks::total;
