@@ -125,6 +125,7 @@ pub mod roadsign_text_raster;
 pub mod roadsign_line_row;
 pub mod roadsign_atomic;
 pub mod generated;
+pub mod frontier_b2;
 pub mod visibility_vehicle;
 pub mod visibility_weapon;
 pub mod heat_haze_fx;

@@ -532,7 +532,7 @@ use sa_world::bindings::membership_is_member as group_is_member;
 use sa_core::bindings::audio_report_frontend_event as report_frontend_audio_event;
 orig! {
     /// `CDarkel::ThisVehicleShouldBeKilledForFrenzy(CVehicle*)` (0x43D350)
-    fn this_vehicle_should_be_killed_for_frenzy(veh: GPtr<u8>) -> u8 = cdecl 0x43D350 => unported;
+    pub fn this_vehicle_should_be_killed_for_frenzy(veh: GPtr<u8>) -> u8 = cdecl 0x43D350 => unported;
 }
 
 /// `CDarkel::Status` (int16)

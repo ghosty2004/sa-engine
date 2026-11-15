@@ -101,6 +101,7 @@ use crate::bindings::clothes_desc_set_texture_and_model as set_texture_and_model
 use sa_world::bindings::copy_texture;
 use sa_world::bindings::rp_geometry_triangle_set_vertex_indices;
 use sa_core::bindings::crt_new as operator_new;
+use sa_rwcore::bindings::rp_skin_geometry_set_skin;
 orig! {
     /// `CPedClothesDesc::SetModel(uint32, eClothesModelPart)` (0x5A7910)
     fn set_model_hash(this: GPtr<u8>, key: u32, part: i32) = thiscall 0x5A7910 => crate::clothes::set_model_hash;
@@ -116,8 +117,6 @@ orig! {
     fn request_file(index: i32, offset: u32, size: u32, img: i32, flags: i32) = cdecl 0x40A080 => unported;
     /// `FUN_007316d0(int32 i)` (0x7316D0): the TXD slot of default TXD `i`
     fn default_txd_slot(i: i32) -> i32 = cdecl 0x7316D0 => crate::default_txd_slot::default_txd_slot;
-    /// `RpSkinGeometrySetSkin(RpGeometry*, RpSkin*)` (0x7C7560)
-    fn rp_skin_geometry_set_skin(gm: GPtr<u8>, skin: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C7560 => unported;
     /// `RpSkinCreate(numVertices, numBones, RwMatrixWeights*, uint32* indices, RwMatrix* inverseMatrices)` (0x7C75B0)
     fn rp_skin_create(nv: u32, nb: u32, weights: GPtr<u8>, indices: GPtr<u8>, inv: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C75B0 => unported;
     /// `RpSkinGetVertexBoneIndices(RpSkin*)` (0x7C7800)

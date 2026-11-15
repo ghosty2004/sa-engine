@@ -724,6 +724,11 @@ orig! {
 }
 
 orig! {
+    /// `CPickups::GenerateNewOne_WeaponType` (0x457380)
+    pub fn pickups_generate_new_one_weapon_type(x: u32, y: u32, z: u32, ty: i32, pt: i32, ammo: i32, b: u32, msg: u32) -> i32 = cdecl 0x457380 => unported;
+}
+
+orig! {
     /// `CPickups::CreateSomeMoney` (0x458970)
     pub fn create_some_money(px: f32, py: f32, pz: f32, amount: u32) = cdecl 0x458970 => unported;
 }

@@ -98,3 +98,4 @@ pub mod rt_quat;
 pub mod d3d9_destroy_instance;
 pub mod d3d9_skin_vs_begin;
 pub mod frontier_b;
+pub mod frontier_b2;

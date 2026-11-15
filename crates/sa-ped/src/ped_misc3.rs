@@ -40,9 +40,8 @@ orig! {
     fn pickups_create_pickup_coors_close_to_coors(x: u32, y: u32, z: u32, ox: GPtr<u8>, oy: GPtr<u8>, oz: GPtr<u8>) = cdecl 0x458A80 => unported;
     /// `CPickups::TryToMerge_WeaponType(CVector, eWeaponType, ePickupType, uint32, bool)` (0x4555A0, AL)
     fn pickups_try_to_merge_weapon_type(x: u32, y: u32, z: u32, ty: i32, pt: i32, ammo: i32, b: u32) -> u8 = cdecl 0x4555A0 => unported;
-    /// `CPickups::GenerateNewOne_WeaponType(CVector, eWeaponType, ePickupType, uint32, bool, char*)` (0x457380)
-    fn pickups_generate_new_one_weapon_type(x: u32, y: u32, z: u32, ty: i32, pt: i32, ammo: i32, b: u32, msg: u32) -> i32 = cdecl 0x457380 => unported;
 }
+use sa_world::bindings::pickups_generate_new_one_weapon_type;
 
 /// `CAEPedWeaponAudioEntity::Initialise(CPed*)` (0x4E6AA0): `+0xA4 = ped`, `CAEWeaponAudioEntity::Initialise()`,
 /// `+0xA0 = 1`.

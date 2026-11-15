@@ -29,7 +29,7 @@ orig! {
     /// `CGangWars::UpdateTerritoryUnderControlPercentage()` (0x443DE0)
     fn update_territory_under_control_percentage() = cdecl 0x443DE0 => crate::misc2::update_territory_under_control_percentage;
     /// `CDarkel::ThisPedShouldBeKilledForFrenzy(const CPed&)` (0x43D2F0)
-    fn this_ped_should_be_killed_for_frenzy(ped: GPtr<u8>) -> u8 = cdecl 0x43D2F0 => crate::misc2::this_ped_should_be_killed_for_frenzy;
+    pub fn this_ped_should_be_killed_for_frenzy(ped: GPtr<u8>) -> u8 = cdecl 0x43D2F0 => crate::misc2::this_ped_should_be_killed_for_frenzy;
     /// `CGangWars::AddKillToProvocation(ePedType)` (0x443950)
     fn add_kill_to_provocation(pt: i32) = cdecl 0x443950 => crate::misc2::add_kill_to_provocation;
     /// `CPopCycle::PlayerKilledADealer()` (0x610490)

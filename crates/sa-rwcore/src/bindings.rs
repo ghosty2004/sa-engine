@@ -309,6 +309,11 @@ orig! {
 }
 
 orig! {
+    /// `RpSkinGeometrySetSkin` (0x7C7560)
+    pub fn rp_skin_geometry_set_skin(geom: GPtr<u8>, skin: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C7560 => crate::skin::rp_skin_geometry_set_skin;
+}
+
+orig! {
     /// `RpSkinGetSkinToBoneMatrices` (0x7C7810)
     pub fn rp_skin_get_skin_to_bone_matrices(s: GPtr<u8>) -> u32 = cdecl 0x7C7810 => crate::skin::rp_skin_get_skin_to_bone_matrices;
 }

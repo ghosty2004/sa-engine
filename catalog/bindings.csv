@@ -7,6 +7,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x43AC40,sa-ai,conv_is_player_in_position,thiscall,,c:GPtr<u8>;random:u32,u8,unported,CConversationForPed::IsPlayerInPositionForConversation,
 0x447E40,sa-world,stored_car_restore_car,thiscall,,s:GPtr<u8>,GPtr<u8>,unported,CStoredCar::RestoreCar,sa_veh::stored_car_restore::stored_car_restore
 0x4509A0,sa-ai,path_take_width_for_wandering,thiscall,,pf:GPtr<u8>;out:GPtr<u8>;node:u32;seed:u32,GPtr<u8>,unported,CPathFind::TakeWidthIntoAccountForWandering,
+0x457380,sa-world,pickups_generate_new_one_weapon_type,cdecl,,x:u32;y:u32;z:u32;ty:i32;pt:i32;ammo:i32;b:u32;msg:u32,i32,unported,CPickups::GenerateNewOne_WeaponType,
 0x463540,sa-ai,leave_group_ctor,thiscall,,t:GPtr<u8>,GPtr<u8>,unported,CTaskSimpleLeaveGroup::Constructor,
 0x4684F0,sa-ai,decision_maker_types_get_instance,cdecl,,,GPtr<u8>,sa_ai::misc::decision_maker_types_get_instance_4684f0,CDecisionMakerTypes::GetInstance,
 0x4893E0,sa-ai,intel_get_ped_entities,thiscall,,i:GPtr<u8>,GPtr<u8>,unported,CPedIntelligence::GetPedEntities,
@@ -1025,6 +1026,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x7C5120,sa-core,rp_hanim_hierarchy_get_matrix_array,cdecl,,h:GPtr<u8>,GPtr<u8>,unported,RpHAnimHierarchyGetMatrixArray,
 0x7C51A0,sa-core,rp_hanim_id_get_index,cdecl,,h:GPtr<u8>;id:u32,i32,unported,RpHAnimIDGetIndex,
 0x7C7550,sa-core,rp_skin_geometry_get_skin,cdecl,,g:GPtr<u8>,u32,unported,RpSkinGeometryGetSkin,sa_rwcore::skin::rp_skin_geometry_get_skin
+0x7C7560,sa-rwcore,rp_skin_geometry_set_skin,cdecl,,geom:GPtr<u8>;skin:GPtr<u8>,GPtr<u8>,sa_rwcore::skin::rp_skin_geometry_set_skin,RpSkinGeometrySetSkin,
 0x7C77E0,sa-core,rp_skin_get_num_bones,cdecl,,s:GPtr<u8>,u32,unported,RpSkinGetNumBones,
 0x7C7810,sa-core,rp_skin_get_skin_to_bone_matrices,cdecl,,s:GPtr<u8>,u32,unported,RpSkinGetSkinToBoneMatrices,sa_rwcore::skin::rp_skin_get_skin_to_bone_matrices
 0x7EB5C0,sa-core,rt_quat_convert_from_matrix,cdecl,,q:GPtr<u8>;m:GPtr<u8>,GPtr<u8>,unported,RtQuatConvertFromMatrix,

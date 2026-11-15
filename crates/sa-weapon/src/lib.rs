@@ -40,3 +40,4 @@ pub mod projectile_add;
 // WRITER-MVP-B (helper A)
 pub mod mvpb_a;
 pub mod generated;
+pub mod frontier_b2;
