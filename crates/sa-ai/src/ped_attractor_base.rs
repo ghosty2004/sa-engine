@@ -401,6 +401,13 @@ pub fn broadcast_departure(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     }
     erase_pair_inline(this, ped);
     erase4(this, 0x24, rd::<u32>(this, 0x20).wrapping_add(4 * idx as u32));
+    send_attracted_to_queue_end(this);
+    1
+}
+
+/// The tail both `BroadcastDeparture`s share: every attracted ped (+0x10, count taken once) gets a
+/// `CTaskComplexGoToAttractor(this, pos(n), heading(n), +0x44, n, walk)`, n = the queue length (+0x20) at that point.
+fn send_attracted_to_queue_end(this: GPtr<u8>) {
     let attracted = count4(this, 0x10);
     for j in 0..attracted {
         let p = GPtr::<GPtr<u8>>::from_addr(rd::<u32>(this, 0x10) as usize + 4 * j as usize).read();
@@ -418,6 +425,24 @@ pub fn broadcast_departure(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         };
         set_task_for_ped_o(this, p, go);
     }
+}
+
+/// `CPedShelterAttractor::BroadcastDeparture(CPed*)` (0x5EF570, thiscall, `ret 4`, SEH frame; vtable slot 0x14;
+/// FRONTIER-2 turn 5 lane A). The base's (0x5EF160) without the queue shuffle: AL = 0 when the ped is not in the queue
+/// (+0x20); else its pair and queue entry are erased and every attracted ped is sent to the queue's end
+/// ([`send_attracted_to_queue_end`]); AL = 1.
+#[hook(addr = 0x5EF570, conv = thiscall, name = "CPedShelterAttractor::BroadcastDeparture", expect = "6A FF 64 A1 00 00 00 00 68 4B DD 83 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes,uninit-locals,stack-residue,ax-al-return",
+       note = "the original keeps the time in the found index's local and the count in its argument slot")]
+pub fn shelter_broadcast_departure(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
+    let count = count4(this, 0x20);
+    let Some(idx) = (0..count).find(|&i| GPtr::<GPtr<u8>>::from_addr(rd::<u32>(this, 0x20) as usize + 4 * i as usize).read() == ped)
+    else {
+        return 0;
+    };
+    erase_pair_inline(this, ped);
+    erase4(this, 0x24, rd::<u32>(this, 0x20).wrapping_add(4 * idx as u32));
+    send_attracted_to_queue_end(this);
     1
 }
 
@@ -452,4 +477,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_COMPUTE_ATTRACT_POS,
     HOOK_COMPUTE_ATTRACT_HEADING,
     HOOK_BROADCAST_DEPARTURE,
+    HOOK_SHELTER_BROADCAST_DEPARTURE,
 ];
