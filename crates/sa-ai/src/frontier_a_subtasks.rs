@@ -171,7 +171,7 @@ pub fn evasive_cower_create_sub_task(this: GPtr<u8>, ty: i32) -> GPtr<u8> {
     match ty {
         0x386 => new_task(0x18, |m| {
             let h = general_get_radian_angle_between_points(-rd::<f32>(this, 0xC), -rd::<f32>(this, 0x10), 0.0, 0.0);
-            achieve_heading_ctor(m, st0(h).to_f32(), 0x40000000, g::<u32>(0x86FC80).read())
+            achieve_heading_ctor(m, h.to_f32(), 0x40000000, g::<u32>(0x86FC80).read())
         }),
         0x19C => new_task(0x20, |m| {
             run_anim_ctor2(m, 0, 0x8F, 0x40800000, 0x19C, 0x85A0F8, 0);
@@ -424,7 +424,7 @@ fn heading_to(ped: GPtr<u8>, other: GPtr<u8>) -> f32 {
     let (p, o) = (entity_pos(ped), entity_pos(other));
     let dx = x(rd::<f32>(o, 0)).fsub_m(rd::<f32>(p, 0)).to_f32();
     let dy = x(rd::<f32>(o, 4)).fsub_m(rd::<f32>(p, 4)).to_f32();
-    let a = st0(general_get_radian_angle_between_points(dx, dy, 0.0, 0.0)).to_f32();
+    let a = general_get_radian_angle_between_points(dx, dy, 0.0, 0.0).to_f32();
     let h = st0(general_limit_radian_angle(a)).to_f32();
     wr::<f32>(ped, 0x55C, h);
     h

@@ -273,7 +273,7 @@ pub fn treat_accident_compute_heading(this: GPtr<u8>, medic: GPtr<u8>) -> X87 {
     let m = rd::<GPtr<u8>>(medic, 0x14);
     let pos = if m.is_null() { medic.byte_add(4) } else { m.byte_add(0x30) };
     let ang = general_get_radian_angle_between_points(mx, my, rd::<f32>(pos, 0), rd::<f32>(pos, 4));
-    st0(general_limit_radian_angle(st0(ang).to_f32()))
+    st0(general_limit_radian_angle(ang.to_f32()))
 }
 
 /// `CTaskSimpleGangDriveBy::MakeAbortable(CPed*, int32 priority, const CEvent*)` (0x62D290, `ret 0xC`, AL). Any priority
