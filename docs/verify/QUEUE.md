@@ -68,7 +68,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-b3 | 7 | VEH | 221f09a0 | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
 | frontier2-b4 | 5 | RW, SAVE | 2f47ba34 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | frontier2-c1 | 44 | AI, UNK-game | 49bdb6d2 | master | 44 | 0 | 0 | 0 | 0 | L2 44 |
-| frontier2-c10 | 10 | AUDIO, HUD, UNK-game | 709cbb43 | worktree-agent-a8e8e96036c1da50f | 10 | 0 | 0 | 0 | 0 | L2 7, split 3 |
+| frontier2-c10 | 9 | AUDIO, HUD, UNK-game | 709cbb43 | worktree-agent-a8e8e96036c1da50f | 9 | 0 | 0 | 0 | 0 | L2 6, split 3 |
 | frontier2-c2 | 35 | AI, MATH, SCRIPT, UNK-game, VEH | 49bdb6d2 | master | 35 | 0 | 0 | 0 | 0 | L2 35 |
 | frontier2-c3 | 11 | AI, SCRIPT, UNK-game | 49bdb6d2 | master | 11 | 0 | 0 | 0 | 0 | L2 11 |
 | frontier2-c4 | 10 | AUDIO, CALLED-ONLY, SCRIPT, UNK-game | d18327f1 | master | 10 | 0 | 0 | 0 | 0 | L2 9, split 1 |
@@ -2340,7 +2340,7 @@ SA_UNVERIFIED=frontier2-c1 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c1 $S
 
 ## frontier2-c10
 
-10 hooks in sa-ai, sa-audio, sa-core, sa-hud, sa-pop, sa-weapon; hazards: heap-writes (5), x87-transcendental (2); recordings calling them: no coverage data.
+9 hooks in sa-ai, sa-audio, sa-core, sa-hud, sa-pop, sa-weapon; hazards: heap-writes (5), x87-transcendental (1); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -2353,7 +2353,6 @@ SA_UNVERIFIED=frontier2-c10 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c10 
 |---|---|---|---|---|
 | 0x454200 | `dtor_977be8_body` | written | split | heap-writes |
 | 0x4FE420 | `CAEVehicleAudioEntity::ProcessPlayerHeli` | written | L2 | x87-transcendental |
-| 0x506800 | `CAEWeatherAudioEntity::AddAudioEvent` | written | L2 | x87-transcendental |
 | 0x506B90 | `CAEExplosionAudioEntity::~CAEExplosionAudioEntity` | written | split | heap-writes |
 | 0x58FD90 | `CHudColours::~CHudColours` | written | split | heap-writes |
 | 0x6592A0 | `FUN_006592a0` | written | L2 | none |
