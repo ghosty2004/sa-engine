@@ -2759,6 +2759,11 @@ orig! {
 }
 
 orig! {
+    /// `CObject::CanBeUsedToTakeCoverBehind` (0x5A1B60)
+    pub fn object_can_be_used_to_take_cover_behind(o: GPtr<u8>) -> u8 = thiscall 0x5A1B60 => crate::world::object::can_be_used_to_take_cover_behind;
+}
+
+orig! {
     /// `CObject::Create-intbool` (0x5A1F60)
     pub fn object_create(model: u32, flag: u32) -> GPtr<u8> = cdecl 0x5A1F60 => unported;
 }

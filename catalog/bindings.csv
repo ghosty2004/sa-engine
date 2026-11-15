@@ -292,6 +292,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x6923F0,sa-ai,duck_control_duck_move,thiscall,,d:GPtr<u8>;mx:f32;my:f32,,unported,CTaskSimpleDuck::ControlDuckMove,
 0x6924B0,sa-ai,duck_force_stop_move,thiscall,,d:GPtr<u8>,,unported,CTaskSimpleDuck::ForceStopMove,
 0x699F00,sa-ai,point_list_empty_b,thiscall,,l:GPtr<u8>,,sa_ai::cover::point_list_empty,CPointList::Empty,
+0x699FF0,sa-ai,find_cover_points_behind_box_b,cdecl,,l:GPtr<u8>;tx:u32;ty:u32;tz:u32;m:GPtr<u8>;c:GPtr<u8>;min:GPtr<u8>;max:GPtr<u8>;cut:f32,,sa_ai::cover::find_cover_points_behind_box,CFormation::FindCoverPointsBehindBox,
 0x69C850,sa-ai,compute_closest_peds_o,cdecl,,group:GPtr<u8>;threats:GPtr<u8>;closest:GPtr<u8>,,sa_ai::kill_threats_basic::compute_closest_peds,CTaskAllocatorKillThreatsBasic::ComputeClosestPeds,
 0x6C2150,sa-world,dm_set_panel_status,thiscall,,dm:GPtr<u8>;panel:u32;status:u32,,unported,CDamageManager::SetPanelStatus,sa_veh::damage::set_panel_status
 0x6C21A0,sa-world,dm_set_wheel_status,thiscall,,dm:GPtr<u8>;wheel:i32;status:u8,,unported,CDamageManager::SetWheelStatus,
@@ -2357,6 +2358,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x5A0D90,sa-world,object_damage,thiscall,,o:GPtr<u8>;dmg:f32;origin:GPtr<u8>;dir:GPtr<u8>;damager:GPtr<u8>;weapon:u32,,unported,CObject::ObjectDamage,
 0x5A1980,sa-world,object_delete_all_temp_objects_in_area,cdecl,,x:f32;y:f32;z:f32;r:f32,,sa_world::world::object::delete_all_temp_objects_in_area,CObject::DeleteAllTempObjectsInArea,
 0x5A1F60,sa-world,object_create,cdecl,,model:u32;flag:u32,GPtr<u8>,unported,CObject::Create-intbool,
+0x5A1B60,sa-world,object_can_be_used_to_take_cover_behind,thiscall,,o:GPtr<u8>,u8,sa_world::world::object::can_be_used_to_take_cover_behind,CObject::CanBeUsedToTakeCoverBehind,
 0x5A2CB0,sa-world,object_set_centre_of_mass,thiscall,,o:GPtr<u8>;x:f32;y:f32;z:f32,,unported,FUN_005a2cb0,
 0x5A5730,sa-world,copy_texture,cdecl,,t:GPtr<u8>,GPtr<u8>,unported,CClothesBuilder::CopyTexture,sa_render::car_dirt::copy_texture
 0x5A7950,sa-world,clothes_get_is_wearing_balaclava,thiscall,,c:GPtr<u8>,u8,unported,CPedClothesDesc::GetIsWearingBalaclava,

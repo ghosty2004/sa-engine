@@ -1554,6 +1554,11 @@ orig! {
 }
 
 orig! {
+    /// `CFormation::FindCoverPointsBehindBox` (0x699FF0)
+    pub fn find_cover_points_behind_box_b(l: GPtr<u8>, tx: u32, ty: u32, tz: u32, m: GPtr<u8>, c: GPtr<u8>, min: GPtr<u8>, max: GPtr<u8>, cut: f32) = cdecl 0x699FF0 => crate::cover::find_cover_points_behind_box;
+}
+
+orig! {
     /// `CTaskAllocatorKillThreatsBasic::ComputeClosestPeds` (0x69C850)
     pub fn compute_closest_peds_o(group: GPtr<u8>, threats: GPtr<u8>, closest: GPtr<u8>) = cdecl 0x69C850 => crate::kill_threats_basic::compute_closest_peds;
 }

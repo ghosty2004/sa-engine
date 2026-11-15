@@ -17,7 +17,10 @@ use crate::common::*;
 use crate::frontier_a_t3::{kill_then_look_about, set_response};
 use sa_core::bindings::task_new;
 use sa_core::crt::rand_at;
-use sa_math::fpu::ftol32;
+use sa_math::fpu::{fbits, ftol32};
+use sa_core::bindings::vector_normalise;
+use crate::bindings::find_cover_points_behind_box_b;
+use sa_world::bindings::object_can_be_used_to_take_cover_behind;
 use sa_world::bindings::{
     crt_printf, dtor_6389f0 as sequence_dtor, gang_drive_by_ctor, interesting_events_add, kill_ped_on_foot_ctor, leave_car_ctor,
     membership_get_leader, membership_get_member, sequence_add_task, sequence_ctor, stand_still_ctor,
@@ -39,11 +42,11 @@ orig! {
     /// `CPedList::ExtractPedsWithGuns(CPedList&)` (0x69A4C0, `ret 4`)
     fn ped_list_extract_peds_with_guns(l: GPtr<u8>, from: GPtr<u8>) -> u32 = thiscall 0x69A4C0 => crate::group_list_loops::ped_list_extract_peds_with_guns;
     /// `CFormation::FindCoverPoints(CVector pos, float radius)` (0x69B860, cdecl, the vector by value)
-    fn formation_find_cover_points(x: u32, y: u32, z: u32, radius: f32) = cdecl 0x69B860 => unported;
+    fn formation_find_cover_points_o(x: u32, y: u32, z: u32, radius: f32) = cdecl 0x69B860 => formation_find_cover_points;
     /// `CFormation::DistributeDestinations_CoverPoints(CPedList&, CVector pos)` (0x69B5B0, cdecl, the vector by value)
-    fn formation_distribute_cover_points(l: GPtr<u8>, x: u32, y: u32, z: u32) = cdecl 0x69B5B0 => unported;
+    fn formation_distribute_cover_points(l: GPtr<u8>, x: u32, y: u32, z: u32) = cdecl 0x69B5B0 => formation_distribute_destinations_cover_points;
     /// `CFormation::DistributeDestinations_PedsToAttack(CPedList&)` (0x69B700, cdecl)
-    fn formation_distribute_peds_to_attack(l: GPtr<u8>) = cdecl 0x69B700 => unported;
+    fn formation_distribute_peds_to_attack(l: GPtr<u8>) = cdecl 0x69B700 => formation_distribute_destinations_peds_to_attack;
     /// `CFormation::ReturnTargetPedForPed(CPed*, int32* out)` (0x699F50, cdecl)
     fn formation_return_target_ped_for_ped(ped: u32, out: GPtr<u8>) -> u32 = cdecl 0x699F50 => crate::group_list_loops::formation_return_target_ped_for_ped;
     /// `CPedGroupIntelligence::GetTask(CPed*, CPedTaskPair*)` (0x5F7660, `ret 8`)
@@ -177,7 +180,7 @@ pub fn kill_on_foot_allocate_tasks(this: GPtr<u8>, intel: GPtr<u8>) {
     if g::<u8>(0xC1A554).read() != 0 || (!target.is_null() && weapon_is_type_melee(ped_active_weapon(target)) == 0) {
         ped_list_extract_peds_with_guns(gp, mp);
         let p = entity_pos(rd::<GPtr<u8>>(this, 4));
-        formation_find_cover_points(rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8), 30.0);
+        formation_find_cover_points_o(rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8), 30.0);
         let p = entity_pos(rd::<GPtr<u8>>(this, 4));
         formation_distribute_cover_points(gp, rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8));
         let mut i = 0;
@@ -443,8 +446,253 @@ fn shelter_too_close(px: f32, py: f32) -> bool {
     false
 }
 
+/// `CFormation::m_Peds` (0xC1A4D8, a `CPedList`: count, then 30 peds at 0xC1A4DC)
+const FORMATION_PEDS: usize = 0xC1A4D8;
+/// `CFormation::m_aFinalPedLinkToDestinations` (0xC1A2C0, int32[8])
+const FORMATION_LINKS: usize = 0xC1A2C0;
+/// `CFormation::m_Destinations` (0xC1A318, a `CPointList`: count, then 24 points at 0xC1A31C)
+const FORMATION_DESTS: usize = 0xC1A318;
+
+/// `CFormation::m_Peds = list` (31 dwords), then (with peds) every link -1; false without peds.
+fn formation_take_peds(list: GPtr<u8>) -> bool {
+    for k in 0..0x1F {
+        g::<u32>(FORMATION_PEDS + k * 4).write(rd::<u32>(list, k as isize * 4));
+    }
+    if g::<u32>(FORMATION_PEDS).read() == 0 {
+        return false;
+    }
+    for k in 0..8 {
+        g::<i32>(FORMATION_LINKS + k * 4).write(-1);
+    }
+    true
+}
+
+/// `sqrt(dy * dy + dx * dx)` of `a - b` in 2D (`fld a.x; fsub b.x; fld a.y; fsub b.y; fld st0; fmul st1; fld st2;
+/// fmul st3; faddp; fsqrt`).
+fn dist2d(ax: f32, ay: f32, bx: f32, by: f32) -> sa_math::x87::X87 {
+    let dx = x(ax).fsub_m(bx);
+    let dy = x(ay).fsub_m(by);
+    dy.fmul(dy).fadd(dx.fmul(dx)).fsqrt()
+}
+
+/// `CFormation::DistributeDestinations_CoverPoints(const CPedList&, CVector pos)` (0x69B5B0, cdecl, the vector by
+/// value): `m_Peds` = the list; with peds, every link -1 and for each destination (count re-read) the unlinked ped
+/// with the best detour score `1 - (|ped - dest| + |dest - pos| - |ped - pos|) / |ped - pos|` above 0.4 (strictly;
+/// peds farther from `pos` than the destination by more than 1 skipped) is linked to it (2D distances; the
+/// destination's stored as f32 in the list argument's slot).
+#[hook(addr = 0x69B5B0, conv = cdecl, name = "CFormation::DistributeDestinations_CoverPoints", expect = "51 56 8B 74 24 0C",
+       unverified = "frontier2-a7", route = "L2", hazards = "x87-transcendental,heap-writes",
+       note = "FSQRT only; overwrites its list argument slot with the destination's distance")]
+pub fn formation_distribute_destinations_cover_points(list: GPtr<u8>, px: u32, py: u32, _pz: u32) {
+    let (px, py) = (f32::from_bits(px), f32::from_bits(py));
+    if !formation_take_peds(list) {
+        return;
+    }
+    let mut k = 0;
+    while k < g::<i32>(FORMATION_DESTS).read() {
+        let dest = g::<u8>(FORMATION_DESTS + 4 + k as usize * 12);
+        let d_dest = dist2d(rd::<f32>(dest, 0), rd::<f32>(dest, 4), px, py).to_f32();
+        let mut best_i = -1i32;
+        let mut best = fbits(0x3ECCCCCD);
+        let mut i = 0;
+        while i < g::<i32>(FORMATION_PEDS).read() {
+            if g::<i32>(FORMATION_LINKS + i as usize * 4).read() < 0 {
+                let ped = g::<GPtr<u8>>(FORMATION_PEDS + 4 + i as usize * 4).read();
+                let pp = entity_pos(ped);
+                let d_ped = dist2d(rd::<f32>(pp, 0), rd::<f32>(pp, 4), px, py);
+                if !x(1.0).fadd(d_ped).fcom(x(d_dest)).test_any(1) {
+                    let pp = entity_pos(ped);
+                    let d = dist2d(rd::<f32>(pp, 0), rd::<f32>(pp, 4), rd::<f32>(dest, 0), rd::<f32>(dest, 4));
+                    let score = x(1.0).fsub(d.fadd_m(d_dest).fsub(d_ped).fdiv(d_ped));
+                    if !score.fcom(x(best)).test_any(0x41) {
+                        best = score.to_f32();
+                        best_i = i;
+                    }
+                }
+            }
+            i += 1;
+        }
+        if best_i >= 0 {
+            g::<i32>(FORMATION_LINKS + best_i as usize * 4).write(k);
+        }
+        k += 1;
+    }
+}
+
+/// `CFormation::DistributeDestinations_PedsToAttack(const CPedList&)` (0x69B700, cdecl): `m_Peds` = the list; with
+/// peds, every link -1, each of the `m_DestinationPeds` targets may take `max(_ftol(ceil(count / targets)), 2)` peds;
+/// then `count` times the closest (2D, strictly) pair of an unlinked ped of the list and a target with room is linked
+/// and the target's room decremented. The best pair is not reset between rounds and starts from one uninitialised
+/// stack slot (as both the ped and the target index; zero here); a round without a pair links them again.
+#[hook(addr = 0x69B700, conv = cdecl, name = "CFormation::DistributeDestinations_PedsToAttack", expect = "81 EC 84 00 00 00",
+       unverified = "frontier2-a7", route = "L2", hazards = "x87-transcendental,heap-writes,uninit-locals",
+       note = "FSQRT only; the first round's best pair is an uninitialised stack slot")]
+pub fn formation_distribute_destinations_peds_to_attack(list: GPtr<u8>) {
+    if !formation_take_peds(list) {
+        return;
+    }
+    let n_t = g::<i32>(DESTINATION_PEDS).read();
+    let q = xi(rd::<i32>(list, 0)).fdiv(xi(n_t)).to_f64();
+    let mut per = ftol32(sa_math::x87::X87::from_f64_exact(sa_world::bindings::crt_ceil(q)));
+    if per < 2 {
+        per = 2;
+    }
+    let mut room = [0i32; 0x1E];
+    for r in room.iter_mut().take(n_t.max(0) as usize) {
+        *r = per;
+    }
+    let mut best_i = 0i32;
+    let mut best_t = best_i;
+    let mut j = 0;
+    while j < rd::<i32>(list, 0) {
+        let mut best = fbits(0x497423FE);
+        let mut i = 0;
+        while i < rd::<i32>(list, 0) {
+            if g::<i32>(FORMATION_LINKS + i as usize * 4).read() < 0 {
+                let mut t = 0;
+                while t < g::<i32>(DESTINATION_PEDS).read() {
+                    if room.get(t as usize).copied().unwrap_or(0) > 0 {
+                        let tp = entity_pos(g::<GPtr<u8>>(DESTINATION_PEDS + 4 + t as usize * 4).read());
+                        let pp = entity_pos(rd::<GPtr<u8>>(list, 4 + i as isize * 4));
+                        let dx = x(rd::<f32>(pp, 0)).fsub_m(rd::<f32>(tp, 0));
+                        let dy = x(rd::<f32>(pp, 4)).fsub_m(rd::<f32>(tp, 4));
+                        let d = dx.fmul(dx).fadd(dy.fmul(dy)).fsqrt();
+                        if !d.fcom(x(best)).test_parity(5) {
+                            best = d.to_f32();
+                            best_i = i;
+                            best_t = t;
+                        }
+                    }
+                    t += 1;
+                }
+            }
+            i += 1;
+        }
+        g::<i32>(FORMATION_LINKS.wrapping_add((best_i as usize).wrapping_mul(4))).write(best_t);
+        if let Some(r) = room.get_mut(best_t as usize) {
+            *r -= 1;
+        }
+        j += 1;
+    }
+}
+
+/// `CFormation::FindCoverPoints(CVector pos, float radius)` (0x69B860, cdecl, the vector by value): no destinations,
+/// the six dwords at 0xC1A43C cleared. Every vehicle in the pool (from the last slot down) without +0x590, slower
+/// than 0.005 (3D, `(x^2 + y^2) + z^2`) and whose model box is lower than 1.5 (max.z) gives the cover points behind
+/// its box (`FindCoverPointsBehindBox` into a stack point list) while there is room (24). Every object (from the last
+/// slot down) standing upright (up.z above 0.95) that can be used to take cover behind and lies within the radius of
+/// `pos` (2D) gives the point one unit beyond it, away from `pos` (the normalised 3D direction added).
+#[hook(addr = 0x69B860, conv = cdecl, name = "CFormation::FindCoverPoints", expect = "81 EC 58 01 00 00",
+       unverified = "frontier2-a7", route = "L2", hazards = "x87-transcendental,heap-writes",
+       note = "FSQRT only")]
+pub fn formation_find_cover_points(px: u32, py: u32, pz: u32, radius: f32) {
+    g::<u32>(FORMATION_DESTS).write(0);
+    for k in 0..6 {
+        g::<u32>(0xC1A43C + k * 4).write(0);
+    }
+    let pool = g::<GPtr<u8>>(0xB74494).read();
+    let mut i = rd::<u32>(pool, 8);
+    while i != 0 {
+        i -= 1;
+        if rd::<i8>(rd::<GPtr<u8>>(pool, 4), i as isize) < 0 {
+            continue;
+        }
+        let a = rd::<u32>(pool, 0).wrapping_add(i.wrapping_mul(0xA18));
+        if a == 0 {
+            continue;
+        }
+        cover_points_of_vehicle(GPtr::from_addr(a as usize), px, py, pz, radius);
+    }
+    let pool = g::<GPtr<u8>>(0xB7449C).read();
+    let mut i = rd::<u32>(pool, 8);
+    while i != 0 {
+        i -= 1;
+        if rd::<i8>(rd::<GPtr<u8>>(pool, 4), i as isize) < 0 {
+            continue;
+        }
+        let a = rd::<u32>(pool, 0).wrapping_add(i.wrapping_mul(0x19C));
+        if a == 0 {
+            continue;
+        }
+        cover_point_of_object(GPtr::from_addr(a as usize), f32::from_bits(px), f32::from_bits(py), f32::from_bits(pz), radius);
+    }
+}
+
+/// One vehicle of [`formation_find_cover_points`] (0x69B8BA..0x69B9C8).
+fn cover_points_of_vehicle(v: GPtr<u8>, px: u32, py: u32, pz: u32, radius: f32) {
+    if rd::<u32>(v, 0x590) != 0 {
+        return;
+    }
+    let (sx, sy, sz) = (x(rd::<f32>(v, 0x44)), x(rd::<f32>(v, 0x48)), x(rd::<f32>(v, 0x4C)));
+    let speed = sx.fmul(sx).fadd(sy.fmul(sy)).fadd(sz.fmul(sz)).fsqrt();
+    if speed.fcom(x(fbits(0x3BA3D70A))).test_parity(5) {
+        return;
+    }
+    let col = rd::<GPtr<u8>>(model_info_of(v), 0x14);
+    if x(rd::<f32>(col, 0x14)).fcom(x(1.5)).test_parity(5) {
+        return;
+    }
+    let mut local = [0u32; 0x4F];
+    let lp: GPtr<u8> = GPtr::from_raw(local.as_mut_ptr()).cast();
+    find_cover_points_behind_box_b(lp, px, py, pz, rd::<GPtr<u8>>(v, 0x14), col.byte_add(0x18), col, col.byte_add(0xC), radius);
+    let n = rd::<i32>(lp, 0);
+    for k in 0..n.max(0) {
+        let c = g::<i32>(FORMATION_DESTS).read();
+        if c < 0x18 {
+            let dst = g::<u8>(FORMATION_DESTS + 4 + c as usize * 12);
+            for o in [0, 4, 8] {
+                wr::<u32>(dst, o, rd::<u32>(lp, 4 + k as isize * 12 + o));
+            }
+            g::<i32>(FORMATION_DESTS).write(g::<i32>(FORMATION_DESTS).read() + 1);
+        }
+    }
+}
+
+/// `CModelInfo::ms_modelInfoPtrs[entity +0x22]`.
+fn model_info_of(e: GPtr<u8>) -> GPtr<u8> {
+    g::<GPtr<u8>>(0xA9B0C8 + (rd::<i16>(e, 0x22) as isize * 4) as usize).read()
+}
+
+/// One object of [`formation_find_cover_points`] (0x69BA06..0x69BB0E).
+fn cover_point_of_object(o: GPtr<u8>, px: f32, py: f32, pz: f32, radius: f32) {
+    if le_or_nan_up(o) || object_can_be_used_to_take_cover_behind(o) == 0 {
+        return;
+    }
+    let p = entity_pos(o);
+    let mut q = [rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8)];
+    let dx = x(q[0]).fsub_m(px);
+    let dy = x(q[1]).fsub_m(py);
+    let dys = dy.to_f32();
+    let d = dy.fmul(dy).fadd(dx.fmul(dx)).fsqrt();
+    if d.fcom(x(radius)).test_parity(5) {
+        return;
+    }
+    let mut dir = [dx.to_f32(), dys, x(q[2]).fsub_m(pz).to_f32()];
+    vector_normalise(GPtr::from_raw(&mut dir));
+    for k in 0..3 {
+        q[k] = x(dir[k]).fadd_m(q[k]).to_f32();
+    }
+    let c = g::<i32>(FORMATION_DESTS).read();
+    if c >= 0x18 {
+        return;
+    }
+    let dst = g::<u8>(FORMATION_DESTS + 4 + c as usize * 12);
+    for (k, v) in q.iter().enumerate() {
+        wr::<f32>(dst, k as isize * 4, *v);
+    }
+    g::<i32>(FORMATION_DESTS).write(g::<i32>(FORMATION_DESTS).read() + 1);
+}
+
+/// `up.z <= 0.95` or unordered (`test ah, 41h; jne`): the object is not upright.
+fn le_or_nan_up(o: GPtr<u8>) -> bool {
+    x(rd::<f32>(rd::<GPtr<u8>>(o, 0x14), 0x28)).fcom(x(fbits(0x3F733333))).test_any(0x41)
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_FORMATION_DISTRIBUTE_DESTINATIONS_COVER_POINTS,
+    HOOK_FORMATION_DISTRIBUTE_DESTINATIONS_PEDS_TO_ATTACK,
+    HOOK_FORMATION_FIND_COVER_POINTS,
     HOOK_VECTOR3_PUSH_BACK,
     HOOK_SHELTER_GET_DISPLACEMENT,
     HOOK_PED_LIST_EMPTY,

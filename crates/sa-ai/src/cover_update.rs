@@ -34,9 +34,8 @@ use sa_world::bindings::double_node_delete as list_node_delete;
 use sa_world::bindings::double_node_new as list_node_new;
 use sa_world::bindings::find_player_coors;
 use sa_world::bindings::find_player_vehicle;
+use sa_world::bindings::object_can_be_used_to_take_cover_behind;
 orig! {
-    /// `CObject::CanBeUsedToTakeCoverBehind()` (0x5A1B60)
-    fn object_can_be_used_to_take_cover_behind(o: GPtr<u8>) -> u8 = thiscall 0x5A1B60 => unported;
     /// `CCover::ShouldThisBuildingHaveItsCoverPointsCreated(CBuilding*)` (0x699230)
     fn should_building_have_cover_points(b: GPtr<u8>) -> u8 = cdecl 0x699230 => unported;
     /// `CCover::RemoveCoverPointsForThisEntity(CEntity*)` (0x698740)
