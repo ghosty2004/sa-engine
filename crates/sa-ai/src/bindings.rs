@@ -1239,6 +1239,11 @@ orig! {
 }
 
 orig! {
+    /// `FUN_006592a0` (0x6592A0)
+    pub fn task_heading_to_ped(t: GPtr<u8>, ped: GPtr<u8>) -> sa_math::x87::X87 = reg("args = ecx stack; pop") 0x6592A0 => crate::frontier_c::heading_from_task_entity_to_ped;
+}
+
+orig! {
     /// `CTaskComplexSmartFleeEntity::Destructor` (0x65C4D0)
     pub fn dtor_65c4d0(this: GPtr<u8>) = thiscall 0x65C4D0 => unported;
 }

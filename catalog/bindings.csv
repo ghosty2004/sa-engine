@@ -233,6 +233,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x654290,sa-ai,walk_round_car_set_new_vehicle,thiscall,,t:GPtr<u8>;v:GPtr<u8>;f:i32,,unported,CTaskComplexWalkRoundCar::SetNewVehicle,
 0x655020,sa-ai,walk_round_object_ctor,thiscall,,t:GPtr<u8>;ms:i32;target:GPtr<u8>;obj:GPtr<u8>,GPtr<u8>,unported,CTaskComplexWalkRoundObject::Constructor,
 0x655140,sa-ai,create_route_task,thiscall,,t:GPtr<u8>;ped:GPtr<u8>,GPtr<u8>,sa_ai::walkround::object_create_route_task,CTaskComplexWalkRoundObject::CreateRouteTask,
+0x6592A0,sa-ai,task_heading_to_ped,thiscall,,t:GPtr<u8>;ped:GPtr<u8>,sa_math::x87::X87,sa_ai::frontier_c::heading_from_task_entity_to_ped,FUN_006592a0,
 0x65C4D0,sa-ai,dtor_65c4d0,thiscall,,this:GPtr<u8>,,unported,CTaskComplexSmartFleeEntity::Destructor,
 0x65C530,sa-ai,flee_entity_create_sub_task,thiscall,,t:GPtr<u8>;ty:u32,GPtr<u8>,unported,CTaskComplexSmartFleeEntity::CreateSubTask,
 0x65DAF0,sa-ai,event_lean_on_vehicle_ctor,thiscall,,this:GPtr<u8>;a:GPtr<u8>;b:u32,GPtr<u8>,unported,CEventLeanOnVehicle::Constructor,

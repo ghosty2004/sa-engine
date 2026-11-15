@@ -843,8 +843,57 @@ pub fn bounding_sphere_of_peds(_this: GPtr<u8>, sphere: GPtr<u8>, peds: GPtr<u8>
 
 use sa_core::bindings::col_sphere_set;
 
+/// The heading from a task's entity to a ped (0x6592A0, thiscall, `ret 4`, ST0; unnamed, called by 0x65A110; FRONTIER-2
+/// lane C turn 4): `LimitRadianAngle(f32(GetRadianAngleBetweenPoints(e.x, e.y, ped.x, ped.y)))` with `e` the entity at
+/// `this + 0xC` (positions from the matrix when there is one, else the placement); the f32 is stored into the ped
+/// argument's slot, which no caller reads.
+#[hook(addr = 0x6592A0, conv = thiscall, name = "FUN_006592a0", expect = "8B 54 24 04 8B 42 14",
+       unverified = "frontier2-c10", route = "L2", hazards = "none")]
+pub fn heading_from_task_entity_to_ped(this: GPtr<u8>, ped: GPtr<u8>) -> X87 {
+    let p = sa_world::world::common::entity_pos(ped);
+    let e = sa_world::world::common::entity_pos(rd::<GPtr<u8>>(this, 0xC));
+    let a = sa_core::bindings::general_get_radian_angle_between_points(rd::<f32>(e, 0), rd::<f32>(e, 4), rd::<f32>(p, 0),
+        rd::<f32>(p, 4));
+    X87::from_f64_exact(sa_core::bindings::general_limit_radian_angle(a.to_f32()))
+}
+
+/// A sub-task by type (0x65A110, thiscall, `ret 8`; unnamed, called by generated `CreateSubTask`s; FRONTIER-2 lane C
+/// turn 4): 0x19D: a `CTaskSimpleRunTimedAnim` (0x34 bytes; `Constructor-2(0, 0x8E, 4.0, -4.0, 3000, 0x19D, "HandsUp",
+/// 0)`, then the vtable 0x85A29C); 0x386: a `CTaskSimpleAchieveHeading` (0x18 bytes) to the heading of 0x6592A0
+/// with rate 0.5 and tolerance 0.2 (0x86FC7C / 0x86FC80; the original pushes them before the heading call, whose `ret
+/// 4` leaves them as the constructor's arguments), its constructor's EAX returned; a failed allocation and every
+/// other type (0x516 included) return null.
+#[hook(addr = 0x65A110, conv = thiscall, name = "FUN_0065a110", expect = "64 A1 00 00 00 00 6A FF",
+       unverified = "frontier2-c10", route = "L2", hazards = "none")]
+pub fn create_sub_task_65a110(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> {
+    match ty {
+        0x19D => {
+            let t = sa_core::bindings::task_new(0x34);
+            if t.is_null() {
+                return GPtr::NULL;
+            }
+            crate::bindings::run_timed_anim_ctor2(t, 0, 0x8E, 0x4080_0000, 0xC080_0000, 3000, 0x19D, 0x85A2C4, 0);
+            t.cast::<u32>().write(0x85A29C);
+            t
+        }
+        0x386 => {
+            let t = sa_core::bindings::task_new(0x18);
+            if t.is_null() {
+                return GPtr::NULL;
+            }
+            let tol = GPtr::<u32>::from_addr(0x86FC80).read();
+            let rate = GPtr::<u32>::from_addr(0x86FC7C).read();
+            let h = crate::bindings::task_heading_to_ped(this, ped).to_f32();
+            sa_world::bindings::achieve_heading_ctor(t, h, rate, tol)
+        }
+        _ => GPtr::NULL,
+    }
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_HEADING_FROM_TASK_ENTITY_TO_PED,
+    HOOK_CREATE_SUB_TASK_65A110,
     HOOK_BOUNDING_SPHERE_OF_PEDS,
     HOOK_ROUTE_ROUND_GROUP,
     HOOK_AVOID_ENTITY_CTOR,
