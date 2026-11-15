@@ -2,6 +2,7 @@
 //! 1.0 US bytes (gta-reversed only calls the original); unverified (docs/verify/HOWTO.md).
 
 use sa_core::abi::{HookReg, NativeReg};
+use sa_core::field::v3_ptr as vp;
 use sa_core::mem::GPtr;
 use sa_core::{hook, native, orig};
 use sa_math::fpu::{ge_or_nan, gt, le_or_nan, lt};
@@ -17,7 +18,7 @@ use sa_core::bindings::{
 };
 use sa_pop::bindings::add_ped;
 use sa_input::bindings::get_pad;
-use sa_pop::carctrl3::time_step;
+use sa_pop::carctrl3::{time_ms as now, time_step};
 use sa_world::bindings::{
     cull_zones_no_police, find_player_entity, find_player_ped, find_player_vehicle, find_player_wanted, fx_kill,
     get_at_direction, interesting_events_add, multiply3x3, placeable_get_top_direction, player_no_rain,
@@ -47,15 +48,6 @@ orig! {
     fn wind_register_one(px: f32, py: f32, pz: f32, ty: i32, power: f32) = cdecl 0x72C8B0 => unported;
     /// `CVehicle::UpdateWinch()` (0x6D3B80)
     fn vehicle_update_winch(v: GPtr<u8>) = thiscall 0x6D3B80 => crate::vehicle2::update_winch;
-}
-
-/// `CTimer::m_snTimeInMilliseconds` (0xB7CB84).
-fn now() -> u32 {
-    g::<u32>(0xB7_CB84).read()
-}
-
-fn vp(v: &mut [f32; 3]) -> GPtr<u8> {
-    GPtr::from_raw(v.as_mut_ptr()).cast()
 }
 
 /// `CHeli::FindSwatPositionRelativeToHeli` (0x6C4760): the phase B entry of the generated body (unhookable: callers

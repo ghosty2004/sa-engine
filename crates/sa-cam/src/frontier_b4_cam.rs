@@ -3,6 +3,7 @@
 //! (docs/verify/HOWTO.md).
 
 use sa_core::abi::HookReg;
+use sa_core::field::v3_ptr as vp;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::fpu::{ge_or_nan, le_or_nan};
@@ -39,10 +40,6 @@ const EXIT_CAM: usize = 0xB6_EC5C;
 const START_TIME: usize = 0xB6_EC60;
 /// `CTimer::ms_fTimeStep` (0xB7CB5C).
 const TIME_STEP: usize = 0xB7_CB5C;
-
-fn vp(v: &mut [f32; 3]) -> GPtr<u8> {
-    GPtr::from_raw(v.as_mut_ptr()).cast()
-}
 
 fn normalise(p: GPtr<u8>) {
     vector_normalise(p.cast());
