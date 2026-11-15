@@ -385,10 +385,10 @@ fn vec3_count(begin: u32, end: u32) -> i32 {
     (end.wrapping_sub(begin) as i32) / 12
 }
 
-/// `std::vector<CVector>::push_back(const CVector& val)` (0x5EE370, `ret 4`): with storage and the size below the
-/// capacity (unsigned), `*val` is copied to the end (0x5EB340 with one element) and the end moves by 12; else
+/// `FUN_005EE370`: `std::vector<CVector>::push_back(const CVector& val)` (0x5EE370, `ret 4`): with storage and the
+/// size below the capacity (unsigned), `*val` is copied to the end (0x5EB340 with one element) and the end moves by 12; else
 /// `insert(end, val)` (0x5EDE50, its iterator result written to the argument slot).
-#[hook(addr = 0x5EE370, conv = thiscall, name = "std::vector<CVector>::push_back", expect = "53 56 8B F1 57",
+#[hook(addr = 0x5EE370, conv = thiscall, name = "FUN_005ee370", expect = "53 56 8B F1 57",
        unverified = "frontier2-a7", route = "L2", hazards = "heap-writes")]
 pub fn vector3_push_back(this: u32, val: u32) {
     let v = GPtr::<u8>::from_addr(this as usize);
