@@ -63,20 +63,29 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-7 | 21 | AI, WORLD | 0e036130 | master | 21 | 0 | 0 | 0 | 0 | L2 21 |
 | frontier2-8 | 14 | AI, ANIM, UNK-game, WEAPON | 0e036130 | master | 14 | 0 | 0 | 0 | 0 | L2 13, L3-only 1 |
 | frontier2-9 | 21 | AI | a06f78e1 | master | 21 | 0 | 0 | 0 | 0 | L2 21 |
+| frontier2-a1 | 2 | AI | edeee96d | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| frontier2-a2 | 23 | AI, UNK-game | 40c90c34 | master | 23 | 0 | 0 | 0 | 0 | L2 23 |
+| frontier2-a3 | 5 | AI | 7104be38 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| frontier2-a4 | 2 | AI | 4b0ec921 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | frontier2-b1 | 32 | MATH, RENDER, RW | ebd33c14 | master | 32 | 0 | 0 | 0 | 0 | L1-pure 1, L2 31 |
 | frontier2-b2 | 23 | RW | 2f47ba34 | master | 23 | 0 | 0 | 0 | 0 | L2 23 |
 | frontier2-b3 | 7 | VEH | 221f09a0 | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
 | frontier2-b4 | 5 | RW, SAVE | 2f47ba34 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| frontier2-b5 | 25 | MATH, POP, VEH, WORLD | 1caf613f | master | 25 | 0 | 0 | 0 | 0 | L2 22, split 3 |
+| frontier2-b6 | 6 | VEH | c21bbc1e | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| frontier2-b7 | 4 | WORLD | c21bbc1e | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| frontier2-b8 | 8 | RENDER, RW, WEAPON | d2f93e64 | master | 8 | 0 | 0 | 0 | 0 | L2 8 |
+| frontier2-b9 | 2 | VEH | c4bfaf14 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | frontier2-c1 | 44 | AI, UNK-game | 49bdb6d2 | master | 44 | 0 | 0 | 0 | 0 | L2 44 |
 | frontier2-c2 | 35 | AI, MATH, SCRIPT, UNK-game, VEH | 49bdb6d2 | master | 35 | 0 | 0 | 0 | 0 | L2 35 |
 | frontier2-c3 | 11 | AI, SCRIPT, UNK-game | 49bdb6d2 | master | 11 | 0 | 0 | 0 | 0 | L2 11 |
 | frontier2-c4 | 10 | AUDIO, CALLED-ONLY, SCRIPT, UNK-game | d18327f1 | master | 10 | 0 | 0 | 0 | 0 | L2 9, split 1 |
-| frontier2-c5 | 22 | AI, ANIM, AUDIO, CALLED-ONLY, MATH, SCRIPT, UNK-game, WORLD | 1a07f443 | worktree-agent-a04a02581f061bd35 | 22 | 0 | 0 | 0 | 0 | L2 21, split 1 |
-| frontier2-c6 | 12 | AI, UNK-game, WORLD | 1a07f443 | worktree-agent-a04a02581f061bd35 | 12 | 0 | 0 | 0 | 0 | L2 12 |
-| frontier2-c7 | 6 | CALLED-ONLY, SCRIPT, UNK-game | 9cc9b4e3 | worktree-agent-a04a02581f061bd35 | 6 | 0 | 0 | 0 | 0 | L2 6 |
-| frontier2-c8 | 10 | STREAM, WORLD | 9cc9b4e3 | worktree-agent-a04a02581f061bd35 | 10 | 0 | 0 | 0 | 0 | L2 1, split 9 |
+| frontier2-c5 | 22 | AI, ANIM, AUDIO, CALLED-ONLY, MATH, SCRIPT, UNK-game, WORLD | 749ddded | master | 22 | 0 | 0 | 0 | 0 | L2 21, split 1 |
+| frontier2-c6 | 12 | AI, UNK-game, WORLD | 749ddded | master | 12 | 0 | 0 | 0 | 0 | L2 12 |
+| frontier2-c7 | 6 | CALLED-ONLY, SCRIPT, UNK-game | b4e16784 | (no branch) | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| frontier2-c8 | 10 | STREAM, WORLD | b4e16784 | (no branch) | 10 | 0 | 0 | 0 | 0 | L2 1, split 9 |
 | gen2-anim-1 | 1 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| gen2-audio-1 | 1 | AUDIO | 1a07f443 | worktree-agent-a04a02581f061bd35 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| gen2-audio-1 | 1 | AUDIO | 749ddded | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | gen2-coll-1 | 20 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 20 | 0 | L2 8, split 12 |
 | gen2-core-1 | 4 | UNK-game | 327954b9 | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
 | gen2-input-1 | 1 | INPUT | 327954b9 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
@@ -2155,6 +2164,94 @@ SA_UNVERIFIED=frontier2-9 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-9 $SA_
 | 0x67C360 | `CTaskSimpleInAir::Clone` | written | L2 | heap-writes |
 | 0x68AA50 | `CTaskSimpleSwim::DestroyFxSystem` | written | L2 | heap-writes |
 
+## frontier2-a1
+
+2 hooks in sa-ai; hazards: heap-writes (2); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-a1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-a1 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-a1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x68C050 | `CTaskComplexKillCriminal::CreateSubTask` | written | L2 | heap-writes |
+| 0x68E4F0 | `CTaskComplexKillCriminal::CreateNextSubTask` | written | L2 | heap-writes |
+
+## frontier2-a2
+
+23 hooks in sa-ai; hazards: ax-al-return (2), heap-writes (20), uninit-locals (1); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-a2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-a2 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-a2
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x622450 | `CTaskComplexKillPedGroupOnFoot::ComputeNearestLivingGroupPed` | written | L2 | none |
+| 0x627B20 | `FUN_00627b20` | written | L2 | heap-writes,ax-al-return |
+| 0x62D290 | `CTaskSimpleGangDriveBy::MakeAbortable` | written | L2 | heap-writes,ax-al-return |
+| 0x631F80 | `CTaskComplexSunbathe::Constructor` | written | L2 | heap-writes |
+| 0x632140 | `CTaskComplexSunbathe::CanSunbathe` | written | L2 | none |
+| 0x6333D0 | `CTaskComplexOnFire::ComputeFireDamage` | written | L2 | heap-writes |
+| 0x63D240 | `CTaskComplexShuffleSeats::CreateSubTask` | written | L2 | heap-writes |
+| 0x63D610 | `CTaskComplexShuffleSeats::CreateTaskUtilityLineUpPedWithCar` | written | L2 | heap-writes |
+| 0x6408D0 | `CTaskComplexEnterCarAsPassengerWait::CreateSubTask` | written | L2 | heap-writes |
+| 0x64CEA0 | `CTaskSimpleCreateCarAndGetIn::Destructor` | written | L2 | heap-writes |
+| 0x655570 | `CTaskComplexEvasiveCower::CreateSubTask` | written | L2 | heap-writes |
+| 0x6586A0 | `FUN_006586a0` | written | L2 | heap-writes |
+| 0x658AF0 | `CTaskComplexTreatAccident::ComputeHeading` | written | L2 | none |
+| 0x658DB0 | `CTaskComplexMedicTreatInjuredPed::CreateSubTask` | written | L2 | heap-writes |
+| 0x668790 | `CTaskComplexGoToPointAiming::Constructor` | written | L2 | heap-writes,uninit-locals |
+| 0x67B4E0 | `CTaskSimpleJetPack::Constructor` | written | L2 | heap-writes |
+| 0x68B990 | `CTaskComplexArrestPed::Constructor` | written | L2 | heap-writes |
+| 0x68C9E0 | `CTaskComplexCopInCar::CreateSubTask` | written | L2 | heap-writes |
+| 0x68CF80 | `CTaskComplexArrestPed::CreateSubTask` | written | L2 | heap-writes |
+| 0x6949A0 | `CTaskComplexFollowLeaderInFormation::Constructor` | written | L2 | heap-writes |
+| 0x6973B0 | `CTaskComplexWaitForBackup::CreateSubTask` | written | L2 | heap-writes |
+| 0x697B70 | `CTaskComplexReactToGunAimedAt::CreateSubTask` | written | L2 | heap-writes |
+| 0x69C3F0 | `CTaskAllocatorAttack::AllocateTasks` | written | L2 | heap-writes |
+
+## frontier2-a3
+
+5 hooks in sa-ai; hazards: ax-al-return (1), heap-writes (3); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-a3 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-a3 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a3 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-a3
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x43B000 | `CConversations::IsConversationAtNode` | written | L2 | ax-al-return |
+| 0x5EB740 | `CPedAttractorManager::GetPedUsingEffect<CPedAttractor>` | written | L2 | none |
+| 0x675300 | `CTaskInteriorBeInOffice::GetInfoForPedToUse` | written | L2 | heap-writes |
+| 0x67B660 | `CTaskSimpleJetPack::DropJetPack` | written | L2 | heap-writes |
+| 0x67B720 | `CTaskSimpleJetPack::ApplyRollAndPitch` | written | L2 | heap-writes |
+
+## frontier2-a4
+
+2 hooks in sa-ai; hazards: heap-writes (2); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-a4 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-a4 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a4 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-a4
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x68FD50 | `CTaskComplexCopInCar::ControlSubTask` | written | L2 | heap-writes |
+| 0x693440 | `CTaskSimpleHoldEntity::ChoosePutDownHeight` | written | L2 | heap-writes |
+
 ## frontier2-b1
 
 32 hooks in sa-core, sa-render, sa-stream; hazards: heap-writes (15), stack-residue (1), x87-transcendental (2); recordings calling them: no coverage data.
@@ -2277,6 +2374,121 @@ SA_UNVERIFIED=frontier2-b4 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b4 $S
 | 0x74FFA0 | `_rpWorldSectorTieDestroy` | written | L2 | heap-writes |
 | 0x74FFF0 | `_rpWorldSectorLightTieDestroy` | written | L2 | heap-writes |
 | 0x7CF130 | `RtDictDestroy` | written | L2 | heap-writes |
+
+## frontier2-b5
+
+25 hooks in sa-core, sa-pop, sa-veh, sa-world; hazards: heap-writes (13), stack-residue (1), x87-transcendental (1); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-b5 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-b5 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b5 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-b5
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x439C70 | `CCheat::EverybodyAttacksPlayerCheat` | written | L2 | heap-writes |
+| 0x441D30 | `CGameLogic::RestorePedsWeapons` | written | L2 | heap-writes |
+| 0x4428B0 | `CGameLogic::DoWeaponStuffAtStartOf2PlayerGame` | written | L2 | heap-writes |
+| 0x442980 | `CGameLogic::ResetStuffUponResurrection` | written | L2 | heap-writes,x87-transcendental |
+| 0x447B80 | `CGarages::TriggerMessage` | written | L2 | none |
+| 0x4485C0 | `thunk_FUN_01561490` | written | L2 | heap-writes |
+| 0x448660 | `CGarages::GivePlayerDetonator` | written | L2 | heap-writes |
+| 0x449100 | `thunk_FUN_01566680` | written | L2 | none |
+| 0x449A50 | `FUN_00449a50` | written | L2 | heap-writes |
+| 0x44DF60 | `CPathFind::RemoveInteriorLinks` | written | L2 | none |
+| 0x454BE0 | `CPickup::ExtractAmmoFromPickup` | written | L2 | heap-writes |
+| 0x4588B0 | `CPickup::ProcessGunShot` | written | L2 | heap-writes |
+| 0x45C340 | `CReplay::SaveReplayToHD` | written | split | none |
+| 0x45E2A0 | `CReplay::GoToNextBlock` | written | L2 | heap-writes |
+| 0x460390 | `CReplay::PlayReplayFromHD` | written | split | heap-writes |
+| 0x4604A0 | `CReplay::PlayBackThisFrame` | written | L2 | heap-writes |
+| 0x460DF0 | `CRoadBlocks::RegisterScriptRoadBlock` | written | L2 | none |
+| 0x463A60 | `CStuckCarCheck::AttemptToWarpVehicle` | written | L2 | stack-residue |
+| 0x463B80 | `CStuckCarCheck::RemoveCarFromCheck` | written | L2 | none |
+| 0x465970 | `CStuckCarCheck::AddCarToCheck` | written | L2 | none |
+| 0x49B280 | `CShopping::StoreVehicleMods` | written | L2 | none |
+| 0x49B3C0 | `CShopping::RestoreVehicleMods` | written | split | heap-writes |
+| 0x568DD0 | `CWorld::FindObjectsIntersectingCube` | written | L2 | none |
+| 0x569240 | `CWorld::FindMissionEntitiesIntersectingCube` | written | L2 | none |
+| 0x59B9F0 | `CCompressedMatrixNotAligned::DecompressIntoFullMatrix` | written | L2 | none |
+
+## frontier2-b6
+
+6 hooks in sa-veh; hazards: heap-writes (5), stack-residue (1), x87-transcendental (2); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-b6 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-b6 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b6 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-b6
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6A3A60 | `CAutomobile::BoostJumpControl` | written | L2 | none |
+| 0x6B4410 | `CAutomobile::SetTowLink` | written | L2 | heap-writes,x87-transcendental |
+| 0x6CFDF0 | `CTrailer::SetTowLink` | written | L2 | heap-writes,x87-transcendental |
+| 0x6D3510 | `CVehicle::CreateUpgradeAtomic` | written | L2 | heap-writes,stack-residue |
+| 0x6DFA20 | `CVehicle::AddUpgrade` | written | L2 | heap-writes |
+| 0x6F6850 | `CTrain::RemoveRandomPassenger` | written | L2 | heap-writes |
+
+## frontier2-b7
+
+4 hooks in sa-world; hazards: heap-writes (1); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-b7 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-b7 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b7 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-b7
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x566A60 | `CWorld::CallOffChaseForArea` | written | L2 | none |
+| 0x5693F0 | `CWorld::FindNearestObjectOfType` | written | L2 | none |
+| 0x591F90 | `Interior_c::AddPickups` | written | L2 | heap-writes |
+| 0x5922C0 | `Interior_c::FindBoundingBox` | written | L2 | none |
+
+## frontier2-b8
+
+8 hooks in sa-render, sa-rwcore, sa-weapon; hazards: heap-writes (2), stack-residue (4), x87-transcendental (2); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-b8 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-b8 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b8 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-b8
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x713760 | `CClouds::MovingFog_Create` | written | L2 | none |
+| 0x716B10 | `CClouds::MovingFog_Update` | written | L2 | x87-transcendental |
+| 0x73E240 | `CWeapon::FindNearestTargetEntityWithScreenCoors` | written | L2 | x87-transcendental,stack-residue |
+| 0x7C88B0 | `FUN_007c88b0` | written | L2 | heap-writes,stack-residue |
+| 0x7CA240 | `(missed by ghidra: cat7-call)` | written | L2 | stack-residue |
+| 0x7CA330 | `(missed by ghidra: cat7-call)` | written | L2 | none |
+| 0x803840 | `FUN_00803840` | written | L2 | heap-writes,stack-residue |
+| 0x812C90 | `FUN_00812c90` | written | L2 | none |
+
+## frontier2-b9
+
+2 hooks in sa-veh; hazards: heap-writes (1); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-b9 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-b9 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b9 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-b9
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6D46E0 | `CVehicle::GetPlaneOrdnancePosition` | written | L2 | none |
+| 0x6E07E0 | `CVehicle::PossiblyDropFreeFallBombForPlayer` | written | L2 | heap-writes |
 
 ## frontier2-c1
 
