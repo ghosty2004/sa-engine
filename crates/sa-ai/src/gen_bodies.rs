@@ -51,7 +51,7 @@ orig! {
     fn c_4ae070_t0(this: u32) -> u32 = thiscall 0x4AE070 => unported;
     /// `FUN_004aec50` (0x4AEC50), thiscall, 0 stack argument(s)
     fn c_4aec50_t0(this: u32) -> u32 = thiscall 0x4AEC50 => unported;
-    /// `FUN_004aeca0` (0x4AECA0), thiscall, 0 stack argument(s)
+    /// `CEventRevive::Destructor` (0x4AECA0), thiscall, 0 stack argument(s)
     fn c_4aeca0_t0(this: u32) -> u32 = thiscall 0x4AECA0 => unported;
     /// `CEventPlayerCommandToGroup::Constructor` (0x4B23D0), thiscall, 2 stack argument(s)
     fn c_4b23d0_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x4B23D0 => unported;

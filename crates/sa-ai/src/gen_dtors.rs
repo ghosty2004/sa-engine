@@ -84,7 +84,7 @@ orig! {
     fn c_4ae270_t0(this: u32) -> u32 = thiscall 0x4AE270 => unported;
     /// `FUN_004ae670` (0x4AE670), thiscall, 0 stack argument(s)
     fn c_4ae670_t0(this: u32) -> u32 = thiscall 0x4AE670 => unported;
-    /// `FUN_004aea50` (0x4AEA50), thiscall, 0 stack argument(s)
+    /// `CEventVehicleHitAndRun::Destructor` (0x4AEA50), thiscall, 0 stack argument(s)
     fn c_4aea50_t0(this: u32) -> u32 = thiscall 0x4AEA50 => unported;
     /// `FUN_004aeb90` (0x4AEB90), thiscall, 0 stack argument(s)
     fn c_4aeb90_t0(this: u32) -> u32 = thiscall 0x4AEB90 => unported;
@@ -96,13 +96,13 @@ orig! {
     fn c_4af700_t0(this: u32) -> u32 = thiscall 0x4AF700 => unported;
     /// `FUN_004af890` (0x4AF890), thiscall, 0 stack argument(s)
     fn c_4af890_t0(this: u32) -> u32 = thiscall 0x4AF890 => unported;
-    /// `FUN_004afbf0` (0x4AFBF0), thiscall, 0 stack argument(s)
+    /// `CEventVehicleThreat::Destructor` (0x4AFBF0), thiscall, 0 stack argument(s)
     fn c_4afbf0_t0(this: u32) -> u32 = thiscall 0x4AFBF0 => unported;
     /// `FUN_004afe70` (0x4AFE70), thiscall, 0 stack argument(s)
     fn c_4afe70_t0(this: u32) -> u32 = thiscall 0x4AFE70 => unported;
     /// `CEventGunAimedAt::~CEventGunAimedAt` (0x4B07B0), thiscall, 0 stack argument(s)
     fn c_4b07b0_t0(this: u32) -> u32 = thiscall 0x4B07B0 => unported;
-    /// `FUN_004b0da0` (0x4B0DA0), thiscall, 0 stack argument(s)
+    /// `CEventVehicleDied::Destructor` (0x4B0DA0), thiscall, 0 stack argument(s)
     fn c_4b0da0_t0(this: u32) -> u32 = thiscall 0x4B0DA0 => unported;
     /// `FUN_004b1170` (0x4B1170), thiscall, 0 stack argument(s)
     fn c_4b1170_t0(this: u32) -> u32 = thiscall 0x4B1170 => unported;
@@ -184,7 +184,7 @@ orig! {
     fn c_5eeaf0_t0(this: u32) -> u32 = thiscall 0x5EEAF0 => unported;
     /// `FUN_005eebc0` (0x5EEBC0), thiscall, 0 stack argument(s)
     fn c_5eebc0_t0(this: u32) -> u32 = thiscall 0x5EEBC0 => unported;
-    /// `thunk_FUN_0040a472` (0x5F63F0), thiscall, 0 stack argument(s)
+    /// `CEventPlayerCommandToGroupAttack::Destructor` (0x5F63F0), thiscall, 0 stack argument(s)
     fn c_5f63f0_t0(this: u32) -> u32 = thiscall 0x5F63F0 => unported;
     /// `CTaskComplexBeStill::~CTaskComplexBeStill` (0x5F6700), thiscall, 0 stack argument(s)
     fn c_5f6700_t0(this: u32) -> u32 = thiscall 0x5F6700 => unported;
@@ -194,27 +194,27 @@ orig! {
     fn c_5f6920_t0(this: u32) -> u32 = thiscall 0x5F6920 => unported;
     /// `CEventPlayerCollisionWithPed::Destructor` (0x5FEE80), thiscall, 0 stack argument(s)
     fn c_5fee80_t0(this: u32) -> u32 = thiscall 0x5FEE80 => unported;
-    /// `FUN_005fef70` (0x5FEF70), thiscall, 0 stack argument(s)
+    /// `CEventScriptedAttractor::Destructor` (0x5FEF70), thiscall, 0 stack argument(s)
     fn c_5fef70_t0(this: u32) -> u32 = thiscall 0x5FEF70 => unported;
-    /// `FUN_005ff2c0` (0x5FF2C0), thiscall, 0 stack argument(s)
+    /// `CEventAcquaintancePedHateBadlyLit::Destructor` (0x5FF2C0), thiscall, 0 stack argument(s)
     fn c_5ff2c0_t0(this: u32) -> u32 = thiscall 0x5FF2C0 => unported;
-    /// `thunk_FUN_00401a42` (0x5FF460), thiscall, 0 stack argument(s)
+    /// `CEventHealthLow::Destructor` (0x5FF460), thiscall, 0 stack argument(s)
     fn c_5ff460_t0(this: u32) -> u32 = thiscall 0x5FF460 => unported;
-    /// `FUN_005ff520` (0x5FF520), thiscall, 0 stack argument(s)
+    /// `CEventHealthReallyLow::Destructor` (0x5FF520), thiscall, 0 stack argument(s)
     fn c_5ff520_t0(this: u32) -> u32 = thiscall 0x5FF520 => unported;
-    /// `FUN_005ff5e0` (0x5FF5E0), thiscall, 0 stack argument(s)
+    /// `CEventLowAngerAtPlayer::Destructor` (0x5FF5E0), thiscall, 0 stack argument(s)
     fn c_5ff5e0_t0(this: u32) -> u32 = thiscall 0x5FF5E0 => unported;
     /// `FUN_005ff6a0` (0x5FF6A0), thiscall, 0 stack argument(s)
     fn c_5ff6a0_t0(this: u32) -> u32 = thiscall 0x5FF6A0 => unported;
-    /// `FUN_005ff760` (0x5FF760), thiscall, 0 stack argument(s)
+    /// `CEventOnFire::Destructor` (0x5FF760), thiscall, 0 stack argument(s)
     fn c_5ff760_t0(this: u32) -> u32 = thiscall 0x5FF760 => unported;
-    /// `thunk_FUN_004ac010` (0x5FF860), thiscall, 0 stack argument(s)
+    /// `CEventEscalator::Destructor` (0x5FF860), thiscall, 0 stack argument(s)
     fn c_5ff860_t0(this: u32) -> u32 = thiscall 0x5FF860 => unported;
     /// `CEntityScanner::Clear` (0x5FF9D0), thiscall, 0 stack argument(s)
     fn c_5ff9d0_t0(this: u32) -> u32 = thiscall 0x5FF9D0 => unported;
     /// `FUN_00609080` (0x609080), thiscall, 0 stack argument(s)
     fn c_609080_t0(this: u32) -> u32 = thiscall 0x609080 => unported;
-    /// `FUN_00609140` (0x609140), thiscall, 0 stack argument(s)
+    /// `CEventDontJoinPlayerGroup::Destructor` (0x609140), thiscall, 0 stack argument(s)
     fn c_609140_t0(this: u32) -> u32 = thiscall 0x609140 => unported;
     /// `FUN_00609300` (0x609300), thiscall, 0 stack argument(s)
     fn c_609300_t0(this: u32) -> u32 = thiscall 0x609300 => unported;
@@ -228,7 +228,7 @@ orig! {
     fn c_61a6f0_t0(this: u32) -> u32 = thiscall 0x61A6F0 => unported;
     /// `thunk_FUN_0061a6f0` (0x61BCA0), thiscall, 0 stack argument(s)
     fn c_61bca0_t0(this: u32) -> u32 = thiscall 0x61BCA0 => unported;
-    /// `FUN_0061c310` (0x61C310), thiscall, 0 stack argument(s)
+    /// `CEventVehicleDamageWeapon::Destructor` (0x61C310), thiscall, 0 stack argument(s)
     fn c_61c310_t0(this: u32) -> u32 = thiscall 0x61C310 => unported;
     /// `CTaskSimpleFightingControl::Destructor` (0x61DCA0), thiscall, 0 stack argument(s)
     fn c_61dca0_t0(this: u32) -> u32 = thiscall 0x61DCA0 => unported;
@@ -580,7 +580,7 @@ orig! {
     fn c_6709f0_t0(this: u32) -> u32 = thiscall 0x6709F0 => unported;
     /// `FUN_006726f0` (0x6726F0), thiscall, 0 stack argument(s)
     fn c_6726f0_t0(this: u32) -> u32 = thiscall 0x6726F0 => unported;
-    /// `thunk_FUN_00401ac8` (0x674ED0), thiscall, 0 stack argument(s)
+    /// `CEventInteriorUseInfo::Destructor` (0x674ED0), thiscall, 0 stack argument(s)
     fn c_674ed0_t0(this: u32) -> u32 = thiscall 0x674ED0 => unported;
     /// `CTaskInteriorBeInHouse::Destructor` (0x675000), thiscall, 0 stack argument(s)
     fn c_675000_t0(this: u32) -> u32 = thiscall 0x675000 => unported;

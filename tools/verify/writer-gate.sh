@@ -15,6 +15,7 @@
 #            (tools/verify/state_check.py)
 #   dupes    no cross-crate copy of a function beyond tools/verify/dupes-allow.txt (tools/verify/dupes.py --check)
 #   cfg      platform cfgs only in backends / the binding layer beyond tools/verify/cfg-baseline.txt (cfg_check.py)
+#   gen      tools/gen/{patterns,ai_patterns,audio_patterns}.py --check (generated ports match the exe + catalogue)
 #   layers   crate dependencies follow ADR-003 §3.4's layers (tools/lib/layers.py, tools/verify/crate_layers.py)
 #   clippy   cargo clippy --workspace --all-targets -- -D warnings (host build of every crate and test)
 #   i686     cargo build --release --target i686-pc-windows-gnu -p sa-launcher -p sa-hook (the in-process
@@ -83,6 +84,20 @@ python3 -I "$HERE/dupes.py" --check > "$OUT/dupes.log" 2>&1
 res dupes "$([ $? = 0 ] && echo 1)" "$(head -1 "$OUT/dupes.log")$(grep -m1 '^FAIL' "$OUT/dupes.log" | cut -c1-160 | sed 's/^/; /')"
 python3 -I "$HERE/cfg_check.py" > "$OUT/cfg.log" 2>&1
 res cfg "$([ $? = 0 ] && echo 1)" "$(head -1 "$OUT/cfg.log")$(grep -m1 '^FAIL' "$OUT/cfg.log" | sed 's/^/; /')"
+# ADR-003 §3.5: the byte-pattern generators' output matches what they produce from the exe and the catalogue
+# (capstone from the project venv: this checkout's .venv, else the main checkout's)
+PYV="$ROOT/.venv/bin/python"; [ -x "$PYV" ] || PYV="${ROOT%%/.claude/worktrees/*}/.venv/bin/python"
+if skip gen; then
+    printf 'SKIP %-8s %s\n' gen "generator --check" | tee -a "$SUMMARY"
+elif [ ! -x "$PYV" ]; then
+    res gen 0 "no project venv (.venv) with capstone"
+else
+    : > "$OUT/gen.log"; bad=""
+    for g in patterns ai_patterns audio_patterns; do
+        "$PYV" -I "$ROOT/tools/gen/$g.py" --check >> "$OUT/gen.log" 2>&1 || bad="$bad $g"
+    done
+    res gen "$([ -z "$bad" ] && echo 1)" "patterns / ai_patterns / audio_patterns --check$([ -z "$bad" ] || echo ":$bad differ; $(grep -m1 '^differs' "$OUT/gen.log"); log $OUT/gen.log")"
+fi
 python3 -I "$HERE/crate_layers.py" > "$OUT/layers.log" 2>&1
 res layers "$([ $? = 0 ] && echo 1)" "$(head -1 "$OUT/layers.log")$(grep -m1 '^FAIL' "$OUT/layers.log" | sed 's/^/; /')"
 

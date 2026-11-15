@@ -60,13 +60,6 @@ pub fn g_cb_skinplugin_rp_atomic_stream_get_size_7c7510() -> u32 {
     0
 }
 
-/// `FUN_007c8830` (0x7C8830, RW): const, cdecl, `ret`; 2 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_fun_007c8830_7c8830() -> u32 {
-    0
-}
-
 /// `_rpUVAnimCustomDataStreamGetSize` (0x7CC010, RW): const, cdecl, `ret`; 2 instruction(s) matched.
 #[hook(addr = 0x7CC010, conv = cdecl, name = "_rpUVAnimCustomDataStreamGetSize", expect = "B8 40 00 00 00", route = "L1-pure", hazards = "none")]
 pub fn g_rp_uvanim_custom_data_stream_get_size_7cc010() -> u32 {
@@ -248,7 +241,6 @@ pub const BODIES: &[Body] = &[
     (0x7C6A70, 0x3A6DF6CC919E0BCB, &[(0x7C6A70, 5)]),
     (0x7C7500, 0x3A6DF6CC919E0BCB, &[(0x7C7500, 5)]),
     (0x7C7510, 0x58389C18233078FF, &[(0x7C7510, 3)]),
-    (0x7C8830, 0x58389C18233078FF, &[(0x7C8830, 3)]),
     (0x7CC010, 0x12AB673A5F182ADC, &[(0x7CC010, 6)]),
     (0x7CC3A0, 0xEC98D0BD866D2CEC, &[(0x7CC3A0, 8)]),
     (0x7CC740, 0xAF647E4C8602FFD2, &[(0x7CC740, 1)]),
@@ -280,7 +272,6 @@ mod tests {
     fn pattern_const() {
         assert_eq!(g_rp_atomic_validate_plugins_74bf00(), 1);
         assert_eq!(g_cb_skinplugin_rp_atomic_stream_get_size_7c7510(), 0);
-        assert_eq!(g_fun_007c8830_7c8830(), 0);
         assert_eq!(g_rp_uvanim_custom_data_stream_get_size_7cc010(), 0x40);
         assert_eq!(g_fun_00810030_810030(), 1);
     }

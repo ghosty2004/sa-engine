@@ -56,11 +56,10 @@ pub fn g_fun_0049ea80_49ea80(this: u32) -> u32 {
 
 /// `Fx_c::Exit` (0x4A1320, RENDER): small, thiscall, `ret`; 8 instruction(s) matched.
 #[hook(addr = 0x4A1320, conv = thiscall, name = "Fx_c::Exit", expect = "56 8B F1 E8 A8 FF FF FF", unverified = "gen2-render-4", route = "L2", hazards = "none")]
-pub fn g_fx_c_exit_4a1320(this: u32) -> u32 {
+pub fn g_fx_c_exit_4a1320(this: u32) {
     c_4a12d0_t0(this);
     c_49e850_t0(this);
-    let v3 = c_4a9a10_t0(0xA9_AE80);
-    v3
+    let _v3 = c_4a9a10_t0(0xA9_AE80);
 }
 
 /// `FUN_004a9090` (0x4A9090, RENDER): small, thiscall, `ret`; 6 instruction(s) matched.
