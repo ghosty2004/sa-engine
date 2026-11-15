@@ -1847,3 +1847,47 @@
   CGangWars::Update, CRoadBlocks::GenerateRoadBlocks, CCollision::ProcessColModels' disk cases; L1 specs for
   0x4AECA0 / 0x4B1320 / 0x4B1B50 (preserve ecx); the rest of the AI frontier (the ~250-function turn was not reached:
   56 hooks + 3 natives this part).
+## 2026-11-15 — FRONTIER-2 lane B: VEH / WORLD / RENDER / RW / CAM / … frontier turn (agent, branch worktree-agent-a64af3d60c6e9085b)
+- Base: master 8c9cbf77. Lane B of the three-way split (subsystems VEH, WORLD, RENDER, RW, CAM, WEAPON, POP, PED, ANIM,
+  STREAM, CORE, MATH, SAVE, PHYS). Every port from the 1.0 US bytes (gta-reversed as an aid only), every address checked
+  against `inflight.py`'s `elsewhere()` before porting and again before hand-back (0 overlaps with master / other
+  branches). 67 new unverified hooks in four batches, plus 3 phase B natives:
+  - `frontier2-b1` (RENDER + MATH + one STREAM row): the `Fx_c` / `FxManager_c` shutdown and particle-recycling paths
+    (0x49E630, 0x49E850, 0x4A12D0, 0x4A90A0, 0x4A9400, 0x4A9A10, 0x4A9C80, 0x4AA1B0, 0x4A2510, 0x4AAC70), the `Fx_c`
+    helpers (CreateMatFromVec 0x49E950 on the literal x87 stack, AddTyreBurst 0x49F300, AddWood 0x49EE10 with its rand
+    sites, TriggerBullet/FootSplash 0x4A10E0 / 0x4A1150), `FxManager_c::CreateFxSystem` 0x4A95C0 / 0x4A9BB0,
+    `FxEmitter_c::AddParticle` (matrix overload) 0x4A4050; `CPostEffects` 0x700BE0, 0x701170, 0x702F00, 0x7011C0,
+    0x701320, 0x702F40; `CSprite2d::Draw` 0x7282C0, `CShadowCamera::Update(RpAtomic*)` 0x705C80,
+    `CRopes::IsCarriedByRope` 0x555F80, `CShadows::RemoveOilInArea` 0x7074F0, `CCheckpoints::UpdatePos` 0x722900 /
+    `SetHeading` 0x722970, `RpClumpGtaCancelStream` 0x72E700, `CGeneral::GetAngleBetweenPoints` 0x53CEA0 (L1-pure,
+    the L1 run 1,060,000 cases on the native backend passes; registered after every older sa-core hook so sa-hook's
+    table order test holds).
+  - `frontier2-b2` (RW, new sa-rwcore `frontier_b.rs`): sector teardown / lookup (0x74ECA0, 0x74ED50, 0x74F4E0, 0x751660,
+    0x751300, 0x74EC00), geometry / atomic (0x74CE60, 0x74D6D0, 0x74BF40), UV anim (0x7CC530, 0x7CC4B0, 0x7C8D40,
+    0x7CC760 with FPATAN), strings / lists / resources (0x80A470, 0x80A4A0, 0x809240, 0x801E90, 0x808320), files /
+    images / MatFX (0x80E9B0, 0x800810 with the jump table decoded, 0x803790, 0x816290), `_rwMatrixIdentityError`
+    0x7F1590 (ST0); native 0x7C8830 (3-byte `xor eax, eax; ret`).
+  - `frontier2-b3` (VEH): `CQuadBike::CQuadBike` 0x6CE370, `CAutomobile::SetupDamageAfterLoad` 0x6B3E90, `BreakTowLink`
+    0x6A4400, `GetTowBarPos` 0x6AF250, `CTrain::GetDooorAngleOpenRatioU32` 0x6F5930, `CHeli::TestSniperCollision`
+    0x6C6890, `CBike::BlowUpCar` 0x6BEA10.
+  - `frontier2-b4` (RW + SAVE): the sector tie destroys 0x74FFA0 / 0x74FFF0 (revealed by b2), `RtDictDestroy` 0x7CF130,
+    `CObjectSaveStructure::Construct` 0x5D2160 / `Extract` 0x5D2220 (new sa-core `object_save.rs`).
+  - Phase B natives: `CCarAI::TellCarToFollowOtherCar` 0x41C960 (unhookable: the protection writes its entry; the
+    existing port now registered), `CPlayerInfo::CancelPlayerEnteringCars` 0x56E860 (empty `ret 4`).
+- Hazards recorded on the hooks: stack-residue where the original keeps temporaries in its own argument slots (AddWood,
+  RwFreeListForAllUsed, the same-depth image copy, TestSniperCollision); TestSniperCollision compares
+  `CCollision::DistToLine`'s result through the f64 binding (exact for f32-derived values, noted).
+- ADR-003: no new bindings rows; repeated declarations avoided by making the existing ones `pub` and importing them
+  (0x749C00 clumpstream, 0x74ECA0 / 0x74ED50 worldcreate now targeting the ports, 0x809440 anim, 0x6D0B10 mvpd_v2);
+  `make structure` clean.
+- Writer gate (base 8c9cbf77): all steps PASS (hooks 67, queue, bindings, state, dupes, cfg, layers, commits, clippy,
+  i686, i686clip, wasm32, hooktest 59/59, l1test, l1 0x53CEA0).
+- frontier.py (lane B subsystems, to port, excluding addresses other branches register): before 263 (direct 228,
+  virtual 27, partial 8) → after 197 (direct 169, virtual 20, partial 8); the partial ports are lane A's. Newly revealed
+  in lane B: 0x59B9F0 `DecompressIntoFullMatrix` (sa-math has the L1-verified model; not hooked yet).
+- Scenarios (native i686 sa-game, --fixed-step 40, default lengths): pausemenu 416 / 0 blocked, solicit 4016 / 0,
+  crossing 1216 / 0, melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0; no crash.
+- verify-all `frontier2-lb1` (lanes 4-5, `SA_UNVERIFIED=frontier2-b1..b4`, head 3f216dfe, fresh release sa-oracle):
+  IDENTICAL 13/13; default set `frontier2-lb-default` (lanes 4-5): IDENTICAL 13/13.
+- i686 sa-game with and without `--features samp`, `FEATURES=samp tools/web/build.sh`: build.
+
