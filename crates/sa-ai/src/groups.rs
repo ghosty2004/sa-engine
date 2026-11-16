@@ -529,7 +529,7 @@ pub fn group_teleport(this: GPtr<u8>, pos: GPtr<f32>) {
     }
 }
 
-use crate::bindings::wander_gang_ctor as wander_gang_ctor_alloc;
+use sa_pop::bindings::wander_gang_ctor as wander_gang_ctor_alloc;
 orig! {
     /// `CTaskComplexFollowLeaderInFormation::CTaskComplexFollowLeaderInFormation(CPedGroup*, CPed* leader, const
     /// CVector2D& offset, float)` (0x6949A0, `ret 0x10`)

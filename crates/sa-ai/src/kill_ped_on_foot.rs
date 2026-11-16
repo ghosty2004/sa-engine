@@ -24,7 +24,7 @@ use crate::bindings::stand_still_dtor;
 use crate::bindings::stand_still_process_ped;
 use crate::bindings::task_complex_dtor;
 use crate::bindings::task_timer_is_out_of_time as timer_is_out_of_time;
-use crate::bindings::vehicle_is_driver;
+use sa_pop::bindings::vehicle_is_driver;
 use crate::bindings::vehicle_is_passenger;
 use sa_world::bindings::entity_clean_up_old_reference;
 use sa_world::bindings::find_player_ped;

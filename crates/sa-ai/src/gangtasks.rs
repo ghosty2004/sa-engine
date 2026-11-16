@@ -42,7 +42,7 @@ use crate::bindings::ped_stop_playing_hand_signal;
 use crate::bindings::play_hand_signal_anim_ctor_61b2b0 as play_hand_signal_anim_ctor;
 use crate::bindings::seek_entity_xy_offset_ctor;
 use crate::bindings::should_load_gang_anims;
-use crate::bindings::wander_gang_ctor;
+use sa_pop::bindings::wander_gang_ctor;
 use sa_world::bindings::entity_register_reference;
 use sa_world::bindings::find_player_ped as world_find_player_ped;
 use sa_core::bindings::general_get_radian_angle_between_points as general_radian_angle_between_points;

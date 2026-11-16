@@ -12,7 +12,7 @@ use crate::common::*;
 
 use crate::bindings::group_intel_process;
 use crate::bindings::membership_process;
-use crate::bindings::wander_gang_ctor;
+use sa_pop::bindings::wander_gang_ctor;
 use sa_core::bindings::membership_set_leader;
 use sa_pop::bindings::add_ped as population_add_ped;
 use sa_world::bindings::be_in_group_ctor;

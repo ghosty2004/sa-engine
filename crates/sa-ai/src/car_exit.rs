@@ -905,7 +905,7 @@ pub fn car_set_ped_out_position_ped_out_of_collision_port(ped: GPtr<u8>, veh: GP
 use crate::bindings::car_enter_exit_car_has_door_to_close;
 use sa_world::bindings::car_enter_exit_is_room_for_ped_to_leave_car;
 use crate::bindings::leave_car_create_sub_task as leave_car_create_sub_task_orig;
-use crate::bindings::vehicle_is_driver;
+use sa_pop::bindings::vehicle_is_driver;
 use crate::bindings::vehicle_is_passenger;
 use sa_world::bindings::ped_set_ped_state;
 orig! {

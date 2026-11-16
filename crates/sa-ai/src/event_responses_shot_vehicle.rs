@@ -23,7 +23,7 @@ use crate::bindings::task_is_go_to_task;
 use crate::bindings::use_attractor_ctor;
 use crate::bindings::use_attractor_run_ctor;
 use crate::bindings::use_attractor_sprint_ctor;
-use crate::bindings::vehicle_is_driver;
+use sa_pop::bindings::vehicle_is_driver;
 use sa_world::bindings::find_player_ped;
 use sa_core::bindings::general_random_int_in_range;
 use sa_core::bindings::vector_dot_product as vector_dot;

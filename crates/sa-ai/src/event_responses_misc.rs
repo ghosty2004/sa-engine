@@ -16,7 +16,7 @@ use sa_world::bindings::smart_flee_point_ctor;
 use crate::bindings::use_attractor_ctor;
 use crate::bindings::use_attractor_run_ctor;
 use crate::bindings::use_attractor_sprint_ctor;
-use crate::bindings::vehicle_is_driver;
+use sa_pop::bindings::vehicle_is_driver;
 use sa_world::bindings::find_player_ped;
 use sa_world::bindings::arrest_ped_ctor;
 use sa_world::bindings::die_ctor;

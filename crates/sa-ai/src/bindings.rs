@@ -1434,11 +1434,6 @@ orig! {
 }
 
 orig! {
-    /// `CTaskComplexWanderGang::CTaskComplexWanderGang` (0x66F5C0)
-    pub fn wander_gang_ctor(t: GPtr<u8>, ms: i32, dir: i32, time: i32, b: u32, f: u32) -> GPtr<u8> = thiscall 0x66F5C0 => unported;
-}
-
-orig! {
     /// `FUN_0066f6c0` (0x66F6C0)
     pub fn group_member_bounding_sphere(t: GPtr<u8>, sphere: GPtr<u8>, peds: GPtr<u8>) = thiscall 0x66F6C0 => crate::frontier_c::bounding_sphere_of_peds;
 }
@@ -1616,11 +1611,6 @@ orig! {
 orig! {
     /// `CVehicle::IsPassenger-Ped` (0x6D1BD0)
     pub fn vehicle_is_passenger(v: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6D1BD0 => unported;
-}
-
-orig! {
-    /// `CVehicle::IsDriver-Ped` (0x6D1C40)
-    pub fn vehicle_is_driver(v: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x6D1C40 => unported;
 }
 
 orig! {

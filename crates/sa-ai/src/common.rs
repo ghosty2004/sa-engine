@@ -21,7 +21,7 @@ pub use crate::bindings::line_up_ped_with_car_ctor;
 pub use sa_world::bindings::ped_set_move_state;
 pub use crate::bindings::ped_set_radio_station;
 pub use crate::bindings::say_jacked;
-pub use crate::bindings::vehicle_is_driver;
+pub use sa_pop::bindings::vehicle_is_driver;
 pub use sa_anim::bindings::assoc_set_current_time;
 pub use sa_core::bindings::crt_new;
 pub use sa_world::bindings::entity_clean_up_old_reference;

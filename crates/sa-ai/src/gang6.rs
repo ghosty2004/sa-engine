@@ -79,7 +79,7 @@ use crate::bindings::should_load_gang_anims;
 use crate::bindings::task_complex_dtor;
 use crate::bindings::task_timer_is_out_of_time;
 use crate::bindings::vehicle_set_hassle_pos_id;
-use crate::bindings::wander_gang_ctor;
+use sa_pop::bindings::wander_gang_ctor;
 use sa_world::bindings::entity_clean_up_old_reference;
 use sa_world::bindings::entity_register_reference;
 use sa_world::bindings::find_player_ped as world_find_player_ped;

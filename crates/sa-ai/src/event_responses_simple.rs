@@ -25,7 +25,7 @@ use sa_world::bindings::smart_flee_point_ctor;
 use crate::bindings::steal_car_ctor;
 use crate::bindings::task_is_go_to_task;
 use crate::bindings::use_attractor_ctor;
-use crate::bindings::vehicle_is_driver;
+use sa_pop::bindings::vehicle_is_driver;
 use crate::bindings::walk_round_object_ctor;
 use sa_world::bindings::find_player_ped;
 use sa_world::bindings::find_player_vehicle;

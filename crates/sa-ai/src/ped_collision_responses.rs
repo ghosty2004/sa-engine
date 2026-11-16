@@ -34,7 +34,7 @@ use crate::bindings::task_is_go_to_task;
 use crate::bindings::use_attractor_ctor;
 use crate::bindings::use_attractor_run_ctor;
 use crate::bindings::use_attractor_sprint_ctor;
-use crate::bindings::vehicle_is_driver;
+use sa_pop::bindings::vehicle_is_driver;
 use sa_core::bindings::get_weapon_info as weapon_info_get;
 use sa_core::bindings::random_float_in_range as general_random_float_in_range;
 use sa_core::bindings::tm_get_simplest_active_task;

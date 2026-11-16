@@ -192,7 +192,8 @@ orig! {
     fn simple_arrest_ped_ctor(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x68B620 => unported;
 }
 
-use crate::bindings::{drag_ped_from_car_ctor, vehicle_is_driver};
+use crate::bindings::drag_ped_from_car_ctor;
+use sa_pop::bindings::vehicle_is_driver;
 use sa_world::bindings::{destroy_car_ctor, kill_ped_on_foot_ctor, seek_entity_standard_ctor, task_gun_control_ctor, vector_sub};
 use sa_core::bindings::general_limit_radian_angle;
 use sa_world::world::common::entity_pos;

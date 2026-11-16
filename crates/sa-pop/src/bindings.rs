@@ -250,7 +250,7 @@ orig! {
 
 orig! {
     /// `CGangWars::TellGangMembersTo` (0x444530)
-    pub fn tell_gang_members_to(b: u32) = cdecl 0x444530 => unported;
+    pub fn tell_gang_members_to(b: u32) = cdecl 0x444530 => crate::gang_war_tell::tell_gang_members_to;
 }
 
 orig! {
@@ -424,6 +424,11 @@ orig! {
 }
 
 orig! {
+    /// `CTaskComplexWanderGang::CTaskComplexWanderGang` (0x66F5C0)
+    pub fn wander_gang_ctor(t: GPtr<u8>, ms: i32, dir: i32, time: i32, b: u32, f: u32) -> GPtr<u8> = thiscall 0x66F5C0 => unported;
+}
+
+orig! {
     /// `CDamageManager::GetCarNodeIndexFromDoor` (0x6C26F0)
     pub fn get_car_node_index_from_door(d: u32) -> i32 = cdecl 0x6C26F0 => unported;
 }
@@ -436,6 +441,11 @@ orig! {
 orig! {
     /// `CVehicle::SetupPassenger` (0x6D1AA0)
     pub fn setup_passenger(v: GPtr<u8>, i: i32, pt: i32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x6D1AA0 => unported;
+}
+
+orig! {
+    /// `CVehicle::IsDriver-Ped` (0x6D1C40)
+    pub fn vehicle_is_driver(v: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x6D1C40 => unported;
 }
 
 orig! {

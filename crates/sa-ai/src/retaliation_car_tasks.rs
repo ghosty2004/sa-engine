@@ -13,7 +13,7 @@ use sa_math::x87::Cmp;
 use crate::common::*;
 
 use sa_world::bindings::leave_car_and_flee_ctor;
-use crate::bindings::vehicle_is_driver;
+use sa_pop::bindings::vehicle_is_driver;
 use crate::bindings::vehicle_is_passenger;
 use sa_world::bindings::entity_clean_up_old_reference;
 use sa_world::bindings::entity_register_reference;

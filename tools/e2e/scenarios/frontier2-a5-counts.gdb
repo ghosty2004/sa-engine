@@ -15,7 +15,8 @@ rbreak ^sa_pop::[a-z0-9_]*::create_attack_wave$
 rbreak ^sa_pop::[a-z0-9_]*::create_defending_group$
 rbreak ^sa_pop::[a-z0-9_]*::pick_zone_to_attack$
 rbreak ^sa_pop::[a-z0-9_]*::gang_wars_update$
-commands 1-7
+rbreak ^sa_pop::[a-z0-9_]*::tell_gang_members_to$
+commands 1-8
 silent
 continue
 end
