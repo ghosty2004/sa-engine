@@ -15,6 +15,10 @@ gamepad = ["native", "dep:gilrs"]
 # audio output through cpal (native only; needs ALSA on Linux)
 audio = ["native", "dep:cpal"]
 
+[dependencies]
+# `Instant`: std natively, `performance.now()` on wasm32 (the clock module)
+web-time = "1.1"
+
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 winit = { version = "0.30", optional = true }
 gilrs = { version = "0.11", optional = true }

@@ -16,22 +16,7 @@ use std::sync::OnceLock;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::thread::ThreadId;
 
-use sa_platform::clock::Clock;
-
-/// Real time since the clock was made (`web_time`: `performance.now()` on wasm32).
-pub struct StdClock(web_time::Instant);
-
-impl Default for StdClock {
-    fn default() -> Self {
-        StdClock(web_time::Instant::now())
-    }
-}
-
-impl StdClock {
-    fn now_seconds(&self) -> f64 {
-        self.0.elapsed().as_secs_f64()
-    }
-}
+use sa_platform::clock::{Clock, StdClock};
 
 /// The step in microseconds (0: real time).
 static STEP_US: AtomicU64 = AtomicU64::new(0);

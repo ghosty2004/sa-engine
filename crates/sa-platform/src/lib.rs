@@ -13,6 +13,7 @@
 //! * [`win32`]: the Win32 semantics the ported code relies on (window messages, virtual keys,
 //!   `MapVirtualKeyA`, `GetKeyState`, `QueryPerformanceCounter`/`timeGetTime`);
 //! * [`clock`]: a monotonic clock;
+//! * [`perf`]: per-frame phase timers and counters (PERF-0);
 //! * [`kernel`]: kernel32 objects (semaphores, threads, `LocalAlloc`) for `CdStream`;
 //! * [`audio`]: the PCM sink of the phase B mixer;
 //! * [`gpu`]: the `IDirect3DDevice9` seam the ported RW D3D9 driver calls (implemented on wgpu by
@@ -30,6 +31,7 @@ pub mod fs;
 pub mod gpu;
 pub mod input;
 pub mod kernel;
+pub mod perf;
 pub mod vfs;
 pub mod win32;
 
