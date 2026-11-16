@@ -3100,3 +3100,24 @@
 - Writer gate (base b31ab3de, head c0ae4432): all 18 steps PASS. Its queue step failed on master already (the writer
   branch of batches frontier2-b18 / b19 changed from "(no branch)" to master once they were merged); c0ae4432
   regenerates catalog/verify-queue.csv and docs/verify/QUEUE.md (no hook or status changed).
+
+## 2026-11-16 — PERF-1 first optimisations: Idle 14 ms rule, worker yield, registry dispatch (agent)
+- c2b94050 `perf(sa-game)`: with the frame limiter off (0xBA6794 == 0) and outside `--fixed-step`, sa-game's WinMain
+  step sets `g_LastTickTime` (0xB72CA8) to now - 14 ms before rsIDLE, so the unchanged `Game::Idle` port does not
+  spin (user decision 2026-11-16; ROADMAP divergence ledger, accepted). Limiter on: 1:1 (`idle.spin` 6.8 ms before
+  and after). Phase A untouched; no corpus recording pokes 0xBA6794 (only save-load has header pokes).
+- 1ff9632e `perf(web)`: web/worker.js yields with scheduler.postTask / MessageChannel instead of setTimeout(tick, 0).
+- 22dc83c0 `perf(sa-core)`: registry lookup via an open-addressing hash index (was a binary search); call / miss
+  counting only when on (`--perf`, `?SA_GAME_PERF`, `--report`); host stand-in lookup skipped through a compile-time
+  key hash + 4096-bit filter (was a spin lock and a 512-slot scan on every unported call: the big cost).
+- Native offscreen, limiter off, `--perf` (mean / median / p95 ms): base 22.11 / 20.17 / 34.50 -> after the Idle skip
+  17.03 / 16.21 / 22.22 -> after the registry change 9.62 / 9.74 / 11.64 (104 fps). Without `--perf`: 14.96 / 17.03
+  (Idle skip, two runs) -> 8.86 / 9.62 (registry). Limiter on: 40.24 / 40.27 / 40.23 (the 25 fps limit; the work
+  shrinks, `loop` waits longer). Deterministic crossing scenario (1200 iterations, `--fixed-step 40`): the report's
+  per-function dispatch counts are IDENTICAL base vs final (5423 functions, 56,995,849 calls); frame pacing 29.1 ->
+  17.7 ms. Dispatches per frame rise in real-time runs (32k -> 39k, bimodal): timing-dependent original paths run
+  more often at the higher frame rate.
+- Web WebGPU (1500 frames, limiter off): base 28.08 ms, after the Idle skip 24.78 ms. The worker-yield and registry
+  web runs and all WebGL2 runs were not completed (stopped at the usage limit).
+- Not run (usage limit): writer gate, verify-all lanes 1-3, frontier.sh beyond `crossing`. sa-core tests pass (host
+  75/75; i686 orig:: 6/6 incl. the new index test).

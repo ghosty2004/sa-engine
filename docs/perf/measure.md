@@ -123,3 +123,12 @@ Reading:
   cooperative audio threads).
 - The GPU is idle most of the frame (0.8 ms of 21); the frame is CPU-bound: game logic (~5.5 ms), the game's render
   code (~6.5 ms), our D3D9 translation (~2.8 ms).
+
+## PERF-1 (2026-11-16): first optimisations
+
+Native offscreen, limiter off, `--perf` (frame mean / median / p95, ms): PERF-0 base 22.11 / 20.17 / 34.50;
+`Game::Idle`'s 14 ms rule skipped with the limiter off (ROADMAP ledger) 17.03 / 16.21 / 22.22; registry dispatch O(1)
+and the host stand-in filter 9.62 / 9.74 / 11.64. Phase means after both: `logic.world` 1.10, `d3d9` 2.98,
+`render.world` 0.46, `logic` 0.76, `render.list` 0.72, `render.shadows` 0.76, `render.coronas` 1.23. With the limiter
+on the frame stays at the 25 fps limit (40.2 ms) and `idle.spin` is unchanged (6.8 ms). Web WebGPU: 28.08 -> 24.78 ms
+with the Idle skip (the worker-yield and registry web runs are still to be measured). Details: WORKLOG 2026-11-16.
