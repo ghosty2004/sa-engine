@@ -68,7 +68,7 @@ fn target(this: GPtr<u8>) -> GPtr<u8> {
 
 
 /// The `CWeaponInfo` of the ped's current weapon at its current skill.
-fn current_weapon_info(ped: GPtr<u8>) -> GPtr<u8> {
+pub(crate) fn current_weapon_info(ped: GPtr<u8>) -> GPtr<u8> {
     let slot = isize::from(rd::<i8>(ped, 0x718));
     let wt = rd::<i32>(ped, 0x5A0 + slot * 0x1C);
     get_weapon_info(wt, ped_get_weapon_skill(ped))
