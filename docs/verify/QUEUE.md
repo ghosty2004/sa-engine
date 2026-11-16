@@ -70,7 +70,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-c1 | 44 | AI, UNK-game | 49bdb6d2 | master | 44 | 0 | 0 | 0 | 0 | L2 44 |
 | frontier2-c10 | 9 | AUDIO, HUD, UNK-game | 709cbb43 | worktree-agent-a666e9cf719f6e793 | 9 | 0 | 0 | 0 | 0 | L2 6, split 3 |
 | frontier2-c11 | 12 | AUDIO, CALLED-ONLY, SCRIPT, UNK-game | df984d3f | worktree-agent-a666e9cf719f6e793 | 12 | 0 | 0 | 0 | 0 | L2 12 |
-| frontier2-c12 | 11 | AUDIO, SCRIPT, UNK-game | 08439903 | worktree-agent-a666e9cf719f6e793 | 11 | 0 | 0 | 0 | 0 | L2 9, split 2 |
+| frontier2-c12 | 10 | AUDIO, SCRIPT, UNK-game | 08439903 | worktree-agent-a666e9cf719f6e793 | 10 | 0 | 0 | 0 | 0 | L2 8, split 2 |
 | frontier2-c2 | 35 | AI, MATH, SCRIPT, UNK-game, VEH | 49bdb6d2 | master | 35 | 0 | 0 | 0 | 0 | L2 35 |
 | frontier2-c3 | 11 | AI, SCRIPT, UNK-game | 49bdb6d2 | master | 11 | 0 | 0 | 0 | 0 | L2 11 |
 | frontier2-c4 | 10 | AUDIO, CALLED-ONLY, SCRIPT, UNK-game | d18327f1 | master | 10 | 0 | 0 | 0 | 0 | L2 9, split 1 |
@@ -2391,7 +2391,7 @@ SA_UNVERIFIED=frontier2-c11 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c11 
 
 ## frontier2-c12
 
-11 hooks in sa-ai, sa-audio, sa-script, sa-veh, sa-world; hazards: entry-protection-read (1), heap-writes (10), uninit-locals (2); recordings calling them: no coverage data.
+10 hooks in sa-ai, sa-audio, sa-script, sa-veh, sa-world; hazards: heap-writes (9), uninit-locals (1); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -2402,7 +2402,6 @@ SA_UNVERIFIED=frontier2-c12 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c12 
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x45BA90 | `tReplayVehicleBlock::ExtractVehicleUpdateData` | written | L2 | heap-writes,uninit-locals,entry-protection-read |
 | 0x45C4B0 | `thunk_FUN_01561cf0` | written | L2 | heap-writes |
 | 0x45DEF0 | `thunk_FUN_0156ae50` | written | L2 | heap-writes |
 | 0x46AF50 | `CRunningScript::ScriptTaskPickUpObject` | written | L2 | heap-writes,uninit-locals |
@@ -2410,7 +2409,7 @@ SA_UNVERIFIED=frontier2-c12 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c12 
 | 0x4ECCF0 | `CAEScriptAudioEntity::ProcessMissionAudioEvent` | written | L2 | heap-writes |
 | 0x4F3050 | `CAEUserRadioTrackManager::GetTrackPath` | written | split | heap-writes |
 | 0x4F35F0 | `CAEUserRadioTrackManager::LoadUserTrack` | written | split | heap-writes |
-| 0x59CA10 | `ApplyPanelDamageToCar` | written | L2 | heap-writes |
+| 0x59CA10 | `(missed by ghidra: cat7-call)` | written | L2 | heap-writes |
 | 0x6002F0 | `FUN_006002f0` | written | L2 | heap-writes |
 | 0x603AF0 | `FUN_00603af0` | written | L2 | none |
 
