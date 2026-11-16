@@ -18,7 +18,9 @@ use crate::bindings::task_timer_is_out_of_time;
 use sa_core::bindings::{
     general_get_radian_angle_between_points, general_limit_radian_angle, matrix_mul_vec, matrix_set_rotate_z_only,
 };
-use sa_world::bindings::{anim_blend_animation, ped_set_move_state};
+use sa_world::bindings::{anim_blend_animation, get_peds_interior_group, ped_set_move_state};
+use sa_anim::bindings::ik_abort_look_at;
+use crate::frontier_a_t5::interior_group_find_closest_info;
 use sa_core::bindings::{clump_get_association, general_random_int_in_range, matrix_dtor};
 use sa_stream::bindings::{anim_remove_block_ref, entity_is_visible, get_animation_block_index, streaming_request_model};
 use sa_world::bindings::{
@@ -763,6 +765,123 @@ pub fn interior_lie_in_bed_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     0
 }
 
+/// vt_870314's finish callback (0x675DD0).
+const SIT_IN_CHAIR_FINISH_CB: u32 = 0x675DD0;
+
+/// `vt_870314::ProcessPed(CPed*)` (0x676D30, `ret 4`, AL; the house chair task, look-at name "TaskSitInChair"). The
+/// anims are fixed: 0x157 sit down, 0x159 the loop, 0x158 stand up; the fields as `CTaskInteriorLieInBed`'s (start
+/// in the loop: +0x10). Finished (+0x29) with 0x158 gone, or aborting without the int_house anims: 1 (no scanner
+/// change). Aborting: sit-down → blend delta -8; loop (not being placed) → stand-up blended, 0; stand-up → anim
+/// +0x24 = 3. No anim (with the anims loaded): the loop (timer, placed) on the first run with +0x10 or after the sit
+/// down, the sit-down (blend 4) on the first run. With an anim: placing, for the loop, turns the ped by pi first, then
+/// moves it to its matrix times 0xC18C78 (loop and stand-up) or its own position, z kept; the timer out → stand-up;
+/// sitting down steps towards the interior info. Every path but the two early ones ends in the look-at: during the
+/// loop a ped not already looking (2 % per frame, `rand(0, 1000) > 980`) looks at the closest interior info of its
+/// group within 10 for 10..20 s; otherwise a running look-at is aborted (250 ms). 0.
+#[hook(addr = 0x676D30, conv = thiscall, name = "vt_870314::ProcessPed", expect = "83 EC 20 53 55 56 8B F1 8B 46 14",
+       unverified = "frontier2-a13", route = "L2", hazards = "heap-writes,ax-al-return,stack-residue",
+       note = "the original stores floats and a null info pointer over its own ped argument slot; AL result; the 0x6771B2 island compares the anim id")]
+pub fn interior_sit_in_chair_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
+    let anim = rd::<GPtr<u8>>(this, 0x14);
+    let cur = if anim.is_null() { -1 } else { i32::from(rd::<i16>(anim, 0x2C)) };
+    ped_set_move_state(ped, 1);
+    if rd::<u8>(this, 0x29) != 0 && clump_get_association(rd::<GPtr<u8>>(ped, 0x18), 0x158).is_null() {
+        return 1;
+    }
+    if rd::<u8>(this, 0x2A) != 0 {
+        if are_anims_loaded(0) == 0 {
+            return 1;
+        }
+        match cur {
+            0x157 => wr::<u32>(rd::<GPtr<u8>>(this, 0x14), 0x1C, 0xC100_0000),
+            0x159 => {
+                if rd::<u8>(this, 0x28) == 0 {
+                    interior_blend(this, ped, 0x158, 1000.0, SIT_IN_CHAIR_FINISH_CB, true);
+                    wr::<u8>(this, 0x28, 1);
+                    return 0;
+                }
+            }
+            0x158 => wr::<u32>(rd::<GPtr<u8>>(this, 0x14), 0x24, 0x4040_0000),
+            _ => {}
+        }
+    }
+    if rd::<GPtr<u8>>(this, 0x14).is_null() {
+        if are_anims_loaded(0) != 0 {
+            let prev = rd::<i32>(this, 0x18);
+            if (prev == -1 && rd::<u8>(this, 0x10) != 0) || prev == 0x157 {
+                interior_start_timer(this);
+                interior_blend(this, ped, 0x159, 1000.0, SIT_IN_CHAIR_FINISH_CB, false);
+                wr::<u8>(this, 0x28, 1);
+            } else if prev == -1 {
+                interior_blend(this, ped, 0x157, 4.0, SIT_IN_CHAIR_FINISH_CB, false);
+            }
+        }
+    } else {
+        if rd::<u8>(this, 0x28) != 0 {
+            let m = rd::<GPtr<u8>>(ped, 0x14);
+            let mut p: [f32; 3] = core::array::from_fn(|i| rd::<f32>(entity_pos(ped), 4 * i as isize));
+            let z = p[2];
+            if cur == 0x159 || cur == 0x158 {
+                let mut o = [0f32; 3];
+                matrix_mul_vec(GPtr::from_raw(o.as_mut_ptr()).cast(), m, GPtr::from_addr(0xC18C78));
+                p = o;
+            }
+            if cur == 0x159 {
+                let h = x(rd::<f32>(ped, 0x558)).fadd_m(g::<f32>(0x858CB8).read()).to_f32();
+                let h = general_limit_radian_angle(h) as f32;
+                wr::<f32>(ped, 0x55C, h);
+                wr::<f32>(ped, 0x558, h);
+                let m = rd::<GPtr<u8>>(ped, 0x14);
+                if m.is_null() {
+                    wr::<f32>(ped, 0x10, h);
+                } else {
+                    matrix_set_rotate_z_only(m, h);
+                }
+            }
+            p[2] = z;
+            placeable_set_posn(ped, GPtr::from_raw(p.as_mut_ptr()));
+            wr::<u8>(this, 0x28, 0);
+        }
+        if rd::<u8>(this, 0x24) != 0
+            && task_timer_is_out_of_time(this.byte_add(0x1C)) != 0
+            && rd::<i16>(rd::<GPtr<u8>>(this, 0x14), 0x2C) != 0x158
+        {
+            interior_blend(this, ped, 0x158, 1000.0, SIT_IN_CHAIR_FINISH_CB, true);
+            wr::<u8>(this, 0x28, 1);
+        }
+        if rd::<i16>(rd::<GPtr<u8>>(this, 0x14), 0x2C) == 0x157 {
+            interior_step_to_info(this, ped);
+        }
+    }
+    let ik = GPtr::<u8>::from_addr(0xC15448);
+    let a = rd::<GPtr<u8>>(this, 0x14);
+    if !a.is_null() && rd::<i16>(a, 0x2C) == 0x159 {
+        if ik_is_looking(ik, ped) != 0 || general_random_int_in_range(0, 1000) <= 0x3D4 {
+            return 0;
+        }
+        let grp = get_peds_interior_group(GPtr::from_addr(0xBAF670), ped);
+        if grp.is_null() {
+            return 0;
+        }
+        let pp = entity_pos(ped);
+        let mut info = GPtr::<u8>::NULL;
+        let mut interior = GPtr::<u8>::NULL;
+        let mut dist = 0f32;
+        interior_group_find_closest_info(grp, 0, rd::<f32>(pp, 0), rd::<f32>(pp, 4), rd::<f32>(pp, 8), 10.0,
+            GPtr::from_raw(&mut info), GPtr::from_raw(&mut interior), GPtr::from_raw(&mut dist));
+        if info.is_null() {
+            return 0;
+        }
+        let t = general_random_int_in_range(10000, 20000);
+        ik_look_at(ik, GPtr::from_addr(0x870380), ped, GPtr::NULL, t, -1, info.byte_add(4), 0, 0.25, 0x1F4, 3, 0);
+        return 0;
+    }
+    if ik_is_looking(ik, ped) != 0 {
+        ik_abort_look_at(ik, ped, 0xFA);
+    }
+    0
+}
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_KILL_PED_WITH_CAR_DAMAGE_CAR_BONNET,
     HOOK_KILL_PED_WITH_CAR_SHAKE_PAD,
@@ -770,4 +889,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_USE_SWAT_ROPE_CONTROL_SUB_TASK,
     HOOK_GANG_HASSLE_VEHICLE_CONTROL_SUB_TASK,
     HOOK_INTERIOR_LIE_IN_BED_PROCESS_PED,
+    HOOK_INTERIOR_SIT_IN_CHAIR_PROCESS_PED,
 ];

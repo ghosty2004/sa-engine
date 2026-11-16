@@ -65,7 +65,7 @@ orig! {
     fn ik_chain_ctor(t: GPtr<u8>, name: u32, bone: i32, ox: u32, oy: u32, oz: u32, part: i32, ent: u32, tbone: u32, tx: u32, ty: u32, tz: u32, speed: u32, time: u32, blend: u32) -> GPtr<u8> = thiscall 0x6339C0 => unported;
     /// `InteriorGroup_c::FindClosestInteriorInfo(int32 type, CVector pos, float maxDist, InteriorInfo_t**, Interior_c**,
     /// float*)` (0x594A50, `ret 0x20`)
-    fn interior_group_find_closest_info(g: GPtr<u8>, ty: i32, x: f32, y: f32, z: f32, max: f32, info: GPtr<GPtr<u8>>, interior: GPtr<GPtr<u8>>, dist: GPtr<f32>) -> u8 = thiscall 0x594A50 => sa_world::world::interior_closest_info::find_closest_interior_info;
+    pub(crate) fn interior_group_find_closest_info(g: GPtr<u8>, ty: i32, x: f32, y: f32, z: f32, max: f32, info: GPtr<GPtr<u8>>, interior: GPtr<GPtr<u8>>, dist: GPtr<f32>) -> u8 = thiscall 0x594A50 => sa_world::world::interior_closest_info::find_closest_interior_info;
     /// the interior use-info event's constructor (0x674EA0, `ret 0x10`)
     fn event_interior_use_info_ctor(e: GPtr<u8>, info: GPtr<u8>, interior: GPtr<u8>, a: u32, b: u32) -> GPtr<u8> = thiscall 0x674EA0 => unported;
     /// `CTaskComplexGoToPointAiming::CreateSubTask(int32 type)` (0x6688D0, `ret 4`)
