@@ -266,6 +266,42 @@ fn acos_ratio(z: Z) -> X87 {
     p.fdiv(q)
 }
 
+/// The inlined fdlibm `acosf(d)` of RW (`RtQuatSetupSlerpCache`, `RpLightGetConeAngle`), full width as
+/// it is left in ST0, on the bits of d: |d| >= 1: 0 for d > 0 as an int, else pi; |d| < 0.5: pi/2 at or
+/// below 2^-57, else `pio2_hi - (d - (pio2_lo - d r))`; d < 0: `pi - 2 (s + (r s - pio2_lo))` with
+/// `s = _rwSqrt(f32((d + 1) / 2))`; else `2 (df + (r s + (z - df^2) / (df + s)))` with df = s's f32
+/// bits `& 0xFFFFF000`.
+pub fn acosf_inline(d: f32) -> X87 {
+    let bits = d.to_bits() as i32;
+    let ab = bits & 0x7FFF_FFFF;
+    if ab >= 0x3F80_0000 {
+        X87::from_f32(f32::from_bits(if bits > 0 { 0 } else { 0x4049_0FDB }))
+    } else if ab < 0x3F00_0000 {
+        if ab <= 0x2300_0000 {
+            X87::from_f32(f32::from_bits(0x3FC9_0FDB))
+        } else {
+            let z = x(d).fmul_m(d);
+            let r = acos_ratio(Z::Wide(z));
+            r.fmul_m(d).fsubr_m(c(0x874E6C)).fsubr_m(d).fsubr_m(c(0x874E68))
+        }
+    } else if bits < 0 {
+        let zf = x(d).fadd_m(gf(C_ONE)).fmul_m(gf(C_HALF)).to_f32();
+        let s = X87::from_f64_exact(rw_sqrt(zf));
+        let r = acos_ratio(Z::Mem(zf));
+        let w = r.fmul(s).fsub_m(c(0x874E6C)).fadd(s);
+        w.fadd(w).fsubr_m(c(0x874E64))
+    } else {
+        let zf = x(gf(C_ONE)).fsub_m(d).fmul_m(gf(C_HALF)).to_f32();
+        let s = X87::from_f64_exact(rw_sqrt(zf));
+        let df = f32::from_bits(s.to_f32().to_bits() & 0xFFFF_F000);
+        let r = acos_ratio(Z::Mem(zf));
+        let rs = r.fmul(s);
+        let cc = x(df).fmul_m(df).fsubr_m(zf).fdiv(x(df).fadd(s));
+        let w = rs.fadd(cc).fadd_m(df);
+        w.fadd(w)
+    }
+}
+
 #[derive(Clone, Copy)]
 enum Z {
     Wide(X87),
@@ -310,34 +346,7 @@ pub fn rt_quat_setup_slerp_cache(from: GPtr<u8>, to: GPtr<u8>, cache: GPtr<u8>) 
             wr::<u32>(cache, 0x10 + o, rd::<u32>(to, o));
         }
     }
-    let bits = d.to_bits() as i32;
-    let ab = bits & 0x7FFF_FFFF;
-    let omega: u32 = if ab >= 0x3F80_0000 {
-        if bits > 0 { 0 } else { 0x4049_0FDB }
-    } else if ab < 0x3F00_0000 {
-        if ab <= 0x2300_0000 {
-            0x3FC9_0FDB
-        } else {
-            let z = x(d).fmul_m(d);
-            let r = acos_ratio(Z::Wide(z));
-            r.fmul_m(d).fsubr_m(c(0x874E6C)).fsubr_m(d).fsubr_m(c(0x874E68)).to_f32().to_bits()
-        }
-    } else if bits < 0 {
-        let zf = x(d).fadd_m(gf(C_ONE)).fmul_m(gf(C_HALF)).to_f32();
-        let s = X87::from_f64_exact(rw_sqrt(zf));
-        let r = acos_ratio(Z::Mem(zf));
-        let w = r.fmul(s).fsub_m(c(0x874E6C)).fadd(s);
-        w.fadd(w).fsubr_m(c(0x874E64)).to_f32().to_bits()
-    } else {
-        let zf = x(gf(C_ONE)).fsub_m(d).fmul_m(gf(C_HALF)).to_f32();
-        let s = X87::from_f64_exact(rw_sqrt(zf));
-        let df = f32::from_bits(s.to_f32().to_bits() & 0xFFFF_F000);
-        let r = acos_ratio(Z::Mem(zf));
-        let rs = r.fmul(s);
-        let cc = x(df).fmul_m(df).fsubr_m(zf).fdiv(x(df).fadd(s));
-        let w = rs.fadd(cc).fadd_m(df);
-        w.fadd(w).to_f32().to_bits()
-    };
+    let omega = acosf_inline(d).to_f32().to_bits();
     wr::<u32>(cache, 0x20, omega);
     let near = u32::from(!x(d).fcom(x(c(0x871258))).c0());
     wr::<u32>(cache, 0x24, near);

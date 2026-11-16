@@ -58,7 +58,7 @@ use sa_core::bindings::rw_d3d9_set_light;
 use crate::bindings::set_render_state as rw_d3d9_set_render_state;
 orig! {
     /// `RpLightGetConeAngle(light)` (0x751AE0), result in ST0
-    fn rp_light_get_cone_angle(l: GPtr<u8>) -> f64 = cdecl 0x751AE0 => unported;
+    fn rp_light_get_cone_angle(l: GPtr<u8>) -> X87 = reg("args = stack") 0x751AE0 => crate::light::rp_light_get_cone_angle;
 }
 
 fn ext(l: GPtr<u8>) -> GPtr<u8> {
@@ -343,7 +343,7 @@ pub fn rw_d3d9_light_local_enable(l: GPtr<u8>) -> u32 {
             wr::<u32>(t, 0x40, rd::<u32>(ltm, 0x20));
             wr::<u32>(t, 0x44, rd::<u32>(ltm, 0x24));
             wr::<u32>(t, 0x48, rd::<u32>(ltm, 0x28));
-            let a = X87::from_f64_exact(rp_light_get_cone_angle(l)).fdouble();
+            let a = rp_light_get_cone_angle(l).fdouble();
             let below = !a.fcom(x(g::<f32>(PI_ADDR).read())).test_parity(0x05);
             if below {
                 wr::<f32>(t, 0x60, f32_of(a));
@@ -358,7 +358,7 @@ pub fn rw_d3d9_light_local_enable(l: GPtr<u8>) -> u32 {
             wr::<u32>(t, 0x44, rd::<u32>(ltm, 0x24));
             wr::<u32>(t, 0x48, rd::<u32>(ltm, 0x28));
             wr::<u32>(t, 0x60, 0);
-            let a = X87::from_f64_exact(rp_light_get_cone_angle(l)).fdouble();
+            let a = rp_light_get_cone_angle(l).fdouble();
             wr::<f32>(t, 0x64, f32_of(a));
         }
         _ => return 0,

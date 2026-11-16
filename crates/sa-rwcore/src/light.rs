@@ -129,6 +129,15 @@ pub fn rp_light_set_color(l: GPtr<u8>, c: GPtr<u8>) -> GPtr<u8> {
     l
 }
 
+/// `RpLightGetConeAngle(light)` (0x751AE0): the inlined `acosf` of `f32(-minusCosAngle)` (+0x28),
+/// left full width in ST0 ([`crate::rt_quat::acosf_inline`]; its constants 0 / pi / pi/2 from
+/// 0x858B50 / 0x858CB8 / 0x858FE4 here).
+#[hook(addr = 0x751AE0, conv = cdecl, name = "RpLightGetConeAngle", expect = "51 8B 44 24 08 D9 40 28",
+       unverified = "frontier2-c14", route = "L2", hazards = "none")]
+pub fn rp_light_get_cone_angle(l: GPtr<u8>) -> X87 {
+    crate::rt_quat::acosf_inline(x(rd::<f32>(l, 0x28)).fchs().to_f32())
+}
+
 /// `RpLightRegisterPlugin(size, id, ctor, dtor, copy)` (0x751D60).
 #[hook(addr = 0x751D60, conv = cdecl, name = "RpLightRegisterPlugin", expect = "8B 44 24 14 8B 4C 24 10")]
 pub fn rp_light_register_plugin(size: i32, id: u32, ctor: u32, dtor: u32, copy: u32) -> i32 {
@@ -274,6 +283,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_RP_WORLD_REMOVE_LIGHT,
     HOOK_RP_LIGHT_SET_RADIUS,
     HOOK_RP_LIGHT_SET_COLOR,
+    HOOK_RP_LIGHT_GET_CONE_ANGLE,
     HOOK_RP_LIGHT_REGISTER_PLUGIN,
     HOOK_RP_LIGHT_STREAM_READ,
     HOOK_RP_LIGHT_DESTROY,
