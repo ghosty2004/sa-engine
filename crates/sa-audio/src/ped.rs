@@ -450,7 +450,71 @@ pub fn ped_audio_entity_dtor(this: GPtr<u8>) {
     sound_dtor(this.byte_add(8));
 }
 
+/// One jet-pack level step of `UpdateJetPack`: `field + step` capped at `max` (kept unless `< max`, NaN capped) or
+/// `field - step` floored at `min` (kept unless `> min`, NaN floored), each on the x87 and stored as f32.
+fn jet_pack_step(this: GPtr<u8>, off: isize, up: bool, step: usize, bound: usize) {
+    use sa_math::fpu::x;
+    let k = g::<f32>(bound).read();
+    let v = if up {
+        let t = x(g::<f32>(step).read()).fadd_m(rd::<f32>(this, off));
+        if !t.fcom(x(k)).test_parity(5) { t } else { x(k) }
+    } else {
+        let t = x(rd::<f32>(this, off)).fsub_m(g::<f32>(step).read());
+        if !t.fcom(x(k)).test_any(0x41) { t } else { x(k) }
+    };
+    wr::<f32>(this, off, v.to_f32());
+}
+
+/// `CAEPedAudioEntity::UpdateJetPack(float thrust, float angle)` (0x4E0EE0, thiscall, `ret 8`; FRONTIER-2 lane C turn 7,
+/// the jet-pack scenario). Only when initialised (+0x98) with the three jet-pack sounds (+0x9C, +0xA0, +0xA4). Thrust
+/// above the double 0.5: the levels +0x84 / +0x8C / +0x90 rise (capped) and +0x88 falls (floored); else the reverse,
+/// each by its `.data` step (0x8AE5F0..0x8AE640). Then `s = sin(angle)` (x87; its f32 kept in the thrust argument
+/// slot): sound +0x9C volume = `master + level 0x84`, speed = `|s| * [0xB613B0] + [0x8AE608]` (|s| of the x87 value);
+/// +0xA0 volume = `master + level 0x88`, speed = `[0x8AE5F8]`; +0xA4 volume = `master + level 0x8C`, speed =
+/// `(|f32(s)| * [0x8AE620] + 1) * level 0x90`; master = `[0xB61384]`.
+#[hook(addr = 0x4E0EE0, conv = thiscall, name = "CAEPedAudioEntity::UpdateJetPack", expect = "8A 81 98 00 00 00",
+       unverified = "frontier2-c13", route = "L2", hazards = "x87-transcendental")]
+pub fn ped_update_jet_pack(this: GPtr<u8>, thrust: f32, angle: f32) {
+    use sa_math::fpu::x;
+    use sa_math::x87::X87;
+    if rd::<u8>(this, 0x98) == 0
+        || rd::<u32>(this, 0xA0) == 0
+        || rd::<u32>(this, 0x9C) == 0
+        || rd::<u32>(this, 0xA4) == 0
+    {
+        return;
+    }
+    let up = !x(thrust).fcom(X87::from_f64_exact(0.5)).test_any(0x41);
+    if up {
+        jet_pack_step(this, 0x84, true, 0x8A_E640, 0x8A_E604);
+        jet_pack_step(this, 0x88, false, 0x8A_E634, 0x8A_E5F0);
+        jet_pack_step(this, 0x8C, true, 0x8A_E628, 0x8A_E614);
+        jet_pack_step(this, 0x90, true, 0x8A_E62C, 0x8A_E61C);
+    } else {
+        jet_pack_step(this, 0x84, false, 0x8A_E63C, 0x8A_E600);
+        jet_pack_step(this, 0x88, true, 0x8A_E638, 0x8A_E5F4);
+        jet_pack_step(this, 0x8C, false, 0x8A_E624, 0x8A_E610);
+        jet_pack_step(this, 0x90, false, 0x8A_E630, 0x8A_E618);
+    }
+    let abs = |v: X87| if !v.fcom(X87::zero()).test_parity(5) { v.fchs() } else { v };
+    let s = x(angle).fsin();
+    let s32 = s.to_f32();
+    let speed = abs(s).fmul_m(g::<f32>(0xB6_13B0).read()).fadd_m(g::<f32>(0x8A_E608).read());
+    let b = abs(x(s32));
+    let master = || x(g::<f32>(0xB6_1384).read());
+    let snd = |off: isize| rd::<GPtr<u8>>(this, off);
+    wr::<f32>(snd(0x9C), 0x14, master().fadd_m(rd::<f32>(this, 0x84)).to_f32());
+    wr::<f32>(snd(0x9C), 0x1C, speed.to_f32());
+    wr::<f32>(snd(0xA0), 0x14, master().fadd_m(rd::<f32>(this, 0x88)).to_f32());
+    wr::<u32>(snd(0xA0), 0x1C, g::<u32>(0x8A_E5F8).read());
+    wr::<f32>(snd(0xA4), 0x14, master().fadd_m(rd::<f32>(this, 0x8C)).to_f32());
+    let v = b.fmul_m(g::<f32>(0x8A_E620).read()).fadd_m(1.0).fmul_m(rd::<f32>(this, 0x90));
+    wr::<f32>(snd(0xA4), 0x1C, v.to_f32());
+}
+
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_PED_UPDATE_JET_PACK,
     HOOK_PED_AUDIO_ENTITY_DTOR,
     HOOK_PED_STATIC_INITIALISE,
     HOOK_PED_INITIALISE,
