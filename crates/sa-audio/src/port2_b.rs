@@ -170,6 +170,7 @@ pub fn vehicle_get_aircraft_near_position(this: GPtr<u8>, out: GPtr<u8>) -> GPtr
 
 pub const HOOKS: &[HookReg] = &[
     HOOK_PEDLESS_PLAY_LOADED_SOUND,
+    HOOK_PEDLESS_ADD_SAY_EVENT,
     HOOK_SPEECH_ENABLE_PED_SPEECH,
     HOOK_SPEECH_RELEASE_PED_CONVERSATION,
     HOOK_SPEECH_ENABLE_PED_SPEECH_FOR_SCRIPT_SPEECH,
@@ -986,6 +987,100 @@ pub fn pedless_play_loaded_sound(this: GPtr<u8>) {
         g::<u8>(0xB613E5).write(0);
     }
     wr::<u16>(this, 0xA8, 0xFFFF);
+}
+
+/// `CAEPedlessSpeechAudioEntity::AddSayEvent(int32 event, int16 gCtx, CEntity* attachTo, uint32 delay, float
+/// probability, bool overrideSilence, bool isForceAudible, bool isFrontEnd)` (0x4E60D0, `ret 0x20`; FRONTIER-2 lane C
+/// turn 6): AX = the sound (`GetSoundAndBankIDs`) or -1. Shares the ped version's checks where the bytes match, without
+/// its pain / interrupt / ped / CJ parts: refused when not initialised (+0x90), without `attachTo`, all speech disabled,
+/// script speech disabled (+0x9A); widescreen and the context not important for it; `0x96A8B0 == 2`;
+/// `ResolveProbability` fails; event != 0x34; speech disabled (+0x99) without `overrideSilence`; already talking
+/// (+0x98); a context outside 0xAD..0xAF. Then ped type +0x92 = 4 and voice type +0x94 = 10; the streaming checks as the
+/// ped version; the squared camera distance to the entity > [0x8599B8]; no free slot (`CanWePlayGlobalSpeechContext`,
+/// 0..4); `GetSoundAndBankIDs` < 0. On success the entity reference (+0x114) is cleaned up and replaced by `attachTo`
+/// (`RegisterReference`), `SetNextPlayTime`, +0xAC = event volume 0x34, +0x9B = isFrontEnd, +0x9C = isForceAudible,
+/// +0xA8 = slot, +0x98 = 1, +0xB0 = context and `LoadAndPlaySpeech(delay)` (no [0xB61C10] added, unlike the ped one).
+/// The original keeps the slot in its context argument slot and passes the `overrideSilence` slot as the
+/// `GetSoundAndBankIDs` out word: locals here.
+#[hook(addr = 0x4E60D0, conv = thiscall, name = "CAEPedlessSpeechAudioEntity::AddSayEvent", expect = "83 EC 18 53 56 8B F1",
+       unverified = "frontier2-c12", route = "L2", hazards = "heap-writes")]
+#[allow(clippy::too_many_arguments)]
+pub fn pedless_add_say_event(
+    this: GPtr<u8>,
+    event: u32,
+    ctx: u32,
+    attach_to: u32,
+    delay: u32,
+    prob: u32,
+    override_silence: u32,
+    force_audible: u32,
+    front_end: u32,
+) -> u16 {
+    const NONE: u16 = 0xFFFF;
+    if rd::<u8>(this, 0x90) == 0 || attach_to == 0 || g::<u8>(0xB613E6).read() != 0 || rd::<u8>(this, 0x9A) != 0 {
+        return NONE;
+    }
+    if g::<u8>(0xB6F065).read() != 0 && speech_is_important_for_widescreen_call(this, ctx) == 0 {
+        return NONE;
+    }
+    if g::<u8>(0x96A8B0).read() == 2 {
+        return NONE;
+    }
+    if ae_resolve_probability_bits(f32::from_bits(prob)) == 0 || event != 0x34 {
+        return NONE;
+    }
+    if rd::<u8>(this, 0x99) != 0 && override_silence as u8 == 0 {
+        return NONE;
+    }
+    if rd::<u8>(this, 0x98) != 0 || !(0xAD..=0xAF).contains(&i32::from(ctx as u16 as i16)) {
+        return NONE;
+    }
+    wr::<u16>(this, 0x92, 4);
+    wr::<u16>(this, 0x94, 0xA);
+    if speech_is_important_for_streaming(this, ctx) != 0 || force_audible as u8 != 0 || front_end as u8 != 0 {
+        if g::<i32>(0x8E4CB8).read() > 0xF && g::<u32>(0xB6B98C).read() != 0 {
+            return NONE;
+        }
+    } else if streaming_is_very_busy() as u8 != 0 {
+        return NONE;
+    }
+    let cam_m = g::<u32>(0xB6F03C).read();
+    let cam: GPtr<u8> = if cam_m != 0 { g(cam_m as usize + 0x30) } else { g(0xB6F02C) };
+    let ent: GPtr<u8> = g(attach_to as usize);
+    let m = rd::<u32>(ent, 0x14);
+    let pos: GPtr<u8> = if m != 0 { g(m as usize + 0x30) } else { ent.byte_add(4) };
+    let mut d = [0u32; 3];
+    vector_sub(GPtr::from_raw(d.as_mut_ptr()).cast(), pos, cam);
+    let mut d2 = d;
+    let mag = vector_magnitude_sqr(GPtr::from_raw(d2.as_mut_ptr()).cast());
+    if mag.fcom(crate::common::x(g::<f32>(0x8599B8).read())) == sa_math::x87::Cmp::Greater {
+        return NONE;
+    }
+    let slot = speech_can_we_play_global_speech_context_call(this, ctx);
+    if !(0..5).contains(&(slot as i16)) {
+        return NONE;
+    }
+    let mut spec = [override_silence];
+    let r = speech_get_sound_and_bank_ids_call(this, ctx, GPtr::from_raw(spec.as_mut_ptr()).cast());
+    if (r as i16) < 0 {
+        return NONE;
+    }
+    let refp = this.byte_add(0x114);
+    if rd::<u32>(refp, 0) != 0 {
+        sa_core::bindings::entity_clean_up_old_reference(g(rd::<u32>(refp, 0) as usize), refp);
+        wr::<u32>(refp, 0, 0);
+    }
+    wr::<u32>(refp, 0, attach_to);
+    sa_core::bindings::entity_register_reference(g(attach_to as usize), refp);
+    speech_set_next_play_time(this, ctx);
+    wr::<f32>(this, 0xAC, event_volume(0x34));
+    wr::<u8>(this, 0x9B, front_end as u8);
+    wr::<u8>(this, 0x9C, force_audible as u8);
+    wr::<u16>(this, 0xA8, slot);
+    wr::<u8>(this, 0x98, 1);
+    wr::<u16>(this, 0xB0, ctx as u16);
+    speech_load_and_play_speech(this, delay);
+    r as u16
 }
 
 use crate::bindings::hw_is_sound_bank_loaded;

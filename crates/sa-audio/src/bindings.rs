@@ -569,6 +569,11 @@ orig! {
 }
 
 orig! {
+    /// `CAEVorbisDecoder::Constructor` (0x5026B0)
+    pub fn vorbis_decoder_ctor(this: u32, stream: u32, check: u32) -> u32 = thiscall 0x5026B0 => unported;
+}
+
+orig! {
     /// `CAEWeaponAudioEntity::Terminate` (0x503480)
     pub fn weapon_terminate(this: GPtr<u8>) = thiscall 0x503480 => crate::entities::weapon_terminate;
 }

@@ -90,6 +90,7 @@ pub(crate) fn ci_pow(base: f64, exp: X87) -> X87 {
     X87::from_f64_exact(r)
 }
 
+use crate::bindings::vorbis_decoder_ctor;
 use crate::bindings::track_ctor as track_loader_ctor;
 use sa_core::bindings::is_foreground_app;
 pub(crate) use crate::bindings::current_time_ms;
@@ -187,9 +188,7 @@ orig! {
     fn sc_remove_fx(this: u32) = thiscall 0x4F1C20 => streaming_remove_fx;
     fn st_service(this: u32) = thiscall 0x4F1290 => stream_thread_service;
     fn track_loader_get_data_stream(this: u32, track: u32) -> u32 = thiscall 0x4E0D20 => unported;
-    /// `CAEVorbisDecoder::CAEVorbisDecoder(CAEDataStream*, bool checkLength)` (`ret 8`)
-    fn vorbis_decoder_ctor(this: u32, stream: u32, check: u32) -> u32 = thiscall 0x5026B0 => unported;
-    fn user_radio_load_user_track(this: u32, track: u32) -> u32 = thiscall 0x4F35F0 => unported;
+    fn user_radio_load_user_track(this: u32, track: u32) -> u32 = thiscall 0x4F35F0 => crate::user_track::load_user_track;
 }
 
 // ------------------------------------------------------------------ CAEAudioUtility --------------

@@ -466,6 +466,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x4FA630,sa-audio,play_train_brake_sound,thiscall,,this:GPtr<u8>;sfx:u32;speed:u32;volume:u32,,sa_audio::port3_veh::play_train_brake_sound,CAEVehicleAudioEntity::PlayTrainBrakeSound,
 0x4FAD40,sa-audio,update_generic_vehicle_sound_call,thiscall,,this:GPtr<u8>;id:u32;slot:u32;bank:u32;sfx:u32;speed:u32;volume:u32;distance:u32,,sa_audio::port3_veh::update_generic_vehicle_sound,CAEVehicleAudioEntity::UpdateGenericVehicleSound,
 0x4FD0B0,sa-audio,just_wrecked_vehicle,thiscall,,this:GPtr<u8>,,unported,CAEVehicleAudioEntity::JustWreckedVehicle,
+0x5026B0,sa-audio,vorbis_decoder_ctor,thiscall,,this:u32;stream:u32;check:u32,u32,unported,CAEVorbisDecoder::Constructor,
 0x503480,sa-audio,weapon_terminate,thiscall,,this:GPtr<u8>,,sa_audio::entities::weapon_terminate,CAEWeaponAudioEntity::Terminate,
 0x507210,sa-audio,engine_is_ambience_track_active,thiscall,,engine:GPtr<u8>,u8,unported,CAudioEngine::IsAmbienceTrackActive,
 0x507220,sa-audio,engine_stop_ambience_track,thiscall,,engine:GPtr<u8>;b:u32,,unported,CAudioEngine::StopAmbienceTrack,
