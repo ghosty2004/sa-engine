@@ -197,6 +197,23 @@ fn decode(f: &mut File) -> bool {
     true
 }
 
+/// A fresh reader at the start of the stream (headers re-read): position 0, nothing pending or to skip.
+fn rewind(f: &mut File) {
+    f.pending.clear();
+    f.eof = false;
+    f.skip = 0;
+    let rdr = f.rdr.take().map(|r| r.into_inner().into_inner());
+    f.rdr = rdr.and_then(|mut src| {
+        src.seek(SeekFrom::Start(0)).ok()?;
+        OggStreamReader::new(src).ok()
+    });
+    f.pos = 0;
+    f.pos_unknown = false;
+    if f.rdr.is_none() {
+        f.eof = true;
+    }
+}
+
 /// Drops the samples a seek asked to skip, once the position is known.
 fn apply_skip(f: &mut File) {
     if f.pos_unknown || f.skip == 0 {
@@ -370,20 +387,9 @@ pub fn ov_time_seek(vf: u32, s: f64) -> i32 {
     if trace_on() {
         eprintln!("vorbisfile: seek {vf:#x} to {s:.3} s ({target} of {})", f.total);
     }
-    f.pending.clear();
-    f.eof = false;
-    f.skip = 0;
     // a fresh reader from the start (headers re-read), then a page seek for a later target
-    let rdr = f.rdr.take().map(|r| r.into_inner().into_inner());
-    f.rdr = rdr.and_then(|mut src| {
-        src.seek(SeekFrom::Start(0)).ok()?;
-        OggStreamReader::new(src).ok()
-    });
-    f.pos = 0;
-    f.pos_unknown = false;
-    if f.rdr.is_none() {
-        f.eof = true;
-    } else if target > 0 {
+    rewind(&mut f);
+    if f.rdr.is_some() && target > 0 {
         let ok = f.rdr.as_mut().is_some_and(|r| r.seek_absgp_pg(target).is_ok());
         f.pos_unknown = true;
         // decode until a page end gives the position, then drop up to the target
@@ -391,10 +397,13 @@ pub fn ov_time_seek(vf: u32, s: f64) -> i32 {
         if trace_on() {
             eprintln!("vorbisfile: seek {vf:#x}: at {} (+{} pending), known {}", f.pos, f.pending.len(), !f.pos_unknown);
         }
-        if !f.pos_unknown {
-            f.skip = target.saturating_sub(f.pos);
-            apply_skip(&mut f);
+        if f.pos_unknown {
+            // no page end after the page seek (a target inside the first audio page: the reader stops at once, and the
+            // stream thread seeked again forever, FRONTIER-2 turn 6): decode from the start and drop up to the target
+            rewind(&mut f);
         }
+        f.skip = target.saturating_sub(f.pos);
+        apply_skip(&mut f);
     }
     put(vf, f);
     0
