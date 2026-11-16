@@ -169,6 +169,11 @@ orig! {
 }
 
 orig! {
+    /// `CEventDeath::CEventDeath` (0x4ADDF0)
+    pub fn event_death_ctor(e: GPtr<u8>, drowning: u32) -> GPtr<u8> = thiscall 0x4ADDF0 => unported;
+}
+
+orig! {
     /// `FUN_004ade90` (0x4ADE90)
     pub fn death_dtor(e: GPtr<u8>) = thiscall 0x4ADE90 => unported;
 }

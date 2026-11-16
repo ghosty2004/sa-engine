@@ -38,7 +38,14 @@ use crate::bindings::go_to_point_aiming_ctor;
 use crate::bindings::task_trigger_look_at_ctor;
 use crate::bindings::throw_projectile_ctor;
 use crate::bindings::track_entity_ctor;
+use crate::bindings::{death_dtor, drive_to_point_ctor};
+use sa_world::bindings::{find_player_ped, ped_set_ped_state, stats_increment_stat};
+use crate::bindings::event_death_ctor;
 orig! {
+    /// `CTask::Clone()` (vtable +4)
+    fn v_clone(t: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x4 => unported;
+    /// `CEntitySeekPosCalculator::ComputeEntitySeekPos(const CPed&, const CEntity&, CVector&)` (vtable +0)
+    fn v_compute_entity_seek_pos(c: GPtr<u8>, ped: GPtr<u8>, e: GPtr<u8>, out: GPtr<u8>) = thiscall vslot 0x0 => unported;
     /// `CTaskComplexSeekCoverUntilTargetDead::GetCoverPed(CPed*)` (0x622D50, `ret 4`)
     fn get_cover_ped_o(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x622D50 => seek_cover_get_cover_ped;
     /// `CTaskInteriorBeInHouse::GetInfoForPedToUse(CPed*, int32*)` (0x6750A0, `ret 8`)
@@ -818,6 +825,87 @@ pub fn interior_shop_keeper_create_first_sub_task(this: GPtr<u8>, _ped: GPtr<u8>
     t
 }
 
+/// `vt_870480::MakeAbortable(CPed* ped, int32 priority, const CEvent* event)` (0x678AA0, `ret 0xC`): urgent (2) is
+/// passed on to the sub-task (+8, a tail call); otherwise the sub-task is told the same unless it is a 0xCF task;
+/// AL = its answer for priority 1 (0 for a 0xCF sub-task), 0 for any other priority.
+#[hook(addr = 0x678AA0, conv = thiscall, name = "vt_870480::MakeAbortable", expect = "56 57 8B 7C 24 10",
+       unverified = "frontier2-a8", route = "L2", hazards = "ax-al-return")]
+pub fn vt_870480_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, prio: i32, event: GPtr<u8>) -> u8 {
+    let sub = || rd::<GPtr<u8>>(this, 8);
+    if prio == 2 {
+        return task_make_abortable(sub(), ped, 2, event);
+    }
+    if task_get_type(sub()) == 0xCF {
+        return 0;
+    }
+    let r = task_make_abortable(sub(), ped, prio, event);
+    if prio == 1 { r } else { 0 }
+}
+
+/// `CTaskComplexSeekEntityAnyMeansXYOffset::CreateFirstSubTask(CPed* ped)` (0x6960B0, `ret 4`): the seek position from
+/// the calculator at +0x24 (`ComputeEntitySeekPos(ped, entity +0xC, &pos)`); +0x18 = now, +0x1C = +0x10, +0x20 = 1;
+/// then `CTaskComplexDriveToPoint(null, &pos, 30.0, 0, -1, +0x14, 0)` (the radius kept in the argument slot).
+#[hook(addr = 0x6960B0, conv = thiscall, name = "CTaskComplexSeekEntityAnyMeansXYOffset::CreateFirstSubTask", expect = "6A FF 68 BB 77 84 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes,uninit-locals",
+       note = "the position stays uninitialised when the calculator writes nothing")]
+pub fn seek_entity_any_means_xy_offset_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let mut pos = [0u32; 3];
+    let pp = GPtr::from_raw(pos.as_mut_ptr()).cast::<u8>();
+    v_compute_entity_seek_pos(this.byte_add(0x24), ped, rd::<GPtr<u8>>(this, 0xC), pp);
+    let radius = rd::<u32>(this, 0x14);
+    wr::<u32>(this, 0x18, g::<u32>(0xB7CB84).read());
+    wr::<u32>(this, 0x1C, rd::<u32>(this, 0x10));
+    wr::<u8>(this, 0x20, 1);
+    new_task(0x3C, |m| drive_to_point_ctor(m, GPtr::NULL, pp, 0x41F0_0000, 0, u32::MAX, radius, 0))
+}
+
+/// `CTaskSimpleAffectSecondaryBehaviour::ProcessPed(CPed* ped)` (0x691320, `ret 4`): the ped's secondary task in slot
+/// +0xC. Adding (+8): a current one must accept `MakeAbortable(ped, 1, null)` (else AL = 0), then a clone of +0x10
+/// becomes the slot's task and AL = 1. Removing: a current one gets `MakeAbortable(ped, 0, null)` and AL = 0; none:
+/// AL = 1.
+#[hook(addr = 0x691320, conv = thiscall, name = "CTaskSimpleAffectSecondaryBehaviour::ProcessPed", expect = "53 56 57 8B 7C 24 10",
+       unverified = "frontier2-a8", route = "L2", hazards = "ax-al-return,heap-writes")]
+pub fn affect_secondary_behaviour_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
+    let tm = |p: GPtr<u8>| rd::<GPtr<u8>>(p, 0x47C).byte_add(4);
+    let cur = tm_get_task_secondary(tm(ped), rd::<i32>(this, 0xC));
+    if rd::<u8>(this, 8) == 0 {
+        if cur.is_null() {
+            return 1;
+        }
+        task_make_abortable(cur, ped, 0, GPtr::NULL);
+        return 0;
+    }
+    if !cur.is_null() && task_make_abortable(cur, ped, 1, GPtr::NULL) == 0 {
+        return 0;
+    }
+    let (t, slot) = (tm(ped), rd::<i32>(this, 0xC));
+    tm_set_task_secondary(t, v_clone(rd::<GPtr<u8>>(this, 0x10)), slot);
+    1
+}
+
+/// `CTaskSimpleDrownInCar::ProcessPed(CPed* ped)` (0x62FF70, `ret 4`, SEH frame): ped state 0x36 (drowned), +0x46C bit
+/// 9 cleared; for the player the stat 0xAA is incremented by 1.0 and the vehicle's +0x36 byte becomes `(b & 7) |
+/// 0x48`; a stack `CEventDeath(true)` is added to the ped's event group (`Add(event, false)`) and destroyed. AL = 1.
+#[hook(addr = 0x62FF70, conv = thiscall, name = "CTaskSimpleDrownInCar::ProcessPed", expect = "64 A1 00 00 00 00 6A FF 68 D8 03 84 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes")]
+pub fn drown_in_car_process_ped(_this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
+    ped_set_ped_state(ped, 0x36);
+    wr::<u32>(ped, 0x46C, rd::<u32>(ped, 0x46C) & 0xFFFF_FDFF);
+    if find_player_ped(-1) == ped {
+        stats_increment_stat(0xAA, 1.0);
+    }
+    if find_player_ped(-1) == ped {
+        let v = rd::<GPtr<u8>>(ped, 0x58C);
+        wr::<u8>(v, 0x36, (rd::<u8>(v, 0x36) & 7) | 0x48);
+    }
+    let mut ev = [0u32; 5];
+    let e = GPtr::from_raw(ev.as_mut_ptr()).cast::<u8>();
+    event_death_ctor(e, 1);
+    event_group_add(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), e, 0);
+    death_dtor(e);
+    1
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_FOLLOW_LEADER_IN_FORMATION_CREATE_SUB_TASK,
@@ -842,4 +930,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_INTERIOR_BE_IN_OFFICE_CREATE_NEXT_SUB_TASK,
     HOOK_INTERIOR_SHOP_KEEPER_CONTROL_SUB_TASK,
     HOOK_INTERIOR_SHOP_KEEPER_CREATE_FIRST_SUB_TASK,
+    HOOK_VT_870480_MAKE_ABORTABLE,
+    HOOK_SEEK_ENTITY_ANY_MEANS_XY_OFFSET_CREATE_FIRST_SUB_TASK,
+    HOOK_AFFECT_SECONDARY_BEHAVIOUR_PROCESS_PED,
+    HOOK_DROWN_IN_CAR_PROCESS_PED,
 ];

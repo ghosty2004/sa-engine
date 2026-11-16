@@ -30,6 +30,7 @@ use sa_world::bindings::ped_set_ped_state;
 use sa_world::bindings::ped_stop_non_partial_anims;
 use crate::bindings::task_complex_ctor;
 use sa_world::bindings::vector_mul_scalar as vector_mul;
+use crate::bindings::event_death_ctor;
 orig! {
     /// `CTask::GetSubTask` (vtable +8)
     fn v_sub_task(t: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x8 => unported;
@@ -37,8 +38,6 @@ orig! {
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CPed::ClearAll` (0x5E5320)
     fn ped_clear_all(p: GPtr<u8>) = thiscall 0x5E5320 => unported;
-    /// `CEventDeath::CEventDeath(bool drowning)` (0x4ADDF0, `ret 4`)
-    fn event_death_ctor(e: GPtr<u8>, drowning: u32) -> GPtr<u8> = thiscall 0x4ADDF0 => unported;
     /// `CTaskSimpleDie::StartAnim(CPed*)` (0x637520, `ret 4`)
     fn o_die_start_anim(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x637520 => unported;
     /// `CTaskComplexDie::SayDeathSample(CPed*)` (0x630100, `ret 4`)
