@@ -1635,13 +1635,77 @@ use crate::bindings::auto_mipmap as check_auto_mipmap_texture_4cbf80;
 use crate::bindings::check_valid_texture_format_call;
 use crate::bindings::rw_raster_destroy as rw_raster_destroy_call;
 use crate::bindings::rw_raster_create as rw_raster_create_call;
+use crate::d3d9rast::dev_create_texture;
 orig! {
     /// `_rwD3D9CheckAutoMipmapGenCubeTextureFormat(fmt)` (0x4CC020)
     fn check_auto_mipmap_cube_call(fmt: u32) -> u32 = cdecl 0x4CC020 => d3d9_check_auto_mipmap_gen_cube_texture_format;
-    /// `_rwD3D9RasterCreateFromDDSFormat(w, h, d3dFormat, flags)` (0x4CD050)
-    fn raster_create_from_dds_format(w: u32, h: u32, fmt: u32, flags: u32) -> GPtr<u8> = cdecl 0x4CD050 => unported;
     /// `IDirect3DDevice9::CreateCubeTexture(edge, levels, usage, fmt, pool, out, shared)` (+0x64)
     fn dev_create_cube_texture(dev: GPtr<u8>, edge: u32, levels: u32, usage: u32, fmt: u32, pool: u32, out: GPtr<u8>, shared: u32) -> i32 = stdcall vslot 0x64 => unported;
+}
+
+/// `_rwD3D9RasterCreateFromDDSFormat(w, h, d3dFormat, flags)` (0x4CD050, cdecl; unnamed in the catalogue, the
+/// rw-names proposal). Raster type 0 / 1 lose the mipmap bits (0x9000). `RwRasterCreate(w, h, 0, flags | 0x80)`, then,
+/// for a mipmapped + auto-mipmap raster (0x9000) whose format passes `_rwD3D9CheckAutoMipmapGenTextureFormat`, the
+/// auto-mipmap nibble. Usage = 0x400 (AUTOGENMIPMAP) when that nibble is set; a camera texture (type & 5 == 5) needs a
+/// valid camera texture format (usage |= RENDERTARGET, pool DEFAULT), a depth format 0x46..=0x50 a valid Z-buffer
+/// texture format (usage |= DEPTHSTENCIL, pool DEFAULT), any other a valid texture format (pool MANAGED; the original
+/// keeps the pool in the format argument slot). `CreateTexture(w, h, levels = mipmap (0x8000) ? 0 : 1, usage, format,
+/// pool, &ext.texture, NULL)`; a failed check or call destroys the raster (null). A DEFAULT-pool raster joins the video
+/// memory list. Then +0x21 &= 0x7F, +0x23 &= 0xF0, ext +0x18 = format: DXT1..DXT5 set the compressed nibble, the alpha
+/// byte ext +8 (0 for DXT1), +0x23 |= 2 / 3 and depth 16; others clear it and, below 0x80, take ext +8 / depth / +0x23
+/// bits from the 4-byte format table 0xB4E7E0.
+#[hook(addr = 0x4CD050, conv = cdecl, name = "FUN_004cd050", expect = "56 57 8B 7C 24 18",
+       unverified = "frontier2-c13", route = "L2", hazards = "heap-writes")]
+pub fn raster_create_from_dds_format(w: u32, h: u32, fmt: u32, flags: u32) -> GPtr<u8> {
+    let mut flags = flags;
+    if flags & 7 == 0 || flags & 7 == 1 {
+        flags &= 0xFFFF_6FFF;
+    }
+    let r = rw_raster_create_call(w as i32, h as i32, 0, flags | 0x80);
+    if r.is_null() {
+        return r;
+    }
+    let e = ext(r);
+    if flags & 0x9000 == 0x9000 && check_auto_mipmap_texture_4cbf80(fmt) != 0 {
+        wr::<u8>(e, 0xA, (rd::<u8>(e, 0xA) & 0xF1) | 1);
+    }
+    let mut usage = if rd::<u8>(e, 0xA) & 0xF != 0 { 0x400 } else { 0 };
+    let (ok, pool) = if flags & 5 == 5 {
+        usage |= 1;
+        (d3d9_check_valid_camera_texture_format(fmt) != 0, 0)
+    } else if (0x46..=0x50).contains(&(fmt as i32)) {
+        usage |= 2;
+        (d3d9_check_valid_zbuffer_texture_format(fmt) != 0, 0)
+    } else {
+        (d3d9_check_valid_texture_format(fmt) != 0, 1)
+    };
+    let levels = !(flags >> 15) & 1;
+    if !ok || dev_create_texture(device(), rd::<u32>(r, 0xC), rd::<u32>(r, 0x10), levels, usage, fmt, pool, e, 0) < 0 {
+        rw_raster_destroy_call(r);
+        return GPtr::NULL;
+    }
+    if pool == 0 {
+        vm_raster_list_add(r);
+    }
+    wr::<u8>(r, 0x21, rd::<u8>(r, 0x21) & 0x7F);
+    wr::<u8>(r, 0x23, rd::<u8>(r, 0x23) & 0xF0);
+    wr::<u32>(e, 0x18, fmt);
+    if (0x3154_5844..=0x3554_5844).contains(&(fmt as i32)) {
+        wr::<u8>(e, 0xA, (rd::<u8>(e, 0xA) & 0xF) | 0x10);
+        let dxt1 = fmt == 0x3154_5844;
+        wr::<u8>(e, 8, u8::from(!dxt1));
+        wr::<u8>(r, 0x23, rd::<u8>(r, 0x23) | if dxt1 { 2 } else { 3 });
+        wr::<u32>(r, 0x14, 0x10);
+    } else {
+        wr::<u8>(e, 0xA, rd::<u8>(e, 0xA) & 0xF);
+        if (fmt as i32) < 0x80 {
+            let row = 0xB4_E7E0usize.wrapping_add((fmt as i32 as isize * 4) as usize);
+            wr::<u8>(e, 8, g::<u8>(row).read());
+            wr::<u32>(r, 0x14, u32::from(g::<u8>(row + 1).read()));
+            wr::<u8>(r, 0x23, rd::<u8>(r, 0x23) | g::<u8>(row + 3).read());
+        }
+    }
+    r
 }
 
 /// The cube-texture creation shared by the two cube paths of `_rwD3D9NativeTextureRead`: levels check
@@ -1982,6 +2046,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_RW_RASTER_UNLOCK,
     HOOK_RW_RASTER_GET_NUM_LEVELS,
     HOOK_RW_RASTER_CREATE,
+    HOOK_RASTER_CREATE_FROM_DDS_FORMAT,
     HOOK_RW_RASTER_LOCK,
 ];
 

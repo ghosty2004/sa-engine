@@ -4,16 +4,23 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::bindings::{material_list_find_call, rp_material_destroy};
 use crate::common::{g, rd, wr};
 
-orig! {
-    /// The D3D9 raster format resolver (0x4CC1D0, cdecl `(type, format)`; unnamed): the format flags (bits 8..15) the
-    /// device supports for that raster type
-    fn raster_resolve_format(ty: u32, format: u32) -> u32 = cdecl 0x4CC1D0 => unported;
-}
+use crate::raster::{d3d9_check_valid_camera_texture_format as camera_ok, d3d9_check_valid_texture_format as texture_ok};
+
+// The low byte of `D3DCAPS9.TextureCaps`; bit 7 (D3DPTEXTURECAPS_ALPHAPALETTE, read as a sign test) gives PAL8 an
+// 8888 palette, else 888.
+use crate::d3d9state::CAPS_TEXTURE as CAPS_TEXTURE_BYTE;
+/// The display mode depth (0xC9BEF4) and the Z-buffer depth (0xC9BEFC).
+const MODE_DEPTH: usize = 0xC9BEF4;
+const Z_DEPTH: usize = 0xC9BEFC;
+
+/// Raster format nibbles (bits 8..11 of the RW raster format): 0x100 1555, 0x200 565, 0x300 4444, 0x500 8888, 0x600
+/// 888, 0x400 LUM8; 0x2000 PAL8, 0x4000 PAL4 (made PAL8).
+const NIBBLE: u32 = 0xF00;
 
 /// `RpGeometryReplaceOldMaterialWithNewMaterial(RpGeometry*, RpMaterial* old, RpMaterial* new)` (0x734DE0, cdecl, AL):
 /// over the geometry's mesh header (+0x54; mesh count word +4, meshes of 0xC from +0x10, material at +8) every mesh
@@ -45,6 +52,144 @@ pub fn rp_geometry_replace_old_material_with_new_material(geometry: GPtr<u8>, ol
         if n == 0 {
             return result;
         }
+    }
+}
+
+/// The D3D9 raster format resolver (0x4CC1D0, cdecl `(type, format)`; unnamed, called by the format setter 0x4CC580):
+/// the format bits 8..15 the device supports for a raster of that type, from `format & 0xFF00`. Types 0 / 4 (normal /
+/// texture) fall back between 8888 (D3DFMT 0x15), 888 (0x16), 4444 (0x1A), 565 / 1555 and PAL8 (0x29) through
+/// `_rwD3D9CheckValidTextureFormat`, LUM8 (0x32) becoming the 888 fallback `| 0x16` as the bytes do; with no nibble the
+/// display depth (0xC9BEF4) > 16 prefers 32-bit formats. Type 5 (camera texture) matches the Z-buffer depth (0xC9BEFC)
+/// with `_rwD3D9CheckValidCameraTextureFormat`. Type 2 (Z-buffer) without a nibble takes the word at 0xB4E7E2 +
+/// [0xC9C048] * 4, type 1 (camera) 0x700 / 0x900 for a 16 / 32-bit Z-buffer. Other types return the input bits.
+#[hook(addr = 0x4CC1D0, conv = cdecl, name = "FUN_004cc1d0", expect = "8B 44 24 04 56 8B 74 24 0C",
+       unverified = "frontier2-c13", route = "L2", hazards = "none")]
+pub fn raster_resolve_format(ty: u32, format: u32) -> u32 {
+    let mut f = format & 0xFF00;
+    match ty {
+        0 | 4 => resolve_texture(f),
+        5 => {
+            let nib = f & NIBBLE;
+            let zd = g::<u32>(Z_DEPTH).read();
+            if nib == 0 {
+                return if zd != 0x10 && camera_ok(0x16) != 0 { f | 0x600 } else { f | 0x200 };
+            }
+            let bpp = u32::from(g::<u8>(0x85C674 + 8 * ((f >> 8) & 0xF) as usize).read());
+            if zd == 0x10 {
+                if bpp == 0x20 {
+                    f = match nib {
+                        0x500 => (f & !0x400) | 0x300,
+                        0x600 => (f & !0x400) | 0x200,
+                        _ => 0x200,
+                    };
+                }
+                if f & NIBBLE == 0x300 && camera_ok(0x1A) == 0 {
+                    f = (f & !0x200) | 0x100;
+                }
+                if f & NIBBLE != 0x100 || camera_ok(0x19) != 0 {
+                    return f;
+                }
+                (f & !0x100) | 0x200
+            } else {
+                if bpp == 0x10 {
+                    f = match nib {
+                        0x300 => (f & !0x200) | 0x500,
+                        0x100 => f | 0x500,
+                        0x200 => f | 0x600,
+                        _ => 0x600,
+                    };
+                }
+                if f & NIBBLE != 0x500 || camera_ok(0x15) != 0 {
+                    return f;
+                }
+                (f & !0x100) | 0x600
+            }
+        }
+        2 if f & NIBBLE == 0 => u32::from(g::<u16>((0xB4_E7E2u32).wrapping_add(g::<u32>(0xC9C048).read().wrapping_mul(4)) as usize).read()),
+        1 if f & NIBBLE == 0 => match g::<u32>(Z_DEPTH).read() {
+            0x10 => 0x700,
+            0x20 => 0x900,
+            _ => f,
+        },
+        _ => f,
+    }
+}
+
+/// The type 0 / 4 arm of 0x4CC1D0 (texture formats through `_rwD3D9CheckValidTextureFormat`).
+fn resolve_texture(mut f: u32) -> u32 {
+    // the shared fallback tails: 4444 else 1555 (0x4CC320), 565 (0x4CC351)
+    let to_4444 = |f: u32| if texture_ok(0x1A) != 0 { f | 0x300 } else { f | 0x100 };
+    let to_565 = |f: u32| (f & !0x400) | 0x200;
+    if f & NIBBLE == 0 {
+        if f & 0x2000 != 0 {
+            if texture_ok(0x29) != 0 {
+                f |= if (g::<u8>(CAPS_TEXTURE_BYTE).read() as i8) < 0 { 0x500 } else { 0x600 };
+            } else {
+                f &= !0x2000;
+            }
+            if f & 0x2000 != 0 {
+                return f;
+            }
+        }
+        if texture_ok(0x15) != 0 {
+            return f | 0x500;
+        }
+        return to_4444(f);
+    }
+    if f & 0x4000 != 0 {
+        f = (f & !0x4000) | 0x2000;
+    }
+    if f & 0x2000 != 0 {
+        if texture_ok(0x29) != 0 && (f & NIBBLE != 0x500 || (g::<u8>(CAPS_TEXTURE_BYTE).read() as i8) < 0) {
+            return f;
+        }
+        let depth = g::<i32>(MODE_DEPTH).read();
+        f &= !0x2000;
+        if f & NIBBLE == 0x600 {
+            if depth > 0x10 && texture_ok(0x16) != 0 {
+                return f | 0x600;
+            }
+            return to_565(f);
+        }
+        if depth > 0x10 && texture_ok(0x15) != 0 {
+            return f | 0x500;
+        }
+        return to_4444(f & !0x500);
+    }
+    match f & NIBBLE {
+        0x500 => {
+            if texture_ok(0x15) != 0 {
+                f
+            } else {
+                to_4444(f & !0x500)
+            }
+        }
+        0x600 => {
+            if texture_ok(0x16) != 0 {
+                f
+            } else {
+                to_565(f)
+            }
+        }
+        0x300 => {
+            if texture_ok(0x1A) != 0 {
+                f
+            } else {
+                (f & !0x200) | 0x100
+            }
+        }
+        0x400 => {
+            if texture_ok(0x32) != 0 {
+                return f;
+            }
+            f &= !0x400;
+            if texture_ok(0x16) != 0 {
+                f | 0x16
+            } else {
+                f | 0x200
+            }
+        }
+        _ => f,
     }
 }
 
@@ -80,4 +225,9 @@ pub fn raster_check_format_by_type(cube: u32, ty: u32, format: u32) -> u32 {
 
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] =
-    &[HOOK_RP_GEOMETRY_REPLACE_OLD_MATERIAL_WITH_NEW_MATERIAL, HOOK_RASTER_SET_FORMAT, HOOK_RASTER_CHECK_FORMAT_BY_TYPE];
+    &[
+        HOOK_RP_GEOMETRY_REPLACE_OLD_MATERIAL_WITH_NEW_MATERIAL,
+        HOOK_RASTER_SET_FORMAT,
+        HOOK_RASTER_CHECK_FORMAT_BY_TYPE,
+        HOOK_RASTER_RESOLVE_FORMAT,
+    ];
