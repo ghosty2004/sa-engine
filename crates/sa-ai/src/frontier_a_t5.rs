@@ -205,6 +205,13 @@ pub fn seek_cover_until_target_dead_create_first_sub_task(this: GPtr<u8>, ped: G
     }
     entity_register_reference(target, target_slot);
     entity_register_reference(rd::<GPtr<u8>>(cover_slot, 0), cover_slot);
+    seek_cover_sequence(this)
+}
+
+/// The seek-cover sequence both `CreateFirstSubTask` (0x62E6C0) and `ControlSubTask` (0x62E8B0) build: seek the cover
+/// ped (+0x14) at a radius / angle offset, turn to face the target (+0x10), stand still for 2000 ms.
+pub(crate) fn seek_cover_sequence(this: GPtr<u8>) -> GPtr<u8> {
+    let (target_slot, cover_slot) = (this.byte_add(0x10), this.byte_add(0x14));
     let seq = new_task(0x40, sequence_ctor);
     let t = task_new(0x54);
     let seek = if t.is_null() {

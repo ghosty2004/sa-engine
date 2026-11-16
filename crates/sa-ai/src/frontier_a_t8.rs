@@ -13,7 +13,10 @@ use sa_math::fpu::{gt, hypot_x87, lt};
 use sa_world::bindings::ped_say;
 use sa_world::world::common::entity_pos;
 use crate::bindings::{pad_jump_just_down, use_gun_control_gun, use_gun_control_gun_move, use_gun_ctor};
-use sa_core::bindings::{intel_get_task_use_gun, vector_normalise};
+use sa_core::bindings::{
+    entity_clean_up_old_reference, entity_register_reference, intel_get_task_use_gun, ped_is_alive, vector_normalise,
+};
+use sa_world::bindings::stand_still_ctor;
 use sa_core::crt::rand_at;
 use sa_input::bindings::pad_sprint_just_down;
 use crate::common::{task_make_abortable, task_new, xi};
@@ -632,6 +635,55 @@ pub fn follow_patrol_route_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) 
     }
 }
 
+// ------------------------------------------------------------------------------------------- seek cover
+
+/// `CTaskComplexSeekCoverUntilTargetDead::ControlSubTask(CPed*)` (0x62E8B0, `ret 4`). A dead or missing target (+0x10)
+/// is replaced by `GetTargetPed()` (references moved); still none and the sub-task aborts (`MakeAbortable(ped, 1,
+/// NULL)`) → `CTaskSimpleStandStill(-1, false, false, 8.0)`. A dead or missing cover ped (+0x14) is replaced by
+/// `GetTargetPed()` as well (the bytes call the target getter here too); none → the stand-still on an abortable
+/// sub-task, else the sub-task; a new one → on an abortable sub-task the seek-cover sequence (as `CreateFirstSubTask`),
+/// else the sub-task. A living cover ped keeps the sub-task.
+#[hook(addr = 0x62E8B0, conv = thiscall, name = "CTaskComplexSeekCoverUntilTargetDead::ControlSubTask",
+       expect = "64 A1 00 00 00 00 6A FF 68 FA 01 84 00",
+       unverified = "frontier2-a11", route = "L2", hazards = "heap-writes")]
+pub fn seek_cover_until_target_dead_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    use crate::group_scan_loops::seek_cover_until_target_dead_get_target_ped as get_target;
+    let alive = |e: GPtr<u8>| !e.is_null() && ped_is_alive(e) as u8 != 0;
+    let replace = |slot: GPtr<u8>| {
+        let old = rd::<GPtr<u8>>(slot, 0);
+        if !old.is_null() {
+            entity_clean_up_old_reference(old, slot);
+        }
+        let new = get_target(this);
+        wr::<GPtr<u8>>(slot, 0, new);
+        if !new.is_null() {
+            entity_register_reference(new, slot);
+        }
+    };
+    let abortable = || task_make_abortable(rd::<GPtr<u8>>(this, 8), ped, 1, GPtr::NULL) != 0;
+    let stand = || crate::common::new_task(0x20, |m| stand_still_ctor(m, -1, 0, 0, 8.0));
+    let target_slot = this.byte_add(0x10);
+    if !alive(rd::<GPtr<u8>>(target_slot, 0)) {
+        replace(target_slot);
+        if rd::<u32>(target_slot, 0) == 0 && abortable() {
+            return stand();
+        }
+    }
+    let cover_slot = this.byte_add(0x14);
+    if alive(rd::<GPtr<u8>>(cover_slot, 0)) {
+        return rd::<GPtr<u8>>(this, 8);
+    }
+    replace(cover_slot);
+    if rd::<u32>(cover_slot, 0) == 0 {
+        return if abortable() { stand() } else { rd::<GPtr<u8>>(this, 8) };
+    }
+    if abortable() {
+        crate::frontier_a_t5::seek_cover_sequence(this)
+    } else {
+        rd::<GPtr<u8>>(this, 8)
+    }
+}
+
 /// The batch's hooks.
 pub const HOOKS: &[HookReg] = &[
     HOOK_MEDIC_TREAT_INJURED_PED_CREATE_NEXT_SUB_TASK,
@@ -641,4 +693,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_GO_PICK_UP_ENTITY_CREATE_FIRST_SUB_TASK,
     HOOK_GO_TO_POINT_AIMING_CONTROL_SUB_TASK,
     HOOK_FOLLOW_PATROL_ROUTE_CREATE_FIRST_SUB_TASK,
+    HOOK_SEEK_COVER_UNTIL_TARGET_DEAD_CONTROL_SUB_TASK,
 ];
