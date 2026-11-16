@@ -389,11 +389,6 @@ orig! {
 }
 
 orig! {
-    /// `FUN_00634440` (0x634440)
-    pub fn task_trigger_look_at_ctor(t: GPtr<u8>, e: GPtr<u8>, time: u32, bone: u32, x: u32, y: u32, z: u32, b: u32, speed: u32, blend: u32, prio: u32) -> GPtr<u8> = thiscall 0x634440 => unported;
-}
-
-orig! {
     /// `FUN_00634a40` (0x634A40)
     pub fn phone_task_stop(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x634A40 => unported;
 }
@@ -406,11 +401,6 @@ orig! {
 orig! {
     /// `CTaskComplexDrivePointRoute::Constructor` (0x6433E0)
     pub fn task_drive_point_route_ctor(t: GPtr<u8>, v: GPtr<u8>, r: u32, speed: u32, mode: u32, model: u32, radius: u32, style: u32) -> GPtr<u8> = thiscall 0x6433E0 => unported;
-}
-
-orig! {
-    /// `CTaskComplexGoToPointAiming::Constructor` (0x668790)
-    pub fn go_to_point_aiming_ctor(t: GPtr<u8>, ms: u32, p: GPtr<u32>, aim: GPtr<u8>, x: u32, y: u32, z: u32, r: u32, d: u32) -> GPtr<u8> = thiscall 0x668790 => unported;
 }
 
 orig! {

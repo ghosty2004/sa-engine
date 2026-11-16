@@ -144,6 +144,7 @@ use sa_world::bindings::stand_still_ctor;
 use sa_world::bindings::vector_add;
 use sa_world::bindings::vector_mul_scalar as vector_scale;
 use sa_world::bindings::max_f as float_max;
+use crate::bindings::track_entity_ctor;
 orig! {
     // ---- virtual slots ----
     /// `CTask::GetTaskType` (vtable +0x10)
@@ -168,9 +169,6 @@ orig! {
     fn leave_car_and_wander_create_sub_task_orig(t: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x63BEC0 => unported;
     /// `CEntitySeekPosCalculatorXYOffset::CEntitySeekPosCalculatorXYOffset(const CVector&)` (0x65DE60, `ret 4`)
     fn seek_pos_calc_xy_offset_ctor(t: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x65DE60 => unported;
-    /// `CTaskComplexTrackEntity::Constructor(CEntity*, CVector (by value), bool, int32, float, float, bool)`
-    /// (0x65F3B0, `ret 0x24`)
-    fn track_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, vx: u32, vy: u32, vz: u32, a: u32, b: i32, f1: u32, f2: u32, c: u32) -> GPtr<u8> = thiscall 0x65F3B0 => unported;
     /// `CEventPassObject::Constructor(CPed* giver, bool)` (0x65DC70, `ret 8`)
     fn event_pass_object_ctor(e: GPtr<u8>, giver: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x65DC70 => unported;
     /// `CEventPassObject` complete destructor (0x65DCF0)

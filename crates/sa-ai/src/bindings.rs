@@ -919,6 +919,11 @@ orig! {
 }
 
 orig! {
+    /// `CTaskSimpleThrowProjectile::Constructor` (0x61F660)
+    pub fn throw_projectile_ctor(t: GPtr<u8>, target: GPtr<u8>, x: u32, y: u32, z: u32) -> GPtr<u8> = thiscall 0x61F660 => unported;
+}
+
+orig! {
     /// `CTaskSimpleThrowControl::Constructor` (0x61F8B0)
     pub fn throw_control_ctor(t: GPtr<u8>, e: u32, pos: GPtr<u32>) -> GPtr<u8> = thiscall 0x61F8B0 => unported;
 }
@@ -986,6 +991,11 @@ orig! {
 orig! {
     /// `CTaskComplexSequence::Flush` (0x632C10)
     pub fn sequence_flush(s: GPtr<u8>) = thiscall 0x632C10 => crate::small::sequence_flush;
+}
+
+orig! {
+    /// `FUN_00634440` (0x634440)
+    pub fn task_trigger_look_at_ctor(t: GPtr<u8>, e: GPtr<u8>, time: u32, bone: u32, x: u32, y: u32, z: u32, b: u32, speed: u32, blend: u32, prio: u32) -> GPtr<u8> = thiscall 0x634440 => unported;
 }
 
 orig! {
@@ -1294,6 +1304,11 @@ orig! {
 }
 
 orig! {
+    /// `CTaskComplexTrackEntity::Constructor` (0x65F3B0)
+    pub fn track_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, vx: u32, vy: u32, vz: u32, a: u32, b: i32, f1: u32, f2: u32, c: u32) -> GPtr<u8> = thiscall 0x65F3B0 => unported;
+}
+
+orig! {
     /// `CTaskGangHasslePed::Constructor` (0x65FED0)
     pub fn gang_hassle_ped_ctor(this: GPtr<u8>, ped: GPtr<u8>, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x65FED0 => unported;
 }
@@ -1366,6 +1381,11 @@ orig! {
 orig! {
     /// `CTaskSimpleGoToPoint::Constructor` (0x667CD0)
     pub fn go_to_point_ctor(t: GPtr<u8>, ms: u32, pos: GPtr<u8>, radius: u32, a: u8, b: u8) -> GPtr<u8> = thiscall 0x667CD0 => crate::walk::goto_point_ctor;
+}
+
+orig! {
+    /// `CTaskComplexGoToPointAiming::Constructor` (0x668790)
+    pub fn go_to_point_aiming_ctor(t: GPtr<u8>, ms: u32, p: GPtr<u32>, aim: GPtr<u8>, x: u32, y: u32, z: u32, r: u32, d: u32) -> GPtr<u8> = thiscall 0x668790 => unported;
 }
 
 orig! {

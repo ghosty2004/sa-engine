@@ -978,6 +978,7 @@ use sa_world::bindings::vector_add_assign;
 use crate::bindings::use_gun_ctor;
 use crate::bindings::use_gun_control_gun;
 use crate::bindings::use_gun_require_pistol_whip;
+use crate::bindings::throw_projectile_ctor;
 orig! {
     /// `CPlayerPed::PlayerHasJustAttackedSomeone()` (0x60D5A0)
     fn player_has_just_attacked_someone(p: GPtr<u8>) = thiscall 0x60D5A0 => unported;
@@ -989,8 +990,6 @@ orig! {
     fn intel_test_for_stealth_kill(i: GPtr<u8>, target: GPtr<u8>, full: u32) -> u8 = thiscall 0x601E00 => crate::frontier_a_t4::test_for_stealth_kill;
     /// `CTaskSimpleThrowProjectile::ControlThrow(bool, CEntity*, CVector*)` (0x61F810, `ret 0xC`)
     fn throw_control_throw(t: GPtr<u8>, b: u32, target: GPtr<u8>, pos: GPtr<u8>) -> u8 = thiscall 0x61F810 => unported;
-    /// `CTaskSimpleThrowProjectile::CTaskSimpleThrowProjectile(CEntity*, CVector)` (0x61F660, `ret 0x10`)
-    fn throw_projectile_ctor(t: GPtr<u8>, target: GPtr<u8>, x: u32, y: u32, z: u32) -> GPtr<u8> = thiscall 0x61F660 => unported;
     /// `CPlayerPed::PedCanBeTargettedVehicleWise(CPed*)` (0x609D90)
     fn player_ped_can_be_targetted_vehicle_wise(p: GPtr<u8>) -> u8 = cdecl 0x609D90 => unported;
     /// `CPad::ShiftTargetLeftJustDown()` (0x540850; AL, EAX passed on whole once)

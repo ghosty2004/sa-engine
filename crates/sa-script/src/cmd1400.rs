@@ -64,7 +64,7 @@ fn take_next_enter_car_dword(t: GPtr<u8>, field: isize) {
 
 use crate::bindings::affect_secondary_behaviour_ctor as task_affect_secondary_ctor;
 use crate::bindings::physical_45afb0 as set_turn_speed;
-use crate::bindings::task_trigger_look_at_ctor;
+use sa_ai::bindings::task_trigger_look_at_ctor;
 use sa_core::bindings::strncmp;
 use sa_core::bindings::vector_magnitude;
 use sa_world::bindings::achieve_heading_ctor as task_achieve_heading_ctor;

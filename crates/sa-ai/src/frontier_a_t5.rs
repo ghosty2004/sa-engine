@@ -32,7 +32,14 @@ use sa_world::bindings::{
 use sa_world::world::common::{entity_pos, ped_active_weapon};
 
 use crate::bindings::task_seek_radius_angle_ctor;
+use crate::bindings::go_to_point_aiming_ctor;
+use crate::bindings::task_trigger_look_at_ctor;
+use crate::bindings::throw_projectile_ctor;
+use crate::bindings::track_entity_ctor;
 orig! {
+    /// `CTaskSimpleIKChain::Constructor(name, bone, CVector offset, part, entity, bone, CVector offset, speed, time,
+    /// blend)` (0x6339C0, `ret 0x34`)
+    fn ik_chain_ctor(t: GPtr<u8>, name: u32, bone: i32, ox: u32, oy: u32, oz: u32, part: i32, ent: u32, tbone: u32, tx: u32, ty: u32, tz: u32, speed: u32, time: u32, blend: u32) -> GPtr<u8> = thiscall 0x6339C0 => unported;
     /// `InteriorGroup_c::FindClosestInteriorInfo(int32 type, CVector pos, float maxDist, InteriorInfo_t**, Interior_c**,
     /// float*)` (0x594A50, `ret 0x20`)
     fn interior_group_find_closest_info(g: GPtr<u8>, ty: i32, x: f32, y: f32, z: f32, max: f32, info: GPtr<GPtr<u8>>, interior: GPtr<GPtr<u8>>, dist: GPtr<f32>) -> u8 = thiscall 0x594A50 => sa_world::world::interior_closest_info::find_closest_interior_info;
@@ -561,6 +568,119 @@ pub fn swim_process_control_ai(this: GPtr<u8>, ped: GPtr<u8>) {
     }
 }
 
+/// `[+o, +o + 4, +o + 8]` of a task: a `CVector` passed by value.
+fn vec_at(t: GPtr<u8>, o: isize) -> (u32, u32, u32) {
+    (rd::<u32>(t, o), rd::<u32>(t, o + 4), rd::<u32>(t, o + 8))
+}
+
+/// `CTaskSimpleUseGun::Clone()` (0x622F20): `new CTaskSimpleUseGun(target +0x1C, the target position +0x20, command
+/// +0x10, burst length +0x34 (u16), aim-flag +0x3B)`.
+#[hook(addr = 0x622F20, conv = thiscall, name = "CTaskSimpleUseGun::Clone", expect = "6A FF 68 1B FA 83 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes")]
+pub fn use_gun_clone(this: GPtr<u8>) -> GPtr<u8> {
+    new_task(0x3C, |m| {
+        let (vx, vy, vz) = vec_at(this, 0x20);
+        let (cmd, burst, aim) = (rd::<u8>(this, 0x10), rd::<u16>(this, 0x34), rd::<u8>(this, 0x3B));
+        use_gun_ctor(m, rd::<GPtr<u8>>(this, 0x1C), vx, vy, vz, u32::from(cmd), u32::from(burst), u32::from(aim))
+    })
+}
+
+/// `CTaskSimpleThrowProjectile::Clone()` (0x623030): `new CTaskSimpleThrowProjectile(target +0x10, position +0x14)`.
+#[hook(addr = 0x623030, conv = thiscall, name = "CTaskSimpleThrowProjectile::Clone", expect = "6A FF 68 5B FA 83 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes")]
+pub fn throw_projectile_clone(this: GPtr<u8>) -> GPtr<u8> {
+    new_task(0x24, |m| {
+        let (vx, vy, vz) = vec_at(this, 0x14);
+        throw_projectile_ctor(m, rd::<GPtr<u8>>(this, 0x10), vx, vy, vz)
+    })
+}
+
+/// `CTaskComplexGoToPointAiming::Clone()` (0x66CD80): `new CTaskComplexGoToPointAiming(move state +0xC, &point +0x20,
+/// aim entity +0x10, aim position +0x14, radius +0x2C, slow-down distance +0x30)`.
+#[hook(addr = 0x66CD80, conv = thiscall, name = "CTaskComplexGoToPointAiming::Clone", expect = "6A FF 68 6B 53 84 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes")]
+pub fn go_to_point_aiming_clone(this: GPtr<u8>) -> GPtr<u8> {
+    new_task(0x38, |m| {
+        let (vx, vy, vz) = vec_at(this, 0x14);
+        go_to_point_aiming_ctor(m, rd::<u32>(this, 0xC), this.byte_add(0x20).cast(), rd::<GPtr<u8>>(this, 0x10), vx, vy, vz,
+            rd::<u32>(this, 0x2C), rd::<u32>(this, 0x30))
+    })
+}
+
+/// `CTaskComplexGoToPointShooting::Clone()` (0x66CE10): the go-to-point-aiming constructor with the same arguments
+/// (radius and distance through `fld` / `fstp`), then the vtable 0x86FE2C.
+#[hook(addr = 0x66CE10, conv = thiscall, name = "CTaskComplexGoToPointShooting::Clone", expect = "6A FF 68 8B 53 84 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes")]
+pub fn go_to_point_shooting_clone(this: GPtr<u8>) -> GPtr<u8> {
+    new_task(0x38, |m| {
+        let d = x(rd::<f32>(this, 0x30)).to_f32().to_bits();
+        let r = x(rd::<f32>(this, 0x2C)).to_f32().to_bits();
+        let (vx, vy, vz) = vec_at(this, 0x14);
+        go_to_point_aiming_ctor(m, rd::<u32>(this, 0xC), this.byte_add(0x20).cast(), rd::<GPtr<u8>>(this, 0x10), vx, vy, vz, r, d);
+        wr::<u32>(m, 0, 0x86FE2C);
+        m
+    })
+}
+
+/// `CTaskSimpleTriggerLookAt::Clone()` (vt_86e3cc, 0x634560): `new` of the trigger look-at task (0x634440) with entity
+/// +8, time +0xC, bone +0x10, offset +0x14, flag +0x20, speed +0x24, blend +0x28, priority +0x2D (sign-extended); with
+/// a bone (+0x10 > -1) but no entity the bone becomes -1 and the time 100.
+#[hook(addr = 0x634560, conv = thiscall, name = "vt_86e3cc::Clone", expect = "6A FF 68 9B 08 84 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes")]
+pub fn trigger_look_at_clone(this: GPtr<u8>) -> GPtr<u8> {
+    let (mut time, mut bone) = (rd::<u32>(this, 0xC), rd::<i32>(this, 0x10));
+    if bone > -1 && rd::<u32>(this, 8) == 0 {
+        bone = -1;
+        time = 0x64;
+    }
+    new_task(0x30, |m| {
+        let (vx, vy, vz) = vec_at(this, 0x14);
+        task_trigger_look_at_ctor(m, rd::<GPtr<u8>>(this, 8), time, bone as u32, vx, vy, vz, u32::from(rd::<u8>(this, 0x20)),
+            rd::<u32>(this, 0x24), rd::<u32>(this, 0x28), i32::from(rd::<i8>(this, 0x2D)) as u32)
+    })
+}
+
+/// `CTaskComplexTrackEntity::Clone()` (0x65F4E0): the time left (+0x38 set: `+0x34 - now + +0x30`, else +0x20) and
+/// `new CTaskComplexTrackEntity(entity +0xC, offset +0x10, move state +0x1C, time, +0x24, +0x28, +0x2C)`; +0x3C copied
+/// to the result (through it even when `new` failed, as the bytes).
+#[hook(addr = 0x65F4E0, conv = thiscall, name = "CTaskComplexTrackEntity::Clone", expect = "6A FF 68 8B 44 84 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes")]
+pub fn track_entity_clone(this: GPtr<u8>) -> GPtr<u8> {
+    let time = if rd::<u8>(this, 0x38) != 0 {
+        rd::<u32>(this, 0x34).wrapping_sub(g::<u32>(0xB7CB84).read()).wrapping_add(rd::<u32>(this, 0x30))
+    } else {
+        rd::<u32>(this, 0x20)
+    };
+    let t = new_task(0x58, |m| {
+        let (vx, vy, vz) = vec_at(this, 0x10);
+        track_entity_ctor(m, rd::<GPtr<u8>>(this, 0xC), vx, vy, vz, u32::from(rd::<u8>(this, 0x1C)), time as i32,
+            rd::<u32>(this, 0x24), rd::<u32>(this, 0x28), u32::from(rd::<u8>(this, 0x2C)))
+    });
+    wr::<u32>(t, 0x3C, rd::<u32>(this, 0x3C));
+    t
+}
+
+/// `CTaskSimpleIKChain::Clone()` (0x633B00): `new CTaskSimpleIKChain("", bone +0x18, offset +0x1C, part +0x16, entity
+/// +0x28, bone +0x2C, offset +0x30, speed +0x3C, time +8, blend +0xC)` (the bone tags sign-extended); with a chain
+/// (+0x10) the four dwords +0x44..+0x50 are copied to the result (through it even when `new` failed).
+#[hook(addr = 0x633B00, conv = thiscall, name = "CTaskSimpleIKChain::Clone", expect = "6A FF 68 BB 07 84 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes")]
+pub fn ik_chain_clone(this: GPtr<u8>) -> GPtr<u8> {
+    let t = new_task(0x58, |m| {
+        let (ox, oy, oz) = vec_at(this, 0x1C);
+        let (tx, ty, tz) = vec_at(this, 0x30);
+        ik_chain_ctor(m, 0x858B54, i32::from(rd::<i16>(this, 0x18)), ox, oy, oz, i32::from(rd::<i16>(this, 0x16)),
+            rd::<u32>(this, 0x28), rd::<u32>(this, 0x2C), tx, ty, tz, rd::<u32>(this, 0x3C), rd::<u32>(this, 8),
+            rd::<u32>(this, 0xC))
+    });
+    if rd::<u32>(this, 0x10) != 0 {
+        for o in [0x44, 0x48, 0x4C, 0x50] {
+            wr::<u32>(t, o, rd::<u32>(this, o));
+        }
+    }
+    t
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_FOLLOW_LEADER_IN_FORMATION_CREATE_SUB_TASK,
@@ -572,4 +692,11 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_USE_CLOSEST_FREE_SCRIPTED_ATTRACTOR_COMPUTE_CLOSEST_FREE_SCRIPTED_EFFECT,
     HOOK_FALL_TO_DEATH_CALC_FALL,
     HOOK_SWIM_PROCESS_CONTROL_AI,
+    HOOK_USE_GUN_CLONE,
+    HOOK_THROW_PROJECTILE_CLONE,
+    HOOK_GO_TO_POINT_AIMING_CLONE,
+    HOOK_GO_TO_POINT_SHOOTING_CLONE,
+    HOOK_TRIGGER_LOOK_AT_CLONE,
+    HOOK_TRACK_ENTITY_CLONE,
+    HOOK_IK_CHAIN_CLONE,
 ];

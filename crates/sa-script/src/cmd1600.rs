@@ -129,7 +129,7 @@ orig! {
     fn take_control_attached(cam: GPtr<u8>, target: GPtr<u8>, attached: GPtr<u8>, offset: GPtr<u32>, look: GPtr<u32>, tilt: u32, sw: u32, who: u32) = thiscall 0x50C910 => unported;
 }
 
-use crate::bindings::task_trigger_look_at_ctor as trigger_look_at_ctor;
+use sa_ai::bindings::task_trigger_look_at_ctor as trigger_look_at_ctor;
 use sa_weapon::bindings::get_weapon_info;
 use sa_world::bindings::ik_look_at;
 

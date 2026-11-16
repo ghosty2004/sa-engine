@@ -279,7 +279,7 @@ pub fn dont_suppress_vehicle_model(model: i32) {
 }
 
 use sa_ai::bindings::task_simple_dtor as task_dtor;
-use crate::bindings::go_to_point_aiming_ctor;
+use sa_ai::bindings::go_to_point_aiming_ctor;
 
 /// The mission byte setter at stub 0x463490 (→ 0x1565620, thiscall on a `CAutoPilot`, `ret 4`; unnamed in the
 /// catalogue, reached by 00AF SET_CAR_MISSION): byte +0x2A takes the argument's low byte unless it is 0x39 or 0x3A.
