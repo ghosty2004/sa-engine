@@ -480,9 +480,10 @@ impl Session {
         let disp = native::dispatched();
         let _ = writeln!(
             md,
-            "\n## Native implementations reached through the orig! address registry ({} functions, {} calls)\n",
+            "\n## Native implementations reached through the orig! address registry ({} functions, {} calls){}\n",
             disp.len(),
-            disp.iter().map(|d| d.2 as u64).sum::<u64>()
+            disp.iter().map(|d| d.2 as u64).sum::<u64>(),
+            if sa_core::orig::registry::counting() { "" } else { " (not counted in this run)" }
         );
         for (name, addr, n) in &disp {
             let _ = writeln!(md, "- `{name}` ({addr:#x}): {n}");

@@ -220,7 +220,7 @@ pub fn fallback_entry(_cell: &AtomicU32, _name: &str) -> usize {
 /// Dispatch exists only on 32-bit x86, where the entries have the original's ABI.
 #[cfg(not(sa_phase_a))]
 pub mod registry {
-    use core::sync::atomic::{AtomicPtr, AtomicU32, AtomicUsize, Ordering};
+    use core::sync::atomic::{AtomicBool, AtomicPtr, AtomicU32, AtomicUsize, Ordering};
 
     /// One native implementation of an original function.
     pub struct Entry {
@@ -247,9 +247,69 @@ pub mod registry {
 
     static TABLE: AtomicPtr<Entry> = AtomicPtr::new(core::ptr::null_mut());
     static LEN: AtomicUsize = AtomicUsize::new(0);
+    /// The address index of the installed table (see [`Index`]).
+    static INDEX: AtomicPtr<Index> = AtomicPtr::new(core::ptr::null_mut());
     static ARENA_LO: AtomicUsize = AtomicUsize::new(0);
     static ARENA_HI: AtomicUsize = AtomicUsize::new(0);
     static MISSES: AtomicU32 = AtomicU32::new(0);
+    /// Whether [`lookup`] counts calls and misses (off by default: only the per-frame measurement
+    /// and sa-game's run report read the counts, and they turn it on).
+    static COUNTING: AtomicBool = AtomicBool::new(false);
+
+    /// An open-addressing hash index over the installed table (PERF-1): the slot `hash(addr)` and
+    /// the slots after it hold `table position + 1` (0 = empty). At a load factor of at most 1/2 a
+    /// lookup costs one multiply and about one probe instead of a binary search over the whole
+    /// table. Built once per [`install`]; an installed table never changes.
+    struct Index {
+        slots: &'static [u32],
+        shift: u32,
+    }
+
+    /// Fibonacci hashing of a 32-bit address into `32 - shift` bits.
+    #[inline(always)]
+    fn hash(addr: u32, shift: u32) -> usize {
+        (addr.wrapping_mul(0x9E37_79B1) >> shift) as usize
+    }
+
+    impl Index {
+        fn build(t: &[Entry]) -> Index {
+            // at least twice as many slots as entries, at least 4 (so `shift` stays below 32)
+            let bits = (t.len().max(2) * 2).next_power_of_two().trailing_zeros();
+            let shift = 32 - bits;
+            let mask = (1usize << bits) - 1;
+            let mut slots = alloc::vec![0u32; 1 << bits];
+            for (i, e) in t.iter().enumerate() {
+                let mut h = hash(e.addr, shift);
+                while slots[h] != 0 {
+                    h = (h + 1) & mask;
+                }
+                slots[h] = i as u32 + 1;
+            }
+            Index {
+                slots: alloc::boxed::Box::leak(slots.into_boxed_slice()),
+                shift,
+            }
+        }
+
+        /// The table position of `addr`, if it has an entry.
+        #[inline(always)]
+        fn find(&self, t: &[Entry], addr: u32) -> Option<usize> {
+            let mask = self.slots.len() - 1;
+            let mut h = hash(addr, self.shift);
+            loop {
+                match self.slots[h] {
+                    0 => return None,
+                    s => {
+                        let i = s as usize - 1;
+                        if t[i].addr == addr {
+                            return Some(i);
+                        }
+                    }
+                }
+                h = (h + 1) & mask;
+            }
+        }
+    }
 
     /// Installs the table (sorted by address, one entry per address), replacing an earlier one.
     pub fn install(t: &'static [Entry]) {
@@ -257,8 +317,10 @@ pub mod registry {
             t.windows(2).all(|w| w[0].addr < w[1].addr),
             "orig::registry: the table must be sorted by address without duplicates"
         );
+        let index: &'static Index = alloc::boxed::Box::leak(alloc::boxed::Box::new(Index::build(t)));
         LEN.store(0, Ordering::SeqCst);
         TABLE.store(t.as_ptr().cast_mut(), Ordering::SeqCst);
+        INDEX.store((index as *const Index).cast_mut(), Ordering::SeqCst);
         LEN.store(t.len(), Ordering::SeqCst);
     }
 
@@ -277,16 +339,46 @@ pub mod registry {
         unsafe { core::slice::from_raw_parts(TABLE.load(Ordering::Acquire), n) }
     }
 
-    /// The entry for `addr`, counting the call (or the miss).
+    /// The position of `addr` in `t` (the installed table), if it has an entry.
+    #[inline(always)]
+    fn position(t: &[Entry], addr: usize) -> Option<usize> {
+        if t.is_empty() {
+            return None;
+        }
+        let addr = u32::try_from(addr).ok()?;
+        // SAFETY: `install` stores the index (a leaked `Box`, never freed) before the non-zero
+        // length that made `t` non-empty, and the index of a table is never replaced while that
+        // table is installed.
+        let index = unsafe { &*INDEX.load(Ordering::Acquire) };
+        index.find(t, addr)
+    }
+
+    /// Turns the call and miss counting of [`lookup`] on or off (off by default).
+    pub fn set_counting(on: bool) {
+        COUNTING.store(on, Ordering::SeqCst);
+    }
+
+    /// Whether [`lookup`] counts calls and misses.
+    pub fn counting() -> bool {
+        COUNTING.load(Ordering::Relaxed)
+    }
+
+    /// The entry for `addr`, counting the call (or the miss) when counting is on
+    /// ([`set_counting`]).
+    #[inline]
     pub fn lookup(addr: usize) -> Option<&'static Entry> {
         let t = table();
-        match t.binary_search_by_key(&addr, |e| e.addr as usize) {
-            Ok(i) if addr != 0 => {
-                t[i].calls.fetch_add(1, Ordering::Relaxed);
+        match position(t, addr) {
+            Some(i) if addr != 0 => {
+                if COUNTING.load(Ordering::Relaxed) {
+                    t[i].calls.fetch_add(1, Ordering::Relaxed);
+                }
                 Some(&t[i])
             }
             _ => {
-                MISSES.fetch_add(1, Ordering::Relaxed);
+                if COUNTING.load(Ordering::Relaxed) {
+                    MISSES.fetch_add(1, Ordering::Relaxed);
+                }
                 None
             }
         }
@@ -295,9 +387,7 @@ pub mod registry {
     /// The name of the native implementation at `addr`, if any (not counted).
     pub fn name_of(addr: usize) -> Option<&'static str> {
         let t = table();
-        t.binary_search_by_key(&addr, |e| e.addr as usize)
-            .ok()
-            .map(|i| t[i].name)
+        position(t, addr).map(|i| t[i].name)
     }
 
     /// Calls that found no entry.
@@ -348,6 +438,39 @@ pub mod registry {
         NAMES_LEN.store(0, Ordering::SeqCst);
         NAMES.store(t.as_ptr().cast_mut(), Ordering::SeqCst);
         NAMES_LEN.store(t.len(), Ordering::SeqCst);
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::{Entry, Index};
+
+        // The index finds exactly the table's addresses (dense runs, clustered and spread ones, hash
+        // collisions), at any table size.
+        #[test]
+        fn index_matches_binary_search() {
+            for n in [1usize, 2, 3, 7, 64, 1000, 20_000] {
+                let mut addrs: std::vec::Vec<u32> = (0..n as u32)
+                    .map(|i| match i % 3 {
+                        0 => 0x401000 + i * 0x10,
+                        1 => 0x1556000 + i * 4,
+                        _ => 0x8000_0000u32.wrapping_add(i.wrapping_mul(0x9E37_79B1)),
+                    })
+                    .collect();
+                addrs.sort_unstable();
+                addrs.dedup();
+                let t: std::vec::Vec<Entry> = addrs.iter().map(|&a| Entry::new(a, a as usize, "e")).collect();
+                let ix = Index::build(&t);
+                assert!(ix.slots.len() >= 2 * t.len());
+                for (i, e) in t.iter().enumerate() {
+                    assert_eq!(ix.find(&t, e.addr), Some(i));
+                    for probe in [e.addr.wrapping_add(1), e.addr.wrapping_sub(1), e.addr ^ 0x10_0000] {
+                        let want = t.binary_search_by_key(&probe, |e| e.addr).ok();
+                        assert_eq!(ix.find(&t, probe), want, "{probe:#x}");
+                    }
+                }
+                assert_eq!(ix.find(&t, 0), t.binary_search_by_key(&0, |e| e.addr).ok());
+            }
+        }
     }
 
     /// The name of an address (an entry or an import trap), else `""`.
@@ -777,9 +900,36 @@ macro_rules! __orig_body {
 #[cfg(not(sa_phase_a))]
 pub mod host {
     use core::any::TypeId;
-    use core::sync::atomic::{AtomicBool, Ordering};
+    use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
     const SLOTS: usize = 512;
+
+    /// Bits of the key filter (PERF-1): a key whose filter bit is clear has no stand-in, so the
+    /// call skips the lock and the table scan. sa-game registers ~80 stand-ins and dispatches
+    /// ~32,000 calls per frame through declarations that have none.
+    const FILTER_BITS: usize = 4096;
+    /// One bit per `key_hash(key) % FILTER_BITS` of every key ever registered (bits are never
+    /// cleared, so a cleared key only costs the slow path again).
+    static FILTER: [AtomicU32; FILTER_BITS / 32] = [const { AtomicU32::new(0) }; FILTER_BITS / 32];
+
+    /// FNV-1a of a stand-in key (`const`, so the declarations hash their keys at compile time).
+    pub const fn key_hash(key: &str) -> u32 {
+        let b = key.as_bytes();
+        let mut h: u32 = 0x811C_9DC5;
+        let mut i = 0;
+        while i < b.len() {
+            h = (h ^ b[i] as u32).wrapping_mul(0x0100_0193);
+            i += 1;
+        }
+        h
+    }
+
+    /// Whether a stand-in may be registered for a key of hash `h` (false: certainly none).
+    #[inline(always)]
+    pub fn may_have(h: u32) -> bool {
+        let bit = h as usize % FILTER_BITS;
+        FILTER[bit / 32].load(Ordering::Relaxed) & (1 << (bit % 32)) != 0
+    }
 
     #[derive(Clone, Copy)]
     struct Slot {
@@ -819,6 +969,8 @@ pub mod host {
             ty: TypeId::of::<F>(),
             f,
         };
+        let bit = key_hash(key) as usize % FILTER_BITS;
+        FILTER[bit / 32].fetch_or(1 << (bit % 32), Ordering::SeqCst);
         with(|t| {
             let i = t
                 .iter()
@@ -842,6 +994,20 @@ pub mod host {
 
     /// The stand-in for `key`, if one of exactly type `F` is registered.
     pub fn get<F: Copy + 'static>(key: &'static str) -> Option<F> {
+        get_hashed(key, key_hash(key))
+    }
+
+    /// [`get`] with the key's [`key_hash`] precomputed (the `orig!` declarations' fast path).
+    #[inline(always)]
+    pub fn get_hashed<F: Copy + 'static>(key: &'static str, h: u32) -> Option<F> {
+        if !may_have(h) {
+            return None;
+        }
+        lookup(key)
+    }
+
+    #[inline(never)]
+    fn lookup<F: Copy + 'static>(key: &'static str) -> Option<F> {
         let s = with(|t| t.iter().flatten().find(|s| s.key == key).copied())?;
         assert!(
             s.ty == TypeId::of::<F>(),
@@ -871,12 +1037,12 @@ macro_rules! __orig_body {
         $imp($($a),*)
     };
     (unported $name:path, $conv:ident, ($addr:expr), ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {{
-        if let Some(f) = $crate::orig::host::get::<fn($($t),*) $(-> $r)?>(concat!(
-            module_path!(),
-            "::",
-            stringify!($name)
-        )) {
-            return f($($a),*);
+        {
+            const __SA_KEY: &str = concat!(module_path!(), "::", stringify!($name));
+            const __SA_HASH: u32 = $crate::orig::host::key_hash(__SA_KEY);
+            if let Some(f) = $crate::orig::host::get_hashed::<fn($($t),*) $(-> $r)?>(__SA_KEY, __SA_HASH) {
+                return f($($a),*);
+            }
         }
         let __sa_callee: usize = $addr;
         $crate::__orig_dispatch!($conv, __sa_callee, ($($a: $t),*) $(-> $r)?);

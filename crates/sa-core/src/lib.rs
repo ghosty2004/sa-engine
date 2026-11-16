@@ -22,6 +22,8 @@
 
 /// The `orig!` bindings this crate declares for the whole workspace (generated, ADR-003 §3.2).
 pub mod bindings;
+// The phase B registry's address index (`orig::registry`) is built on the heap.
+extern crate alloc;
 #[cfg(test)]
 extern crate std;
 

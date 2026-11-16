@@ -94,6 +94,10 @@ pub fn parse_args() -> Result<Args, String> {
     if let Some(p) = perf {
         crate::perf::enable(crate::perf::Output::File(p));
     }
+    // the run report lists the registry's dispatch counts (counting is off otherwise: it costs on every dispatch)
+    if a.report.is_some() {
+        sa_core::orig::registry::set_counting(true);
+    }
     Ok(a)
 }
 

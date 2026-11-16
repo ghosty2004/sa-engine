@@ -312,6 +312,8 @@ pub fn enable(output: Output) {
             gpu: None,
         })
     });
+    // the `dispatch_calls` counter
+    sa_core::orig::registry::set_counting(true);
     println!("sa-game: per-frame measurement on (docs/perf/measure.md)");
 }
 
