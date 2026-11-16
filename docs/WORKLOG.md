@@ -2545,7 +2545,7 @@
   CAEPedlessSpeechAudioEntity::AddSayEvent 0x4E60D0 (776). 0 blocked on lane B functions.
 - Writer gate (base 7f557d6e, `GATE_SKIP=i686` while verify-all used the DLL): hooks / bindings / state / dupes / cfg / layers /
   commits / clippy / wasm32 / hooktest / l1test / l1 PASS; queue FAIL on the first run (the amended commit's hash), regenerated,
-  `queue.py --check` up to date; full rerun below.
+  `queue.py --check` up to date; full rerun on e9d663c2 (no step skipped): all 16 steps PASS.
 - verify-all (lanes 4-5, fresh release sa-oracle, DLL of e33f4a8d): `lb5-u` (SA_UNVERIFIED=frontier2-b14) IDENTICAL 13/13; default set `lb5-def` IDENTICAL 13/13.
 - Not done (time): the boat scenario and ports (ProcessBoatControl 0x6DBCE0, CBoat::ProcessControl 0x6F1770), CPlane::PreRender
   0x6C94A0 / ProcessFlyingCarStuff 0x6CB7C0 (docs/re/specs/VEH/CPlane.md has a full spec), the CCamera / CCam bodies, item 4.
