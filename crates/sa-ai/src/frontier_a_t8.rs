@@ -813,8 +813,9 @@ pub fn task_timer_get_time_left(this: GPtr<u8>) -> i32 {
 /// 0x1AD / 0x1AE: `CTaskSimpleRunAnim(0x30, anim, 4.0, type, name, hold)` with anim `type + 0xF4` / (0xFE or 0x101 +
 /// `GetRandomNumberInRange(0, 3)` for types 0 / 2, else 0x1AD: the bytes read the type argument's slot) / `type +
 /// 0xF9`, names 0x86E654 / 0x86E644 / 0x86E634, hold 1 / 1 / 0. Anything else (0x516 too): NULL.
-#[hook(addr = 0x638290, conv = thiscall, name = "CTaskComplexSunbathe::CreateSubTask", expect = "90 E9 6C 18 DD FF",
-       unverified = "frontier2-a11", route = "L2", hazards = "heap-writes")]
+// Not hookable: its entry bytes (0x638292..) are a code key protection code reads (0x156D78F `sub edx,
+// [0x638292]`); a phase B native.
+#[sa_core::native(addr = 0x638290, conv = thiscall, name = "CTaskComplexSunbathe::CreateSubTask")]
 pub fn sunbathe_create_sub_task(this: GPtr<u8>, ty: i32, _ped: GPtr<u8>) -> GPtr<u8> {
     let sub = rd::<GPtr<u8>>(this, 8);
     if !sub.is_null() && task_get_type(sub) == ty {
@@ -1224,7 +1225,8 @@ pub fn follow_leader_in_formation_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>
 /// (+0xC) differing in any component, or a radius (+0x18) other than 0x86FC78 (NaN too), stores the target, the
 /// radius 0x86FC78 and +0x1C = `(+0x1C & 0xF0) | 0x20`. ECX is left as `this` (the caller reuses it).
 #[hook(addr = 0x65F330, conv = thiscall, name = "CTaskSimpleGoToPointFine::SetTargetPos", expect = "D9 05 78 FC 86 00",
-       unverified = "frontier2-a11", route = "L2", hazards = "none")]
+       preserve = "ecx", unverified = "frontier2-a11", route = "L2", hazards = "none",
+       note = "TrackEntity::ControlSubTask reads ECX (this) after the call (0x66376C)")]
 pub fn go_to_point_fine_set_target_pos(this: GPtr<u8>, px: f32, py: f32, pz: f32) {
     let c = x(g::<f32>(0x86FC78).read());
     let ne = |off: isize, v: X87| fcom_ne(x(rd::<f32>(this, off)), v);
@@ -1424,7 +1426,7 @@ pub fn choking_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let ts = g::<f32>(0xB7CB5C).read();
     let t = ftol32(x(ts).fmul_m(g::<f32>(0x858B38).read()).fmul_m(g::<f32>(0x858C4C).read())) as u32;
     let left = rd::<u32>(this, 0x10);
-    wr::<u32>(this, 0x10, if left > t { left - t } else { 0 });
+    wr::<u32>(this, 0x10, left.saturating_sub(t));
     let blend = |anim: u32| {
         let a = anim_blend_animation(rd::<GPtr<u8>>(ped, 0x18), 0, anim, 4.0);
         wr::<GPtr<u8>>(this, 0xC, a);
@@ -1461,8 +1463,9 @@ pub fn choking_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
 /// the entry's `nop; jmp` fetches the SEH link in the island 0x4020FF). 0xD0 → `CTaskComplexFallAndGetUp(+0x1C == 2 ?
 /// 0x1A : 0x14, 0, 1000)`; 0xC8 → a bare `CTaskSimple` with vtable 0x859CFC; 0x3F0 → `CTaskSimpleBeHit(+0x14 when it is
 /// a ped (type 3) else NULL, +0x20, +0x1C, ftol(+0x18))` (the float converted after `new`); others NULL.
-#[hook(addr = 0x620C30, conv = thiscall, name = "thunk_FUN_004020ff", expect = "90 E9 C9 14 DE FF",
-       unverified = "frontier2-a11", route = "L2", hazards = "heap-writes")]
+// Not hookable: its entry bytes (0x620C31..) are a code key protection code reads (0x40135D `add esi,
+// [0x620C31]`); a phase B native.
+#[sa_core::native(addr = 0x620C30, conv = thiscall, name = "thunk_FUN_004020ff")]
 pub fn hit_reaction_create_sub_task(this: GPtr<u8>, ty: i32) -> GPtr<u8> {
     match ty {
         0xD0 => {
@@ -1747,7 +1750,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_SEEK_COVER_UNTIL_TARGET_DEAD_CONTROL_SUB_TASK,
     HOOK_KILL_PED_ON_FOOT_STEALTH_CONTROL_SUB_TASK,
     HOOK_TASK_TIMER_GET_TIME_LEFT,
-    HOOK_SUNBATHE_CREATE_SUB_TASK,
     HOOK_SET_VALUE_AND_RESTART_TIMER_6955D0,
     HOOK_DIE_IN_CAR_PREPARE_PED_VEHICLE_FOR_PED_DEATH,
     HOOK_SUNBATHE_CREATE_FIRST_SUB_TASK,
@@ -1761,7 +1763,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_TRACK_ENTITY_CALC_MOVE_RATIO,
     HOOK_TRACK_ENTITY_CONTROL_SUB_TASK,
     HOOK_CHOKING_PROCESS_PED,
-    HOOK_HIT_REACTION_CREATE_SUB_TASK,
     HOOK_HIT_REACTION_CREATE_FIRST_SUB_TASK,
     HOOK_SEEK_87004C_CREATE_SUB_TASK,
     HOOK_SEEK_87004C_CREATE_FIRST_SUB_TASK,
@@ -1770,3 +1771,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_CREATE_CAR_AND_GET_IN_PROCESS_PED,
     HOOK_CHAT_ALLOCATE_DEFAULT_TASKS,
 ];
+
+/// The batch's phase B natives (entries protection code reads as code keys).
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_SUNBATHE_CREATE_SUB_TASK, NATIVE_HIT_REACTION_CREATE_SUB_TASK];
