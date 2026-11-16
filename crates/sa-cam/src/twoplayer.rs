@@ -199,4 +199,88 @@ fn fcos(f: &mut Fpu) {
     f.push(v.fcos());
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_TWO_PLAYER_POINT_SEES_BOTH, HOOK_TWO_PLAYER_VECTORS];
+sa_core::orig! {
+    /// `CWeapon::FindNearestTargetEntityWithScreenCoors(float screenX, float screenY, float range, CVector point,
+    /// float* outX, float* outY)` (0x73E240, cdecl; the vector by value)
+    fn find_nearest_target_entity_with_screen_coors(sx: f32, sy: f32, range: f32, px: u32, py: u32, pz: u32, ox: GPtr<u8>, oy: GPtr<u8>) -> GPtr<u8> = cdecl 0x73E240 => unported;
+}
+
+/// `CDraw::ms_fAspectRatio`
+const ASPECT_RATIO: usize = 0xC3_EFA4;
+/// 0.5 * pi / 180 (0x8631D4)
+const K_HALF_DEG2RAD: u32 = 0x3C0E_FA35;
+
+/// `CCam::Get_TwoPlayer_AimVector(CVector& out)` (0x513E40, thiscall `ret 4`; FRONTIER-2 turn 8 lane B, batch
+/// `frontier2-b18`): the aiming player's ped is player 0's, or player 1's when player 0 sits in a vehicle he does
+/// not drive (the entry fragment 0x407E0F loads `Players[0].m_pPed` through `[0x156089C] - [0x727253]` =
+/// 0xB7CD98). The nearest target of the cam's screen point (+0x108, +0x10C) within twice the current weapon's
+/// target range around the ped wins: `out = pos(target) - source`. Without one the screen point is projected:
+/// `t = tan(fov * 0.5deg)`, `A = (t / aspect) * sy`, `R = front x up`, `out = (R*sx)*f32(t) + front - up*A` with
+/// the bytes' f32 stores. `out` is normalised; returns the target (or null).
+#[hook(addr = 0x513E40, conv = thiscall, name = "CCam::Get_TwoPlayer_AimVector", this = "CCam",
+       expect = "83 EC 28 53 55 56 57 90 E9 C2 3F EF FF",
+       unverified = "frontier2-b18", route = "L2", hazards = "x87-transcendental",
+       note = "FPTAN of the half FOV")]
+pub fn get_two_player_aim_vector(this: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> {
+    use sa_core::bindings::{cross_product, get_weapon_info};
+    use sa_math::fpu::{f32_of, x};
+    use sa_world::bindings::ped_get_weapon_skill;
+    let mut ped = g::<GPtr<u8>>(PLAYER0_PED).read();
+    let veh = rd::<GPtr<u8>>(ped, 0x58C);
+    if !veh.is_null() && rd::<GPtr<u8>>(veh, 0x460) != ped {
+        ped = g::<GPtr<u8>>(PLAYER1_PED).read();
+    }
+    let slot = isize::from(rd::<i8>(ped, 0x718));
+    let wt = rd::<i32>(ped, 0x5A0 + slot * 0x1C);
+    let info = get_weapon_info(wt, ped_get_weapon_skill(ped));
+    let p = pos_of(ped);
+    let range = f32_of(x(rd::<f32>(info, 8)).fadd(x(rd::<f32>(info, 8))));
+    let target = find_nearest_target_entity_with_screen_coors(
+        rd::<f32>(this, 0x108),
+        rd::<f32>(this, 0x10C),
+        range,
+        rd::<u32>(p, 0),
+        rd::<u32>(p, 4),
+        rd::<u32>(p, 8),
+        GPtr::NULL,
+        GPtr::NULL,
+    );
+    let v = if !target.is_null() {
+        let tp = pos_of(target);
+        let mut v = [0f32; 3];
+        for (i, c) in v.iter_mut().enumerate() {
+            let o = 4 * i as isize;
+            *c = f32_of(x(rd::<f32>(tp, o)).fsub_m(rd::<f32>(this, 0x19C + o)));
+        }
+        v
+    } else {
+        let mut r = [0f32; 3];
+        let front = this.byte_add(0x190);
+        let up = this.byte_add(0x1B4);
+        cross_product(sa_core::field::v3_ptr(&mut r), front, up);
+        let t = x(rd::<f32>(this, 0xB4)).fmul_m(f32::from_bits(K_HALF_DEG2RAD)).fptan().map_or(x(0.0), |(t, _)| t);
+        let a = t.fdiv(x(g::<f32>(ASPECT_RATIO).read())).fmul_m(rd::<f32>(this, 0x10C));
+        let ux = f32_of(a.fmul_m(rd::<f32>(up, 0)));
+        let uy = f32_of(a.fmul_m(rd::<f32>(up, 4)));
+        let uz = a.fmul_m(rd::<f32>(up, 8));
+        let sx = rd::<f32>(this, 0x108);
+        let rx = x(r[0]).fmul_m(sx);
+        let ry = f32_of(x(r[1]).fmul_m(sx));
+        let rz = f32_of(x(r[2]).fmul_m(sx));
+        let tf = f32_of(t);
+        let rx = rx.fmul_m(tf);
+        let ry = x(ry).fmul_m(tf);
+        let rz = f32_of(x(rz).fmul_m(tf));
+        let cx = f32_of(rx.fadd_m(rd::<f32>(front, 0)));
+        let cy = ry.fadd_m(rd::<f32>(front, 4));
+        let cz = f32_of(x(rz).fadd_m(rd::<f32>(front, 8)));
+        [f32_of(x(cx).fsub_m(ux)), f32_of(cy.fsub_m(uy)), f32_of(x(cz).fsub(uz))]
+    };
+    for (i, c) in v.iter().enumerate() {
+        wr::<f32>(out, 4 * i as isize, *c);
+    }
+    vector_normalise(out.cast());
+    target
+}
+
+pub const HOOKS: &[HookReg] = &[HOOK_TWO_PLAYER_POINT_SEES_BOTH, HOOK_TWO_PLAYER_VECTORS, HOOK_GET_TWO_PLAYER_AIM_VECTOR];
