@@ -31,7 +31,7 @@ use sa_world::bindings::{enter_car_as_passenger_ctor, ped_groups_get_peds_group}
 use sa_math::x87::X87;
 use sa_core::crt::rand_at;
 use sa_input::bindings::pad_sprint_just_down;
-use crate::common::{task_make_abortable, task_new, xi};
+use crate::common::{task_create_next_sub_task, task_make_abortable, task_new, xi};
 use sa_anim::bindings::anim_add_block_ref;
 use sa_core::bindings::{
     general_get_radian_angle_between_points, matrix_mul_vec, tm_get_task_secondary, tm_set_task_secondary,
@@ -1209,6 +1209,180 @@ pub fn follow_leader_in_formation_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>
     }
 }
 
+// ------------------------------------------------------------------------------------------- track entity
+
+/// `CTaskSimpleGoToPointFine::SetTargetPos(CVector)` (0x65F330, thiscall, `ret 0xC`, the vector by value): a target
+/// (+0xC) differing in any component, or a radius (+0x18) other than 0x86FC78 (NaN too), stores the target, the
+/// radius 0x86FC78 and +0x1C = `(+0x1C & 0xF0) | 0x20`. ECX is left as `this` (the caller reuses it).
+#[hook(addr = 0x65F330, conv = thiscall, name = "CTaskSimpleGoToPointFine::SetTargetPos", expect = "D9 05 78 FC 86 00",
+       unverified = "frontier2-a11", route = "L2", hazards = "none")]
+pub fn go_to_point_fine_set_target_pos(this: GPtr<u8>, px: f32, py: f32, pz: f32) {
+    let c = x(g::<f32>(0x86FC78).read());
+    let ne = |off: isize, v: X87| fcom_ne(x(rd::<f32>(this, off)), v);
+    if ne(0xC, x(px)) || ne(0x10, x(py)) || ne(0x14, x(pz)) || ne(0x18, c) {
+        wr::<f32>(this, 0x18, c.to_f32());
+        wr::<f32>(this, 0xC, px);
+        wr::<f32>(this, 0x10, py);
+        wr::<f32>(this, 0x14, pz);
+        wr::<u8>(this, 0x1C, (rd::<u8>(this, 0x1C) & 0xF0) | 0x20);
+    }
+}
+
+/// `CTaskComplexTrackEntity::CalcTargetPos(CPed*)` (0x65F780, `ret 4`). +0x44 = the entity's (+0xC) position plus the
+/// offset (+0x10, +0x14): along the entity's right / forward axes with +0x2C set (the y and z products through f32
+/// stores, the x products unrounded), else added to x and y; a vehicle or ped (type 2 / 3) adds its move speed times
+/// the time step. +0x50 = the 2D squared distance to the ped (`dy² + dx²`).
+#[hook(addr = 0x65F780, conv = thiscall, name = "CTaskComplexTrackEntity::CalcTargetPos", expect = "83 EC 24 53 56 57 8B F9",
+       this = "CTaskComplexTrackEntity", unverified = "frontier2-a11", route = "L2", hazards = "none")]
+pub fn track_entity_calc_target_pos(this: GPtr<u8>, ped: GPtr<u8>) {
+    let t = this.byte_add(0x44);
+    let p = entity_pos(rd::<GPtr<u8>>(this, 0xC));
+    for i in 0..3 {
+        wr::<u32>(t, i * 4, rd::<u32>(p, i * 4));
+    }
+    let add = |k: isize, v: X87| wr::<f32>(t, k * 4, v.fadd_m(rd::<f32>(t, k * 4)).to_f32());
+    let add_axis = |axis: [f32; 3], o: f32| {
+        let ax = x(axis[0]).fmul_m(o);
+        let ay = x(axis[1]).fmul_m(o).to_f32();
+        let az = x(axis[2]).fmul_m(o).to_f32();
+        add(0, ax);
+        add(1, x(ay));
+        add(2, x(az));
+    };
+    if rd::<u8>(this, 0x2C) != 0 {
+        let m = get_matrix(rd::<GPtr<u8>>(this, 0xC));
+        let right = [rd::<f32>(m, 0), rd::<f32>(m, 4), rd::<f32>(m, 8)];
+        let m = get_matrix(rd::<GPtr<u8>>(this, 0xC));
+        let fwd = [rd::<f32>(m, 0x10), rd::<f32>(m, 0x14), rd::<f32>(m, 0x18)];
+        add_axis(right, rd::<f32>(this, 0x10));
+        add_axis(fwd, rd::<f32>(this, 0x14));
+    } else {
+        add(0, x(rd::<f32>(this, 0x10)));
+        add(1, x(rd::<f32>(this, 0x14)));
+    }
+    let e = rd::<GPtr<u8>>(this, 0xC);
+    if matches!(rd::<u8>(e, 0x36) & 7, 2 | 3) {
+        let ts = g::<f32>(0xB7CB5C).read();
+        let vx = x(ts).fmul_m(rd::<f32>(e, 0x44));
+        let vy = x(ts).fmul_m(rd::<f32>(e, 0x48));
+        let vz = x(ts).fmul_m(rd::<f32>(e, 0x4C)).to_f32();
+        add(0, vx);
+        add(1, vy);
+        add(2, x(vz));
+    }
+    let pp = entity_pos(ped);
+    let dx = x(rd::<f32>(t, 0)).fsub_m(rd::<f32>(pp, 0));
+    let dy = x(rd::<f32>(t, 4)).fsub_m(rd::<f32>(pp, 4));
+    wr::<f32>(this, 0x50, dy.fmul(dy).fadd(dx.fmul(dx)).to_f32());
+}
+
+/// `CTaskComplexTrackEntity::CalcMoveRatio(CPed*)` (0x65F930, `ret 4`; the ped unused). Function statics (guard
+/// 0xC18D08): the squares of 0x86F9D0 / 0x86F9CC / 0x86F9C8 and `1 / (c2 - c1)`, `1 / (c1 - c0)`. From the squared
+/// distance (+0x50): below c0² → 0; above c2² → 1; else `(sqrt(d) - c0) / (c1 - c0) * 0.5` below c1², otherwise
+/// `(sqrt(d) - c1) / (c2 - c1) * 0.5 + 0.5`. Then `ratio = sqrt(ratio) * 0x858B3C`, raised to 2 above 0x858CA0 unless
+/// +0x1C; +0x3C moves towards it by at most 0x86F9C4 per call.
+#[hook(addr = 0x65F930, conv = thiscall, name = "CTaskComplexTrackEntity::CalcMoveRatio", expect = "A1 08 8D C1 00 A8 01",
+       this = "CTaskComplexTrackEntity", unverified = "frontier2-a11", route = "L2", hazards = "none")]
+pub fn track_entity_calc_move_ratio(this: GPtr<u8>, _ped: GPtr<u8>) {
+    let guard = g::<u32>(0xC18D08);
+    let c = |a: usize| g::<f32>(a).read();
+    let (c0, c1, c2, one) = (0x86F9D0, 0x86F9CC, 0x86F9C8, 0x858624);
+    let mut gv = guard.read();
+    for (bit, dst, v) in [
+        (1u32, 0xC18D04usize, None),
+        (2, 0xC18D00, None),
+        (4, 0xC18CFC, None),
+        (8, 0xC18CF8, Some((c2, c1))),
+        (0x10, 0xC18CF4, Some((c1, c0))),
+    ] {
+        if gv & bit == 0 {
+            gv |= bit;
+            let r = match v {
+                None => {
+                    let k = [c0, c1, c2][bit.trailing_zeros() as usize];
+                    x(c(k)).fmul_m(c(k))
+                }
+                Some((a, b)) => x(c(a)).fsub_m(c(b)).fdivr_m(c(one)),
+            };
+            guard.write(gv);
+            g::<f32>(dst).write(r.to_f32());
+        }
+    }
+    let d = x(rd::<f32>(this, 0x50));
+    let ratio = if !d.fcom(x(c(0xC18D04))).test_parity(5) {
+        x(0.0)
+    } else if gt(d, x(c(0xC18CFC))) {
+        x(1.0)
+    } else if !d.fcom(x(c(0xC18D00))).test_parity(5) {
+        d.fsqrt().fsub_m(c(c0)).fmul_m(c(0xC18CF4)).fmul_m(c(0x858B8C))
+    } else {
+        d.fsqrt().fsub_m(c(c1)).fmul_m(c(0xC18CF8)).fmul_m(c(0x858B8C)).fadd_m(c(0x858B8C))
+    };
+    wr::<f32>(this, 0x40, ratio.to_f32());
+    let r = x(rd::<f32>(this, 0x40)).fsqrt().fmul_m(c(0x858B3C));
+    wr::<f32>(this, 0x40, r.to_f32());
+    if rd::<u8>(this, 0x1C) == 0 && gt(r, x(c(0x858CA0))) {
+        wr::<u32>(this, 0x40, 0x4000_0000);
+    }
+    let step = c(0x86F9C4);
+    if gt(x(rd::<f32>(this, 0x40)).fsub_m(rd::<f32>(this, 0x3C)), x(step)) {
+        wr::<f32>(this, 0x3C, x(step).fadd_m(rd::<f32>(this, 0x3C)).to_f32());
+    } else {
+        wr::<u32>(this, 0x3C, rd::<u32>(this, 0x40));
+    }
+}
+
+/// `CTaskComplexTrackEntity::ControlSubTask(CPed*)` (0x663640, `ret 4`). No entity (+0xC), or a started timer (+0x38;
+/// +0x39 restarts it at now) that expired (`now >= +0x30 + +0x34`): the sub-task aborts (`MakeAbortable(ped, 1,
+/// NULL)`) → NULL, else the sub-task. Otherwise `CalcTargetPos`, then by the sub-task's type: 0x38A → NULL when the
+/// squared distance (+0x50) is above `(+0x28)²`; below `(+0x24)²` an aborting sub-task is replaced by
+/// `CreateNextSubTask`. 0x39E → at or beyond `(+0x24)²` an aborting sub-task is replaced likewise; else
+/// `CalcMoveRatio`, `SetTargetPos(+0x44)` and the go-to's move ratio (+0x20) = +0x3C. Otherwise the sub-task.
+#[hook(addr = 0x663640, conv = thiscall, name = "CTaskComplexTrackEntity::ControlSubTask", expect = "56 8B F1 8B 46 0C 85 C0",
+       this = "CTaskComplexTrackEntity", unverified = "frontier2-a11", route = "L2", hazards = "heap-writes")]
+pub fn track_entity_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let abort = || task_make_abortable(rd::<GPtr<u8>>(this, 8), ped, 1, GPtr::NULL) != 0;
+    let mut expired = rd::<u32>(this, 0xC) == 0;
+    if !expired && rd::<u8>(this, 0x38) != 0 {
+        if rd::<u8>(this, 0x39) != 0 {
+            wr::<u32>(this, 0x30, g::<u32>(TIME_MS).read());
+            wr::<u8>(this, 0x39, 0);
+        }
+        expired = g::<u32>(TIME_MS).read() >= rd::<u32>(this, 0x34).wrapping_add(rd::<u32>(this, 0x30));
+    }
+    if expired {
+        return if abort() { GPtr::NULL } else { rd::<GPtr<u8>>(this, 8) };
+    }
+    track_entity_calc_target_pos(this, ped);
+    let d = x(rd::<f32>(this, 0x50));
+    let sq = |off: isize| {
+        let r = x(rd::<f32>(this, off));
+        r.fmul(r)
+    };
+    match task_get_type(rd::<GPtr<u8>>(this, 8)) {
+        0x38A => {
+            if gt(d, sq(0x28)) {
+                return GPtr::NULL;
+            }
+            if d.fcom(sq(0x24)).test_parity(5) || !abort() {
+                return rd::<GPtr<u8>>(this, 8);
+            }
+            task_create_next_sub_task(this, ped)
+        }
+        0x39E => {
+            if !d.fcom(sq(0x24)).test_any(1) && abort() {
+                return task_create_next_sub_task(this, ped);
+            }
+            track_entity_calc_move_ratio(this, ped);
+            let sub = rd::<GPtr<u8>>(this, 8);
+            go_to_point_fine_set_target_pos(sub, rd::<f32>(this, 0x44), rd::<f32>(this, 0x48), rd::<f32>(this, 0x4C));
+            wr::<f32>(sub, 0x20, x(rd::<f32>(this, 0x3C)).to_f32());
+            rd::<GPtr<u8>>(this, 8)
+        }
+        _ => rd::<GPtr<u8>>(this, 8),
+    }
+}
+
 /// The batch's hooks.
 pub const HOOKS: &[HookReg] = &[
     HOOK_MEDIC_TREAT_INJURED_PED_CREATE_NEXT_SUB_TASK,
@@ -1230,4 +1404,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_FLEE_POINT_SET_FLEE_POSITION,
     HOOK_FLEE_ENTITY_CONTROL_SUB_TASK_65BBB0,
     HOOK_FOLLOW_LEADER_IN_FORMATION_CONTROL_SUB_TASK,
+    HOOK_GO_TO_POINT_FINE_SET_TARGET_POS,
+    HOOK_TRACK_ENTITY_CALC_TARGET_POS,
+    HOOK_TRACK_ENTITY_CALC_MOVE_RATIO,
+    HOOK_TRACK_ENTITY_CONTROL_SUB_TASK,
 ];
