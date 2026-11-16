@@ -10,7 +10,7 @@ use crate::bindings::{
     compute_closest_surface_point_ped, ped_groups_get_peds_group, ped_replace_weapon_when_exiting_vehicle,
     bbox_planes, compute_entity_hit_side_ped, event_group_add, go_to_point_ctor, scripted_2d_effects_get_index,
     task_timer_is_out_of_time, tm_find_active_task_by_type, tm_get_task_secondary, tm_set_task_secondary,
-    use_gun_clear_anim, use_gun_control_gun, use_gun_ctor,
+    throw_projectile_ctor, use_gun_clear_anim, use_gun_control_gun, use_gun_ctor,
 };
 use sa_core::bindings::{
     get_weapon_info, intel_get_task_use_gun, matrix_set_rotate_z_only, ped_is_alive, tm_get_simplest_active_task,
@@ -33,7 +33,7 @@ use sa_world::bindings::{
     entity_clean_up_old_reference, follow_node_route_ctor, fx_kill, get_pad_from_player, ik_is_looking, ik_look_at,
     membership_get_leader, ped_say, ped_set_ped_state, event_damage_ctor, event_damage_dtor, fire_extinguish,
     duck_ctor, find_player_wanted, get_task_swim, intel_get_task_duck, kill_ped_on_foot_ctor, stand_still_ctor,
-    vector_ctor_iterator, max_f, min_f, pad_get_accelerate, pad_get_brake,
+    intel_get_task_throw, vector_ctor_iterator, vector_ne, max_f, min_f, pad_get_accelerate, pad_get_brake,
     pad_get_exit_vehicle, pad_get_ped_walk_left_right, pad_get_ped_walk_up_down, pad_get_target,
     ped_remove_weapon_when_entering_vehicle, physical_apply_move_force_5429f0,
 };
@@ -1306,6 +1306,69 @@ pub fn duck_toggle_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     1
 }
 
+/// `CTaskSimpleThrowControl::ProcessPed(CPed*)` (0x61F9F0, `ret 4`, AL). Finished (+8): 1. `SetMoveState(1)`. No
+/// secondary attack task: once (+9) a `CTaskSimpleThrowProjectile(target +0xC, +0x10 point)` (NULL when the pool is
+/// full) becomes it, else 1. A secondary attack task other than 0x3FA: its `MakeAbortable(ped, 1, NULL)`, 0. Then `t`
+/// = `GetTaskThrow()`; the point counts when it differs from (0, 0, 0); the heading +0x55C = `atan2(-d.x, d.y)` towards
+/// the target entity, else towards the point when it counts. Not started (+9 clear): 0. `t`'s +8 set: 1. With a point
+/// it becomes `t`'s +0x14; 0.
+#[hook(addr = 0x61F9F0, conv = thiscall, name = "CTaskSimpleThrowControl::ProcessPed", expect = "6A FF 64 A1 00 00 00 00 68 DB F4 83 00",
+       unverified = "frontier2-a10", route = "L2", hazards = "x87-transcendental,ax-al-return,heap-writes,stack-residue",
+       note = "GetTaskThrow's result is kept over the ped argument slot; SEH frame not modelled")]
+pub fn throw_control_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
+    if rd::<u8>(this, 8) != 0 {
+        return 1;
+    }
+    sa_world::bindings::ped_set_move_state(ped, 1);
+    let tm = || rd::<GPtr<u8>>(ped, 0x47C).byte_add(4);
+    if tm_get_task_secondary(tm(), 0).is_null() {
+        if rd::<u8>(this, 9) != 0 {
+            return 1;
+        }
+        let mem = crate::common::task_new(0x24);
+        let t = if mem.is_null() {
+            GPtr::NULL
+        } else {
+            throw_projectile_ctor(mem, rd::<GPtr<u8>>(this, 0xC), rd::<u32>(this, 0x10), rd::<u32>(this, 0x14),
+                                  rd::<u32>(this, 0x18))
+        };
+        tm_set_task_secondary(tm(), t, 0);
+        wr::<u8>(this, 9, 1);
+    } else if crate::common::task_get_type(tm_get_task_secondary(tm(), 0)) != 0x3FA {
+        crate::common::task_make_abortable(tm_get_task_secondary(tm(), 0), ped, 1, GPtr::NULL);
+        return 0;
+    }
+    let throw = intel_get_task_throw(rd::<GPtr<u8>>(ped, 0x47C));
+    let pos = this.byte_add(0x10);
+    let mut zero = [0u32; 3];
+    let has_pos = vector_ne(pos, GPtr::from_raw(zero.as_mut_ptr()).cast()) != 0;
+    let target = rd::<GPtr<u8>>(this, 0xC);
+    let (from, to) = if !target.is_null() {
+        (entity_pos(ped), Some(entity_pos(target)))
+    } else if has_pos {
+        (entity_pos(ped), Some(pos))
+    } else {
+        (entity_pos(ped), None)
+    };
+    if let Some(to) = to {
+        let dx = x(rd::<f32>(to, 0)).fsub_m(rd::<f32>(from, 0)).to_f32();
+        let dy = x(rd::<f32>(to, 4)).fsub_m(rd::<f32>(from, 4)).to_f32();
+        wr::<f32>(ped, 0x55C, x(dx).fchs().fpatan(x(dy)).to_f32());
+    }
+    if rd::<u8>(this, 9) == 0 {
+        return 0;
+    }
+    if rd::<u8>(throw, 8) != 0 {
+        return 1;
+    }
+    if has_pos {
+        for k in 0..3 {
+            wr::<u32>(throw, 0x14 + k * 4, rd::<u32>(pos, k * 4));
+        }
+    }
+    0
+}
+
 /// Every hook of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_JET_PACK_PROCESS_CONTROL_INPUT,
@@ -1325,4 +1388,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_DIVE_FROM_ATTACHED_ENTITY_CREATE_FIRST_SUB_TASK,
     HOOK_INTERIOR_GO_TO_INFO_CREATE_FIRST_SUB_TASK,
     HOOK_DUCK_TOGGLE_PROCESS_PED,
+    HOOK_THROW_CONTROL_PROCESS_PED,
 ];
