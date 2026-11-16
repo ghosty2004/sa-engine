@@ -27,11 +27,8 @@ use sa_world::bindings::{
 };
 use sa_world::world::common::entity_pos;
 
+use sa_pop::bindings::audio_say_pedless as say_pedless;
 orig! {
-    /// `CAudioEngine::SayPedless(event, ctx, attachTo, delay, probability, overrideSilence, forceAudible, frontEnd)`
-    /// (0x5073C0)
-    fn say_pedless(engine: GPtr<u8>, event: u32, ctx: u32, attach: GPtr<u8>, delay: u32, prob: f32, ov: u32, force: u32,
-                   front: u32) = thiscall 0x5073C0 => unported;
     /// `CHeli::SendDownSwat()` (0x6C69C0)
     fn send_down_swat(h: GPtr<u8>) -> u8 = thiscall 0x6C69C0 => crate::frontier_b4_heli::heli_send_down_swat;
     /// `CTaskComplexUseSwatRope::CTaskComplexUseSwatRope(uint32 ropeId, CHeli* heli)` (0x659470)

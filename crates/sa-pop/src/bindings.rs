@@ -339,6 +339,11 @@ orig! {
 }
 
 orig! {
+    /// `CAudioEngine::SayPedless` (0x5073C0)
+    pub fn audio_say_pedless(e: GPtr<u8>, event: u32, ctx: u32, attach: GPtr<u8>, delay: u32, prob: f32, a: u32, b: u32, c: u32) = thiscall 0x5073C0 => unported;
+}
+
+orig! {
     /// `CPad::GetCarGunUpDown` (0x53FC10)
     pub fn get_car_gun_up_down(pad: GPtr<u8>) -> i16 = thiscall 0x53FC10 => unported;
 }

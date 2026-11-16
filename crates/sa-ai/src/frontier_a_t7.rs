@@ -996,10 +996,8 @@ pub fn flee_point_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     sub
 }
 
+use sa_pop::bindings::audio_say_pedless;
 orig! {
-    /// `CAudioEngine::SayPedless(event, ctx, attachTo, delay, probability, overrideSilence, forceAudible, frontEnd)`
-    /// (0x5073C0, `ret 0x20`)
-    fn audio_say_pedless(e: GPtr<u8>, event: u32, ctx: u32, attach: GPtr<u8>, delay: u32, prob: f32, a: u32, b: u32, c: u32) = thiscall 0x5073C0 => unported;
     /// `CLocalisation::PedsOnFire()` (0x56D2D0)
     fn localisation_peds_on_fire() -> u8 = cdecl 0x56D2D0 => unported;
 }
