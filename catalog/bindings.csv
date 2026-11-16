@@ -90,6 +90,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x5E0820,sa-ai,ped_position_ped_out_of_collision,thiscall,,p:GPtr<u8>;door:u32;veh:GPtr<u8>;b:u32,u8,unported,CPed::PositionPedOutOfCollision,
 0x5E6490,sa-ai,ped_replace_weapon_when_exiting_vehicle,thiscall,,p:GPtr<u8>,,unported,CPed::ReplaceWeaponWhenExitingVehicle,
 0x5EB310,sa-ai,fill_n_t_o,cdecl,,dest:u32;n:u32;val:GPtr<u8>,u32,sa_ai::attractor_ptr_vectors::fill_n_t,FUN_005eb310,
+0x5EB340,sa-ai,vector3_fill_n,cdecl,,dest:u32;n:u32;val:GPtr<u8>,u32,sa_ai::attractor_ptr_vectors::fill_n_v,FUN_005eb340,
 0x5EB4C0,sa-ai,attractor_is_registered_with_ped_o,thiscall,,a:GPtr<u8>;ped:GPtr<u8>,u8,sa_ai::attractor_registry::attractor_is_registered_with_ped,CPedAttractor::IsRegisteredWithPed,
 0x5EB590,sa-ai,attractor_get_head_of_queue,thiscall,,this:GPtr<u8>,GPtr<u8>,unported,CPedAttractor::GetHeadOfQueue,
 0x5EBCB0,sa-ai,is_ped_registered_with_effect,thiscall,,m:GPtr<u8>;ped:GPtr<u8>,u8,sa_ai::attractor_registry::is_ped_registered_with_effect_ped,CPedAttractorManager::IsPedRegisteredWithEffect-Ped,
@@ -1296,6 +1297,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x612F90,sa-pop,choose_civilian_occupation,cdecl,,male:u8;female:u8;race:i32;exclude:i32;stat:i32;a:u8;b:u8;c:u8;name:GPtr<u8>,i32,sa_pop::population2::choose_civilian_occupation,CPopulation::ChooseCivilianOccupation,
 0x614490,sa-pop,pick_gang_car,cdecl,,gang:i32,i32,sa_pop::population::pick_gang_car,CPopulation::PickGangCar,
 0x615970,sa-pop,generate_peds_at_attractors,cdecl,,px:f32;py:f32;pz:f32;a:f32;b:f32;c:f32;d:f32;dm:i32;n:i32,i32,sa_pop::population2::generate_peds_at_attractors,CPopulation::GeneratePedsAtAttractors,
+0x632140,sa-pop,can_sunbathe,cdecl,,,u32,unported,CTaskComplexSunbathe::CanSunbathe,sa_ai::frontier_a::sunbathe_can_sunbathe
 0x66F5C0,sa-pop,wander_gang_ctor,thiscall,,t:GPtr<u8>;ms:i32;dir:i32;time:i32;b:u32;f:u32,GPtr<u8>,unported,CTaskComplexWanderGang::CTaskComplexWanderGang,
 0x6C26F0,sa-pop,get_car_node_index_from_door,cdecl,,d:u32,i32,unported,CDamageManager::GetCarNodeIndexFromDoor,sa_veh::automobile2::get_car_node_index_from_door
 0x6D1A50,sa-pop,set_up_driver,thiscall,,v:GPtr<u8>;pt:i32;a:u32;b:u32,GPtr<u8>,unported,CVehicle::SetUpDriver,

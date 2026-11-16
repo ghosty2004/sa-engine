@@ -1,6 +1,7 @@
 //! CPopulation leftovers (WRITER-POP-4, lead): `AddToPopulation`. Ported from the 1.0 US bytes; gta-reversed and
 //! `docs/re/specs/POP/CPopulation.md` as reading aids.
 
+use crate::bindings::can_sunbathe;
 use sa_core::abi::{Fp, HookReg};
 use sa_core::mem::{GPtr, GlobalDesc};
 use sa_core::{hook, orig};
@@ -85,8 +86,6 @@ orig! {
     fn find_distance_to_nearest_ped_of_type(t: i32, px: f32, py: f32, pz: f32) -> f64 = cdecl 0x6143E0 => fdtnpot_abi;
     /// `SurfaceInfos_c::IsBeach(uint32)` (0x55E750, thiscall on `g_surfaceInfos` 0xB79538)
     fn is_beach(this: GPtr<u8>, surface: u32) -> u8 = thiscall 0x55E750 => unported;
-    /// `CTaskComplexSunbathe::CanSunbathe()` (0x632140)
-    fn can_sunbathe() -> u8 = cdecl 0x632140 => unported;
     /// `CWaterLevel::CreateBeachToy(const CVector&, eBeachToy)` (0x6EABA0)
     fn create_beach_toy(pos: GPtr<f32>, toy: i32) -> GPtr<u8> = cdecl 0x6EABA0 => crate::misc4::create_beach_toy;
     /// `CPathFind::GeneratePedCreationCoors_Interior(float, float, CVector*, CNodeAddress*, CNodeAddress*, float*)` (0x44ECA0)
@@ -655,7 +654,7 @@ fn sunbathe(ped: GPtr<u8>, cpos: &mut [f32; 3]) -> bool {
     {
         return false;
     }
-    if can_sunbathe() == 0 && !cheat() {
+    if can_sunbathe() as u8 == 0 && !cheat() {
         return false;
     }
     let mut ents = [0u32; 2];

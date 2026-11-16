@@ -459,6 +459,11 @@ orig! {
 }
 
 orig! {
+    /// `FUN_005eb340` (0x5EB340)
+    pub fn vector3_fill_n(dest: u32, n: u32, val: GPtr<u8>) -> u32 = cdecl 0x5EB340 => crate::attractor_ptr_vectors::fill_n_v;
+}
+
+orig! {
     /// `CPedAttractor::IsRegisteredWithPed` (0x5EB4C0)
     pub fn attractor_is_registered_with_ped_o(a: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5EB4C0 => crate::attractor_registry::attractor_is_registered_with_ped;
 }
@@ -1001,6 +1006,11 @@ orig! {
 orig! {
     /// `CTaskComplexHitResponse::Constructor` (0x631D70)
     pub fn hit_response_ctor(t: GPtr<u8>, side: i32) -> GPtr<u8> = thiscall 0x631D70 => unported;
+}
+
+orig! {
+    /// `CTaskComplexSunbathe::CanSunbathe` (0x632140)
+    pub fn can_sunbathe() -> u32 = cdecl 0x632140 => crate::frontier_a::sunbathe_can_sunbathe;
 }
 
 orig! {

@@ -5,6 +5,7 @@
 #![allow(clippy::unreadable_literal)]
 
 use sa_core::abi::HookReg;
+use crate::bindings::vector3_fill_n;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
@@ -368,9 +369,6 @@ pub fn kill_threats_driveby_allocate_tasks(this: GPtr<u8>, intel: GPtr<u8>) {
 }
 
 orig! {
-    /// `FUN_005EB340(CVector* dst, uint32 n, const CVector* val, ...)` (0x5EB340, cdecl): `n` copies of `*val`
-    /// (the vector's uninitialised fill; a null `dst` skips the copy, not the count)
-    fn vector_fill_n(dst: u32, n: u32, val: u32, vec: u32, val2: u32) = cdecl 0x5EB340 => unported;
     /// `std::vector<CVector>::insert(iterator* ret, iterator where, const CVector& val)` (0x5EDE50, `ret 12`)
     fn vector_insert(v: u32, ret: u32, at: u32, val: u32) -> u32 = thiscall 0x5EDE50 => crate::gen_bodies::g_fun_005ede50_5ede50;
     /// `std::vector<CVector>::push_back(const CVector&)` (0x5EE370, `ret 4`)
@@ -396,7 +394,7 @@ pub fn vector3_push_back(this: u32, val: u32) {
     let size = if begin == 0 { 0 } else { vec3_count(begin, rd::<u32>(v, 8)) };
     if begin != 0 && (size as u32) < vec3_count(begin, rd::<u32>(v, 0xC)) as u32 {
         let end = rd::<u32>(v, 8);
-        vector_fill_n(end, 1, val, this, val);
+        vector3_fill_n(end, 1, GPtr::from_addr(val as usize));
         wr::<u32>(v, 8, end.wrapping_add(0xC));
         return;
     }

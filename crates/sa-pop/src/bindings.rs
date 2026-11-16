@@ -424,6 +424,11 @@ orig! {
 }
 
 orig! {
+    /// `CTaskComplexSunbathe::CanSunbathe` (0x632140)
+    pub fn can_sunbathe() -> u32 = cdecl 0x632140 => unported;
+}
+
+orig! {
     /// `CTaskComplexWanderGang::CTaskComplexWanderGang` (0x66F5C0)
     pub fn wander_gang_ctor(t: GPtr<u8>, ms: i32, dir: i32, time: i32, b: u32, f: u32) -> GPtr<u8> = thiscall 0x66F5C0 => unported;
 }

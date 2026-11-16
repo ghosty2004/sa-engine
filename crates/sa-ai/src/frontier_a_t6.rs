@@ -8,7 +8,7 @@ use sa_core::filemgr::strcpy;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-use crate::bindings::{go_to_point_ctor, in_air_ctor, simple_dead_ctor, task_new, task_simple_ctor};
+use crate::bindings::{can_sunbathe, go_to_point_ctor, in_air_ctor, simple_dead_ctor, task_new, task_simple_ctor};
 use crate::common::{g, rd, task_get_type, task_make_abortable, wr, x};
 use sa_anim::bindings::anim_add_block_ref;
 use sa_math::fpu::le_or_nan;
@@ -32,8 +32,6 @@ orig! {
     fn follow_patrol_route_create_sub_task_o(t: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x670B00 => follow_patrol_route_create_sub_task;
     /// `CTaskComplexSunbathe::ShouldLoadSunbatheAnims()` (0x632190, AL)
     fn should_load_sunbathe_anims_o() -> u8 = cdecl 0x632190 => should_load_sunbathe_anims;
-    /// `CTaskComplexSunbathe::CanSunbathe()` (0x632140, EAX)
-    fn can_sunbathe_o() -> u32 = cdecl 0x632140 => crate::frontier_a::sunbathe_can_sunbathe;
 }
 
 /// `CTimer::m_snTimeInMilliseconds` (0xB7CB84)
@@ -434,7 +432,7 @@ pub fn sunbathe_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
         wr::<u32>(ped, 0x528, rd::<u32>(ped, 0x528) | 8);
         wr::<u32>(ped, 0x474, rd::<u32>(ped, 0x474) | 0x10_0000);
     }
-    if can_sunbathe_o() as u8 == 0 {
+    if can_sunbathe() as u8 == 0 {
         if rd::<u8>(this, 0x1C) != 0 {
             let start = rd::<u32>(this, 0x14);
             let interval = rd::<u32>(this, 0x18);
