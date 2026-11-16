@@ -175,7 +175,7 @@ orig! {
 
 orig! {
     /// `CRunningScript::ScriptTaskPickUpObject` (0x46AF50)
-    pub fn script_task_pick_up_object(s: GPtr<u8>, command: u32) = thiscall 0x46AF50 => unported;
+    pub fn script_task_pick_up_object(s: GPtr<u8>, command: u32) = thiscall 0x46AF50 => crate::script_tasks::script_task_pick_up_object;
 }
 
 orig! {

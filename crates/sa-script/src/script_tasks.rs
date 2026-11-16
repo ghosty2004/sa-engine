@@ -27,6 +27,9 @@ use sa_world::bindings::event_script_command_dtor;
 use sa_world::bindings::group_intel_set_script_command_task;
 use sa_ai::bindings::ped_groups_get_peds_group as get_peds_group;
 use sa_world::bindings::sequence_add_task;
+use crate::bindings::{affect_secondary_behaviour_ctor, read_label};
+use sa_core::bindings::{task_new, tm_set_task_secondary};
+use sa_world::bindings::hold_entity_ctor;
 use crate::bindings::get_vacant_slot;
 use sa_world::bindings::group_intel_get_task_script_command;
 orig! {
@@ -128,3 +131,78 @@ pub fn give_ped_scripted_task(this: GPtr<u8>, ped_handle: i32, task: GPtr<u8>, o
 }
 
 pub const HOOKS: &[HookReg] = &[HOOK_GIVE_PED_SCRIPTED_TASK];
+
+orig! {
+    /// `CTaskSimpleHoldEntity::CTaskSimpleHoldEntity(CEntity*, CVector*, uint8 bone, uint8 boneFlags, const char*
+    /// animName, const char* animBlock, eAnimationFlags)` (0x691470)
+    #[allow(clippy::too_many_arguments)]
+    fn hold_entity_ctor_named(t: GPtr<u8>, e: GPtr<u8>, off: GPtr<u8>, bone: u32, flags: u32, anim: GPtr<u8>, block: GPtr<u8>, anim_flags: u32) -> GPtr<u8> = thiscall 0x691470 => unported;
+    /// `CPedScriptedTaskRecordData::Set(CPed*, int32 opcode, CTask*)` (0x6083E0)
+    fn record_set_task(r: GPtr<u8>, ped: GPtr<u8>, opcode: u32, task: GPtr<u8>) = thiscall 0x6083E0 => unported;
+}
+
+/// `CTheScripts::ScriptParams` (0xA43C78), the collected parameters.
+const SCRIPT_PARAMS: usize = 0xA43C78;
+/// `CPools::ms_pObjectPool` (0xB7449C): objects +0, flag bytes +4.
+const OBJECT_POOL: usize = 0xB7449C;
+
+/// `CRunningScript::ScriptTaskPickUpObject(int32 opcode)` (stub 0x46AF50 → .HOODLUM 0x156B440, thiscall, `ret 4`; SEH
+/// frame for the `new` expressions, not modelled). Seven parameters: ped handle, object handle, an offset vector
+/// (copied twice on the stack; the second copy is passed), bone and bone flags (bytes); then a 24-byte animation name
+/// and a 16-byte block name (`ReadTextLabelFromScript`) and one more parameter (anim flags 0x10 when non-zero, else
+/// 0x18). A `CTaskSimpleHoldEntity` (0x3C bytes): when the name or the block is "NULL" the constructor 0x6913A0 with
+/// anim 0xBF, group 0 and a flag the protection pushes as `~[0x1560560] ^ [0x4C4572]` = 0; else 0x691470 with the two
+/// names and the anim flags. Ped handle -1: only for opcode 0x70A a `CTaskSimpleAffectSecondaryBehaviour(1, 4, task)`
+/// (0x14 bytes) goes into the open sequence (`AddTask` reached through a call/ret trampoline: `rol([0x1560568],
+/// [0x4D7191])` = 0x632D10); otherwise the hold task is not stored. Else the ped of the handle (null when stale, then
+/// dereferenced as the original does) gets `SetTaskSecondary(task, slot)` (slot 4 for opcode 0x70A, `[0x1560564] -
+/// [0x6A9663] - 1`; else 0 from the VM 0xCB73E0, descriptor 0x1560028) and the vacant scripted-task record `Set(ped,
+/// opcode, task)`.
+#[hook(addr = 0x46AF50, conv = thiscall, name = "CRunningScript::ScriptTaskPickUpObject", expect = "E9 EB 04 10 01",
+       unverified = "frontier2-c12", route = "L2", hazards = "heap-writes,uninit-locals",
+       note = "the bone bytes are pushed as stack dwords with uninitialised upper bytes; allocates tasks; the three protection pushes and the AddTask trampoline evaluated on the exe image")]
+pub fn script_task_pick_up_object(this: GPtr<u8>, opcode: u32) {
+    crate::vm::collect_parameters_call(this, 7);
+    let params = ga::<u8>(SCRIPT_PARAMS);
+    let ped_handle = at::<i32>(params, 0).read();
+    let pool = ga::<GPtr<u8>>(OBJECT_POOL).read();
+    let obj = crate::script_objects::object_at(pool, at::<GPtr<u8>>(pool, 4).read(), at::<i32>(params, 4).read());
+    let off = [at::<u32>(params, 8).read(), at::<u32>(params, 12).read(), at::<u32>(params, 16).read()];
+    let mut off2 = off;
+    let bone = u32::from(at::<u8>(params, 20).read());
+    let bone_flags = u32::from(at::<u8>(params, 24).read());
+    let mut anim = [0u8; 0x18];
+    let mut block = [0u8; 0x10];
+    let anim_p = GPtr::from_raw(anim.as_mut_ptr());
+    let block_p = GPtr::from_raw(block.as_mut_ptr());
+    read_label(this, anim_p, 0x18);
+    read_label(this, block_p, 0x10);
+    let null = anim[..5] == *b"NULL\0" || block[..5] == *b"NULL\0";
+    crate::vm::collect_parameters_call(this, 1);
+    let anim_flags = if at::<u32>(params, 0).read() != 0 { 0x10 } else { 0x18 };
+    let mem = task_new(0x3C);
+    let off_p = GPtr::from_raw(off2.as_mut_ptr().cast::<u8>());
+    let task = if mem.is_null() {
+        GPtr::NULL
+    } else if null {
+        hold_entity_ctor(mem, obj, off_p, bone, bone_flags, 0xBF, 0, 0)
+    } else {
+        hold_entity_ctor_named(mem, obj, off_p, bone, bone_flags, anim_p, block_p, anim_flags)
+    };
+    if ped_handle == -1 {
+        if opcode == 0x70A {
+            let m = task_new(0x14);
+            let t = if m.is_null() { GPtr::NULL } else { affect_secondary_behaviour_ctor(m, 1, 4, task) };
+            let seq = (TASK_SEQUENCES as u32).wrapping_add(ga::<u32>(ACTIVE_SEQUENCE).read() << 6);
+            sequence_add_task(GPtr::from_addr(seq as usize), t);
+        }
+        return;
+    }
+    let ped = ped_at(ped_handle);
+    let tm = at::<GPtr<u8>>(ped, 0x47C).read().byte_add(4);
+    tm_set_task_secondary(tm, task, if opcode == 0x70A { 4 } else { 0 });
+    record_set_task(vacant_record(), ped, opcode, task);
+}
+
+/// Lane C turn 6 hooks (batch `frontier2-c12`).
+pub const HOOKS6: &[HookReg] = &[HOOK_SCRIPT_TASK_PICK_UP_OBJECT];

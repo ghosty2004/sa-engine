@@ -53,6 +53,7 @@ pub const MODULES: &[&[HookReg]] = &[
     script_tables::HOOKS,
     script_registries::HOOKS,
     script_tasks::HOOKS,
+    script_tasks::HOOKS6,
     script_things::HOOKS,
     crate::the_scripts_init::HOOKS,
     script_search_lights::HOOKS,

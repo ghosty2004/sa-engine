@@ -48,7 +48,7 @@ pub fn clean_up_this_object(obj: GPtr<u8>) {
 
 /// The object of pool handle `h` (`h >> 8` arithmetic, its flag byte equal to `h`'s low byte), else
 /// null.
-fn object_at(pool: GPtr<u8>, flags: GPtr<u8>, h: i32) -> GPtr<u8> {
+pub(crate) fn object_at(pool: GPtr<u8>, flags: GPtr<u8>, h: i32) -> GPtr<u8> {
     let i = h >> 8;
     if at::<u8>(flags, i as isize).read() == h as u8 {
         at::<GPtr<u8>>(pool, 0).read().byte_add(0x19C * i as isize)

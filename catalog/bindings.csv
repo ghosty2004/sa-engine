@@ -1570,7 +1570,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x46A7C0,sa-script,clear_all_suppressed_car_models,cdecl,,,,unported,CTheScripts::ClearAllSuppressedCarModels,
 0x46A930,sa-script,add_new_script_brain,thiscall,,b:GPtr<u8>;i:u32;model:u32;priority:u32;attach:u32;ty:u32;radius:u32,,unported,CScriptsForBrains::AddNewScriptBrain,
 0x46A9C0,sa-script,add_brain_for_code_use,thiscall,,m:GPtr<u8>;i:u32;name:GPtr<u8>;ty:u32,,unported,CScriptsForBrains::AddNewStreamedScriptBrainForCodeUse,
-0x46AF50,sa-script,script_task_pick_up_object,thiscall,,s:GPtr<u8>;command:u32,,unported,CRunningScript::ScriptTaskPickUpObject,
+0x46AF50,sa-script,script_task_pick_up_object,thiscall,,s:GPtr<u8>;command:u32,,sa_script::script_tasks::script_task_pick_up_object,CRunningScript::ScriptTaskPickUpObject,
 0x46B270,sa-script,brains_start_new_streamed_script_brain,thiscall,,this:GPtr<u8>;index:u32;e:GPtr<u8>;b:u32,,sa_script::script_brain_requests::start_new_streamed_script_brain_port,CScriptsForBrains::StartNewStreamedScriptBrain,
 0x46B3D0,sa-script,brains_is_object_within_range,thiscall,,b:GPtr<u8>;o:GPtr<u8>;pos:GPtr<u8>,u8,unported,CScriptsForBrains::IsObjectWithinBrainActivationRange,
 0x46CD80,sa-script,brains_start_or_request,thiscall,,this:GPtr<u8>;index:u32;e:GPtr<u8>;attach:u32;add:u32,,sa_script::script_brain_requests::start_or_request_new_streamed_script_brain,CScriptsForBrains::StartOrRequestNewStreamedScriptBrain,
