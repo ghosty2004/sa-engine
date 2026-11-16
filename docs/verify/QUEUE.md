@@ -2226,7 +2226,7 @@ SA_UNVERIFIED=frontier2-a11 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a11 
 |---|---|---|---|---|
 | 0x5F8180 | `CPedGroupDefaultTaskAllocatorChat::AllocateDefaultTasks` | written | L2 | heap-writes |
 | 0x620490 | `CTaskSimpleChoking::ProcessPed` | written | L2 | heap-writes,ax-al-return |
-| 0x620C30 | `FUN_00620c30` | written | L2 | heap-writes |
+| 0x620C30 | `thunk_FUN_004020ff` | written | L2 | heap-writes |
 | 0x625C70 | `vt_86d868::CreateFirstSubTask` | written | L2 | heap-writes |
 | 0x62B840 | `CTaskComplexKillPedOnFootStealth::ControlSubTask` | written | L2 | heap-writes,stack-residue |
 | 0x62E8B0 | `CTaskComplexSeekCoverUntilTargetDead::ControlSubTask` | written | L2 | heap-writes |
@@ -2248,14 +2248,14 @@ SA_UNVERIFIED=frontier2-a11 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a11 
 | 0x6689E0 | `CTaskComplexGoToPointAiming::ControlSubTask` | written | L2 | heap-writes |
 | 0x670E20 | `vt_870114::CreateFirstSubTask` | written | L2 | heap-writes,stack-residue |
 | 0x672E80 | `vt_87004c::CreateNextSubTask` | written | L2 | heap-writes |
-| 0x673070 | `FUN_00673070` | written | L2 | heap-writes |
+| 0x673070 | `thunk_FUN_00402204` | written | L2 | heap-writes |
 | 0x6733E0 | `vt_87004c::CreateFirstSubTask` | written | L2 | heap-writes |
 | 0x673540 | `vt_87004c::ControlSubTask` | written | L2 | heap-writes |
 | 0x673BA0 | `FUN_00673ba0` | written | L2 | none |
 | 0x691AE0 | `vt_870b98::CreateNextSubTask` | written | L2 | heap-writes,stack-residue |
 | 0x691D50 | `vt_870b98::ControlSubTask` | written | L2 | heap-writes,stack-residue |
 | 0x693610 | `vt_870b98::CreateFirstSubTask` | written | L2 | heap-writes,stack-residue |
-| 0x6955D0 | `FUN_006955d0` | written | L2 | none |
+| 0x6955D0 | `(missed by ghidra: cat7-call)` | written | L2 | none |
 | 0x696940 | `CTaskComplexFollowLeaderInFormation::ControlSubTask` | written | L2 | heap-writes,stack-residue |
 
 ## frontier2-a2
