@@ -18,7 +18,10 @@ use sa_core::bindings::{
 };
 use sa_world::bindings::{ctor_48df30, run_anim_ctor, sequence_add_task, sequence_ctor, stand_still_ctor};
 use crate::bindings::{can_ped_target_ped, intel_can_see_entity_with_lights, investigate_disturbance_ctor};
-use sa_math::fpu::{fcom_parity, st0};
+use sa_math::fpu::{fcom_ne, fcom_parity, st0};
+use crate::bindings::{run_anim_ctor2, run_timed_anim_ctor2};
+use sa_core::bindings::general_random_int_in_range;
+use sa_world::bindings::{pause_ctor, switch_vehicle_to_real_physics};
 use sa_core::crt::rand_at;
 use sa_input::bindings::pad_sprint_just_down;
 use crate::common::{task_make_abortable, task_new, xi};
@@ -769,6 +772,113 @@ pub fn kill_ped_on_foot_stealth_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) 
     seq
 }
 
+// ------------------------------------------------------------------------------------------- sunbathe, small helpers
+
+/// `CTaskTimer::GetTimeLeft()` (0x62EB80, catalogue `FUN_0062eb80`): a started timer (+8) → `interval (+4) - now +
+/// start (+0)` (wrapping), else 0. The entry's `nop; jmp` goes to the island 0x40131C, which loads the time as
+/// `[[0x4EC103] ^ [0x156061C]]` = `[0xB7CB84]` (static image values) and jumps back.
+#[hook(addr = 0x62EB80, conv = thiscall, name = "FUN_0062eb80", expect = "8A 41 08 84 C0 74 0E",
+       unverified = "frontier2-a11", route = "L2", hazards = "none",
+       note = "the island's pushfd / popfd keeps the flags; EDX = the time on the started path")]
+pub fn task_timer_get_time_left(this: GPtr<u8>) -> i32 {
+    if rd::<u8>(this, 8) == 0 {
+        return 0;
+    }
+    rd::<u32>(this, 4).wrapping_sub(g::<u32>(TIME_MS).read()).wrapping_add(rd::<u32>(this, 0)) as i32
+}
+
+/// `CTaskComplexSunbathe::CreateSubTask(int32 type, CPed*)` (0x638290, `ret 8`; the entry's `nop; jmp` goes to the
+/// island 0x409B02 that fetches the SEH link and jumps back to 0x638296). +0x20 the sunbather type, +0x24 / +0x28 the
+/// two anim blocks (+0x10 loaded), +0x14 a task timer. The current sub-task when it already has the type. 0xCA:
+/// `CTaskSimplePause(10000)` when the second block is not loaded and the anims should load, or the first block is
+/// not loaded; else `CTaskSimplePause(GetRandomNumberInRange(1000, 5000))` (drawn after `new`). 0x1A2:
+/// `CTaskSimpleRunTimedAnim(0x2F, type + 0xEF, 4.0, -4.0, time, 0x1A2, 0x86E098, true)`, the time `timer left + 1000`,
+/// or for types 0 / 2 with the second block loaded `GetRandomNumberInRange(3000, min(left + 1000, 12000))`. 0x1AC /
+/// 0x1AD / 0x1AE: `CTaskSimpleRunAnim(0x30, anim, 4.0, type, name, hold)` with anim `type + 0xF4` / (0xFE or 0x101 +
+/// `GetRandomNumberInRange(0, 3)` for types 0 / 2, else 0x1AD: the bytes read the type argument's slot) / `type +
+/// 0xF9`, names 0x86E654 / 0x86E644 / 0x86E634, hold 1 / 1 / 0. Anything else (0x516 too): NULL.
+#[hook(addr = 0x638290, conv = thiscall, name = "CTaskComplexSunbathe::CreateSubTask", expect = "90 E9 6C 18 DD FF",
+       unverified = "frontier2-a11", route = "L2", hazards = "heap-writes")]
+pub fn sunbathe_create_sub_task(this: GPtr<u8>, ty: i32, _ped: GPtr<u8>) -> GPtr<u8> {
+    let sub = rd::<GPtr<u8>>(this, 8);
+    if !sub.is_null() && task_get_type(sub) == ty {
+        return rd::<GPtr<u8>>(this, 8);
+    }
+    let kind = rd::<i32>(this, 0x20);
+    let loaded = |off: isize| rd::<u8>(rd::<GPtr<u8>>(this, off), 0x10) != 0;
+    let anim = |a: u32, ty: u32, name: u32, hold: u8| {
+        crate::common::new_task(0x20, |m| run_anim_ctor2(m, 0x30, a, 0x4080_0000, ty, name, hold))
+    };
+    match ty {
+        0xCA => {
+            let long = (!loaded(0x28) && crate::frontier_a_t6::should_load_sunbathe_anims() != 0) || !loaded(0x24);
+            if long {
+                crate::common::new_task(0x18, |m| pause_ctor(m, 10000))
+            } else {
+                crate::common::new_task(0x18, |m| pause_ctor(m, general_random_int_in_range(1000, 5000) as u32))
+            }
+        }
+        0x1A2 => {
+            let a = kind.wrapping_add(0xEF) as u32;
+            let timer = this.byte_add(0x14);
+            let time = if loaded(0x28) && (kind == 0 || kind == 2) {
+                let hi = if task_timer_get_time_left(timer).wrapping_add(1000) > 12000 {
+                    12000
+                } else {
+                    task_timer_get_time_left(timer).wrapping_add(1000)
+                };
+                general_random_int_in_range(3000, hi)
+            } else {
+                task_timer_get_time_left(timer).wrapping_add(1000)
+            };
+            crate::common::new_task(0x34, |m| {
+                run_timed_anim_ctor2(m, 0x2F, a, 0x4080_0000, 0xC080_0000, time as u32, 0x1A2, 0x86E098, 1)
+            })
+        }
+        0x1AC => anim(kind.wrapping_add(0xF4) as u32, 0x1AC, 0x86E654, 1),
+        0x1AD => {
+            let a = match kind {
+                0 => general_random_int_in_range(0, 3) + 0xFE,
+                2 => general_random_int_in_range(0, 3) + 0x101,
+                _ => ty,
+            };
+            anim(a as u32, 0x1AD, 0x86E644, 1)
+        }
+        0x1AE => anim(kind.wrapping_add(0xF9) as u32, 0x1AE, 0x86E634, 0),
+        _ => GPtr::NULL,
+    }
+}
+
+/// `FUN_006955d0(float)` (0x6955D0, thiscall, `ret 4`): a value different from +0x18 (NaN too) is stored there, with
+/// +0x28 = now, +0x2C = 0 and +0x30 = 1 (a restarted task timer).
+#[hook(addr = 0x6955D0, conv = thiscall, name = "FUN_006955d0", expect = "D9 44 24 04 D8 59 18",
+       unverified = "frontier2-a11", route = "L2", hazards = "none")]
+pub fn set_value_and_restart_timer_6955d0(this: GPtr<u8>, v: f32) {
+    if fcom_ne(x(v), x(rd::<f32>(this, 0x18))) {
+        wr::<f32>(this, 0x18, v);
+        wr::<u32>(this, 0x28, g::<u32>(TIME_MS).read());
+        wr::<u32>(this, 0x2C, 0);
+        wr::<u8>(this, 0x30, 1);
+    }
+}
+
+/// `CTaskComplexDieInCar::PreparePedVehicleForPedDeath(CVehicle*)` (0x62FD00, thiscall, `ret 4`; `this` unused): a
+/// vehicle whose status (+0x36 >> 3) is 2 is switched to real physics (`CCarCtrl::SwitchVehicleToRealPhysics`); then
+/// its autopilot gets +0x3D0 = 0, +0x3BA = 0, mission +0x3BB = 6 and +0x3BC = now + 2000. AL = 0.
+#[hook(addr = 0x62FD00, conv = thiscall, name = "CTaskComplexDieInCar::PreparePedVehicleForPedDeath",
+       expect = "56 8B 74 24 08 8A 46 36", unverified = "frontier2-a11", route = "L2", hazards = "heap-writes,ax-al-return",
+       note = "AL is 0 from the cleared bytes; EAX's upper bytes come from the switch call or the status byte")]
+pub fn die_in_car_prepare_ped_vehicle_for_ped_death(_this: GPtr<u8>, veh: GPtr<u8>) -> u8 {
+    if rd::<u8>(veh, 0x36) & 0xF8 == 0x10 {
+        switch_vehicle_to_real_physics(veh);
+    }
+    wr::<u8>(veh, 0x3D0, 0);
+    wr::<u8>(veh, 0x3BA, 0);
+    wr::<u8>(veh, 0x3BB, 6);
+    wr::<u32>(veh, 0x3BC, g::<u32>(TIME_MS).read().wrapping_add(2000));
+    0
+}
+
 /// The batch's hooks.
 pub const HOOKS: &[HookReg] = &[
     HOOK_MEDIC_TREAT_INJURED_PED_CREATE_NEXT_SUB_TASK,
@@ -780,4 +890,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_FOLLOW_PATROL_ROUTE_CREATE_FIRST_SUB_TASK,
     HOOK_SEEK_COVER_UNTIL_TARGET_DEAD_CONTROL_SUB_TASK,
     HOOK_KILL_PED_ON_FOOT_STEALTH_CONTROL_SUB_TASK,
+    HOOK_TASK_TIMER_GET_TIME_LEFT,
+    HOOK_SUNBATHE_CREATE_SUB_TASK,
+    HOOK_SET_VALUE_AND_RESTART_TIMER_6955D0,
+    HOOK_DIE_IN_CAR_PREPARE_PED_VEHICLE_FOR_PED_DEATH,
 ];
