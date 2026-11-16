@@ -686,14 +686,14 @@ orig! {
     pub fn cam_two_player_separate_cars_top_down(c: GPtr<u8>) = thiscall 0x513BE0 => unported;
     pub fn cam_arrest_cam_one(c: GPtr<u8>) -> u8 = thiscall 0x518500 => crate::frontier_b4_cam::process_arrest_cam_one;
     pub fn cam_attached_cam(c: GPtr<u8>) = thiscall 0x512B10 => unported;
-    /// `CCam` DW processors `(bool)`
-    pub fn cam_dw_heli_chase(c: GPtr<u8>, b: u32) = thiscall 0x51A740 => unported;
-    pub fn cam_dw_cam_man(c: GPtr<u8>, b: u32) = thiscall 0x51B120 => unported;
-    pub fn cam_dw_birdy(c: GPtr<u8>, b: u32) = thiscall 0x51B850 => unported;
-    pub fn cam_dw_plane_spotter(c: GPtr<u8>, b: u32) = thiscall 0x51C250 => unported;
-    pub fn cam_dw_plane_cam1(c: GPtr<u8>, b: u32) = thiscall 0x51C760 => unported;
-    pub fn cam_dw_plane_cam2(c: GPtr<u8>, b: u32) = thiscall 0x51CC30 => unported;
-    pub fn cam_dw_plane_cam3(c: GPtr<u8>, b: u32) = thiscall 0x51D100 => unported;
+    /// `CCam` DW processors `(bool)`, AL
+    pub fn cam_dw_heli_chase(c: GPtr<u8>, b: u32) -> u8 = thiscall 0x51A740 => unported;
+    pub fn cam_dw_cam_man(c: GPtr<u8>, b: u32) -> u8 = thiscall 0x51B120 => crate::dwcams::process_dw_cam_man_cam;
+    pub fn cam_dw_birdy(c: GPtr<u8>, b: u32) -> u8 = thiscall 0x51B850 => unported;
+    pub fn cam_dw_plane_spotter(c: GPtr<u8>, b: u32) -> u8 = thiscall 0x51C250 => crate::dwcams::process_dw_plane_spotter_cam;
+    pub fn cam_dw_plane_cam1(c: GPtr<u8>, b: u32) -> u8 = thiscall 0x51C760 => crate::dwcams::process_dw_plane_cam1;
+    pub fn cam_dw_plane_cam2(c: GPtr<u8>, b: u32) -> u8 = thiscall 0x51CC30 => crate::dwcams::process_dw_plane_cam2;
+    pub fn cam_dw_plane_cam3(c: GPtr<u8>, b: u32) -> u8 = thiscall 0x51D100 => crate::dwcams::process_dw_plane_cam3;
     /// `CTaskSimpleClimb::GetCameraTargetPos(CPed*, CVector&)` (0x67A390)
     pub fn climb_get_camera_target_pos(t: GPtr<u8>, ped: GPtr<u8>, out: GPtr<u8>) = thiscall 0x67A390 => unported;
     /// `CCam::LookBehind()` (0x520690) / `CCam::LookRight(bool)` (0x520E40)
@@ -969,14 +969,28 @@ pub fn cam_process(this: GPtr<u8>) {
             cam_arrest_cam_one(this);
         }
         47 => cam_attached_cam(this),
-        56 => cam_dw_heli_chase(this, 0),
-        57 => cam_dw_cam_man(this, 0),
-        58 => cam_dw_birdy(this, 0),
-        59 => cam_dw_plane_spotter(this, 0),
+        56 => {
+            cam_dw_heli_chase(this, 0);
+        }
+        57 => {
+            cam_dw_cam_man(this, 0);
+        }
+        58 => {
+            cam_dw_birdy(this, 0);
+        }
+        59 => {
+            cam_dw_plane_spotter(this, 0);
+        }
         60 | 61 => g::<u8>(USE_NEAR_CLIP_SCRIPT).write(0),
-        62 => cam_dw_plane_cam1(this, 0),
-        63 => cam_dw_plane_cam2(this, 0),
-        64 => cam_dw_plane_cam3(this, 0),
+        62 => {
+            cam_dw_plane_cam1(this, 0);
+        }
+        63 => {
+            cam_dw_plane_cam2(this, 0);
+        }
+        64 => {
+            cam_dw_plane_cam3(this, 0);
+        }
         33 => {}
         _ => {
             for (o, v) in [

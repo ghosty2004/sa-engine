@@ -12,7 +12,7 @@ pub use sa_core::bindings::text_get;
 pub use sa_core::bindings::hud_set_help_message;
 orig! {
     /// `CCamera::IsItTimeForNewcam(int32 seq, int32 startTimeMs)` (0x51D770, AL)
-    pub fn is_it_time_for_newcam(this: GPtr<u8>, seq: i32, start: u32) -> u8 = thiscall 0x51D770 => unported;
+    pub fn is_it_time_for_newcam(this: GPtr<u8>, seq: i32, start: u32) -> u8 = thiscall 0x51D770 => crate::newcam::is_it_time_for_newcam;
     /// `CCamera::TryToStartNewCamMode(int32 seq)` (0x51E560, AL)
     pub fn try_to_start_new_cam_mode(this: GPtr<u8>, seq: i32) -> u8 = thiscall 0x51E560 => unported;
     /// "active camera under water" (0x50B830, cdecl, AL)

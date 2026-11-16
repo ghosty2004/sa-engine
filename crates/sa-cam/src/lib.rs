@@ -46,6 +46,7 @@ pub mod dwcams;
 pub mod firstperson;
 pub mod followcar;
 pub mod followped;
+pub mod newcam;
 pub mod obbe;
 pub mod padlook;
 pub mod pedmouse;

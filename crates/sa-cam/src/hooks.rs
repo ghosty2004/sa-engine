@@ -40,6 +40,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::pedmouse::HOOKS,
     crate::camcontrol::HOOKS,
     crate::obbe::HOOKS,
+    crate::newcam::HOOKS,
     crate::camera_process::HOOKS,
     crate::generated::HOOKS,
     // WRITER-NATIVE
