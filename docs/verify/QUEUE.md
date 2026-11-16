@@ -64,15 +64,16 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-8 | 14 | AI, ANIM, UNK-game, WEAPON | 0e036130 | master | 14 | 0 | 0 | 0 | 0 | L2 13, L3-only 1 |
 | frontier2-9 | 21 | AI | a06f78e1 | master | 21 | 0 | 0 | 0 | 0 | L2 21 |
 | frontier2-a1 | 2 | AI | bcaaada4 | worktree-agent-a198f2e01294e8cc9 | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| frontier2-a10 | 21 | AI | e18f44e5 | worktree-agent-aa15ab7791f090943 | 21 | 0 | 0 | 0 | 0 | L2 21 |
+| frontier2-a10 | 21 | AI | e18f44e5 | worktree-agent-a673f3b762ca00e8d | 21 | 0 | 0 | 0 | 0 | L2 21 |
+| frontier2-a11 | 33 | AI, UNK-game | a7bb4f40 | worktree-agent-a673f3b762ca00e8d | 33 | 0 | 0 | 0 | 0 | L2 33 |
 | frontier2-a2 | 23 | AI, UNK-game | 7d0524fc | worktree-agent-a198f2e01294e8cc9 | 23 | 0 | 0 | 0 | 0 | L2 23 |
 | frontier2-a3 | 5 | AI | 6aa6d889 | worktree-agent-a198f2e01294e8cc9 | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | frontier2-a4 | 2 | AI | 555a5634 | worktree-agent-a198f2e01294e8cc9 | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | frontier2-a5 | 6 | AI, UNK-game | bc708147 | worktree-agent-a198f2e01294e8cc9 | 6 | 0 | 0 | 0 | 0 | L2 6 |
 | frontier2-a6 | 8 | AI | a6049c75 | worktree-agent-a198f2e01294e8cc9 | 8 | 0 | 0 | 0 | 0 | L2 8 |
 | frontier2-a7 | 16 | AI, POP | 0041ebcc | worktree-agent-a198f2e01294e8cc9 | 16 | 0 | 0 | 0 | 0 | L2 15, split 1 |
-| frontier2-a8 | 36 | AI | 3fd22dd2 | worktree-agent-a84f43d95c6a883c2 | 36 | 0 | 0 | 0 | 0 | L2 36 |
-| frontier2-a9 | 28 | AI, POP, UNK-game | a2efb994 | worktree-agent-aa15ab7791f090943 | 28 | 0 | 0 | 0 | 0 | L2 28 |
+| frontier2-a8 | 36 | AI | 3fd22dd2 | worktree-agent-a673f3b762ca00e8d | 36 | 0 | 0 | 0 | 0 | L2 36 |
+| frontier2-a9 | 28 | AI, POP, UNK-game | a2efb994 | worktree-agent-a673f3b762ca00e8d | 28 | 0 | 0 | 0 | 0 | L2 28 |
 | frontier2-b1 | 32 | MATH, RENDER, RW | ebd33c14 | master | 32 | 0 | 0 | 0 | 0 | L1-pure 1, L2 31 |
 | frontier2-b2 | 23 | RW | 2f47ba34 | master | 23 | 0 | 0 | 0 | 0 | L2 23 |
 | frontier2-b3 | 7 | VEH | 221f09a0 | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
@@ -2209,6 +2210,53 @@ SA_UNVERIFIED=frontier2-a10 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a10 
 | 0x6801F0 | `CTaskSimpleJetPack::ProcessPed` | written | L2 | x87-transcendental,ax-al-return,heap-writes |
 | 0x694C70 | `CTaskComplexSeekEntityAiming::ControlSubTask` | written | L2 | heap-writes,stack-residue |
 | 0x697F10 | `CTaskComplexWaitForBackup::CreateNextSubTask` | written | L2 | heap-writes,stack-residue |
+
+## frontier2-a11
+
+33 hooks in sa-ai; hazards: ax-al-return (3), heap-writes (26), stack-residue (7); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-a11 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-a11 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a11 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-a11
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x5F8180 | `CPedGroupDefaultTaskAllocatorChat::AllocateDefaultTasks` | written | L2 | heap-writes |
+| 0x620490 | `CTaskSimpleChoking::ProcessPed` | written | L2 | heap-writes,ax-al-return |
+| 0x620C30 | `FUN_00620c30` | written | L2 | heap-writes |
+| 0x625C70 | `vt_86d868::CreateFirstSubTask` | written | L2 | heap-writes |
+| 0x62B840 | `CTaskComplexKillPedOnFootStealth::ControlSubTask` | written | L2 | heap-writes,stack-residue |
+| 0x62E8B0 | `CTaskComplexSeekCoverUntilTargetDead::ControlSubTask` | written | L2 | heap-writes |
+| 0x62EB80 | `FUN_0062eb80` | written | L2 | none |
+| 0x62FD00 | `CTaskComplexDieInCar::PreparePedVehicleForPedDeath` | written | L2 | heap-writes,ax-al-return |
+| 0x6375F0 | `CTaskComplexDieInCar::CreateFirstSubTask` | written | L2 | heap-writes |
+| 0x638290 | `CTaskComplexSunbathe::CreateSubTask` | written | L2 | heap-writes |
+| 0x6399F0 | `CTaskComplexSunbathe::CreateNextSubTask` | written | L2 | heap-writes |
+| 0x639CB0 | `CTaskComplexSunbathe::CreateFirstSubTask` | written | L2 | heap-writes |
+| 0x64CF40 | `CTaskSimpleCreateCarAndGetIn::ProcessPed` | written | L2 | heap-writes,ax-al-return,stack-residue |
+| 0x65A990 | `CTaskComplexMedicTreatInjuredPed::CreateNextSubTask` | written | L2 | heap-writes |
+| 0x65ABF0 | `CTaskComplexMedicTreatInjuredPed::ControlSubTask` | written | L2 | heap-writes |
+| 0x65B7B0 | `CTaskComplexFleePoint::SetFleePosition` | written | L2 | none |
+| 0x65BBB0 | `CTaskComplexFleeEntity::ControlSubTask` | written | L2 | heap-writes |
+| 0x65F330 | `CTaskSimpleGoToPointFine::SetTargetPos` | written | L2 | none |
+| 0x65F780 | `CTaskComplexTrackEntity::CalcTargetPos` | written | L2 | none |
+| 0x65F930 | `CTaskComplexTrackEntity::CalcMoveRatio` | written | L2 | none |
+| 0x663640 | `CTaskComplexTrackEntity::ControlSubTask` | written | L2 | heap-writes |
+| 0x6689E0 | `CTaskComplexGoToPointAiming::ControlSubTask` | written | L2 | heap-writes |
+| 0x670E20 | `vt_870114::CreateFirstSubTask` | written | L2 | heap-writes,stack-residue |
+| 0x672E80 | `vt_87004c::CreateNextSubTask` | written | L2 | heap-writes |
+| 0x673070 | `FUN_00673070` | written | L2 | heap-writes |
+| 0x6733E0 | `vt_87004c::CreateFirstSubTask` | written | L2 | heap-writes |
+| 0x673540 | `vt_87004c::ControlSubTask` | written | L2 | heap-writes |
+| 0x673BA0 | `FUN_00673ba0` | written | L2 | none |
+| 0x691AE0 | `vt_870b98::CreateNextSubTask` | written | L2 | heap-writes,stack-residue |
+| 0x691D50 | `vt_870b98::ControlSubTask` | written | L2 | heap-writes,stack-residue |
+| 0x693610 | `vt_870b98::CreateFirstSubTask` | written | L2 | heap-writes,stack-residue |
+| 0x6955D0 | `FUN_006955d0` | written | L2 | none |
+| 0x696940 | `CTaskComplexFollowLeaderInFormation::ControlSubTask` | written | L2 | heap-writes,stack-residue |
 
 ## frontier2-a2
 
