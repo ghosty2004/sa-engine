@@ -754,6 +754,11 @@ orig! {
 }
 
 orig! {
+    /// `CPedIntelligence::Respects` (0x601C90)
+    pub fn intel_respects(i: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x601C90 => unported;
+}
+
+orig! {
     /// `CPedIntelligence::GetMoveStateFromGoToTask` (0x601D70)
     pub fn intel_get_move_state_from_go_to_task(i: GPtr<u8>) -> i32 = thiscall 0x601D70 => unported;
 }

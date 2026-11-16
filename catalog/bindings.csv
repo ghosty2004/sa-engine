@@ -135,6 +135,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x601230,sa-ai,intel_set_task_duck_secondary,thiscall,,i:GPtr<u8>;t:u32,,sa_ai::intelrest::intel_set_task_duck_secondary,CPedIntelligence::SetTaskDuckSecondary,
 0x601390,sa-ai,intel_clear_task_duck_secondary,thiscall,,intel:GPtr<u8>,,sa_ai::intelrest::intel_clear_task_duck_secondary,CPedIntelligence::ClearTaskDuckSecondary,
 0x601C30,sa-ai,intel_is_threatened_by,thiscall,,intel:GPtr<u8>;ped:GPtr<u8>,u8,unported,CPedIntelligence::IsThreatenedBy,
+0x601C90,sa-ai,intel_respects,thiscall,,i:GPtr<u8>;p:GPtr<u8>,u8,unported,CPedIntelligence::Respects,
 0x601D70,sa-ai,intel_get_move_state_from_go_to_task,thiscall,,i:GPtr<u8>,i32,unported,CPedIntelligence::GetMoveStateFromGoToTask,
 0x602350,sa-ai,intel_is_ped_going_for_car_door,thiscall,,i:GPtr<u8>,u8,sa_ai::intelrest::intel_is_ped_going_for_car_door,CPedIntelligence::IsPedGoingForCarDoor,
 0x603720,sa-ai,scan_vehicle_potential_collision,thiscall,,s:GPtr<u8>;ped:GPtr<u8>;ents:GPtr<u8>;n:u32,,unported,CVehiclePotentialCollisionScanner::ScanForVehiclePotentialCollisionEvents,

@@ -12,6 +12,9 @@ use crate::common::*;
 
 use crate::bindings::task_simple_ctor;
 use sa_world::bindings::{entity_register_reference, task_complex_ctor};
+use crate::bindings::{intel_respects, is_gang_ped_type, ped_groups_get_peds_group};
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::membership_get_leader;
 
 orig! {
     /// `CEventKnockOffBike::From(const CEventKnockOffBike&)` (0x4AFDD0, thiscall)
@@ -966,3 +969,39 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_ALLOCATOR_SIT_IN_LEADER_CAR_DTOR,
     HOOK_SCRIPTED_EFFECT_NEAREST_PED,
 ];
+
+/// The "may react against" test behind the ped-to-ped event responses (0x603AF0, cdecl, unnamed; callers 0x606BA0,
+/// 0x607560, 0x607A90 test AL): with `pt` = the ped's type (+0x598, loaded in the protection fragment 0x406E8F), AL = 0
+/// for types 6, 0x12, 0x13, for a player ped and for a ped whose +0x484 is 2. A player `other`: EAX = 1 unless the ped's
+/// intelligence (+0x47C) `Respects(other)` (then 0). Else, when `other` has a group (`CPedGroups::GetPedsGroup`) whose
+/// leader (membership +8, `GetLeader` called up to three times) is a player: the same with the leader. Else EAX = 0 when
+/// both types are gang types (0x5FE9C0) and equal, 1 otherwise.
+#[hook(addr = 0x603AF0, conv = cdecl, name = "FUN_00603af0", expect = "53 8B 5C 24 08 55 90 E9",
+       unverified = "frontier2-c12", route = "L2", hazards = "none")]
+pub fn may_react_against(ped: GPtr<u8>, other: GPtr<u8>) -> u8 {
+    let pt = rd::<u32>(ped, 0x598);
+    if pt == 6 || pt == 0x12 || pt == 0x13 || ped_is_player(ped) != 0 || rd::<u8>(ped, 0x484) == 2 {
+        return 0;
+    }
+    if ped_is_player(other) != 0 {
+        return u8::from(intel_respects(rd::<GPtr<u8>>(ped, 0x47C), other) == 0);
+    }
+    let group = ped_groups_get_peds_group(other.addr() as u32);
+    if group != 0 {
+        let m = GPtr::<u8>::from_addr(group as usize).byte_add(8);
+        if !membership_get_leader(m).is_null() && ped_is_player(membership_get_leader(m)) != 0 {
+            let intel = rd::<GPtr<u8>>(ped, 0x47C);
+            return u8::from(intel_respects(intel, membership_get_leader(m)) == 0);
+        }
+    }
+    if is_gang_ped_type(pt) != 0 {
+        let pt2 = rd::<u32>(other, 0x598);
+        if is_gang_ped_type(pt2) != 0 && pt == pt2 {
+            return 0;
+        }
+    }
+    1
+}
+
+/// Lane C turn 6 hooks (batch `frontier2-c12`).
+pub const HOOKS6: &[HookReg] = &[HOOK_MAY_REACT_AGAINST];

@@ -54,6 +54,7 @@ use sa_world::bindings::find_player_ped;
 use sa_core::bindings::ped_is_alive;
 use sa_world::bindings::vector_sub;
 use sa_stream::bindings::ped_is_player;
+use crate::bindings::intel_respects;
 use sa_world::bindings::dtor_6389f0 as seq_dtor;
 use crate::bindings::event_group_add;
 use sa_world::bindings::fx_get_play_status;
@@ -102,8 +103,6 @@ orig! {
     fn alloc_kill_basic_ctor(a: P, threat: P) -> P = thiscall 0x69C710 => unported;
     /// `CTaskAllocatorPlayerCommandAttack::CTaskAllocatorPlayerCommandAttack(CPed*, int32 groupId, int32)` (0x69C480)
     fn alloc_cmd_attack_ctor(a: P, target: P, group_id: i32, x: u32) -> P = thiscall 0x69C480 => unported;
-    /// `CPedIntelligence::Respects(CPed*)` (0x601C90)
-    fn intel_respects(i: P, p: P) -> u8 = thiscall 0x601C90 => unported;
     /// `CEventHandler::ComputeEventResponseTask(CPed*, CEvent*)` (0x4C4220)
     fn handler_compute_event_response_task(ped: P, e: P) -> P = cdecl 0x4C4220 => unported;
     /// `CTaskComplexLeaveCarAsPassengerWait::CTaskComplexLeaveCarAsPassengerWait(CVehicle*)` (0x63B430)
