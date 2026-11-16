@@ -2776,3 +2776,45 @@
 - Not done: KillPedWithCar::ProcessPed 0x6564A0 (needs 0x653CF0 / 0x6563D0), UseSwatRope::ControlSubTask 0x65A460 (needs
   CRopes::FindCoorsAlongRope 0x555E40), GangHassleVehicle::ControlSubTask 0x6637C0 (0x6D3 bytes), the interior ProcessPeds
   0x676D30 / 0x6772E0 / 0x677920; the partial script switches 0x47A760 / 0x48B590; ProcessColModels' disk cases.
+
+## 2026-11-16 — FRONTIER-2 turn 9, lane A: KillPedWithCar, the swat rope, gang hassle, the interior bed / chair tasks (agent, branch worktree-agent-a811558b41ef1a9e5)
+- Base: worktree-agent-a673f3b762ca00e8d (7a65de4a, lane A turn 8). Every port from the 1.0 US bytes (gta-reversed read as an
+  aid; where it differs the bytes win), every address checked against `inflight.py` first (none registered elsewhere).
+  Batches `frontier2-a12` (6 hooks: AI + RENDER 0x555E40) and `frontier2-a13` (2 hooks, AI), all plain `#[hook(`, in the
+  new module sa-ai `frontier_a_t9.rs` (0x555E40 in sa-render `ropes_register.rs`). The hook table tests found no code-key
+  entry, so no phase B native this turn.
+- CTaskSimpleKillPedWithCar: ProcessPed 0x6564A0, DamageCarBonnet 0x653CF0, the pad shake 0x6563D0 (`FUN_006563d0`; the
+  frequency dword's upper bytes are the `1 / mass` stack slot, as the original). Bytes vs gta-reversed: the run-over test
+  uses `forward · speed > 0`, the bonnet height uses max.z, the span for `forward.z > 0.1` depends on the travel direction,
+  the low front hit is direction 5 (piece 9), the bonnet's speed starts from the ped's speed. Three events on the stack
+  (hit-and-run, damage calculator, CEventDamage). CLocalisation::KnockDownPeds 0x56D290 and RemoveBonnetInPedCollision
+  0x6AA200 became sa-pop bindings (twins in sa-hud / sa-veh), sa-ped's KillPedWithCar imports them.
+- CRopes::FindCoorsAlongRope 0x555E40 (gta-reversed only calls the original; free per inflight) and
+  CTaskComplexUseSwatRope::ControlSubTask 0x65A460 (a rope that is not found aborts into CreateSubTask(0xC8); gta-reversed
+  keeps the sub-task).
+- CTaskGangHassleVehicle::ControlSubTask 0x6637C0 (~2.5 KB with the `.text` island 0x4010BF; gta-reversed only calls
+  the original): anim block ref, kill / hassle-ped hand-offs, look-at, the 0..3 state machine, secondary gang anims, the
+  car hit through a stack CTaskSimpleFight + CMatrix (ProcessColModels, FightHitCar, health restored). fighthelp's
+  FightHitCar / sphere set-up declarations made crate-visible and reused; `cover_update::speed` reused for |v| (a local
+  copy failed dupes once).
+- Interior: CTaskInteriorLieInBed::ProcessPed 0x6772E0 and vt_870314::ProcessPed 0x676D30 (the house chair task,
+  "TaskSitInChair", anims 0x157 / 0x159 / 0x158, look-at tail at the closest interior info) on shared helpers
+  (`interior_blend`, `interior_start_timer`, `interior_step_to_info` = the identical x87 tail 0x677606 / 0x67705B);
+  frontier_a_t5's FindClosestInteriorInfo declaration made crate-visible. Both originals store floats over their own ped
+  argument slot (hazard stack-residue).
+- frontier.py: AI 6 virtuals → 1 (CTaskInteriorSitAtDesk::ProcessPed 0x677920); to port 179 → 174 (all lanes, this
+  checkout). POP / PED rows unchanged: 0x41D0E0 / 0x44DF60 / 0x460DF0 are on master; 0x422760, 0x60E530 and the POP
+  partials 0x461170 / 0x612710 / 0x6F34D0 not started.
+- Scenarios (frontier.sh, i686 native, SA_ROOT=~/sa-engine): pausemenu 416 / 0 blocked, solicit 4016 / 0, crossing
+  1216 / 0, crossing-long 4016 / 0, melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0, shootdriver 1216 / 0,
+  roadblock-script 1016 / 0, gangwar 2016 / 0, roadblocks 875 / 1141 (lane B: CCam::ArrestCamOne 0x518500, CHeli::
+  GenerateHeli 0x6C6520), roadblock-wanted 1015 / 1001 (lane B: 0x518500, CWorld::FindObjectsIntersectingCube 0x568DD0,
+  0x6C6520), jetpack 228 / 788 (lane C: CAEPedAudioEntity::UpdateJetPack 0x4E0EE0); no lane A blocker, no crash.
+- Writer gate (base 7a65de4a): all 17 steps PASS on b12e114d (hooks 8 new, all unverified, batches frontier2-a12 /
+  frontier2-a13; queue up to date; no new L1-pure hook).
+- verify-all (lanes 1-3, sa-oracle rebuilt from this tree, DLL sha256 cc1401e8… of 2628c6eb): `f2a9-u`
+  (SA_UNVERIFIED=frontier2-a12,frontier2-a13) IDENTICAL 13/13 and `f2a9-def` (default set, same DLL) IDENTICAL 13/13; save-load identical
+  except the SAVE-1 stack residue. The lanes are shared with other sessions (lock waits, ~1 h per run).
+- Not done: CTaskInteriorSitAtDesk::ProcessPed 0x677920 (same shape as 0x6772E0, plus StartRandomLoopAnim /
+  StartRandomOneOffAnim calls), the partial script switches 0x47A760 / 0x48B590, ProcessColModels' disk cases, POP
+  0x422760 and the three POP partials, PED 0x60E530.
