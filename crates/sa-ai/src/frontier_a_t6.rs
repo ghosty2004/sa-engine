@@ -9,7 +9,10 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
 use crate::bindings::{go_to_point_ctor, in_air_ctor, simple_dead_ctor, task_new, task_simple_ctor};
-use crate::common::{g, rd, task_get_type, task_make_abortable, wr};
+use crate::common::{g, rd, task_get_type, task_make_abortable, wr, x};
+use sa_anim::bindings::anim_add_block_ref;
+use sa_math::fpu::le_or_nan;
+use sa_stream::bindings::streaming_request_model;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::{
     anim_blend_animation, follow_node_route_ctor, go_to_point_and_stand_still_ctor, intel_clear_tasks,
@@ -27,6 +30,10 @@ orig! {
     fn follow_patrol_route_next_type_o(t: GPtr<u8>) -> i32 = thiscall 0x670A70 => follow_patrol_route_next_type;
     /// `FUN_00670b00` (0x670B00, `ret 4`): the patrol route task's CreateSubTask
     fn follow_patrol_route_create_sub_task_o(t: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x670B00 => follow_patrol_route_create_sub_task;
+    /// `CTaskComplexSunbathe::ShouldLoadSunbatheAnims()` (0x632190, AL)
+    fn should_load_sunbathe_anims_o() -> u8 = cdecl 0x632190 => should_load_sunbathe_anims;
+    /// `CTaskComplexSunbathe::CanSunbathe()` (0x632140, EAX)
+    fn can_sunbathe_o() -> u32 = cdecl 0x632140 => crate::frontier_a::sunbathe_can_sunbathe;
 }
 
 /// `CTimer::m_snTimeInMilliseconds` (0xB7CB84)
@@ -364,6 +371,84 @@ pub fn fall_to_death_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr
     }
 }
 
+// ------------------------------------------------------------------------------------------- sunbathe
+
+/// `CTaskComplexSunbathe::ShouldLoadSunbatheAnims()` (0x632190, the entry a `nop; nop; jmp` to the island 0x402274
+/// that reads `CWorld::PlayerInFocus` (0xB7CD74) and jumps back; ECX is not read). The player in focus's ped
+/// (`CWorld::Players[i]`, 0xB7CD98 + i * 0x190): in a vehicle (+0x46C bit 0x100, +0x58C) whose move speed squared
+/// (`x*x + y*y + z*z` on the x87 stack) is above 0.04 (0x863244): false; otherwise (NaN included) true.
+#[hook(addr = 0x632190, conv = cdecl, name = "CTaskComplexSunbathe::ShouldLoadSunbatheAnims",
+       expect = "90 90 E9 DD 00 DD FF",
+       unverified = "frontier2-a9", route = "L2", hazards = "none")]
+pub fn should_load_sunbathe_anims() -> u8 {
+    let i = g::<u8>(0xB7CD74).read() as u32;
+    let ped = g::<GPtr<u8>>(0xB7CD98 + (i * 0x190) as usize).read();
+    let veh = rd::<GPtr<u8>>(ped, 0x58C);
+    if rd::<u32>(ped, 0x46C) & 0x100 == 0 || veh.is_null() {
+        return 1;
+    }
+    let (vx, vy, vz) = (x(rd::<f32>(veh, 0x44)), x(rd::<f32>(veh, 0x48)), x(rd::<f32>(veh, 0x4C)));
+    let sq = vx.fmul(vx).fadd(vy.fmul(vy)).fadd(vz.fmul(vz));
+    if le_or_nan(sq, x(g::<f32>(0x863244).read())) {
+        1
+    } else {
+        0
+    }
+}
+
+/// `CTaskComplexSunbathe::ControlSubTask(CPed*)` (0x6381A0, `ret 4`). +0xD bathing, +0xE / +0xF the beach /
+/// sunbathe anim blocks referenced, +0x10 aborted, +0x14 / +0x18 / +0x1C / +0x1D the bathing timer (start, interval,
+/// started, stopped), +0x24 / +0x28 the anim blocks, +0x2C / +0x30 their indices.
+/// * Aborted: null.
+/// * The beach block referenced once loaded (`AddAnimBlockRef`), else requested (model 0x63E7 + index, flags 8); the
+///   sunbathe block likewise, but only while `ShouldLoadSunbatheAnims()`.
+/// * Bathing: ped +0x528 |= 8, +0x474 |= 0x100000.
+/// * When `CanSunbathe()` fails: a started timer is stopped (+0x1D = 1, the interval reduced by the time elapsed) and a
+///   sub-task of type 0x1A2 gets `MakeAbortable(ped, 0, null)`.
+///
+/// Returns the sub-task (+8, read last).
+#[hook(addr = 0x6381A0, conv = thiscall, name = "CTaskComplexSunbathe::ControlSubTask", expect = "56 8B F1 8A 46 10 84 C0",
+       this = "CTaskComplexSunbathe",
+       unverified = "frontier2-a9", route = "L2", hazards = "none")]
+pub fn sunbathe_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    if rd::<u8>(this, 0x10) != 0 {
+        return GPtr::NULL;
+    }
+    if rd::<u8>(this, 0xE) == 0 {
+        if rd::<u8>(rd::<GPtr<u8>>(this, 0x24), 0x10) != 0 {
+            anim_add_block_ref(rd::<i32>(this, 0x2C));
+            wr::<u8>(this, 0xE, 1);
+        } else {
+            streaming_request_model(rd::<i32>(this, 0x2C).wrapping_add(0x63E7), 8);
+        }
+    }
+    if rd::<u8>(this, 0xF) == 0 && should_load_sunbathe_anims_o() != 0 {
+        if rd::<u8>(rd::<GPtr<u8>>(this, 0x28), 0x10) != 0 {
+            anim_add_block_ref(rd::<i32>(this, 0x30));
+            wr::<u8>(this, 0xF, 1);
+        } else {
+            streaming_request_model(rd::<i32>(this, 0x30).wrapping_add(0x63E7), 8);
+        }
+    }
+    if rd::<u8>(this, 0xD) != 0 {
+        wr::<u32>(ped, 0x528, rd::<u32>(ped, 0x528) | 8);
+        wr::<u32>(ped, 0x474, rd::<u32>(ped, 0x474) | 0x10_0000);
+    }
+    if can_sunbathe_o() as u8 == 0 {
+        if rd::<u8>(this, 0x1C) != 0 {
+            let start = rd::<u32>(this, 0x14);
+            let interval = rd::<u32>(this, 0x18);
+            wr::<u8>(this, 0x1D, 1);
+            let elapsed = g::<u32>(TIME_MS).read().wrapping_sub(start);
+            wr::<u32>(this, 0x18, interval.wrapping_sub(elapsed));
+        }
+        if task_get_type(rd::<GPtr<u8>>(this, 8)) == 0x1A2 {
+            task_make_abortable(rd::<GPtr<u8>>(this, 8), ped, 0, GPtr::NULL);
+        }
+    }
+    rd::<GPtr<u8>>(this, 8)
+}
+
 /// Every hook of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_USE_MOBILE_PHONE_RESTORE_WEAPON,
@@ -373,4 +458,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_FOLLOW_PATROL_ROUTE_CREATE_SUB_TASK,
     HOOK_FOLLOW_PATROL_ROUTE_CREATE_NEXT_SUB_TASK,
     HOOK_FALL_TO_DEATH_CREATE_NEXT_SUB_TASK,
+    HOOK_SHOULD_LOAD_SUNBATHE_ANIMS,
+    HOOK_SUNBATHE_CONTROL_SUB_TASK,
 ];
