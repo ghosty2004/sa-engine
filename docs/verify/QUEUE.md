@@ -2365,7 +2365,7 @@ SA_UNVERIFIED=frontier2-a8 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a8 $S
 | 0x691320 | `CTaskSimpleAffectSecondaryBehaviour::ProcessPed` | written | L2 | ax-al-return,heap-writes |
 | 0x6960B0 | `CTaskComplexSeekEntityAnyMeansXYOffset::CreateFirstSubTask` | written | L2 | heap-writes,uninit-locals |
 | 0x696160 | `CTaskComplexSeekEntityAnyMeansXYOffset::ControlSubTask` | written | L2 | heap-writes,uninit-locals |
-| 0x6962A0 | `CTaskComplexFollowLeaderInFormation::CreateSubTask` | written | L2 | heap-writes |
+| 0x6962A0 | `thunk_FUN_00401913` | written | L2 | heap-writes |
 
 ## frontier2-b1
 
