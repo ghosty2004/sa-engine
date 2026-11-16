@@ -15,7 +15,6 @@ use crate::bindings::fight_strike_damage_c;
 use sa_world::bindings::apply_force as physical_apply_force;
 use sa_world::bindings::ped_audio_add_audio_event as ped_audio_event;
 use crate::bindings::fx_add_punch_impact;
-use crate::event_vehicle_damage_ctor::event_vehicle_damage_ctor;
 use sa_core::bindings::{get_anim_hierarchy_from_skin_clump, rp_hanim_hierarchy_get_matrix_array,
                         rp_hanim_id_get_index};
 use sa_world::bindings::{event_vehicle_damage_dtor, fx_add_sparks, report_crime};
@@ -25,6 +24,8 @@ orig! {
     /// `CVehicle::VehicleDamage(float, uint16 component, CEntity* damager, CVector* pos, CVector* dir, eWeaponType)`
     /// (vtable slot 0xE0)
     fn v_vehicle_damage(v: GPtr<u8>, dmg: u32, comp: u32, e: GPtr<u8>, p: GPtr<u8>, d: GPtr<u8>, weapon: u32) = thiscall vslot 0xE0 => unported;
+    /// `CEventVehicleDamage::CEventVehicleDamage(CVehicle*, CEntity* attacker, eWeaponType)` (0x4B18D0)
+    fn event_vehicle_damage_ctor(e: GPtr<u8>, veh: GPtr<u8>, attacker: GPtr<u8>, weapon: u32) -> GPtr<u8> = thiscall 0x4B18D0 => crate::event_vehicle_damage_ctor::event_vehicle_damage_ctor;
 }
 
 /// `g_fx` (Fx_c, 0xA9AE00).
