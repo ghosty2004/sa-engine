@@ -2,7 +2,7 @@
 # FRONTIER-1 scenarios: native sa-game runs (deterministic, --fixed-step 40, offscreen) that reach the blockers the
 # user hit. Each must end with an empty blocker list in OUT/report.md and no crash.
 #
-#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar OUTDIR [FRAMES]
+#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat OUTDIR [FRAMES]
 #
 # pausemenu (400)  Esc, down x3, Enter (pause-menu item 4: Stats), down, Enter, Enter: the Stats pages draw
 #                  (was a SIGSEGV at iteration ~171: CStats::GetStatValue's X87 result dispatched as cdecl)
@@ -50,6 +50,10 @@
 #                  poked above 2.1: CGangWars::Update starts an offensive war (StartOffensiveGangWar 0x446050, the
 #                  attack waves 0x444810)
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-a5-counts.gdb --args" counts the road block / gang war calls.
+# boat (1200)     the script's boat car generators at the Bayside marina (-2227, 2446): CJ taken to Grove Street, then onto
+#                  the dock next to the Squalo / Marquis / Jetmax, `f` to get in, w held: CBoat::ProcessControl 0x6F1770
+#                  and CVehicle::ProcessBoatControl 0x6DBCE0 for every boat there (FRONTIER-2 turn 6 lane B; the Santa
+#                  Maria pier has no boat and its teleport hung in the vorbis stream seek until ece2d244)
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-counts.gdb --args" counts the FRONTIER-2 ports' calls
 # (frontier2-3-counts.gdb: those of part 2).
 # Env: SA_ROOT (checkout holding wine/gta-sa; default ~/sa-engine), SA_GAME (binary; default this checkout's
@@ -161,7 +165,11 @@ plane)
     keys=; i=150; for c in u r k q s r k; do keys="$keys${keys:+,}$c:$i:$((i + 2))"; i=$((i + 6)); done
     export SA_GAME_KEYS="$keys,f:260:263,w:400:1150,a:800:840"
     run "${3:-1200}" --start-in-world ;;
+boat)
+    export SA_GAME_TELEPORT="60:2505.0:-1666.4:13.4;150:-2229.0:2443.0:8.0:-1.5708"
+    export SA_GAME_KEYS="f:200:203,w:300:1100,a:700:760"
+    run "${3:-1200}" --start-in-world ;;
 *)
-    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar OUTDIR [FRAMES]" >&2
+    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat OUTDIR [FRAMES]" >&2
     exit 2 ;;
 esac
