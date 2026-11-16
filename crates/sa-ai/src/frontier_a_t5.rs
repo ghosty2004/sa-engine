@@ -38,7 +38,7 @@ use crate::bindings::go_to_point_aiming_ctor;
 use crate::bindings::task_trigger_look_at_ctor;
 use crate::bindings::throw_projectile_ctor;
 use crate::bindings::track_entity_ctor;
-use crate::bindings::{death_dtor, drive_to_point_ctor};
+use crate::bindings::{climb_ctor, death_dtor, drive_to_point_ctor};
 use sa_world::bindings::{find_player_ped, ped_set_ped_state, stats_increment_stat};
 use crate::bindings::event_death_ctor;
 orig! {
@@ -906,6 +906,84 @@ pub fn drown_in_car_process_ped(_this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     1
 }
 
+/// `CTaskComplexUseScriptedAttractor::CreateFirstSubTask(CPed*)` (0x6390C0, `ret 4`): the scripted effect (attractor
+/// +0xC, its effect +4) among the 64 at 0xC3AB00 (stride 0x40); none: null. Its id (0xC3A020 + 4 * index) goes into a
+/// new 0x1C-byte complex task (vtable 0x86E518; +0xC id, +0x10 0, +0x14 -1, +0x18 0) and the effect pair's user count
+/// (0xC178F0 + 0x40 * id + 0x3C) is incremented when `new` succeeds.
+#[hook(addr = 0x6390C0, conv = thiscall, name = "CTaskComplexUseScriptedAttractor::CreateFirstSubTask", expect = "6A FF 68 8B 12 84 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes")]
+pub fn use_scripted_attractor_create_first_sub_task(this: GPtr<u8>, _ped: GPtr<u8>) -> GPtr<u8> {
+    let effect = rd::<u32>(rd::<GPtr<u8>>(this, 0xC), 4);
+    let Some(i) = (0..0x40u32).find(|&i| 0xC3AB00 + i * 0x40 == effect) else {
+        return GPtr::NULL;
+    };
+    let id = g::<u32>(0xC3A020 + i as usize * 4).read();
+    let t = task_new(0x1C);
+    if t.is_null() {
+        return GPtr::NULL;
+    }
+    task_complex_ctor(t.addr() as u32);
+    wr::<u32>(t, 0xC, id);
+    wr::<u32>(t, 0, 0x86E518);
+    wr::<u32>(t, 0x10, 0);
+    wr::<u32>(t, 0x14, u32::MAX);
+    wr::<u32>(t, 0x18, 0);
+    let users = (id << 6).wrapping_add(0xC178F0 + 0x3C) as usize;
+    g::<u32>(users).write(g::<u32>(users).read().wrapping_add(1));
+    t
+}
+
+/// `CPedGroupDefaultTaskAllocatorStandStill::AllocateDefaultTasks(CPedGroup* group, CPed* ped)` (0x5F6DA0, `ret 8`):
+/// each of the seven members (+0x21C, stride 0x14) and then the leader (+0x2A8) that exists (and is `ped`, when one is
+/// given) gets a new 0xC-byte complex task with vtable 0x86C7BC in its default-task slot (+4; null when `new` fails;
+/// the old one is not deleted).
+#[hook(addr = 0x5F6DA0, conv = thiscall, name = "CPedGroupDefaultTaskAllocatorStandStill::AllocateDefaultTasks", expect = "6A FF 68 66 DF 83 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes")]
+pub fn default_task_allocator_stand_still_allocate_default_tasks(_this: GPtr<u8>, group: GPtr<u8>, ped: GPtr<u8>) {
+    let alloc = || {
+        new_task(0xC, |m| {
+            task_complex_ctor(m.addr() as u32);
+            wr::<u32>(m, 0, 0x86C7BC);
+            m
+        })
+    };
+    for k in 0..7 {
+        let slot = group.byte_add(0x21C + k * 0x14);
+        let p = rd::<GPtr<u8>>(slot, 0);
+        if !p.is_null() && (ped.is_null() || p == ped) {
+            wr::<GPtr<u8>>(slot, 4, alloc());
+        }
+    }
+    let l = rd::<GPtr<u8>>(group, 0x2A8);
+    if !l.is_null() && (ped.is_null() || l == ped) {
+        wr::<GPtr<u8>>(group, 0x2AC, alloc());
+    }
+}
+
+/// `CTaskComplexInWater::CreateNextSubTask(CPed* ped)` (0x635110, `ret 4`): only after a 0x518 sub-task (the climb
+/// test) that found something to climb (+0x38): ped +0x46C bit 9 set and a `CTaskSimpleClimb(entity +0x38, &pos +0x3C,
+/// heading +0x48, surface +0x4C, height, false)`, the height 2 when `pos.z - ped.z < 1.4` (0x8D2F34) else 1, written
+/// into the low byte of the argument slot (the ped pointer's upper bytes stay, as the bytes pass the whole dword).
+/// Otherwise null.
+#[hook(addr = 0x635110, conv = thiscall, name = "CTaskComplexInWater::CreateNextSubTask", expect = "6A FF 68 6B 09 84 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes")]
+pub fn in_water_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    if task_get_type(rd::<GPtr<u8>>(this, 8)) != 0x518 {
+        return GPtr::NULL;
+    }
+    let sub = rd::<GPtr<u8>>(this, 8);
+    if rd::<u32>(sub, 0x38) == 0 {
+        return GPtr::NULL;
+    }
+    wr::<u32>(ped, 0x46C, rd::<u32>(ped, 0x46C) | 0x200);
+    let pz = entity_pos(ped).cast::<f32>().wrapping_index(2).read();
+    let low = !x(rd::<f32>(sub, 0x44)).fsub_m(pz).fcom(x(g::<f32>(0x8D2F34).read())).test_parity(5);
+    let height = (ped.addr() as u32 & 0xFFFF_FF00) | if low { 2 } else { 1 };
+    new_task(0x30, |m| {
+        climb_ctor(m, rd::<GPtr<u8>>(sub, 0x38), sub.byte_add(0x3C), rd::<u32>(sub, 0x48), u32::from(rd::<u8>(sub, 0x4C)), height, 0)
+    })
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_FOLLOW_LEADER_IN_FORMATION_CREATE_SUB_TASK,
@@ -934,4 +1012,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_SEEK_ENTITY_ANY_MEANS_XY_OFFSET_CREATE_FIRST_SUB_TASK,
     HOOK_AFFECT_SECONDARY_BEHAVIOUR_PROCESS_PED,
     HOOK_DROWN_IN_CAR_PROCESS_PED,
+    HOOK_USE_SCRIPTED_ATTRACTOR_CREATE_FIRST_SUB_TASK,
+    HOOK_DEFAULT_TASK_ALLOCATOR_STAND_STILL_ALLOCATE_DEFAULT_TASKS,
+    HOOK_IN_WATER_CREATE_NEXT_SUB_TASK,
 ];
