@@ -82,7 +82,7 @@ orig! {
     /// `CAutomobile::TankControl()` (0x6AE850)
     fn tank_control(v: GPtr<u8>) = thiscall 0x6AE850 => unported;
     /// `CVehicle::ProcessBoatControl(tBoatHandlingData*, float*, bool, bool)` (0x6DBCE0)
-    fn process_boat_control(v: GPtr<u8>, h: GPtr<u8>, res: GPtr<u8>, hit_wall: u32, post_collision: u32) = thiscall 0x6DBCE0 => unported;
+    pub(crate) fn process_boat_control(v: GPtr<u8>, h: GPtr<u8>, res: GPtr<u8>, hit_wall: u32, post_collision: u32) = thiscall 0x6DBCE0 => unported;
     /// `CAutomobile::ProcessBuoyancy()` (0x6A8C00)
     fn process_buoyancy(v: GPtr<u8>) = thiscall 0x6A8C00 => crate::mvpd_v5::automobile_process_buoyancy;
     /// `CAutomobile::ProcessCarOnFireAndExplode(bool)` (0x6A7090)

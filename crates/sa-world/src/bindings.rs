@@ -2414,6 +2414,11 @@ orig! {
 }
 
 orig! {
+    /// `CWorld::FindPlayerCentreOfWorld_NoSniperShift` (0x56E320)
+    pub fn find_player_centre_of_world_no_sniper_shift(id: i32) -> GPtr<u8> = cdecl 0x56E320 => crate::world::cworld::find_player_centre_of_world_no_sniper_shift;
+}
+
+orig! {
     /// `CWorld::FindPlayerCentreOfWorldForMap` (0x56E400)
     pub fn find_player_centre_of_world_for_map(out: GPtr<f32>, id: i32) -> GPtr<f32> = cdecl 0x56E400 => crate::world::cworld::find_player_centre_of_world_for_map;
 }

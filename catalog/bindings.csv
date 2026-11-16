@@ -2311,6 +2311,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x56E120,sa-world,find_player_entity,cdecl,,id:i32,GPtr<u8>,sa_world::world::cworld::find_player_entity,CWorld::FindPlayerEntity,
 0x56E160,sa-world,find_player_train,cdecl,,id:i32,GPtr<u8>,unported,CWorld::FindPlayerTrain,
 0x56E250,sa-world,find_player_centre_of_world,cdecl,,id:i32,GPtr<u8>,sa_world::world::cworld::find_player_centre_of_world,CWorld::FindPlayerCentreOfWorld,
+0x56E320,sa-world,find_player_centre_of_world_no_sniper_shift,cdecl,,id:i32,GPtr<u8>,sa_world::world::cworld::find_player_centre_of_world_no_sniper_shift,CWorld::FindPlayerCentreOfWorld_NoSniperShift,
 0x56E400,sa-world,find_player_centre_of_world_for_map,cdecl,,out:GPtr<f32>;id:i32,GPtr<f32>,sa_world::world::cworld::find_player_centre_of_world_for_map,CWorld::FindPlayerCentreOfWorldForMap,
 0x56E450,sa-world,find_player_heading_st0,cdecl,,id:i32,f64,unported,CWorld::FindPlayerHeading,
 0x56EAB0,sa-world,player_info_add_health,thiscall,,pi:GPtr<u8>;amount:i32,,unported,CPlayerInfo::AddHealth,

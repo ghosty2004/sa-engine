@@ -183,9 +183,8 @@ use sa_core::bindings::sprite2d_draw as sprite2d_draw_rect;
 use sa_render::bindings::sprite_draw_rect as sprite2d_draw_rect_static;
 use sa_world::bindings::zone_locked_or_unlocked;
 use crate::bindings::limit_radar_point_call_st0;
+use sa_world::bindings::find_player_centre_of_world_no_sniper_shift;
 orig! {
-    /// `FindPlayerCentreOfWorld_NoSniperShift(int32)` (0x56E320; returns a `CVector*`)
-    fn find_player_centre_of_world_no_sniper_shift(id: i32) -> GPtr<u8> = cdecl 0x56E320 => sa_world::world::cworld::find_player_centre_of_world_no_sniper_shift;
     /// `CRadar::DrawRadarSectionMap(int32 x, int32 y, CRect rect)` (0x586520; the rect by value)
     fn draw_radar_section_map_call(tx: i32, ty: i32, left: f32, bottom: f32, right: f32, top: f32) = cdecl 0x586520 => crate::radar_draw2::draw_radar_section_map;
     /// `CPlaceName::GetForMap(float x, float y)` (0x571D90, `ret 8`; the original loads ECX = 0xBA18F4, which the
