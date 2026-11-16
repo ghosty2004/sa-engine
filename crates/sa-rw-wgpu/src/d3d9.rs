@@ -7,15 +7,20 @@
 //!   [`D3d9Device::present`] with [`WgpuDevice::blit_to`] (a full-screen copy into e.g. the
 //!   surface texture's view, scaled if the sizes differ, gamma-preserving on sRGB targets):
 //!   `dev.present()?; let frame = surface.get_current_texture(); dev.blit_to(&view, format); frame.present();`.
-//! * **Immediate mode.** D3D9 executes calls in order; wgpu writes buffers/textures at the next
-//!   submit. Draws (and clears, drawn as full-viewport triangles) are recorded into a pending list
-//!   with everything they need (pipeline, bind groups, a per-draw uniform block at a dynamic
-//!   offset, vertex/index buffer references, viewport, scissor, stencil reference). The list is
-//!   encoded as one render pass and submitted ("flushed") before anything that could change what
-//!   a pending draw sees: updating a vertex/index buffer range a pending draw reads, updating a
-//!   texture a pending draw samples, `set_render_target`, `reset`, `present`,
-//!   `read_render_target`, `blit_to`. `DrawPrimitiveUP` data and generated indices go into a
-//!   per-flush arena buffer.
+//! * **Immediate mode.** D3D9 executes calls in order. Draws (and clears, drawn as full-viewport
+//!   triangles) are recorded into a pending list with everything they need (pipeline, bind groups,
+//!   a per-draw uniform block at a dynamic offset, vertex/index buffer references, viewport,
+//!   scissor, stencil reference). The list is encoded as one render pass into the frame's command
+//!   encoder ("end of pass") before anything that could change what a pending draw sees: updating
+//!   a vertex/index buffer range a pending draw reads, a different render target, a `StretchRect`.
+//!   Buffer updates are staged ([`wgpu::util::StagingBelt`]) and copied into their buffers at their
+//!   place in that command stream, so passes recorded earlier read the old bytes. The encoder is
+//!   submitted once per frame (`present`), and earlier only where the queue's own ordering would
+//!   differ from D3D9's: a texture write (applied before the whole submission) to a texture the
+//!   submission uses, read-backs, `reset`, `blit_to`. Per-draw uniforms, shader constants,
+//!   `DrawPrimitiveUP` data and generated indices are appended to per-submission belts written with
+//!   one `write_buffer` each at the submit. Each pass sets a piece of state only when it differs
+//!   from the previous draw's.
 //! * **Fixed function** is one WGSL uber-shader (`d3d9_common.wgsl` + `d3d9_ff_vs.wgsl` +
 //!   `d3d9_ff_ps.wgsl`) driven by the per-draw uniform block; only the vertex input struct is
 //!   generated per vertex layout. Pipelines are cached by program, vertex layout, topology, blend,
@@ -75,7 +80,10 @@
 //! targets, `P8`/`V8U8` formats, fixed-function texture stages 2–7.
 //! On wasm32, [`D3d9Device::read_render_target`] returns `NotAvailable` (it needs a blocking map).
 
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::BTreeSet;
+
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
+use smallvec::SmallVec;
 use std::sync::{Arc, Mutex};
 
 use bytemuck::{Pod, Zeroable};
@@ -591,7 +599,7 @@ struct Stream {
     stride: u32,
 }
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 enum Input {
     Fvf(u32),
     Decl(VertexDeclId),
@@ -605,7 +613,22 @@ struct StreamKey {
     attrs: Vec<(u32, u8, u32)>,
 }
 
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+/// A vertex input (FVF or declaration) resolved for one vertex shader (or fixed function): which elements feed
+/// which locations, per stream. Independent of the streams' strides; cached per (input, vertex shader).
+struct InputLayout {
+    /// per stream used, in first-use order: (stream, end of its last attribute, attributes (offset, D3DDECLTYPE,
+    /// shader location))
+    streams: SmallVec<[(u32, u32, SmallVec<[(u32, u8, u32); 8]>); 2]>,
+    /// `F_PRETRANSFORMED` / `F_HAS_NORMAL` / `F_HAS_C0` / `F_HAS_C1` (fixed function)
+    flags: u32,
+    /// the error a draw with this input returns before looking at strides
+    error: Option<D3dError>,
+}
+
+/// Interned pipeline vertex layouts: (input layout, the streams' strides) -> id.
+type LayoutKey = (u32, [u32; MAX_STREAMS]);
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 struct StencilKey {
     /// fail, zfail, pass, func (D3D values)
     front: [u8; 4],
@@ -626,10 +649,11 @@ struct ProgKey {
 /// Number of texture stages the shader path binds.
 const SHADER_STAGES: usize = 8;
 
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 struct PipeKey {
     prog: ProgKey,
-    layout: Vec<StreamKey>,
+    /// index into `WgpuDevice::layouts`
+    layout: u32,
     /// 0 points, 1 lines, 2 triangles
     topology: u8,
     /// src, dst, op, src alpha, dst alpha, op alpha
@@ -648,12 +672,13 @@ type SampKey = [u32; 8];
 type BindKey = (TextureId, SampKey, TextureId, SampKey);
 type ShBindKey = ([TextureId; SHADER_STAGES], [SampKey; SHADER_STAGES], u8);
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 enum BufSrc {
     Buf(wgpu::Buffer),
     Arena,
 }
 
+#[derive(Clone, Copy)]
 enum DrawKind {
     Plain { first: u32, count: u32 },
     Indexed { first: u32, count: u32, base: i32 },
@@ -664,27 +689,106 @@ struct DrawCmd {
     textures: wgpu::BindGroup,
     uniform_offset: u32,
     const_offset: u32,
-    vertex_buffers: Vec<(BufSrc, u64)>,
+    vertex_buffers: SmallVec<[(BufSrc, u64); 2]>,
     index: Option<(BufSrc, u64, wgpu::IndexFormat)>,
     kind: DrawKind,
     viewport: [f32; 6],
     scissor: [u32; 4],
     stencil_ref: u32,
-    blend_constant: wgpu::Color,
+    blend_constant: [f32; 4],
 }
 
+/// The draws of the render pass being recorded (encoded into the frame's command encoder by `end_pass`).
 #[derive(Default)]
 struct Pending {
     draws: Vec<DrawCmd>,
-    arena: Vec<u8>,
-    uniforms: Vec<u8>,
+    /// the last uniform block pushed in this pass and its offset (consecutive equal blocks share one)
     last_uniform: Option<(Uniforms, u32)>,
-    /// Shader constant blocks (`ConstBlock`), one per change.
-    consts: Vec<u8>,
+    /// the offset of the current shader constants in this pass (pushed once per change)
     last_consts: Option<u32>,
+    /// the fixed-function uniform block of this pass's last draw while no state it depends on changed:
+    /// (the draw's input flags, offset)
+    ff_uniform: Option<(u32, u32)>,
     vb_ranges: HashMap<VertexBufferId, (u64, u64)>,
     ib_ranges: HashMap<IndexBufferId, (u64, u64)>,
     textures: HashSet<TextureId>,
+}
+
+/// Bytes the GPU reads in the current submission (per-draw uniforms, shader constants, `DrawPrimitiveUP` vertices
+/// and generated indices, staged buffer updates): appended on the CPU and written with one `write_buffer` per GPU
+/// buffer when the submission is submitted (a staging belt; one `write_buffer` per draw or update would cost a
+/// staging allocation each). Offsets are absolute in the submission's bytes; a buffer that becomes too small is
+/// retired with the bytes recorded commands read from it and replaced by a larger one for the rest.
+struct Belt {
+    label: &'static str,
+    usage: wgpu::BufferUsages,
+    min_size: u64,
+    buf: Option<wgpu::Buffer>,
+    /// where `buf`'s part of `data` starts (earlier bytes belong to retired buffers)
+    start: usize,
+    retired: Vec<(wgpu::Buffer, usize, usize)>,
+    data: Vec<u8>,
+}
+
+impl Belt {
+    fn new(label: &'static str, usage: wgpu::BufferUsages, min_size: u64) -> Belt {
+        Belt { label, usage: usage | wgpu::BufferUsages::COPY_DST, min_size, buf: None, start: 0, retired: Vec::new(), data: Vec::new() }
+    }
+
+    fn len(&self) -> usize {
+        self.data.len()
+    }
+
+    /// Appends `bytes` at the next multiple of `align` (padded to 4 bytes); returns the offset.
+    fn push(&mut self, bytes: &[u8], align: usize) -> u32 {
+        let off = self.data.len().next_multiple_of(align);
+        self.data.resize(off, 0);
+        self.data.extend_from_slice(bytes);
+        self.data.resize(self.data.len().next_multiple_of(4), 0);
+        off as u32
+    }
+
+    /// Makes the current buffer large enough for all bytes so far. Commands recorded before `from` read a
+    /// replaced buffer, which keeps `data[start..from]`. True when the buffer was (re)created.
+    fn reserve(&mut self, device: &wgpu::Device, from: usize) -> bool {
+        let need = self.data.len() as u64;
+        if self.buf.as_ref().is_some_and(|b| b.size() >= need) {
+            return false;
+        }
+        if let Some(old) = self.buf.take()
+            && from > self.start
+        {
+            self.retired.push((old, self.start, from));
+        }
+        self.buf = Some(device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some(self.label),
+            size: need.next_power_of_two().max(self.min_size),
+            usage: self.usage,
+            mapped_at_creation: false,
+        }));
+        self.start = from;
+        true
+    }
+
+    fn buffer(&self) -> &wgpu::Buffer {
+        self.buf.as_ref().expect("Belt::reserve before use")
+    }
+
+    /// Writes the submission's bytes into their buffers (applied by the next queue submission) and starts over.
+    fn upload(&mut self, queue: &wgpu::Queue) -> u64 {
+        let n = self.data.len() as u64;
+        for (b, s, e) in self.retired.drain(..) {
+            queue.write_buffer(&b, s as u64, &self.data[s..e]);
+        }
+        if let Some(b) = &self.buf
+            && self.data.len() > self.start
+        {
+            queue.write_buffer(b, self.start as u64, &self.data[self.start..]);
+        }
+        self.data.clear();
+        self.start = 0;
+        n
+    }
 }
 
 struct Target {
@@ -715,8 +819,10 @@ enum DrawSrc<'a> {
 #[derive(Debug, Clone, Copy, Default)]
 pub struct D3d9Stats {
     pub draws: u64,
-    /// render passes (one per flush) and their queue submissions
+    /// render passes
     pub flushes: u64,
+    /// queue submissions of the recorded passes and copies (one per frame unless ordering needs more)
+    pub submits: u64,
     /// pipelines created (cache misses)
     pub pipelines: u64,
     /// draws whose pipeline differs from the previous draw's in the same pass
@@ -787,10 +893,37 @@ pub struct WgpuDevice {
     samplers: HashMap<SampKey, wgpu::Sampler>,
     bind_groups: HashMap<BindKey, wgpu::BindGroup>,
     white: wgpu::TextureView,
-    uniform_stride: u32,
-    uniform_buf: Option<(wgpu::Buffer, wgpu::Buffer, wgpu::BindGroup)>,
-    arena_buf: Option<wgpu::Buffer>,
+    /// dynamic uniform offset alignment
+    uniform_align: u32,
+    /// the end of the last uniform block's binding (the belt is padded to it before its buffer is sized)
+    uniform_end: usize,
     pending: Pending,
+
+    /// the commands recorded since the last submission (render passes, staged buffer copies, render-target copies)
+    enc: Option<wgpu::CommandEncoder>,
+    /// per-draw uniform blocks, shader constant blocks, UP vertices / generated indices of the submission
+    uniform_belt: Belt,
+    const_belt: Belt,
+    arena: Belt,
+    /// vertex / index buffer updates: written into mapped staging chunks (reused once the GPU is done with them)
+    /// and copied into their buffers at their place in the command stream
+    staging: wgpu::util::StagingBelt,
+    /// the uniform bind group on the current uniform and constant buffers
+    uniform_group: Option<wgpu::BindGroup>,
+    /// the belt lengths where the pending pass's bytes start (uniforms, constants, arena)
+    pass_base: (usize, usize, usize),
+    /// textures the recorded but unsubmitted commands sample, render to or copy (a `write_texture` to one of
+    /// them, which the queue applies before the whole submission, submits first)
+    frame_textures: HashSet<TextureId>,
+    /// resolved vertex inputs per (input, vertex shader) and their ids
+    input_layouts: HashMap<(Input, ShaderId), u32>,
+    input_list: Vec<InputLayout>,
+    /// interned pipeline vertex layouts
+    layout_ids: HashMap<LayoutKey, u32>,
+    layouts: Vec<Vec<StreamKey>>,
+    /// the last draw's pipeline and fixed-function texture group (most draws repeat them)
+    last_pipeline: Option<(PipeKey, wgpu::RenderPipeline)>,
+    last_texture_group: Option<(BindKey, wgpu::BindGroup)>,
 
     blit_module: wgpu::ShaderModule,
     blit_layout: wgpu::BindGroupLayout,
@@ -801,7 +934,7 @@ pub struct WgpuDevice {
     back_opaque: bool,
     /// Writes alpha 1 into a rectangle of a colour target (the blit shader on the white texture, alpha
     /// writes only): `StretchRect` into a target without alpha.
-    alpha_one_pipeline: Option<wgpu::RenderPipeline>,
+    alpha_one_pipeline: Option<(wgpu::RenderPipeline, wgpu::BindGroup)>,
 
     errors: Arc<Mutex<Vec<String>>>,
     pub stats: D3d9Stats,
@@ -878,6 +1011,8 @@ impl WgpuDevice {
 
     /// Ends a timed frame: the passes since the last call are read back under `tag`.
     pub fn gpu_frame_end(&mut self, tag: u64) {
+        // the frame's passes are submitted before their queries are resolved
+        self.flush();
         if let Some(t) = self.gpu_timer.as_mut() {
             t.end_frame(&self.device, &self.queue, tag);
         }
@@ -999,7 +1134,7 @@ impl WgpuDevice {
             wgpu::Extent3d { width: 1, height: 1, depth_or_array_layers: 1 },
         );
         let align = device.limits().min_uniform_buffer_offset_alignment.max(16);
-        let uniform_stride = (size_of::<Uniforms>() as u32).div_ceil(align) * align;
+
         let const_stride = (size_of::<ConstBlock>() as u32).div_ceil(align) * align;
         let white_cube_tex = device.create_texture(&wgpu::TextureDescriptor {
             label: Some("d3d9 white cube"),
@@ -1022,9 +1157,10 @@ impl WgpuDevice {
         let back = color_texture(&device, width, height, "d3d9 back buffer");
         let back_view = back.create_view(&Default::default());
         let back_depth = depth_texture(&device, width, height).create_view(&Default::default());
-        let mut depth_by_size = HashMap::new();
+        let mut depth_by_size = HashMap::default();
         depth_by_size.insert((width, height), back_depth.clone());
         let target = Target { color_view: back_view.clone(), depth_view: back_depth, size: (width, height), color_id: None, opaque: false };
+        let staging = wgpu::util::StagingBelt::new(device.clone(), 1 << 20);
         WgpuDevice {
             white: white_tex.create_view(&Default::default()),
             device,
@@ -1039,10 +1175,10 @@ impl WgpuDevice {
             target,
             depth_by_size,
             next_id: 1,
-            textures: HashMap::new(),
-            vbs: HashMap::new(),
-            ibs: HashMap::new(),
-            decls: HashMap::new(),
+            textures: HashMap::default(),
+            vbs: HashMap::default(),
+            ibs: HashMap::default(),
+            decls: HashMap::default(),
             rs: default_render_states(),
             tss: default_stage_states(),
             samp: default_sampler_states(),
@@ -1051,41 +1187,54 @@ impl WgpuDevice {
             view: IDENTITY,
             proj: IDENTITY,
             material: Material::default(),
-            lights: HashMap::new(),
+            lights: HashMap::default(),
             enabled_lights: BTreeSet::new(),
             viewport: Viewport { x: 0, y: 0, width, height, min_z: 0.0, max_z: 1.0 },
             scissor: (0, 0, width, height),
             input: None,
             streams: [Stream::default(); MAX_STREAMS],
             indices: None,
-            fvf_cache: HashMap::new(),
-            modules: HashMap::new(),
-            program_modules: HashMap::new(),
-            shaders: HashMap::new(),
+            fvf_cache: HashMap::default(),
+            modules: HashMap::default(),
+            program_modules: HashMap::default(),
+            shaders: HashMap::default(),
             vs: None,
             ps: None,
             consts: ConstBlock::default(),
             const_stride,
-            sh_layouts: HashMap::new(),
-            sh_bind_groups: HashMap::new(),
+            sh_layouts: HashMap::default(),
+            sh_bind_groups: HashMap::default(),
             white_cube,
-            pipelines: HashMap::new(),
-            clear_pipelines: HashMap::new(),
+            pipelines: HashMap::default(),
+            clear_pipelines: HashMap::default(),
             clear_module,
             uniform_layout,
             texture_layout,
             pipeline_layout,
-            samplers: HashMap::new(),
-            bind_groups: HashMap::new(),
-            uniform_stride,
-            uniform_buf: None,
-            arena_buf: None,
+            samplers: HashMap::default(),
+            bind_groups: HashMap::default(),
+            uniform_align: align,
+            uniform_end: 0,
             pending: Pending::default(),
+            enc: None,
+            uniform_belt: Belt::new("d3d9 uniforms", wgpu::BufferUsages::UNIFORM, 1 << 20),
+            const_belt: Belt::new("d3d9 shader constants", wgpu::BufferUsages::UNIFORM, 256 << 10),
+            arena: Belt::new("d3d9 arena", wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::INDEX, 1 << 20),
+            staging,
+            uniform_group: None,
+            pass_base: (0, 0, 0),
+            frame_textures: HashSet::default(),
+            input_layouts: HashMap::default(),
+            input_list: Vec::new(),
+            layout_ids: HashMap::default(),
+            layouts: Vec::new(),
+            last_pipeline: None,
+            last_texture_group: None,
             blit_module,
             blit_layout,
             blit_pipeline_layout,
             blit_sampler,
-            blit_pipelines: HashMap::new(),
+            blit_pipelines: HashMap::default(),
             errors,
             stats: D3d9Stats::default(),
             gpu_timer: None,
@@ -1174,12 +1323,13 @@ impl WgpuDevice {
         self.queue.submit([enc.finish()]);
     }
 
-    /// Sets the alpha of `rect` (x, y, w, h) of a colour target to 1, keeping its colour.
+    /// Sets the alpha of `rect` (x, y, w, h) of a colour target to 1, keeping its colour (recorded in command order).
     fn set_alpha_one(&mut self, view: &wgpu::TextureView, rect: (u32, u32, u32, u32)) {
-        let pipeline = self
+        self.end_pass();
+        let (pipeline, group) = self
             .alpha_one_pipeline
             .get_or_insert_with(|| {
-                self.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                let p = self.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
                     label: Some("d3d9 alpha one"),
                     layout: Some(&self.blit_pipeline_layout),
                     vertex: wgpu::VertexState {
@@ -1199,70 +1349,74 @@ impl WgpuDevice {
                     }),
                     multiview_mask: None,
                     cache: None,
-                })
+                });
+                let g = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+                    label: Some("d3d9 alpha one"),
+                    layout: &self.blit_layout,
+                    entries: &[
+                        wgpu::BindGroupEntry { binding: 0, resource: wgpu::BindingResource::TextureView(&self.white) },
+                        wgpu::BindGroupEntry { binding: 1, resource: wgpu::BindingResource::Sampler(&self.blit_sampler) },
+                    ],
+                });
+                (p, g)
             })
             .clone();
-        let group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let enc = Self::encoder(&self.device, &mut self.enc);
+        let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("d3d9 alpha one"),
-            layout: &self.blit_layout,
-            entries: &[
-                wgpu::BindGroupEntry { binding: 0, resource: wgpu::BindingResource::TextureView(&self.white) },
-                wgpu::BindGroupEntry { binding: 1, resource: wgpu::BindingResource::Sampler(&self.blit_sampler) },
-            ],
+            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                view,
+                depth_slice: None,
+                resolve_target: None,
+                ops: wgpu::Operations { load: wgpu::LoadOp::Load, store: wgpu::StoreOp::Store },
+            })],
+            depth_stencil_attachment: None,
+            timestamp_writes: None,
+            occlusion_query_set: None,
+            multiview_mask: None,
         });
-        let mut enc = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("d3d9 alpha one") });
-        {
-            let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("d3d9 alpha one"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view,
-                    depth_slice: None,
-                    resolve_target: None,
-                    ops: wgpu::Operations { load: wgpu::LoadOp::Load, store: wgpu::StoreOp::Store },
-                })],
-                depth_stencil_attachment: None,
-                timestamp_writes: None,
-                occlusion_query_set: None,
-                multiview_mask: None,
-            });
-            pass.set_pipeline(&pipeline);
-            pass.set_bind_group(0, &group, &[]);
-            pass.set_scissor_rect(rect.0, rect.1, rect.2, rect.3);
-            pass.draw(0..3, 0..1);
-        }
-        self.queue.submit([enc.finish()]);
+        pass.set_pipeline(&pipeline);
+        pass.set_bind_group(0, &group, &[]);
+        pass.set_scissor_rect(rect.0, rect.1, rect.2, rect.3);
+        pass.draw(0..3, 0..1);
     }
 
-    pub fn flush(&mut self) {
+    /// The command encoder of the current submission.
+    fn encoder<'a>(device: &wgpu::Device, enc: &'a mut Option<wgpu::CommandEncoder>) -> &'a mut wgpu::CommandEncoder {
+        enc.get_or_insert_with(|| device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("d3d9") }))
+    }
+
+    /// Records the pending draws as one render pass on the current target into the submission's command encoder
+    /// (D3D9 order: everything recorded later runs after them). The pass sets each piece of state only when it
+    /// differs from the previous draw's.
+    fn end_pass(&mut self) {
         let p = std::mem::take(&mut self.pending);
+        let (bu, bc, ba) = self.pass_base;
         if p.draws.is_empty() {
+            // bytes of a draw that failed after pushing them: nothing reads them
+            self.uniform_belt.data.truncate(bu);
+            self.const_belt.data.truncate(bc);
+            self.arena.data.truncate(ba);
+            self.uniform_end = bu;
             return;
         }
+        // the last block's binding lies inside the buffer
+        if self.uniform_belt.data.len() < self.uniform_end {
+            self.uniform_belt.data.resize(self.uniform_end, 0);
+        }
+        self.pass_base = (self.uniform_belt.len(), self.const_belt.len(), self.arena.len());
         self.stats.flushes += 1;
-        let need_u = p.uniforms.len() as u64;
-        let need_c = p.consts.len() as u64;
-        if self.uniform_buf.as_ref().is_none_or(|(b, c, _)| b.size() < need_u || c.size() < need_c) {
-            let (old_u, old_c) = self.uniform_buf.as_ref().map(|(b, c, _)| (b.size(), c.size())).unwrap_or((0, 0));
-            let size = need_u.next_power_of_two().max(64 * 1024).max(old_u);
-            let csize = need_c.next_power_of_two().max(64 * 1024).max(old_c);
-            let mk = |size: u64, label: &str| {
-                self.device.create_buffer(&wgpu::BufferDescriptor {
-                    label: Some(label),
-                    size,
-                    usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-                    mapped_at_creation: false,
-                })
-            };
-            let buf = mk(size, "d3d9 uniforms");
-            let cbuf = mk(csize, "d3d9 shader constants");
-            let group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let gu = self.uniform_belt.reserve(&self.device, bu);
+        let gc = self.const_belt.reserve(&self.device, bc);
+        if gu || gc || self.uniform_group.is_none() {
+            self.uniform_group = Some(self.device.create_bind_group(&wgpu::BindGroupDescriptor {
                 label: Some("d3d9 uniforms"),
                 layout: &self.uniform_layout,
                 entries: &[
                     wgpu::BindGroupEntry {
                         binding: 0,
                         resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding {
-                            buffer: &buf,
+                            buffer: self.uniform_belt.buffer(),
                             offset: 0,
                             size: wgpu::BufferSize::new(size_of::<Uniforms>() as u64),
                         }),
@@ -1270,97 +1424,120 @@ impl WgpuDevice {
                     wgpu::BindGroupEntry {
                         binding: 1,
                         resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding {
-                            buffer: &cbuf,
+                            buffer: self.const_belt.buffer(),
                             offset: 0,
                             size: wgpu::BufferSize::new(size_of::<ConstBlock>() as u64),
                         }),
                     },
                 ],
-            });
-            self.uniform_buf = Some((buf, cbuf, group));
+            }));
         }
-        let Some((ubuf, cbuf, ugroup)) = self.uniform_buf.clone() else { return };
-        self.stats.stream_bytes += (p.uniforms.len() + p.consts.len() + p.arena.len()) as u64;
-        self.queue.write_buffer(&ubuf, 0, &p.uniforms);
-        if !p.consts.is_empty() {
-            self.queue.write_buffer(&cbuf, 0, &p.consts);
+        if self.arena.len() > ba {
+            self.arena.reserve(&self.device, ba);
         }
-        let mut arena = p.arena;
-        arena.resize(arena.len().div_ceil(4) * 4, 0);
-        if !arena.is_empty() {
-            let need = arena.len() as u64;
-            if self.arena_buf.as_ref().is_none_or(|b| b.size() < need) {
-                self.arena_buf = Some(self.device.create_buffer(&wgpu::BufferDescriptor {
-                    label: Some("d3d9 arena"),
-                    size: need.next_power_of_two().max(64 * 1024),
-                    usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
-                    mapped_at_creation: false,
-                }));
-            }
-            if let Some(b) = &self.arena_buf {
-                self.queue.write_buffer(b, 0, &arena);
-            }
+        self.frame_textures.extend(p.textures.iter().copied());
+        if let Some(id) = self.target.color_id {
+            self.frame_textures.insert(id);
         }
-        let arena_buf = self.arena_buf.clone();
-        let resolve = |s: &BufSrc| -> Option<wgpu::Buffer> {
+        let Some(ugroup) = self.uniform_group.as_ref() else { return };
+        let arena = self.arena.buf.as_ref();
+        fn source<'a>(s: &'a BufSrc, arena: Option<&'a wgpu::Buffer>) -> Option<&'a wgpu::Buffer> {
             match s {
-                BufSrc::Buf(b) => Some(b.clone()),
-                BufSrc::Arena => arena_buf.clone(),
+                BufSrc::Buf(b) => Some(b),
+                BufSrc::Arena => arena,
             }
-        };
-        let mut enc = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("d3d9") });
-        {
-            let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("d3d9"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &self.target.color_view,
-                    depth_slice: None,
-                    resolve_target: None,
-                    ops: wgpu::Operations { load: wgpu::LoadOp::Load, store: wgpu::StoreOp::Store },
-                })],
-                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                    view: &self.target.depth_view,
-                    depth_ops: Some(wgpu::Operations { load: wgpu::LoadOp::Load, store: wgpu::StoreOp::Store }),
-                    stencil_ops: Some(wgpu::Operations { load: wgpu::LoadOp::Load, store: wgpu::StoreOp::Store }),
-                }),
-                timestamp_writes: self.gpu_timer.as_mut().and_then(|t| t.pass()),
-                occlusion_query_set: None,
-                multiview_mask: None,
-            });
-            let mut prev: Option<&DrawCmd> = None;
-            for d in &p.draws {
-                if prev.is_none_or(|q| q.pipeline != d.pipeline) {
-                    self.stats.pipeline_changes += 1;
-                }
-                if prev.is_none_or(|q| q.textures != d.textures) {
-                    self.stats.texture_group_changes += 1;
-                }
-                prev = Some(d);
+        }
+        let resolve = |s| source(s, arena);
+        let enc = Self::encoder(&self.device, &mut self.enc);
+        let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
+            label: Some("d3d9"),
+            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                view: &self.target.color_view,
+                depth_slice: None,
+                resolve_target: None,
+                ops: wgpu::Operations { load: wgpu::LoadOp::Load, store: wgpu::StoreOp::Store },
+            })],
+            depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                view: &self.target.depth_view,
+                depth_ops: Some(wgpu::Operations { load: wgpu::LoadOp::Load, store: wgpu::StoreOp::Store }),
+                stencil_ops: Some(wgpu::Operations { load: wgpu::LoadOp::Load, store: wgpu::StoreOp::Store }),
+            }),
+            timestamp_writes: self.gpu_timer.as_mut().and_then(|t| t.pass()),
+            occlusion_query_set: None,
+            multiview_mask: None,
+        });
+        let mut prev: Option<&DrawCmd> = None;
+        // vertex buffer slots and the index buffer as last set in this pass
+        let mut slots: SmallVec<[Option<(&BufSrc, u64)>; 4]> = SmallVec::new();
+        let mut index: Option<(&BufSrc, u64, wgpu::IndexFormat)> = None;
+        for d in &p.draws {
+            let q = prev;
+            prev = Some(d);
+            if q.is_none_or(|q| q.pipeline != d.pipeline) {
+                self.stats.pipeline_changes += 1;
                 pass.set_pipeline(&d.pipeline);
-                pass.set_bind_group(0, &ugroup, &[d.uniform_offset, d.const_offset]);
+            }
+            if q.is_none_or(|q| (q.uniform_offset, q.const_offset) != (d.uniform_offset, d.const_offset)) {
+                pass.set_bind_group(0, ugroup, &[d.uniform_offset, d.const_offset]);
+            }
+            if q.is_none_or(|q| q.textures != d.textures) {
+                self.stats.texture_group_changes += 1;
                 pass.set_bind_group(1, &d.textures, &[]);
-                for (slot, (src, off)) in d.vertex_buffers.iter().enumerate() {
-                    if let Some(b) = resolve(src) {
-                        pass.set_vertex_buffer(slot as u32, b.slice(*off..));
-                    }
+            }
+            for (slot, (src, off)) in d.vertex_buffers.iter().enumerate() {
+                if slots.len() <= slot {
+                    slots.resize(slot + 1, None);
                 }
-                if let Some((src, off, f)) = &d.index
+                if slots[slot] != Some((src, *off))
                     && let Some(b) = resolve(src)
                 {
-                    pass.set_index_buffer(b.slice(*off..), *f);
-                }
-                let v = d.viewport;
-                pass.set_viewport(v[0], v[1], v[2], v[3], v[4], v[5]);
-                pass.set_scissor_rect(d.scissor[0], d.scissor[1], d.scissor[2], d.scissor[3]);
-                pass.set_stencil_reference(d.stencil_ref);
-                pass.set_blend_constant(d.blend_constant);
-                match d.kind {
-                    DrawKind::Plain { first, count } => pass.draw(first..first + count, 0..1),
-                    DrawKind::Indexed { first, count, base } => pass.draw_indexed(first..first + count, base, 0..1),
+                    pass.set_vertex_buffer(slot as u32, b.slice(*off..));
+                    slots[slot] = Some((src, *off));
                 }
             }
+            if let Some((src, off, f)) = &d.index
+                && index != Some((src, *off, *f))
+                && let Some(b) = resolve(src)
+            {
+                pass.set_index_buffer(b.slice(*off..), *f);
+                index = Some((src, *off, *f));
+            }
+            if q.is_none_or(|q| q.viewport != d.viewport) {
+                let v = d.viewport;
+                pass.set_viewport(v[0], v[1], v[2], v[3], v[4], v[5]);
+            }
+            if q.is_none_or(|q| q.scissor != d.scissor) {
+                pass.set_scissor_rect(d.scissor[0], d.scissor[1], d.scissor[2], d.scissor[3]);
+            }
+            if q.is_none_or(|q| q.stencil_ref != d.stencil_ref) {
+                pass.set_stencil_reference(d.stencil_ref);
+            }
+            if q.is_none_or(|q| q.blend_constant != d.blend_constant) {
+                let c = d.blend_constant;
+                pass.set_blend_constant(wgpu::Color { r: c[0] as f64, g: c[1] as f64, b: c[2] as f64, a: c[3] as f64 });
+            }
+            match d.kind {
+                DrawKind::Plain { first, count } => pass.draw(first..first + count, 0..1),
+                DrawKind::Indexed { first, count, base } => pass.draw_indexed(first..first + count, base, 0..1),
+            }
         }
+    }
+
+    /// Records the pending draws and submits everything recorded (also done implicitly whenever D3D9 ordering
+    /// requires it: read-backs, presents, texture writes to a texture the submission uses).
+    pub fn flush(&mut self) {
+        self.end_pass();
+        let Some(enc) = self.enc.take() else { return };
+        for b in [&mut self.uniform_belt, &mut self.const_belt, &mut self.arena] {
+            self.stats.stream_bytes += b.upload(&self.queue);
+        }
+        self.staging.finish();
         self.queue.submit([enc.finish()]);
+        self.staging.recall();
+        self.stats.submits += 1;
+        self.frame_textures.clear();
+        self.pass_base = (0, 0, 0);
+        self.uniform_end = 0;
     }
 
     /// Draws the back buffer into `target` (e.g. a surface texture's view) of format `format`,
@@ -1439,11 +1616,43 @@ impl WgpuDevice {
     }
 
     fn arena_push(&mut self, bytes: &[u8]) -> u64 {
-        let a = &mut self.pending.arena;
-        a.resize(a.len().div_ceil(16) * 16, 0);
-        let off = a.len() as u64;
-        a.extend_from_slice(bytes);
-        off
+        self.arena.push(bytes, 16) as u64
+    }
+
+    /// Appends the `u32` indices that draw `count` primitives of the strip or fan `prim` as a list, from the
+    /// source indices `idx(i)` (D3D's winding: odd strip triangles swapped); returns their offset and number.
+    fn arena_push_expanded(&mut self, prim: PrimitiveType, count: u32, idx: impl Fn(u32) -> u32) -> (u64, u32) {
+        Self::push_expanded_into(&mut self.arena.data, prim, count, idx)
+    }
+
+    fn push_expanded_into(a: &mut Vec<u8>, prim: PrimitiveType, count: u32, idx: impl Fn(u32) -> u32) -> (u64, u32) {
+        let off = a.len().next_multiple_of(16);
+        a.resize(off, 0);
+        let mut put = |v: u32| a.extend_from_slice(&v.to_le_bytes());
+        for i in 0..count {
+            match prim {
+                PrimitiveType::LineStrip => {
+                    put(idx(i));
+                    put(idx(i + 1));
+                }
+                PrimitiveType::TriangleStrip if i % 2 == 1 => {
+                    put(idx(i + 1));
+                    put(idx(i));
+                    put(idx(i + 2));
+                }
+                PrimitiveType::TriangleStrip => {
+                    put(idx(i));
+                    put(idx(i + 1));
+                    put(idx(i + 2));
+                }
+                _ => {
+                    put(idx(0));
+                    put(idx(i + 1));
+                    put(idx(i + 2));
+                }
+            }
+        }
+        (off as u64, ((a.len() - off) / 4) as u32)
     }
 
     fn push_uniforms(&mut self, u: &Uniforms) -> u32 {
@@ -1452,23 +1661,28 @@ impl WgpuDevice {
         {
             return *off;
         }
-        let off = self.pending.uniforms.len() as u32;
-        self.pending.uniforms.extend_from_slice(bytemuck::bytes_of(u));
-        self.pending.uniforms.resize((off + self.uniform_stride) as usize, 0);
+        // only the lights the block enables (`flags.w`): the shaders read no further, so the next block may start
+        // inside this one's binding
+        let used = std::mem::offset_of!(Uniforms, lights) + size_of::<LightU>() * (u.flags[3] as usize).min(MAX_LIGHTS);
+        let off = self.uniform_belt.push(&bytemuck::bytes_of(u)[..used], self.uniform_align as usize);
+        self.uniform_end = self.uniform_end.max(off as usize + size_of::<Uniforms>());
         self.pending.last_uniform = Some((*u, off));
         off
     }
 
-    /// The current shader constants in the pending constant arena (pushed once per change).
+    /// The current shader constants in the constant belt (pushed once per change and pass).
     fn push_consts(&mut self) -> u32 {
         if let Some(off) = self.pending.last_consts {
             return off;
         }
-        let off = self.pending.consts.len() as u32;
-        self.pending.consts.extend_from_slice(bytemuck::bytes_of(&self.consts));
-        self.pending.consts.resize((off + self.const_stride) as usize, 0);
+        let off = self.const_belt.push(bytemuck::bytes_of(&self.consts), self.const_stride as usize);
         self.pending.last_consts = Some(off);
         off
+    }
+
+    /// A state the fixed-function uniform block reads changed.
+    fn uniforms_changed(&mut self) {
+        self.pending.ff_uniform = None;
     }
 
     /// Vertex buffer ranges read by pending draws overlap `[start, end)`?
@@ -1510,23 +1724,32 @@ impl WgpuDevice {
         Ok(id)
     }
 
-    /// Writes `data` at `offset` into the CPU copy and the GPU buffer (4-byte aligned window).
-    fn write_buf(queue: &wgpu::Queue, b: &mut GpuBuf, offset: u32, data: &[u8]) -> D3dResult<()> {
+    /// Writes `data` at `offset` into the CPU copy and stages it for the GPU buffer (the 4-byte aligned window
+    /// around it, copied into the buffer at this point of the command stream: draws recorded before see the old
+    /// bytes, later ones the new).
+    fn write_buf(
+        device: &wgpu::Device,
+        enc: &mut Option<wgpu::CommandEncoder>,
+        staging: &mut wgpu::util::StagingBelt,
+        b: &mut GpuBuf,
+        offset: u32,
+        data: &[u8],
+    ) -> D3dResult<()> {
         let start = offset as usize;
         let end = start + data.len();
         if end > b.cpu.len() {
             return Err(D3dError::InvalidCall(format!("buffer write {start}..{end} past size {}", b.cpu.len())));
         }
-        if data.is_empty() {
-            return Ok(());
-        }
+        let Some(size) = wgpu::BufferSize::new(data.len() as u64) else { return Ok(()) };
         b.cpu[start..end].copy_from_slice(data);
         let a0 = start / 4 * 4;
         let a1 = end.div_ceil(4) * 4;
-        let mut window = vec![0u8; a1 - a0];
+        let size = if (a0, a1) == (start, end) { size } else { wgpu::BufferSize::new((a1 - a0) as u64).unwrap_or(size) };
+        let mut view = staging.write_buffer(Self::encoder(device, enc), &b.buf, a0 as u64, size);
+        // the window past the buffer's (unaligned) end is zero padding
         let have = b.cpu.len().min(a1) - a0;
-        window[..have].copy_from_slice(&b.cpu[a0..a0 + have]);
-        queue.write_buffer(&b.buf, a0 as u64, &window);
+        view.slice(..have).copy_from_slice(&b.cpu[a0..a0 + have]);
+        view.slice(have..).fill(0);
         Ok(())
     }
 
@@ -1685,15 +1908,15 @@ impl WgpuDevice {
         if let Some(p) = self.pipelines.get(key) {
             return Ok(p.clone());
         }
-        let mut sig: Vec<(u32, u8)> = key.layout.iter().flat_map(|s| s.attrs.iter().map(|&(_, t, loc)| (loc, t))).collect();
+        let streams = self.layouts[key.layout as usize].clone();
+        let mut sig: Vec<(u32, u8)> = streams.iter().flat_map(|s| s.attrs.iter().map(|&(_, t, loc)| (loc, t))).collect();
         sig.sort_unstable();
         let (module, layout) = if key.prog == ProgKey::default() {
             (self.shader_module(sig), self.pipeline_layout.clone())
         } else {
             (self.program_module(sig, key.prog)?, self.shader_layout(key.prog.cube).1)
         };
-        let attrs: Vec<Vec<wgpu::VertexAttribute>> = key
-            .layout
+        let attrs: Vec<Vec<wgpu::VertexAttribute>> = streams
             .iter()
             .map(|s| {
                 s.attrs
@@ -1706,8 +1929,7 @@ impl WgpuDevice {
                     .collect()
             })
             .collect();
-        let buffers: Vec<wgpu::VertexBufferLayout<'_>> = key
-            .layout
+        let buffers: Vec<wgpu::VertexBufferLayout<'_>> = streams
             .iter()
             .zip(&attrs)
             .map(|(s, a)| wgpu::VertexBufferLayout { array_stride: s.stride as u64, step_mode: wgpu::VertexStepMode::Vertex, attributes: a })
@@ -1750,7 +1972,7 @@ impl WgpuDevice {
             cache: None,
         });
         self.stats.pipelines += 1;
-        self.pipelines.insert(key.clone(), p.clone());
+        self.pipelines.insert(*key, p.clone());
         Ok(p)
     }
 
@@ -1899,7 +2121,7 @@ impl WgpuDevice {
         u
     }
 
-    fn pipe_key(&self, layout: Vec<StreamKey>, topology: u8) -> PipeKey {
+    fn pipe_key(&self, layout: u32, topology: u8) -> PipeKey {
         let tri = topology == 2;
         let blend = (self.r(rs::ALPHABLENDENABLE) != 0).then(|| {
             let (sb, db) = fix_both(self.r(rs::SRCBLEND), self.r(rs::DESTBLEND));
@@ -1949,25 +2171,18 @@ impl WgpuDevice {
         }
     }
 
-    fn draw(&mut self, prim: PrimitiveType, count: u32, src: DrawSrc<'_>) -> D3dResult<()> {
-        if count == 0 {
-            return Ok(());
+    /// The current vertex input resolved for the current vertex shader (cached per input and shader).
+    fn input_layout(&mut self) -> D3dResult<u32> {
+        let Some(input) = self.input else { return Err(D3dError::InvalidCall("no FVF or vertex declaration set".into())) };
+        let key = (input, self.vs.unwrap_or(0));
+        if let Some(&id) = self.input_layouts.get(&key) {
+            return Ok(id);
         }
-        let Some((viewport, scissor)) = self.viewport_and_scissor() else { return Ok(()) };
         let elements = self.input_elements()?;
-        let up = matches!(src, DrawSrc::Up { .. } | DrawSrc::UpIndexed { .. });
-        let up_stride = match src {
-            DrawSrc::Up { stride, .. } | DrawSrc::UpIndexed { stride, .. } => Some(stride),
-            _ => None,
-        };
-
-        // vertex layout
-        let mut layout: Vec<StreamKey> = Vec::new();
-        let mut max_end: Vec<u32> = Vec::new();
-        let mut used = [false; 16];
-        let mut flags = 0u32;
         // with a vertex shader, elements feed the input registers whose `dcl` matches their usage
         let vs_inputs: Option<Vec<(u32, u8, u8)>> = self.vs.and_then(|id| self.shaders.get(&id)).map(|s| s.input_decls());
+        let mut l = InputLayout { streams: SmallVec::new(), flags: 0, error: None };
+        let mut used = [false; 16];
         for e in &elements {
             if e.stream == 0xFF || e.decl_type == decltype::UNUSED {
                 break;
@@ -1986,45 +2201,90 @@ impl WgpuDevice {
                 continue;
             }
             let Some((vf, _, _)) = decl_format(e.decl_type) else {
-                return Err(D3dError::NotAvailable(format!("D3DDECLTYPE {}", e.decl_type)));
+                l.error = Some(D3dError::NotAvailable(format!("D3DDECLTYPE {}", e.decl_type)));
+                break;
             };
             used[loc as usize] = true;
             match loc {
                 _ if vs_inputs.is_some() => {}
-                0 if e.usage == declusage::POSITIONT => flags |= F_PRETRANSFORMED,
-                1 => flags |= F_HAS_NORMAL,
-                2 => flags |= F_HAS_C0,
-                3 => flags |= F_HAS_C1,
+                0 if e.usage == declusage::POSITIONT => l.flags |= F_PRETRANSFORMED,
+                1 => l.flags |= F_HAS_NORMAL,
+                2 => l.flags |= F_HAS_C0,
+                3 => l.flags |= F_HAS_C1,
                 _ => {}
             }
             let stream = e.stream as u32;
-            if up && stream != 0 {
-                return Err(D3dError::InvalidCall("DrawPrimitiveUP with a multi-stream declaration".into()));
-            }
-            let idx = match layout.iter().position(|s| s.stream == stream) {
+            let idx = match l.streams.iter().position(|s| s.0 == stream) {
                 Some(i) => i,
                 None => {
-                    let stride = match up_stride {
-                        Some(s) => s,
-                        None => self.streams.get(stream as usize).map(|s| s.stride).unwrap_or(0),
-                    };
-                    layout.push(StreamKey { stream, stride, attrs: Vec::new() });
-                    max_end.push(0);
-                    layout.len() - 1
+                    l.streams.push((stream, 0, SmallVec::new()));
+                    l.streams.len() - 1
                 }
             };
-            let end = e.offset as u32 + vf.size() as u32;
-            layout[idx].attrs.push((e.offset as u32, e.decl_type, loc));
-            max_end[idx] = max_end[idx].max(end);
+            let s = &mut l.streams[idx];
+            s.1 = s.1.max(e.offset as u32 + vf.size() as u32);
+            s.2.push((e.offset as u32, e.decl_type, loc));
         }
-        if !used[0] && vs_inputs.is_none() {
-            return Err(D3dError::InvalidCall("vertex layout without a position".into()));
+        if l.error.is_none() && !used[0] && vs_inputs.is_none() {
+            l.error = Some(D3dError::InvalidCall("vertex layout without a position".into()));
         }
-        for (s, &end) in layout.iter().zip(&max_end) {
-            if s.stride == 0 || !s.stride.is_multiple_of(4) || end > s.stride {
-                return Err(D3dError::InvalidCall(format!("stream {} stride {} (attributes end at {end})", s.stream, s.stride)));
+        let id = self.input_list.len() as u32;
+        self.input_list.push(l);
+        self.input_layouts.insert(key, id);
+        Ok(id)
+    }
+
+    /// The interned pipeline vertex layout of input layout `input` with the streams' `strides`.
+    fn layout_id(&mut self, input: u32, strides: [u32; MAX_STREAMS]) -> u32 {
+        if let Some(&id) = self.layout_ids.get(&(input, strides)) {
+            return id;
+        }
+        let layout = self.input_list[input as usize]
+            .streams
+            .iter()
+            .map(|(stream, _, attrs)| StreamKey { stream: *stream, stride: strides[*stream as usize], attrs: attrs.to_vec() })
+            .collect();
+        let id = self.layouts.len() as u32;
+        self.layouts.push(layout);
+        self.layout_ids.insert((input, strides), id);
+        id
+    }
+
+    fn draw(&mut self, prim: PrimitiveType, count: u32, src: DrawSrc<'_>) -> D3dResult<()> {
+        if count == 0 {
+            return Ok(());
+        }
+        let Some((viewport, scissor)) = self.viewport_and_scissor() else { return Ok(()) };
+        let input = self.input_layout()?;
+        let up = matches!(src, DrawSrc::Up { .. } | DrawSrc::UpIndexed { .. });
+        let up_stride = match src {
+            DrawSrc::Up { stride, .. } | DrawSrc::UpIndexed { stride, .. } => Some(stride),
+            _ => None,
+        };
+
+        // vertex layout: (stream, end of its attributes, stride) per stream in layout order
+        let il = &self.input_list[input as usize];
+        if let Some(e) = &il.error {
+            return Err(e.clone());
+        }
+        if up && il.streams.iter().any(|s| s.0 != 0) {
+            return Err(D3dError::InvalidCall("DrawPrimitiveUP with a multi-stream declaration".into()));
+        }
+        let flags = il.flags;
+        let mut streams: SmallVec<[(u32, u32, u32); 2]> = SmallVec::new();
+        let mut strides = [0u32; MAX_STREAMS];
+        for &(stream, end, _) in &il.streams {
+            let stride = match up_stride {
+                Some(s) => s,
+                None => self.streams.get(stream as usize).map(|s| s.stride).unwrap_or(0),
+            };
+            if stride == 0 || !stride.is_multiple_of(4) || end > stride {
+                return Err(D3dError::InvalidCall(format!("stream {stream} stride {stride} (attributes end at {end})")));
             }
+            strides[stream as usize] = stride;
+            streams.push((stream, end, stride));
         }
+        let layout = self.layout_id(input, strides);
 
         // topology and index expansion
         let (topology, expand) = match prim {
@@ -2035,21 +2295,9 @@ impl WgpuDevice {
             PrimitiveType::TriangleStrip | PrimitiveType::TriangleFan => (2, true),
         };
         let n = prim.vertex_count(count);
-        let expand_with = |idx: &dyn Fn(u32) -> u32| -> Vec<u32> {
-            let mut out = Vec::with_capacity(count as usize * 3);
-            for i in 0..count {
-                match prim {
-                    PrimitiveType::LineStrip => out.extend([idx(i), idx(i + 1)]),
-                    PrimitiveType::TriangleStrip if i % 2 == 1 => out.extend([idx(i + 1), idx(i), idx(i + 2)]),
-                    PrimitiveType::TriangleStrip => out.extend([idx(i), idx(i + 1), idx(i + 2)]),
-                    _ => out.extend([idx(0), idx(i + 1), idx(i + 2)]),
-                }
-            }
-            out
-        };
 
-        let mut vertex_buffers: Vec<(BufSrc, u64)> = Vec::new();
-        let mut vb_notes: Vec<(VertexBufferId, u64, u64)> = Vec::new();
+        let mut vertex_buffers: SmallVec<[(BufSrc, u64); 2]> = SmallVec::new();
+        let mut vb_notes: SmallVec<[(VertexBufferId, u64, u64); 2]> = SmallVec::new();
         let mut ib_note: Option<(IndexBufferId, u64, u64)> = None;
         let index: Option<(BufSrc, u64, wgpu::IndexFormat)>;
         let kind: DrawKind;
@@ -2066,15 +2314,14 @@ impl WgpuDevice {
 
         match src {
             DrawSrc::Up { vertices, stride } => {
-                let bytes = ((n - 1) as u64 * stride as u64 + max_end[0] as u64) as usize;
+                let bytes = ((n - 1) as u64 * stride as u64 + streams[0].1 as u64) as usize;
                 let v = vertices.get(..bytes).ok_or_else(|| D3dError::InvalidCall("DrawPrimitiveUP: vertex data too short".into()))?;
                 let off = self.arena_push(v);
                 vertex_buffers.push((BufSrc::Arena, off));
                 if expand {
-                    let generated = expand_with(&|i| i);
-                    let ioff = self.arena_push(bytemuck::cast_slice(&generated));
+                    let (ioff, generated) = self.arena_push_expanded(prim, count, |i| i);
                     index = Some((BufSrc::Arena, ioff, wgpu::IndexFormat::Uint32));
-                    kind = DrawKind::Indexed { first: 0, count: generated.len() as u32, base: 0 };
+                    kind = DrawKind::Indexed { first: 0, count: generated, base: 0 };
                 } else {
                     index = None;
                     kind = DrawKind::Plain { first: 0, count: n };
@@ -2084,35 +2331,33 @@ impl WgpuDevice {
                 let isz = isize_of(index_format) as usize;
                 let ib = indices.get(..n as usize * isz).ok_or_else(|| D3dError::InvalidCall("DrawIndexedPrimitiveUP: index data too short".into()))?;
                 let max_index = (0..n).map(|i| read_indices(ib, index_format, i)).max().unwrap_or(0).max(min_index + num_vertices.max(1) - 1);
-                let bytes = (max_index as u64 * stride as u64 + max_end[0] as u64) as usize;
+                let bytes = (max_index as u64 * stride as u64 + streams[0].1 as u64) as usize;
                 let v = vertices.get(..bytes.min(vertices.len())).unwrap_or(vertices);
                 let off = self.arena_push(v);
                 vertex_buffers.push((BufSrc::Arena, off));
                 if expand {
-                    let generated = expand_with(&|i| read_indices(ib, index_format, i));
-                    let ioff = self.arena_push(bytemuck::cast_slice(&generated));
+                    let (ioff, generated) = self.arena_push_expanded(prim, count, |i| read_indices(ib, index_format, i));
                     index = Some((BufSrc::Arena, ioff, wgpu::IndexFormat::Uint32));
-                    kind = DrawKind::Indexed { first: 0, count: generated.len() as u32, base: 0 };
+                    kind = DrawKind::Indexed { first: 0, count: generated, base: 0 };
                 } else {
-                    let mut padded = ib.to_vec();
-                    padded.resize(padded.len().div_ceil(4) * 4, 0);
-                    let ioff = self.arena_push(&padded);
+                    // padded to 4 bytes by the arena
+                    let ioff = self.arena_push(ib);
                     index = Some((BufSrc::Arena, ioff, index_wgpu(index_format)));
                     kind = DrawKind::Indexed { first: 0, count: n, base: 0 };
                 }
             }
             DrawSrc::Stream { .. } | DrawSrc::Indexed { .. } => {
                 // vertex streams
-                for (s, &end) in layout.iter().zip(&max_end) {
-                    let st = self.streams.get(s.stream as usize).copied().unwrap_or_default();
-                    let vb_id = st.vb.ok_or_else(|| D3dError::InvalidCall(format!("no vertex buffer on stream {}", s.stream)))?;
+                for &(stream, end, stride) in &streams {
+                    let st = self.streams.get(stream as usize).copied().unwrap_or_default();
+                    let vb_id = st.vb.ok_or_else(|| D3dError::InvalidCall(format!("no vertex buffer on stream {stream}")))?;
                     let vb = self.vbs.get(&vb_id).ok_or_else(|| D3dError::InvalidCall(format!("vertex buffer {vb_id}")))?;
                     let len = vb.cpu.len() as u64;
                     let off = st.offset as u64;
                     if !off.is_multiple_of(4) || off >= len {
-                        return Err(D3dError::InvalidCall(format!("stream {} offset {off}", s.stream)));
+                        return Err(D3dError::InvalidCall(format!("stream {stream} offset {off}")));
                     }
-                    let stride = s.stride as u64;
+                    let stride = stride as u64;
                     let (r0, r1) = match src {
                         DrawSrc::Stream { start_vertex } => {
                             let last = off + (start_vertex as u64 + n as u64 - 1) * stride + end as u64;
@@ -2133,10 +2378,9 @@ impl WgpuDevice {
                 match src {
                     DrawSrc::Stream { start_vertex } => {
                         if expand {
-                            let generated = expand_with(&|i| i);
-                            let ioff = self.arena_push(bytemuck::cast_slice(&generated));
+                            let (ioff, generated) = self.arena_push_expanded(prim, count, |i| i);
                             index = Some((BufSrc::Arena, ioff, wgpu::IndexFormat::Uint32));
-                            kind = DrawKind::Indexed { first: 0, count: generated.len() as u32, base: start_vertex as i32 };
+                            kind = DrawKind::Indexed { first: 0, count: generated, base: start_vertex as i32 };
                         } else {
                             index = None;
                             kind = DrawKind::Plain { first: start_vertex, count: n };
@@ -2151,15 +2395,16 @@ impl WgpuDevice {
                             return Err(D3dError::InvalidCall(format!("indices {start_index}+{n} past index buffer {ib_id}")));
                         }
                         let ib_format = ib.index_format;
-                        let ib_buf = ib.buf.clone();
-                        let generated = expand.then(|| expand_with(&|i| read_indices(&ib.cpu, ib_format, start_index + i)));
-                        if let Some(generated) = generated {
-                            let ioff = self.arena_push(bytemuck::cast_slice(&generated));
+                        if expand {
+                            // the source indices are read from the CPU copy into the arena (disjoint fields)
+                            let cpu = &self.ibs[&ib_id].cpu;
+                            let a = &mut self.arena;
+                            let (ioff, generated) = Self::push_expanded_into(&mut a.data, prim, count, |i| read_indices(cpu, ib_format, start_index + i));
                             index = Some((BufSrc::Arena, ioff, wgpu::IndexFormat::Uint32));
-                            kind = DrawKind::Indexed { first: 0, count: generated.len() as u32, base: base_vertex };
+                            kind = DrawKind::Indexed { first: 0, count: generated, base: base_vertex };
                         } else {
                             ib_note = Some((ib_id, i0, i1));
-                            index = Some((BufSrc::Buf(ib_buf), 0, index_wgpu(ib_format)));
+                            index = Some((BufSrc::Buf(ib.buf.clone()), 0, index_wgpu(ib_format)));
                             kind = DrawKind::Indexed { first: start_index, count: n, base: base_vertex };
                         }
                     }
@@ -2173,11 +2418,10 @@ impl WgpuDevice {
         let mut kind = kind;
         if let DrawKind::Indexed { first, count, base } = kind
             && base > 0
-            && vertex_buffers.len() == layout.len()
-            && layout.iter().all(|s| s.stride % 4 == 0)
+            && vertex_buffers.len() == streams.len()
         {
-            for (vb, s) in vertex_buffers.iter_mut().zip(layout.iter()) {
-                vb.1 += base as u64 * s.stride as u64;
+            for (vb, s) in vertex_buffers.iter_mut().zip(streams.iter()) {
+                vb.1 += base as u64 * s.2 as u64;
             }
             kind = DrawKind::Indexed { first, count, base: 0 };
         }
@@ -2185,9 +2429,23 @@ impl WgpuDevice {
         if self.vs.is_some() || self.ps.is_some() {
             key.prog = ProgKey { vs: self.vs.unwrap_or(0), ps: self.ps.unwrap_or(0), cube: self.ps.map(|id| self.ps_cube_mask(id)).unwrap_or(0) };
         }
-        let pipeline = self.pipeline(&key)?;
-        let u = self.draw_uniforms(flags);
-        let uniform_offset = self.push_uniforms(&u);
+        let pipeline = match &self.last_pipeline {
+            Some((k, p)) if *k == key => p.clone(),
+            _ => {
+                let p = self.pipeline(&key)?;
+                self.last_pipeline = Some((key, p.clone()));
+                p
+            }
+        };
+        let uniform_offset = match self.pending.ff_uniform {
+            Some((f, off)) if f == flags => off,
+            _ => {
+                let u = self.draw_uniforms(flags);
+                let off = self.push_uniforms(&u);
+                self.pending.ff_uniform = Some((flags, off));
+                off
+            }
+        };
         let const_offset = self.push_consts();
         let textures = if key.prog == ProgKey::default() {
             let (t0, t1) = (self.stage_binding(0), self.stage_binding(1));
@@ -2197,7 +2455,15 @@ impl WgpuDevice {
                     self.pending.textures.insert(t);
                 }
             }
-            self.texture_group(t0, s0, t1, s1)
+            let k = (t0, s0, t1, s1);
+            match &self.last_texture_group {
+                Some((lk, g)) if *lk == k => g.clone(),
+                _ => {
+                    let g = self.texture_group(t0, s0, t1, s1);
+                    self.last_texture_group = Some((k, g.clone()));
+                    g
+                }
+            }
         } else {
             self.shader_texture_group(key.prog.cube)
         };
@@ -2207,7 +2473,6 @@ impl WgpuDevice {
         if let Some((id, a, b)) = ib_note {
             Self::note_range(&mut self.pending.ib_ranges, id, a, b);
         }
-        let bf = color(self.r(RS_BLENDFACTOR));
         self.pending.draws.push(DrawCmd {
             pipeline,
             textures,
@@ -2219,7 +2484,7 @@ impl WgpuDevice {
             viewport,
             scissor,
             stencil_ref: self.r(rs::STENCILREF) & 0xFF,
-            blend_constant: wgpu::Color { r: bf[0] as f64, g: bf[1] as f64, b: bf[2] as f64, a: bf[3] as f64 },
+            blend_constant: color(self.r(RS_BLENDFACTOR)),
         });
         self.stats.draws += 1;
         Ok(())
@@ -2550,7 +2815,7 @@ impl D3d9Device for WgpuDevice {
     }
 
     fn update_texture(&mut self, tex: TextureId, face: u32, level: u32, rect: Option<(u32, u32, u32, u32)>, data: &[u8], pitch: u32) -> D3dResult<()> {
-        if self.pending.textures.contains(&tex) || self.target.color_id == Some(tex) {
+        if self.pending.textures.contains(&tex) || self.frame_textures.contains(&tex) || self.target.color_id == Some(tex) {
             self.flush();
         }
         self.stats.texture_uploads += 1;
@@ -2631,6 +2896,7 @@ impl D3d9Device for WgpuDevice {
         if self.textures.remove(&tex).is_some() {
             self.bind_groups.retain(|k, _| k.0 != tex && k.2 != tex);
             self.sh_bind_groups.retain(|k, _| !k.0.contains(&tex));
+            self.last_texture_group = None;
             for s in self.stage_tex.iter_mut() {
                 if *s == Some(tex) {
                     *s = None;
@@ -2648,12 +2914,12 @@ impl D3d9Device for WgpuDevice {
 
     fn update_vertex_buffer(&mut self, vb: VertexBufferId, offset: u32, data: &[u8]) -> D3dResult<()> {
         if self.vb_pending(vb, offset as u64, offset as u64 + data.len() as u64) {
-            self.flush();
+            self.end_pass();
         }
         let b = self.vbs.get_mut(&vb).ok_or_else(|| D3dError::InvalidCall(format!("vertex buffer {vb}")))?;
         self.stats.buffer_uploads += 1;
         self.stats.buffer_bytes += data.len() as u64;
-        Self::write_buf(&self.queue, b, offset, data)
+        Self::write_buf(&self.device, &mut self.enc, &mut self.staging, b, offset, data)
     }
 
     fn release_vertex_buffer(&mut self, vb: VertexBufferId) {
@@ -2674,12 +2940,12 @@ impl D3d9Device for WgpuDevice {
 
     fn update_index_buffer(&mut self, ib: IndexBufferId, offset: u32, data: &[u8]) -> D3dResult<()> {
         if self.ib_pending(ib, offset as u64, offset as u64 + data.len() as u64) {
-            self.flush();
+            self.end_pass();
         }
         let b = self.ibs.get_mut(&ib).ok_or_else(|| D3dError::InvalidCall(format!("index buffer {ib}")))?;
         self.stats.buffer_uploads += 1;
         self.stats.buffer_bytes += data.len() as u64;
-        Self::write_buf(&self.queue, b, offset, data)
+        Self::write_buf(&self.device, &mut self.enc, &mut self.staging, b, offset, data)
     }
 
     fn release_index_buffer(&mut self, ib: IndexBufferId) {
@@ -2697,6 +2963,7 @@ impl D3d9Device for WgpuDevice {
 
     fn release_vertex_declaration(&mut self, decl: VertexDeclId) {
         self.decls.remove(&decl);
+        self.input_layouts.retain(|k, _| k.0 != Input::Decl(decl));
         if self.input == Some(Input::Decl(decl)) {
             self.input = None;
         }
@@ -2715,6 +2982,8 @@ impl D3d9Device for WgpuDevice {
             self.flush();
             self.pipelines.retain(|k, _| k.prog.vs != shader && k.prog.ps != shader);
             self.program_modules.retain(|k, _| k.1.vs != shader && k.1.ps != shader);
+            self.input_layouts.retain(|k, _| k.1 != shader);
+            self.last_pipeline = None;
             if self.vs == Some(shader) {
                 self.vs = None;
             }
@@ -2725,8 +2994,11 @@ impl D3d9Device for WgpuDevice {
     }
 
     fn set_render_state(&mut self, state: u32, value: u32) {
-        if let Some(v) = self.rs.get_mut(state as usize) {
+        if let Some(v) = self.rs.get_mut(state as usize)
+            && *v != value
+        {
             *v = value;
+            self.uniforms_changed();
         }
     }
 
@@ -2735,8 +3007,11 @@ impl D3d9Device for WgpuDevice {
     }
 
     fn set_texture_stage_state(&mut self, stage: u32, kind: u32, value: u32) {
-        if let Some(v) = self.tss.get_mut(stage as usize).and_then(|s| s.get_mut(kind as usize)) {
+        if let Some(v) = self.tss.get_mut(stage as usize).and_then(|s| s.get_mut(kind as usize))
+            && *v != value
+        {
             *v = value;
+            self.uniforms_changed();
         }
     }
 
@@ -2753,20 +3028,28 @@ impl D3d9Device for WgpuDevice {
     }
 
     fn set_transform(&mut self, kind: u32, m: &[[f32; 4]; 4]) {
-        match kind {
-            ts::WORLD => self.world = *m,
-            ts::VIEW => self.view = *m,
-            ts::PROJECTION => self.proj = *m,
-            _ => {} // texture transforms and WORLDMATRIX(1..) are not emulated
+        let t = match kind {
+            ts::WORLD => &mut self.world,
+            ts::VIEW => &mut self.view,
+            ts::PROJECTION => &mut self.proj,
+            _ => return, // texture transforms and WORLDMATRIX(1..) are not emulated
+        };
+        if t != m {
+            *t = *m;
+            self.uniforms_changed();
         }
     }
 
     fn set_material(&mut self, m: &Material) {
-        self.material = *m;
+        if self.material != *m {
+            self.material = *m;
+            self.uniforms_changed();
+        }
     }
 
     fn set_light(&mut self, index: u32, l: &Light) {
         self.lights.insert(index, *l);
+        self.uniforms_changed();
     }
 
     fn light_enable(&mut self, index: u32, on: bool) {
@@ -2781,10 +3064,14 @@ impl D3d9Device for WgpuDevice {
         } else {
             self.enabled_lights.remove(&index);
         }
+        self.uniforms_changed();
     }
 
     fn set_viewport(&mut self, vp: &Viewport) {
-        self.viewport = *vp;
+        if self.viewport != *vp {
+            self.viewport = *vp;
+            self.uniforms_changed();
+        }
     }
 
     fn set_scissor_rect(&mut self, rect: (u32, u32, u32, u32)) {
@@ -2850,7 +3137,6 @@ impl D3d9Device for WgpuDevice {
     }
 
     fn set_render_target(&mut self, color: Option<TextureId>, depth: Option<TextureId>) {
-        self.flush();
         let (view, size, id, opaque) = match color.and_then(|id| self.textures.get(&id).filter(|t| t.desc.render_target).map(|t| (id, t))) {
             Some((id, t)) => (t.view.clone(), (t.desc.width, t.desc.height), Some(id), format_is_opaque(t.desc.format)),
             None => (self.back_view.clone(), self.size, None, self.back_opaque),
@@ -2863,9 +3149,13 @@ impl D3d9Device for WgpuDevice {
                 .or_insert_with(|| depth_texture(&self.device, size.0, size.1).create_view(&Default::default()))
                 .clone(),
         };
+        // the same attachments again (RW sets the colour and the depth surface one call each) continue the pass
+        if self.target.color_view != view || self.target.depth_view != depth_view {
+            self.end_pass();
+        }
         self.target = Target { color_view: view, depth_view, size, color_id: id, opaque };
         // D3D9 resets the viewport and scissor rectangle to the new target
-        self.viewport = Viewport { x: 0, y: 0, width: size.0, height: size.1, min_z: 0.0, max_z: 1.0 };
+        self.set_viewport(&Viewport { x: 0, y: 0, width: size.0, height: size.1, min_z: 0.0, max_z: 1.0 });
         self.scissor = (0, 0, size.0, size.1);
     }
 
@@ -2900,13 +3190,13 @@ impl D3d9Device for WgpuDevice {
             textures,
             uniform_offset,
             const_offset,
-            vertex_buffers: Vec::new(),
+            vertex_buffers: SmallVec::new(),
             index: None,
             kind: DrawKind::Plain { first: 0, count: 3 },
             viewport,
             scissor,
             stencil_ref: stencil & 0xFF,
-            blend_constant: wgpu::Color::WHITE,
+            blend_constant: [1.0; 4],
         });
     }
 
@@ -2966,7 +3256,7 @@ impl D3d9Device for WgpuDevice {
         dst_rect: Option<(u32, u32, u32, u32)>,
         linear: bool,
     ) -> D3dResult<()> {
-        self.flush();
+        self.end_pass();
         let target = |id: Option<TextureId>| -> D3dResult<(wgpu::Texture, (u32, u32))> {
             match id {
                 None => Ok((self.back.clone(), self.size)),
@@ -2992,13 +3282,12 @@ impl D3d9Device for WgpuDevice {
             return Err(D3dError::InvalidCall(format!("StretchRect: rectangle {sr:?} -> {dr:?} outside the targets")));
         }
         if (sr.2, sr.3) == (dr.2, dr.3) && src != dst {
-            let mut enc = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("d3d9 stretch") });
-            enc.copy_texture_to_texture(
+            Self::encoder(&self.device, &mut self.enc).copy_texture_to_texture(
                 wgpu::TexelCopyTextureInfo { texture: &st, mip_level: 0, origin: wgpu::Origin3d { x: sr.0, y: sr.1, z: 0 }, aspect: wgpu::TextureAspect::All },
                 wgpu::TexelCopyTextureInfo { texture: &dt, mip_level: 0, origin: wgpu::Origin3d { x: dr.0, y: dr.1, z: 0 }, aspect: wgpu::TextureAspect::All },
                 wgpu::Extent3d { width: sr.2, height: sr.3, depth_or_array_layers: 1 },
             );
-            self.queue.submit([enc.finish()]);
+            self.frame_textures.extend(src.into_iter().chain(dst));
             // D3D9 drops the alpha of a copy into a target without alpha (it samples as 1)
             if dst_opaque && !src_opaque {
                 let view = match dst {

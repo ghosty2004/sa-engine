@@ -16,6 +16,7 @@
 #![allow(clippy::too_many_arguments)]
 
 use std::collections::HashMap;
+use std::cell::RefCell;
 use std::sync::Mutex;
 
 use sa_core::mem::GPtr;
@@ -24,15 +25,17 @@ use sa_rw_wgpu::d3d9::WgpuDevice;
 
 use crate::bind::with;
 
-/// The device `IDirect3D9::CreateDevice` created.
-static DEVICE: Mutex<Option<WgpuDevice>> = Mutex::new(None);
+thread_local! {
+    /// The device `IDirect3D9::CreateDevice` created. Owned by the game thread, which makes every D3D9 call (the game
+    /// creates its device without `D3DCREATE_MULTITHREADED`): no lock per call.
+    static DEVICE: RefCell<Option<WgpuDevice>> = const { RefCell::new(None) };
+}
 
-/// Runs `f` on the device (`None` before `CreateDevice`).
+/// Runs `f` on the device (`None` before `CreateDevice`, and on any thread but the game thread).
 pub fn with_device<R>(f: impl FnOnce(&mut WgpuDevice) -> R) -> Option<R> {
     #[cfg(target_arch = "wasm32")]
     crate::platform::web::maybe_sample("IDirect3DDevice9 (seam)");
-    let mut d = DEVICE.lock().unwrap_or_else(|e| e.into_inner());
-    d.as_mut().map(f)
+    DEVICE.with_borrow_mut(|d| d.as_mut().map(f))
 }
 
 /// The native window's swap chain (`--window`): `CreateDevice` creates the seam device on the window's GPU device
@@ -112,7 +115,7 @@ pub fn create_device(w: u32, h: u32, color: u32, depth: u32) -> bool {
         d.set_back_buffer_format(if color == 0 { gpu::fmt::X8R8G8B8 } else { color });
     }
     let ok = dev.is_some();
-    *DEVICE.lock().unwrap_or_else(|e| e.into_inner()) = dev;
+    DEVICE.with_borrow_mut(|d| *d = dev);
     *SWAP_SURFACES.lock().unwrap_or_else(|e| e.into_inner()) = None;
     *RENDER_TARGET.lock().unwrap_or_else(|e| e.into_inner()) = (0, 0);
     ok
@@ -260,14 +263,16 @@ enum Res {
 
 struct Store {
     next: u32,
-    res: HashMap<u32, (Res, u32)>,
+    res: rustc_hash::FxHashMap<u32, (Res, u32)>,
 }
 
-static RESOURCES: Mutex<Option<Store>> = Mutex::new(None);
+thread_local! {
+    /// The resource objects (game thread only, like the device).
+    static RESOURCES: RefCell<Store> = RefCell::new(Store { next: 1, res: Default::default() });
+}
 
 fn with_store<R>(f: impl FnOnce(&mut Store) -> R) -> R {
-    let mut s = RESOURCES.lock().unwrap_or_else(|e| e.into_inner());
-    f(s.get_or_insert_with(|| Store { next: 1, res: HashMap::new() }))
+    RESOURCES.with_borrow_mut(f)
 }
 
 /// A new object `{vtable, handle}` for `res` (reference count 1).
@@ -321,9 +326,6 @@ fn rd32(p: GPtr<u8>, i: isize) -> u32 {
 }
 fn rdf(p: GPtr<u8>, i: isize) -> f32 {
     f32::from_bits(rd32(p, i))
-}
-fn bytes(p: GPtr<u8>, n: usize) -> Vec<u8> {
-    (0..n as isize).map(|i| p.byte_add(i).read()).collect()
 }
 fn prim(t: u32) -> Option<PrimitiveType> {
     PrimitiveType::from_d3d(t)
@@ -446,12 +448,12 @@ mod trace {
         }
     }
     pub fn stage(stage: u32, ty: u32, v: u32) {
-        if stage < 2 && (1..=8).contains(&ty) {
+        if range().is_some() && stage < 2 && (1..=8).contains(&ty) {
             STAGE.lock().unwrap_or_else(|e| e.into_inner())[stage as usize][ty as usize - 1] = v;
         }
     }
     pub fn texture(stage: u32, obj: u32) {
-        if stage < 2 {
+        if range().is_some() && stage < 2 {
             TEX.lock().unwrap_or_else(|e| e.into_inner())[stage as usize] = obj;
         }
     }
@@ -1055,18 +1057,21 @@ fn dev_draw_indexed_primitive(_this: u32, ty: u32, base: i32, min: u32, num: u32
 }
 fn dev_draw_primitive_up(_this: u32, ty: u32, count: u32, data: GPtr<u8>, stride: u32) -> i32 {
     let Some(p) = prim(ty) else { return D3DERR_INVALIDCALL };
-    let v = bytes(data, (p.vertex_count(count) * stride) as usize);
-    trace::draw("DPUP", ty, count, &v[..(stride as usize).min(v.len())]);
-    hr(with_device(|d| d.draw_primitive_up(p, count, &v, stride)))
+    data.with_bytes((p.vertex_count(count) * stride) as usize, |v| {
+        trace::draw("DPUP", ty, count, &v[..(stride as usize).min(v.len())]);
+        hr(with_device(|d| d.draw_primitive_up(p, count, v, stride)))
+    })
 }
 #[allow(clippy::too_many_arguments)]
 fn dev_draw_indexed_primitive_up(_this: u32, ty: u32, min: u32, num: u32, count: u32, idx: GPtr<u8>, format: u32, data: GPtr<u8>, stride: u32) -> i32 {
     let Some(p) = prim(ty) else { return D3DERR_INVALIDCALL };
     let isz = if format == gpu::fmt::INDEX32 { 4 } else { 2 };
-    let ib = bytes(idx, (p.vertex_count(count) * isz) as usize);
-    let vb = bytes(data, ((min + num) * stride) as usize);
-    trace::draw("DIPUP", ty, count, &vb[(min * stride) as usize..((min + 1) * stride) as usize]);
-    hr(with_device(|d| d.draw_indexed_primitive_up(p, min, num, count, &ib, format, &vb, stride)))
+    idx.with_bytes((p.vertex_count(count) * isz) as usize, |ib| {
+        data.with_bytes(((min + num) * stride) as usize, |vb| {
+            trace::draw("DIPUP", ty, count, &vb[(min * stride) as usize..((min + 1) * stride) as usize]);
+            hr(with_device(|d| d.draw_indexed_primitive_up(p, min, num, count, ib, format, vb, stride)))
+        })
+    })
 }
 fn dev_create_vertex_declaration(_this: u32, elems: GPtr<u8>, out: GPtr<u32>) -> i32 {
     let mut v = Vec::new();
@@ -1279,20 +1284,19 @@ fn tex_lock_rect(obj: u32, level: u32, out: GPtr<u8>, rect: GPtr<u32>, _flags: u
     D3D_OK
 }
 fn tex_unlock_rect(obj: u32, level: u32) -> i32 {
-    let r = with_res(obj, |r| match r {
+    with_res(obj, |r| match r {
         Res::Texture { id, w, h, format, locked, .. } => {
             let (_, _, pitch, _) = level_size(*format, *w, *h, level);
             // the level's CPU copy stays: a later read lock (RwRasterLock for reading, the clothes
             // builder's texture blending) sees the uploaded pixels, as a managed D3D9 texture's
-            locked.get(&level).map(|data| (*id, pitch, data.clone()))
+            match locked.get(&level) {
+                Some(data) => hr(with_device(|d| d.update_texture(*id, 0, level, None, data, pitch))),
+                None => D3DERR_INVALIDCALL,
+            }
         }
-        _ => None,
+        _ => D3DERR_INVALIDCALL,
     })
-    .flatten();
-    match r {
-        Some((id, pitch, data)) => hr(with_device(|d| d.update_texture(id, 0, level, None, &data, pitch))),
-        None => D3DERR_INVALIDCALL,
-    }
+    .unwrap_or(D3DERR_INVALIDCALL)
 }
 fn surf_get_desc(obj: u32, out: GPtr<u8>) -> i32 {
     let d = with_res(obj, |r| match r {
@@ -1366,25 +1370,19 @@ fn buf_lock(obj: u32, offset: u32, size: u32, out: GPtr<u32>, _flags: u32) -> i3
     }
 }
 fn buf_unlock(obj: u32) -> i32 {
-    enum Up {
-        V(gpu::VertexBufferId, u32, Vec<u8>),
-        I(gpu::IndexBufferId, u32, Vec<u8>),
-    }
-    let up = with_res(obj, |r| match r {
+    // the locked range goes to the device straight from the object's copy
+    with_res(obj, |r| match r {
         Res::VertexBuffer { id, data, lock } => {
-            Some(Up::V(*id, lock.0, data[lock.0 as usize..(lock.0 + lock.1) as usize].to_vec()))
+            let d = &data[lock.0 as usize..(lock.0 + lock.1) as usize];
+            hr(with_device(|dev| dev.update_vertex_buffer(*id, lock.0, d)))
         }
         Res::IndexBuffer { id, data, lock, .. } => {
-            Some(Up::I(*id, lock.0, data[lock.0 as usize..(lock.0 + lock.1) as usize].to_vec()))
+            let d = &data[lock.0 as usize..(lock.0 + lock.1) as usize];
+            hr(with_device(|dev| dev.update_index_buffer(*id, lock.0, d)))
         }
-        _ => None,
+        _ => D3DERR_INVALIDCALL,
     })
-    .flatten();
-    match up {
-        Some(Up::V(id, o, d)) => hr(with_device(|dev| dev.update_vertex_buffer(id, o, &d))),
-        Some(Up::I(id, o, d)) => hr(with_device(|dev| dev.update_index_buffer(id, o, &d))),
-        None => D3DERR_INVALIDCALL,
-    }
+    .unwrap_or(D3DERR_INVALIDCALL)
 }
 /// `D3DVERTEXBUFFER_DESC`/`D3DINDEXBUFFER_DESC` `{Format, Type, Usage, Pool, Size, (FVF)}`.
 fn buf_get_desc(obj: u32, out: GPtr<u32>) -> i32 {

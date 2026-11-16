@@ -10,6 +10,9 @@ publish.workspace = true
 sa-platform = { path = "../sa-platform", default-features = false }
 wgpu = "29"
 bytemuck = { version = "1", features = ["derive"] }
+# hot-path maps keyed by small ids / state keys (SipHash costs more than the lookups it guards)
+rustc-hash = "2"
+smallvec = "1"
 
 [dev-dependencies]
 png = "0.18"

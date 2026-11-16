@@ -142,6 +142,21 @@ impl<T: GameData> GPtr<T> {
     }
 }
 
+impl GPtr<u8> {
+    /// Runs `f` on the `n` bytes at `self` as one slice (bulk access to a game buffer, e.g. vertex data handed to
+    /// the render device). The borrow lasts only for the call (trust model: no reference outlives one access), so
+    /// `f` must not run game code that could write those bytes.
+    #[inline]
+    pub fn with_bytes<R>(self, n: usize, f: impl FnOnce(&[u8]) -> R) -> R {
+        if n == 0 || self.is_null() {
+            return f(&[]);
+        }
+        // SAFETY: trust model (module docs): `n` bytes the original program would read at this pointer; `u8` has
+        // no alignment or validity requirement and the slice does not escape `f`.
+        f(unsafe { core::slice::from_raw_parts(self.0, n) })
+    }
+}
+
 /// A game global: `addr` in phase A, a Rust-owned static otherwise. Declared with [`globals!`].
 pub struct Global<T: 'static> {
     addr: u32,

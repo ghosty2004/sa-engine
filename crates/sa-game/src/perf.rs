@@ -107,6 +107,7 @@ const C_DISPATCH: usize = 12;
 const C_PLATFORM: usize = 13;
 pub const C_GAME_ALLOCS: usize = 14;
 const C_ITERATIONS: usize = 15;
+const C_SUBMITS: usize = 16;
 
 const COUNTERS: &[&str] = &[
     "d3d9_calls",
@@ -125,6 +126,7 @@ const COUNTERS: &[&str] = &[
     "platform_calls",
     "game_allocs",
     "iterations",
+    "submits",
 ];
 
 /// Late column: the GPU time of the frame's render passes (timestamp queries; empty where unsupported).
@@ -289,7 +291,7 @@ pub enum Output {
 struct Run {
     output: Output,
     /// cumulative sources at the last frame boundary: device stats, registry calls, platform calls
-    base: [u64; 12],
+    base: [u64; 13],
     gpu: Option<bool>,
 }
 
@@ -308,7 +310,7 @@ pub fn enable(output: Output) {
     RUN.with(|r| {
         *r.borrow_mut() = Some(Run {
             output,
-            base: [0; 12],
+            base: [0; 13],
             gpu: None,
         })
     });
@@ -361,7 +363,7 @@ pub fn probe_enter(i: usize) -> Option<Scope> {
 }
 
 /// The cumulative sources of the counters: device stats, orig! registry dispatches, platform calls.
-fn sources() -> [u64; 12] {
+fn sources() -> [u64; 13] {
     let s = crate::d3d9::with_device(|d| d.stats).unwrap_or_default();
     let reg: u64 = sa_core::orig::registry::table()
         .iter()
@@ -381,11 +383,12 @@ fn sources() -> [u64; 12] {
         s.stream_bytes,
         reg,
         crate::bind::calls_total(),
+        s.submits,
     ]
 }
 
 /// The counter each source feeds.
-const SOURCE_COUNTERS: [usize; 12] = [
+const SOURCE_COUNTERS: [usize; 13] = [
     C_DRAWS,
     C_PASSES,
     C_PIPELINES_NEW,
@@ -398,6 +401,7 @@ const SOURCE_COUNTERS: [usize; 12] = [
     C_STREAM_BYTES,
     C_DISPATCH,
     C_PLATFORM,
+    C_SUBMITS,
 ];
 
 /// The end of main-loop iteration `n` that began in `gGameState` `state` (both the normal and the blocked path):

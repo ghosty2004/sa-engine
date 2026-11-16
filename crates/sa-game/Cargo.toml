@@ -42,6 +42,8 @@ sa-samp-api = { path = "../sa-samp-api" }
 wgpu = "29"
 png = "0.18"
 web-time = "1.1"
+# the D3D9 resource objects' map, looked up on every SetTexture / SetStreamSource / SetIndices
+rustc-hash = "2"
 # pure-Rust Vorbis decoder behind the VORBISFILE.DLL replacement (vorbisfile.rs); MIT OR Apache-2.0
 lewton = "0.10"
 # samp-rs (the SA:MP client, `samp-rs/` in this repository, its own Cargo workspace). samp-client takes
