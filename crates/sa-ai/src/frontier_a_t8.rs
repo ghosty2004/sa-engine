@@ -865,9 +865,9 @@ pub fn sunbathe_create_sub_task(this: GPtr<u8>, ty: i32, _ped: GPtr<u8>) -> GPtr
     }
 }
 
-/// `FUN_006955d0(float)` (0x6955D0, thiscall, `ret 4`): a value different from +0x18 (NaN too) is stored there, with
-/// +0x28 = now, +0x2C = 0 and +0x30 = 1 (a restarted task timer).
-#[hook(addr = 0x6955D0, conv = thiscall, name = "FUN_006955d0", expect = "D9 44 24 04 D8 59 18",
+/// `FUN_006955d0(float)` (0x6955D0, catalogue name `(missed by ghidra: cat7-call)`, thiscall, `ret 4`): a value
+/// different from +0x18 (NaN too) is stored there, with +0x28 = now, +0x2C = 0 and +0x30 = 1 (a restarted task timer).
+#[hook(addr = 0x6955D0, conv = thiscall, name = "(missed by ghidra: cat7-call)", expect = "D9 44 24 04 D8 59 18",
        unverified = "frontier2-a11", route = "L2", hazards = "none")]
 pub fn set_value_and_restart_timer_6955d0(this: GPtr<u8>, v: f32) {
     if fcom_ne(x(v), x(rd::<f32>(this, 0x18))) {
@@ -1457,11 +1457,11 @@ pub fn choking_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
 
 // ------------------------------------------------------------------------------------------- vt_86d868 (hit reaction)
 
-/// `FUN_00620c30(int32 type)` (0x620C30, thiscall, `ret 4`; vt_86d868's CreateSubTask; the entry's `nop; jmp` fetches
-/// the SEH link in the island 0x4020FF). 0xD0 → `CTaskComplexFallAndGetUp(+0x1C == 2 ? 0x1A : 0x14, 0, 1000)`; 0xC8 →
-/// a bare `CTaskSimple` with vtable 0x859CFC; 0x3F0 → `CTaskSimpleBeHit(+0x14 when it is a ped (type 3) else NULL,
-/// +0x20, +0x1C, ftol(+0x18))` (the float converted after `new`); others NULL.
-#[hook(addr = 0x620C30, conv = thiscall, name = "FUN_00620c30", expect = "90 E9 C9 14 DE FF",
+/// `FUN_00620c30(int32 type)` (0x620C30, catalogue `thunk_FUN_004020ff`, thiscall, `ret 4`; vt_86d868's CreateSubTask;
+/// the entry's `nop; jmp` fetches the SEH link in the island 0x4020FF). 0xD0 → `CTaskComplexFallAndGetUp(+0x1C == 2 ?
+/// 0x1A : 0x14, 0, 1000)`; 0xC8 → a bare `CTaskSimple` with vtable 0x859CFC; 0x3F0 → `CTaskSimpleBeHit(+0x14 when it is
+/// a ped (type 3) else NULL, +0x20, +0x1C, ftol(+0x18))` (the float converted after `new`); others NULL.
+#[hook(addr = 0x620C30, conv = thiscall, name = "thunk_FUN_004020ff", expect = "90 E9 C9 14 DE FF",
        unverified = "frontier2-a11", route = "L2", hazards = "heap-writes")]
 pub fn hit_reaction_create_sub_task(this: GPtr<u8>, ty: i32) -> GPtr<u8> {
     match ty {
@@ -1533,11 +1533,11 @@ pub fn hit_reaction_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr
 
 // ------------------------------------------------------------------------------------------- vt_87004c (seek entity)
 
-/// `FUN_00673070(int32 type, CPed*)` (0x673070, `ret 8`; vt_87004c's CreateSubTask, a `CTaskComplexSeekEntity`
-/// instance with the XYOffset layout: flags +0x54, move state +0x50; the entry's `nop; jmp` fetches the SEH link in
-/// the island 0x402204). The bytes of 0x665270 except 0x2CF, which calls `CTaskSimpleCarDriveTimed(vehicle, 2000)`
-/// (0x5FF940) where 0x665270 inlines it.
-#[hook(addr = 0x673070, conv = thiscall, name = "FUN_00673070", expect = "90 E9 8E F1 D8 FF",
+/// `FUN_00673070(int32 type, CPed*)` (0x673070, catalogue `thunk_FUN_00402204`, `ret 8`; vt_87004c's CreateSubTask, a
+/// `CTaskComplexSeekEntity` instance with the XYOffset layout: flags +0x54, move state +0x50; the entry's `nop; jmp`
+/// fetches the SEH link in the island 0x402204). The bytes of 0x665270 except 0x2CF, which calls
+/// `CTaskSimpleCarDriveTimed(vehicle, 2000)` (0x5FF940) where 0x665270 inlines it.
+#[hook(addr = 0x673070, conv = thiscall, name = "thunk_FUN_00402204", expect = "90 E9 8E F1 D8 FF",
        unverified = "frontier2-a11", route = "L2", hazards = "heap-writes")]
 pub fn seek_87004c_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> {
     if ty == 0x2CF {
