@@ -40,6 +40,8 @@ use crate::bindings::throw_projectile_ctor;
 use crate::bindings::track_entity_ctor;
 use crate::bindings::{climb_ctor, death_dtor, drive_to_point_ctor, go_to_point_ctor, ped_position_ped_out_of_collision, vehicle_is_driver};
 use sa_world::bindings::{car_enter_exit_compute_passenger_index_from_car_door, col_sphere_set};
+use crate::bindings::{run_anim_ctor2, task_simple_ctor, task_simple_dtor};
+use sa_world::bindings::{camera_clear_player_weapon_mode, ped_set_current_weapon, player_clear_weapon_target};
 use sa_world::bindings::{find_player_ped, ped_set_ped_state, stats_increment_stat};
 use crate::bindings::event_death_ctor;
 use crate::bindings::geom_compute_route_round_sphere;
@@ -1086,6 +1088,49 @@ pub fn vt_86ee94_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     out()
 }
 
+/// `CTaskComplexUseMobilePhone::CreateFirstSubTask(CPed* ped)` (0x634C10, `ret 4`, SEH frame): ped +0x478 bit 1 and
+/// +0x474 bit 22 set; the player's weapon target cleared; a remembered weapon of 0x37 (+0x70C) becomes the active
+/// weapon's type and the ped switches to weapon 0; +0x480's +0x85 byte set; the player's camera weapon mode cleared; a
+/// stack `CTaskSimpleStandStill(0, false, false, 8.0)` (built inline: vtable 0x86DD2C) processed once and destroyed;
+/// the result `CTaskSimpleRunAnim(group 0, anim 0x91, 4.0, task 0x642, the name at 0x86E498, false)`.
+#[hook(addr = 0x634C10, conv = thiscall, name = "CTaskComplexUseMobilePhone::CreateFirstSubTask", expect = "64 A1 00 00 00 00 6A FF 68 13 09 84 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes")]
+pub fn use_mobile_phone_create_first_sub_task(_this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let (f478, f474) = (rd::<u32>(ped, 0x478), rd::<u32>(ped, 0x474));
+    wr::<u32>(ped, 0x478, f478 | 2);
+    wr::<u32>(ped, 0x474, f474 | 0x40_0000);
+    if ped_is_player(ped) != 0 {
+        player_clear_weapon_target(ped);
+    }
+    if rd::<u32>(ped, 0x70C) == 0x37 {
+        wr::<u32>(ped, 0x70C, rd::<u32>(ped_active_weapon(ped), 0));
+        ped_set_current_weapon(ped, 0);
+    }
+    let pd = rd::<GPtr<u8>>(ped, 0x480);
+    if !pd.is_null() {
+        wr::<u8>(pd, 0x85, 1);
+    }
+    if ped_is_player(ped) != 0 {
+        camera_clear_player_weapon_mode(g::<u8>(0xB6F028));
+    }
+    let mut stand = [0u32; 8];
+    let st = GPtr::from_raw(stand.as_mut_ptr()).cast::<u8>();
+    task_simple_ctor(st);
+    wr::<u32>(st, 0, 0x86DD2C);
+    for o in [8, 0xC, 0x10] {
+        wr::<u32>(st, o, 0);
+    }
+    for o in [0x14, 0x15, 0x18, 0x19] {
+        wr::<u8>(st, o, 0);
+    }
+    wr::<u32>(st, 0x1C, 0x4100_0000);
+    stand_still_process_ped(st, ped);
+    let t = new_task(0x20, |m| run_anim_ctor2(m, 0, 0x91, 0x4080_0000, 0x642, 0x86E498, 0));
+    wr::<u32>(st, 0, 0x86DD2C);
+    task_simple_dtor(st);
+    t
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_FOLLOW_LEADER_IN_FORMATION_CREATE_SUB_TASK,
@@ -1120,4 +1165,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_WALK_ROUND_FIRE_CREATE_FIRST_SUB_TASK,
     HOOK_SEEK_ENTITY_ANY_MEANS_XY_OFFSET_CONTROL_SUB_TASK,
     HOOK_VT_86EE94_PROCESS_PED,
+    HOOK_USE_MOBILE_PHONE_CREATE_FIRST_SUB_TASK,
 ];
