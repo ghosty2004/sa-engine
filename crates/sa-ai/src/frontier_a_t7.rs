@@ -10,10 +10,11 @@ use crate::bindings::{
     compute_closest_surface_point_ped, ped_groups_get_peds_group, ped_replace_weapon_when_exiting_vehicle,
     bbox_planes, compute_entity_hit_side_ped, event_group_add, go_to_point_ctor, scripted_2d_effects_get_index,
     task_timer_is_out_of_time, tm_find_active_task_by_type, tm_get_task_secondary, tm_set_task_secondary,
-    use_gun_control_gun, use_gun_ctor,
+    use_gun_clear_anim, use_gun_control_gun, use_gun_ctor,
 };
 use sa_core::bindings::{
-    get_weapon_info, matrix_set_rotate_z_only, ped_is_alive, vector_difference, vector_magnitude_sqr, vector_sub,
+    get_weapon_info, intel_get_task_use_gun, matrix_set_rotate_z_only, ped_is_alive, tm_get_simplest_active_task,
+    vector_difference, vector_magnitude_sqr, vector_sub,
 };
 use sa_pop::bindings::get_position;
 use crate::common::{g, rd, wr, x, xi, X87};
@@ -31,7 +32,8 @@ use sa_world::bindings::{
     achieve_heading_ctor, camera_get_look_direction, car_enter_exit_compute_passenger_index_from_car_door,
     entity_clean_up_old_reference, follow_node_route_ctor, fx_kill, get_pad_from_player, ik_is_looking, ik_look_at,
     membership_get_leader, ped_say, ped_set_ped_state, event_damage_ctor, event_damage_dtor, fire_extinguish,
-    find_player_wanted, get_task_swim, kill_ped_on_foot_ctor, stand_still_ctor, vector_ctor_iterator, max_f, min_f, pad_get_accelerate, pad_get_brake,
+    duck_ctor, find_player_wanted, get_task_swim, intel_get_task_duck, kill_ped_on_foot_ctor, stand_still_ctor,
+    vector_ctor_iterator, max_f, min_f, pad_get_accelerate, pad_get_brake,
     pad_get_exit_vehicle, pad_get_ped_walk_left_right, pad_get_ped_walk_up_down, pad_get_target,
     ped_remove_weapon_when_entering_vehicle, physical_apply_move_force_5429f0,
 };
@@ -1244,6 +1246,66 @@ pub fn interior_go_to_info_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) 
     t
 }
 
+/// A new `CTaskSimpleDuck(4, 0, -1)` (NULL when the task pool is full) as the ped's secondary task 1 (duck).
+fn duck_toggle_start_duck(ped: GPtr<u8>) {
+    let mem = crate::common::task_new(0x28);
+    let t = if mem.is_null() { GPtr::NULL } else { duck_ctor(mem, 4, 0, u32::MAX) };
+    tm_set_task_secondary(rd::<GPtr<u8>>(ped, 0x47C).byte_add(4), t, 1);
+}
+
+/// `CTaskSimpleDuckToggle::ProcessPed(CPed*)` (0x62F6E0, `ret 4`, AL = 1). Mode +8 0 or -1 with a secondary duck
+/// (`GetTaskDuck(0)`): its `MakeAbortable(ped, 0, NULL)`, then the gun task's `ClearAnim(ped)` when there is one
+/// (`GetTaskUseGun`). Mode 1 or -1 (-1 only without a duck): `o` = the simplest active task when it is a 0x19F one.
+/// Without a ducking secondary task (`GetTaskDuck(1)`): `o.MakeAbortable(ped, 1, NULL)`, a new duck (4, 0, -1) as
+/// secondary task 1 and the gun task's `ClearAnim`. With one whose control type (+0x24) is not 4:
+/// `o.AbortBecauseOfOtherDuck(ped)`, and unless `SetControlType(4)` succeeds the old duck's
+/// `AbortBecauseOfOtherDuck(ped)` and a new duck.
+#[hook(addr = 0x62F6E0, conv = thiscall, name = "CTaskSimpleDuckToggle::ProcessPed", expect = "64 A1 00 00 00 00 6A FF 68 26 03 84 00",
+       unverified = "frontier2-a10", route = "L2", hazards = "ax-al-return,heap-writes",
+       note = "SEH frame not modelled")]
+pub fn duck_toggle_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
+    let intel = || rd::<GPtr<u8>>(ped, 0x47C);
+    let tm = || intel().byte_add(4);
+    let clear_gun_anim = || {
+        if !intel_get_task_use_gun(intel()).is_null() {
+            use_gun_clear_anim(intel_get_task_use_gun(intel()), ped);
+        }
+    };
+    let mode = rd::<i32>(this, 8);
+    if (mode == 0 || mode == -1) && !intel_get_task_duck(intel(), 0).is_null() {
+        crate::common::task_make_abortable(intel_get_task_duck(intel(), 0), ped, 0, GPtr::NULL);
+        clear_gun_anim();
+        return 1;
+    }
+    let mode = rd::<i32>(this, 8);
+    if mode != 1 && mode != -1 {
+        return 1;
+    }
+    let mut other = GPtr::NULL;
+    if !tm_get_simplest_active_task(tm()).is_null() && crate::common::task_get_type(tm_get_simplest_active_task(tm())) == 0x19F {
+        other = tm_get_simplest_active_task(tm());
+    }
+    if intel_get_task_duck(intel(), 1).is_null() {
+        if !other.is_null() {
+            crate::common::task_make_abortable(other, ped, 1, GPtr::NULL);
+        }
+        duck_toggle_start_duck(ped);
+        clear_gun_anim();
+        return 1;
+    }
+    if rd::<u8>(intel_get_task_duck(intel(), 1), 0x24) == 4 {
+        return 1;
+    }
+    if !other.is_null() {
+        crate::duck_sequence_groups::duck_abort_because_of_other_duck(other, ped);
+    }
+    if crate::duck_sequence_groups::duck_set_control_type(intel_get_task_duck(intel(), 1), 4) == 0 {
+        crate::duck_sequence_groups::duck_abort_because_of_other_duck(intel_get_task_duck(intel(), 1), ped);
+        duck_toggle_start_duck(ped);
+    }
+    1
+}
+
 /// Every hook of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_JET_PACK_PROCESS_CONTROL_INPUT,
@@ -1262,4 +1324,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_PLAYER_ON_FIRE_PROCESS_PED,
     HOOK_DIVE_FROM_ATTACHED_ENTITY_CREATE_FIRST_SUB_TASK,
     HOOK_INTERIOR_GO_TO_INFO_CREATE_FIRST_SUB_TASK,
+    HOOK_DUCK_TOGGLE_PROCESS_PED,
 ];
