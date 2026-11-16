@@ -18,7 +18,7 @@ use crate::bindings::get_random_id;
 use crate::bindings::place_furniture;
 orig! {
     /// `Interior_c::PlaceObject(bool, Furniture_c*, float x, float y, float z, float rot)` (0x5934E0)
-    fn place_object(this: GPtr<u8>, a: u32, f: GPtr<u8>, px: f32, py: f32, pz: f32, rot: f32) -> GPtr<u8> = thiscall 0x5934E0 => unported;
+    fn place_object(this: GPtr<u8>, a: u32, f: GPtr<u8>, px: f32, py: f32, pz: f32, rot: f32) -> GPtr<u8> = thiscall 0x5934E0 => super::interior_place_furniture::place_object;
     /// `Interior_c::Kitchen_FurnishEdges()` (0x596930)
     fn kitchen_furnish_edges(this: GPtr<u8>) = thiscall 0x596930 => unported;
     /// `Interior_c::Office_PlaceEdgeDesks(int32 id, int32 x, int32 y, int32 dir, int32)` (0x5995B0)

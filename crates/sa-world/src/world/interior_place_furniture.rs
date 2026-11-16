@@ -7,7 +7,12 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-use super::common::{rd, wr, x, xi};
+use super::common::{ftol32, g, rd, wr, x, xi};
+use super::misc2::interior_manager_find_stealable_object_id2 as find_stealable;
+use super::misc2::interior_manager_has_interior_had_steal_data_setup as has_steal_data;
+use super::object::{object_ctor_model, object_new};
+use crate::bindings::world_remove;
+use sa_core::bindings::list_remove_item;
 
 use sa_core::bindings::matrix_ctor_rw as m_ctor_rw;
 use crate::bindings::placeable_set_matrix as set_matrix;
@@ -29,6 +34,10 @@ use sa_core::bindings::matrix_rotate_z as m_set_rotate_z;
 orig! {
     /// `CEntity::SetModelIndex(uint32)` (vtable +0x18)
     fn v_set_model_index(e: GPtr<u8>, mi: u32) = thiscall vslot 0x18 => unported;
+    /// `CEntity::SetIsStatic(bool)` (vtable +0x10)
+    fn v_set_is_static(e: GPtr<u8>, v: u32) = thiscall vslot 0x10 => unported;
+    /// The scalar deleting destructor (vtable +0)
+    fn v_delete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
 }
 
 /// The free furniture item list (0xBAD3EC).
@@ -184,5 +193,115 @@ pub fn place_furniture(this: GPtr<u8>, f: GPtr<u8>, tx: i32, ty: i32, height: f3
     ret
 }
 
+/// The interior manager (`g_interiorMan`, 0xBAF670) and its stealable records (count 0xBB3A18, then 0x1C
+/// each from 0xBB3A1C: +0 object, +4 model, +8 interior id, +0xC position, +0x18 stolen flag).
+const INTERIOR_MAN: usize = 0xBA_F670;
+const STEAL_COUNT: usize = 0xBB_3A18;
+const STEAL_RECORDS: usize = 0xBB_3A1C;
+
+/// `Interior_c::PlaceObject(uint8 stealable, Furniture_c* f, float x, float y, float z, float rot)`
+/// (0x5934E0, thiscall, `ret 0x18`). The point is the interior's local origin (`-W/2, -D/2, -H/2` of
+/// the info at +0x14, x87 `fild * 0.5`) plus the offsets, its z lowered by the model's bounding-box
+/// minimum z. Without a free list item: null (no matrix built). The matrix is the interior's (+0x18)
+/// times `RotateZ(rot degrees)` translated by the point; a free item gets a new `CObject(model, 0)`
+/// with that matrix, area = this +0x10, flags +0x1C |= 0x10000, type +0x13C = 5, vtable +0x10 (1),
+/// added to the world; the item's tile = `_ftol(x)`, `_ftol(y)`, appended to the furniture list
+/// (+0x5C). A stealable object (+0x140 |= 0x2000): when the interior's steal data was set up, its
+/// record (`FindStealableObjectId(id, model, point)`) marked stolen removes and deletes it again (item
+/// back to the free list, result null), else a found record takes the object; otherwise a new record
+/// {object, model, interior id, point, 0} is appended. Returns the object.
+#[hook(addr = 0x5934E0, conv = thiscall, name = "Interior_c::PlaceObject", this = "Interior_c",
+       expect = "6A FF 68 47 D0 83 00",
+       unverified = "frontier2-c15", route = "L2", hazards = "heap-writes",
+       note = "creates a CObject (world, object pool); three stack CMatrix objects through the original matrix functions")]
+#[allow(clippy::too_many_arguments)]
+pub fn place_object(this: GPtr<u8>, stealable: u32, f: GPtr<u8>, ox: f32, oy: f32, oz: f32, rot: f32) -> GPtr<u8> {
+    let col = rd::<GPtr<u8>>(super::hand_object::model_info(i32::from(rd::<u16>(f, 8))), 0x14);
+    let min_z = rd::<f32>(col, 8);
+    let info = rd::<GPtr<u8>>(this, 0x14);
+    let px = xi(-i32::from(rd::<u8>(info, 2))).fmul_m(F_0_5).fadd_m(ox).to_f32();
+    let py = xi(-i32::from(rd::<u8>(info, 3))).fmul_m(F_0_5).fadd_m(oy).to_f32();
+    let pz = xi(-i32::from(rd::<u8>(info, 4))).fmul_m(F_0_5).fadd_m(oz).fsub_m(min_z).to_f32();
+    if (list_num_items(GPtr::from_addr(FREE_ITEMS)) as i32) <= 0 {
+        return GPtr::NULL;
+    }
+    let mut ma: Mat = [0; 0x12]; // [esp+0xBC]
+    m_ctor_rw(m(&mut ma), this.byte_add(0x18), 0);
+    let mut mb: Mat = [0; 0x12]; // [esp+0x2C]
+    let mut mc: Mat = [0; 0x12]; // [esp+0x74]
+    m_set_unity(m(&mut mb));
+    m_set_rotate_z(m(&mut mb), x(rot).fmul_m(DEG2RAD).to_f32());
+    let bp = m(&mut mb);
+    for (o, v) in [(0x30, px), (0x34, py), (0x38, pz)] {
+        wr::<f32>(bp, o, x(rd::<f32>(bp, o)).fadd_m(v).to_f32());
+    }
+    let mut t: Mat = [0; 0x12]; // [esp+0x104]
+    let r = m_mul(m(&mut t), m(&mut ma), m(&mut mb));
+    m_assign(m(&mut mc), r);
+    m_dtor(m(&mut t));
+    let dtors = |mc: &mut Mat, mb: &mut Mat, ma: &mut Mat| {
+        m_dtor(m(mc));
+        m_dtor(m(mb));
+        m_dtor(m(ma));
+    };
+    let item = list_remove_head(GPtr::from_addr(FREE_ITEMS));
+    if item.is_null() {
+        dtors(&mut mc, &mut mb, &mut ma);
+        return GPtr::NULL;
+    }
+    let mem = object_new(0x17C);
+    let obj = if mem.is_null() { GPtr::NULL } else { object_ctor_model(mem, u32::from(rd::<u16>(f, 8)), 0) };
+    wr::<GPtr<u8>>(item, 8, obj);
+    set_matrix(obj, m(&mut mc));
+    wr::<u8>(rd::<GPtr<u8>>(item, 8), 0x2F, rd::<u8>(this, 0x10));
+    let o = rd::<GPtr<u8>>(item, 8);
+    wr::<u32>(o, 0x1C, rd::<u32>(o, 0x1C) | 0x1_0000);
+    wr::<u8>(rd::<GPtr<u8>>(item, 8), 0x13C, 5);
+    v_set_is_static(rd::<GPtr<u8>>(item, 8), 1);
+    world_add(rd::<GPtr<u8>>(item, 8));
+    wr::<u16>(item, 0xC, ftol32(x(ox)) as u16);
+    wr::<u16>(item, 0xE, ftol32(x(oy)) as u16);
+    list_add_item(this.byte_add(0x5C), item);
+    if stealable as u8 != 0 {
+        let o = rd::<GPtr<u8>>(item, 8);
+        wr::<u32>(o, 0x140, rd::<u32>(o, 0x140) | 0x2000);
+        let man = GPtr::from_addr(INTERIOR_MAN);
+        let model = || u32::from(rd::<u16>(f, 8));
+        if has_steal_data(man, this) != 0 {
+            let id = find_stealable(man, rd::<u32>(this, 8), model(), px, py, pz);
+            if id >= 0 && GPtr::<u8>::from_addr(STEAL_RECORDS + 0x18 + id as usize * 0x1C).read() != 0 {
+                world_remove(rd::<GPtr<u8>>(item, 8));
+                let o = rd::<GPtr<u8>>(item, 8);
+                if !o.is_null() {
+                    v_delete(o, 1);
+                }
+                wr::<u32>(item, 8, 0);
+                list_remove_item(this.byte_add(0x5C), item);
+                list_add_item(GPtr::from_addr(FREE_ITEMS), item);
+                dtors(&mut mc, &mut mb, &mut ma);
+                return GPtr::NULL;
+            }
+            let id = find_stealable(man, rd::<u32>(this, 8), model(), px, py, pz);
+            if id >= 0 {
+                GPtr::<u32>::from_addr(STEAL_RECORDS + id as usize * 0x1C).write(rd::<u32>(item, 8));
+            }
+        } else {
+            let rec = |o: usize| STEAL_RECORDS + o + g::<u32>(STEAL_COUNT).read() as usize * 0x1C;
+            GPtr::<u32>::from_addr(rec(0)).write(rd::<u32>(item, 8));
+            GPtr::<u32>::from_addr(rec(4)).write(model());
+            GPtr::<u32>::from_addr(rec(8)).write(rd::<u32>(this, 8));
+            let p = rec(0xC);
+            GPtr::<f32>::from_addr(p).write(px);
+            GPtr::<f32>::from_addr(p + 4).write(py);
+            GPtr::<f32>::from_addr(p + 8).write(pz);
+            GPtr::<u8>::from_addr(rec(0x18)).write(0);
+            g::<u32>(STEAL_COUNT).write(g::<u32>(STEAL_COUNT).read().wrapping_add(1));
+        }
+    }
+    let ret = rd::<GPtr<u8>>(item, 8);
+    dtors(&mut mc, &mut mb, &mut ma);
+    ret
+}
+
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_PLACE_FURNITURE];
+pub const HOOKS: &[HookReg] = &[HOOK_PLACE_FURNITURE, HOOK_PLACE_OBJECT];
