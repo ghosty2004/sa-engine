@@ -7,7 +7,7 @@ use sa_core::bindings::{general_get_radian_angle_between_points, general_limit_r
 use sa_core::bindings::{task_new, vector_normalise};
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
-use sa_math::fpu::{lt, st0};
+use sa_math::fpu::{fcom_ne, lt, st0};
 
 use crate::bindings::{
     climb_test_for_climb, membership_count_members, ped_groups_get_peds_group, seek_entity_xy_offset_ctor, stand_still_dtor,
@@ -73,14 +73,15 @@ orig! {
     fn seek_cover_get_target_ped(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x622CC0 => crate::group_scan_loops::seek_cover_until_target_dead_get_target_ped;
 }
 
-/// `CTaskComplexFollowLeaderInFormation::CreateSubTask(int32 type, CPed* ped)` (0x6962A0, `ret 8`; the entry is a
+/// `CTaskComplexFollowLeaderInFormation::CreateSubTask(int32 type, CPed* ped)` (0x6962A0, catalogue name
+/// `thunk_FUN_00401913`; `ret 8`; the entry is a
 /// `nop; jmp` to the island 0x401913 that fetches the SEH link and jumps back to 0x6962A6). +0xC the group, +0x10 the
 /// leader, +0x14 the formation offset. 0xCA pause (2000); 0xCB stand still (500, 8.0); 0x2BC enter the leader's vehicle
 /// as passenger; 0x2C0 leave the ped's vehicle; 0x2C5 simple car drive in it; 0x38B seek the leader (50000, 1000, the
 /// radii at 0x86FC2C / 0x86FC30, 2.0) with the offset copied to +0x44 and mode 7 at +0x50 (written through the result
 /// even when `new` fails, as the bytes); 0x386 achieve a heading ([`follow_leader_turn_task`]); 0x516 and anything
 /// else: null.
-#[hook(addr = 0x6962A0, conv = thiscall, name = "CTaskComplexFollowLeaderInFormation::CreateSubTask",
+#[hook(addr = 0x6962A0, conv = thiscall, name = "thunk_FUN_00401913",
        expect = "90 E9 6D B6 D6 FF", this = "CTaskComplexFollowLeaderInFormation",
        unverified = "frontier2-a8", route = "L2", hazards = "heap-writes")]
 pub fn follow_leader_in_formation_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> {
@@ -296,6 +297,7 @@ pub fn go_to_point_aiming_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -
 /// event.
 #[hook(addr = 0x6754D0, conv = thiscall, name = "CTaskInteriorBeInShop::ScanForStuff", expect = "6A FF 68 00 5C 84 00",
        unverified = "frontier2-a8", route = "L2", hazards = "heap-writes")]
+#[allow(clippy::collapsible_match)]
 pub fn be_in_shop_scan_for_stuff(this: GPtr<u8>, ped: GPtr<u8>) {
     if rd::<u8>(this, 0x30) == 0 {
         return;
@@ -478,11 +480,6 @@ pub fn fall_to_death_calc_fall(ped: GPtr<u8>, dir: GPtr<i32>, fall_to_death: GPt
     0
 }
 
-/// `x == 0.0` after `fcomp; test ah, 44h; jp` (ordered equality).
-fn eq0(v: f32) -> bool {
-    !x(v).fcom(x(0.0)).test_parity(0x44)
-}
-
 /// `sqrt(dy^2 + dx^2)` of the swim target (+0x14) minus the ped's position, on the x87 stack (x first).
 fn swim_target_dist_2d(this: GPtr<u8>, ped: GPtr<u8>) -> X87 {
     let p = entity_pos(ped).cast::<f32>();
@@ -513,7 +510,7 @@ pub fn swim_process_control_ai(this: GPtr<u8>, ped: GPtr<u8>) {
         let (dz, dy, dx) = (d(2), d(1), d(0));
         let mut dir = [dx, dy, dz];
         vector_normalise(GPtr::from_raw(dir.as_mut_ptr()).cast());
-        if eq0(rd::<f32>(this, 0x50)) {
+        if !fcom_ne(x(rd::<f32>(this, 0x50)), x(0.0)) {
             let r = rand_at(0x6896B4) & 3;
             wr::<f32>(this, 0x50, xi(r).fmul_m(g::<f32>(0x858B8C).read()).fadd_m(g::<f32>(0x858CE8).read()).to_f32());
         }
@@ -530,7 +527,7 @@ pub fn swim_process_control_ai(this: GPtr<u8>, ped: GPtr<u8>) {
         wr::<f32>(this, 0x1C, tz);
     }
     let mut led = false;
-    if !(eq0(rd::<f32>(this, 0x14)) && eq0(rd::<f32>(this, 0x18)) && eq0(rd::<f32>(this, 0x1C))) {
+    if [0x14, 0x18, 0x1C].iter().any(|&o| fcom_ne(x(rd::<f32>(this, o)), x(0.0))) {
         let p = entity_pos(ped).cast::<f32>();
         let dy = x(rd::<f32>(this, 0x18)).fsub_m(p.wrapping_index(1).read());
         let dx = x(rd::<f32>(this, 0x14)).fsub_m(p.read());
