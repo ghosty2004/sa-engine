@@ -3070,10 +3070,7 @@ use crate::bindings::hw_load_sound_bank;
 use crate::bindings::script_is_mission_audio_sample_finished;
 use crate::bindings::are_sounds_of_this_event_playing_for_this_entity as sm_are_sounds_of_this_event_playing_for_this_entity;
 use crate::bindings::get_bank_and_sound_from_script_slot_audio_event as util_get_bank_and_sound_from_script_slot_audio_event;
-orig! {
-    /// `CAEScriptAudioEntity::PlayResidentSoundEvent(int16 bank, int16 slot, int16 sfx, int32 event, CVector& pos, CPhysical*, float vol, float speed, int16 playTime, float maxDistance)` (0x4EC550)
-    fn script_play_resident_sound_event(this: GPtr<u8>, bank: u32, slot: u32, sfx: u32, event: u32, pos: GPtr<u8>, physical: u32, vol_bits: u32, speed_bits: u32, play_time: u32, max_dist_bits: u32) = thiscall 0x4EC550 => unported;
-}
+use crate::bindings::script_play_resident_sound_event;
 
 /// `CAEScriptAudioEntity::PreloadMissionAudio(uint8 slot, int32 event)` (0x4EC190): for slots < 4 whose
 /// previous sample finished: resolves the event to (bank +0xA8, sound +0xAC) of the slot's 32-byte record
@@ -3152,11 +3149,8 @@ pub fn script_service(this: GPtr<u8>) {
 }
 
 use crate::bindings::sound_set_position;
-orig! {
-    /// `CAEScriptAudioEntity::PlayMissionBankSound(event, pos, physical, sfx, slot, skip, volDelta, maxDist,
-    /// speed)` (0x4EC6D0, `ret 0x24`)
-    fn script_play_mission_bank_sound(this: GPtr<u8>, event: u32, pos: GPtr<u8>, physical: u32, sfx: u32, slot: u32, skip: u32, vol_bits: u32, max_dist_bits: u32, speed_bits: u32) = thiscall 0x4EC6D0 => script_play_mission_bank_sound_port;
-}
+use crate::bindings::script_play_mission_bank_sound;
+use crate::bindings::ambience_stop_special_mission_ambience_track;
 
 /// `CAEScriptAudioEntity::UpdateParameters(CAESound*, int16 curPlayPos)` (0x4EC970, vtable slot 0). For
 /// each of the 4 mission-audio records: the record's own sound (+0xA0) is cleared and the function returns
@@ -3454,8 +3448,6 @@ pub fn engine_preload_beat_track(this: GPtr<u8>, track: u32) {
 }
 
 orig! {
-    /// `CAEAmbienceTrackManager::StopSpecialMissionAmbienceTrack()` (0x4D6D60)
-    fn ambience_stop_special_mission_ambience_track(this: GPtr<u8>) = thiscall 0x4D6D60 => unported;
     /// `CAERadioTrackManager::Reset()` (0x4E7F80)
     fn radio_reset(this: GPtr<u8>) = thiscall 0x4E7F80 => unported;
     /// `CAEAmbienceTrackManager::Reset()` (0x4D6CA0)

@@ -34,6 +34,7 @@ use sa_core::bindings::is_foreground_app;
 use sa_core::bindings::timer_get_is_slow_motion_active as timer_is_slow_motion_active;
 use sa_stream::bindings::cd_stream_get_status;
 use crate::bindings::ae_resolve_probability;
+use crate::bindings::sm_cancel_sounds_of_event;
 use crate::bindings::amb_service as ambience_service;
 use crate::bindings::are_sounds_of_this_event_playing_for_this_entity as sm_are_sounds_of_event;
 use crate::bindings::cut_service as cutscene_service;
@@ -99,7 +100,6 @@ orig! {
     fn sound_update_parameters(s: u32, pt: u32) = thiscall 0x4EFF50 => unported;
     fn sound_calculate_volume(s: u32) = thiscall 0x4EFA10 => unported;
     fn entity_update_parameters_raw(ent: GPtr<u8>, s: u32, pt: u32) = thiscall vslot 0x00 => unported;
-    fn sm_cancel_sounds_of_event(this: u32, ev: u32, ent: u32) = thiscall 0x4EFB90 => unported;
     fn global_weapon_service_ambient_gun_fire(this: u32) = thiscall 0x4DF210 => unported;
     fn collision_service(this: u32) = thiscall 0x4DA2C0 => unported;
     fn script_service(this: u32) = thiscall 0x4EC900 => unported;

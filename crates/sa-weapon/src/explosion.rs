@@ -329,10 +329,7 @@ pub use sa_world::bindings::get_water_level_no_waves;
 pub use sa_world::bindings::interesting_events_add;
 pub use sa_world::bindings::find_player_ped;
 pub use sa_world::bindings::add_permanent_shadow;
-orig! {
-    /// `CAEExplosionAudioEntity::AddAudioEvent(int32 event, CVector& pos, float volume)` (0x4DCBE0, thiscall)
-    pub fn explosion_audio_add_event(ae: GPtr<u8>, ev: i32, pos: GPtr<u8>, vol: f32) = thiscall 0x4DCBE0 => unported;
-}
+pub use sa_world::bindings::explosion_audio_add_event;
 
 /// `g_fxMan`
 const FX_MAN: usize = 0xA9AE80;

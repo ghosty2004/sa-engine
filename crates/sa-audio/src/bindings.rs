@@ -24,6 +24,11 @@ orig! {
 }
 
 orig! {
+    /// `CAEAmbienceTrackManager::StopSpecialMissionAmbienceTrack` (0x4D6D60)
+    pub fn ambience_stop_special_mission_ambience_track(this: GPtr<u8>) = thiscall 0x4D6D60 => unported;
+}
+
+orig! {
     /// `CAEAmbienceTrackManager::Service` (0x4D76C0)
     pub fn amb_service(this: GPtr<u8>, play_time: u32) = thiscall 0x4D76C0 => unported;
 }
@@ -229,6 +234,11 @@ orig! {
 }
 
 orig! {
+    /// `CAEExplosionAudioEntity::AddAudioEvent` (0x4DCBE0)
+    pub fn explosion_audio_add_event(ae: GPtr<u8>, ev: i32, pos: GPtr<u8>, vol: f32) = thiscall 0x4DCBE0 => crate::explosion_audio::explosion_audio_add_event;
+}
+
+orig! {
     /// `CAEFrontendAudioEntity::AddAudioEvent` (0x4DD4A0)
     pub fn frontend_add_audio_event(this: u32, event: u32, volume: u32, speed: u32) = thiscall 0x4DD4A0 => crate::port4_service::frontend_add_audio_event;
 }
@@ -364,8 +374,18 @@ orig! {
 }
 
 orig! {
+    /// `CAEScriptAudioEntity::PlayResidentSoundEvent` (0x4EC550)
+    pub fn script_play_resident_sound_event(this: GPtr<u8>, slot: u32, bank: u32, sfx: u32, event: u32, pos: GPtr<u8>, physical: u32, vol_bits: u32, speed_bits: u32, play_time: u32, max_dist_bits: u32) = thiscall 0x4EC550 => unported;
+}
+
+orig! {
+    /// `CAEScriptAudioEntity::PlayMissionBankSound` (0x4EC6D0)
+    pub fn script_play_mission_bank_sound(this: GPtr<u8>, event: u32, pos: GPtr<u8>, physical: u32, sfx: u32, slot: u32, skip: u32, vol_bits: u32, max_dist_bits: u32, speed_bits: u32) = thiscall 0x4EC6D0 => crate::port2_a::script_play_mission_bank_sound_port;
+}
+
+orig! {
     /// `CAEScriptAudioEntity::ProcessMissionAudioEvent` (0x4ECCF0)
-    pub fn script_process_mission_audio_event(this: GPtr<u8>, event: u32, posn: GPtr<u8>, physical: u32, a4: u32, volume: u32) = thiscall 0x4ECCF0 => unported;
+    pub fn script_process_mission_audio_event(this: GPtr<u8>, event: u32, posn: GPtr<u8>, physical: u32, volume: u32, speed: u32) = thiscall 0x4ECCF0 => crate::mission_audio_event::process_mission_audio_event;
 }
 
 orig! {
@@ -421,6 +441,11 @@ orig! {
 orig! {
     /// `CAESoundManager::RequestNewSound` (0x4EFB10)
     pub fn sm_request_new_sound(sm: u32, sound: u32) -> u32 = thiscall 0x4EFB10 => crate::port4_service::sound_manager_request_new_sound;
+}
+
+orig! {
+    /// `CAESoundManager::CancelSoundsOfThisEventPlayingForThisEntity` (0x4EFB90)
+    pub fn sm_cancel_sounds_of_event(sm: u32, ev: u32, ent: u32) = thiscall 0x4EFB90 => unported;
 }
 
 orig! {

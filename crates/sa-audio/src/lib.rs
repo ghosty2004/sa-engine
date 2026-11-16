@@ -70,3 +70,4 @@ pub mod cj_mood;
 pub mod ped_hit;
 pub mod explosion_audio;
 pub mod frontier_c;
+pub mod mission_audio_event;

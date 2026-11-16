@@ -1279,6 +1279,11 @@ orig! {
 }
 
 orig! {
+    /// `CAEExplosionAudioEntity::AddAudioEvent` (0x4DCBE0)
+    pub fn explosion_audio_add_event(ae: GPtr<u8>, ev: i32, pos: GPtr<u8>, vol: f32) = thiscall 0x4DCBE0 => unported;
+}
+
+orig! {
     /// `CAEPedAudioEntity::TurnOffJetPack` (0x4E2A70)
     pub fn ped_audio_turn_off_jet_pack(a: GPtr<u8>) = thiscall 0x4E2A70 => unported;
 }
