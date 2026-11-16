@@ -54,6 +54,11 @@ orig! {
 }
 
 orig! {
+    /// `CPad::SprintJustDown` (0x5407F0)
+    pub fn pad_sprint_just_down(pad: GPtr<u8>) -> u8 = thiscall 0x5407F0 => unported;
+}
+
+orig! {
     /// `CPad::Clear` (0x541A70)
     pub fn pad_clear(pad: GPtr<u8>, a: u32, b: u32) = thiscall 0x541A70 => crate::pad::clear;
 }

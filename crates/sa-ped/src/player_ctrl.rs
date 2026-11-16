@@ -99,6 +99,7 @@ pub use crate::bindings::player_clear_weapon_target as clear_weapon_target;
 pub use crate::bindings::player_info_get_pos;
 pub use crate::bindings::player_ped_clear_adrenaline as clear_adrenaline;
 pub use sa_world::bindings::set_orientation;
+pub use sa_input::bindings::pad_sprint_just_down;
 orig! {
     /// `CReplay::DisableReplays` (0x45B150)
     pub fn disable_replays() = cdecl 0x45B150 => unported;
@@ -106,8 +107,6 @@ orig! {
     pub fn enable_replays() = cdecl 0x45B160 => unported;
     /// `CWeapon::StopWeaponEffect` (0x73B360)
     pub fn weapon_stop_weapon_effect(w: GPtr<u8>) = thiscall 0x73B360 => unported;
-    /// `CPad::SprintJustDown` (0x5407F0)
-    pub fn pad_sprint_just_down(pad: GPtr<u8>) -> u8 = thiscall 0x5407F0 => unported;
     /// `CPed::CanStrafeOrMouseControl` (0x5DF090)
     pub fn ped_can_strafe_or_mouse_control(p: GPtr<u8>) -> u8 = thiscall 0x5DF090 => unported;
     /// `CBaseModelInfo::GetModelType` (vtable slot 0x10, AL)

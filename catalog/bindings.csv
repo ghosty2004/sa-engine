@@ -1211,6 +1211,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x530640,sa-input,call_init_default,thiscall,,this:GPtr<u8>,,sa_input::ccm::init_default_control_configuration,CControllerConfigManager::InitDefaultControlConfiguration,
 0x531F20,sa-input,reinit_controls,cdecl,,,,unported,CControllerConfigManager::ReinitControls,
 0x53EFF0,sa-input,call_controller_state_check_for_input,thiscall,,state:GPtr<u8>,u8,sa_input::pad::controller_state_check_for_input,CControllerState::CheckForInput,
+0x5407F0,sa-input,pad_sprint_just_down,thiscall,,pad:GPtr<u8>,u8,unported,CPad::SprintJustDown,
 0x4B23D0,sa-ped,event_player_command_to_group_ctor,thiscall,,e:GPtr<u8>;cmd:i32;target:GPtr<u8>,GPtr<u8>,unported,CEventPlayerCommandToGroup::Constructor,
 0x4E68D0,sa-ped,ped_speech_initialise,thiscall,,e:GPtr<u8>;ped:GPtr<u8>,,unported,CAEPedSpeechAudioEntity::Initialise,
 0x561E70,sa-ped,set_maximum_wanted_level,cdecl,,level:i32,,sa_ped::wanted::set_maximum_wanted_level,CWanted::SetMaximumWantedLevel,

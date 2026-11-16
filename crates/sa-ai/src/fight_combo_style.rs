@@ -22,7 +22,7 @@ const ANIM_BLOCKS: u32 = 0xB5D4A0;
 const COMBO_DATA: u32 = 0xC170D0;
 
 /// The animation block of group `grp`: the group's block pointer, else `GetAnimationBlock(GetAnimBlockName(grp))`.
-fn group_block(grp: u32) -> GPtr<u8> {
+pub(crate) fn group_block(grp: u32) -> GPtr<u8> {
     let b = rd::<GPtr<u8>>(g::<GPtr<u8>>(ASSOC_GROUPS).read(), grp as isize * 0x14);
     if b.is_null() {
         animation_block(GPtr::from_addr((GPtr::<u8>::addr(anim_block_name(grp)) as u32) as usize))
@@ -31,7 +31,7 @@ fn group_block(grp: u32) -> GPtr<u8> {
     }
 }
 
-fn block_index(b: GPtr<u8>) -> i32 {
+pub(crate) fn block_index(b: GPtr<u8>) -> i32 {
     (b.addr() as u32).wrapping_sub(ANIM_BLOCKS) as i32 >> 5
 }
 
