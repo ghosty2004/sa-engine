@@ -385,6 +385,8 @@ use crate::bindings::rw_matrix_invert as matrix_invert;
 use crate::bindings::rw_raster_create as raster_create;
 use crate::bindings::rw_raster_destroy as raster_destroy;
 use crate::bindings::set_transform;
+use crate::d3d9rast::{dev_create_additional_swap_chain, swap_chain_get_back_buffer, D3D_TO_RW};
+use crate::d3d9sys::get_window_rect;
 orig! {
     /// `IDirect3DDevice9::SetRenderTarget(index, surface)` (+0x94)
     fn dev_set_render_target(dev: GPtr<u8>, index: u32, surface: u32) -> i32 = stdcall vslot 0x94 => unported;
@@ -411,8 +413,6 @@ orig! {
     fn is_iconic(hwnd: u32) -> u32 = stdcall cell 0x85825C => unported;
     /// `_rwProcessorForceSinglePrecision()` (0x857432)
     fn force_single_precision() = cdecl 0x857432 => crate::d3d9sys::processor_force_single_precision;
-    /// `RwD3D9CameraAttachWindow(camera, hwnd)` (0x7F8D70)
-    fn camera_attach_window(camera: GPtr<u8>, hwnd: u32) -> u32 = cdecl 0x7F8D70 => unported;
     /// `FUN_007f5800()`: the dynamic vertex buffers' frame advance
     fn dynamic_vertex_buffer_frame() = cdecl 0x7F5800 => crate::d3d9vb::dynamic_vertex_buffer_manager_frame;
 }
@@ -678,6 +678,72 @@ pub fn camera_begin_update(_out: u32, camera: GPtr<u8>, _flags: u32) -> u32 {
     test_state()
 }
 
+/// `RwD3D9CameraAttachWindow(camera, hwnd)` (0x7F8D70): 0 for a fullscreen device or the main window.
+/// `GetWindowRect(hwnd)`; the camera's frame buffer and Z rasters destroyed (fields cleared first);
+/// the present parameters copied with back-buffer width / height = 1 when the window's width /
+/// height is 0, else 0 (the original's `neg; sbb; inc`), the window as device window and no
+/// automatic depth stencil; `CreateAdditionalSwapChain` (failure: 0). Its back buffer (`GetBackBuffer(0,
+/// 0)`) described: a camera raster `RwRasterCreate(w, h, 0, 0x82)` of its size takes the depth, RW
+/// format and alpha from the D3D format table 0xB4E7E0 and the surface, format, swap chain and window
+/// in its extension, and becomes the frame buffer; a Z raster `RwRasterCreate(w, h, 0, 1)` the Z
+/// buffer when created. The surface is released; returns 1.
+#[hook(addr = 0x7F8D70, conv = cdecl, name = "RwD3D9CameraAttachWindow", expect = "8B 0D 60 C0 C9 00",
+       unverified = "frontier2-c14", route = "L3-only", hazards = "heap-writes",
+       note = "creates a D3D9 swap chain for another window (OS effects)")]
+pub fn camera_attach_window(camera: GPtr<u8>, hwnd: u32) -> u32 {
+    if g::<u32>(PRESENT_PARAMS as usize + 0x20).read() == 0 || g::<u32>(WINDOW).read() == hwnd {
+        return 0;
+    }
+    let mut rc = [0i32; 4];
+    get_window_rect(hwnd, GPtr::from_raw(rc.as_mut_ptr()).cast());
+    for o in [0x60, 0x64] {
+        let r = rd::<u32>(camera, o);
+        if r != 0 {
+            wr::<u32>(camera, o, 0);
+            raster_destroy(p8(r));
+        }
+    }
+    let mut pp = [0u32; 14];
+    for (k, v) in pp.iter_mut().enumerate() {
+        *v = g::<u32>(PRESENT_PARAMS as usize + k * 4).read();
+    }
+    pp[0] = u32::from(rc[2].wrapping_sub(rc[0]) == 0);
+    pp[1] = u32::from(rc[3].wrapping_sub(rc[1]) == 0);
+    pp[7] = hwnd;
+    pp[9] = 0;
+    let mut sc: u32 = 0;
+    if dev_create_additional_swap_chain(device(), GPtr::from_raw(pp.as_mut_ptr()), GPtr::from_raw(&mut sc).cast()) != 0 {
+        return 0;
+    }
+    // the original's surface out-parameter is the hwnd argument slot
+    let mut surf: u32 = hwnd;
+    swap_chain_get_back_buffer(p8(sc), 0, 0, GPtr::from_raw(&mut surf).cast());
+    let mut desc = [0u32; 8];
+    surf_get_desc(p8(surf), GPtr::from_raw(desc.as_mut_ptr()));
+    let (w, h) = (desc[6] as i32, desc[7] as i32);
+    let fmt = desc[0] as usize;
+    let fb = raster_create(w, h, 0, 0x82);
+    if !fb.is_null() {
+        wr::<i32>(fb, 0xC, w);
+        wr::<i32>(fb, 0x10, h);
+        wr::<u32>(fb, 0x14, g::<u8>(D3D_TO_RW + 4 * fmt + 1).read() as u32);
+        wr::<u8>(fb, 0x23, g::<u8>(D3D_TO_RW + 4 * fmt + 3).read());
+        let e = ext_of(fb);
+        wr::<u32>(e, 0, surf);
+        wr::<u8>(e, 8, g::<u8>(D3D_TO_RW + 4 * fmt).read());
+        wr::<u32>(e, 0x18, desc[0]);
+        wr::<u32>(e, 0x20, hwnd);
+        wr::<u32>(e, 0x1C, sc);
+        wr::<u32>(camera, 0x60, fb.addr() as u32);
+    }
+    let z = raster_create(w, h, 0, 1);
+    if !z.is_null() {
+        wr::<u32>(camera, 0x64, z.addr() as u32);
+    }
+    release(p8(surf));
+    1
+}
+
 /// `_rwD3D9TestState()` (0x7F8300; begin update ends with the same code inlined):
 /// `TestCooperativeLevel`; DEVICENOTRESET releases the default-pool objects and resets the device (an
 /// INVALIDCALL reset of a windowed device retries with the desktop format and its depth, a fullscreen
@@ -886,6 +952,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_CAMERA_END_UPDATE,
     HOOK_CHANGE_VIDEO_MODE,
     HOOK_TEST_STATE,
+    HOOK_CAMERA_ATTACH_WINDOW,
     HOOK_CAMERA_BEGIN_UPDATE,
     HOOK_CAMERA_CLEAR,
     HOOK_RASTER_SHOW_RASTER,

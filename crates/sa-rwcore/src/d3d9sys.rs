@@ -116,7 +116,7 @@ orig! {
     /// USER32 `ShowWindow(hwnd, cmd)` (IAT 0x858278)
     fn show_window(hwnd: u32, cmd: i32) -> i32 = stdcall cell 0x858278 => unported;
     /// USER32 `GetWindowRect(hwnd, rect)` (IAT 0x8582F0)
-    fn get_window_rect(hwnd: u32, rect: GPtr<i32>) -> i32 = stdcall cell 0x8582F0 => unported;
+    pub(crate) fn get_window_rect(hwnd: u32, rect: GPtr<i32>) -> i32 = stdcall cell 0x8582F0 => unported;
     /// USER32 `GetClientRect(hwnd, rect)` (IAT 0x858304)
     fn get_client_rect(hwnd: u32, rect: GPtr<i32>) -> i32 = stdcall cell 0x858304 => unported;
 

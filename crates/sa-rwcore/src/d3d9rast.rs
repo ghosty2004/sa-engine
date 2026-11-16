@@ -33,7 +33,7 @@ const VM_FREELIST: usize = 0xB4EA00;
 /// RW format → `D3DFORMAT` (u32), depth (u8 +4), alpha (u8 +5), 8 bytes per format index.
 const FORMAT_TABLE: usize = 0x85C670;
 /// `D3DFORMAT` → RW format word (+2 of 4-byte entries).
-const D3D_TO_RW: usize = 0xB4E7E0;
+pub(crate) const D3D_TO_RW: usize = 0xB4E7E0;
 const WINDOW: usize = 0xC97C1C;
 const D3D9: usize = 0xC97C20;
 const ADAPTER: usize = 0xC97C24;
@@ -641,11 +641,11 @@ pub fn raster_destroy(_out: u32, r: GPtr<u8>, _n: u32) -> u32 {
 
 orig! {
     /// `IDirect3DDevice9::CreateAdditionalSwapChain(params, out)` (+0x34)
-    fn dev_create_additional_swap_chain(d: GPtr<u8>, pp: GPtr<u32>, out: GPtr<u8>) -> i32 = stdcall vslot 0x34 => unported;
+    pub(crate) fn dev_create_additional_swap_chain(d: GPtr<u8>, pp: GPtr<u32>, out: GPtr<u8>) -> i32 = stdcall vslot 0x34 => unported;
     /// `IDirect3DDevice9::SetPaletteEntries(palette, entries)` (+0x11C)
     fn dev_set_palette_entries(d: GPtr<u8>, index: u32, entries: GPtr<u8>) -> i32 = stdcall vslot 0x11C => unported;
     /// `IDirect3DSwapChain9::GetBackBuffer(index, type, out)` (+0x14)
-    fn swap_chain_get_back_buffer(sc: GPtr<u8>, index: u32, ty: u32, out: GPtr<u8>) -> i32 = stdcall vslot 0x14 => unported;
+    pub(crate) fn swap_chain_get_back_buffer(sc: GPtr<u8>, index: u32, ty: u32, out: GPtr<u8>) -> i32 = stdcall vslot 0x14 => unported;
 }
 
 use crate::bindings::image_allocate_pixels;
