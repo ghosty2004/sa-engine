@@ -66,6 +66,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-a1 | 2 | AI | bcaaada4 | worktree-agent-a198f2e01294e8cc9 | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | frontier2-a10 | 21 | AI | e18f44e5 | worktree-agent-a673f3b762ca00e8d | 21 | 0 | 0 | 0 | 0 | L2 21 |
 | frontier2-a11 | 31 | AI, UNK-game | a7bb4f40 | worktree-agent-a673f3b762ca00e8d | 31 | 0 | 0 | 0 | 0 | L2 31 |
+| frontier2-a12 | 6 | AI, RENDER | 57c111bb | worktree-agent-a811558b41ef1a9e5 | 6 | 0 | 0 | 0 | 0 | L2 6 |
 | frontier2-a2 | 23 | AI, UNK-game | 7d0524fc | worktree-agent-a198f2e01294e8cc9 | 23 | 0 | 0 | 0 | 0 | L2 23 |
 | frontier2-a3 | 5 | AI | 6aa6d889 | worktree-agent-a198f2e01294e8cc9 | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | frontier2-a4 | 2 | AI | 555a5634 | worktree-agent-a198f2e01294e8cc9 | 2 | 0 | 0 | 0 | 0 | L2 2 |
@@ -2255,6 +2256,26 @@ SA_UNVERIFIED=frontier2-a11 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a11 
 | 0x693610 | `vt_870b98::CreateFirstSubTask` | written | L2 | heap-writes,stack-residue |
 | 0x6955D0 | `(missed by ghidra: cat7-call)` | written | L2 | none |
 | 0x696940 | `CTaskComplexFollowLeaderInFormation::ControlSubTask` | written | L2 | heap-writes,stack-residue |
+
+## frontier2-a12
+
+6 hooks in sa-ai, sa-render; hazards: ax-al-return (1), heap-writes (5); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-a12 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-a12 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a12 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-a12
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x555E40 | `CRopes::FindCoorsAlongRope` | written | L2 | none |
+| 0x653CF0 | `CTaskSimpleKillPedWithCar::DamageCarBonnet` | written | L2 | heap-writes |
+| 0x6563D0 | `FUN_006563d0` | written | L2 | heap-writes |
+| 0x6564A0 | `CTaskSimpleKillPedWithCar::ProcessPed` | written | L2 | heap-writes,ax-al-return |
+| 0x65A460 | `CTaskComplexUseSwatRope::ControlSubTask` | written | L2 | heap-writes |
+| 0x6637C0 | `CTaskGangHassleVehicle::ControlSubTask` | written | L2 | heap-writes |
 
 ## frontier2-a2
 
