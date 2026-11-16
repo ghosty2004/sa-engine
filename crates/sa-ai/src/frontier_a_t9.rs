@@ -13,7 +13,12 @@ use crate::bindings::{
 };
 use crate::cover_update::speed as magnitude;
 use crate::fighthelp::{fight_hit_car, fight_set_up_col};
-use sa_anim::bindings::anim_add_block_ref;
+use sa_anim::bindings::{anim_add_block_ref, anim_set_delete_callback, assoc_set_finish_callback};
+use crate::bindings::task_timer_is_out_of_time;
+use sa_core::bindings::{
+    general_get_radian_angle_between_points, general_limit_radian_angle, matrix_mul_vec, matrix_set_rotate_z_only,
+};
+use sa_world::bindings::{anim_blend_animation, ped_set_move_state};
 use sa_core::bindings::{clump_get_association, general_random_int_in_range, matrix_dtor};
 use sa_stream::bindings::{anim_remove_block_ref, entity_is_visible, get_animation_block_index, streaming_request_model};
 use sa_world::bindings::{
@@ -46,6 +51,8 @@ orig! {
     fn hit_and_run_dtor(e: GPtr<u8>) = thiscall 0x4AEA50 => crate::event_dtors::event_vehicle_hit_and_run_dtor;
     /// `CRopes::FindCoorsAlongRope(uint32 id, float along, CVector* pos, CVector* speed)` (0x555E40, sa-render)
     fn ropes_find_coors_along_rope(id: u32, along: f32, pos: GPtr<f32>, speed: GPtr<f32>) -> u8 = cdecl 0x555E40 => unported;
+    /// `InteriorManager_c::AreAnimsLoaded(int32 block)` (0x5980F0, static, `ret 4`)
+    fn are_anims_loaded(block: i32) -> u8 = stdcall 0x5980F0 => sa_world::world::interior_wall_fillers::are_anims_loaded;
     /// `CTaskGangHassleVehicle::GetTargetHeading(CPed*)` (0x65FDD0, `ret 4`, ST0)
     fn target_heading(t: GPtr<u8>, ped: GPtr<u8>) -> X87 = reg("args = ecx stack; pop") 0x65FDD0 => crate::gang6::gang_hassle_vehicle_get_target_heading;
     /// `CTaskComplexUseSwatRope::CreateSubTask(int32 type, CPed*)` (0x659620, phase B native)
@@ -584,10 +591,183 @@ fn gang_hassle_hit_car(this: GPtr<u8>, ped: GPtr<u8>, range: f32) {
     fight_dtor_orig(fp);
 }
 
+// ------------------------------------------------------------------------------------------- interior tasks
+
+/// The anim tasks' "only script peds" acquaintance scanner state (intelligence +0x238: +0xC = 1, +0xD / +0xE = 0;
+/// gta-reversed `SetOnlyScriptPedAllowed`).
+fn scanner_only_script_peds(ped: GPtr<u8>) {
+    let s = rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x238);
+    wr::<u8>(s, 0xC, 1);
+    wr::<u8>(s, 0xD, 0);
+    wr::<u8>(s, 0xE, 0);
+}
+
+/// The interior anim tasks' shared step towards their interior info (+0xC; 0x677606 in 0x6772E0, 0x67705B in
+/// 0x676D30): `d = info pos (+4) - ped pos` (f32), `len = sqrt((dz * dz + dy * dy) + dx * dx)` (dz's product uses the
+/// unrounded difference once), `step = len < 0.02 ? len : 0.02` (a NaN takes 0.02); the ped's anim shift (+0x4D8 /
+/// +0x4DC) = the step vector `n = (dx / len * step, f32(dy / len) * step, f32(dz / len) * step)` along its matrix's
+/// right and forward rows (`(r.z * n.z + r.y * n.y) + n.x * r.x`), then +0x55C = `LimitRadianAngle(f32(
+/// GetRadianAngleBetweenPoints(info +0x10, info +0x14, 0, 0)))`. The original stores `len` over its own ped
+/// argument slot.
+fn interior_step_to_info(this: GPtr<u8>, ped: GPtr<u8>) {
+    let info = rd::<GPtr<u8>>(this, 0xC);
+    let pp = entity_pos(ped);
+    let dx = x(rd::<f32>(info, 4)).fsub_m(rd::<f32>(pp, 0)).to_f32();
+    let dy = x(rd::<f32>(info, 8)).fsub_m(rd::<f32>(pp, 4)).to_f32();
+    let dz80 = x(rd::<f32>(info, 0xC)).fsub_m(rd::<f32>(pp, 8));
+    let dz = dz80.to_f32();
+    let len80 = dz80.fmul_m(dz).fadd(x(dy).fmul_m(dy)).fadd(x(dx).fmul_m(dx)).fsqrt();
+    let len = len80.to_f32();
+    let min = g::<f32>(0x858B38).read();
+    let step = if len80.fcom(x(min)).test_parity(5) { x(min) } else { x(len) };
+    let inv = x(g::<f32>(0x858624).read()).fdiv_m(len);
+    let nx = x(dx).fmul(inv).fmul(step);
+    let ny = x(x(dy).fmul(inv).to_f32()).fmul(step);
+    let nz = x(x(dz).fmul(inv).to_f32()).fmul(step);
+    let m = rd::<GPtr<u8>>(ped, 0x14);
+    let along = |o: isize| {
+        x(rd::<f32>(m, o + 8)).fmul(nz).fadd(x(rd::<f32>(m, o + 4)).fmul(ny)).fadd(nx.fmul_m(rd::<f32>(m, o))).to_f32()
+    };
+    wr::<f32>(ped, 0x4D8, along(0));
+    wr::<f32>(ped, 0x4DC, along(0x10));
+    let info = rd::<GPtr<u8>>(this, 0xC);
+    let a = general_get_radian_angle_between_points(rd::<f32>(info, 0x10), rd::<f32>(info, 0x14), 0.0, 0.0).to_f32();
+    wr::<f32>(ped, 0x55C, general_limit_radian_angle(a) as f32);
+}
+
+/// `SetDeleteCallback(default)` on the task's anim (+0x14), then a new `BlendAnimation(clump, 0x54, anim, delta)`
+/// as the task's anim with the finish callback `cb` (data = the task).
+fn interior_blend(this: GPtr<u8>, ped: GPtr<u8>, anim: u32, delta: f32, cb: u32, drop_old: bool) {
+    if drop_old {
+        anim_set_delete_callback(rd::<GPtr<u8>>(this, 0x14), 0x4D1390, 0);
+    }
+    let a = anim_blend_animation(rd::<GPtr<u8>>(ped, 0x18), 0x54, anim, delta);
+    wr::<GPtr<u8>>(this, 0x14, a);
+    assoc_set_finish_callback(a, cb, this.addr() as u32);
+}
+
+/// The interior anim tasks' timer start (`+8 >= 0`: +0x1C = now, +0x20 = +8, +0x24 = 1).
+fn interior_start_timer(this: GPtr<u8>) {
+    let d = rd::<i32>(this, 8);
+    if d >= 0 {
+        wr::<u32>(this, 0x1C, g::<u32>(TIME_MS).read());
+        wr::<i32>(this, 0x20, d);
+        wr::<u8>(this, 0x24, 1);
+    }
+}
+
+/// `CTaskInteriorLieInBed::FinishAnimCB` (0x675FC0).
+const LIE_IN_BED_FINISH_CB: u32 = 0x675FC0;
+
+/// `CTaskInteriorLieInBed::ProcessPed(CPed*)` (0x6772E0, `ret 4`, AL). Base anim +0x2C (get in), +1 the loop, +2
+/// get out; anim +0x14, previous anim +0x18, the get-out timer +0x1C, +0x28 "place the ped", +0x29 finished, +0x2A
+/// aborting, +0x11 start in the loop. `SetMoveState(1)`; finished with the get-out anim gone, or aborting without
+/// the int_house anims: the scanner set to script peds only, 1. Aborting: get-in → blend delta (+0x1C) -8; loop
+/// (not being placed) → get-out blended (1000), 0; get-out → anim +0x24 = 3. No anim: without the anims 0; first
+/// time (+0x18 = -1) the scanner cleared, then the loop (timer started, placed) or get-in (blend 4, not placed);
+/// after get-in the loop; 0. With an anim: placing moves the ped to its matrix times the bed offset (0xC18C54 for
+/// anims 0x152 / 0x153, 0xC18C60 for 0x155 / 0x156, else its own position; z kept) and, for the loop, turns it by pi
+/// (`LimitRadianAngle`, the matrix's Z rotation or +0x10); the timer out → get-out; in get-in the step towards the
+/// interior info. 0.
+#[hook(addr = 0x6772E0, conv = thiscall, name = "CTaskInteriorLieInBed::ProcessPed", expect = "83 EC 18 53 55 56 8B F1 8B 46 14",
+       unverified = "frontier2-a13", route = "L2", hazards = "heap-writes,ax-al-return,stack-residue",
+       note = "the original stores floats over its own ped argument slot; AL result")]
+pub fn interior_lie_in_bed_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
+    let anim = rd::<GPtr<u8>>(this, 0x14);
+    let cur = if anim.is_null() { -1 } else { i32::from(rd::<i16>(anim, 0x2C)) };
+    ped_set_move_state(ped, 1);
+    let base = rd::<i32>(this, 0x2C);
+    if rd::<u8>(this, 0x29) != 0 && clump_get_association(rd::<GPtr<u8>>(ped, 0x18), (base + 2) as u32).is_null() {
+        scanner_only_script_peds(ped);
+        return 1;
+    }
+    if rd::<u8>(this, 0x2A) != 0 {
+        if are_anims_loaded(0) == 0 {
+            scanner_only_script_peds(ped);
+            return 1;
+        }
+        if cur == base {
+            wr::<u32>(rd::<GPtr<u8>>(this, 0x14), 0x1C, 0xC100_0000);
+        } else if cur == base + 1 {
+            if rd::<u8>(this, 0x28) == 0 {
+                interior_blend(this, ped, (base + 2) as u32, 1000.0, LIE_IN_BED_FINISH_CB, true);
+                wr::<u8>(this, 0x28, 1);
+                return 0;
+            }
+        } else if cur == base + 2 {
+            wr::<u32>(rd::<GPtr<u8>>(this, 0x14), 0x24, 0x4040_0000);
+        }
+    }
+    if rd::<GPtr<u8>>(this, 0x14).is_null() {
+        if are_anims_loaded(0) == 0 {
+            return 0;
+        }
+        let prev = rd::<i32>(this, 0x18);
+        if prev == -1 {
+            let s = rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x238);
+            for o in [0xC, 0xD, 0xE] {
+                wr::<u8>(s, o, 0);
+            }
+            if rd::<u8>(this, 0x11) == 0 {
+                interior_blend(this, ped, base as u32, 4.0, LIE_IN_BED_FINISH_CB, false);
+                return 0;
+            }
+        } else if prev != base {
+            return 0;
+        }
+        interior_start_timer(this);
+        interior_blend(this, ped, (base + 1) as u32, 1000.0, LIE_IN_BED_FINISH_CB, false);
+        wr::<u8>(this, 0x28, 1);
+        return 0;
+    }
+    if rd::<u8>(this, 0x28) != 0 {
+        let m = rd::<GPtr<u8>>(ped, 0x14);
+        let mut p: [f32; 3] = core::array::from_fn(|i| rd::<f32>(entity_pos(ped), 4 * i as isize));
+        let z = p[2];
+        let off = match cur {
+            0x152 | 0x153 => Some(0xC18C54),
+            0x155 | 0x156 => Some(0xC18C60),
+            _ => None,
+        };
+        if let Some(off) = off {
+            let mut o = [0f32; 3];
+            matrix_mul_vec(GPtr::from_raw(o.as_mut_ptr()).cast(), m, GPtr::from_addr(off));
+            p = o;
+        }
+        p[2] = z;
+        placeable_set_posn(ped, GPtr::from_raw(p.as_mut_ptr()));
+        wr::<u8>(this, 0x28, 0);
+        if cur == base + 1 {
+            let h = x(rd::<f32>(ped, 0x558)).fadd_m(g::<f32>(0x858CB8).read()).to_f32();
+            let h = general_limit_radian_angle(h) as f32;
+            wr::<f32>(ped, 0x558, h);
+            wr::<f32>(ped, 0x55C, h);
+            let m = rd::<GPtr<u8>>(ped, 0x14);
+            if m.is_null() {
+                wr::<f32>(ped, 0x10, h);
+            } else {
+                matrix_set_rotate_z_only(m, h);
+            }
+        }
+    }
+    if rd::<u8>(this, 0x24) != 0
+        && task_timer_is_out_of_time(this.byte_add(0x1C)) != 0
+        && i32::from(rd::<i16>(rd::<GPtr<u8>>(this, 0x14), 0x2C)) != base + 2
+    {
+        interior_blend(this, ped, (base + 2) as u32, 1000.0, LIE_IN_BED_FINISH_CB, true);
+        wr::<u8>(this, 0x28, 1);
+    }
+    if i32::from(rd::<i16>(rd::<GPtr<u8>>(this, 0x14), 0x2C)) == rd::<i32>(this, 0x2C) {
+        interior_step_to_info(this, ped);
+    }
+    0
+}
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_KILL_PED_WITH_CAR_DAMAGE_CAR_BONNET,
     HOOK_KILL_PED_WITH_CAR_SHAKE_PAD,
     HOOK_KILL_PED_WITH_CAR_PROCESS_PED,
     HOOK_USE_SWAT_ROPE_CONTROL_SUB_TASK,
     HOOK_GANG_HASSLE_VEHICLE_CONTROL_SUB_TASK,
+    HOOK_INTERIOR_LIE_IN_BED_PROCESS_PED,
 ];
