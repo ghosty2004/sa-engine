@@ -11,6 +11,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x486670,sa-ai,clean_up_this_vehicle,cdecl,,v:GPtr<u8>,,unported,CTheScripts::CleanUpThisVehicle,
 0x4893E0,sa-ai,intel_get_ped_entities,thiscall,,i:GPtr<u8>,GPtr<u8>,unported,CPedIntelligence::GetPedEntities,
 0x493730,sa-ai,task_seek_radius_angle_ctor,thiscall,,t:GPtr<u8>;e:GPtr<u8>;time:u32;period:u32;a:u32;b:u32;c:u32;d:u32;f:u32,GPtr<u8>,unported,CTaskComplexSeekEntityRadiusAngleOffset::Constructor,
+0x49F670,sa-ai,fx_add_punch_impact,thiscall,,fx:GPtr<u8>;pos:GPtr<u8>;vel:GPtr<u8>;n:i32,,unported,Fx_c::AddPunchImpact,
 0x4AB700,sa-ai,event_group_reorganise,thiscall,,g:GPtr<u8>,,unported,CEventGroup::Reorganise,
 0x4AB760,sa-ai,event_group_remove_invalid_events,thiscall,,g:GPtr<u8>;b:u32,,unported,CEventGroup::RemoveInvalidEvents,
 0x4ABC30,sa-ai,event_takes_priority_over,thiscall,,ev:GPtr<u8>;other:GPtr<u8>,u8,sa_ai::events::event_takes_priority_over_4abc30,CEvent::TakesPriorityOver,

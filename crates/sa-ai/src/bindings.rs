@@ -69,6 +69,11 @@ orig! {
 }
 
 orig! {
+    /// `Fx_c::AddPunchImpact` (0x49F670)
+    pub fn fx_add_punch_impact(fx: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, n: i32) = thiscall 0x49F670 => unported;
+}
+
+orig! {
     /// `CEventGroup::Add-` (0x4AB420)
     pub fn event_group_add(g: GPtr<u8>, e: GPtr<u8>, b: u8) -> GPtr<u8> = thiscall 0x4AB420 => crate::group::event_group_add;
 }
