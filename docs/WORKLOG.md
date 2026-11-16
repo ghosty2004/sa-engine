@@ -2438,3 +2438,47 @@
 - Writer gate (base 7f81981d, target dir target/gate): all 16 steps PASS (hooks 15 new, all unverified, batch frontier2-a7;
   queue up to date). The first run failed hooktest: 0x5EE370 was named `std::vector<CVector>::push_back`, the catalogue has
   FUN_005ee370 (fixed).
+
+## 2026-11-16 — FRONTIER-2 turn 5, lane A: road block and gang war scenarios, AI frontier (agent, branch worktree-agent-a84f43d95c6a883c2)
+- Base: worktree-agent-a198f2e01294e8cc9 (728a6fa5, lane A turn 4). Every port from the 1.0 US bytes (gta-reversed read as an
+  aid), every address checked against `inflight.py` first. One batch, `frontier2-a8` (36 hooks, all AI).
+- 0x53CBE0's binding returns X87 as on master (770ffde5 takes master's call-site lines verbatim, so the rebase merges
+  them); the new ports use the X87 value directly (`.to_f32()`), no `st0()` around it.
+- Scenarios: sa-game gains `SA_GAME_POKE=ITER:ADDR:VALUE[:SIZE]` (ADDR may be `[0xP]+0xOFF`). New frontier.sh scenarios
+  `roadblock-script` (a script road block poked into aScriptRoadBlocks[0]: CreateRoadBlockBetween2Points 0x4619C0 runs
+  once), `roadblock-wanted` (the roadblocks car with four stars teleported to Idlewood's east-west road, where five
+  ROADBLOX.DAT nodes come within 90 m, and the CWanted +0x1C chance poked to 127 every 10 iterations: 9 road blocks), `gangwar`
+  (Ballas Idlewood, gang wars on 0x96AB90 and the provocation timer 0x96AB5C poked to 3.0: StartOffensiveGangWar,
+  StartDefensiveGangWar, PickZoneToAttack and three CreateAttackWave calls). frontier2-a5-counts.gdb counts them on the
+  Rust functions (ports reach each other directly, not through their native entries; turn 4's "0 calls" count of 0x4619C0
+  watched the native entry only).
+- Ports (batch frontier2-a8): CTaskComplexFollowLeaderInFormation::CreateSubTask 0x6962A0 (catalogue name
+  thunk_FUN_00401913; the `nop; jmp` island only fetches the SEH link), CTaskSimpleIKChain::CreateIKChain 0x633BD0 / Clone
+  0x633B00, CPedShelterAttractor::BroadcastDeparture 0x5EF570 (shares the attracted-peds tail with 0x5EF160),
+  SeekCoverUntilTargetDead::CreateFirstSubTask 0x62E6C0 + GetCoverPed 0x622D50, CTaskSimpleWaitUntilPedIsOutCar::ProcessPed
+  0x649550 (roadblock-wanted's block), GoToPointAiming::CreateFirstSubTask 0x66DDB0, BeInShop::ScanForStuff 0x6754D0, the
+  direct entries 0x634740 (ComputeClosestFreeScriptedEffect), 0x6796C0 (FallToDeath::CalcFall, rand at both sites) and
+  0x689640 (Swim::ProcessControlAI, FPATAN), the Clone virtuals 0x622F20 / 0x623030 / 0x66CD80 / 0x66CE10 / 0x634560 /
+  0x65F4E0, the interior tasks 0x6750A0 / 0x6762B0 / 0x676200 / 0x676350 / 0x675740 / 0x676550, 0x678AA0, 0x6960B0,
+  0x696160, 0x691320, 0x62FF70, 0x6390C0, 0x5F6DA0, 0x635110, 0x6584E0, 0x6477F0, 0x634C10, 0x679120.
+- Bindings (bindings.py --resolve, rows placed without reordering the CSV): 0x493730, 0x4ADDF0, 0x5F1890, 0x61F660,
+  0x65F3B0 bound in sa-ai; 0x634440 / 0x668790 moved down from sa-script.
+- Not ported: 0x5ED750 (std::vector<CVector>::_Insert_n: mis-split body continuing past 0x5ED92A, try/catch, its callees
+  0x5EB340 / 0x5EAEA0 / 0x5ECC30 are lane C UNK-game), PlaceFormationGroup 0x5FC9B0 / PlaceChatGroup 0x5FCE80 /
+  RenderJetPack 0x67F6A0 (big, unreached), 0x634930 / 0x670D80 / 0x679270 (callees 0x6348F0 / 0x670B00 / 0x670A70 /
+  0x630590 not in the catalogue), Sunbathe::ControlSubTask 0x6381A0 (needs ShouldLoadSunbatheAnims 0x632190);
+  CCollision::ProcessColModels' A-disk path (not started: the loader clears the disk flag, nothing reaches it).
+- frontier.py: AI 95 (8 direct + 87 virtual) → 61 (4 + 57); to port 301 → 266 (all lanes, this checkout).
+- Scenarios (frontier.sh, i686 native, final ports, SA_ROOT=~/sa-engine): pausemenu 416 / 0 blocked, solicit 4016 / 0,
+  crossing 1216 / 0, crossing-long 4016 / 0, melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0, shootdriver 1216 / 0,
+  roadblock-script 1016 / 0, roadblocks 875 / 1141 (lane B: CCam::ArrestCamOne 0x518500, CHeli::GenerateHeli 0x6C6520),
+  roadblock-wanted 1015 / 1001 (lane B: 0x518500, CWorld::FindObjectsIntersectingCube 0x568DD0, 0x6C6520), gangwar 2015 / 1
+  (lane B: CGangWars::TellGangMembersTo 0x444530), quad (master's frontier.sh) 1215 / 1 (CCheat::VehicleCheat 0x43A0B0, in
+  flight on a lane B worktree); 0x568DD0 and 0x6C6520 are on master already; no crash.
+- verify-all (lanes 1-3, fresh sa-oracle / satool, DLL of 29609990): `f2a5-u` (SA_UNVERIFIED=frontier2-a8) IDENTICAL 13/13
+  and `f2a5-def` (default set) IDENTICAL 13/13; save-load identical except the SAVE-1 stack residue. a9a354c7 after it
+  only renames 0x6962A0's hook to the catalogue name and replaces a local zero test by sa_math::fpu::fcom_ne (no
+  behaviour change).
+- Writer gate (base 728a6fa5, target dir target/gate): all 15 steps PASS (hooks 36 new, all unverified, batch frontier2-a8;
+  queue up to date). The first run failed dupes (a local copy of an existing zero test), clippy (collapsible match) and
+  hooktest (0x6962A0 is catalogued as thunk_FUN_00401913): fixed in a9a354c7.
