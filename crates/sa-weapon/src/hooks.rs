@@ -12,6 +12,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::weapon::HOOKS,
     crate::weapon_fire::HOOKS,
     crate::weapon_impact::HOOKS,
+    crate::fire_one_instant_hit::HOOKS,
     crate::explosion::HOOKS,
     crate::bullet_shot::HOOKS,
     crate::projectile::HOOKS,

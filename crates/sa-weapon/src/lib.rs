@@ -32,6 +32,7 @@ pub mod weapon;
 pub mod weapon_fire;
 pub mod weapon_data;
 pub mod weapon_impact;
+pub mod fire_one_instant_hit;
 pub mod weapon_info;
 pub mod fire_instant_hit;
 pub mod fire_projectile;

@@ -94,7 +94,7 @@ orig! {
 }
 
 /// CRT `_CIasin` (0x821E70): ST0 in, ST0 out (`sa_core::orig::x87_unary`; unported in phases B/C).
-fn ci_asin(v: X87) -> X87 {
+pub(crate) fn ci_asin(v: X87) -> X87 {
     st0(sa_core::orig::x87_unary(0x821E70, v.to_f64()))
 }
 
