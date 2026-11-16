@@ -13,7 +13,7 @@ use sa_math::fpu::{gt, hypot_x87, lt};
 use sa_world::bindings::ped_say;
 use sa_world::world::common::entity_pos;
 use crate::bindings::{pad_jump_just_down, use_gun_control_gun, use_gun_control_gun_move, use_gun_ctor};
-use sa_core::bindings::intel_get_task_use_gun;
+use sa_core::bindings::{intel_get_task_use_gun, vector_normalise};
 use sa_core::crt::rand_at;
 use sa_input::bindings::pad_sprint_just_down;
 use crate::common::{task_make_abortable, task_new, xi};
@@ -558,6 +558,80 @@ pub fn go_to_point_aiming_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPt
     sub
 }
 
+// ------------------------------------------------------------------------------------------- follow patrol route
+
+/// `CTaskComplexFollowPatrolRoute::CreateFirstSubTask(CPed*)` (0x670E20, catalogue `vt_870114::CreateFirstSubTask`,
+/// `ret 4`). +0x20 bit 0 cleared. No points: `CreateSubTask(0xC8)`. Otherwise the point to start from (+0x12): over
+/// every leg `i → (i + 1) % n` the ped's projection `t` on the leg's unit direction, when `0 < t < |leg|`, gives the
+/// foot point; the leg end becomes the candidate when the squared distance to the foot point is below the square of
+/// the best value so far (FLT_MAX first), which then takes that squared distance (the bytes compare a squared distance
+/// with a squared one). No leg: the point whose squared distance is below the square of the best (0x863A3C first),
+/// kept the same way. Then +0x20 bit 1 set → cleared and `CreateSubTask(0x38A)`, else `CreateSubTask(next type)`.
+#[hook(addr = 0x670E20, conv = thiscall, name = "vt_870114::CreateFirstSubTask", expect = "83 EC 38 53 8B D9 8B 4B 20",
+       unverified = "frontier2-a11", route = "L2", hazards = "heap-writes,stack-residue",
+       note = "the original stores the projections and distances over its own ped argument slot")]
+pub fn follow_patrol_route_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    use crate::frontier_a_t6::{follow_patrol_route_create_sub_task as sub, follow_patrol_route_next_type, route_pos};
+    wr::<u32>(this, 0x20, rd::<u32>(this, 0x20) & !1);
+    let route = rd::<GPtr<u8>>(this, 0x1C);
+    let n = rd::<i32>(route, 0);
+    if n == 0 {
+        return sub(this, 0xC8);
+    }
+    let pp = entity_pos(ped);
+    let p = [rd::<f32>(pp, 0), rd::<f32>(pp, 4), rd::<f32>(pp, 8)];
+    let mut idx: i32 = -1;
+    let mut best = f32::from_bits(0x7F7F_FFFF);
+    for i in 0..n {
+        let next = (i + 1) % n;
+        let a = route_pos(rd::<GPtr<u8>>(this, 0x1C), i % n);
+        let b = route_pos(rd::<GPtr<u8>>(this, 0x1C), next);
+        let leg = |k: usize| x(rd::<f32>(b, k as isize * 4)).fsub_m(rd::<f32>(a, k as isize * 4));
+        let mut dir = [leg(0).to_f32(), leg(1).to_f32(), leg(2).to_f32()];
+        let len2 = leg(2).fmul_m(dir[2]).fadd(x(dir[0]).fmul_m(dir[0])).fadd(x(dir[1]).fmul_m(dir[1])).to_f32();
+        vector_normalise(GPtr::from_raw(dir.as_mut_ptr()).cast());
+        let d = |k: usize| x(p[k]).fsub_m(rd::<f32>(a, k as isize * 4));
+        let tx = d(2).fmul_m(dir[2]).fadd(d(0).fmul_m(dir[0])).fadd(d(1).fmul_m(dir[1]));
+        let t = tx.to_f32();
+        if !gt(tx, x(g::<f32>(0x858B50).read())) || !gt(x(len2).fsqrt(), x(t)) {
+            continue;
+        }
+        let fx = x(dir[0]).fmul_m(t).fadd_m(rd::<f32>(a, 0)).to_f32();
+        let fy = x(dir[1]).fmul_m(t).fadd_m(rd::<f32>(a, 4));
+        let fz = x(x(dir[2]).fmul_m(t).to_f32()).fadd_m(rd::<f32>(a, 8));
+        let ex = x(p[0]).fsub_m(fx).to_f32();
+        let ey = x(p[1]).fsub(fy).to_f32();
+        let ez = x(p[2]).fsub(fz);
+        let d2 = ez.fmul(ez).fadd(x(ey).fmul_m(ey)).fadd(x(ex).fmul_m(ex));
+        if lt(d2, x(best).fmul_m(best)) {
+            best = d2.to_f32();
+            idx = next;
+        }
+    }
+    if idx == -1 {
+        let mut min = x(g::<f32>(0x863A3C).read());
+        for j in 0..n {
+            let q = route_pos(rd::<GPtr<u8>>(this, 0x1C), j);
+            let dx = x(p[0]).fsub_m(rd::<f32>(q, 0));
+            let dy = x(p[1]).fsub_m(rd::<f32>(q, 4));
+            let dz = x(p[2]).fsub_m(rd::<f32>(q, 8));
+            let s = dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx));
+            if lt(s, min.fmul(min)) {
+                idx = j;
+                min = x(s.to_f32());
+            }
+        }
+    }
+    wr::<u16>(this, 0x12, idx as u16);
+    let f = rd::<u32>(this, 0x20);
+    wr::<u32>(this, 0x20, f & !2);
+    if f & 2 != 0 {
+        sub(this, 0x38A)
+    } else {
+        sub(this, follow_patrol_route_next_type(this))
+    }
+}
+
 /// The batch's hooks.
 pub const HOOKS: &[HookReg] = &[
     HOOK_MEDIC_TREAT_INJURED_PED_CREATE_NEXT_SUB_TASK,
@@ -566,4 +640,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_GO_PICK_UP_ENTITY_CONTROL_SUB_TASK,
     HOOK_GO_PICK_UP_ENTITY_CREATE_FIRST_SUB_TASK,
     HOOK_GO_TO_POINT_AIMING_CONTROL_SUB_TASK,
+    HOOK_FOLLOW_PATROL_ROUTE_CREATE_FIRST_SUB_TASK,
 ];

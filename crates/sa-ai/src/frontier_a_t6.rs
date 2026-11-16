@@ -145,7 +145,7 @@ pub fn use_mobile_phone_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, priority: 
 // +0x18 the move-state radius, +0x20 flags.
 
 /// The position of point `i`.
-fn route_pos(route: GPtr<u8>, i: i32) -> GPtr<u8> {
+pub(crate) fn route_pos(route: GPtr<u8>, i: i32) -> GPtr<u8> {
     route.byte_add(((i + 0x1B) * 0xC) as isize)
 }
 
