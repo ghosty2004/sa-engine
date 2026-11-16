@@ -823,7 +823,7 @@ pub fn route_round_group(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
     let sp: GPtr<u8> = GPtr::from_raw(&raw mut sphere).cast();
     group_member_bounding_sphere(this, sp, GPtr::from_raw(&raw mut list).cast());
     wr::<u32>(sp, 8, rd::<u32>(sa_world::world::common::entity_pos(ped), 8));
-    crate::wander::geom_compute_route_round_sphere(
+    crate::bindings::geom_compute_route_round_sphere(
         ped,
         sp,
         this.byte_add(0x14),
