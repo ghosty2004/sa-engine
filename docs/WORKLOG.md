@@ -2928,3 +2928,50 @@
   IDENTICAL 13/13.
 - frontier.py: lane C subsystems 9 → 2 rows (both lane A's partial switches); whole frontier "to port" 193 → 170
   (other branches' registrations included); new RW row 0x7F8300 (lane B).
+
+## 2026-11-16 — FRONTIER-2 turn 8 lane C: RW leftovers, Interior_c::PlaceObject, GeneratePanesForWindow, batches c14 / c15 / c16 (agent, branch worktree-agent-acd1111ff68d2fe92)
+- Base: lane C turn 7 head a102bfd2 (branch worktree-agent-a6e18bff35f33ca8b). Lane C's own subsystems had no rows left
+  besides lane A's partial switches, so this turn took lane B's RW / WORLD / RENDER leftovers (camera bodies and
+  0x73AF00 stay with lane B). Every address checked with frontier.py / `tools/gen/inflight.py` first (none in flight).
+- Batch frontier2-c14 (RW, 6 hooks):
+  - `_rwD3D9TestState` 0x7F8300 (sa-rwcore `d3d9cam.rs`; the new row of 0x4CA5A0): TestCooperativeLevel, the
+    DEVICENOTRESET reset (INVALIDCALL on a windowed device retries with the desktop format; depth table 0x7F84BC equals
+    `format_depth`), post-reset sequence (result ignored) + restore callback, BeginScene. `_rwD3D9CameraBeginUpdate`
+    ends with the same code inlined: its tail now calls the port (one definition).
+  - RwCameraStreamRead 0x808DE0 (`camera.rs`); the oversized-struct handling of `_rpClumpAtomicStreamRead` became one
+    helper (`stream::read_struct_local`) used by both.
+  - `_rwMemoryClose` 0x8020F0 (`memory.rs`, every freelist destroyed through the ported RwFreeListDestroy).
+  - `_rpMeshWrite` 0x758D70 (`mesh.rs`); the non-native object test of `_rpMeshRead` is now `mesh::non_native`.
+  - RpLightGetConeAngle 0x751AE0 (`light.rs`): the inlined fdlibm acosf, full width in ST0; RtQuatSetupSlerpCache
+    inlines the same acosf, now one function `rt_quat::acosf_inline` (X87). The D3D9 light setup's binding returns X87
+    instead of an f64.
+  - RwD3D9CameraAttachWindow 0x7F8D70 (`d3d9cam.rs`): swap chain for another window; the device calls go through the
+    existing vtable bindings of d3d9rast / d3d9sys (made crate-visible, not redeclared; no platform cfg). Its surface
+    out-parameter is the hwnd argument slot in the original (port: initialised with hwnd).
+- Batch frontier2-c15 (WORLD, 1 hook): Interior_c::PlaceObject 0x5934E0 (sa-world `interior_place_furniture.rs`, next to
+  its twin PlaceFurniture, sharing its matrix helpers; unreversed in gta-reversed): point from the interior origin and
+  the model's bbox min z, matrix = interior * RotateZ(rot deg) + point, a CObject on a free furniture item, the steal
+  records of the interior manager (a stolen object is removed and deleted again). Its "chain" (FurnishBedroom 0x593FC0,
+  FurnishLounge 0x597740, Kitchen_FurnishEdges 0x596930, Office_PlaceDesk 0x5993E0, InteriorGroup_c peds) are its
+  callers, 450-800 instructions each: not ported this turn.
+- Batch frontier2-c16 (RENDER, 1 hook): CGlass::GeneratePanesForWindow 0x71B620 (sa-render `glass.rs`; entry `nop; jmp
+  0x403985`). From the bytes; gta-reversed differs: counts `_ftol(max(len + 0.75, 1)) * sections`, pane offsets `i *
+  len / n`, delayed time `_ftol(|pos - centre| * 100 + now)`, the random rotation takes the rand() calls in the order
+  (b, a, c). rand() sites 0x71B9BB / 0x71B9DB / 0x71BAF5 / 0x71BAFC / 0x71BB31.
+- The first three c14 hooks were defined but missing from their HOOKS tables (fixed in 519aca70); clippy's
+  needless_range_loop in the pane loop fixed in e14d3e1a.
+- Gates: writer gate (base a102bfd2) all PASS on e14d3e1a (hooks: 8 new, all unverified, batches frontier2-c14 / c15 / c16; the first run failed clippy on the pane loop, fixed).
+- Scenarios (master's `frontier.sh`, i686 native sa-game of 264ffb54 (e14d3e1a only changes a loop's form)): pausemenu
+  416 / 0 blocked, solicit 4016 / 0, crossing 1216 / 0, crossing-long 4014 / 2 (lane A 0x68E4F0), melee 2616 / 0,
+  sniper / shootcar / shootdriver 1216 / 0, quad / heli / plane 1215 / 1 (CCheat::VehicleCheat 0x43A0B0, other branch),
+  roadblocks 254 / 1762 and roadblock-wanted 250 / 1766 (0x62D290 / 0x62D3B0, the GenerateRoadBlocks fallback, CHeli::
+  GenerateHeli 0x6C6520: other branches), roadblock-script 1016 / 0, gangwar 2015 / 1 (0x68E4F0); no crash; 0 blocked
+  on this turn's functions or lane C.
+- verify-all (lanes 6-7, host sa-oracle and satool rebuilt; DLL of e14d3e1a): `lanec8-c1416` (SA_UNVERIFIED=frontier2-c14,frontier2-c15,frontier2-c16) IDENTICAL 13/13; `lanec8-default` (default set) IDENTICAL 13/13. (A first attempt failed every recording: this worktree had no target/release/satool.)
+- frontier.py: whole "to port" 141 -> 133; RW 36 -> 30, WORLD 26 -> 25, RENDER 20 -> 19 rows; no new rows.
+- Open (RW): the image / raster helpers 0x7F44C0 / 0x7F4690 / 0x7F4AE0 / 0x7FF450 / 0x7FFFF0 / 0x800C80 / 0x801390 /
+  0x803950 / 0x8030C0 / 0x80CA20, the MatFX renders 0x812AC0 / 0x812D40 / 0x813A10 / 0x814460 / 0x810830, the skin
+  paths 0x7C8060 / 0x7C9DA0 / 0x7CA410 / 0x7CA850, RtAnimInterpolatorAddAnimTime 0x7CD8D0, _rpClumpAtomicStreamWrite
+  0x74A880 (read; needs RpGeometryStreamWrite 0x74CED0, unbound), 0x4CAEA0, 0x75A960, the world-sector native stream
+  0x763F20 / 0x7641C0, 0x7CC110, 0x7CF240, 0x7CF600, 0x5D0820, 0x81F360; WORLD / RENDER: PlaceObject's callers above
+  and the rest of frontier.py's rows.
