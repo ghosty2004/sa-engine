@@ -3097,3 +3097,6 @@
   the measurement on: 0 blocked in 3016 / 616 iterations, the browser runs 0 blocked; with it off no perf output and
   no registry change. i686 clippy `-D warnings` (sa-game all targets), wasm32 clippy (sa-game lib), sa-platform tests
   24/24 (new: perf, clock), cfg 0 over baseline, dupes 0 new.
+- Writer gate (base b31ab3de, head c0ae4432): all 18 steps PASS. Its queue step failed on master already (the writer
+  branch of batches frontier2-b18 / b19 changed from "(no branch)" to master once they were merged); c0ae4432
+  regenerates catalog/verify-queue.csv and docs/verify/QUEUE.md (no hook or status changed).
