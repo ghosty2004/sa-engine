@@ -5,7 +5,7 @@
 //! Both entries are `nop; jmp` into a protection fragment that only reserves the stack frame.
 
 use sa_core::abi::HookReg;
-use sa_core::field::v3_ptr as vp;
+use sa_core::field::{rd3f as rd3, v3_ptr as vp};
 use sa_core::mem::GPtr;
 use sa_core::timer::{TIME_MS, fild_u32};
 use sa_core::hook;
@@ -294,10 +294,6 @@ const MODE_1STPERSON: u32 = 16;
 const MODE_CAM_ON_A_STRING: u32 = 18;
 /// 0.8 (0x858C98): the police car's heading test.
 const K_0_8: u32 = 0x3F4C_CCCD;
-
-fn rd3(p: GPtr<u8>) -> [f32; 3] {
-    [rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8)]
-}
 
 /// `FindPlayerCoors(-1)` copied.
 fn coors() -> [f32; 3] {

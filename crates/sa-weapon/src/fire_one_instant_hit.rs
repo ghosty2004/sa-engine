@@ -3,7 +3,7 @@
 //! reading aid; unverified (docs/verify/HOWTO.md).
 
 use sa_core::abi::HookReg;
-use sa_core::field::v3_ptr as vp;
+use sa_core::field::{rd3f as v3, v3_ptr as vp};
 use sa_core::hook;
 use sa_core::mem::GPtr;
 use sa_math::fpu::{f32_of, ge_or_nan, x, xi};
@@ -29,10 +29,6 @@ const K_RAD2DEG: u32 = 0x4265_2EE0;
 const WEAPON_PED: i32 = 0x34;
 const WEAPON_VEHICLE: i32 = 0x1C;
 const SURFACE_WATER_SHALLOW: u32 = 0x27;
-
-fn v3(p: GPtr<u8>) -> [f32; 3] {
-    [rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8)]
-}
 
 /// `FireOneInstantHitRound(const CVector& start, const CVector& end, int32 intensity)` (0x73AF00, cdecl). A point
 /// light (3.0, 0.25 / 0.22 / 0) at `start`; `ProcessLineOfSight(start, end)` (everything but see-through and camera

@@ -2379,7 +2379,7 @@ SA_UNVERIFIED=frontier2-b19 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b19 
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x73AF00 | `FireOneInstantHitRound` | written | L2 | x87-transcendental |
+| 0x73AF00 | `CWeapon::FireOneInstantHitRound` | written | L2 | x87-transcendental |
 
 ## frontier2-b2
 
