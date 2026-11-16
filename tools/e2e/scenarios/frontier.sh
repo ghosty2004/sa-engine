@@ -2,7 +2,7 @@
 # FRONTIER-1 scenarios: native sa-game runs (deterministic, --fixed-step 40, offscreen) that reach the blockers the
 # user hit. Each must end with an empty blocker list in OUT/report.md and no crash.
 #
-#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat OUTDIR [FRAMES]
+#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack OUTDIR [FRAMES]
 #
 # pausemenu (400)  Esc, down x3, Enter (pause-menu item 4: Stats), down, Enter, Enter: the Stats pages draw
 #                  (was a SIGSEGV at iteration ~171: CStats::GetStatValue's X87 result dispatched as cdecl)
@@ -54,6 +54,11 @@
 #                  the dock next to the Squalo / Marquis / Jetmax, `f` to get in, w held: CBoat::ProcessControl 0x6F1770
 #                  and CVehicle::ProcessBoatControl 0x6DBCE0 for every boat there (FRONTIER-2 turn 6 lane B; the Santa
 #                  Maria pier has no boat and its teleport hung in the vorbis stream seek until ece2d244)
+#                  attack waves 0x444810, CGangWars::TellGangMembersTo 0x444530)
+# jetpack  (1000)  on foot at Grove Street, the jet pack cheat ROCKETMAN, then lift-off (space), forward (w) and strafes:
+#                  CTaskSimpleJetPack::RenderJetPack 0x67F6A0 every frame (FRONTIER-2 turn 6 lane A)
+# WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-a5-counts.gdb --args" counts the road block / gang war / jet pack
+# calls.
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-counts.gdb --args" counts the FRONTIER-2 ports' calls
 # (frontier2-3-counts.gdb: those of part 2).
 # Env: SA_ROOT (checkout holding wine/gta-sa; default ~/sa-engine), SA_GAME (binary; default this checkout's
@@ -111,6 +116,11 @@ gangwar)
     export SA_GAME_TELEPORT="60:2070.0:-1730.0:13.5"
     export SA_GAME_POKE="200:0x96AB90:1:1;200:0x96AB5C:3.0"
     run "${3:-2000}" --start-in-world ;;
+jetpack)
+    export SA_GAME_SCRIPT_SKIP=1
+    keys=; i=150; for c in r o c k e t m a n; do keys="$keys${keys:+,}$c:$i:$((i + 2))"; i=$((i + 6)); done
+    export SA_GAME_KEYS="$keys,space:300:520,w:360:700,a:540:600,d:640:700,s:760:800"
+    run "${3:-1000}" --start-in-world ;;
 melee)
     # the PEDHIT foot run's sprint into the Grove Street peds (they are next to CJ at ~905), then punches every 25
     # iterations: CTaskSimpleFight::FightHitPed lands (7 hits by 2600); stops on HandlePedHit 0x4E1CC0 and
@@ -170,6 +180,6 @@ boat)
     export SA_GAME_KEYS="f:200:203,w:300:1100,a:700:760"
     run "${3:-1200}" --start-in-world ;;
 *)
-    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat OUTDIR [FRAMES]" >&2
+    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack OUTDIR [FRAMES]" >&2
     exit 2 ;;
 esac

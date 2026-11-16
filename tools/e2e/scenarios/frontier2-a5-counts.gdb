@@ -1,7 +1,7 @@
 # gdb command file for tools/e2e/scenarios/frontier.sh (WRAP="gdb -q -batch -x THIS --args"): counts the calls of
 # the road block and gang war ports (the Rust functions themselves: ports reach each other directly, not through
 # their native entries) the FRONTIER-2 turn 5 lane A scenarios (roadblock-script, roadblock-wanted,
-# gangwar) are meant to reach, and prints the hit counts at the end.
+# gangwar) and turn 6 (jetpack) are meant to reach, and prints the hit counts at the end.
 set pagination off
 set breakpoint pending on
 handle SIGSEGV stop nopass
@@ -16,7 +16,8 @@ rbreak ^sa_pop::[a-z0-9_]*::create_defending_group$
 rbreak ^sa_pop::[a-z0-9_]*::pick_zone_to_attack$
 rbreak ^sa_pop::[a-z0-9_]*::gang_wars_update$
 rbreak ^sa_pop::[a-z0-9_]*::tell_gang_members_to$
-commands 1-8
+rbreak ^sa_ai::[a-z0-9_]*::jet_pack_render$
+commands 1-9
 silent
 continue
 end

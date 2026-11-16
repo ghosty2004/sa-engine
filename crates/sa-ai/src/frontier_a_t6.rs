@@ -11,15 +11,22 @@ use sa_core::{hook, orig};
 use crate::bindings::{can_sunbathe, go_to_point_ctor, in_air_ctor, simple_dead_ctor, task_new, task_simple_ctor};
 use crate::common::{g, rd, task_get_type, task_make_abortable, wr, x};
 use sa_anim::bindings::anim_add_block_ref;
-use sa_math::fpu::le_or_nan;
+use crate::fall::fild_u32;
+use sa_core::bindings::{
+    clump_get_frame_from_name, get_anim_hierarchy_from_skin_clump, rp_hanim_hierarchy_get_matrix_array,
+    rw_frame_update_objects, rw_matrix_rotate, rw_matrix_translate,
+};
+use sa_math::fpu::{ge_or_nan, gt, le_or_nan, lt};
 use sa_stream::bindings::streaming_request_model;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::{
-    anim_blend_animation, follow_node_route_ctor, go_to_point_and_stand_still_ctor, intel_clear_tasks,
-    ped_remove_weapon_model, ped_set_current_weapon, run_named_anim_ctor,
+    anim_blend_animation, follow_node_route_ctor, fx_kill, go_to_point_and_stand_still_ctor, intel_clear_tasks,
+    ped_remove_weapon_model, ped_set_current_weapon, rp_clump_render, run_named_anim_ctor,
 };
 
 orig! {
+    /// `CTaskSimpleJetPack::DoJetPackEffect(CPed*)` (0x67B7F0, `ret 4`)
+    fn jet_pack_do_effect(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x67B7F0 => unported;
     /// `CEvent::GetEventType()` (vtable +4)
     fn v_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
     /// `FUN_006348f0` (0x6348F0, `ret 4`): the mobile phone task's weapon restore
@@ -447,6 +454,122 @@ pub fn sunbathe_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     rd::<GPtr<u8>>(this, 8)
 }
 
+// ------------------------------------------------------------------------------------------- jet pack
+
+/// Rotates a jet ball frame's matrix (`RwMatrixRotate(X axis 0x8D232C, rx, replace)`, then `(Y axis 0x8D2338, ry,
+/// preconcat)`) and puts its saved position back.
+fn rotate_jet_ball(m: GPtr<u8>, pos: [u32; 3], rx: f32, ry: f32) {
+    rw_matrix_rotate(m, GPtr::from_addr(0x8D232C), rx, 0);
+    rw_matrix_rotate(m, GPtr::from_addr(0x8D2338), ry, 1);
+    for (k, v) in pos.iter().enumerate() {
+        wr::<u32>(m, 0x30 + k as isize * 4, *v);
+    }
+}
+
+/// `v` clamped to [-90, 90] as the original tests it (`90 < v` → 90, else `-90 > v` → -90, else `v`; NaN stays).
+fn clamp_90(v: f32) -> f32 {
+    if lt(x(g::<f32>(0x85991C).read()), x(v)) {
+        g::<f32>(0x85991C).read()
+    } else if gt(x(g::<f32>(0x859CE8).read()), x(v)) {
+        f32::from_bits(0xC2B4_0000)
+    } else {
+        v
+    }
+}
+
+/// `CTaskSimpleJetPack::RenderJetPack(CPed*)` (0x67F6A0, `ret 4`). +8 finished, +0xD thrust stop, +0x10 strafe, +0x14
+/// thrust angle, +0x3C the previous heading, +0x40 the jet pack clump, +0x64 / +0x68 the effect systems.
+/// * No clump or finished: both effects killed (`FxSystem_c::Kill`, slot cleared).
+/// * Otherwise the clump's frame matrix becomes the ped's skin bone matrix 3 (16 dwords), translated by 0x8D2F68 and
+///   rotated 90 degrees about 0x8D2F74 (both preconcat). The heading change: the ped's aiming rotation (+0x55C)
+///   brought within pi of the previous heading (`cur > prev + pi` → -2pi, else `cur < prev - pi` → +2pi; gta-reversed
+///   has `>=` / `<=`), minus it, clamped to [-0.2, 0.2] on the x87 stack, times 57.2958 and 10 (f32 `r`). The jet
+///   balls (`jetball1`, `jetball2`; skipped when absent), their position kept: with thrust stop `t = time /
+///   79.577469`, rotations `(sin t * 45, cos t * 45)` (`-45` for the second); otherwise `(clamp_90(angle * 57.2958 +
+///   r), max(0, strafe * 45))` for the first and `(clamp_90(angle * 57.2958 - r), min(0, strafe * 45))` for the
+///   second (gta-reversed uses `angle - r` for both). Then `RwFrameUpdateObjects`, `RpClumpRender`,
+///   `DoJetPackEffect(ped)`.
+///
+/// Both paths end with +0x3C = the ped's current rotation (+0x558).
+#[hook(addr = 0x67F6A0, conv = thiscall, name = "CTaskSimpleJetPack::RenderJetPack", expect = "83 EC 1C 55 8B E9 8B 45 40",
+       this = "CTaskSimpleJetPack",
+       unverified = "frontier2-a9", route = "L2", hazards = "x87-transcendental,heap-writes")]
+pub fn jet_pack_render(this: GPtr<u8>, ped: GPtr<u8>) {
+    if rd::<u32>(this, 0x40) == 0 || rd::<u8>(this, 8) != 0 {
+        for o in [0x64, 0x68] {
+            let fx = rd::<GPtr<u8>>(this, o);
+            if !fx.is_null() {
+                fx_kill(fx);
+                wr::<u32>(this, o, 0);
+            }
+        }
+        wr::<u32>(this, 0x3C, rd::<u32>(ped, 0x558));
+        return;
+    }
+    let hier = get_anim_hierarchy_from_skin_clump(rd::<GPtr<u8>>(ped, 0x18));
+    let src = rp_hanim_hierarchy_get_matrix_array(hier).byte_add(0xC0);
+    let frame = rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x40), 4);
+    let m = frame.byte_add(0x10);
+    for k in 0..16 {
+        wr::<u32>(m, k * 4, rd::<u32>(src, k * 4));
+    }
+    rw_matrix_translate(m, GPtr::from_addr(0x8D2F68), 1);
+    rw_matrix_rotate(m, GPtr::from_addr(0x8D2F74), 90.0, 1);
+
+    let pi = g::<f32>(0x858CB8).read();
+    let two_pi = g::<f32>(0x858CBC).read();
+    let prev = rd::<f32>(this, 0x3C);
+    let mut cur = x(rd::<f32>(ped, 0x55C));
+    if gt(cur, x(prev).fadd_m(pi)) {
+        cur = cur.fsub_m(two_pi);
+    } else if lt(cur, x(prev).fsub_m(pi)) {
+        cur = cur.fadd_m(two_pi);
+    }
+    let mut d = cur.fsub_m(prev);
+    let lim = g::<f32>(0x8D2F88).read();
+    if gt(d, x(lim)) {
+        d = x(lim);
+    } else if lt(d, x(-lim)) {
+        d = x(-lim);
+    }
+    let r = d.fmul_m(g::<f32>(0x859878).read()).fmul_m(g::<f32>(0x8D2F84).read()).to_f32();
+
+    for (name, left) in [(0x8705F4usize, true), (0x8705E8, false)] {
+        let jb = clump_get_frame_from_name(rd::<GPtr<u8>>(this, 0x40), GPtr::from_addr(name));
+        if jb.is_null() {
+            continue;
+        }
+        let jm = jb.byte_add(0x10);
+        let pos = [rd::<u32>(jm, 0x30), rd::<u32>(jm, 0x34), rd::<u32>(jm, 0x38)];
+        let (rx, ry) = if rd::<u8>(this, 0xD) != 0 {
+            let t = fild_u32(g::<i32>(TIME_MS).read()).fdiv_m(g::<f32>(0x8D2F80).read());
+            let k = if left { 0x858CB4 } else { 0x87063C };
+            let rx = t.fsin().fmul_m(g::<f32>(k).read()).to_f32();
+            let ry = t.fcos().fmul_m(g::<f32>(0x858CB4).read()).to_f32();
+            (rx, ry)
+        } else {
+            let a = x(rd::<f32>(this, 0x14)).fmul_m(g::<f32>(0x859878).read());
+            let v = if left { a.fadd_m(r) } else { a.fsub_m(r) }.to_f32();
+            let rx = clamp_90(v);
+            let y = x(rd::<f32>(this, 0x10)).fmul_m(g::<f32>(0x858CB4).read());
+            let zero = x(g::<f32>(0x858B50).read());
+            let ry = if left {
+                if le_or_nan(zero, y) { y.to_f32() } else { 0.0 }
+            } else if ge_or_nan(zero, y) {
+                y.to_f32()
+            } else {
+                0.0
+            };
+            (rx, ry)
+        };
+        rotate_jet_ball(jm, pos, rx, ry);
+    }
+    rw_frame_update_objects(frame);
+    rp_clump_render(rd::<GPtr<u8>>(this, 0x40));
+    jet_pack_do_effect(this, ped);
+    wr::<u32>(this, 0x3C, rd::<u32>(ped, 0x558));
+}
+
 /// Every hook of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_USE_MOBILE_PHONE_RESTORE_WEAPON,
@@ -458,4 +581,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_FALL_TO_DEATH_CREATE_NEXT_SUB_TASK,
     HOOK_SHOULD_LOAD_SUNBATHE_ANIMS,
     HOOK_SUNBATHE_CONTROL_SUB_TASK,
+    HOOK_JET_PACK_RENDER,
 ];

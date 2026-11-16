@@ -686,7 +686,7 @@ pub fn evasive_step_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
 }
 
 /// `fild` of a dword the original treats as unsigned (`fild`, then `fadd [0x858C54]` = 2^32 when negative).
-fn fild_u32(v: i32) -> X87 {
+pub(crate) fn fild_u32(v: i32) -> X87 {
     let f = xi(v);
     if v < 0 { f.fadd_m(gm(0x858C54)) } else { f }
 }
