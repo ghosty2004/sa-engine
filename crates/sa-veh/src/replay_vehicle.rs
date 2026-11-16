@@ -32,7 +32,7 @@ const CURR_AREA: usize = 0xB72914;
 /// panel states of the damage manager's panel word (+0x5B4) that differs from `panels`, the nibble is copied; panels 0,
 /// 1 and 4 then call `SetPanelDamage(i, flag)` (0x6B1480), panels 5 and 6 `SetBumperDamage(i, flag)` (0x6B1350),
 /// panels 2 and 3 nothing.
-#[hook(addr = 0x59CA10, conv = cdecl, name = "ApplyPanelDamageToCar", expect = "53 8B 5C 24 10 56",
+#[hook(addr = 0x59CA10, conv = cdecl, name = "(missed by ghidra: cat7-call)", expect = "53 8B 5C 24 10 56",
        unverified = "frontier2-c12", route = "L2", hazards = "heap-writes")]
 pub fn apply_panel_damage_to_car(panels: u32, car: GPtr<u8>, flag: u32) {
     for i in 0..7u32 {
@@ -70,10 +70,10 @@ fn scaled(b: i8, c: usize) -> u32 {
 /// 4, `SetDoorStatus(i, 4)` and `SetDoorDamage(i, 1)`. Every vehicle: engine-on bit 4 of +0x428 = not engine-broken
 /// (bit 1 of +0x42D); an automobile's +0x961 = 4; area (+0x2F) = `CGame::currArea`; `CWorld::Remove` and `Add`; bit 29
 /// of the physical flags +0x40 from bit 0 of +0x2F.
-#[hook(addr = 0x45BA90, conv = thiscall, name = "tReplayVehicleBlock::ExtractVehicleUpdateData",
-       expect = "90 E9 CC 62 FA FF", unverified = "frontier2-c12", route = "L2",
-       hazards = "heap-writes,uninit-locals,entry-protection-read",
-       note = "the two stack CMatrix keep uninitialised padding words; the entry bytes are read by protection code")]
+///
+/// A phase B native, not a hook: the protection reads the entry's dword at 0x45BA91 as a key (0x401831, 0x40A486,
+/// 0x156A03F, 0x156D5E5), which a 5-byte patch would change and keycells does not list (INF-20).
+#[sa_core::native(addr = 0x45BA90, conv = thiscall, name = "tReplayVehicleBlock::ExtractVehicleUpdateData")]
 pub fn extract_vehicle_update_data(this: GPtr<u8>, veh: GPtr<u8>, t: u32) {
     if veh.is_null() {
         return;
@@ -160,4 +160,7 @@ pub fn extract_vehicle_update_data(this: GPtr<u8>, veh: GPtr<u8>, t: u32) {
 }
 
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_APPLY_PANEL_DAMAGE_TO_CAR, HOOK_EXTRACT_VEHICLE_UPDATE_DATA];
+pub const HOOKS: &[HookReg] = &[HOOK_APPLY_PANEL_DAMAGE_TO_CAR];
+
+/// Every `#[native]` of this module.
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_EXTRACT_VEHICLE_UPDATE_DATA];
