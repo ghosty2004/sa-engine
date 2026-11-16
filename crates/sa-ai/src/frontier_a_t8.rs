@@ -21,7 +21,11 @@ use crate::bindings::{can_ped_target_ped, intel_can_see_entity_with_lights, inve
 use sa_math::fpu::{fcom_ne, fcom_parity, st0};
 use crate::bindings::{run_anim_ctor2, run_timed_anim_ctor2};
 use sa_core::bindings::general_random_int_in_range;
-use sa_world::bindings::{pause_ctor, switch_vehicle_to_real_physics};
+use sa_world::bindings::{
+    get_vehicle_appearance, is_sunbather, pause_ctor, ped_set_ped_state, switch_vehicle_to_real_physics,
+};
+use crate::bindings::{can_sunbathe, event_group_add, history_get_current_event, task_timer_is_out_of_time};
+use sa_math::fpu::ftol32;
 use sa_core::crt::rand_at;
 use sa_input::bindings::pad_sprint_just_down;
 use crate::common::{task_make_abortable, task_new, xi};
@@ -879,6 +883,173 @@ pub fn die_in_car_prepare_ped_vehicle_for_ped_death(_this: GPtr<u8>, veh: GPtr<u
     0
 }
 
+/// The sunbathe task's anim block at `off` (+0x24 / +0x28) loaded (+0x10).
+fn sunbathe_block_loaded(this: GPtr<u8>, off: isize) -> bool {
+    rd::<u8>(rd::<GPtr<u8>>(this, off), 0x10) != 0
+}
+
+/// `CTaskComplexSunbathe::CreateFirstSubTask(CPed*)` (0x639CB0, `ret 4`). A `rand()` whose value is dropped (0x639CB9),
+/// then the sunbather type (+0x20): peds of type 5 `2 - ftol((rand() & 0xFFFF) * 0x858B14 * 0x859024)`; sunbather
+/// models `rand() < 0x3FFF`; others 1. Unloaded anim blocks (+0x24, +0x28) are requested (`+0x2C / +0x30 + 0x63E7`,
+/// flags 8); +0xD = 0. With +0xC set and `ShouldLoadSunbatheAnims()`: 0x1AC when +0x34 is 0 and the second block is
+/// loaded, else 0xCA. Otherwise: the first block loaded → +0x14 = now, +0x18 = `20000 - ftol((rand() & 0xFFFF) *
+/// 0x858B14 * 0x86E668)`, +0x1C = 1, +0xD = 1 and 0x1A2; not loaded → 0xCA when the anims should load, else NULL.
+#[hook(addr = 0x639CB0, conv = thiscall, name = "CTaskComplexSunbathe::CreateFirstSubTask", expect = "56 57 8B F1 E8 65 7E 1E 00",
+       unverified = "frontier2-a11", route = "L2", hazards = "heap-writes")]
+pub fn sunbathe_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    rand_at(0x639CB9);
+    let scaled = |site: u32, k: usize| {
+        let r = rand_at(site) & 0xFFFF;
+        ftol32(xi(r).fmul_m(g::<f32>(0x858B14).read()).fmul_m(g::<f32>(k).read()))
+    };
+    let kind = if rd::<i32>(ped, 0x598) == 5 {
+        2 - scaled(0x639CCB, 0x859024)
+    } else if is_sunbather(i32::from(rd::<i16>(ped, 0x22))) != 0 {
+        i32::from(rand_at(0x639D0B) < 0x3FFF)
+    } else {
+        1
+    };
+    wr::<i32>(this, 0x20, kind);
+    for (blk, idx) in [(0x24, 0x2C), (0x28, 0x30)] {
+        if !sunbathe_block_loaded(this, blk) {
+            streaming_request_model(rd::<i32>(this, idx).wrapping_add(0x63E7), 8);
+        }
+    }
+    wr::<u8>(this, 0xD, 0);
+    let should = crate::frontier_a_t6::should_load_sunbathe_anims() != 0;
+    let sub = |ty: i32| sunbathe_create_sub_task(this, ty, ped);
+    if rd::<u8>(this, 0xC) != 0 && should {
+        return if rd::<u32>(this, 0x34) == 0 && sunbathe_block_loaded(this, 0x28) { sub(0x1AC) } else { sub(0xCA) };
+    }
+    if sunbathe_block_loaded(this, 0x24) {
+        let r = rand_at(0x639DD1) & 0xFFFF;
+        wr::<u32>(this, 0x14, g::<u32>(TIME_MS).read());
+        let t = ftol32(xi(r).fmul_m(g::<f32>(0x858B14).read()).fmul_m(g::<f32>(0x86E668).read()));
+        wr::<i32>(this, 0x18, 20000 - t);
+        wr::<u8>(this, 0x1C, 1);
+        wr::<u8>(this, 0xD, 1);
+        return sub(0x1A2);
+    }
+    if should { sub(0xCA) } else { GPtr::NULL }
+}
+
+/// `CTaskComplexSunbathe::CreateNextSubTask(CPed*)` (0x6399F0, `ret 4`). Peds of type 0x16 or 5 add an interesting
+/// event (2). By the sub-task's type: 0xCA → with +0xD: 0x1AE when the anims should load and the second block is
+/// loaded, else 0x516; without: 0x1AC when both blocks are loaded, else 0x516. 0x1A2 → the second block not loaded:
+/// 0xCA; else 0x1AE unless `CanSunbathe()`, the timer +0x14 not out of time and type 0 or 2 → 0x1AD. 0x1AC → the first
+/// block loaded: +0x14 = now, +0x18 = `GetRandomNumberInRange(20000, 100000)`, +0x1C = 1, 0x1A2 and +0xD = 1 after it;
+/// else 0x516. 0x1AD → 0x1A2 with the first block loaded, else 0x516. 0x1AE → 0x516 and +0xD = 0. Others: NULL.
+#[hook(addr = 0x6399F0, conv = thiscall, name = "CTaskComplexSunbathe::CreateNextSubTask", expect = "55 8B 6C 24 08 8B 85 98 05 00 00",
+       unverified = "frontier2-a11", route = "L2", hazards = "heap-writes")]
+pub fn sunbathe_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let pt = rd::<i32>(ped, 0x598);
+    if pt == 0x16 || pt == 5 {
+        interesting_events_add(GPtr::from_addr(0xC0B058), 2, ped);
+    }
+    let sub = |ty: i32| sunbathe_create_sub_task(this, ty, ped);
+    let (b24, b28) = (|| sunbathe_block_loaded(this, 0x24), || sunbathe_block_loaded(this, 0x28));
+    match task_get_type(rd::<GPtr<u8>>(this, 8)) {
+        0xCA => {
+            if rd::<u8>(this, 0xD) != 0 {
+                if crate::frontier_a_t6::should_load_sunbathe_anims() != 0 && b28() { sub(0x1AE) } else { sub(0x516) }
+            } else if b28() && b24() {
+                sub(0x1AC)
+            } else {
+                sub(0x516)
+            }
+        }
+        0x1A2 => {
+            if !b28() {
+                return sub(0xCA);
+            }
+            if can_sunbathe() as u8 == 0 || task_timer_is_out_of_time(this.byte_add(0x14)) != 0 {
+                return sub(0x1AE);
+            }
+            let kind = rd::<i32>(this, 0x20);
+            if kind == 0 || kind == 2 { sub(0x1AD) } else { sub(0x1AE) }
+        }
+        0x1AC => {
+            if !b24() {
+                return sub(0x516);
+            }
+            let now = g::<u32>(TIME_MS).read();
+            let r = general_random_int_in_range(20000, 100000);
+            wr::<u32>(this, 0x14, now);
+            wr::<i32>(this, 0x18, r);
+            wr::<u8>(this, 0x1C, 1);
+            let t = sub(0x1A2);
+            wr::<u8>(this, 0xD, 1);
+            t
+        }
+        0x1AD => if b24() { sub(0x1A2) } else { sub(0x516) },
+        0x1AE => {
+            let t = sub(0x516);
+            wr::<u8>(this, 0xD, 0);
+            t
+        }
+        _ => GPtr::NULL,
+    }
+}
+
+orig! {
+    /// `CTaskComplexDieInCar::CreateSubTask(int32 type, CPed*)` (0x62FD50, `ret 8`)
+    fn die_in_car_create_sub_task(t: u32, ty: u32, ped: u32) -> u32 = thiscall 0x62FD50 => crate::gen_subtasks::g_task_complex_die_in_car_create_sub_task_62fd50;
+    /// `CEvent::GetEventType()` (vtable +4)
+    fn v_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
+    /// `CEvent::Clone()` (vtable +0x10)
+    fn v_event_clone(e: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x10 => unported;
+    /// The scalar deleting destructor (vtable +0)
+    fn v_delete(o: GPtr<u8>, flags: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
+    /// `CVehicle::CanPedStepOutCar(bool)` (vtable +0xE4)
+    fn v_vehicle_can_ped_step_out_car(v: GPtr<u8>, ignore: u32) -> u8 = thiscall vslot 0xE4 => unported;
+}
+
+/// `CTaskComplexDieInCar::CreateFirstSubTask(CPed*)` (0x6375F0, `ret 4`). `SetPedState(0x36)`. A current event of type
+/// 9 is passed on (cloned, its +0xC cleared, added to the event group +0x68, the clone deleted) to the vehicle's
+/// driver and each passenger (`+0x488` seats from +0x464) other than the ped. Then 0xD6 (+0x478 bit 7, the task's +0xC
+/// 0x33, a vehicle of class 3 or 4 (+0x594)); 0x2C1 when `CanPedStepOutCar(false)`; a normal-appearance vehicle (1)
+/// driven by the ped: `PreparePedVehicleForPedDeath`, the timer (+0x10 now, +0x14 2000, +0x18 1) and 0x2C5; else
+/// 0xD6.
+#[hook(addr = 0x6375F0, conv = thiscall, name = "CTaskComplexDieInCar::CreateFirstSubTask", expect = "83 EC 08 53 55 57 8B 7C 24 18",
+       unverified = "frontier2-a11", route = "L2", hazards = "heap-writes")]
+pub fn die_in_car_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    ped_set_ped_state(ped, 0x36);
+    let ev = history_get_current_event(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x38));
+    if !ev.is_null() && v_event_type(ev) == 9 {
+        let pass_on = |other: GPtr<u8>| {
+            if !other.is_null() && other != ped {
+                let c = v_event_clone(ev);
+                wr::<u8>(c, 0xC, 0);
+                event_group_add(rd::<GPtr<u8>>(other, 0x47C).byte_add(0x68), c, 0);
+                v_delete(c, 1);
+            }
+        };
+        pass_on(rd::<GPtr<u8>>(rd::<GPtr<u8>>(ped, 0x58C), 0x460));
+        let mut i = 0;
+        while i < i32::from(rd::<u8>(rd::<GPtr<u8>>(ped, 0x58C), 0x488)) {
+            pass_on(rd::<GPtr<u8>>(rd::<GPtr<u8>>(ped, 0x58C), 0x464 + i as isize * 4));
+            i += 1;
+        }
+    }
+    let sub = |ty: u32| GPtr::from_addr(die_in_car_create_sub_task(this.addr() as u32, ty, ped.addr() as u32) as usize);
+    if rd::<i8>(ped, 0x478) < 0 || rd::<u32>(this, 0xC) == 0x33
+        || matches!(rd::<u32>(rd::<GPtr<u8>>(ped, 0x58C), 0x594), 3 | 4)
+    {
+        return sub(0xD6);
+    }
+    if v_vehicle_can_ped_step_out_car(rd::<GPtr<u8>>(ped, 0x58C), 0) != 0 {
+        return sub(0x2C1);
+    }
+    if get_vehicle_appearance(rd::<GPtr<u8>>(ped, 0x58C)) == 1 && rd::<GPtr<u8>>(rd::<GPtr<u8>>(ped, 0x58C), 0x460) == ped {
+        die_in_car_prepare_ped_vehicle_for_ped_death(this, rd::<GPtr<u8>>(ped, 0x58C));
+        wr::<u32>(this, 0x10, g::<u32>(TIME_MS).read());
+        wr::<u32>(this, 0x14, 2000);
+        wr::<u8>(this, 0x18, 1);
+        return sub(0x2C5);
+    }
+    sub(0xD6)
+}
+
 /// The batch's hooks.
 pub const HOOKS: &[HookReg] = &[
     HOOK_MEDIC_TREAT_INJURED_PED_CREATE_NEXT_SUB_TASK,
@@ -894,4 +1065,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_SUNBATHE_CREATE_SUB_TASK,
     HOOK_SET_VALUE_AND_RESTART_TIMER_6955D0,
     HOOK_DIE_IN_CAR_PREPARE_PED_VEHICLE_FOR_PED_DEATH,
+    HOOK_SUNBATHE_CREATE_FIRST_SUB_TASK,
+    HOOK_SUNBATHE_CREATE_NEXT_SUB_TASK,
+    HOOK_DIE_IN_CAR_CREATE_FIRST_SUB_TASK,
 ];
