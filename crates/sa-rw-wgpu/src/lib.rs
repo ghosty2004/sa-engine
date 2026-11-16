@@ -9,4 +9,5 @@
 
 pub mod d3d9;
 pub mod dxt;
+pub mod gpu_timer;
 pub mod sm;

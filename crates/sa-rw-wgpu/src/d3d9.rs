@@ -711,12 +711,26 @@ enum DrawSrc<'a> {
     UpIndexed { min_index: u32, num_vertices: u32, indices: &'a [u8], index_format: u32, vertices: &'a [u8], stride: u32 },
 }
 
-/// Counters (cumulative).
+/// Counters (cumulative; the per-frame measurement, docs/perf/measure.md, takes their differences).
 #[derive(Debug, Clone, Copy, Default)]
 pub struct D3d9Stats {
     pub draws: u64,
+    /// render passes (one per flush) and their queue submissions
     pub flushes: u64,
+    /// pipelines created (cache misses)
     pub pipelines: u64,
+    /// draws whose pipeline differs from the previous draw's in the same pass
+    pub pipeline_changes: u64,
+    /// draws whose texture bind group differs from the previous draw's in the same pass
+    pub texture_group_changes: u64,
+    /// vertex / index buffer writes (`Unlock`, updates) and their bytes
+    pub buffer_uploads: u64,
+    pub buffer_bytes: u64,
+    /// texture level writes and their bytes
+    pub texture_uploads: u64,
+    pub texture_bytes: u64,
+    /// per-draw uniforms, shader constants and UP vertex / index bytes written per flush
+    pub stream_bytes: u64,
 }
 
 /// [`D3d9Device`] on wgpu. See the module documentation.
@@ -791,6 +805,8 @@ pub struct WgpuDevice {
 
     errors: Arc<Mutex<Vec<String>>>,
     pub stats: D3d9Stats,
+    /// GPU time per frame ([`WgpuDevice::enable_gpu_timing`])
+    gpu_timer: Option<crate::gpu_timer::GpuTimer>,
 }
 
 fn color_texture(device: &wgpu::Device, w: u32, h: u32, label: &str) -> wgpu::Texture {
@@ -845,8 +861,34 @@ pub fn block_on<F: std::future::Future>(f: F) -> F::Output {
 
 impl WgpuDevice {
     /// Device features this backend uses when the adapter offers them (request them with the device).
+    /// With a per-frame measurement running ([`sa_platform::perf`]) also the timestamp queries of the GPU time.
     pub fn optional_features() -> wgpu::Features {
-        wgpu::Features::TEXTURE_COMPRESSION_BC | wgpu::Features::ADDRESS_MODE_CLAMP_TO_BORDER
+        let f = wgpu::Features::TEXTURE_COMPRESSION_BC | wgpu::Features::ADDRESS_MODE_CLAMP_TO_BORDER;
+        if sa_platform::perf::enabled() { f | wgpu::Features::TIMESTAMP_QUERY } else { f }
+    }
+
+    /// Times every render pass with timestamp queries (GPU time per frame, [`WgpuDevice::gpu_frame_end`]); false
+    /// when the device has no `TIMESTAMP_QUERY` (e.g. WebGL2).
+    pub fn enable_gpu_timing(&mut self) -> bool {
+        if self.gpu_timer.is_none() {
+            self.gpu_timer = crate::gpu_timer::GpuTimer::new(&self.device, &self.queue);
+        }
+        self.gpu_timer.is_some()
+    }
+
+    /// Ends a timed frame: the passes since the last call are read back under `tag`.
+    pub fn gpu_frame_end(&mut self, tag: u64) {
+        if let Some(t) = self.gpu_timer.as_mut() {
+            t.end_frame(&self.device, &self.queue, tag);
+        }
+    }
+
+    /// The timed frames whose GPU time is in: `(tag, ms, partial)`; `wait` blocks for all (end of a run).
+    pub fn gpu_frame_times(&mut self, wait: bool) -> Vec<(u64, f64, bool)> {
+        match self.gpu_timer.as_mut() {
+            Some(t) => t.take(&self.device, wait),
+            None => Vec::new(),
+        }
     }
 
     /// A device rendering into its own `width`×`height` back buffer. Installs an uncaptured-error
@@ -1046,6 +1088,7 @@ impl WgpuDevice {
             blit_pipelines: HashMap::new(),
             errors,
             stats: D3d9Stats::default(),
+            gpu_timer: None,
         }
     }
 
@@ -1237,6 +1280,7 @@ impl WgpuDevice {
             self.uniform_buf = Some((buf, cbuf, group));
         }
         let Some((ubuf, cbuf, ugroup)) = self.uniform_buf.clone() else { return };
+        self.stats.stream_bytes += (p.uniforms.len() + p.consts.len() + p.arena.len()) as u64;
         self.queue.write_buffer(&ubuf, 0, &p.uniforms);
         if !p.consts.is_empty() {
             self.queue.write_buffer(&cbuf, 0, &p.consts);
@@ -1279,11 +1323,19 @@ impl WgpuDevice {
                     depth_ops: Some(wgpu::Operations { load: wgpu::LoadOp::Load, store: wgpu::StoreOp::Store }),
                     stencil_ops: Some(wgpu::Operations { load: wgpu::LoadOp::Load, store: wgpu::StoreOp::Store }),
                 }),
-                timestamp_writes: None,
+                timestamp_writes: self.gpu_timer.as_mut().and_then(|t| t.pass()),
                 occlusion_query_set: None,
                 multiview_mask: None,
             });
+            let mut prev: Option<&DrawCmd> = None;
             for d in &p.draws {
+                if prev.is_none_or(|q| q.pipeline != d.pipeline) {
+                    self.stats.pipeline_changes += 1;
+                }
+                if prev.is_none_or(|q| q.textures != d.textures) {
+                    self.stats.texture_group_changes += 1;
+                }
+                prev = Some(d);
                 pass.set_pipeline(&d.pipeline);
                 pass.set_bind_group(0, &ugroup, &[d.uniform_offset, d.const_offset]);
                 pass.set_bind_group(1, &d.textures, &[]);
@@ -2501,6 +2553,8 @@ impl D3d9Device for WgpuDevice {
         if self.pending.textures.contains(&tex) || self.target.color_id == Some(tex) {
             self.flush();
         }
+        self.stats.texture_uploads += 1;
+        self.stats.texture_bytes += data.len() as u64;
         let t = self.textures.get(&tex).ok_or_else(|| D3dError::InvalidCall(format!("texture {tex}")))?;
         if face >= if t.desc.cube { 6 } else { 1 } {
             return Err(D3dError::InvalidCall(format!("face {face} of a {} texture", if t.desc.cube { "cube" } else { "2D" })));
@@ -2597,6 +2651,8 @@ impl D3d9Device for WgpuDevice {
             self.flush();
         }
         let b = self.vbs.get_mut(&vb).ok_or_else(|| D3dError::InvalidCall(format!("vertex buffer {vb}")))?;
+        self.stats.buffer_uploads += 1;
+        self.stats.buffer_bytes += data.len() as u64;
         Self::write_buf(&self.queue, b, offset, data)
     }
 
@@ -2621,6 +2677,8 @@ impl D3d9Device for WgpuDevice {
             self.flush();
         }
         let b = self.ibs.get_mut(&ib).ok_or_else(|| D3dError::InvalidCall(format!("index buffer {ib}")))?;
+        self.stats.buffer_uploads += 1;
+        self.stats.buffer_bytes += data.len() as u64;
         Self::write_buf(&self.queue, b, offset, data)
     }
 
