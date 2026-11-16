@@ -73,6 +73,21 @@ pub fn matrix_dtor(this: GPtr<u8>) {
     }
 }
 
+/// `CMatrix::ScaleAll(float s)` (0x45AF40, thiscall `ret 4`; FRONTIER-2 turn 7 lane B, batch `frontier2-b17`):
+/// every row's x, y, z (right, forward, up, pos) `= s * c` (f32 stores), the flag / pad words untouched. The body
+/// is `lea eax, [ecx + 8]; jmp 0x401BA5`, a protection fragment that sets the row counter (`mov ecx, 4`) and jumps
+/// to the loop 0x45AF48; the original leaves ECX = 0 and EAX = this + 0x48 (no caller reads them).
+#[hook(addr = 0x45AF40, conv = thiscall, name = "CMatrix::ScaleAll", this = "CMatrix", expect = "8D 41 08 E9 5D 6C FA FF",
+       unverified = "frontier2-b17", route = "L2", hazards = "preserved-regs",
+       note = "the loop counter is set in the fragment 0x401BA5; ECX / EAX left as the original's are not modelled")]
+pub fn scale_all(this: GPtr<u8>, s: f32) {
+    for row in 0..4isize {
+        for c in 0..3isize {
+            let p = this.byte_add(row * 0x10 + c * 4).cast::<f32>();
+            p.write(sa_math::x87::X87::from_f32(s).fmul_m(p.read()).to_f32());
+        }
+    }
+}
 
 /// Every `#[hook]` of this module.
 /// `gDummyMatrix` (`CMatrix`, 0xB74240).
@@ -92,7 +107,7 @@ pub fn init_dummy_matrix() -> i32 {
     atexit(DTOR_DUMMY_MATRIX)
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_SET_SCALE, HOOK_ATTACH, HOOK_INIT_DUMMY_MATRIX];
+pub const HOOKS: &[HookReg] = &[HOOK_SET_SCALE, HOOK_ATTACH, HOOK_INIT_DUMMY_MATRIX, HOOK_SCALE_ALL];
 
 /// Globals owned by this module.
 pub const GLOBALS: &[GlobalDesc] = &[];
