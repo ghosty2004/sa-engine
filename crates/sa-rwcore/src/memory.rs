@@ -337,6 +337,20 @@ pub fn rw_memory_open(funcs: GPtr<u8>) -> u32 {
     1
 }
 
+/// `_rwMemoryClose()` (0x8020F0): every freelist on the global list destroyed (the inline
+/// `RwFreeListDestroy`), then the freelist-of-freelists itself; its pointer and the open flag
+/// cleared.
+#[hook(addr = 0x8020F0, conv = cdecl, name = "_rwMemoryClose", expect = "A1 04 A6 C9 00 55",
+       unverified = "frontier2-c14", route = "L2", hazards = "heap-writes")]
+pub fn rw_memory_close() {
+    while g::<u32>(FREELIST_LIST).read() != FREELIST_LIST as u32 {
+        rw_freelist_destroy(p8(g::<u32>(FREELIST_LIST).read()).byte_add(-0x1C));
+    }
+    rw_freelist_destroy(p8(g::<u32>(FREELIST_OF_FREELISTS).read()));
+    g::<u32>(FREELIST_OF_FREELISTS).write(0);
+    g::<u32>(MEMORY_OPEN).write(0);
+}
+
 fn rmod() -> GPtr<u8> {
     module(RESOURCES)
 }

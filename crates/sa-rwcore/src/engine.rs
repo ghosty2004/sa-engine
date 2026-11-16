@@ -99,7 +99,7 @@ orig! {
     /// `_rwMemoryOpen(const RwMemoryFunctions*)` (0x801FD0)
     fn memory_open(funcs: GPtr<u8>) -> u32 = cdecl 0x801FD0 => crate::memory::rw_memory_open;
     /// `_rwMemoryClose()` (0x8020F0)
-    fn memory_close() = cdecl 0x8020F0 => unported;
+    fn memory_close() = cdecl 0x8020F0 => crate::memory::rw_memory_close;
     /// `_rwFileSystemOpen()` (0x804140)
     fn file_system_open() -> i32 = cdecl 0x804140 => rw_file_system_open;
     /// `_rwFileSystemClose()` (0x804240)
