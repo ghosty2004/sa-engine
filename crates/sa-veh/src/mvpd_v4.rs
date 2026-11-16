@@ -192,7 +192,7 @@ orig! {
 }
 
 /// CRT `_CIasin` (0x821E70) of ST0.
-fn ci_asin(v: X87) -> X87 {
+pub(crate) fn ci_asin(v: X87) -> X87 {
     X87::from_f64_exact(sa_core::orig::x87_unary(0x82_1E70, v.to_f64()))
 }
 

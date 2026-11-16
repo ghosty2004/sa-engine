@@ -124,7 +124,7 @@ fn sq3(p: GPtr<u8>, off: isize) -> X87 {
 
 use sa_world::world::common::entity_pos as pos_ptr;
 
-fn mat(this: GPtr<u8>) -> GPtr<u8> {
+pub(crate) fn mat(this: GPtr<u8>) -> GPtr<u8> {
     rd::<GPtr<u8>>(this, 0x14)
 }
 
