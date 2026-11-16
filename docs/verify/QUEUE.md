@@ -64,6 +64,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-8 | 14 | AI, ANIM, UNK-game, WEAPON | 0e036130 | master | 14 | 0 | 0 | 0 | 0 | L2 13, L3-only 1 |
 | frontier2-9 | 21 | AI | a06f78e1 | master | 21 | 0 | 0 | 0 | 0 | L2 21 |
 | frontier2-a1 | 2 | AI | bcaaada4 | worktree-agent-a198f2e01294e8cc9 | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| frontier2-a10 | 21 | AI | e18f44e5 | worktree-agent-aa15ab7791f090943 | 21 | 0 | 0 | 0 | 0 | L2 21 |
 | frontier2-a2 | 23 | AI, UNK-game | 7d0524fc | worktree-agent-a198f2e01294e8cc9 | 23 | 0 | 0 | 0 | 0 | L2 23 |
 | frontier2-a3 | 5 | AI | 6aa6d889 | worktree-agent-a198f2e01294e8cc9 | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | frontier2-a4 | 2 | AI | 555a5634 | worktree-agent-a198f2e01294e8cc9 | 2 | 0 | 0 | 0 | 0 | L2 2 |
@@ -71,7 +72,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-a6 | 8 | AI | a6049c75 | worktree-agent-a198f2e01294e8cc9 | 8 | 0 | 0 | 0 | 0 | L2 8 |
 | frontier2-a7 | 16 | AI, POP | 0041ebcc | worktree-agent-a198f2e01294e8cc9 | 16 | 0 | 0 | 0 | 0 | L2 15, split 1 |
 | frontier2-a8 | 36 | AI | 3fd22dd2 | worktree-agent-a84f43d95c6a883c2 | 36 | 0 | 0 | 0 | 0 | L2 36 |
-| frontier2-a9 | 28 | AI, POP, UNK-game | a2efb994 | worktree-agent-aa16f3bdf26614476 | 28 | 0 | 0 | 0 | 0 | L2 28 |
+| frontier2-a9 | 28 | AI, POP, UNK-game | a2efb994 | worktree-agent-aa15ab7791f090943 | 28 | 0 | 0 | 0 | 0 | L2 28 |
 | frontier2-b1 | 32 | MATH, RENDER, RW | ebd33c14 | master | 32 | 0 | 0 | 0 | 0 | L1-pure 1, L2 31 |
 | frontier2-b2 | 23 | RW | 2f47ba34 | master | 23 | 0 | 0 | 0 | 0 | L2 23 |
 | frontier2-b3 | 7 | VEH | 221f09a0 | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
@@ -2173,6 +2174,41 @@ SA_UNVERIFIED=frontier2-a1 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a1 $S
 |---|---|---|---|---|
 | 0x68C050 | `CTaskComplexKillCriminal::CreateSubTask` | written | L2 | heap-writes |
 | 0x68E4F0 | `CTaskComplexKillCriminal::CreateNextSubTask` | written | L2 | heap-writes |
+
+## frontier2-a10
+
+21 hooks in sa-ai; hazards: ax-al-return (6), heap-writes (21), stack-residue (6), uninit-locals (2), x87-transcendental (6); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-a10 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-a10 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a10 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-a10
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x5F6FC0 | `CPedGroupDefaultTaskAllocatorSitInLeaderCar::AllocateDefaultTasks` | written | L2 | heap-writes |
+| 0x5FCE80 | `CPedGroupPlacer::PlaceChatGroup` | written | L2 | x87-transcendental,ax-al-return,uninit-locals,heap-writes |
+| 0x61F9F0 | `CTaskSimpleThrowControl::ProcessPed` | written | L2 | x87-transcendental,ax-al-return,heap-writes,stack-residue |
+| 0x622980 | `CTaskComplexKillPedFromBoat::ControlSubTask` | written | L2 | heap-writes |
+| 0x62DC20 | `CTaskComplexDestroyCarMelee::CreateNextSubTask` | written | L2 | heap-writes,stack-residue |
+| 0x62E540 | `CTaskSimpleStealthKill::ProcessPed` | written | L2 | x87-transcendental,ax-al-return,heap-writes |
+| 0x62F6E0 | `CTaskSimpleDuckToggle::ProcessPed` | written | L2 | ax-al-return,heap-writes |
+| 0x6335C0 | `CTaskSimplePlayerOnFire::ProcessPed` | written | L2 | ax-al-return,heap-writes |
+| 0x639E40 | `CTaskComplexUsePairedAttractor::CreateNextSubTask` | written | L2 | heap-writes |
+| 0x63D420 | `CTaskComplexShuffleSeats::CreateNextSubTask` | written | L2 | heap-writes |
+| 0x640730 | `CTaskComplexEnterCarAsPassengerWait::ControlSubTask` | written | L2 | heap-writes,uninit-locals |
+| 0x657820 | `CTaskComplexDiveFromAttachedEntityAndGetUp::CreateFirstSubTask` | written | L2 | heap-writes |
+| 0x65B660 | `CTaskComplexFleePoint::ControlSubTask` | written | L2 | heap-writes |
+| 0x66C820 | `CTaskComplexInvestigateDisturbance::CreateFirstSubTask` | written | L2 | heap-writes,stack-residue |
+| 0x675890 | `CTaskInteriorGoToInfo::CreateNextSubTask` | written | L2 | heap-writes |
+| 0x676640 | `CTaskInteriorGoToInfo::CreateFirstSubTask` | written | L2 | heap-writes,stack-residue |
+| 0x67E7B0 | `CTaskSimpleJetPack::ProcessControlInput` | written | L2 | x87-transcendental,heap-writes |
+| 0x67EF20 | `CTaskSimpleJetPack::ProcessThrust` | written | L2 | x87-transcendental,heap-writes |
+| 0x6801F0 | `CTaskSimpleJetPack::ProcessPed` | written | L2 | x87-transcendental,ax-al-return,heap-writes |
+| 0x694C70 | `CTaskComplexSeekEntityAiming::ControlSubTask` | written | L2 | heap-writes,stack-residue |
+| 0x697F10 | `CTaskComplexWaitForBackup::CreateNextSubTask` | written | L2 | heap-writes,stack-residue |
 
 ## frontier2-a2
 
