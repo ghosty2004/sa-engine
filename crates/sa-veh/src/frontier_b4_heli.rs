@@ -36,8 +36,8 @@ orig! {
     fn send_down_swat(h: GPtr<u8>) -> u8 = thiscall 0x6C69C0 => crate::frontier_b4_heli::heli_send_down_swat;
     /// `CTaskComplexUseSwatRope::CTaskComplexUseSwatRope(uint32 ropeId, CHeli* heli)` (0x659470)
     fn task_use_swat_rope_ctor(t: GPtr<u8>, rope: GPtr<u8>, heli: GPtr<u8>) -> GPtr<u8> = thiscall 0x659470 => unported;
-    /// `CHeli::FindSwatPositionRelativeToHeli(CVector* out, int32 i)` (0x6C4760; callers keep EDX: not hookable, the
-    /// generated body is its phase B native below)
+    /// `CHeli::FindSwatPositionRelativeToHeli(CVector* out, int32 i)` (0x6C4760; callers keep EDX: not hookable, its
+    /// phase B native below)
     fn heli_find_swat_position(h: GPtr<u8>, out: GPtr<u8>, i: u32) -> GPtr<f32> = thiscall 0x6C4760 => crate::frontier_b4_heli::heli_find_swat_position_native;
     /// `CRopes::SetSpeedOfTopNode(uint32 id, CVector speed)` (0x555DF0)
     fn ropes_set_speed_of_top_node(id: GPtr<u8>, sx: f32, sy: f32, sz: f32) = cdecl 0x555DF0 => unported;
@@ -50,12 +50,28 @@ orig! {
     fn vehicle_update_winch(v: GPtr<u8>) = thiscall 0x6D3B80 => crate::vehicle2::update_winch;
 }
 
-/// `CHeli::FindSwatPositionRelativeToHeli` (0x6C4760): the phase B entry of the generated body (unhookable: callers
-/// keep EDX across the call).
+/// `CHeli::FindSwatPositionRelativeToHeli(CVector* out, int32 i)` (0x6C4760, leaf, `ret 8`): the rope position `i` of
+/// the four (x -1.2 / 1.2, y -1 / 1, z -0.5, in the bytes' order 0..3: (-x, -y), (x, -y), (-x, y), (x, y)); `i` above 3
+/// (unsigned) gives the zero vector. Returns `out`. Phase B native only: callers keep EDX across the call. The stores
+/// are the bytes' immediate bit patterns.
 #[native(addr = 0x6C4760, conv = thiscall, name = "CHeli::FindSwatPositionRelativeToHeli")]
-pub fn heli_find_swat_position_native(h: GPtr<u8>, out: GPtr<u8>, i: u32) -> GPtr<f32> {
-    let r = crate::generated::generated_leaf_logic::g_cheli_find_swat_position_relative_to_heli_6c4760(h.addr() as u32, out.addr() as u32, i);
-    GPtr::from_addr(r as usize)
+pub fn heli_find_swat_position_native(_h: GPtr<u8>, out: GPtr<u8>, i: u32) -> GPtr<f32> {
+    const NEG_X: u32 = 0xBF99_999A; // -1.2
+    const POS_X: u32 = 0x3F99_999A; // 1.2
+    const NEG_Y: u32 = 0xBF80_0000; // -1.0
+    const POS_Y: u32 = 0x3F80_0000; // 1.0
+    const Z: u32 = 0xBF00_0000; // -0.5
+    let v = match i {
+        0 => [NEG_X, NEG_Y, Z],
+        1 => [POS_X, NEG_Y, Z],
+        2 => [NEG_X, POS_Y, Z],
+        3 => [POS_X, POS_Y, Z],
+        _ => [0, 0, 0],
+    };
+    wr::<u32>(out, 0, v[0]);
+    wr::<u32>(out, 4, v[1]);
+    wr::<u32>(out, 8, v[2]);
+    out.cast()
 }
 
 /// `CHeli::ProcessControl()` (0x6C7050, vtable slot). `CAutomobile::ProcessControl`, then:

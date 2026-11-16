@@ -18,8 +18,6 @@ use sa_math::x87::X87;
 
 #[path = "generated_dtors.rs"]
 pub mod generated_dtors;
-#[path = "generated_leaf_logic.rs"]
-pub mod generated_leaf_logic;
 #[path = "generated_leaves.rs"]
 pub mod generated_leaves;
 #[path = "generated_setters.rs"]
@@ -68,7 +66,6 @@ pub const HOOKS: &[HookReg] = &[
 /// Every generated body of this crate.
 pub const BODIES: &[&[Body]] = &[
     generated_dtors::BODIES,
-    generated_leaf_logic::BODIES,
     generated_leaves::BODIES,
     generated_setters::BODIES,
     generated_small::BODIES,
