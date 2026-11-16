@@ -8,6 +8,7 @@ use sa_core::{hook, orig};
 
 use crate::bindings::{
     compute_closest_surface_point_ped, ped_groups_get_peds_group, ped_replace_weapon_when_exiting_vehicle,
+    scripted_2d_effects_get_index,
     task_timer_is_out_of_time, tm_find_active_task_by_type, tm_get_task_secondary, tm_set_task_secondary,
     use_gun_control_gun, use_gun_ctor,
 };
@@ -16,6 +17,7 @@ use crate::common::{g, rd, wr, x, xi, X87};
 use crate::fall::fild_u32;
 use crate::kill_ped_on_foot_armed::current_weapon_info;
 use sa_core::bindings::{general_get_radian_angle_between_points, general_limit_radian_angle};
+use sa_anim::bindings::ik_abort_look_at;
 use sa_core::crt::rand_at;
 use sa_core::field::gf;
 use sa_math::fpu::{fcom_any, fcom_ne, fcom_parity, ge_or_nan, gt, le_or_nan, lt, st0};
@@ -24,7 +26,8 @@ use sa_pop::bindings::{get_look_behind_for_car, pad_get_look_left, pad_get_look_
 use sa_stream::bindings::{calculate_ground_height, ped_is_player};
 use sa_world::bindings::{
     achieve_heading_ctor, camera_get_look_direction, car_enter_exit_compute_passenger_index_from_car_door,
-    follow_node_route_ctor, fx_kill, get_pad_from_player, membership_get_leader, ped_say, ped_set_ped_state, max_f, min_f, pad_get_accelerate, pad_get_brake,
+    entity_clean_up_old_reference, follow_node_route_ctor, fx_kill, get_pad_from_player, ik_is_looking, ik_look_at,
+    membership_get_leader, ped_say, ped_set_ped_state, max_f, min_f, pad_get_accelerate, pad_get_brake,
     pad_get_exit_vehicle, pad_get_ped_walk_left_right, pad_get_ped_walk_up_down, pad_get_target,
     ped_remove_weapon_when_entering_vehicle, physical_apply_move_force_5429f0,
 };
@@ -873,6 +876,116 @@ pub fn seek_entity_aiming_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPt
     rd::<GPtr<u8>>(this, 8)
 }
 
+orig! {
+    /// `CTaskComplexUsePairedAttractor::CreateSubTask(int32 type, CPed*)` (0x638D30, `ret 8`)
+    fn use_paired_attractor_create_sub_task(t: u32, ty: u32, ped: u32) -> u32 = thiscall 0x638D30 => crate::gen_subtasks::g_task_complex_use_paired_attractor_create_sub_task_638d30;
+    /// `CTaskComplex::CreateFirstSubTask(CPed*)` (vtable +0x24)
+    fn v_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
+}
+
+/// [`use_paired_attractor_create_sub_task`] with pointers.
+fn paired_sub(this: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> {
+    GPtr::from_addr(use_paired_attractor_create_sub_task(this.addr() as u32, ty, ped.addr() as u32) as usize)
+}
+
+/// `CTaskComplexUsePairedAttractor::CreateNextSubTask(CPed*)` (0x639E40, `ret 4`). By the sub-task's type: 0xF9 →
+/// +0x20 += 1; with a partner (+0x10) `CreateSubTask(0xF8)`; without one 0xF9 while the attractor's scripted effect
+/// (+0xC → +4) is still flagged (0xC39FE0 + `CScripted2dEffects::GetIndex`), else 0x516. 0xF8 → 0xF7 with a partner,
+/// else 0xF9. 0xF7 → when +0x14 is set +0x1C = `(+0x1C + 5) % 4` (C remainder) and the pair data's (+0x18) +0xC is
+/// read, otherwise its +0x1C: 0 → 0x516, 1 → 0xF9, others NULL; then the partner reference is cleaned up and cleared,
+/// +0x14 = 0, +0x18 = NULL. Others: NULL.
+#[hook(addr = 0x639E40, conv = thiscall, name = "CTaskComplexUsePairedAttractor::CreateNextSubTask", expect = "55 56 8B F1 8B 4E 08",
+       unverified = "frontier2-a10", route = "L2", hazards = "heap-writes")]
+pub fn use_paired_attractor_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    match crate::common::task_get_type(rd::<GPtr<u8>>(this, 8)) {
+        0xF9 => {
+            wr::<u32>(this, 0x20, rd::<u32>(this, 0x20).wrapping_add(1));
+            if rd::<u32>(this, 0x10) != 0 {
+                return paired_sub(this, 0xF8, ped);
+            }
+            let i = scripted_2d_effects_get_index(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0xC), 4));
+            if g::<u8>(0xC39FE0usize.wrapping_add(i as usize)).read() != 0 {
+                paired_sub(this, 0xF9, ped)
+            } else {
+                paired_sub(this, 0x516, ped)
+            }
+        }
+        0xF8 => {
+            if rd::<u32>(this, 0x10) == 0 { paired_sub(this, 0xF9, ped) } else { paired_sub(this, 0xF7, ped) }
+        }
+        0xF7 => {
+            let flag = rd::<u8>(this, 0x14) != 0;
+            let pair = rd::<GPtr<u8>>(this, 0x18);
+            let v = if flag {
+                wr::<i32>(this, 0x1C, rd::<i32>(this, 0x1C).wrapping_add(5) % 4);
+                rd::<u32>(pair, 0xC)
+            } else {
+                rd::<u32>(pair, 0x1C)
+            };
+            let t = match v {
+                0 => paired_sub(this, 0x516, ped),
+                1 => paired_sub(this, 0xF9, ped),
+                _ => GPtr::NULL,
+            };
+            let partner = rd::<GPtr<u8>>(this, 0x10);
+            if !partner.is_null() {
+                entity_clean_up_old_reference(partner, this.byte_add(0x10));
+                wr::<u32>(this, 0x10, 0);
+            }
+            wr::<u8>(this, 0x14, 0);
+            wr::<u32>(this, 0x18, 0);
+            t
+        }
+        _ => GPtr::NULL,
+    }
+}
+
+/// `CTaskComplexFleePoint::ControlSubTask(CPed*)` (0x65B660, `ret 4`). A sub-task other than 0x384 / 0x387: an active
+/// look-at (`IKChainManager::IsLooking`) is aborted (blend 250); the sub-task is kept. Otherwise: +0x38 → `Say(0x15B,
+/// 0, 0.1, 0, 0, 0)`; +0x39 (new flee point) → cleared, the timer (+0x28 start, +0x2C = +0x24 duration, +0x30 on)
+/// restarted and `CreateFirstSubTask(ped)`; else a running timer (+0x31 restarts it at now) past its end →
+/// `CreateSubTask(0xF4)`. Then, not looking, `(rand() & 0xFFFF) / 32768 * 100` truncated at most 5 →
+/// `LookAt("TaskFleePoint", ped, NULL, 2000, -1, &+0xC, false, 0.25, 500, 3, false)`.
+#[hook(addr = 0x65B660, conv = thiscall, name = "CTaskComplexFleePoint::ControlSubTask", expect = "56 8B F1 57 8B 7E 08",
+       unverified = "frontier2-a10", route = "L2", hazards = "heap-writes",
+       note = "rand at 0x65B753")]
+pub fn flee_point_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let ik = GPtr::from_addr(0xC15448);
+    let mut sub = rd::<GPtr<u8>>(this, 8);
+    if crate::common::task_get_type(sub) != 0x384 && crate::common::task_get_type(rd::<GPtr<u8>>(this, 8)) != 0x387 {
+        if ik_is_looking(ik, ped) != 0 {
+            ik_abort_look_at(ik, ped, 0xFA);
+        }
+        return rd::<GPtr<u8>>(this, 8);
+    }
+    if rd::<u8>(this, 0x38) != 0 {
+        ped_say(ped, 0x15B, 0, f32::from_bits(0x3DCC_CCCD), 0, 0, 0);
+    }
+    let now = || g::<u32>(TIME_MS).read();
+    if rd::<u8>(this, 0x39) != 0 {
+        wr::<u8>(this, 0x39, 0);
+        wr::<u32>(this, 0x28, now());
+        wr::<u32>(this, 0x2C, rd::<u32>(this, 0x24));
+        wr::<u8>(this, 0x30, 1);
+        sub = v_create_first_sub_task(this, ped);
+    } else if rd::<u8>(this, 0x30) != 0 {
+        if rd::<u8>(this, 0x31) != 0 {
+            wr::<u32>(this, 0x28, now());
+            wr::<u8>(this, 0x31, 0);
+        }
+        if now() >= rd::<u32>(this, 0x2C).wrapping_add(rd::<u32>(this, 0x28)) {
+            sub = GPtr::from_addr(crate::gen_subtasks::g_task_complex_flee_point_create_sub_task_65b460(this.addr() as u32, 0xF4) as usize);
+        }
+    }
+    if ik_is_looking(ik, ped) == 0 {
+        let r = xi(rand_at(0x65B753) & 0xFFFF).fmul_m(gf(0x858B14)).fmul_m(gf(0x858628));
+        if crate::common::ftol32(r) <= 5 {
+            ik_look_at(ik, GPtr::from_addr(0x86F6F8), ped, GPtr::NULL, 2000, -1, this.byte_add(0xC), 0, 0.25, 500, 3, 0);
+        }
+    }
+    sub
+}
+
 /// Every hook of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_JET_PACK_PROCESS_CONTROL_INPUT,
@@ -885,4 +998,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_INTERIOR_GO_TO_INFO_CREATE_NEXT_SUB_TASK,
     HOOK_WAIT_FOR_BACKUP_CREATE_NEXT_SUB_TASK,
     HOOK_SEEK_ENTITY_AIMING_CONTROL_SUB_TASK,
+    HOOK_USE_PAIRED_ATTRACTOR_CREATE_NEXT_SUB_TASK,
+    HOOK_FLEE_POINT_CONTROL_SUB_TASK,
 ];
