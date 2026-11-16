@@ -2730,3 +2730,49 @@
 - Not done: the other 28 AI virtuals (0x65A990 / 0x65ABF0 / 0x64CF40 / 0x62E8B0 / 0x6689E0 / 0x670E20 / the vt_87004c and
   vt_870b98 families / the interior ProcessPeds and others), the partial script switches, ProcessColModels' disk cases;
   jetpack's remaining block is lane C's UpdateJetPack 0x4E0EE0.
+
+## 2026-11-16 — FRONTIER-2 turn 8, lane A: 22 of the 28 AI virtuals and their callees (agent, branch worktree-agent-a673f3b762ca00e8d)
+- Base: worktree-agent-aa15ab7791f090943 (c04d5a6e, lane A turn 7). Every port from the 1.0 US bytes (gta-reversed read as an
+  aid; where it differs the bytes win), every address checked against `inflight.py` first (none registered elsewhere).
+  One batch, `frontier2-a11` (31 hooks: AI, plus the UNK-game helpers 0x62EB80 / 0x673BA0) and 2 natives, in the new
+  module sa-ai `frontier_a_t8.rs` (0x673BA0 in misc.rs next to its twin 0x665DC0).
+- Ports: CTaskComplexMedicTreatInjuredPed CreateNextSubTask 0x65A990 / ControlSubTask 0x65ABF0; vt_870b98 =
+  CTaskComplexGoPickUpEntity (task 0x136): CreateFirstSubTask 0x693610, CreateNextSubTask 0x691AE0, ControlSubTask 0x691D50;
+  GoToPointAiming::ControlSubTask 0x6689E0; FollowPatrolRoute::CreateFirstSubTask 0x670E20 (vt_870114; both searches compare
+  a squared distance with the square of the best squared distance, as the bytes); SeekCoverUntilTargetDead::ControlSubTask
+  0x62E8B0 (a dead cover ped is replaced through GetTargetPed, as the bytes); KillPedOnFootStealth::ControlSubTask 0x62B840;
+  Sunbathe CreateSubTask 0x638290 (native) / CreateFirstSubTask 0x639CB0 (a dropped rand at 0x639CB9) / CreateNextSubTask
+  0x6399F0; CTaskTimer::GetTimeLeft 0x62EB80 (its island's time load `[[0x4EC103] ^ [0x156061C]]` = `[0xB7CB84]`, static
+  image values); 0x6955D0 (catalogue name `(missed by ghidra: cat7-call)`); DieInCar PreparePedVehicleForPedDeath 0x62FD00 /
+  CreateFirstSubTask 0x6375F0; FleeEntity::ControlSubTask 0x65BBB0 + FleePoint::SetFleePosition 0x65B7B0;
+  FollowLeaderInFormation::ControlSubTask 0x696940; TrackEntity ControlSubTask 0x663640 / CalcTargetPos 0x65F780 /
+  CalcMoveRatio 0x65F930 (function statics, guard 0xC18D08) + GoToPointFine::SetTargetPos 0x65F330 (preserve ecx: the caller
+  reuses ECX); Choking::ProcessPed 0x620490; vt_86d868 CreateFirstSubTask 0x625C70 + its CreateSubTask 0x620C30 (native);
+  vt_87004c = a CTaskComplexSeekEntity with the XYOffset layout: CreateSubTask 0x673070 / CreateFirstSubTask 0x6733E0 /
+  CreateNextSubTask 0x672E80 / ControlSubTask 0x673540 on seek.rs's shared bodies (made pub(crate);
+  `seek_control_sub_task_with` takes the instance's CreateSubTask and seek-position copy 0x673BA0); CreateCarAndGetIn::
+  ProcessPed 0x64CF40; the chat allocator 0x5F8180.
+- Natives: 0x638290 and 0x620C30 have code-key entries (protection reads 0x638292 at 0x156D78F and 0x620C31 at 0x40135D;
+  the hook table tests caught it), so they are phase B natives (frontier_a_t8::NATIVES, registered in sa-ports).
+- Reuse (ADR-003): fight_combo_style's group_block / block_index, frontier_a_t5's seek_cover_sequence (split out of
+  0x62E6C0), frontier_a_t6's route_pos, flee.rs's dist2 and the new broadcast_seen_panicked_ped, cworld's in_vehicle (a
+  local copy failed dupes once). Bindings: CPad::SprintJustDown 0x5407F0 (sa-input, shared with sa-ped), the
+  InvestigateDisturbance constructor 0x66C720 and the BeHit constructor 0x620780 (sa-ai; their local declarations removed);
+  rows placed without reordering the CSV.
+- frontier.py: AI 28 virtuals → 6; to port 213 → 190 (all lanes, this checkout).
+- Scenarios (frontier.sh, i686 native, SA_ROOT=~/sa-engine): pausemenu 416 / 0 blocked, solicit 4016 / 0, crossing 1216 / 0,
+  crossing-long 4016 / 0, melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0, shootdriver 1216 / 0, roadblock-script 1016 / 0,
+  gangwar 2016 / 0, roadblocks 875 / 1141 (lane B: CCam::ArrestCamOne 0x518500, CHeli::GenerateHeli 0x6C6520),
+  roadblock-wanted 1015 / 1001 (lane B: 0x518500, CWorld::FindObjectsIntersectingCube 0x568DD0, 0x6C6520), jetpack 228 / 788
+  (lane C: CAEPedAudioEntity::UpdateJetPack 0x4E0EE0); no lane A blocker, no crash.
+- Writer gate (base c04d5a6e, target dir target): all 17 steps PASS on fa2eca9e (hooks 31 new, all unverified, batch
+  frontier2-a11 spanning AI and UNK-game; queue up to date). Earlier runs failed queue (regenerated after later commits),
+  clippy (`saturating_sub`), hooktest (the two code-key entries; ECX read after 0x65F330 by 0x66376C, now `preserve =
+  "ecx"`) and l1test (0x65F330 added to the pending preserve specs).
+- verify-all (lanes 1-3, sa-oracle rebuilt from this tree, DLL sha256 a7b4fb29… of 5cb47b31 / fa2eca9e): `f2a8-u2`
+  (SA_UNVERIFIED=frontier2-a11) IDENTICAL 13/13 and `f2a8-def` (default set) IDENTICAL 13/13; save-load identical except
+  the SAVE-1 stack residue. A first `f2a8-u` (DLL still hooking the two code-key entries) was IDENTICAL 13/13 too. The
+  lanes are shared with other sessions (lock waits).
+- Not done: KillPedWithCar::ProcessPed 0x6564A0 (needs 0x653CF0 / 0x6563D0), UseSwatRope::ControlSubTask 0x65A460 (needs
+  CRopes::FindCoorsAlongRope 0x555E40), GangHassleVehicle::ControlSubTask 0x6637C0 (0x6D3 bytes), the interior ProcessPeds
+  0x676D30 / 0x6772E0 / 0x677920; the partial script switches 0x47A760 / 0x48B590; ProcessColModels' disk cases.
