@@ -29,6 +29,9 @@ use sa_math::fpu::{ftol32, le_or_nan};
 use crate::bindings::{stand_still_dtor, stand_still_process_ped};
 use sa_world::bindings::{enter_car_as_passenger_ctor, ped_groups_get_peds_group};
 use sa_math::x87::X87;
+use sa_anim::bindings::assoc_set_finish_callback;
+use sa_stream::bindings::ped_is_player;
+use sa_world::bindings::anim_blend_animation;
 use sa_core::crt::rand_at;
 use sa_input::bindings::pad_sprint_just_down;
 use crate::common::{task_create_next_sub_task, task_make_abortable, task_new, xi};
@@ -1383,6 +1386,69 @@ pub fn track_entity_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> 
     }
 }
 
+// ------------------------------------------------------------------------------------------- choking
+
+/// `CTaskSimpleChoking::ProcessPed(CPed*)` (0x620490, `ret 4`, AL). Finished (+0x19): 1. A non-player ped with an
+/// attacker (+8) and +0x18 clear turns to face it when it is in front (`d · forward > 0`, the ped's matrix read
+/// unchecked): +0x55C = `atan2(-dx, dy)`. +0x10 counts down by `ftol(timeStep * 0x858B38 * 0x858C4C)` (to 0). No anim
+/// (+0xC): `BlendAnimation(clump, 0, 0x15, 4.0)` with the finish callback 0x620480, its speed (+0x24) `rand() *
+/// 0x858C7C * 0x858C84 + 0x858F34`. A run-out timer with anim 0x15: that anim's callback cleared (0x4D1390), anim 0xA
+/// blended in the same way, +0x10 = `now - +0x14` kept when below `GetRandomNumberInRange(8000, 12000)`, else a second
+/// draw; with another anim it fades out (blend delta -4, flag +0x2E bit 2). Then `Say(0x154)`; AL = 0.
+#[hook(addr = 0x620490, conv = thiscall, name = "CTaskSimpleChoking::ProcessPed", expect = "56 8B F1 8A 46 19 84 C0",
+       unverified = "frontier2-a11", route = "L2", hazards = "heap-writes,ax-al-return",
+       note = "AL result; EAX's upper bytes come from the callees")]
+pub fn choking_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
+    if rd::<u8>(this, 0x19) != 0 {
+        return 1;
+    }
+    let attacker = rd::<GPtr<u8>>(this, 8);
+    if !attacker.is_null() && ped_is_player(ped) == 0 && rd::<u8>(this, 0x18) == 0 {
+        let m = rd::<GPtr<u8>>(ped, 0x14);
+        let pp = entity_pos(ped);
+        let ap = entity_pos(rd::<GPtr<u8>>(this, 8));
+        let dx = x(rd::<f32>(ap, 0)).fsub_m(rd::<f32>(pp, 0));
+        let dy = x(rd::<f32>(ap, 4)).fsub_m(rd::<f32>(pp, 4));
+        let dz = x(rd::<f32>(ap, 8)).fsub_m(rd::<f32>(pp, 8));
+        let dot = dz.fmul_m(rd::<f32>(m, 0x18)).fadd(dy.fmul_m(rd::<f32>(m, 0x14))).fadd(dx.fmul_m(rd::<f32>(m, 0x10)));
+        if gt(dot, x(g::<f32>(0x858B50).read())) {
+            wr::<f32>(ped, 0x55C, dx.fchs().fpatan(dy).to_f32());
+        }
+    }
+    let ts = g::<f32>(0xB7CB5C).read();
+    let t = ftol32(x(ts).fmul_m(g::<f32>(0x858B38).read()).fmul_m(g::<f32>(0x858C4C).read())) as u32;
+    let left = rd::<u32>(this, 0x10);
+    wr::<u32>(this, 0x10, if left > t { left - t } else { 0 });
+    let blend = |anim: u32| {
+        let a = anim_blend_animation(rd::<GPtr<u8>>(ped, 0x18), 0, anim, 4.0);
+        wr::<GPtr<u8>>(this, 0xC, a);
+        assoc_set_finish_callback(a, 0x620480, this.addr() as u32);
+    };
+    let anim = rd::<GPtr<u8>>(this, 0xC);
+    if anim.is_null() {
+        blend(0x15);
+        let r = rand_at(0x62057C);
+        let v = xi(r).fmul_m(g::<f32>(0x858C7C).read()).fmul_m(g::<f32>(0x858C84).read()).fadd_m(g::<f32>(0x858F34).read());
+        wr::<f32>(rd::<GPtr<u8>>(this, 0xC), 0x24, v.to_f32());
+    } else if rd::<u32>(this, 0x10) == 0 {
+        if rd::<i16>(anim, 0x2C) == 0x15 {
+            assoc_set_finish_callback(anim, 0x4D1390, 0);
+            blend(0xA);
+            let e = g::<u32>(TIME_MS).read().wrapping_sub(rd::<u32>(this, 0x14));
+            wr::<u32>(this, 0x10, e);
+            if e >= general_random_int_in_range(8000, 12000) as u32 {
+                wr::<i32>(this, 0x10, general_random_int_in_range(8000, 12000));
+            }
+        } else {
+            wr::<u32>(anim, 0x1C, 0xC080_0000);
+            let a = rd::<GPtr<u8>>(this, 0xC);
+            wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) | 4);
+        }
+    }
+    ped_say(ped, 0x154, 0, 1.0, 0, 0, 0);
+    0
+}
+
 /// The batch's hooks.
 pub const HOOKS: &[HookReg] = &[
     HOOK_MEDIC_TREAT_INJURED_PED_CREATE_NEXT_SUB_TASK,
@@ -1408,4 +1474,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_TRACK_ENTITY_CALC_TARGET_POS,
     HOOK_TRACK_ENTITY_CALC_MOVE_RATIO,
     HOOK_TRACK_ENTITY_CONTROL_SUB_TASK,
+    HOOK_CHOKING_PROCESS_PED,
 ];
