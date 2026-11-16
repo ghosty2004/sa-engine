@@ -6,6 +6,11 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
 use crate::common::{ftol32, g, jne, jp, k, rd, wr, x};
+use sa_core::bindings::{cross_product, vector_normalise};
+use sa_core::crt::rand_at;
+use sa_math::fpu::xi;
+use sa_math::x87::X87;
+use sa_world::bindings::find_ground_z_for_3d_coord;
 
 sa_core::globals! {
     list GLOBALS;
@@ -126,6 +131,144 @@ pub fn find_free_pane() -> GPtr<u8> {
         }
     }
     GPtr::from_addr(0)
+}
+
+/// `(float)(uint32)n` as the bytes build it: `fild` of the int plus 2^32 (0x858C54) when negative.
+fn u32_x87(n: u32) -> X87 {
+    let v = xi(n as i32);
+    if (n as i32) < 0 { v.fadd_m(f32::from_bits(0x4F80_0000)) } else { v }
+}
+
+/// `CGlass::GeneratePanesForWindow(ePaneType type, CVector point, CVector fwd, CVector right, CVector
+/// velocity, CVector centre, float drag, bool shatter, bool max1, int32 sections, bool b)` (0x71B620,
+/// cdecl; entry `nop; jmp 0x403985`, which allocates the frame and jumps back to 0x71B626).
+///
+/// From the bytes (gta-reversed differs: the per-axis count is `max(len + 0.75, 1)` before `_ftol`, the
+/// pane offsets are `i * len / count`, the delayed time is `_ftol(|pos - centre| * 100 + now)`, the
+/// random offsets take the rand() calls in another order). `lenF = |fwd|`, `lenR = |right|` (x87,
+/// `((z z + y y) + x x)`); `nY = _ftol(max(lenF + 0.75, 1)) * sections`, `nX` likewise from lenR, each
+/// capped at 3 (unsigned) and at 1 with `max1`; `sizeY = lenF / nY`, `sizeX = lenR / nX`. The ground z
+/// under the point (`FindGroundZFor3DCoord`; none: `point.z - 2`). For every y, x and piece 0..4 a free
+/// pane (none: next piece) gets the piece, right = `right / lenR * sizeX` (the first component with the
+/// unrounded reciprocal), up = `fwd * f32(1 / lenF) * sizeY`, at = `Normalise(right x up)`, position =
+/// `point + fwd/lenF * (sizeY * cy + yOff) + right/lenR * (sizeX * cx + xOff)` per component (`cx`,
+/// `cy` the piece's centre at 0xC71B30, offsets `i * len / n`), velocity = `velocity + (r1, r2, 0) *
+/// 0.0015` (r = rand() & 0x7F - 0x40) plus `Normalise(pos - centre) * drag` unless drag == 0, the
+/// random rotation `(r_b, r_a, r_c) * 0.002` (a, b, c in call order), the creation time (type 0 / 2:
+/// now; 1: as above; others: unchanged), ground z, shatter, size (sizeY), `b` and exists = 1.
+#[hook(addr = 0x71B620, conv = cdecl, name = "CGlass::GeneratePanesForWindow", expect = "90 E9 5F 83 CE FF",
+       unverified = "frontier2-c16", route = "L2", hazards = "heap-writes",
+       note = "rand() at 0x71B9BB / 0x71B9DB / 0x71BAF5 / 0x71BAFC / 0x71BB31")]
+#[allow(clippy::too_many_arguments)]
+pub fn generate_panes_for_window(ty: u32, px: f32, py: f32, pz: f32, fx: f32, fy: f32, fz: f32, rx: f32, ry: f32, rz: f32,
+                                 vx: f32, vy: f32, vz: f32, cx: f32, cy: f32, cz: f32, drag: f32, shatter: u32, max1: u32,
+                                 sections: i32, b: u32) {
+    let len = |a: f32, b: f32, c: f32| x(c).fmul_m(c).fadd(x(b).fmul_m(b)).fadd(x(a).fmul_m(a)).fsqrt().to_f32();
+    let len_f = len(fx, fy, fz);
+    let len_r = len(rx, ry, rz);
+    let count = |l: f32| {
+        let v = x(l).fadd_m(0.75);
+        let v = if x(1.0).fcom(v).test_any(0x41) { v } else { x(1.0) };
+        ftol32(v) as u32
+    };
+    let mut ny = count(len_f).wrapping_mul(sections as u32);
+    let mut nx = count(len_r).wrapping_mul(sections as u32);
+    ny = ny.min(3);
+    nx = nx.min(3);
+    if max1 as u8 != 0 {
+        ny = ny.min(1);
+        nx = nx.min(1);
+    }
+    let fny = u32_x87(ny).to_f32();
+    let size_y = x(len_f).fdiv_m(fny).to_f32();
+    let fnx = u32_x87(nx).to_f32();
+    let size_x = x(len_r).fdiv_m(fnx).to_f32();
+    let mut hit: u8 = 0;
+    let mut ground = find_ground_z_for_3d_coord(px, py, pz, GPtr::from_raw(&mut hit), GPtr::NULL) as f32;
+    if hit == 0 {
+        ground = x(pz).fsub_m(2.0).to_f32();
+    }
+    let (p, f, r, v, c) = ([px, py, pz], [fx, fy, fz], [rx, ry, rz], [vx, vy, vz], [cx, cy, cz]);
+    for iy in 0..ny {
+        let y_off = u32_x87(iy).fmul_m(len_f).fdiv_m(fny).to_f32();
+        for ix in 0..nx {
+            let x_off = u32_x87(ix).fmul_m(len_r).fdiv_m(fnx).to_f32();
+            for piece in 0..5u32 {
+                let pane = find_free_pane();
+                if pane.is_null() {
+                    continue;
+                }
+                wr::<u8>(pane, 0x6C, piece as u8);
+                let inv_r_wide = x(1.0).fdiv_m(len_r);
+                let inv_r = inv_r_wide.to_f32();
+                wr::<f32>(pane, 0, inv_r_wide.fmul_m(rx).fmul_m(size_x).to_f32());
+                wr::<f32>(pane, 4, x(inv_r).fmul_m(ry).fmul_m(size_x).to_f32());
+                wr::<f32>(pane, 8, x(inv_r).fmul_m(rz).fmul_m(size_x).to_f32());
+                let inv_f = x(1.0).fdiv_m(len_f).to_f32();
+                for k in 0..3 {
+                    wr::<f32>(pane, 0x20 + 4 * k as isize, x(inv_f).fmul_m(f[k]).fmul_m(size_y).to_f32());
+                }
+                let mut at = [0f32; 3];
+                let mut tmp = [0f32; 3];
+                let o = cross_product(GPtr::from_raw(tmp.as_mut_ptr()).cast(), pane, pane.byte_add(0x20));
+                for (k, a) in at.iter_mut().enumerate() {
+                    *a = rd::<f32>(o, 4 * k as isize);
+                }
+                vector_normalise(GPtr::from_raw(&mut at));
+                for (k, a) in at.iter().enumerate() {
+                    wr::<f32>(pane, 0x10 + 4 * k as isize, *a);
+                }
+                let centre = |o: usize| g::<f32>(0xC7_1B30 + piece as usize * 8 + o).read();
+                let pcx = x(size_x).fmul_m(centre(0)).fadd_m(x_off);
+                let pcy = x(size_y).fmul_m(centre(4)).fadd_m(y_off);
+                for k in 0..3 {
+                    let a = x(inv_f).fmul_m(f[k]).fmul(pcy);
+                    let bb = x(inv_r).fmul_m(r[k]).fmul(pcx);
+                    wr::<f32>(pane, 0x30 + 4 * k as isize, a.fadd(bb).fadd_m(p[k]).to_f32());
+                }
+                let rnd = |site: u32| xi((rand_at(site) & 0x7F) - 0x40);
+                let r1 = rnd(0x71_B9BB).fmul_m(0.0015).to_f32();
+                let r2 = rnd(0x71_B9DB).fmul_m(0.0015);
+                wr::<f32>(pane, 0x48, x(vx).fadd_m(r1).to_f32());
+                wr::<f32>(pane, 0x4C, x(vy).fadd(r2).to_f32());
+                wr::<f32>(pane, 0x50, v[2]);
+                if x(drag).fcom(x(0.0)).test_parity(0x44) {
+                    let mut d = [0f32; 3];
+                    for (k, dk) in d.iter_mut().enumerate() {
+                        *dk = x(rd::<f32>(pane, 0x30 + 4 * k as isize)).fsub_m(c[k]).to_f32();
+                    }
+                    vector_normalise(GPtr::from_raw(&mut d));
+                    let dz = x(d[2]).fmul_m(drag).to_f32();
+                    wr::<f32>(pane, 0x48, x(d[0]).fmul_m(drag).fadd_m(rd::<f32>(pane, 0x48)).to_f32());
+                    wr::<f32>(pane, 0x4C, x(d[1]).fmul_m(drag).fadd_m(rd::<f32>(pane, 0x4C)).to_f32());
+                    wr::<f32>(pane, 0x50, x(dz).fadd_m(rd::<f32>(pane, 0x50)).to_f32());
+                }
+                let ra = rand_at(0x71_BAF5);
+                let rb = rand_at(0x71_BAFC);
+                let k2 = |r: i32| xi((r & 0x7F) - 0x40).fmul_m(0.002).to_f32();
+                let (sb, sa) = (k2(rb), k2(ra));
+                let sc = k2(rand_at(0x71_BB31));
+                wr::<f32>(pane, 0x54, sb);
+                wr::<f32>(pane, 0x58, sa);
+                wr::<f32>(pane, 0x5C, sc);
+                let now = g::<u32>(0xB7_CB84).read();
+                match ty {
+                    0 | 2 => wr::<u32>(pane, 0x60, now),
+                    1 => {
+                        let d: [X87; 3] = core::array::from_fn(|k| x(rd::<f32>(pane, 0x30 + 4 * k as isize)).fsub_m(c[k]));
+                        let l = d[2].fmul(d[2]).fadd(d[1].fmul(d[1])).fadd(d[0].fmul(d[0])).fsqrt();
+                        wr::<u32>(pane, 0x60, ftol32(l.fmul_m(100.0).fadd(u32_x87(now))) as u32);
+                    }
+                    _ => {}
+                }
+                wr::<f32>(pane, 0x64, ground);
+                wr::<u8>(pane, 0x6E, shatter as u8);
+                wr::<f32>(pane, 0x68, size_y);
+                wr::<u8>(pane, 0x6F, b as u8);
+                wr::<u8>(pane, 0x6D, 1);
+            }
+        }
+    }
 }
 
 /// `CGlass::AskForObjectToBeRenderedInGlass(CEntity*)` (0x71ACD0): appended while fewer than 31 are
@@ -457,6 +600,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_IS_OBJECT_GLASS,
     HOOK_INIT,
     HOOK_FIND_FREE_PANE,
+    HOOK_GENERATE_PANES_FOR_WINDOW,
     HOOK_ASK_FOR_OBJECT_TO_BE_RENDERED_IN_GLASS,
     HOOK_CALC_ALPHA_WITH_NORMAL,
     HOOK_UPDATE,
