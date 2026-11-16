@@ -3037,3 +3037,26 @@
   docs/re/specs/CAM/CCam.md, ~300 / ~500 instructions, BirdyCam with an SEH frame), the virtual VEH rows
   (CAutomobile::AddMovingCollisionSpeed 0x6A1ED0, DoHoverSuspensionRatios 0x6A45C0, CBike::BurstTyre 0x6BEB20, ...), the
   remaining WEAPON / CAM / VEH direct rows; a scenario that reaches the cinema camera.
+
+## 2026-11-16 — FRONTIER-2 turns 4–9 on master; the porting round closes (main session)
+- Integrated, in order, each with `tools/verify/writer-gate.sh` against master, the i686 sa-game / sa-oracle builds, every
+  `tools/e2e/scenarios/frontier.sh` scenario and verify-all on lanes 1-7 (SA_UNVERIFIED on and the default set):
+  - lane B turn 4 (heli; 0x6C4760 hand-ported for its native so patterns.py keeps one definition, rebase-duplicated
+    bindings rows dropped), lanes A turns 4+5, lane C turn 5, lane B turn 5 (FlyingControl), lane B turn 6 (planes,
+    CBoat::ProcessControl; one l1test run hit a Wine start-up artifact, the test passed alone), lane B turn 7 (boat
+    physics, CMatrix::ScaleAll, SetTotalDamage): each IDENTICAL 13/13 in both modes.
+  - lanes A turns 6–9 + lane C turns 6–8 + the heap fix 933c87cd as one stacked rebase (tag intac): IDENTICAL 13/13 in
+    both modes; 115 new hooks. Fixes made while stacking: lane C's 0x59B9F0 binding now targets master's port, the
+    0x71B620 binding keeps master's visibility with lane C's port as target, sa-ports no longer lists the
+    replay_vehicle natives lane C removed, 0x5073C0 (SayPedless) bound once (`bindings.py --resolve`), and four
+    lane A wrapper comments reworded so ai_patterns.py keeps the generated bodies they call (27166275).
+  - lane B turn 8 (camera new-cam logic, FireOneInstantHitRound; tag intb8): IDENTICAL 13/13 in both modes.
+- Scenarios on master af54a76b: every one runs with no crash; blocked steps only in roadblocks (1, 0x7CF240),
+  roadblock-wanted (1, CObject::Explode 0x5A1340) and plane (392, 0x43E0E0).
+- frontier.py --no-branches: 277 (start of the day) → 129 to port; 51 stay original.
+- Tooling (session scratchpad): the rebase loop now merges catalog/bindings.csv by address (HEAD + the picked commit's
+  own row changes) and regenerates bindings.rs, and unions frontier.sh's scenario lists.
+- User-hit, fixed: peds without legs (random, on slopes) came from the glibc heap's high addresses in the play script
+  (`--system-heap`); the play package no longer passes it and 933c87cd makes every run use the fixed region.
+- target/play/sa-game and web/pkg (FEATURES=samp) refreshed. Per the user, no new porting turns: next is performance
+  (PERF-1, RENDER-2), measured first.
