@@ -47,6 +47,8 @@ sa_core::globals! {
 
 pub use crate::bindings::bbox_calculate;
 pub use crate::bindings::object_release_frame;
+use crate::bindings::plugin_read_data_chunks as read_data_chunks;
+use sa_core::bindings::rw_stream_find_chunk_call as find_chunk;
 pub use crate::bindings::plugin_add as registry_add_plugin;
 pub use crate::bindings::plugin_deinit_object as registry_deinit_object;
 pub use crate::bindings::plugin_init_object as registry_init_object;
@@ -213,6 +215,42 @@ pub fn set_view_window(c: GPtr<u8>, vw: GPtr<u8>) -> GPtr<u8> {
     wr::<f32>(c, 0x70, f32_of(x(ONE).fdiv_m(rd::<f32>(c, 0x68))));
     wr::<f32>(c, 0x74, f32_of(x(ONE).fdiv_m(rd::<f32>(c, 0x6C))));
     update_frame(c);
+    c
+}
+
+/// `RwCameraStreamRead(stream)` (0x808DE0): the struct chunk (none: 0; version outside
+/// 0x34000..0x36003: E_RW_BADVERSION, plugin 1) read into a zeroed 32-byte local `{viewWindow,
+/// viewOffset, near, far, fog, projection}` (a short read: 0), `RwCameraCreate`, the plugin data
+/// chunks (failure: 0, the camera leaks as in the original), then view window, view offset, near,
+/// far, the fog plane (+0x88) and the projection. A struct longer than 32 bytes overflows the
+/// original's local ([`crate::stream::read_struct_local`]).
+#[hook(addr = 0x808DE0, conv = cdecl, name = "RwCameraStreamRead", expect = "83 EC 2C 8D 44 24 00",
+       unverified = "frontier2-c14", route = "L2", hazards = "heap-writes")]
+pub fn stream_read(s: GPtr<u8>) -> GPtr<u8> {
+    let mut len: u32 = 0;
+    let mut ver: u32 = 0;
+    if find_chunk(s, 1, GPtr::from_raw(&mut len), GPtr::from_raw(&mut ver)) == 0 {
+        return GPtr::NULL;
+    }
+    if !(0x34000..=0x36003).contains(&ver) {
+        crate::common::error1(0x8000_0004);
+        return GPtr::NULL;
+    }
+    let mut buf = [0u8; 32];
+    if crate::stream::read_struct_local(s, &mut buf, len) != len {
+        return GPtr::NULL;
+    }
+    let c = create();
+    if c.is_null() || read_data_chunks(camera_registry(), s, c).is_null() {
+        return GPtr::NULL;
+    }
+    let b: GPtr<u8> = GPtr::from_raw(buf.as_mut_ptr());
+    set_view_window(c, b);
+    set_view_offset(c, b.byte_add(8));
+    set_near_clip_plane(c, rd::<u32>(b, 0x10));
+    set_far_clip_plane(c, rd::<u32>(b, 0x14));
+    wr::<u32>(c, 0x88, rd::<u32>(b, 0x18));
+    set_projection(c, rd::<i32>(b, 0x1C));
     c
 }
 

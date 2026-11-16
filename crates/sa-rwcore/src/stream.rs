@@ -215,6 +215,26 @@ pub fn rw_stream_initialize(s: GPtr<u8>, owned: u32, ty: u32, access: u32, data:
     }
 }
 
+/// A struct chunk read into a fixed stack local of the original (`RwStreamRead(s, local, len)`). A
+/// `len` beyond the local overflows the original's stack (divergence): the port keeps the first
+/// `buf.len()` bytes and reads the rest in further `RwStreamRead` calls of up to 64 bytes, stopping
+/// at a short read. Returns the bytes read.
+pub fn read_struct_local(s: GPtr<u8>, buf: &mut [u8], len: u32) -> u32 {
+    let cap = buf.len() as u32;
+    if len <= cap {
+        return crate::bindings::stream_read(s, GPtr::from_raw(buf.as_mut_ptr()), len);
+    }
+    let mut got = crate::bindings::stream_read(s, GPtr::from_raw(buf.as_mut_ptr()), cap);
+    let mut rest = len - cap;
+    let mut scratch = [0u8; 64];
+    while rest > 0 && got == len - rest {
+        let n = rest.min(64);
+        got = got.wrapping_add(crate::bindings::stream_read(s, GPtr::from_raw(scratch.as_mut_ptr()), n));
+        rest -= n;
+    }
+    got
+}
+
 /// `RwStreamRead(stream, buf, len)` (0x7EC9D0): bytes read. File: `fread`, a short read raises
 /// E_RW_ENDOFSTREAM when `feof` else E_RW_READ. Memory: clamps to `nSize - pos` (raising
 /// E_RW_ENDOFSTREAM), copies, advances. Custom: `sfnread`. Other types: E_RW_INVSTREAMTYPE, 0.

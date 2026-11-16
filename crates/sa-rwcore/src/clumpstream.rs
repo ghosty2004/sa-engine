@@ -48,7 +48,7 @@ orig! {
     fn rw_error2(code: u32, a: u32) -> u32 = cdecl 0x8088D0 => unported;
     fn geometry_list_destroy(l: GPtr<u8>) -> GPtr<u8> = cdecl 0x74AE50 => unported;
     fn light_stream_read(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x751F00 => unported;
-    fn camera_stream_read(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x808DE0 => unported;
+    fn camera_stream_read(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x808DE0 => crate::camera::stream_read;
     pub fn clump_for_all_lights(c: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749C00 => crate::clump::for_all_lights;
 }
 
@@ -136,19 +136,7 @@ pub fn atomic_stream_read(s: GPtr<u8>, fl: GPtr<u8>, gl: GPtr<u8>) -> GPtr<u8> {
         return GPtr::NULL;
     }
     let mut buf = [0u8; 16];
-    let got = if len <= 16 {
-        stream_read(s, GPtr::from_raw(buf.as_mut_ptr()), len)
-    } else {
-        let mut got = stream_read(s, GPtr::from_raw(buf.as_mut_ptr()), 16);
-        let mut rest = len - 16;
-        let mut scratch = [0u8; 64];
-        while rest > 0 && got == len - rest {
-            let n = rest.min(64);
-            got = got.wrapping_add(stream_read(s, GPtr::from_raw(scratch.as_mut_ptr()), n));
-            rest -= n;
-        }
-        got
-    };
+    let got = crate::stream::read_struct_local(s, &mut buf, len);
     if got != len {
         error(E_READ);
         return GPtr::NULL;
