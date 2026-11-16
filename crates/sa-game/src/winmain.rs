@@ -343,6 +343,25 @@ impl Drop for ClearOnDrop {
     }
 }
 
+/// `g_LastTickTime` (0xB72CA8): read only by `Game::Idle`'s busy-wait, written right after it.
+const LAST_TICK_TIME: usize = 0xB72CA8;
+
+/// Not original (PERF-1, user decision 2026-11-16; ROADMAP divergence ledger, *accepted*): with the frame limiter
+/// off (`FrontEndMenuManager.m_bPrefsFrameLimiter` 0xBA6794 == 0), `Game::Idle`'s 14 ms rule is skipped. The port
+/// (`sa_core::mvpb_app::idle`, 0x53E920) is unchanged: it spins while `cycles / cyclesPerMs - g_LastTickTime < 14`
+/// (unsigned), so setting `g_LastTickTime` to 14 ms before now makes its first test pass, and the port then stores the
+/// real value as always. With the limiter on (the default), and in the deterministic mode (`--fixed-step`, the
+/// virtual clock: its runs replay the original's frames), nothing changes.
+fn skip_idle_spin_when_unlimited() {
+    if rd::<u8>(MENU_PREFS_FRAME_LIMITER) != 0 || crate::det::on() {
+        return;
+    }
+    let per = get_cycles_per_millisecond();
+    if per != 0 {
+        wr::<u32>(LAST_TICK_TIME, (get_current_time_in_cycles() / per).wrapping_sub(14));
+    }
+}
+
 /// Set when this iteration sent `rsIDLE` (the in-game frame); reported in the step's detail.
 static IDLE_RAN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
@@ -521,6 +540,7 @@ fn process_game_logic() -> String {
                 if unlimited || limit < t {
                     crate::d3d9::IN_GAME_FRAME.store(true, Ordering::SeqCst);
                     let _clear = ClearOnDrop(&crate::d3d9::IN_GAME_FRAME);
+                    skip_idle_spin_when_unlimited();
                     rs_event_handler(26, GPtr::from_addr(1));
                     IDLE_RAN.store(true, Ordering::SeqCst);
                 } else if limit.is_finite() && limit > t && !crate::det::on() {

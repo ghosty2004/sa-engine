@@ -236,6 +236,16 @@ Sections: *pending* (blocks "done") · *original UB, not reproducible* · *accep
 - CMatrix `operator*(Mat, Mat)`, `operator+`, `Invert(const CMatrix&)` and `operator*=` copy four uninitialised stack dwords (offsets 0xC/0x1C/0x2C/0x3C) into the result. The port writes 0, and those 16 bytes are excluded from comparison (MATH-2).
 - `CGeneral::LimitAngle` (0x53CB00) never returns for ±inf and |a| > 2^33 (2^33 itself returns, verifier V-3; `a - 360` rounds back to `a` under PC=24), so the game would hang. `limit_angle` panics there; `limit_angle_checked` returns `None` exactly for those inputs (L1-verified).
 
+*accepted (user-approved)*
+- `Game::Idle`'s 14 ms rule (0x53E920: it spins while `cycles / cyclesPerMs - g_LastTickTime < 14`, unsigned, so every
+  second frame waits until it is 14 ms longer than the one before) is **skipped when the frame limiter is off**
+  (`FrontEndMenuManager.m_bPrefsFrameLimiter` 0xBA6794 == 0) in sa-game's real-time runs (PERF-1, user decision
+  2026-11-16). Why: it cost ~5.5 ms per frame natively and ~4.8 ms on the web with nothing to wait for. How: sa-game's
+  WinMain step sets `g_LastTickTime` (0xB72CA8, read only by that loop) to 14 ms before now right before `rsIDLE`
+  (`winmain::skip_idle_spin_when_unlimited`), so the unchanged port's first test passes and it stores the real value as
+  always. Applies only with the limiter off and outside the deterministic mode (`--fixed-step`); with the limiter on
+  (the default) the rule runs 1:1, and phase A (sa-hook in the original exe, verify-all) is untouched.
+
 ## Waiting for the user
 - Human playthrough recordings of the missions (PLAN §6.1) are needed for F4. Not needed before M17. The
   recorder (INF-5) has to exist first.
