@@ -2597,3 +2597,44 @@
   (IsItTimeForNewcam 0x51D770, TryToStartNewCamMode 0x51E560, Get_TwoPlayer_AimVector 0x513E40, DW_HeliChaseCam 0x51A740,
   DW_BirdyCam 0x51B850), item 4 (FireOneInstantHitRound 0x73AF00, Interior_c::PlaceObject 0x5934E0, GeneratePanesForWindow
   0x71B620, SetTotalDamage 0x6A27F0, the RW leftovers).
+
+## 2026-11-16 — FRONTIER-2 turn 7, lane B: CVehicle::ProcessBoatControl, DoBoatSplashes, CMatrix::ScaleAll, SetTotalDamage (agent, branch worktree-agent-aa54999b4e7af5432)
+- Base: worktree-agent-a10f9d8e814fb0ac6 904c32ea (turn 6 lane B). `inflight.py` checked: no other branch registers 0x6DBCE0,
+  0x6DD130, 0x45AF40, 0x6A27F0.
+- Batch `frontier2-b16` (VEH, 3 hooks), from the 1.0 US bytes, gta-reversed as a reading aid only:
+  - CVehicle::ProcessBoatControl 0x6DBCE0 (`crates/sa-veh/src/boat_physics.rs`, the `boat` blocker): buoyancy, drowning,
+    the Skimmer's take-off, aquaplane lift, wake point, traction, thrust point depth, steered thrust / side traction /
+    steering drag, keel side force, handbrake drag, water resistance, turn resistance, waves. gta-reversed differs: the
+    drowning flag +0x42B bit 6 is not cleared while the hull drowns; the Skimmer timer resets only when the time is strictly
+    past it; the thrust depth is clamped by comparing the depth (not its square) with 1; a negative post-collision z force
+    becomes 0; the wave strength is `(int16)_ftol`; the automobile case is `+0x590 == 0` storing `|force|` at +0x950.
+  - CVehicle::DoBoatSplashes 0x6DD130 (same file): both splashes are thrown back along `-forward` (gta-reversed reads
+    `-right.y, -right.z`), the size is `min((s * 10 + 0.75) * 0.1, 1)`.
+  - CAutomobile::SetTotalDamage 0x6A27F0 (`automobile_random_damage.rs`, sharing SetRandomDamage's helpers; reached by
+    CRoadBlocks::GenerateRoadBlockCopsForCar).
+- Batch `frontier2-b17` (MATH, 1 hook): CMatrix::ScaleAll 0x45AF40 (sa-core cmatrix.rs; `lea eax, [ecx+8]; jmp 0x401BA5`, the
+  fragment sets the row counter 4 and jumps to the loop 0x45AF48), reached by lane C's replay vehicle code.
+- ADR-003: the drowning-driver event of CAutomobile::ProcessBuoyancy is now `mvpd_v5::drown_occupant` (used by both);
+  automobile_render.rs' GetLookingForwardFirstPerson declaration is pub(crate) and reused; `cv` / `rd3f` imported.
+- Priority 2 of the brief: CCam::ArrestCamOne 0x518500, CHeli::GenerateHeli 0x6C6520 and CWorld::FindObjectsIntersectingCube
+  0x568DD0 are already ported on master and this branch (turns 2-4); lane A's tree (144ab2bd, base d05f6e24) lacks them, so
+  they block there only until lane B is integrated. With lane A's `roadblocks` / `roadblock-wanted` definitions run on this
+  tree, neither blocks on lane B.
+- frontier.py, lane B subsystems: 137 → 135 rows (0x6DBCE0, 0x6DD130; 0x45AF40 and 0x6A27F0 are frontier rows only on the
+  lanes that call them); no new rows revealed.
+- Scenarios (i686 native sa-game of 023bbb6b, SA_ROOT=~/sa-engine; lane A's definitions from 144ab2bd for roadblocks /
+  roadblock-script / roadblock-wanted / gangwar / jetpack): pausemenu 416 / 0 blocked, solicit 4016 / 0, crossing 1216 / 0,
+  crossing-long 4014 / 2 (lane A 0x68E4F0), melee 2616 / 0, sniper / shootcar / shootdriver / quad / heli 1216 / 0, plane
+  210 / 1006 (lane C 0x4FD8F0), **boat 1216 / 0** (was 199 / 1017), roadblock-script 1016 / 0, roadblocks 254 / 1762 (lane A
+  0x62D290 885 / 0x62D3B0 37 / 0x68C9E0 2 / 0x69D460 1 / GenerateRoadBlocks fallback 61; lane C 0x4E60D0 776),
+  roadblock-wanted 250 / 1766 (lane C 0x4E60D0 1585; lane A fallback 173, 0x68C9E0 7, 0x68B990 1), gangwar 2015 / 1 (lane A
+  0x68E4F0), jetpack 1015 / 1 (lane A 0x67B4E0); no crash; 0 blocked on lane B everywhere.
+- Writer gate (base 904c32ea): first run on 72c47906 with `GATE_SKIP=i686` (verify-all was using the DLL): hooks (4) / queue /
+  bindings / state / dupes / cfg / layers / commits / clippy / wasm32 / hooktest / l1test / l1 PASS; full rerun on the final
+  head, no step skipped: all PASS.
+- verify-all (lanes 4-5, fresh release sa-oracle, DLL of 023bbb6b): `lb7-u` (SA_UNVERIFIED=frontier2-b16,frontier2-b17)
+  IDENTICAL 13/13; default set `lb7-def` IDENTICAL 13/13.
+- Open (lane B): the CCamera / CCam bodies (IsItTimeForNewcam 0x51D770 and TryToStartNewCamMode 0x51E560, specified in
+  docs/re/specs/CAM/CCamera.md, ~1,000 / ~800 instructions; Get_TwoPlayer_AimVector 0x513E40, DW_HeliChaseCam 0x51A740,
+  DW_BirdyCam 0x51B850), FireOneInstantHitRound 0x73AF00 (its entry runs through the VM-style fragment 0x4015A0: needs
+  vm_eval.py), Interior_c::PlaceObject 0x5934E0 chain, GeneratePanesForWindow 0x71B620, the RW leftovers.
