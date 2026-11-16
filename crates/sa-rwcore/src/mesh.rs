@@ -29,6 +29,8 @@ const E_RW_NOMEM: u32 = 0x8000_0013;
 const FLAG_NATIVE: u32 = 0x0100_0000;
 
 use crate::bindings::material_list_get_material_call;
+use crate::bindings::material_list_find_call;
+use crate::bindings::rw_stream_write_int32;
 use crate::bindings::read_int32 as rw_stream_read_int32_call;
 use crate::bindings::free_list_create as rw_free_list_create;
 use crate::bindings::free_list_destroy as rw_free_list_destroy;
@@ -238,6 +240,54 @@ pub fn rp_mesh_get_next_serial_number() -> u16 {
     n
 }
 
+/// A geometry (type byte 8) or world sector (type 7) whose flags (+8) lack rpGEOMETRYNATIVE: its
+/// mesh indices are streamed (the test of `_rpMeshRead`, `_rpMeshWrite` and `_rpMeshSize`).
+pub fn non_native(o: GPtr<u8>) -> bool {
+    let t = rd::<u8>(o, 0);
+    (t == 8 || t == 7) && rd::<u32>(o, 8) & FLAG_NATIVE == 0
+}
+
+/// `_rpMeshWrite(header, object, stream, matList)` (0x758D70): the 12-byte header `{flags, numMeshes,
+/// totalIndices}`, then per mesh `{numIndices, matIndex}` (`_rpMaterialListFindMaterialIndex`, a
+/// negative index written as 0) and, for non-native objects, the u16 indices widened to dwords in
+/// chunks of up to 0x100 (`RwStreamWriteInt32` each). A failed write returns NULL, else the stream.
+#[hook(addr = 0x758D70, conv = cdecl, name = "_rpMeshWrite", expect = "81 EC 18 04 00 00 53",
+       unverified = "frontier2-c14", route = "L2", hazards = "none")]
+pub fn rp_mesh_write(h: GPtr<u8>, obj: GPtr<u8>, s: GPtr<u8>, ml: GPtr<u8>) -> GPtr<u8> {
+    let mut hdr = [rd::<u32>(h, 0), rd::<u16>(h, 4) as u32, rd::<u32>(h, 8)];
+    if rw_stream_write_int32(s, GPtr::from_raw(hdr.as_mut_ptr()).cast(), 0xC).is_null() {
+        return GPtr::NULL;
+    }
+    let mut mesh = h.byte_add(0x10);
+    let mut count = rd::<u16>(h, 4) as u32;
+    let mut buf = [0u32; 0x100];
+    while count != 0 {
+        count -= 1;
+        let mut mh = [rd::<u32>(mesh, 4), 0];
+        mh[1] = material_list_find_call(ml, p8(rd::<u32>(mesh, 8))).max(0) as u32;
+        if rw_stream_write_int32(s, GPtr::from_raw(mh.as_mut_ptr()).cast(), 8).is_null() {
+            return GPtr::NULL;
+        }
+        if non_native(obj) {
+            let mut remaining = rd::<u32>(mesh, 4);
+            let mut idx = p8(rd::<u32>(mesh, 0));
+            while remaining > 0 {
+                let chunk = remaining.min(0x100);
+                for v in buf.iter_mut().take(chunk as usize) {
+                    *v = rd::<u16>(idx, 0) as u32;
+                    idx = idx.byte_add(2);
+                }
+                if rw_stream_write_int32(s, GPtr::from_raw(buf.as_mut_ptr()).cast(), chunk * 4).is_null() {
+                    return GPtr::NULL;
+                }
+                remaining -= chunk;
+            }
+        }
+        mesh = mesh.byte_add(0xC);
+    }
+    s
+}
+
 /// `_rpMeshRead(stream, object, matList)` (0x758EC0): the 12-byte header (`flags, numMeshes,
 /// totalIndices`), one block of `(numMeshes + 1) * 16` bytes plus `totalIndices * 2` for a non-native
 /// geometry (type 8) or world (type 7) (hint 0x30502; NULL -> NULL), the module's next serial number,
@@ -250,10 +300,6 @@ pub fn rp_mesh_read(s: GPtr<u8>, obj: GPtr<u8>, ml: GPtr<u8>) -> GPtr<u8> {
     if rw_stream_read_int32_call(s, GPtr::from_raw(hdr.as_mut_ptr()).cast(), 0xC).is_null() {
         return GPtr::NULL;
     }
-    let non_native = |o: GPtr<u8>| {
-        let t = rd::<u8>(o, 0);
-        (t == 8 || t == 7) && rd::<u32>(o, 8) & FLAG_NATIVE == 0
-    };
     let mut size = hdr[1].wrapping_add(1).wrapping_mul(16);
     if non_native(obj) {
         size = size.wrapping_add(hdr[2].wrapping_mul(2));
@@ -315,6 +361,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_RP_BUILD_MESH_ADD_TRIANGLE,
     HOOK_RP_MESH_HEADER_FOR_ALL_MESHES,
     HOOK_RP_MESH_READ,
+    HOOK_RP_MESH_WRITE,
     HOOK_RP_MESH_GET_NEXT_SERIAL_NUMBER,
 ];
 
