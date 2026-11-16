@@ -68,6 +68,11 @@ pub fn with<R>(key: &'static str, f: impl FnOnce(&mut Platform) -> R) -> R {
     f(p)
 }
 
+/// Platform calls served so far (the sum of [`Platform::calls`]; not counted as a call itself).
+pub fn calls_total() -> u64 {
+    PLATFORM.lock().unwrap_or_else(|e| e.into_inner()).as_ref().map_or(0, |p| p.calls.values().sum())
+}
+
 /// wasm32: whether the platform lock is free (after an iteration left through a JS exception, see `web::recover`).
 #[cfg(target_arch = "wasm32")]
 pub fn lock_is_free() -> bool {
@@ -370,6 +375,7 @@ pub(crate) fn output_debug_string_a(s: GPtr<u8>) {
 // ------------------------------------------------------------------------ messages/keys ---
 
 pub(crate) fn peek_message_a(msg: GPtr<u8>, _hwnd: u32, _min: u32, _max: u32, remove: u32) -> i32 {
+    let _perf = crate::perf::scope(crate::perf::PUMP);
     match with("PeekMessageA", |p| p.queue.peek(remove & 1 != 0)) {
         Some(m) => {
             msg.cast::<[u32; 7]>().write(m.to_words());
@@ -420,6 +426,7 @@ pub(crate) fn translate_message(_msg: GPtr<u8>) -> i32 {
 /// 0x747EB0) through `orig!`'s registry. While it has no Rust port, the message is counted as
 /// undelivered (per id, for the report) instead of failing the caller.
 pub(crate) fn dispatch_message_a(msg: GPtr<u8>) -> i32 {
+    let _perf = crate::perf::scope(crate::perf::PUMP);
     let m = msg.cast::<[u32; 7]>().read();
     with("DispatchMessageA", |_| ());
     let proc_ = WND_PROC.load(std::sync::atomic::Ordering::SeqCst);

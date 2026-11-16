@@ -92,6 +92,11 @@ pub fn add_game_file(path: &str, id: u32, size: f64) {
 /// `backend`: `"webgpu"`, `"gl"` (WebGL2) or `""` (WebGPU when the browser has it, else WebGL2).
 #[wasm_bindgen]
 pub async fn init_gpu(canvas: web_sys::OffscreenCanvas, backend: String) -> Result<String, JsValue> {
+    // `?SA_GAME_PERF=N`: the per-frame measurement of the first N in-game frames (default 600), its summary and CSV to
+    // the console (docs/perf/measure.md); on before the device exists (the timestamp feature) and the boot (the probes)
+    if let Some(v) = crate::env::var_os("SA_GAME_PERF") {
+        crate::perf::enable(crate::perf::Output::Console { frames: v.parse().unwrap_or(600) });
+    }
     let (w, h) = (canvas.width().max(1), canvas.height().max(1));
     let mut desc = wgpu::InstanceDescriptor::new_with_display_handle(Box::new(WebDisplay));
     desc.backends = match backend.as_str() {

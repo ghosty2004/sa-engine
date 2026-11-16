@@ -29,6 +29,8 @@ pub fn parse_args() -> Result<Args, String> {
         samp_ui_demo: false,
     };
     let mut system_heap = false;
+    // `SA_GAME_PERF=FILE` is `--perf FILE`
+    let mut perf: Option<PathBuf> = std::env::var_os("SA_GAME_PERF").filter(|v| !v.is_empty()).map(PathBuf::from);
     let mut it = std::env::args().skip(1);
     while let Some(k) = it.next() {
         let mut val = || it.next().ok_or(format!("{k} needs a value"));
@@ -40,6 +42,7 @@ pub fn parse_args() -> Result<Args, String> {
             "--exit-after" => a.exit_after = Some(val()?.parse().map_err(|e| format!("--exit-after: {e}"))?),
             "--auto-input" => a.auto_input = true,
             "--frame-times" => a.frame_times = Some(PathBuf::from(val()?)),
+            "--perf" => perf = Some(PathBuf::from(val()?)),
             "--screenshot" => a.screenshot = Some(PathBuf::from(val()?)),
             "--report" => a.report = Some(PathBuf::from(val()?)),
             "--present-dir" => d3d9::set_present_dir(PathBuf::from(val()?)),
@@ -53,7 +56,7 @@ pub fn parse_args() -> Result<Args, String> {
             "--fixed-step" => det::set_fixed_step(val()?.parse().map_err(|e| format!("--fixed-step: {e}"))?),
             "-h" | "--help" => {
                 println!(
-                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--start-in-world] [--fixed-step MS] [--frame-times FILE] [--samp HOST[:PORT] [--name NAME] [--samp-auth FILE] | --samp-ui-demo] [--window [--exit-after SECONDS] [--auto-input] | --screenshot OUT.png]\n\
+                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--start-in-world] [--fixed-step MS] [--frame-times FILE] [--perf FILE] [--samp HOST[:PORT] [--name NAME] [--samp-auth FILE] | --samp-ui-demo] [--window [--exit-after SECONDS] [--auto-input] | --screenshot OUT.png]\n\
                      The user documents folder (settings, saves) is a fresh temporary folder per run unless\n\
                      --documents DIR or --persistent-documents ($XDG_DATA_HOME/sa-engine/documents) is given.\n\
                      --window runs the game in a native window with the window's keyboard and mouse; --auto-input adds\n\
@@ -65,7 +68,9 @@ pub fn parse_args() -> Result<Args, String> {
                      instead (its addresses read as huge floats where the game reads stale pointers: not 1:1).\n\
                      --samp joins a SA:MP / open.mp server through the native game adapter (build with --features samp;\n\
                      without it a stand-in client only samples the adapter). The auth table comes from --samp-auth or SAMP_AUTH_TABLE.\n\
-                     --samp-ui-demo draws the engine-drawn SA:MP UI (chat, dialogs, nametags, labels, textdraws) with sample content."
+                     --samp-ui-demo draws the engine-drawn SA:MP UI (chat, dialogs, nametags, labels, textdraws) with sample content.\n\
+                     --perf FILE (or SA_GAME_PERF=FILE): per-frame phase times and counters of every in-game frame to FILE\n\
+                     (CSV) and a summary table at exit (docs/perf/measure.md)."
                 );
                 std::process::exit(0);
             }
@@ -85,6 +90,10 @@ pub fn parse_args() -> Result<Args, String> {
     // or offscreen) takes the fixed-address region, which keeps the game heap in the original's address range
     // (platform.md section 23); --system-heap opts out.
     det::set_fixed_heap(!system_heap);
+    // before the GPU device and the registry exist (the timestamp feature, the probes)
+    if let Some(p) = perf {
+        crate::perf::enable(crate::perf::Output::File(p));
+    }
     Ok(a)
 }
 
@@ -159,6 +168,7 @@ pub fn main() {
             if let Some(ft) = frame_time_summary() {
                 println!("sa-game: frame pacing (in-game presents): {ft}");
             }
+            crate::perf::finish();
             if let Some(p) = &args.frame_times {
                 let text: String = frame_intervals().iter().map(|v| format!("{v:.3}\n")).collect();
                 if let Err(e) = std::fs::write(p, text) {

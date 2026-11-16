@@ -142,6 +142,7 @@ pub static PRESENTS: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32
 
 /// `Present` on the seam device, and the frame to `--present-dir`.
 fn present_frame() -> i32 {
+    let _perf = crate::perf::scope(crate::perf::PRESENT);
     PRESENTS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     let in_game = IN_GAME_FRAME.load(std::sync::atomic::Ordering::SeqCst);
     let read_back = PRESENT_DIR.lock().unwrap_or_else(|e| e.into_inner()).is_some();
@@ -1412,10 +1413,12 @@ macro_rules! entries {
             $({
                 #[cfg(target_arch = "x86")]
                 extern "stdcall-unwind" fn w($($a: $t),*) -> $r {
+                    let _perf = crate::perf::d3d9_call($name);
                     $f($($a),*)
                 }
                 #[cfg(not(target_arch = "x86"))]
                 extern "C-unwind" fn w($($a: $t),*) -> $r {
+                    let _perf = crate::perf::d3d9_call($name);
                     $f($($a),*)
                 }
                 v.push(($addr, $name, {

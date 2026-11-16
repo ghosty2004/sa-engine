@@ -83,6 +83,11 @@ pub fn install() -> Summary {
             imports += 1;
         }
     }
+    // the per-frame measurement's probes (PERF-0; only when it is on)
+    if crate::perf::enabled() {
+        let n = crate::platform::perf_probe::wrap(&mut v);
+        println!("sa-game: perf: {n} of {} registry probes installed", crate::perf::PROBES.len());
+    }
     names.sort_by_key(|e| e.0);
     registry::install_names(Box::leak(names.into_boxed_slice()));
     v.sort_by_key(|e| e.0);

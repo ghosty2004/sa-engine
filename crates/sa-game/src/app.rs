@@ -379,6 +379,7 @@ impl Session {
         let n = self.n;
         self.n += 1;
         det::begin_iteration();
+        let perf_pump = crate::perf::scope(crate::perf::PUMP);
         bind::with("input", |p| {
             let t = p.time.time_get_time();
             for e in &input.events {
@@ -392,6 +393,7 @@ impl Session {
             p.input.mouse_delta.1 += unread.1;
             p.input.wheel += unread_wheel;
         });
+        drop(perf_pump);
         if !QUIET_FRAMES.load(std::sync::atomic::Ordering::Relaxed) {
             println!("frame {n}:");
         }
@@ -402,7 +404,9 @@ impl Session {
         let state = winmain::game_state();
         self.iter_state = state;
         let frame = winmain::frame_step();
+        let perf_loop = crate::perf::scope(crate::perf::LOOP);
         let o = run_step(&frame);
+        drop(perf_loop);
         self.finish(n, state, &frame, o)
     }
 
@@ -422,6 +426,7 @@ impl Session {
     /// The bookkeeping after an iteration's step: the report row and when the loop stops.
     fn finish(&mut self, n: u32, state: u32, frame: &Step, o: Outcome) -> bool {
         det::end_iteration();
+        crate::perf::end_iteration(n, state);
         self.rep.add(&format!("frame {n}"), frame, &o);
         // decision 2 of STD-5 (platform.md section 12.1): a failure inside `CGame::Initialise`
         // leaves the game half-initialised; the next iteration would retry it from that state, so
@@ -549,18 +554,17 @@ pub(crate) fn frame_time_summary() -> Option<String> {
     if v.is_empty() {
         return None;
     }
-    let mean = v.iter().sum::<f64>() / v.len() as f64;
-    v.sort_by(f64::total_cmp);
-    let pct = |p: f64| v[((v.len() - 1) as f64 * p).round() as usize];
+    let d = sa_platform::perf::stats(&mut v);
     Some(format!(
-        "{} intervals, mean {mean:.2} ms ({:.1} fps), min {:.2}, median {:.2}, p95 {:.2}, p99 {:.2}, max {:.2} ms",
+        "{} intervals, mean {:.2} ms ({:.1} fps), min {:.2}, median {:.2}, p95 {:.2}, p99 {:.2}, max {:.2} ms",
         v.len(),
-        1000.0 / mean,
+        d.mean,
+        1000.0 / d.mean,
         v[0],
-        pct(0.5),
-        pct(0.95),
-        pct(0.99),
-        v[v.len() - 1]
+        d.median,
+        d.p95,
+        d.p99,
+        d.max
     ))
 }
 

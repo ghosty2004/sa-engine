@@ -15,6 +15,8 @@ macro_rules! eprintln {
     ($($t:tt)*) => { $crate::platform::web::log_line(format!($($t)*)) };
 }
 
+pub mod perf_probe;
+
 #[cfg(not(target_arch = "wasm32"))]
 pub mod game_window;
 #[cfg(not(target_arch = "wasm32"))]

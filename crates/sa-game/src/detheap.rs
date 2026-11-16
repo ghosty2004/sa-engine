@@ -94,6 +94,7 @@ fn with<R>(f: impl FnOnce(&mut Heap) -> R) -> R {
 
 /// A block of at least `n` bytes, 16-aligned (contents unspecified).
 pub fn alloc(n: usize) -> GPtr<u8> {
+    crate::perf::add(crate::perf::C_GAME_ALLOCS, 1);
     let c = class(n);
     let hdr = with(|h| {
         if let Some(b) = h.free.get_mut(&c).and_then(Vec::pop) {

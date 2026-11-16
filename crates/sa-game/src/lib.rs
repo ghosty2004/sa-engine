@@ -40,6 +40,7 @@ pub mod dx;
 pub mod frontend;
 pub mod imports;
 pub mod native;
+pub mod perf;
 pub mod rw_standin;
 pub mod samp;
 pub mod samp_assets;

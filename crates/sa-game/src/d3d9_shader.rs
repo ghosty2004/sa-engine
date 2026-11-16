@@ -466,10 +466,12 @@ macro_rules! entries {
             $({
                 #[cfg(target_arch = "x86")]
                 extern "stdcall-unwind" fn w($($a: $t),*) -> $r {
+                    let _perf = crate::perf::d3d9_call($name);
                     $f($($a),*)
                 }
                 #[cfg(not(target_arch = "x86"))]
                 extern "C-unwind" fn w($($a: $t),*) -> $r {
+                    let _perf = crate::perf::d3d9_call($name);
                     $f($($a),*)
                 }
                 v.push(($addr, $name, {
