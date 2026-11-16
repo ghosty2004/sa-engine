@@ -147,6 +147,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::flying_control::HOOKS,
     crate::plane_flying::HOOKS,
     crate::boat_control::HOOKS,
+    crate::boat_physics::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

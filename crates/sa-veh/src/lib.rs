@@ -85,6 +85,7 @@ pub mod frontier_b4_veh;
 pub mod flying_control;
 pub mod plane_flying;
 pub mod boat_control;
+pub mod boat_physics;
 pub mod automobile_wheels;
 pub mod automobile_damage;
 pub mod automobile_ai;

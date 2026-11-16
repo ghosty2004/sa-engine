@@ -45,7 +45,7 @@ orig! {
     /// `CVehicle::AddWaterSplashParticles()` (0x6DDF60)
     fn add_water_splash_particles(v: GPtr<u8>) = thiscall 0x6DDF60 => unported;
     /// `CCamera::GetLookingForwardFirstPerson()` (0x50AED0) on `TheCamera`
-    fn get_looking_forward_first_person(cam: GPtr<u8>) -> u8 = thiscall 0x50AED0 => unported;
+    pub(crate) fn get_looking_forward_first_person(cam: GPtr<u8>) -> u8 = thiscall 0x50AED0 => unported;
     /// `CAutomobile::ProcessSwingingDoor(int32 node, eDoors)` (0x6A9D70)
     fn process_swinging_door(v: GPtr<u8>, node: i32, door: i32) = thiscall 0x6A9D70 => crate::mvpb_a5::process_swinging_door;
     /// `CBouncingPanel::ProcessPanel(CVehicle*, RwFrame*, CVector, CVector, float, float)` (0x6F49A0), floats as bits

@@ -77,10 +77,19 @@ fn occupant(this: GPtr<u8>, ped: GPtr<u8>, is_driver: bool) {
         kob_dtor(evp);
         return;
     }
+    drown_occupant(this, ped);
+}
+
+/// A vehicle occupant under water (also `CVehicle::ProcessBoatControl` 0x6DBE0C's drowning driver): a player
+/// loses breath (`HandlePlayerBreath(true, 1.0)`); any other ped gets the drowning `CEventDamage` (weapon 0x35,
+/// torso) with its damage response computed when it affects the ped (else marked calculated), added to its event
+/// group.
+pub(crate) fn drown_occupant(this: GPtr<u8>, ped: GPtr<u8>) {
     if ped_is_player(ped) != 0 {
         player_handle_breath(ped, 1, 0x3F80_0000);
         return;
     }
+    let group = |p: GPtr<u8>| rd::<GPtr<u8>>(p, 0x47C).byte_add(0x68);
     let mut calc = [0u32; 8];
     let cp = GPtr::from_raw(calc.as_mut_ptr()).cast::<u8>();
     damage_calc_ctor(cp, this.addr() as u32, f32::from_bits(g::<u32>(TIME_STEP).read()).to_bits(), 0x35, 3, 0);
