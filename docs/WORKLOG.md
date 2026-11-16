@@ -2549,3 +2549,51 @@
 - verify-all (lanes 4-5, fresh release sa-oracle, DLL of e33f4a8d): `lb5-u` (SA_UNVERIFIED=frontier2-b14) IDENTICAL 13/13; default set `lb5-def` IDENTICAL 13/13.
 - Not done (time): the boat scenario and ports (ProcessBoatControl 0x6DBCE0, CBoat::ProcessControl 0x6F1770), CPlane::PreRender
   0x6C94A0 / ProcessFlyingCarStuff 0x6CB7C0 (docs/re/specs/VEH/CPlane.md has a full spec), the CCamera / CCam bodies, item 4.
+
+## 2026-11-16 — FRONTIER-2 turn 6, lane B: CPlane flight / pre-render, CBoat::ProcessControl, the pier hang (agent, branch worktree-agent-a10f9d8e814fb0ac6)
+- Base: worktree-agent-a39ff8008721099ec 93b96b88 (turn 5 lane B). `inflight.py` checked before each port: no other branch
+  registers 0x6CB7C0, 0x6C94A0, 0x6F1770.
+- Batch `frontier2-b15` (3 hooks), all from the 1.0 US bytes:
+  - CPlane::ProcessFlyingCarStuff 0x6CB7C0 (`crates/sa-veh/src/plane_flying.rs`): damage wave, speed factor, the low-health
+    propeller loss and control skew, per-component damage (propellers: throttle by a sine of the wave; rudder / elevators /
+    ailerons with their bouncing panels) and smoke puffs, propeller speed toward the throttle target with the ceiling cut,
+    FlyingControl (RC Baron 1, Hydra hover 6 with the Hunter's flying handling, 3). docs/re/specs/VEH/CPlane.md is wrong on
+    one point: the Hydra hover call passes `-leftRight` (0x6CC43F reads the cLR slot), not `-upDown`.
+  - CPlane::PreRender 0x6C94A0 (same file): suspension with the Andromada wheel tilt, wheel matrices, propeller angle, the
+    control surfaces through the stack CMatrix / CQuaternion (aileron stretch with the gear out), propeller frames, landing
+    gear by model (jump table 0x6CAAE0 / byte table 0x6CAAF8 decoded), Andromada door, Hydra nozzles / jet thrust / dust,
+    Vortex skirt, panels and force copies, shadow, wing-tip streaks, smoke ejector, Skimmer splashes.
+  - CBoat::ProcessControl 0x6F1770 (`crates/sa-veh/src/boat_control.rs`): gta-reversed differs from the bytes (heading
+    marker -9999.99 not -10000, the fire timer adds whole milliseconds `ftol(ts * 0.02 * 1000)`, the fire offset's z + 1.0,
+    statuses 2 / 3 are the AI cases).
+- Shared instead of declared again (ADR-003): new bindings CMotionBlurStreaks::RegisterStreak 0x721DC0 (sa-world, twin in
+  sa-render; entity_prerender.rs's private declaration removed) and FindPlayerCentreOfWorld_NoSniperShift 0x56E320
+  (sa-world; sa-hud menu_map.rs's removed); within sa-veh the private declarations of HeightAboveCeiling / pos_z,
+  Get/SetAeroplaneCompStatus (now targeting the damage.rs ports), DoHeliDustEffect, the vtable 0xD0 slot, CQuaternion::Set,
+  ProcessPanel, DoBoatSplashes and ProcessBoatControl are pub(crate) and reused; sa-world break_object's `rand_unit` is public.
+- The Santa Maria pier hang (turn 4): found with gdb on the native i686 sa-game (run under gdb, SIGINT to the child): the
+  main thread looped in CAEStreamingChannel's fill -> `vorbis_set_cursor` -> sa-game's `ov_time_seek`, which re-opened
+  the stream for a seek to 0.001 s (granule 24, inside the first audio page); lewton's page seek left the reader at its end
+  with no position, the channel seeked again, forever (93 500 seeks in 60 s with SA_GAME_VORBIS_TRACE). Fixed in
+  `crates/sa-game/src/vorbisfile.rs` (ece2d244): without a page end after the page seek the stream decodes from the start
+  and drops up to the target. The pier teleport now runs (300 frames, 0 blocked), but no boat spawns there.
+- New scenario `boat` (frontier.sh): the script's boat car generators are at the Bayside marina (CarGeneratorArray 0xC27AD0
+  dumped with SA_GAME_DUMP: Marquis / Squalo / Jetmax at -2227, 2446); CJ is teleported onto the dock next to them.
+- frontier.py, lane B subsystems: 140 → 137 rows (0x6CB7C0, 0x6C94A0, 0x6F1770); no new rows revealed.
+- Scenarios (i686 native sa-game of 595aae66, SA_ROOT=~/sa-engine; master's frontier.sh for its names, this branch's for heli /
+  plane / boat): pausemenu 416 / 0 blocked, solicit 4016 / 0, crossing 1216 / 0, crossing-long 4014 / 2 (lane A's
+  KillCriminal::CreateNextSubTask 0x68E4F0), roadblocks 254 / 1762 (lane A: GangDriveBy MakeAbortable 0x62D290 885 /
+  ProcessPed 0x62D3B0 37, CopInCar 0x68C9E0 2, KillThreats 0x69D460 1, GenerateRoadBlocks fallback 61; lane C: AddSayEvent
+  0x4E60D0 776), melee 2616 / 0, sniper / shootcar / shootdriver / quad / heli 1216 / 0, plane 210 / 1006 (lane C's
+  CAEPropellerAudioEntity 0x4FD8F0; with lane C's branch merged in a scratch tree, not committed: 386 / 830, lane C's
+  UNK-game vector ctor 0x43E0E0 826, lane A's 0x658DB0 3 / 0x6375F0 1: 0 on lane B), boat 199 / 1017 on
+  CVehicle::ProcessBoatControl 0x6DBCE0 (lane B, not ported this turn); no crash.
+- Writer gate (base 93b96b88, on 79862a78, no step skipped): hooks (3) / queue / bindings / state / dupes / cfg / layers /
+  commits / clippy / i686 / i686clip / wasm32 / hooktest / l1test / l1 all PASS.
+- verify-all (lanes 4-5, fresh release sa-oracle, DLL of c9f56a9e): `lb6-u` (SA_UNVERIFIED=frontier2-b15) IDENTICAL 13/13;
+  default set `lb6-def` IDENTICAL 13/13.
+- Open (lane B): CVehicle::ProcessBoatControl 0x6DBCE0 (the `boat` blocker; 5.2 KB with CVector operator calls, gta-reversed
+  has a reading), DoBoatSplashes 0x6DD130 (CPlane::PreRender / CBoat::PreRender reach it), the CCamera / CCam bodies
+  (IsItTimeForNewcam 0x51D770, TryToStartNewCamMode 0x51E560, Get_TwoPlayer_AimVector 0x513E40, DW_HeliChaseCam 0x51A740,
+  DW_BirdyCam 0x51B850), item 4 (FireOneInstantHitRound 0x73AF00, Interior_c::PlaceObject 0x5934E0, GeneratePanesForWindow
+  0x71B620, SetTotalDamage 0x6A27F0, the RW leftovers).
