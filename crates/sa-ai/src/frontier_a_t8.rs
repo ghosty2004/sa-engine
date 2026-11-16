@@ -12,7 +12,9 @@ use sa_core::bindings::{tm_get_active_task, vector_difference};
 use sa_math::fpu::{gt, hypot_x87, lt};
 use sa_world::bindings::ped_say;
 use sa_world::world::common::entity_pos;
-use crate::bindings::pad_jump_just_down;
+use crate::bindings::{pad_jump_just_down, use_gun_control_gun, use_gun_control_gun_move, use_gun_ctor};
+use sa_core::bindings::intel_get_task_use_gun;
+use sa_core::crt::rand_at;
 use sa_input::bindings::pad_sprint_just_down;
 use crate::common::{task_make_abortable, task_new, xi};
 use sa_anim::bindings::anim_add_block_ref;
@@ -478,6 +480,84 @@ pub fn go_pick_up_entity_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) ->
     go_to_point_and_stand_still_ctor(t, 4, pp.cast(), 0.2, 0.0, 0, 1)
 }
 
+// ------------------------------------------------------------------------------------------- go to point aiming
+
+orig! {
+    /// `CTask::GetTaskType()` of a complex task, read through its own vtable (+0x10)
+    fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
+    /// `CTaskComplex::CreateFirstSubTask(CPed*)` (vtable +0x24)
+    fn v_create_first_sub_task(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x24 => unported;
+}
+
+/// `CTaskComplexGoToPointAiming::ControlSubTask(CPed*)` (0x6689E0, `ret 4`). +0x10 the aim entity, +0x14 the aim point,
+/// +0x20 the move point, +0x2C the target radius, +0x34 bit 0 a new target. The current weapon's info is fetched first.
+/// A new target: `CreateFirstSubTask(ped)`. Going to the point (0x387): `GoToPoint(+0x20, 0x86FC84, 0x86FC88, false)`;
+/// a weapon aimed with the arm (info +0x18 bit 1): no attack secondary task → `SetTaskSecondary(CTaskSimpleUseGun(
+/// +0x10, +0x14, 1, 1, false), 0)`; else with a gun task the secondary's `ControlGun(ped, +0x10, 2)` for a shooting
+/// task (0x385) one time in 64 (`rand() & 0x3F`), else `ControlGun(.., 1)`; without one the secondary's
+/// `MakeAbortable(ped, 1, NULL)`. Gun control (0x3FC) with a gun task: the move point relative to the ped in its
+/// matrix frame (`r = d · right`, `f = d · forward * 0x858C1C`), normalised when longer than the radius (else zero),
+/// to the attack secondary's `ControlGunMove`. Returns the sub-task.
+#[hook(addr = 0x6689E0, conv = thiscall, name = "CTaskComplexGoToPointAiming::ControlSubTask",
+       expect = "6A FF 64 A1 00 00 00 00 68 4B 4F 84 00",
+       unverified = "frontier2-a11", route = "L2", hazards = "heap-writes")]
+pub fn go_to_point_aiming_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let sub = rd::<GPtr<u8>>(this, 8);
+    let wi = crate::kill_ped_on_foot_armed::current_weapon_info(ped);
+    if rd::<u8>(this, 0x34) & 1 != 0 {
+        return v_create_first_sub_task(this, ped);
+    }
+    let intel = || rd::<GPtr<u8>>(ped, 0x47C);
+    let attack = || tm_get_task_secondary(intel().byte_add(4), 0);
+    match task_get_type(rd::<GPtr<u8>>(this, 8)) {
+        0x3FC => {
+            if intel_get_task_use_gun(intel()).is_null() {
+                return sub;
+            }
+            let p = entity_pos(ped);
+            let m = rd::<GPtr<u8>>(ped, 0x14);
+            let dx = x(rd::<f32>(this, 0x20)).fsub_m(rd::<f32>(p, 0));
+            let dy = x(rd::<f32>(this, 0x24)).fsub_m(rd::<f32>(p, 4));
+            let dz = x(rd::<f32>(this, 0x28)).fsub_m(rd::<f32>(p, 8));
+            let r = dz.fmul_m(rd::<f32>(m, 8)).fadd(dy.fmul_m(rd::<f32>(m, 4))).fadd(dx.fmul_m(rd::<f32>(m, 0))).to_f32();
+            let f = dz.fmul_m(rd::<f32>(m, 0x18)).fadd(dy.fmul_m(rd::<f32>(m, 0x14))).fadd(dx.fmul_m(rd::<f32>(m, 0x10)))
+                .fmul_m(g::<f32>(0x858C1C).read());
+            let len2 = f.fmul(f).fadd(x(r).fmul_m(r));
+            let rad = x(rd::<f32>(this, 0x2C));
+            let mut v = [0f32; 2];
+            if gt(len2, rad.fmul(rad)) {
+                let inv = len2.fsqrt().fdivr_m(g::<f32>(0x858624).read());
+                v = [x(r).fmul(inv).to_f32(), inv.fmul(f).to_f32()];
+            }
+            use_gun_control_gun_move(attack(), GPtr::from_raw(v.as_mut_ptr()).cast());
+        }
+        0x387 => {
+            crate::walk::gtpss_go_to_point(sub, this.byte_add(0x20), g::<u32>(0x86FC84).read(),
+                g::<u32>(0x86FC88).read(), 0);
+            if (rd::<u32>(wi, 0x18) >> 1) & 1 == 0 {
+                return sub;
+            }
+            if attack().is_null() {
+                let m = task_new(0x3C);
+                let t = if m.is_null() {
+                    GPtr::NULL
+                } else {
+                    use_gun_ctor(m, rd::<GPtr<u8>>(this, 0x10), rd::<u32>(this, 0x14), rd::<u32>(this, 0x18),
+                        rd::<u32>(this, 0x1C), 1, 1, 0)
+                };
+                tm_set_task_secondary(intel().byte_add(4), t, 0);
+            } else if !intel_get_task_use_gun(intel()).is_null() {
+                let cmd = if v_task_type(this) == 0x385 && rand_at(0x668BF5) & 0x3F == 0 { 2 } else { 1 };
+                use_gun_control_gun(attack(), ped, rd::<GPtr<u8>>(this, 0x10), cmd);
+            } else {
+                task_make_abortable(attack(), ped, 1, GPtr::NULL);
+            }
+        }
+        _ => {}
+    }
+    sub
+}
+
 /// The batch's hooks.
 pub const HOOKS: &[HookReg] = &[
     HOOK_MEDIC_TREAT_INJURED_PED_CREATE_NEXT_SUB_TASK,
@@ -485,4 +565,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_GO_PICK_UP_ENTITY_CREATE_NEXT_SUB_TASK,
     HOOK_GO_PICK_UP_ENTITY_CONTROL_SUB_TASK,
     HOOK_GO_PICK_UP_ENTITY_CREATE_FIRST_SUB_TASK,
+    HOOK_GO_TO_POINT_AIMING_CONTROL_SUB_TASK,
 ];
