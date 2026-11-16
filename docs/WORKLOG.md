@@ -2482,3 +2482,40 @@
 - Writer gate (base 728a6fa5, target dir target/gate): all 15 steps PASS (hooks 36 new, all unverified, batch frontier2-a8;
   queue up to date). The first run failed dupes (a local copy of an existing zero test), clippy (collapsible match) and
   hooktest (0x6962A0 is catalogued as thunk_FUN_00401913): fixed in a9a354c7.
+## 2026-11-16 — FRONTIER-2 turn 5 lane C: aircraft prop / sea plane audio, remote cars, oct tree, batch c11 (agent, branch worktree-agent-acc988eb6f9ea226b)
+- Base: lane C turn 4 head 47bd4a75 (branch worktree-agent-a8e8e96036c1da50f). Every port address checked against
+  `tools/gen/inflight.py` first (none in flight).
+- Batch frontier2-c11 (12 hooks):
+  - CAEVehicleAudioEntity::ProcessPlayerSeaPlane 0x4FF320 (engine factor from +0x5A4, clamped / floored at the double
+    0x862D08, the player's accelerator factor, the camera-facing volume split); ProcessPlayerProp 0x4FD290 and
+    ProcessDummyProp 0x4FD8F0: they differ only before the camera part (the dummy derives and stores the pedals, the
+    player calls GetAccelAndBrake) and in one extra first entry of the player's stall table (+0xB4 > 0 with vehicle
+    +0x960 clear), so both share `prop_engine` (landing-gear stall factor / volume, the +0xB8 / +0xBC random stall
+    timer). The shared distance-volume helper now compares the unrounded square root against 128 (the originals do
+    `fst` then `fcomp`), and the verified ProcessAIProp uses the shared smoothing / distance helpers instead of its
+    inline copy (same bytes; affects only a root within half an ulp of 128).
+  - CTheScripts::AddToBuildingSwapArray 0x481140 (.HOODLUM body 0x1569840); CStoredCar::StoreCar 0x449760.
+  - CRemote::GivePlayerRemoteControlledCar 0x45AB10 and TakeRemoteControlOfCar 0x45AD40 (.HOODLUM 0x156E620) with
+    shared remote-car state / player-vehicle / camera helpers. The jump-cut switch the no-CD VM 0xCB73E0 pushes
+    (descriptor 0x1560094) evaluates to 1 on the exe image (unicorn; the VM's `push ss; pop ss` anti-trace pair is
+    skipped); a different previous remote car gives 2.
+  - COctTree::InsertTree 0x5A75B0 and its callees CPool<COctTree>::New 0x5A7350 (generic pool New), the constructor
+    0x5A6DB0 and RemoveChildren 0x5A74F0.
+  - CAEPedlessSpeechAudioEntity::PlayLoadedSound 0x4E6380 (virtual).
+- Bindings: new 0x5A6DB0 / 0x5A7350 / 0x5A74F0 / 0x5A7490 (sa-core), 0x45AB10 / 0x45AD40 / 0x4C5B00 / 0x4C5B30 /
+  0x50C1B0 (sa-script; the cmd800 / cmd1100 / cmd1800 / cmd2000 local declarations removed), 0x449760 now reaches the
+  port (no result); 0x481140's cmd900 declaration reaches the port.
+- Not ported (time): ProcessMissionAudioEvent 0x4ECCF0, ExtractVehicleUpdateData 0x45BA90 / 0x45DEF0, the D3D9 raster
+  helpers 0x4CA5A0 / 0x4CD050 / 0x4CC1D0, 0x603AF0, 0x61D0B0 / 0x61FF40 / 0x66AB40, ScriptTaskPickUpObject 0x46AF50
+  (three obfuscated pushes and a call/ret trampoline), 0x6002F0, AddSayEvent 0x4E60D0 (pedless variant of the ported
+  ped one, own callees), LoadUserTrack 0x4F35F0, 0x477DA0 (CAT-12 not extended), the 0x14274C2 junk proof.
+- Gates: writer gate (base 47bd4a75, on ce6322a3) all PASS (hooks: 12 new, all unverified, batch frontier2-c11; note: the
+  batch spans AUDIO / CALLED-ONLY / SCRIPT / UNK-game). commit_lint caught one 73-character subject (reworded).
+- Scenarios (`frontier.sh`, i686 native sa-game of ce6322a3; target/lc5/scen): pausemenu 416 / 0 blocked, solicit
+  4016 / 0, crossing 1216 / 0, melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0, shootdriver 1216 / 0; crossing 4000
+  frames 4014 / 2 blocked (lane A's KillCriminal::CreateNextSubTask 0x68E4F0, as before); quad (master's frontier.sh,
+  not yet on this branch) 1215 / 1 blocked on CCheat::VehicleCheat 0x43A0B0 (not lane C; registered on another branch);
+  no crash.
+- verify-all (lanes 6-7): `lanec5-c11` (SA_UNVERIFIED=frontier2-c11; DLL of ce6322a3) IDENTICAL 13/13; `lanec5-default` (default set) IDENTICAL 13/13.
+- frontier.py: lane C subsystems 26 → 17 rows (2 of them lane A's partial switches; InsertTree's three callees came
+  and went); whole frontier 263 → 251 (other branches' registrations included).
