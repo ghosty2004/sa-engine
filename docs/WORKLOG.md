@@ -3060,3 +3060,40 @@
   (`--system-heap`); the play package no longer passes it and 933c87cd makes every run use the fixed region.
 - target/play/sa-game and web/pkg (FEATURES=samp) refreshed. Per the user, no new porting turns: next is performance
   (PERF-1, RENDER-2), measured first.
+
+## 2026-11-16 — PERF-0: per-frame measurement of sa-game, and the first reading (agent, branch worktree-agent-a52e8d3133fe02405)
+- Base master b31ab3de (the worktree was created at 1f765b2a and reset to master). How to run it and the full
+  tables: docs/perf/measure.md.
+- Built (ADR-003: one implementation in the platform layer, phases around the ports, no platform cfg outside the
+  backends): `sa_platform::clock` (one clock on `web_time::Instant`: std natively, `performance.now()` on the web;
+  det.rs's private copy of `StdClock` removed), `sa_platform::perf` (exclusive phase scopes, counters, rows, CSV,
+  summary; one relaxed atomic load per hook point when off), `sa_rw_wgpu::gpu_timer` + new `D3d9Stats` counters
+  (pipeline / texture bind-group changes, buffer / texture uploads and bytes, streamed bytes), sa-game `perf.rs`
+  (27 phases, 16 counters, `gpu_ms`) and `platform/perf_probe.rs` (46 registry probes: with the measurement on, the
+  registry entries of `Game::Idle`, `CTimer::Update`, `CGame::Process`'s big callees and the render functions are
+  wrapped by timing wrappers of the same ABI; typed on i686, one type-erased wrapper on wasm32). `--perf FILE` /
+  `SA_GAME_PERF=FILE` natively, `?SA_GAME_PERF=N` on the web page (summary + CSV to the console as one message each:
+  the worker keeps only 500 lines between status posts).
+- Measured (i7-14700F, RX 7800 XT; in world, standing, limiter off with `SA_GAME_POKE=5:0xBA6794:0:1`; CSVs in
+  target/perf/): native offscreen 2975 frames, mean 20.98 ms (47.7 fps), median 17.11, p95 30.92; web WebGPU 1500
+  frames 29.69 ms (33.7 fps); web WebGL2 30.07 ms (33.3 fps); native with the default 25 fps limiter 40.24 ms (`loop`
+  16.9 ms waiting); walking (`SA_GAME_WALK=100:2800`) 21.65 ms. Overhead: the same native run with the measurement
+  off gave 20.24 ms mean / 18.49 median (the run-to-run spread of the alternating frames below), the `perf` phase
+  itself 0.03 ms. GPU 0.8 ms per frame (timestamp queries; WebGL2 has none).
+- Top costs (native, mean ms of 20.98): `idle.spin` 5.52 (`Game::Idle`'s 14 ms rule, the original's: it compares the
+  time since the previous `CTimer::Update` with the previous frame's, so every second frame waits until it is 14 ms
+  longer than the one before; the mean frame is the work + ~7 ms), `d3d9` 2.79 (~2,790 COM calls, 1,830 `Set*`),
+  `logic.world` 2.77, `render.world` 1.83, `logic` 1.50, `render.list` 1.25, `render.shadows` 1.14,
+  `render.coronas` 0.84 (p95 3.67: `CCoronas::Render` in ~20% of the frames), `render.prerender` 0.78,
+  `render.plants` 0.50, `audio` 0.43, `render.hud` 0.36. Web: the same order, game code ~1.3x slower, plus `other`
+  4.7 ms per frame outside the game (`web/worker.js` yields with `setTimeout(tick, 0)` after every frame longer than
+  its 12 ms batch).
+- Counters per frame (native): ~568 draws in ~17 passes, 134 pipeline and 396 texture bind-group changes, ~118
+  buffer uploads of ~1.0 MB, ~1.17 MB streamed uniforms / constants / UP vertices, ~32,000 `orig!` registry
+  dispatches, ~200 platform calls (~260,000 in the frames that spin: `QueryPerformanceCounter` polling).
+- Not run: `--window` under the lane's headless gamescope: the i686 build needs the 32-bit libxkbcommon (X11: "Failed
+  to load one of xlib's shared libraries"; Wayland: `XKBNotFound`), which this machine does not have.
+- Verified: verify-all lanes 1-7 (tag `perf0-def`, head 683b8b47, default mode) IDENTICAL 13/13; offscreen runs with
+  the measurement on: 0 blocked in 3016 / 616 iterations, the browser runs 0 blocked; with it off no perf output and
+  no registry change. i686 clippy `-D warnings` (sa-game all targets), wasm32 clippy (sa-game lib), sa-platform tests
+  24/24 (new: perf, clock), cfg 0 over baseline, dupes 0 new.
