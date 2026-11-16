@@ -13,7 +13,9 @@ use crate::bindings::{compute_clear_target, event_takes_priority_over, should_lo
 use crate::bindings::{car_enter_exit_is_vehicle_stealable, run_anim_ctor2, scanner_closest_vehicle, task_timer_is_out_of_time};
 use crate::common::X87;
 use sa_core::bindings::entity_register_reference;
-use sa_math::fpu::fcom_any;
+use sa_math::fpu::{fcom_any, fcom_ne};
+use sa_core::bindings::{frame_get_ltm, fx_play};
+use sa_world::bindings::{fx_copy_parent_matrix, fx_create_system, fx_set_const_time, fx_set_local_particles, fx_set_offset_pos, fx_system_set_matrix};
 use sa_pop::bindings::add_weapon_model;
 use sa_world::bindings::{die_ctor, intel_find_task_by_type};
 use crate::common::{ftol32, g, rd, task_get_type, task_make_abortable, wr, x, xi};
@@ -51,7 +53,7 @@ orig! {
     /// `ret 0xC`)
     fn follow_leader_any_means_ctor(t: u32, group: u32, leader: u32, offset: u32) -> u32 = thiscall 0x694AA0 => crate::gen_ctors::g_task_complex_follow_leader_any_means_constructor_694aa0;
     /// `CTaskSimpleJetPack::DoJetPackEffect(CPed*)` (0x67B7F0, `ret 4`)
-    fn jet_pack_do_effect(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x67B7F0 => unported;
+    fn jet_pack_do_effect_o(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x67B7F0 => jet_pack_do_effect;
     /// `CEvent::GetEventType()` (vtable +4)
     fn v_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
     /// `FUN_006348f0` (0x6348F0, `ret 4`): the mobile phone task's weapon restore
@@ -591,7 +593,7 @@ pub fn jet_pack_render(this: GPtr<u8>, ped: GPtr<u8>) {
     }
     rw_frame_update_objects(frame);
     rp_clump_render(rd::<GPtr<u8>>(this, 0x40));
-    jet_pack_do_effect(this, ped);
+    jet_pack_do_effect_o(this, ped);
     wr::<u32>(this, 0x3C, rd::<u32>(ped, 0x558));
 }
 
@@ -906,6 +908,78 @@ pub fn fall_to_death_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8>
     m
 }
 
+/// `CTaskSimpleJetPack::DoJetPackEffect(CPed*)` (0x67B7F0, `ret 4`). With a ped clump whose frame matrix pointer is
+/// not null, each missing thruster effect (+0x64, then +0x68) is created (`g_fxMan.CreateFxSystem("jetpack", (0, 0,
+/// 0), that matrix, false)`), played, set to local particles and to copy its parent matrix, the key time +0x6C reset.
+/// The static offset 0xC195D8 = (0, 0, -0.15) is set up once (guard 0xC195E4 bit 0). Each live effect follows its
+/// jet ball frame's LTM with that offset. The key time moves by 0.1 towards 1 when thrusting (+0xE, or a strafe +0x10
+/// that is not 0, NaN included) and towards 0 otherwise (compared on the x87 value before the f32 store, clamped to
+/// 1 / 0), and becomes each live effect's constant time.
+#[hook(addr = 0x67B7F0, conv = thiscall, name = "CTaskSimpleJetPack::DoJetPackEffect", expect = "8B 44 24 04 8B 40 18 83 EC 0C",
+       this = "CTaskSimpleJetPack",
+       unverified = "frontier2-a9", route = "L2", hazards = "heap-writes")]
+pub fn jet_pack_do_effect(this: GPtr<u8>, ped: GPtr<u8>) {
+    let clump = rd::<GPtr<u8>>(ped, 0x18);
+    if !clump.is_null() {
+        let mat = rd::<GPtr<u8>>(clump, 4).byte_add(0x10);
+        if !mat.is_null() {
+            for o in [0x64, 0x68] {
+                if rd::<u32>(this, o) != 0 {
+                    continue;
+                }
+                let mut zero = [0u32; 3];
+                let fx = fx_create_system(GPtr::from_addr(0xA9AE80), GPtr::from_addr(0x870600),
+                                          GPtr::from_raw(zero.as_mut_ptr()).cast(), mat, 0);
+                wr::<GPtr<u8>>(this, o, fx);
+                if !fx.is_null() {
+                    fx_play(fx);
+                    fx_set_local_particles(rd::<GPtr<u8>>(this, o), 1);
+                    fx_copy_parent_matrix(rd::<GPtr<u8>>(this, o));
+                    wr::<u32>(this, 0x6C, 0);
+                }
+            }
+        }
+    }
+    if g::<u32>(0xC195E4).read() & 1 == 0 {
+        g::<u32>(0xC195E4).write(g::<u32>(0xC195E4).read() | 1);
+        g::<u32>(0xC195D8).write(0);
+        g::<u32>(0xC195DC).write(0);
+        g::<u32>(0xC195E0).write(0xBE19_999A);
+    }
+    for (o, name) in [(0x64, 0x8705F4usize), (0x68, 0x8705E8)] {
+        if rd::<u32>(this, o) == 0 {
+            continue;
+        }
+        let f = clump_get_frame_from_name(rd::<GPtr<u8>>(this, 0x40), GPtr::from_addr(name));
+        let ltm = frame_get_ltm(f);
+        fx_system_set_matrix(rd::<GPtr<u8>>(this, o), ltm);
+        fx_set_offset_pos(rd::<GPtr<u8>>(this, o), GPtr::from_addr(0xC195D8));
+    }
+    let on = rd::<u8>(this, 0xE) != 0 || fcom_ne(x(rd::<f32>(this, 0x10)), x(g::<f32>(0x858B50).read()));
+    let v = xi(i32::from(on));
+    let key = rd::<f32>(this, 0x6C);
+    let step = g::<f32>(0x858B1C).read();
+    if gt(v, x(key)) {
+        let n = x(key).fadd_m(step);
+        wr::<f32>(this, 0x6C, n.to_f32());
+        if gt(n, x(g::<f32>(0x858624).read())) {
+            wr::<u32>(this, 0x6C, 0x3F80_0000);
+        }
+    } else if lt(v, x(key)) {
+        let n = x(key).fsub_m(step);
+        wr::<f32>(this, 0x6C, n.to_f32());
+        if lt(n, x(g::<f32>(0x858B50).read())) {
+            wr::<u32>(this, 0x6C, 0);
+        }
+    }
+    for o in [0x64, 0x68] {
+        let fx = rd::<GPtr<u8>>(this, o);
+        if !fx.is_null() {
+            fx_set_const_time(fx, 1, rd::<f32>(this, 0x6C));
+        }
+    }
+}
+
 /// Every hook of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_USE_MOBILE_PHONE_RESTORE_WEAPON,
@@ -925,4 +999,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_GO_TO_POINT_ANY_MEANS_CONTROL_SUB_TASK,
     HOOK_USE_MOBILE_PHONE_CONTROL_SUB_TASK,
     HOOK_FALL_TO_DEATH_CONTROL_SUB_TASK,
+    HOOK_JET_PACK_DO_EFFECT,
 ];
