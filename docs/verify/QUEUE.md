@@ -72,6 +72,9 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-c11 | 12 | AUDIO, CALLED-ONLY, SCRIPT, UNK-game | df984d3f | worktree-agent-a666e9cf719f6e793 | 12 | 0 | 0 | 0 | 0 | L2 12 |
 | frontier2-c12 | 10 | AUDIO, SCRIPT, UNK-game | 08439903 | worktree-agent-a666e9cf719f6e793 | 10 | 0 | 0 | 0 | 0 | L2 8, split 2 |
 | frontier2-c13 | 9 | AUDIO, UNK-game | b50a37eb | worktree-agent-a6e18bff35f33ca8b | 9 | 0 | 0 | 0 | 0 | L2 9 |
+| frontier2-c14 | 6 | RW | eedbc79e | worktree-agent-acd1111ff68d2fe92 | 6 | 0 | 0 | 0 | 0 | L2 4, L3-only 2 |
+| frontier2-c15 | 1 | WORLD | ec2c4fe8 | worktree-agent-acd1111ff68d2fe92 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| frontier2-c16 | 1 | RENDER | 264ffb54 | worktree-agent-acd1111ff68d2fe92 | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | frontier2-c2 | 35 | AI, MATH, SCRIPT, UNK-game, VEH | 49bdb6d2 | master | 35 | 0 | 0 | 0 | 0 | L2 35 |
 | frontier2-c3 | 11 | AI, SCRIPT, UNK-game | 49bdb6d2 | master | 11 | 0 | 0 | 0 | 0 | L2 11 |
 | frontier2-c4 | 10 | AUDIO, CALLED-ONLY, SCRIPT, UNK-game | d18327f1 | master | 10 | 0 | 0 | 0 | 0 | L2 9, split 1 |
@@ -2436,6 +2439,56 @@ SA_UNVERIFIED=frontier2-c13 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c13 
 | 0x61D0B0 | `FUN_0061d0b0` | written | L2 | heap-writes |
 | 0x61FF40 | `FUN_0061ff40` | written | L2 | heap-writes |
 | 0x66AB40 | `FUN_0066ab40` | written | L2 | heap-writes |
+
+## frontier2-c14
+
+6 hooks in sa-rwcore; hazards: heap-writes (3); recordings calling them: boot (1), menus-hud (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-c14 $SA_ROOT/target/e2e/corpus/boot.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-c14 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c14 $SA_ROOT/target/e2e/corpus/boot.sarec --runs "plain l2 rust" --tag frontier2-c14
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x751AE0 | `RpLightGetConeAngle` | written | L2 | none |
+| 0x758D70 | `_rpMeshWrite` | written | L2 | none |
+| 0x7F8300 | `_rwD3D9TestState` | written | L3-only | none |
+| 0x7F8D70 | `RwD3D9CameraAttachWindow` | written | L3-only | heap-writes |
+| 0x8020F0 | `_rwMemoryClose` | written | L2 | heap-writes |
+| 0x808DE0 | `RwCameraStreamRead` | written | L2 | heap-writes |
+
+## frontier2-c15
+
+1 hooks in sa-world; hazards: heap-writes (1); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-c15 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-c15 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c15 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-c15
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x5934E0 | `Interior_c::PlaceObject` | written | L2 | heap-writes |
+
+## frontier2-c16
+
+1 hooks in sa-render; hazards: heap-writes (1); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-c16 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-c16 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c16 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-c16
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x71B620 | `CGlass::GeneratePanesForWindow` | written | L2 | heap-writes |
 
 ## frontier2-c2
 
