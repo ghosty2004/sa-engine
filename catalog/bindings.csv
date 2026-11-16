@@ -1219,9 +1219,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x56F210,sa-ped,ped_data_set_initial_state,thiscall,,d:GPtr<u8>,,sa_ped::player_info::set_initial_state,CPlayerPedData::SetInitialState,
 0x5A7EA0,sa-ped,get_texture_dependency,cdecl,,t:i32,i32,sa_ped::clothes::get_texture_dependency,CClothes::GetTextureDependency,
 0x5A81B0,sa-ped,get_default_player_motion_group,cdecl,,,i32,unported,CClothes::GetDefaultPlayerMotionGroup,
-0x5DEF20,sa-ped,clear_aim_flag,thiscall,,ped:GPtr<u8>,,sa_ped::ped::clear_aim_flag,CPed::ClearAimFlag,
 0x5DF170,sa-ped,remove_goggles_model,thiscall,,p:GPtr<u8>,,sa_ped::ped_weapon::remove_goggles_model_port,CPed::RemoveGogglesModel,
-0x5E1950,sa-ped,ped_clear_look_flag,thiscall,,ped:GPtr<u8>,,sa_ped::ped::clear_look_flag,CPed::ClearLookFlag,
 0x5E4880,sa-ped,ped_set_model_index,thiscall,,p:GPtr<u8>;m:u32,,sa_ped::ped_life::ped_set_model_index,CPed::SetModelIndex,
 0x5E8030,sa-ped,ped_ctor,thiscall,,p:GPtr<u8>;ty:u32,GPtr<u8>,sa_ped::ped_life::ped_constructor,CPed::Constructor,
 0x5E8910,sa-ped,request_delayed_weapon,thiscall,,p:GPtr<u8>,,sa_ped::ped_render::request_delayed_weapon,CPed::RequestDelayedWeapon,
@@ -2410,6 +2408,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x5DEC10,sa-world,ped_set_move_anim_speed,thiscall,,p:GPtr<u8>;a:GPtr<u8>,,unported,CPed::SetMoveAnimSpeed,sa_ped::ped::set_move_anim_speed
 0x5DED10,sa-world,ped_stop_non_partial_anims,thiscall,,p:GPtr<u8>,,unported,CPed::StopNonPartialAnims,
 0x5DED50,sa-world,ped_restart_non_partial_anims,thiscall,,p:GPtr<u8>,,unported,CPed::RestartNonPartialAnims,
+0x5DEF20,sa-world,clear_aim_flag,thiscall,,ped:GPtr<u8>,,unported,CPed::ClearAimFlag,sa_ped::ped::clear_aim_flag
 0x5DEF60,sa-world,get_local_direction,thiscall,,p:GPtr<u8>;dir:GPtr<f32>,i32,unported,CPed::GetLocalDirection,sa_ped::ped::get_local_direction
 0x5DF100,sa-world,ped_can_be_deleted,thiscall,,p:GPtr<u8>,u8,unported,CPed::CanBeDeleted,
 0x5DF200,sa-world,ped_get_weapon_slot,thiscall,,ped:GPtr<u8>;ty:u32,i32,unported,CPed::GetWeaponSlot,
@@ -2425,6 +2424,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x5E02E0,sa-world,ped_get_held_entity,thiscall,,p:GPtr<u8>,GPtr<u8>,unported,CPed::GetEntityThatThisPedIsHolding,
 0x5E0360,sa-world,ped_drop_held_entity,thiscall,,p:GPtr<u8>;b:u32,,unported,CPed::DropEntityThatThisPedIsHolding,sa_ped::ped_coll::drop_entity_that_this_ped_is_holding
 0x5E05B0,sa-world,event_sound_quiet_ctor,thiscall,,e:GPtr<u8>;ent:GPtr<u8>;volume:f32;time:u32;pos:GPtr<u8>,GPtr<u8>,unported,CEventSoundQuiet::Constructor,
+0x5E1950,sa-world,ped_clear_look_flag,thiscall,,ped:GPtr<u8>,,unported,CPed::ClearLookFlag,sa_ped::ped::clear_look_flag
 0x5E3960,sa-world,ped_is_ped_in_control,thiscall,,ped:GPtr<u8>,u8,unported,CPed::IsPedInControl,sa_ped::ped::is_ped_in_control
 0x5E3990,sa-world,ped_remove_weapon_model,thiscall,,p:GPtr<u8>;mi:i32,,unported,CPed::RemoveWeaponModel,sa_ped::ped_render::remove_weapon_model
 0x5E3B60,sa-world,get_weapon_skill_type_call,thiscall,,p:GPtr<u8>;ty:i32,u8,unported,CPed::GetWeaponSkill-WeaponType,sa_ped::ped::get_weapon_skill_type

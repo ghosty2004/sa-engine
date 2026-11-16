@@ -18,6 +18,9 @@ use sa_world::bindings::{
     event_damage_dtor, event_group_add, physical_apply_move_force_5429f0,
 };
 use sa_world::world::common::entity_pos;
+use sa_core::bindings::general_random_int_in_range;
+use sa_core::timer::{fild_u32, FRAME_COUNTER, TIME_MS};
+use sa_world::bindings::{clear_aim_flag, ped_clear_look_flag};
 
 /// `CTaskSimpleBeHit::StartAnim(CPed* ped)` (0x620910, `ret 4`).
 ///
@@ -80,6 +83,119 @@ pub fn be_hit_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
         }
     }
     assoc_set_finish_callback(rd::<GPtr<u8>>(this, 0x24), 0x62_0900, this.addr() as u32);
+}
+
+/// The finish callback `CTaskSimpleBeHitWhileMoving`'s anim gets (0x61FF30: clears +0x14, sets +8). The original pushes
+/// it through the SecuROM fragment 0x401122: `ror([0x15605F8], [0x698EFA])` on the exe image = 0x61FF30.
+const BE_HIT_WHILE_MOVING_CB: u32 = 0x61_FF30;
+
+/// The anim of 0x61FF40 is `anim` in group 0 (+0x14): the clump's running association of it unless there is none or
+/// its blend delta (+0x1C) is below 0 (ordered), in which case `BlendAnimation(clump, 0, anim, 8.0)`; then time 0 and
+/// the flags +0x2E |= 1, |= 8 (two read-modify-writes).
+fn be_hit_while_moving_restart(this: GPtr<u8>, ped: GPtr<u8>, anim: u32) {
+    let a = clump_get_association(rd::<GPtr<u8>>(ped, 0x18), anim);
+    wr(this, 0x14, a);
+    if a.is_null() || lt(x(rd::<f32>(a, 0x1C)), x(0.0)) {
+        wr(this, 0x14, anim_blend_animation(rd::<GPtr<u8>>(ped, 0x18), 0, anim, 8.0));
+    }
+    assoc_set_current_time(rd::<GPtr<u8>>(this, 0x14), 0.0);
+    let a = rd::<GPtr<u8>>(this, 0x14);
+    wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) | 1);
+    let a = rd::<GPtr<u8>>(this, 0x14);
+    wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) | 8);
+}
+
+/// `(ped +0x20 (u16) + CTimer::m_FrameCounter) % 1000`, unsigned.
+fn be_hit_while_moving_frame_jitter(ped: GPtr<u8>) -> u32 {
+    u32::from(rd::<u16>(ped, 0x20)).wrapping_add(FRAME_COUNTER.get()) % 1000
+}
+
+/// `CTaskSimpleBeHitWhileMoving::StartAnim(CPed* ped)` (0x61FF40, `ret 4`; unnamed in the catalogue, task type 1009,
+/// vtable 0x86D7FC, called by its ProcessPed 0x620290 while +0x14 is null). Fields: +0xC hit type, +0x10 direction,
+/// +0x14 the association.
+///
+/// Hit type 4 or 2 with (non-player and `rand() & 1`) or `rand() & 7 == 0`: by direction 1 / 2 / 3 → 0x19, 0x22 or
+/// 0x1A (`rand() & 1`), 0x1B; otherwise 0x14 for type 2, else 0x25 / 0x20 / 0x13 (`rand() & 1` twice). 0x22 / 0x25 /
+/// 0x20 restart that anim (see `be_hit_while_moving_restart`). The others, when the ped's +0xFC is clear:
+/// `ClearLookFlag`, `ClearAimFlag`, the clump's running association of the anim gets time 0, flag +0x2E |= 1, blend
+/// +0x18 = 0, delta +0x1C = 8.0 (none: +0x14 = `BlendAnimation(clump, 0, anim, 8.0)`; the 0xBF branch for the
+/// player's 0x6E / 0x6F is unreachable but kept); then the +0x744 timer: the player's from that association (0x6E /
+/// 0x6F: `+ 100 - its +0x20 * 1000`, else `+ 500`), a non-player's from the frame jitter `+ 500`, and without the
+/// association `jitter + now + 1000`. Any other case: a non-player with `rand() & 1` clear only draws
+/// `GetRandomNumberInRange(1000, 3000)` (result unused); otherwise direction 1 / 2 / 3 / else → anim 0x1D / 0x1E /
+/// 0x1F / 0x1C restarted. Every path ends with `SetFinishCallback(+0x14, 0x61FF30, this)`, also those that leave +0x14
+/// null (as the original, which then writes through null + 0x30). Returns EAX = the callback (SetFinishCallback's
+/// first argument).
+#[hook(addr = 0x61FF40, conv = thiscall, name = "FUN_0061ff40", expect = "53 55 8B E9 8B 45 0C",
+       unverified = "frontier2-c13", route = "L2", hazards = "heap-writes")]
+pub fn be_hit_while_moving_start_anim(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
+    let ty = rd::<u32>(this, 0xC);
+    let dir = rd::<u32>(this, 0x10);
+    let main = (ty == 4 || ty == 2) && ((ped_is_player(ped) == 0 && rand() & 1 != 0) || rand() & 7 == 0);
+    if main {
+        let anim = match dir {
+            1 => Ok(0x19),
+            2 => if rand() & 1 != 0 { Err(0x22) } else { Ok(0x1A) },
+            3 => Ok(0x1B),
+            _ if rd::<u32>(this, 0xC) == 2 => Ok(0x14),
+            _ => if rand() & 1 != 0 { Err(0x25) } else if rand() & 1 != 0 { Err(0x20) } else { Ok(0x13) },
+        };
+        match anim {
+            Err(a) => be_hit_while_moving_restart(this, ped, a),
+            Ok(anim) if rd::<u32>(ped, 0xFC) == 0 => {
+                ped_clear_look_flag(ped);
+                clear_aim_flag(ped);
+                let clump = rd::<GPtr<u8>>(ped, 0x18);
+                let mut a = GPtr::<u8>::NULL;
+                if anim == 0xBF {
+                    if ped_is_player(ped) != 0 {
+                        a = clump_get_association(clump, 0x6E);
+                        if a.is_null() {
+                            a = clump_get_association(clump, 0x6F);
+                        }
+                    }
+                } else {
+                    a = clump_get_association(clump, anim);
+                    if a.is_null() {
+                        wr(this, 0x14, anim_blend_animation(clump, 0, anim, 8.0));
+                    } else {
+                        assoc_set_current_time(a, 0.0);
+                        wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) | 1);
+                        wr::<u32>(a, 0x18, 0);
+                        wr::<u32>(a, 0x1C, 0x4100_0000);
+                    }
+                }
+                if a.is_null() {
+                    let v = be_hit_while_moving_frame_jitter(ped).wrapping_add(TIME_MS.get()).wrapping_add(1000);
+                    wr::<u32>(ped, 0x744, v);
+                } else {
+                    // the anim's total time (+0x14 hierarchy +0x10) in ms
+                    let t = x(rd::<f32>(rd::<GPtr<u8>>(a, 0x14), 0x10)).fmul_m(1000.0);
+                    let v = if ped_is_player(ped) == 0 {
+                        xi(be_hit_while_moving_frame_jitter(ped) as i32).fadd(t).fadd(fild_u32(TIME_MS.get())).fadd_m(500.0)
+                    } else if matches!(rd::<u16>(a, 0x2C), 0x6E | 0x6F) {
+                        t.fadd(fild_u32(TIME_MS.get())).fsub(x(rd::<f32>(a, 0x20)).fmul_m(1000.0)).fadd_m(100.0)
+                    } else {
+                        t.fadd(fild_u32(TIME_MS.get())).fadd_m(500.0)
+                    };
+                    wr::<i32>(ped, 0x744, ftol32(v));
+                }
+            }
+            Ok(_) => {}
+        }
+    } else if ped_is_player(ped) == 0 && rand() & 1 == 0 {
+        general_random_int_in_range(1000, 3000);
+    } else {
+        let anim = match dir {
+            1 => 0x1D,
+            2 => 0x1E,
+            3 => 0x1F,
+            _ => 0x1C,
+        };
+        be_hit_while_moving_restart(this, ped, anim);
+    }
+    assoc_set_finish_callback(rd::<GPtr<u8>>(this, 0x14), BE_HIT_WHILE_MOVING_CB, this.addr() as u32);
+    BE_HIT_WHILE_MOVING_CB
 }
 
 /// `CTaskComplexHitPedWithCar::HitHurtsPed(CPed* ped)` (0x653AE0, `ret 4`): true when the impact speed (+0x10) is above
@@ -236,6 +352,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_HURT_PED_WITH_CAR_PROCESS_PED,
     HOOK_HIT_PED_WITH_CAR_CREATE_SUB_TASK,
     HOOK_BE_HIT_START_ANIM,
+    HOOK_BE_HIT_WHILE_MOVING_START_ANIM,
     HOOK_HIT_PED_WITH_CAR_HIT_HURTS_PED,
     HOOK_HIT_PED_WITH_CAR_COMPUTE_EVASIVE_STEP_MOVE_DIR,
 ];

@@ -2874,6 +2874,11 @@ orig! {
 }
 
 orig! {
+    /// `CPed::ClearAimFlag` (0x5DEF20)
+    pub fn clear_aim_flag(ped: GPtr<u8>) = thiscall 0x5DEF20 => unported;
+}
+
+orig! {
     /// `CPed::GetLocalDirection` (0x5DEF60)
     pub fn get_local_direction(p: GPtr<u8>, dir: GPtr<f32>) -> i32 = thiscall 0x5DEF60 => unported;
 }
@@ -2946,6 +2951,11 @@ orig! {
 orig! {
     /// `CEventSoundQuiet::Constructor` (0x5E05B0)
     pub fn event_sound_quiet_ctor(e: GPtr<u8>, ent: GPtr<u8>, volume: f32, time: u32, pos: GPtr<u8>) -> GPtr<u8> = thiscall 0x5E05B0 => unported;
+}
+
+orig! {
+    /// `CPed::ClearLookFlag` (0x5E1950)
+    pub fn ped_clear_look_flag(ped: GPtr<u8>) = thiscall 0x5E1950 => unported;
 }
 
 orig! {
