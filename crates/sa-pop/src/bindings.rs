@@ -369,6 +369,11 @@ orig! {
 }
 
 orig! {
+    /// `CLocalisation::KnockDownPeds` (0x56D290)
+    pub fn localisation_knock_down_peds() -> u8 = cdecl 0x56D290 => unported;
+}
+
+orig! {
     /// `CHud::GetYPosBasedOnHealth` (0x588B60)
     pub fn get_y_pos_based_on_health_st0(player: u8, y: f32, offset: i8) -> f64 = cdecl 0x588B60 => unported;
 }
@@ -431,6 +436,11 @@ orig! {
 orig! {
     /// `CTaskComplexWanderGang::CTaskComplexWanderGang` (0x66F5C0)
     pub fn wander_gang_ctor(t: GPtr<u8>, ms: i32, dir: i32, time: i32, b: u32, f: u32) -> GPtr<u8> = thiscall 0x66F5C0 => unported;
+}
+
+orig! {
+    /// `CAutomobile::RemoveBonnetInPedCollision` (0x6AA200)
+    pub fn automobile_remove_bonnet_in_ped_collision(car: GPtr<u8>) -> GPtr<u8> = thiscall 0x6AA200 => unported;
 }
 
 orig! {

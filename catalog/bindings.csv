@@ -1294,6 +1294,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x53FE70,sa-pop,get_look_behind_for_car,thiscall,,p:GPtr<u8>,u8,unported,CPad::GetLookBehindForCar,
 0x53FFE0,sa-pop,car_gun_just_down,thiscall,,pad:GPtr<u8>,i16,unported,CPad::CarGunJustDown,
 0x556780,sa-pop,rope_remove,thiscall,,rope:GPtr<u8>,,unported,CRope::Remove,sa_render::mvpa_render1::rope_remove
+0x56D290,sa-pop,localisation_knock_down_peds,cdecl,,,u8,unported,CLocalisation::KnockDownPeds,sa_hud::hud::localisation_knock_down_peds
 0x588B60,sa-pop,get_y_pos_based_on_health_st0,cdecl,,player:u8;y:f32;offset:i8,f64,unported,CHud::GetYPosBasedOnHealth,
 0x5DE5A0,sa-pop,choose_gang_ped_model,cdecl,,gang:i16,i32,sa_pop::gangs::choose_gang_ped_model,CGangs::ChooseGangPedModel,
 0x5E5ED0,sa-pop,add_weapon_model,thiscall,,p:GPtr<u8>;model:i32,,unported,CPed::AddWeaponModel,sa_ped::ped_render::add_weapon_model
@@ -1304,6 +1305,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x615970,sa-pop,generate_peds_at_attractors,cdecl,,px:f32;py:f32;pz:f32;a:f32;b:f32;c:f32;d:f32;dm:i32;n:i32,i32,sa_pop::population2::generate_peds_at_attractors,CPopulation::GeneratePedsAtAttractors,
 0x632140,sa-pop,can_sunbathe,cdecl,,,u32,unported,CTaskComplexSunbathe::CanSunbathe,sa_ai::frontier_a::sunbathe_can_sunbathe
 0x66F5C0,sa-pop,wander_gang_ctor,thiscall,,t:GPtr<u8>;ms:i32;dir:i32;time:i32;b:u32;f:u32,GPtr<u8>,unported,CTaskComplexWanderGang::CTaskComplexWanderGang,
+0x6AA200,sa-pop,automobile_remove_bonnet_in_ped_collision,thiscall,,car:GPtr<u8>,GPtr<u8>,unported,CAutomobile::RemoveBonnetInPedCollision,sa_veh::vehicle_part_damage::automobile_remove_bonnet_in_ped_collision
 0x6C26F0,sa-pop,get_car_node_index_from_door,cdecl,,d:u32,i32,unported,CDamageManager::GetCarNodeIndexFromDoor,sa_veh::automobile2::get_car_node_index_from_door
 0x6D1A50,sa-pop,set_up_driver,thiscall,,v:GPtr<u8>;pt:i32;a:u32;b:u32,GPtr<u8>,unported,CVehicle::SetUpDriver,
 0x6D1AA0,sa-pop,setup_passenger,thiscall,,v:GPtr<u8>;i:i32;pt:i32;a:u32;b:u32,GPtr<u8>,unported,CVehicle::SetupPassenger,

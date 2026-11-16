@@ -58,13 +58,11 @@ use sa_world::bindings::anim_blend_animation as blend_animation;
 use sa_world::bindings::audio_add_event as add_audio_event;
 use crate::bindings::get_local_direction as ped_get_local_direction;
 use sa_world::bindings::ped_say;
+use sa_pop::bindings::automobile_remove_bonnet_in_ped_collision as remove_bonnet_in_ped_collision;
+use sa_pop::bindings::localisation_knock_down_peds as knock_down_peds;
 orig! {
     /// `CTask::GetTaskType` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CAutomobile::RemoveBonnetInPedCollision()` (0x6AA200)
-    fn remove_bonnet_in_ped_collision(car: GPtr<u8>) -> GPtr<u8> = thiscall 0x6AA200 => unported;
-    /// `CLocalisation::KnockDownPeds()` (0x56D290)
-    fn knock_down_peds() -> u8 = cdecl 0x56D290 => unported;
 }
 
 /// A local `CVector` the original passes by address.

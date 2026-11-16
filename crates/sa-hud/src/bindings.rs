@@ -39,6 +39,11 @@ orig! {
 }
 
 orig! {
+    /// `CLocalisation::KnockDownPeds` (0x56D290)
+    pub fn localisation_knock_down_peds() -> u8 = cdecl 0x56D290 => crate::hud::localisation_knock_down_peds;
+}
+
+orig! {
     /// `CMenuManager::DrawWindow` (0x573EE0)
     pub fn draw_window_call(this: GPtr<u8>, rect: GPtr<u8>, key: GPtr<u8>, colour: u32, back: u32, unused: u32, bg: u32) = thiscall 0x573EE0 => crate::menu_mgr::draw_window;
 }

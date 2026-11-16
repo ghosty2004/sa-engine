@@ -184,6 +184,11 @@ orig! {
 }
 
 orig! {
+    /// `CAutomobile::RemoveBonnetInPedCollision` (0x6AA200)
+    pub fn automobile_remove_bonnet_in_ped_collision(car: GPtr<u8>) -> GPtr<u8> = thiscall 0x6AA200 => crate::vehicle_part_damage::automobile_remove_bonnet_in_ped_collision;
+}
+
+orig! {
     /// `CAutomobile::UpdateWheelMatrix` (0x6AA290)
     pub fn update_wheel_matrix(v: GPtr<u8>, node: i32, flags: u32) = thiscall 0x6AA290 => crate::mvpd_v4::automobile_update_wheel_matrix;
 }
