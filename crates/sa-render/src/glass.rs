@@ -205,8 +205,8 @@ pub fn generate_panes_for_window(ty: u32, px: f32, py: f32, pz: f32, fx: f32, fy
                 wr::<f32>(pane, 4, x(inv_r).fmul_m(ry).fmul_m(size_x).to_f32());
                 wr::<f32>(pane, 8, x(inv_r).fmul_m(rz).fmul_m(size_x).to_f32());
                 let inv_f = x(1.0).fdiv_m(len_f).to_f32();
-                for k in 0..3 {
-                    wr::<f32>(pane, 0x20 + 4 * k as isize, x(inv_f).fmul_m(f[k]).fmul_m(size_y).to_f32());
+                for (k, fk) in f.iter().enumerate() {
+                    wr::<f32>(pane, 0x20 + 4 * k as isize, x(inv_f).fmul_m(*fk).fmul_m(size_y).to_f32());
                 }
                 let mut at = [0f32; 3];
                 let mut tmp = [0f32; 3];
