@@ -241,6 +241,24 @@ function audioThreads(sp, sp0) {
   }
 }
 
+// Schedules `f` as a new task, so the event loop runs between two batches of iterations (the page's input messages,
+// the audio pump's interval, the OffscreenCanvas commit) without the >= 4 ms clamp a nested `setTimeout(f, 0)` gets
+// (PERF-1: ~4.7 ms per frame). scheduler.postTask where the worker has it, else a MessageChannel message.
+const nextTask = (() => {
+  if (typeof self.scheduler?.postTask === 'function') {
+    return (f) => {
+      self.scheduler.postTask(f, { priority: 'user-visible' }).catch((e) => console.error(`sa-game: ${e}`));
+    };
+  }
+  const ch = new MessageChannel();
+  const queued = [];
+  ch.port1.onmessage = () => queued.shift()?.();
+  return (f) => {
+    queued.push(f);
+    ch.port2.postMessage(0);
+  };
+})();
+
 function tick() {
   if (stopped) return;
   const end = performance.now() + 12;
@@ -283,7 +301,7 @@ function tick() {
     return;
   }
   if (performance.now() - lastStatus > 100) status({});
-  setTimeout(tick, 0);
+  nextTask(tick);
 }
 
 self.onmessage = async (ev) => {
@@ -322,7 +340,7 @@ self.onmessage = async (ev) => {
         }, 4);
         pending = presentPending();
         presentedNow = presentPending();
-        setTimeout(tick, 0);
+        nextTask(tick);
       } catch (e) {
         stopped = true;
         console.error(`sa-game: ${e}\n${e.stack || ''}`);
