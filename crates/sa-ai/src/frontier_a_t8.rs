@@ -32,7 +32,7 @@ use sa_math::x87::X87;
 use sa_anim::bindings::assoc_set_finish_callback;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::{anim_blend_animation, pad_get_target, physical_apply_move_force_5429f0};
-use crate::bindings::{be_hit_ctor, fall_and_get_up_ctor, task_simple_ctor};
+use crate::bindings::{be_hit_ctor, car_drive_timed_ctor, fall_and_get_up_ctor, task_simple_ctor};
 use sa_core::bindings::{get_pad, vector2d_normalise};
 use sa_math::vector::CVector;
 use sa_core::crt::rand_at;
@@ -1528,6 +1528,46 @@ pub fn hit_reaction_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr
     hit_reaction_create_sub_task(this, 0x3F0)
 }
 
+// ------------------------------------------------------------------------------------------- vt_87004c (seek entity)
+
+/// `FUN_00673070(int32 type, CPed*)` (0x673070, `ret 8`; vt_87004c's CreateSubTask, a `CTaskComplexSeekEntity`
+/// instance with the XYOffset layout: flags +0x54, move state +0x50; the entry's `nop; jmp` fetches the SEH link in
+/// the island 0x402204). The bytes of 0x665270 except 0x2CF, which calls `CTaskSimpleCarDriveTimed(vehicle, 2000)`
+/// (0x5FF940) where 0x665270 inlines it.
+#[hook(addr = 0x673070, conv = thiscall, name = "FUN_00673070", expect = "90 E9 8E F1 D8 FF",
+       unverified = "frontier2-a11", route = "L2", hazards = "heap-writes")]
+pub fn seek_87004c_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> {
+    if ty == 0x2CF {
+        let veh = rd::<GPtr<u8>>(ped, 0x58C);
+        return crate::common::new_task(0x70, |m| car_drive_timed_ctor(m, veh, 2000));
+    }
+    crate::seek::seek_create_sub_task(this, ty, ped, 0x54)
+}
+
+/// `vt_87004c::CreateFirstSubTask(CPed*)` (0x6733E0, `ret 4`): the shared seek-entity body (0x665600's bytes) with
+/// `CreateSubTask` 0x673070.
+#[hook(addr = 0x6733E0, conv = thiscall, name = "vt_87004c::CreateFirstSubTask", expect = "83 EC 0C 56 8B F1",
+       unverified = "frontier2-a11", route = "L2", hazards = "heap-writes")]
+pub fn seek_87004c_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    crate::seek::seek_create_first_sub_task(this, ped, 0x54, seek_87004c_create_sub_task)
+}
+
+/// `vt_87004c::CreateNextSubTask(CPed*)` (0x672E80, `ret 4`): the shared seek-entity body (0x665080's bytes) with
+/// `CreateSubTask` 0x673070.
+#[hook(addr = 0x672E80, conv = thiscall, name = "vt_87004c::CreateNextSubTask", expect = "64 A1 00 00 00 00 6A FF 68 58 58 84 00",
+       unverified = "frontier2-a11", route = "L2", hazards = "heap-writes")]
+pub fn seek_87004c_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    crate::seek::seek_create_next_sub_task(this, ped, 0x54, seek_87004c_create_sub_task)
+}
+
+/// `vt_87004c::ControlSubTask(CPed*)` (0x673540, `ret 4`): instruction for instruction 0x665760 (the XYOffset
+/// instance), with `CreateSubTask` 0x673070 and the seek position 0x673BA0 (a copy of 0x665DC0).
+#[hook(addr = 0x673540, conv = thiscall, name = "vt_87004c::ControlSubTask", expect = "6A FF 68 22 59 84 00",
+       unverified = "frontier2-a11", route = "L2", hazards = "heap-writes")]
+pub fn seek_87004c_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    crate::seek::seek_control_sub_task_with(this, ped, true, seek_87004c_create_sub_task, crate::misc::fun_00673ba0)
+}
+
 /// The batch's hooks.
 pub const HOOKS: &[HookReg] = &[
     HOOK_MEDIC_TREAT_INJURED_PED_CREATE_NEXT_SUB_TASK,
@@ -1556,4 +1596,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_CHOKING_PROCESS_PED,
     HOOK_HIT_REACTION_CREATE_SUB_TASK,
     HOOK_HIT_REACTION_CREATE_FIRST_SUB_TASK,
+    HOOK_SEEK_87004C_CREATE_SUB_TASK,
+    HOOK_SEEK_87004C_CREATE_FIRST_SUB_TASK,
+    HOOK_SEEK_87004C_CREATE_NEXT_SUB_TASK,
+    HOOK_SEEK_87004C_CONTROL_SUB_TASK,
 ];

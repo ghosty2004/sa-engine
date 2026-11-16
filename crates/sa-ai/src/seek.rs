@@ -166,7 +166,7 @@ fn far_task_type(this: GPtr<u8>, d2: X87) -> i32 {
 
 /// The shared `CreateNextSubTask(CPed*)` body (`ret 4`); `fo` = flags offset, `create` = the
 /// instance's `CreateSubTask`.
-fn seek_create_next_sub_task(
+pub(crate) fn seek_create_next_sub_task(
     this: GPtr<u8>,
     ped: GPtr<u8>,
     fo: isize,
@@ -232,7 +232,7 @@ pub fn seek_entity_xy_create_next_sub_task_665080(this: GPtr<u8>, ped: GPtr<u8>)
 }
 
 /// The shared `CreateFirstSubTask(CPed*)` body (`ret 4`).
-fn seek_create_first_sub_task(
+pub(crate) fn seek_create_first_sub_task(
     this: GPtr<u8>,
     ped: GPtr<u8>,
     fo: isize,
@@ -308,7 +308,7 @@ pub fn seek_entity_xy_create_sub_task_665270(this: GPtr<u8>, ty: i32, ped: GPtr<
 
 /// The shared body of the two `CreateSubTask` instances: the flags at `flags` (+0x48 / +0x54) and the move state at
 /// `flags - 4` (+0x44 / +0x50); otherwise the bytes are the same.
-fn seek_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>, flags: isize) -> GPtr<u8> {
+pub(crate) fn seek_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>, flags: isize) -> GPtr<u8> {
     match ty {
         0xDB => {
             let e = task_new(0x1C);
@@ -522,9 +522,21 @@ pub fn seek_entity_xy_control_sub_task_665760(this: GPtr<u8>, ped: GPtr<u8>) -> 
 
 /// The shared `ControlSubTask` body; `xy` selects the XYOffset instance.
 fn seek_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>, xy: bool) -> GPtr<u8> {
-    let (fo, mso): (isize, isize) = if xy { (0x54, 0x50) } else { (0x48, 0x44) };
     let create: fn(GPtr<u8>, i32, GPtr<u8>) -> GPtr<u8> = if xy { xy_create_sub_task } else { std_create_sub_task };
     let seek_pos: fn(GPtr<u8>, GPtr<u8>, GPtr<u8>) -> GPtr<u8> = if xy { xy_seek_pos } else { std_seek_pos };
+    seek_control_sub_task_with(this, ped, xy, create, seek_pos)
+}
+
+/// [`seek_control_sub_task`] with the instance's own `CreateSubTask` and seek-position function (instances with the
+/// XYOffset layout and bytes but their own copies of those two, e.g. vt_87004c).
+pub(crate) fn seek_control_sub_task_with(
+    this: GPtr<u8>,
+    ped: GPtr<u8>,
+    xy: bool,
+    create: fn(GPtr<u8>, i32, GPtr<u8>) -> GPtr<u8>,
+    seek_pos: fn(GPtr<u8>, GPtr<u8>, GPtr<u8>) -> GPtr<u8>,
+) -> GPtr<u8> {
+    let (fo, mso): (isize, isize) = if xy { (0x54, 0x50) } else { (0x48, 0x44) };
     let mut r = rd::<GPtr<u8>>(this, 8);
     let e = rd::<GPtr<u8>>(this, 0xC);
     if !e.is_null() && rd::<u8>(e, 0x36) & 7 == 3 && ped_groups_are_in_same_group(ped, e) != 0 {

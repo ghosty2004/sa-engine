@@ -509,6 +509,13 @@ pub fn fun_00665dc0(this: GPtr<u8>, out: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     seek_pos(this, out, ped)
 }
 
+/// `FUN_00673ba0` (0x673BA0, vt_87004c's copy, byte-identical to 0x665DC0): see [`seek_pos`].
+#[hook(addr = 0x673BA0, conv = thiscall, name = "FUN_00673ba0", expect = "83 EC 0C 56 8B C1",
+       unverified = "frontier2-a11", route = "L2", hazards = "none")]
+pub fn fun_00673ba0(this: GPtr<u8>, out: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    seek_pos(this, out, ped)
+}
+
 /// `CEventScanner::ScanForEventsNow(const CPed*, bool)` (0x6053D0): with the full dword `dont_scan`
 /// == 0: restart the timer at +4 when already started (+0xC), then
 /// `ScanForVehiclePotentialCollisionEvents(this + 4, ped, intel + 0xE0, 16)`.
@@ -1474,6 +1481,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_FUN_005EC220,
     HOOK_FUN_0046FEE0,
     HOOK_FUN_00665DC0,
+    HOOK_FUN_00673BA0,
     HOOK_EVENT_SCANNER_SCAN_FOR_EVENTS_NOW_6053D0,
     HOOK_FUN_00667310,
     HOOK_FUN_0066E050,
