@@ -2638,3 +2638,49 @@
   docs/re/specs/CAM/CCamera.md, ~1,000 / ~800 instructions; Get_TwoPlayer_AimVector 0x513E40, DW_HeliChaseCam 0x51A740,
   DW_BirdyCam 0x51B850), FireOneInstantHitRound 0x73AF00 (its entry runs through the VM-style fragment 0x4015A0: needs
   vm_eval.py), Interior_c::PlaceObject 0x5934E0 chain, GeneratePanesForWindow 0x71B620, the RW leftovers.
+## 2026-11-16 — FRONTIER-2 turn 6, lane A: TellGangMembersTo, the AI frontier, vector<CVector>::_Insert_n, jet pack render (agent, branch worktree-agent-aa16f3bdf26614476)
+- Base: worktree-agent-a84f43d95c6a883c2 (235b6b1a, lane A turn 5). Every port from the 1.0 US bytes (gta-reversed read as an
+  aid; where it differs the bytes win), every address checked against `inflight.py` first (none of them registered
+  elsewhere). One batch, `frontier2-a9` (28 hooks: AI, plus POP 0x444530 and the UNK-game vector helpers).
+- CGangWars::TellGangMembersTo 0x444530 (sa-pop gang_war_tell.rs; `.HOODLUM` body 0x1568E00): the ped pool from the last
+  slot; EBX = -1 out of the no-CD VM 0xCB73E0 (vm_eval.py 1568E37 1568E4F); in-car gang peds get only the car task
+  (gta-reversed also gives them the wander task); argument values other than 0 / 1 do nothing. Bindings 0x66F5C0 /
+  0x6D1C40 moved down to sa-pop. `gangwar` now 0 blocked (frontier2-a5-counts.gdb: 1 call).
+- CAT-12 item: 0x6348F0, 0x670B00, 0x670A70 and 0x630590 were already catalogue procedures (UNK-game / AI rows since the
+  first catalogue; `callgraph.py gaps` has nothing to add and needs the main checkout's `catalog/raw`), so no
+  extra-code-addresses.csv row and no state change; turn 5's "not in the catalogue" was wrong. Ported: FUN_006348f0
+  0x6348F0 + UseMobilePhone::MakeAbortable 0x634930 / ControlSubTask 0x634D60, the patrol route task (route reverse
+  0x66D550, next type 0x670A70, CreateSubTask 0x670B00, CreateNextSubTask 0x670D80), FallToDeath::CreateNextSubTask
+  0x679270 / ControlSubTask 0x679510 (the |z| tests follow the bytes, gta-reversed inverts them); 0x630590 (ported,
+  ai7-10) bound in sa-ai.
+- ShouldLoadSunbatheAnims 0x632190 (nop; nop; jmp island 0x402274) and Sunbathe::ControlSubTask 0x6381A0; CanSunbathe
+  0x632140 bound (sa-pop row, sa-ai port).
+- 0x5ED750 vector<CVector>::_Insert_n with 0x5EB340 / 0x5EAEA0 / 0x5EB9D0 / 0x5EC140 / 0x5EB220 / 0x5EACC0 / 0x5EB1E0 (lane
+  C's UNK-game callees, unregistered everywhere, so taken): attractor_ptr_vectors.rs's shared insert_n / fill / copy now
+  take the element width (one body for the four instantiations); the CVector one divides by 12, has max_size 0x15555555
+  and takes the size through 0x5E9850 on the growth path. _Xlen 0x5ECC30 stays original like its siblings (now a lane C
+  direct frontier row). Split decision: none needed: the catalogue already has the body as 0x5ED750-0x5ED92A +
+  0x5ED93F-0x5EDA4B with the catch funclet 0x5ED92A an excluded X-eh-funclet row, and CAT-16 finds no fall-out there.
+- CTaskSimpleJetPack::RenderJetPack 0x67F6A0 (x87 heading clamp, FSIN / FCOS jet balls; the bytes have strict wrap tests
+  and `angle + r` / `angle - r` per ball) and DoJetPackEffect 0x67B7F0; new scenario `jetpack` (ROCKETMAN): RenderJetPack
+  157 calls in 1000 iterations, blocked on lane A's ProcessPed 0x6801F0 (needs ProcessControlInput 0x67E7B0, ProcessThrust
+  0x67EF20, ~3.8 KB). CPedGroupPlacer::PlaceFormationGroup 0x5FC9B0 (no scenario reaches it).
+- Virtuals: CEventGunAimedAt::TakesPriorityOver 0x4B0810, RadiusAngleOffset::ComputeEntitySeekPos 0x6946F0,
+  GangJoinRespond::ControlSubTask 0x661950, FollowAnyMeans::AllocateDefaultTasks 0x5F6B40, GoToPointAnyMeans::ControlSubTask
+  0x672A50. Bindings added: 0x5EB340, 0x630590, 0x4ABC30, 0x5F5D80 (sa-ai), 0x632140 (sa-pop).
+- frontier.py: AI 61 (4 direct + 57 virtual) → 47 (1 + 46); to port 265 → 242 (all lanes, this checkout).
+- Scenarios (frontier.sh, i686 native, SA_ROOT=~/sa-engine): final tree: pausemenu 416 / 0 blocked,
+  solicit 4016 / 0, crossing 1216 / 0, crossing-long 4016 / 0, melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0,
+  shootdriver 1216 / 0, roadblock-script 1016 / 0, gangwar 2016 / 0 (was 1: TellGangMembersTo), roadblocks 875 / 1141 (lane B:
+  CCam::ArrestCamOne 0x518500, CHeli::GenerateHeli 0x6C6520), roadblock-wanted 1015 / 1001 (lane B: 0x518500,
+  CWorld::FindObjectsIntersectingCube 0x568DD0, 0x6C6520), jetpack (new) 226 / 790 (lane A: CTaskSimpleJetPack::ProcessPed
+  0x6801F0); no crash.
+- verify-all (lanes 1-3, fresh sa-oracle): `f2a6-u` (SA_UNVERIFIED=frontier2-a9, DLL of
+  cf830f09: every port; 8d0d5d28 after it only replaces a helper by its import) IDENTICAL 13/13 and `f2a6-def` (default
+  set, DLL of cdfa2de5) IDENTICAL 13/13; save-load identical except the SAVE-1 stack residue.
+- Writer gate (base 235b6b1a): the final run (head 8d0d5d28) passed every step but
+  queue (the refactor moved a source line; queue regenerated in cdfa2de5, `queue.py --check` up to date); hooks 28 new, all
+  unverified, batch frontier2-a9 (spans AI, POP, UNK-game). Earlier runs failed queue (a racing regeneration) and dupes
+  (PlaceFormationGroup's local copy of entity_pos, fixed in 8d0d5d28).
+- Not done: PlaceChatGroup 0x5FCE80, the jet pack ProcessPed chain, the other 46 AI virtuals, the partial script switches,
+  ProcessColModels' disk cases.
