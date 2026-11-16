@@ -82,7 +82,7 @@ fn ik() -> GPtr<u8> {
 
 use sa_world::world::garage_update::now as time_ms;
 /// `(dz·dz + dy·dy) + dx·dx` of `a - p` as the original's x87 sequence computes it (unrounded differences).
-fn dist2(a: GPtr<u8>, p: GPtr<u8>) -> X87 {
+pub(crate) fn dist2(a: GPtr<u8>, p: GPtr<u8>) -> X87 {
     let dx = x(rd::<f32>(a, 0)).fsub_m(rd::<f32>(p, 0));
     let dy = x(rd::<f32>(a, 4)).fsub_m(rd::<f32>(p, 4));
     let dz = x(rd::<f32>(a, 8)).fsub_m(rd::<f32>(p, 8));
@@ -322,13 +322,18 @@ pub fn flee_entity_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     let scream = rd::<u8>(this, 0x24) as u32;
     flee_point_set_flee_position(sub, this.byte_add(0x10), rd::<u32>(this, 0x20), scream);
     if rd::<i32>(this, 0x30) > 4 {
-        let mut ev = [0u32; 0x11];
-        let ep = buf(&mut ev);
-        seen_panicked_ped_ctor(ep, ped);
-        event_group_add(get_event_global_group(), ep, 0);
-        seen_panicked_ped_dtor(ep);
+        broadcast_seen_panicked_ped(ped);
     }
     rd::<GPtr<u8>>(this, 8)
+}
+
+/// A stack `CEventSeenPanickedPed(ped)` added to the global event group (`Add(ev, false)`), then destroyed.
+pub(crate) fn broadcast_seen_panicked_ped(ped: GPtr<u8>) {
+    let mut ev = [0u32; 0x11];
+    let ep = buf(&mut ev);
+    seen_panicked_ped_ctor(ep, ped);
+    event_group_add(get_event_global_group(), ep, 0);
+    seen_panicked_ped_dtor(ep);
 }
 
 /// `CTaskComplexFleeAnyMeans::CreateSubTask(eTaskType, CPed*)` (0x65D2E0, `ret 8`; the entry `nop; jmp` runs its

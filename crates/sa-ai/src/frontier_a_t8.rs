@@ -1050,6 +1050,69 @@ pub fn die_in_car_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u
     sub(0xD6)
 }
 
+// ------------------------------------------------------------------------------------------- flee entity
+
+/// `CTaskComplexFleePoint::SetFleePosition(const CVector&, float radius, bool scream)` (0x65B7B0, thiscall, `ret 0xC`):
+/// a point (+0xC) or radius (+0x34) that differs (NaN too) is stored with +0x39 = 1 (new point); the scream flag
+/// (+0x38) is stored either way.
+#[hook(addr = 0x65B7B0, conv = thiscall, name = "CTaskComplexFleePoint::SetFleePosition", expect = "D9 41 0C 8B 54 24 04",
+       unverified = "frontier2-a11", route = "L2", hazards = "none")]
+pub fn flee_point_set_flee_position(this: GPtr<u8>, pos: GPtr<u8>, radius: f32, scream: u8) {
+    let ne = |off: isize, v: f32| fcom_ne(x(rd::<f32>(this, off)), x(v));
+    if ne(0xC, rd::<f32>(pos, 0)) || ne(0x10, rd::<f32>(pos, 4)) || ne(0x14, rd::<f32>(pos, 8)) || ne(0x34, radius) {
+        for i in 0..3 {
+            wr::<u32>(this, 0xC + i * 4, rd::<u32>(pos, i * 4));
+        }
+        wr::<f32>(this, 0x34, radius);
+        wr::<u8>(this, 0x39, 1);
+    }
+    wr::<u8>(this, 0x38, scream);
+}
+
+/// `CTaskComplexFleeEntity::ControlSubTask(CPed*)` (0x65BBB0, `ret 4`). Without an entity (+0xC) the sub-task is
+/// asked to abort (`MakeAbortable(ped, 0, NULL)`). A flee-point sub-task (0x38C) with the timer started (+0x28; +0x29
+/// restarts it at now) and expired (`now >= +0x20 + +0x24`), the entity farther than +0x38 from the stored point
+/// (`(dz² + dy²) + dx² > r²`, unrounded): the timer restarts (+0x20 now, +0x24 = +0x34), the point is refreshed and
+/// passed on (`SetFleePosition(&+0x10, +0x2C, +0x30)`), and a stack `CEventSeenPanickedPed(ped)` goes to the global
+/// event group. Always the current sub-task.
+#[hook(addr = 0x65BBB0, conv = thiscall, name = "CTaskComplexFleeEntity::ControlSubTask",
+       expect = "64 A1 00 00 00 00 6A FF 68 B8 3F 84 00",
+       unverified = "frontier2-a11", route = "L2", hazards = "heap-writes")]
+pub fn flee_entity_control_sub_task_65bbb0(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let sub = rd::<GPtr<u8>>(this, 8);
+    if rd::<u32>(this, 0xC) == 0 {
+        task_make_abortable(sub, ped, 0, GPtr::NULL);
+        return rd::<GPtr<u8>>(this, 8);
+    }
+    if task_get_type(sub) != 0x38C || rd::<u8>(this, 0x28) == 0 {
+        return rd::<GPtr<u8>>(this, 8);
+    }
+    if rd::<u8>(this, 0x29) != 0 {
+        wr::<u32>(this, 0x20, g::<u32>(TIME_MS).read());
+        wr::<u8>(this, 0x29, 0);
+    }
+    let end = rd::<u32>(this, 0x24).wrapping_add(rd::<u32>(this, 0x20));
+    let now = g::<u32>(TIME_MS).read();
+    if now < end {
+        return rd::<GPtr<u8>>(this, 8);
+    }
+    let ep = entity_pos(rd::<GPtr<u8>>(this, 0xC));
+    let r = x(rd::<f32>(this, 0x38));
+    if r.fmul(r).fcom(crate::flee::dist2(this.byte_add(0x10), ep)).test_parity(5) {
+        return rd::<GPtr<u8>>(this, 8);
+    }
+    wr::<u32>(this, 0x20, now);
+    wr::<u32>(this, 0x24, rd::<u32>(this, 0x34));
+    wr::<u8>(this, 0x28, 1);
+    let p = entity_pos(rd::<GPtr<u8>>(this, 0xC));
+    for i in 0..3 {
+        wr::<u32>(this, 0x10 + i * 4, rd::<u32>(p, i * 4));
+    }
+    flee_point_set_flee_position(rd::<GPtr<u8>>(this, 8), this.byte_add(0x10), rd::<f32>(this, 0x2C), rd::<u8>(this, 0x30));
+    crate::flee::broadcast_seen_panicked_ped(ped);
+    rd::<GPtr<u8>>(this, 8)
+}
+
 /// The batch's hooks.
 pub const HOOKS: &[HookReg] = &[
     HOOK_MEDIC_TREAT_INJURED_PED_CREATE_NEXT_SUB_TASK,
@@ -1068,4 +1131,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_SUNBATHE_CREATE_FIRST_SUB_TASK,
     HOOK_SUNBATHE_CREATE_NEXT_SUB_TASK,
     HOOK_DIE_IN_CAR_CREATE_FIRST_SUB_TASK,
+    HOOK_FLEE_POINT_SET_FLEE_POSITION,
+    HOOK_FLEE_ENTITY_CONTROL_SUB_TASK_65BBB0,
 ];
