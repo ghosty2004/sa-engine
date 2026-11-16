@@ -18,6 +18,8 @@ use sa_core::bindings::{
     get_weapon_info, matrix_set_scale, tm_get_task_secondary, tm_set_task_secondary, world_get_is_line_of_sight_clear,
 };
 use sa_core::crt::rand_at;
+use crate::bindings::task_complex_ctor;
+use crate::frontier_a::{find_interior_info, rand_scaled};
 use sa_stream::bindings::ped_is_player;
 use crate::common::*;
 use sa_core::bindings::ped_is_alive;
@@ -26,7 +28,7 @@ use sa_world::bindings::{
     leave_car_ctor, membership_get_leader, membership_get_member, pause_ctor,
     sequence_add_task, sequence_ctor, simple_car_drive_ctor, stand_still_ctor, turn_to_face_entity_ctor, vector_sub,
     attractor_manager_has_empty_slot, get_ped_attractor_manager, get_task_swim, go_to_point_and_stand_still_ctor, ik_look_at,
-    matrix_dtor,
+    matrix_dtor, run_anim_ctor,
     ped_get_weapon_skill, weapon_is_type_melee,
 };
 use sa_world::world::common::{entity_pos, ped_active_weapon};
@@ -37,6 +39,12 @@ use crate::bindings::task_trigger_look_at_ctor;
 use crate::bindings::throw_projectile_ctor;
 use crate::bindings::track_entity_ctor;
 orig! {
+    /// `CTaskComplexSeekCoverUntilTargetDead::GetCoverPed(CPed*)` (0x622D50, `ret 4`)
+    fn get_cover_ped_o(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x622D50 => seek_cover_get_cover_ped;
+    /// `CTaskInteriorBeInHouse::GetInfoForPedToUse(CPed*, int32*)` (0x6750A0, `ret 8`)
+    fn be_in_house_get_info_o(t: GPtr<u8>, ped: GPtr<u8>, time: GPtr<i32>) = thiscall 0x6750A0 => interior_be_in_house_get_info_for_ped_to_use;
+    /// `CTaskInteriorBeInOffice::GetInfoForPedToUse(int32*)` (0x675300, `ret 4`)
+    fn be_in_office_get_info_o(t: GPtr<u8>, time: GPtr<i32>) = thiscall 0x675300 => crate::frontier_a::interior_be_in_office_get_info_for_ped_to_use;
     /// `CTaskSimpleIKChain::Constructor(name, bone, CVector offset, part, entity, bone, CVector offset, speed, time,
     /// blend)` (0x6339C0, `ret 0x34`)
     fn ik_chain_ctor(t: GPtr<u8>, name: u32, bone: i32, ox: u32, oy: u32, oz: u32, part: i32, ent: u32, tbone: u32, tx: u32, ty: u32, tz: u32, speed: u32, time: u32, blend: u32) -> GPtr<u8> = thiscall 0x6339C0 => unported;
@@ -172,7 +180,7 @@ pub fn seek_cover_until_target_dead_create_first_sub_task(this: GPtr<u8>, ped: G
             entity_clean_up_old_reference(e, slot);
         }
     }
-    let cover = seek_cover_get_cover_ped(this, ped);
+    let cover = get_cover_ped_o(this, ped);
     wr::<GPtr<u8>>(cover_slot, 0, cover);
     let target = seek_cover_get_target_ped(this);
     wr::<GPtr<u8>>(target_slot, 0, target);
@@ -681,6 +689,135 @@ pub fn ik_chain_clone(this: GPtr<u8>) -> GPtr<u8> {
     t
 }
 
+/// `CTaskInteriorBeInHouse::GetInfoForPedToUse(CPed* ped, int32* time)` (0x6750A0, `ret 8`). Ped types 7..16 (gang
+/// members): the thresholds 0 / 100, others 90 / 10. +0x14 (the info) cleared; `r` = `rand` scaled to 100 (0x6750ED).
+/// Below the first threshold: info type 3 or 4 (`rand() < 0x3FFF`, 0x675118, picks which is tried first, the other
+/// as fallback) and `*time = -1`; then while no info: below the sum of both, type 1 (`*time = -1`) and then type 5
+/// (`*time = 5000 - rand scaled to 25000`, 0x6751B8); then type 1 and type 2 (`*time = -1` each). Every lookup is
+/// `FindInteriorInfo(type, &+0x14, &+0x10)` on the interior group (+0xC).
+#[hook(addr = 0x6750A0, conv = thiscall, name = "CTaskInteriorBeInHouse::GetInfoForPedToUse", expect = "8B 44 24 04 8B 80 98 05 00 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes")]
+pub fn interior_be_in_house_get_info_for_ped_to_use(this: GPtr<u8>, ped: GPtr<u8>, time: GPtr<i32>) {
+    let pt = rd::<i32>(ped, 0x598);
+    let (a, b) = if (7..=0x10).contains(&pt) { (0, 0x64) } else { (0x5A, 0xA) };
+    wr::<u32>(this, 0x14, 0);
+    let find = |ty: i32| find_interior_info(rd::<GPtr<u8>>(this, 0xC), ty, this.byte_add(0x14), this.byte_add(0x10));
+    let none = || rd::<u32>(this, 0x14) == 0;
+    let r = rand_scaled(0x6750ED, 0x858628);
+    if r < a {
+        let (first, second) = if rand_at(0x675118) < 0x3FFF { (3, 4) } else { (4, 3) };
+        if find(first) == 0 {
+            find(second);
+        }
+        time.write(-1);
+    }
+    if none() && r < a + b {
+        find(1);
+        time.write(-1);
+    }
+    if none() && r < b + a {
+        find(5);
+        time.write(0x1388 - rand_scaled(0x6751B8, 0x870214));
+    }
+    if none() {
+        find(1);
+        time.write(-1);
+        if none() {
+            find(2);
+            time.write(-1);
+        }
+    }
+}
+
+/// The `CTaskInteriorGoToInfo` the interior tasks build inline (0x1C bytes, `CTaskComplex` then vtable 0x8702E8): +0xC
+/// the info, +0x10 the interior, +0x14 the time, +0x18 the flag; null when `new` fails.
+fn new_go_to_info(info: u32, interior: u32, time: u32, flag: u8) -> GPtr<u8> {
+    new_task(0x1C, |m| {
+        task_complex_ctor(m.addr() as u32);
+        wr::<u32>(m, 0, 0x8702E8);
+        wr::<u32>(m, 0xC, info);
+        wr::<u32>(m, 0x10, interior);
+        wr::<u32>(m, 0x14, time);
+        wr::<u8>(m, 0x18, flag);
+        m
+    })
+}
+
+/// `CTaskInteriorBeInHouse::CreateFirstSubTask(CPed* ped)` (0x6762B0, `ret 4`): `GetInfoForPedToUse(ped, &time)` (the
+/// time kept in the argument slot), then the go-to-info task (info +0x14, interior +0x10, time, flag 1).
+#[hook(addr = 0x6762B0, conv = thiscall, name = "CTaskInteriorBeInHouse::CreateFirstSubTask", expect = "6A FF 68 BB 5D 84 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes")]
+pub fn interior_be_in_house_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let mut time = ped.addr() as i32;
+    be_in_house_get_info_o(this, ped, GPtr::from_raw(&mut time));
+    new_go_to_info(rd::<u32>(this, 0x14), rd::<u32>(this, 0x10), time as u32, 1)
+}
+
+/// `CTaskInteriorBeInHouse::CreateNextSubTask(CPed* ped)` (0x676200, `ret 4`): ped +0x474 bit 7 set, then as
+/// [`interior_be_in_house_create_first_sub_task`] with flag 0.
+#[hook(addr = 0x676200, conv = thiscall, name = "CTaskInteriorBeInHouse::CreateNextSubTask", expect = "6A FF 68 9B 5D 84 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes")]
+pub fn interior_be_in_house_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    wr::<u32>(ped, 0x474, rd::<u32>(ped, 0x474) | 0x80);
+    let mut time = ped.addr() as i32;
+    be_in_house_get_info_o(this, ped, GPtr::from_raw(&mut time));
+    new_go_to_info(rd::<u32>(this, 0x14), rd::<u32>(this, 0x10), time as u32, 0)
+}
+
+/// `CTaskInteriorBeInOffice::CreateNextSubTask(CPed* ped)` (0x676350, `ret 4`): ped +0x474 bit 7 set,
+/// `GetInfoForPedToUse(&time)` (0x675300; the time in the argument slot), then the go-to-info task (info +0x14,
+/// interior +0x10, time, flag 0).
+#[hook(addr = 0x676350, conv = thiscall, name = "CTaskInteriorBeInOffice::CreateNextSubTask", expect = "6A FF 68 DB 5D 84 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes")]
+pub fn interior_be_in_office_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    wr::<u32>(ped, 0x474, rd::<u32>(ped, 0x474) | 0x80);
+    let mut time = ped.addr() as i32;
+    be_in_office_get_info_o(this, GPtr::from_raw(&mut time));
+    new_go_to_info(rd::<u32>(this, 0x14), rd::<u32>(this, 0x10), time as u32, 0)
+}
+
+/// `CTaskInteriorShopKeeper::ControlSubTask(CPed*)` (0x675740, `ret 4`): once (+0xC, cleared) a
+/// `CTaskSimpleRunAnim(group 0x56, anim 0x147, 4.0, false)`; otherwise the current sub-task (+8).
+#[hook(addr = 0x675740, conv = thiscall, name = "CTaskInteriorShopKeeper::ControlSubTask", expect = "6A FF 68 3B 5C 84 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes")]
+pub fn interior_shop_keeper_control_sub_task(this: GPtr<u8>, _ped: GPtr<u8>) -> GPtr<u8> {
+    if rd::<u8>(this, 0xC) == 0 {
+        return rd::<GPtr<u8>>(this, 8);
+    }
+    wr::<u8>(this, 0xC, 0);
+    new_task(0x20, |m| run_anim_ctor(m, 0x56, 0x147, 4.0, 0))
+}
+
+/// `CTaskInteriorShopKeeper::CreateFirstSubTask(CPed*)` (0x676550, `ret 4`): without an info (+0x18) the interior
+/// (+0x10) looks one of type 10 up (`FindInteriorInfo(10, &+0x18, &+0x1C)`); the info is marked used (+1 = 1); the
+/// go-to-info task (info +0x18, interior +0x1C, time 0) with flag 0 when +0x14 was set, else +0x14 = 1 and flag 1.
+#[hook(addr = 0x676550, conv = thiscall, name = "CTaskInteriorShopKeeper::CreateFirstSubTask", expect = "6A FF 68 46 5E 84 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes")]
+pub fn interior_shop_keeper_create_first_sub_task(this: GPtr<u8>, _ped: GPtr<u8>) -> GPtr<u8> {
+    if rd::<u32>(this, 0x18) == 0 {
+        find_interior_info(rd::<GPtr<u8>>(this, 0x10), 0xA, this.byte_add(0x18), this.byte_add(0x1C));
+    }
+    wr::<u8>(rd::<GPtr<u8>>(this, 0x18), 1, 1);
+    let flag = if rd::<u8>(this, 0x14) != 0 {
+        0
+    } else {
+        wr::<u8>(this, 0x14, 1);
+        1
+    };
+    let t = task_new(0x1C);
+    if t.is_null() {
+        return GPtr::NULL;
+    }
+    let (interior, info) = (rd::<u32>(this, 0x1C), rd::<u32>(this, 0x18));
+    task_complex_ctor(t.addr() as u32);
+    wr::<u8>(t, 0x18, flag);
+    wr::<u32>(t, 0, 0x8702E8);
+    wr::<u32>(t, 0xC, info);
+    wr::<u32>(t, 0x10, interior);
+    wr::<u32>(t, 0x14, 0);
+    t
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_FOLLOW_LEADER_IN_FORMATION_CREATE_SUB_TASK,
@@ -699,4 +836,10 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_TRIGGER_LOOK_AT_CLONE,
     HOOK_TRACK_ENTITY_CLONE,
     HOOK_IK_CHAIN_CLONE,
+    HOOK_INTERIOR_BE_IN_HOUSE_GET_INFO_FOR_PED_TO_USE,
+    HOOK_INTERIOR_BE_IN_HOUSE_CREATE_FIRST_SUB_TASK,
+    HOOK_INTERIOR_BE_IN_HOUSE_CREATE_NEXT_SUB_TASK,
+    HOOK_INTERIOR_BE_IN_OFFICE_CREATE_NEXT_SUB_TASK,
+    HOOK_INTERIOR_SHOP_KEEPER_CONTROL_SUB_TASK,
+    HOOK_INTERIOR_SHOP_KEEPER_CREATE_FIRST_SUB_TASK,
 ];

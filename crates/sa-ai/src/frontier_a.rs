@@ -422,7 +422,7 @@ pub fn create_car_and_get_in_dtor(this: GPtr<u8>) {
 use sa_world::bindings::create_pickup_coors_close_to_coors;
 orig! {
     /// `InteriorGroup_c::FindInteriorInfo(int32 type, InteriorInfo_t**, Interior_c**)` (0x594970, `ret 0xC`, AL)
-    fn find_interior_info(g: GPtr<u8>, ty: i32, info: GPtr<u8>, interior: GPtr<u8>) -> u8 = thiscall 0x594970 => unported;
+    pub(crate) fn find_interior_info(g: GPtr<u8>, ty: i32, info: GPtr<u8>, interior: GPtr<u8>) -> u8 = thiscall 0x594970 => unported;
     /// `CTask::MakeAbortable(CPed*, int32 priority, const CEvent*)` (vtable +0x18)
     fn v_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
 }
@@ -453,7 +453,7 @@ pub fn attractor_manager_get_ped_using_effect(_this: GPtr<u8>, effect: u32, enti
 }
 
 /// `ftol((rand() & 0xFFFF) * 1/32768 * k)` with the `rand` return address `site`.
-fn rand_scaled(site: u32, k: usize) -> i32 {
+pub(crate) fn rand_scaled(site: u32, k: usize) -> i32 {
     let r = rand_at(site) & 0xFFFF;
     ftol32(xi(r).fmul_m(g::<f32>(0x858B14).read()).fmul_m(g::<f32>(k).read()))
 }
