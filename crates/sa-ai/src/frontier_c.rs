@@ -670,7 +670,7 @@ pub fn react_to_attack_create_sub_task(this: GPtr<u8>, task_type: i32) -> GPtr<u
                 return GPtr::NULL;
             }
             let time = sa_math::fpu::ftol32(X87::from_f32(rd::<f32>(this, 0x18)));
-            crate::handler::be_hit_ctor(t, src, rd::<u32>(this, 0x20), rd::<u32>(this, 0x1C), time)
+            crate::bindings::be_hit_ctor(t, src, rd::<u32>(this, 0x20), rd::<u32>(this, 0x1C), time)
         }
         200 => {
             let t = task_new(8);

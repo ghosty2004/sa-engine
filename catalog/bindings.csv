@@ -180,6 +180,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x61E190,sa-ai,use_gun_clear_anim,thiscall,,t:GPtr<u8>;ped:GPtr<u8>,,unported,CTaskSimpleUseGun::ClearAnim,
 0x61E200,sa-ai,use_gun_require_pistol_whip,cdecl,,ped:GPtr<u8>;target:GPtr<u8>,u8,unported,CTaskSimpleUseGun::RequirePistolWhip,
 0x61F8B0,sa-ai,throw_control_ctor,thiscall,,t:GPtr<u8>;e:u32;pos:GPtr<u32>,GPtr<u8>,unported,CTaskSimpleThrowControl::Constructor,
+0x620780,sa-ai,be_hit_ctor,thiscall,,t:GPtr<u8>;src:u32;a:u32;piece:u32;time:i32,GPtr<u8>,unported,CTaskSimpleBeHit::Constructor,
 0x620F70,sa-ai,kill_ped_on_foot_stealth_ctor,thiscall,,t:GPtr<u8>;ped:GPtr<u8>,GPtr<u8>,unported,CTaskComplexKillPedOnFootStealth::Constructor,
 0x622240,sa-ai,kill_ped_group_on_foot_ctor,thiscall,,t:GPtr<u8>;gid:i32;ped:GPtr<u8>,GPtr<u8>,unported,CTaskComplexKillPedGroupOnFoot::Constructor,
 0x6222B0,sa-ai,kill_ped_group_on_foot_dtor,thiscall,,t:GPtr<u8>,,unported,CTaskComplexKillPedGroupOnFoot::Destructor,

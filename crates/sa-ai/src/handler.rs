@@ -17,6 +17,7 @@ use crate::common::*;
 
 use sa_world::bindings::anim_blend_animation;
 use sa_core::bindings::clump_get_association;
+use crate::bindings::be_hit_ctor;
 use crate::bindings::compute_knock_off_bike_response;
 use crate::bindings::damage_4abca0;
 use crate::bindings::dragged_out_car_dtor;
@@ -78,8 +79,6 @@ orig! {
     fn damage_process_damage(e: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x4B3A20 => unported;
     /// `CEventDamage::WasHeadShot(bool* out)` (0x4ADD60, `ret 4`)
     fn damage_was_head_shot(e: GPtr<u8>, out: GPtr<u8>) = thiscall 0x4ADD60 => unported;
-    /// `CTaskSimpleBeHit::Constructor(CPed*, int32, uint8, int32)` (0x620780, `ret 0x10`)
-    pub(crate) fn be_hit_ctor(t: GPtr<u8>, src: u32, a: u32, piece: u32, time: i32) -> GPtr<u8> = thiscall 0x620780 => unported;
     /// `CTaskSimpleChoking::Constructor(CPed*, bool)` (0x6202C0, `ret 8`)
     fn choking_ctor(t: GPtr<u8>, src: GPtr<u8>, b: u32) -> GPtr<u8> = thiscall 0x6202C0 => unported;
     /// `CTaskSimpleChoking::UpdateChoke(CPed*, CPed*, bool)` (0x620660, `ret 0xC`)

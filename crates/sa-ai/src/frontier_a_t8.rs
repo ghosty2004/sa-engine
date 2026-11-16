@@ -31,7 +31,10 @@ use sa_world::bindings::{enter_car_as_passenger_ctor, ped_groups_get_peds_group}
 use sa_math::x87::X87;
 use sa_anim::bindings::assoc_set_finish_callback;
 use sa_stream::bindings::ped_is_player;
-use sa_world::bindings::anim_blend_animation;
+use sa_world::bindings::{anim_blend_animation, pad_get_target, physical_apply_move_force_5429f0};
+use crate::bindings::{be_hit_ctor, fall_and_get_up_ctor, task_simple_ctor};
+use sa_core::bindings::{get_pad, vector2d_normalise};
+use sa_math::vector::CVector;
 use sa_core::crt::rand_at;
 use sa_input::bindings::pad_sprint_just_down;
 use crate::common::{task_create_next_sub_task, task_make_abortable, task_new, xi};
@@ -1449,6 +1452,82 @@ pub fn choking_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     0
 }
 
+// ------------------------------------------------------------------------------------------- vt_86d868 (hit reaction)
+
+/// `FUN_00620c30(int32 type)` (0x620C30, thiscall, `ret 4`; vt_86d868's CreateSubTask; the entry's `nop; jmp` fetches
+/// the SEH link in the island 0x4020FF). 0xD0 → `CTaskComplexFallAndGetUp(+0x1C == 2 ? 0x1A : 0x14, 0, 1000)`; 0xC8 →
+/// a bare `CTaskSimple` with vtable 0x859CFC; 0x3F0 → `CTaskSimpleBeHit(+0x14 when it is a ped (type 3) else NULL,
+/// +0x20, +0x1C, ftol(+0x18))` (the float converted after `new`); others NULL.
+#[hook(addr = 0x620C30, conv = thiscall, name = "FUN_00620c30", expect = "90 E9 C9 14 DE FF",
+       unverified = "frontier2-a11", route = "L2", hazards = "heap-writes")]
+pub fn hit_reaction_create_sub_task(this: GPtr<u8>, ty: i32) -> GPtr<u8> {
+    match ty {
+        0xD0 => {
+            let anim = if rd::<i32>(this, 0x1C) == 2 { 0x1A } else { 0x14 };
+            crate::common::new_task(0x18, |m| fall_and_get_up_ctor(m, anim, 0, 1000))
+        }
+        0xC8 => crate::common::new_task(8, |m| {
+            task_simple_ctor(m);
+            wr::<u32>(m, 0, 0x859CFC);
+            m
+        }),
+        0x3F0 => {
+            let src = rd::<GPtr<u8>>(this, 0x14);
+            let src = if !src.is_null() && rd::<u8>(src, 0x36) & 7 == 3 { src.addr() as u32 } else { 0 };
+            crate::common::new_task(0x28, |m| {
+                let t = ftol32(x(rd::<f32>(this, 0x18)));
+                be_hit_ctor(m, src, rd::<u32>(this, 0x20), rd::<u32>(this, 0x1C), t)
+            })
+        }
+        _ => GPtr::NULL,
+    }
+}
+
+/// `vt_86d868::CreateFirstSubTask(CPed*)` (0x625C70, `ret 4`). +0xC = 0. A player hit with more than 9 (+0x10)
+/// whose pad 0 is not disabled and shows input (`GetTarget`, or any of the stick / shoulder words +0, +2, +0x10..+0x16)
+/// → 0xC8. Direction 3 (+0x20) with the ped's +0x470 bit 26: weapon types 0x1B / 0x19, or 0x18 for a non-player →
+/// knocked over: the 2D direction from the ped to the source (+0x14), normalised, times 0x858FC8 with z 5.0 as a move
+/// force (+0x46C bit 0 cleared first) and 0xD0. Else, with direction 3, a hit below 9 and health (+0x540) below
+/// 0x858CA4 → 0xD0. Otherwise 0x3F0.
+#[hook(addr = 0x625C70, conv = thiscall, name = "vt_86d868::CreateFirstSubTask", expect = "83 EC 14 53 55 56 57 8B 7C 24 28",
+       unverified = "frontier2-a11", route = "L2", hazards = "heap-writes")]
+pub fn hit_reaction_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    wr::<u8>(this, 0xC, 0);
+    let hit = || rd::<i32>(this, 0x10);
+    if ped_is_player(ped) != 0 && hit() > 9 {
+        let pad = get_pad(0);
+        if rd::<u16>(pad, 0x10E) == 0
+            && (pad_get_target(pad) != 0 || [0, 2, 0x10, 0x12, 0x14, 0x16].iter().any(|&o| rd::<u16>(pad, o) != 0))
+        {
+            return hit_reaction_create_sub_task(this, 0xC8);
+        }
+    }
+    if rd::<i32>(this, 0x20) != 3 {
+        return hit_reaction_create_sub_task(this, 0x3F0);
+    }
+    if rd::<u32>(ped, 0x470) & 0x400_0000 != 0 {
+        let t = hit();
+        if t == 0x1B || t == 0x19 || (t == 0x18 && ped_is_player(ped) == 0) {
+            let sp = entity_pos(rd::<GPtr<u8>>(this, 0x14));
+            let pp = entity_pos(ped);
+            let mut v = [
+                x(rd::<f32>(sp, 0)).fsub_m(rd::<f32>(pp, 0)).to_f32(),
+                x(rd::<f32>(sp, 4)).fsub_m(rd::<f32>(pp, 4)).to_f32(),
+            ];
+            vector2d_normalise(GPtr::from_raw(v.as_mut_ptr()).cast());
+            let k = g::<f32>(0x858FC8).read();
+            let f = CVector { x: x(v[0]).fmul_m(k).to_f32(), y: x(v[1]).fmul_m(k).to_f32(), z: 5.0 };
+            wr::<u32>(ped, 0x46C, rd::<u32>(ped, 0x46C) & !1);
+            physical_apply_move_force_5429f0(ped, f);
+            return hit_reaction_create_sub_task(this, 0xD0);
+        }
+    }
+    if hit() < 9 && lt(x(rd::<f32>(ped, 0x540)), x(g::<f32>(0x858CA4).read())) {
+        return hit_reaction_create_sub_task(this, 0xD0);
+    }
+    hit_reaction_create_sub_task(this, 0x3F0)
+}
+
 /// The batch's hooks.
 pub const HOOKS: &[HookReg] = &[
     HOOK_MEDIC_TREAT_INJURED_PED_CREATE_NEXT_SUB_TASK,
@@ -1475,4 +1554,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_TRACK_ENTITY_CALC_MOVE_RATIO,
     HOOK_TRACK_ENTITY_CONTROL_SUB_TASK,
     HOOK_CHOKING_PROCESS_PED,
+    HOOK_HIT_REACTION_CREATE_SUB_TASK,
+    HOOK_HIT_REACTION_CREATE_FIRST_SUB_TASK,
 ];

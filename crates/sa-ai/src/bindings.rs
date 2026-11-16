@@ -954,6 +954,11 @@ orig! {
 }
 
 orig! {
+    /// `CTaskSimpleBeHit::Constructor` (0x620780)
+    pub fn be_hit_ctor(t: GPtr<u8>, src: u32, a: u32, piece: u32, time: i32) -> GPtr<u8> = thiscall 0x620780 => unported;
+}
+
+orig! {
     /// `CTaskComplexKillPedOnFootStealth::Constructor` (0x620F70)
     pub fn kill_ped_on_foot_stealth_ctor(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x620F70 => unported;
 }
