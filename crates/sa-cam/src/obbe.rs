@@ -14,7 +14,7 @@ orig! {
     /// `CCamera::IsItTimeForNewcam(int32 seq, int32 startTimeMs)` (0x51D770, AL)
     pub fn is_it_time_for_newcam(this: GPtr<u8>, seq: i32, start: u32) -> u8 = thiscall 0x51D770 => crate::newcam::is_it_time_for_newcam;
     /// `CCamera::TryToStartNewCamMode(int32 seq)` (0x51E560, AL)
-    pub fn try_to_start_new_cam_mode(this: GPtr<u8>, seq: i32) -> u8 = thiscall 0x51E560 => unported;
+    pub fn try_to_start_new_cam_mode(this: GPtr<u8>, seq: i32) -> u8 = thiscall 0x51E560 => crate::newcam::try_to_start_new_cam_mode;
     /// "active camera under water" (0x50B830, cdecl, AL)
     pub fn active_cam_under_water() -> u8 = cdecl 0x50B830 => active_cam_under_water_port;
 }
