@@ -3002,3 +3002,38 @@
 - For the main session: the play package's `play.sh` passes `--system-heap` and keeps the bug; dropping it fixes it
   (the long-session measurement above was the open condition). Seen but not investigated: the prepared skin matrices of
   the right / left hand and finger bones (12..14, 18..20) sometimes have rows outside 0.5..2 in length, with either heap.
+
+## 2026-11-16 — FRONTIER-2 turn 8, lane B: the cinema camera decisions, Get_TwoPlayer_AimVector, FireOneInstantHitRound (agent, branch worktree-agent-a721df8655aabe1f9)
+- Base: worktree-agent-aa54999b4e7af5432 007e0a41 (turn 7 lane B). Item 3 of the brief (Interior_c::PlaceObject chain,
+  GeneratePanesForWindow, RW leftovers) moved to lane C by the coordinator mid-turn; none of it was started here.
+- Batch `frontier2-b18` (CAM, 3 hooks), from the 1.0 US bytes with docs/re/specs/CAM/CCamera.md as reading aid
+  (`crates/sa-cam/src/newcam.rs`, `twoplayer.rs`):
+  - CCamera::IsItTimeForNewcam 0x51D770: the elapsed time compared with 20000 in the register and stored f32 for the
+    15000 tests, the right-stick step (the latch is set for |x| <= 32: the spec's `< 32` is wrong, `test ah, 0x41; jp`
+    falls through on equality), the 30-entry switch (LOS / distance / moving tests, the near-clip cases, the DW cams).
+  - CCamera::TryToStartNewCamMode 0x51E560: wheel cameras 0 / 8, the side / ahead / angled fixed cameras with the
+    bytes' x87 orders and ground / roof / water fixes, the police car on a string 7, DW cams, near-clip cases. Beyond the
+    spec: case 1 computes its position before the boat test; cases 15..17 call VectorSub twice; FindGroundZ / FindRoofZ
+    are called as their sa-world ports and GetATanOfXY through sa_math's x87 form so ST0 keeps 64 bits.
+  - CCam::Get_TwoPlayer_AimVector 0x513E40: the entry fragment 0x407E0F loads Players[0].m_pPed through
+    `[0x156089C] - [0x727253]` (= 0xB7CD98); the nearest screen target, else the FPTAN projection of the screen point.
+  - The camproc DW processor bindings return AL and target the ported DW cams; obbe.rs' bindings target the ports.
+- Batch `frontier2-b19` (WEAPON, 1 hook): CWeapon::FireOneInstantHitRound 0x73AF00 (`crates/sa-weapon/src/
+  fire_one_instant_hit.rs`). Its entry pushes the light's green through the protection fragment 0x4015A0 (`NOT
+  [0x1560654] XOR [0x499692]`), evaluated with master's tools/re/vm_eval.py (unicorn): 0x3E6147AE = 0.22 (the tool is
+  not on this branch; nothing to extend). gta-reversed differs: the shot animation's association gets blend 0 / delta 8.
+- ADR-003: CBulletTraces::AddTrace 0x723750 and CWeapon::FindNearestTargetEntityWithScreenCoors 0x73E240 are now
+  catalog/bindings.csv rows (sa-world, twins on the sa-render / sa-weapon ports; sa-render's two private declarations
+  removed); weapon_impact's `ci_asin` is pub(crate) and reused; newcam reuses sa-world's `player_vehicle` and sa-core's
+  `rd3f`.
+- frontier.py, lane B subsystems: 135 → 131 rows (0x51D770, 0x51E560, 0x513E40, 0x73AF00); no new rows revealed.
+- Scenarios (i686 native sa-game of 5a0b2348, SA_ROOT=~/sa-engine): pausemenu 416 / 0 blocked, solicit 4016 / 0,
+  crossing / sniper / shootcar / shootdriver / quad / heli / boat 1216 / 0, melee 2616 / 0, plane 210 / 1006 (lane C's
+  CAEPropellerAudioEntity 0x4FD8F0, unchanged); no crash; 0 blocked on lane B. No scenario reaches the cinema camera
+  (it needs the in-vehicle camera cycled to the cinematic mode).
+- verify-all (lanes 4-5, fresh release sa-oracle): `lb8-u` (SA_UNVERIFIED=frontier2-b18,frontier2-b19, DLL of 28b6ef78) IDENTICAL 13/13; default set `lb8-def` (same DLL) IDENTICAL 13/13; after the bindings / dupes refactors, `lb8-u2` (b18, b19 on, DLL of be55d9ae, the final code) IDENTICAL 13/13.
+- Writer gate (base 007e0a41): the first run (`GATE_SKIP=i686`) failed bindings (0x723750, 0x73E240 declared per module), dupes (`player_vehicle`, then the three-float readers), clippy (a range pattern) and hooktest (the hook name of 0x73AF00 must be the catalogue's `CWeapon::FireOneInstantHitRound`); fixed in 1e562dc1 / be55d9ae; full rerun on the final head, no step skipped: all PASS.
+- Open (lane B): CCam::Process_DW_HeliChaseCam 0x51A740 and Process_DW_BirdyCam 0x51B850 (both fully specified in
+  docs/re/specs/CAM/CCam.md, ~300 / ~500 instructions, BirdyCam with an SEH frame), the virtual VEH rows
+  (CAutomobile::AddMovingCollisionSpeed 0x6A1ED0, DoHoverSuspensionRatios 0x6A45C0, CBike::BurstTyre 0x6BEB20, ...), the
+  remaining WEAPON / CAM / VEH direct rows; a scenario that reaches the cinema camera.
