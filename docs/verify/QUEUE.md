@@ -71,7 +71,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-a6 | 8 | AI | a6049c75 | worktree-agent-a198f2e01294e8cc9 | 8 | 0 | 0 | 0 | 0 | L2 8 |
 | frontier2-a7 | 16 | AI, POP | 0041ebcc | worktree-agent-a198f2e01294e8cc9 | 16 | 0 | 0 | 0 | 0 | L2 15, split 1 |
 | frontier2-a8 | 36 | AI | 3fd22dd2 | worktree-agent-a84f43d95c6a883c2 | 36 | 0 | 0 | 0 | 0 | L2 36 |
-| frontier2-a9 | 27 | AI, POP, UNK-game | a2efb994 | worktree-agent-aa16f3bdf26614476 | 27 | 0 | 0 | 0 | 0 | L2 27 |
+| frontier2-a9 | 28 | AI, POP, UNK-game | a2efb994 | worktree-agent-aa16f3bdf26614476 | 28 | 0 | 0 | 0 | 0 | L2 28 |
 | frontier2-b1 | 32 | MATH, RENDER, RW | ebd33c14 | master | 32 | 0 | 0 | 0 | 0 | L1-pure 1, L2 31 |
 | frontier2-b2 | 23 | RW | 2f47ba34 | master | 23 | 0 | 0 | 0 | 0 | L2 23 |
 | frontier2-b3 | 7 | VEH | 221f09a0 | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
@@ -2370,7 +2370,7 @@ SA_UNVERIFIED=frontier2-a8 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a8 $S
 
 ## frontier2-a9
 
-27 hooks in sa-ai, sa-pop; hazards: heap-writes (17), x87-transcendental (2); recordings calling them: no coverage data.
+28 hooks in sa-ai, sa-pop; hazards: ax-al-return (1), heap-writes (18), x87-transcendental (2); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -2392,6 +2392,7 @@ SA_UNVERIFIED=frontier2-a9 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a9 $S
 | 0x5EC140 | `FUN_005ec140` | written | L2 | heap-writes |
 | 0x5ED750 | `FUN_005ed750` | written | L2 | heap-writes |
 | 0x5F6B40 | `CPedGroupDefaultTaskAllocatorFollowAnyMeans::AllocateDefaultTasks` | written | L2 | heap-writes |
+| 0x5FC9B0 | `CPedGroupPlacer::PlaceFormationGroup` | written | L2 | ax-al-return,heap-writes |
 | 0x632190 | `CTaskComplexSunbathe::ShouldLoadSunbatheAnims` | written | L2 | none |
 | 0x6348F0 | `FUN_006348f0` | written | L2 | none |
 | 0x634930 | `CTaskComplexUseMobilePhone::MakeAbortable` | written | L2 | none |
