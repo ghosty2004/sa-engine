@@ -8,11 +8,14 @@ use sa_core::{hook, orig};
 
 use crate::bindings::{
     compute_closest_surface_point_ped, ped_groups_get_peds_group, ped_replace_weapon_when_exiting_vehicle,
-    event_group_add, scripted_2d_effects_get_index,
+    bbox_planes, compute_entity_hit_side_ped, event_group_add, go_to_point_ctor, scripted_2d_effects_get_index,
     task_timer_is_out_of_time, tm_find_active_task_by_type, tm_get_task_secondary, tm_set_task_secondary,
     use_gun_control_gun, use_gun_ctor,
 };
-use sa_core::bindings::{get_weapon_info, ped_is_alive, vector_difference, vector_magnitude_sqr, vector_sub};
+use sa_core::bindings::{
+    get_weapon_info, matrix_set_rotate_z_only, ped_is_alive, vector_difference, vector_magnitude_sqr, vector_sub,
+};
+use sa_pop::bindings::get_position;
 use crate::common::{g, rd, wr, x, xi, X87};
 use crate::fall::fild_u32;
 use crate::kill_ped_on_foot_armed::current_weapon_info;
@@ -28,7 +31,7 @@ use sa_world::bindings::{
     achieve_heading_ctor, camera_get_look_direction, car_enter_exit_compute_passenger_index_from_car_door,
     entity_clean_up_old_reference, follow_node_route_ctor, fx_kill, get_pad_from_player, ik_is_looking, ik_look_at,
     membership_get_leader, ped_say, ped_set_ped_state, event_damage_ctor, event_damage_dtor, fire_extinguish,
-    find_player_wanted, get_task_swim, kill_ped_on_foot_ctor, stand_still_ctor, max_f, min_f, pad_get_accelerate, pad_get_brake,
+    find_player_wanted, get_task_swim, kill_ped_on_foot_ctor, stand_still_ctor, vector_ctor_iterator, max_f, min_f, pad_get_accelerate, pad_get_brake,
     pad_get_exit_vehicle, pad_get_ped_walk_left_right, pad_get_ped_walk_up_down, pad_get_target,
     ped_remove_weapon_when_entering_vehicle, physical_apply_move_force_5429f0,
 };
@@ -1121,6 +1124,126 @@ pub fn player_on_fire_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     0
 }
 
+/// `|n · p + d|` for the bounding-box plane `k` (normals at `normals`, distances at `ds`).
+fn plane_distance(normals: GPtr<u8>, ds: GPtr<u8>, k: isize, p: GPtr<u8>) -> X87 {
+    let n = normals.byte_add(k * 12);
+    x(rd::<f32>(n, 4)).fmul_m(rd::<f32>(p, 4)).fadd(x(rd::<f32>(n, 8)).fmul_m(rd::<f32>(p, 8)))
+        .fadd(x(rd::<f32>(n, 0)).fmul_m(rd::<f32>(p, 0))).fadd_m(rd::<f32>(ds, k * 4)).fabs()
+}
+
+/// `CTaskComplexDiveFromAttachedEntityAndGetUp::CreateFirstSubTask(CPed*)` (0x657820, `ret 4`). Not attached
+/// (+0xFC): the dive direction +0x14 is the ped's forward vector. Attached: the entity's side the ped is on
+/// (`ComputeEntityHitSide`) picks one of its four directions (`ComputeEntityDirs`); on a vehicle (+0x36 & 7 = 2), from
+/// side 0 or 2 and with the vehicle moving along that direction (`speed · dir > 0`), the bounding-box planes at the
+/// ped's height choose between dirs 1 and 3: dir 1 when `|plane 3|` is farther than `|plane 1|` from the ped, else
+/// dir 3 (NaN too). Attached peds get +0x77C = 2pi. Then `CreateSubTask(+0x20 ? 0x386 : 0x1F7)`.
+#[hook(addr = 0x657820, conv = thiscall, name = "CTaskComplexDiveFromAttachedEntityAndGetUp::CreateFirstSubTask", expect = "83 EC 70 53 55 56",
+       unverified = "frontier2-a10", route = "L2", hazards = "heap-writes")]
+pub fn dive_from_attached_entity_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let dir = this.byte_add(0x14);
+    let ent = rd::<GPtr<u8>>(ped, 0xFC);
+    if ent.is_null() {
+        let f = rd::<GPtr<u8>>(ped, 0x14).byte_add(0x10);
+        for k in 0..3 {
+            wr::<u32>(dir, k * 4, rd::<u32>(f, k * 4));
+        }
+    } else {
+        let side = compute_entity_hit_side_ped(ped, ent) as isize;
+        let mut dirs = [0u32; 12];
+        let dp: GPtr<u8> = GPtr::from_raw(dirs.as_mut_ptr()).cast();
+        crate::gen_bodies::g_cped_geometry_analyser_compute_entity_dirs_5f1500(rd::<u32>(ped, 0xFC), dp.addr() as u32);
+        let copy = |k: isize| {
+            for c in 0..3 {
+                wr::<u32>(dir, c * 4, rd::<u32>(dp, k * 12 + c * 4));
+            }
+        };
+        copy(side);
+        let ent = rd::<GPtr<u8>>(ped, 0xFC);
+        if rd::<u8>(ent, 0x36) & 7 == 2 && (side == 2 || side == 0) {
+            let dot = x(rd::<f32>(ent, 0x4C)).fmul_m(rd::<f32>(dir, 8)).fadd(x(rd::<f32>(ent, 0x48)).fmul_m(rd::<f32>(dir, 4)))
+                .fadd(x(rd::<f32>(dir, 0)).fmul_m(rd::<f32>(ent, 0x44)));
+            if gt(dot, x(gf(0x858B50))) {
+                let mut normals = [0u32; 12];
+                let mut ds = [0u32; 4];
+                let np: GPtr<u8> = GPtr::from_raw(normals.as_mut_ptr()).cast();
+                let dsp: GPtr<u8> = GPtr::from_raw(ds.as_mut_ptr()).cast();
+                vector_ctor_iterator(np, 0xC, 4, 0x404350);
+                bbox_planes(rd::<u32>(entity_pos(ped), 8), rd::<GPtr<u8>>(ped, 0xFC), np, dsp);
+                let pp = entity_pos(ped);
+                let a = plane_distance(np, dsp, 1, pp);
+                let b = plane_distance(np, dsp, 3, entity_pos(ped));
+                copy(if le_or_nan(b, a) { 3 } else { 1 });
+            }
+        }
+    }
+    if rd::<u32>(ped, 0xFC) != 0 {
+        wr::<u32>(ped, 0x77C, 0x40C9_0FDB);
+    }
+    let ty = if rd::<u8>(this, 0x20) != 0 { 0x386 } else { 0x1F7 };
+    GPtr::from_addr(crate::gen_subtasks::g_task_complex_evasive_dive_and_get_up_create_sub_task_653820(this.addr() as u32, ty) as usize)
+}
+
+/// `CTaskInteriorGoToInfo::CreateFirstSubTask(CPed*)` (0x676640, `ret 4`). No info (+0xC): NULL. Teleporting (+0x14):
+/// the ped is put at the info's position (matrix or placement), its rotations +0x558 / +0x55C = `LimitRadianAngle(
+/// angle(dir.x, dir.y, 0, 0))` and that heading set (`SetRotateZOnly` with a matrix, else placement +0x10); NULL.
+/// Otherwise, in the task's interior (+0x10, `GetPedsInterior`): a `CTaskSimpleGoToPoint(4, info position, 0.2, false,
+/// false)`; elsewhere a `CTaskComplexFollowNodeRoute(4, the task interior's path node (+0x3F0) position, 0.2, 3.0,
+/// 2.0, false, -1, true)` whose +0x28 becomes the ped's interior's +0x3F0 (written through a NULL task too, as the
+/// bytes).
+#[hook(addr = 0x676640, conv = thiscall, name = "CTaskInteriorGoToInfo::CreateFirstSubTask", expect = "64 A1 00 00 00 00 6A FF 68 66 5E 84 00",
+       unverified = "frontier2-a10", route = "L2", hazards = "heap-writes,stack-residue",
+       note = "the angle is stored over the ped argument slot; SEH frame not modelled")]
+pub fn interior_go_to_info_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let info = rd::<GPtr<u8>>(this, 0xC);
+    if info.is_null() {
+        return GPtr::NULL;
+    }
+    if rd::<u8>(this, 0x14) != 0 {
+        let (dx, dy) = (rd::<f32>(info, 0x10), rd::<f32>(info, 0x14));
+        let pos = [rd::<u32>(info, 4), rd::<u32>(info, 8), rd::<u32>(info, 0xC)];
+        let dst = entity_pos(ped);
+        for (k, v) in pos.iter().enumerate() {
+            wr::<u32>(dst, k as isize * 4, *v);
+        }
+        let a = general_get_radian_angle_between_points(dx, dy, 0.0, 0.0).to_f32();
+        let h = st0(general_limit_radian_angle(a)).to_f32();
+        wr::<f32>(ped, 0x55C, h);
+        wr::<f32>(ped, 0x558, h);
+        let m = rd::<GPtr<u8>>(ped, 0x14);
+        if m.is_null() {
+            wr::<f32>(ped, 0x10, h);
+        } else {
+            matrix_set_rotate_z_only(m, h);
+        }
+        return GPtr::NULL;
+    }
+    let here = sa_world::world::interior_furnish_lookup::get_peds_interior(GPtr::from_addr(0xBAF670), ped);
+    if here == rd::<GPtr<u8>>(this, 0x10) {
+        let mem = crate::common::task_new(0x30);
+        if mem.is_null() {
+            return GPtr::NULL;
+        }
+        let info = rd::<GPtr<u8>>(this, 0xC);
+        let mut pos = [rd::<u32>(info, 4), rd::<u32>(info, 8), rd::<u32>(info, 0xC)];
+        return go_to_point_ctor(mem, 4, GPtr::from_raw(pos.as_mut_ptr()).cast(), 0x3E4C_CCCD, 0, 0);
+    }
+    let link = rd::<u32>(rd::<GPtr<u8>>(this, 0x10), 0x3F0);
+    let nodes = g::<u32>(0x96F854 + (link & 0xFFFF) as usize * 4).read();
+    let node = GPtr::<u8>::from_addr(((link >> 16).wrapping_mul(0x1C)).wrapping_add(nodes) as usize);
+    let mut pos = [0f32; 3];
+    let pp: GPtr<f32> = GPtr::from_raw(pos.as_mut_ptr());
+    get_position(node, pp);
+    let mem = crate::common::task_new(0x60);
+    let t = if mem.is_null() {
+        GPtr::NULL
+    } else {
+        follow_node_route_ctor(mem, 4, pp.cast(), 0x3E4C_CCCD, g::<u32>(0x86FCA4).read(), g::<u32>(0x86FCA8).read(), 0,
+                               u32::MAX, 1)
+    };
+    wr::<u32>(t, 0x28, rd::<u32>(here, 0x3F0));
+    t
+}
+
 /// Every hook of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_JET_PACK_PROCESS_CONTROL_INPUT,
@@ -1137,4 +1260,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_FLEE_POINT_CONTROL_SUB_TASK,
     HOOK_KILL_PED_FROM_BOAT_CONTROL_SUB_TASK,
     HOOK_PLAYER_ON_FIRE_PROCESS_PED,
+    HOOK_DIVE_FROM_ATTACHED_ENTITY_CREATE_FIRST_SUB_TASK,
+    HOOK_INTERIOR_GO_TO_INFO_CREATE_FIRST_SUB_TASK,
 ];
