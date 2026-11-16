@@ -265,3 +265,4 @@ pub mod frontier_a_t4;
 pub mod frontier_a_t5;
 pub mod frontier_a_t6;
 pub mod frontier_a_t7;
+pub mod frontier_a_t8;
