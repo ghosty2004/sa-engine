@@ -2867,3 +2867,64 @@
 - verify-all (lanes 6-7): `lanec6-c12` (SA_UNVERIFIED=frontier2-c12; DLL of 21aa7b02) IDENTICAL 13/13; `lanec6-default` (default set) IDENTICAL 13/13.
 - frontier.py: lane C subsystems 17 → 9 rows (2 of them lane A's partial switches); whole frontier "to port" 218 → 199
   (other branches' registrations included); new MATH row 0x45AF40 (lane B).
+
+## 2026-11-16 — FRONTIER-2 turn 7 lane C: fight / be-hit / avoid-entity helpers, D3D9 raster helpers, natives to hooks, 0x477DA0, batch c13 (agent, branch worktree-agent-a6e18bff35f33ca8b)
+- Base: lane C turn 6 head e20c571b (branch worktree-agent-a666e9cf719f6e793). Every port address checked against
+  `tools/gen/inflight.py` first (none in flight).
+- Batch frontier2-c13 (9 hooks + 1 native):
+  - CTaskSimpleFight's vehicle hit 0x61D0B0 (sa-ai `fight_hit_object.rs`, next to its object twin 0x61D400; the two
+    share the chainsaw-audio / hit-sound / punch-impact tail): strike damage, chainsaw sparks along the bone 0x18
+    matrix `at` vector, `VehicleDamage(mass * dmg * 0.00075 | 0.01)`, ReportCrime 0x15, a CEventVehicleDamageWeapon
+    (ctor 0x4B18D0 + vtable 0x86D640) for the driver and every passenger, the last-damage weapon / entity when the
+    health dropped. New sa-ai binding Fx_c::AddPunchImpact 0x49F670.
+  - CTaskSimpleBeHitWhileMoving::StartAnim 0x61FF40 (task type 1009, vtable 0x86D7FC; sa-ai `be_hit.rs`): the anim
+    from hit type / direction / rand(), the +0x744 timer (x87, `_ftol`), the finish callback 0x61FF30 pushed by the
+    SecuROM fragment 0x401122 (`ror([0x15605F8], [0x698EFA])` on the image); the paths that leave +0x14 null keep the
+    original's SetFinishCallback through null. ClearAimFlag / ClearLookFlag bindings moved to sa-world (sa-ped twins).
+  - The avoid-entity task's look-at 0x66AB40 (vtable 0x86FF00, "TaskAvoidEntity"): the twin of
+    CTaskSimpleGoTo::SetUpIK 0x667AD0; the direction / dot tests and the x87 look-at point are one helper
+    (`look_at_walk_direction`) for both.
+  - The D3D9 raster helpers (sa-rwcore): the format resolver 0x4CC1D0 (pure format logic over the ported
+    `_rwD3D9CheckValid(Camera)TextureFormat`; no device call), `_rwD3D9RasterCreateFromDDSFormat` 0x4CD050
+    (IDirect3DDevice9::CreateTexture through the device vtable binding of d3d9rast.rs, as the other raster create
+    paths) and the textured-quad render 0x4CA5A0 (register convention; every path reaches a device vtable call
+    before `ret`, so a phase B native next to its twin 0x4CAAE0 in raster_copy.rs, reached through the dispatcher's
+    binding). New callee for lane B (RW): `_rwD3D9TestState` 0x7F8300.
+  - The angled-area test 0x477DA0 (sa-script `angled_area.rs`): catalogued by hand (catalog/extra-code-addresses.csv,
+    rule cat17-hand: the E8 calls at 0x4798FA (case 09C0 of ProcessCommands2400To2499, which has no Ghidra body) and
+    0x477FEA) and run_all on a copy of the main checkout's Ghidra project (the main checkout untouched); its x87 flow
+    keeps dy on the stack (dx stored); inside_2d's range tests are shared (`in_range`, `side_ok`).
+  - CAEPedAudioEntity::UpdateJetPack 0x4E0EE0 (sa-audio `ped.rs`; coordinator request: the last blocker of lane A's
+    `jetpack` scenario): the four level fields step up / down against their `.data` bounds by the thrust against the
+    double 0.5; the three jet-pack sounds' volumes / speeds from them and sin(angle) (the x87 |s| for +0x9C, the f32's
+    for +0xA4).
+  - The phase B natives CAEWeatherAudioEntity::AddAudioEvent 0x506800 and tReplayVehicleBlock::ExtractVehicleUpdateData
+    0x45BA90 are hooks now (see sa-hook below).
+- sa-hook (INF-20): an inline hook writes only its 5-byte `jmp`; the rest of the relocated instructions keeps its
+  bytes (the installer already refuses branches into the relocated range). `data_reads::changed` and the keycells test
+  model the 5 bytes. The indexed `.data` reader 0x14274C2 (`fmul qword ptr [ebx + 0x506805]`) then sees no hook byte
+  of 0x506800 (no junk proof needed; static notes: no instruction on a linear sweep of game `.text` / `.HOODLUM`
+  branches into the executable `.data` 0x1301000, the block holding 0x14274C2 has entropy 7.33 bits/byte against
+  6.2-6.6 for code). The four protection key reads of 0x45BA91 (0x401831 pointer key, 0x40A486 / 0x156A03F /
+  0x156D5E5 rotate counts) join keycells; two keycell readers of entry + 5 bytes became unnecessary and were dropped
+  (0x401375 SetFOV, 0x407E2C GetIsWearingBalaclava). docs/re/l2-oracle.md updated.
+- 0x45C4B0 ten NOPs (.HOODLUM 0x1561D4C..0x1561D55): no dword and no rel32 anywhere in the image points into
+  0x1561D40..0x1561D60 (static scan of every section), `.HOODLUM` is stored unpacked (raw = virtual size 0x21000);
+  the hook is kept as it is (the step reads the caller's ESI). Not confirmed at run time: a /proc/PID/mem sampler
+  around verify-all (26 gta_sa.exe processes, 250 samples) read zeros / 0x3F at every probed address, exe bytes
+  included, i.e. not the game's 32-bit image view under Wine's WoW64 (tool problem, no evidence either way).
+- Not ported (other lanes): the new RW callee `_rwD3D9TestState` 0x7F8300 (device lost / reset; only 0x4CA5A0 calls
+  it) and CMatrix::ScaleAll 0x45AF40 (lane B); lane A's partial switches 0x47A760 / 0x48B590.
+- Gates: writer gate (base e20c571b, on 12f3e0ae) all PASS (hooks: 9 new, all unverified, batch frontier2-c13; note:
+  the batch spans AUDIO / UNK-game).
+- Scenarios (master's `frontier.sh`, i686 native sa-game of ca47a074; target/lc7/scen): pausemenu 416 / 0 blocked,
+  solicit 4016 / 0, crossing 1216 / 0, melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0, shootdriver 1216 / 0;
+  crossing-long 4014 / 2 (lane A's KillCriminal::CreateNextSubTask 0x68E4F0); roadblocks 254 / 1762 (0x62D290,
+  0x62D3B0, the GenerateRoadBlocks fallback, CHeli::GenerateHeli 0x6C6520: registered on other branches); quad / heli
+  / plane 1215 / 1 (CCheat::VehicleCheat 0x43A0B0, other branch); 0 blocked on lane C functions; no crash.
+- verify-all (lanes 6-7): `lanec7-c13` (SA_UNVERIFIED=frontier2-c13; DLL of 7fd4b0bb) IDENTICAL 13/13; `lanec7-c13b`
+  (same batch, DLL of 12f3e0ae, with 0x4E0EE0) IDENTICAL 13/13; `lanec7-default` (default set, VERIFY_NO_BUILD on the DLL of
+  7fd4b0bb; the writer gate rebuilt the DLL at a5010982 during the run, which adds only the unverified 0x4E0EE0)
+  IDENTICAL 13/13.
+- frontier.py: lane C subsystems 9 → 2 rows (both lane A's partial switches); whole frontier "to port" 193 → 170
+  (other branches' registrations included); new RW row 0x7F8300 (lane B).
