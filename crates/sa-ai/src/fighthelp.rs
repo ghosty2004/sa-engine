@@ -108,11 +108,11 @@ orig! {
     /// `FUN_0061d6f0(CPed*)` (0x61D6F0, `ret 4`; target on the ground test)
     fn fight_61d6f0(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x61D6F0 => unported;
     /// `FUN_0061d5f0(float radius)` (0x61D5F0, `ret 4`; sets up the fight col model)
-    fn fight_set_up_col(t: GPtr<u8>, radius: u32) = thiscall 0x61D5F0 => unported;
+    pub(crate) fn fight_set_up_col(t: GPtr<u8>, radius: u32) = thiscall 0x61D5F0 => unported;
     /// `FUN_0061cba0(CPed*, CPed* victim, CVector* pos, CVector* dir, int32)` (0x61CBA0, `ret 0x14`; hit a ped)
     fn fight_hit_ped(t: GPtr<u8>, ped: GPtr<u8>, victim: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>, a: i32) -> GPtr<u8> = thiscall 0x61CBA0 => unported;
     /// `FUN_0061d0b0(CPed*, CVehicle*, CVector* pos, CVector* normal, int16, uint8)` (0x61D0B0, `ret 0x18`; hit a car)
-    fn fight_hit_car(t: GPtr<u8>, ped: GPtr<u8>, v: GPtr<u8>, pos: u32, normal: u32, a: u32, b: u32) = thiscall 0x61D0B0 => unported;
+    pub(crate) fn fight_hit_car(t: GPtr<u8>, ped: GPtr<u8>, v: GPtr<u8>, pos: u32, normal: u32, a: u32, b: u32) = thiscall 0x61D0B0 => unported;
     /// `FUN_0061d400(CPed*, CObject*, CVector* pos, CVector* normal, int16, uint8)` (0x61D400, `ret 0x18`; hit an object)
     fn fight_hit_obj(t: GPtr<u8>, ped: GPtr<u8>, o: GPtr<u8>, pos: u32, normal: u32, a: u32, b: u32) = thiscall 0x61D400 => unported;
     /// `CGlass::BreakGlassPhysically(CVector pos (by value), float radius)` (0x71CF50)

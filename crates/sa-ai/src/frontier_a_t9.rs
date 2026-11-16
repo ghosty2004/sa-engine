@@ -6,7 +6,19 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-use crate::common::{g, rd, task_get_type, task_make_abortable, wr, x, xi, X87};
+use crate::common::{g, new_task, rd, task_create_next_sub_task, task_get_type, task_make_abortable, wr, x, xi, X87};
+use crate::bindings::{
+    fight_ctor, fight_dtor_orig, gang_hassle_ped_ctor, ped_is_playing_hand_signal, play_hand_signal_anim_ctor_61b2b0,
+    should_load_gang_anims, tm_get_task_secondary, tm_set_task_secondary,
+};
+use crate::fighthelp::{fight_hit_car, fight_set_up_col};
+use sa_anim::bindings::anim_add_block_ref;
+use sa_core::bindings::{clump_get_association, general_random_int_in_range, matrix_dtor};
+use sa_stream::bindings::{anim_remove_block_ref, entity_is_visible, get_animation_block_index, streaming_request_model};
+use sa_world::bindings::{
+    entity_get_col_model, ik_is_looking, ik_look_at, kill_ped_on_foot_ctor, matrix_copy_ctor, placeable_get_heading,
+    process_col_models, run_anim_ctor, shake_fist_ctor,
+};
 use sa_core::bindings::vector_normalise;
 use sa_core::crt::rand_at;
 use sa_math::fpu::{ftol32, ge_or_nan, gt, le_or_nan};
@@ -33,6 +45,8 @@ orig! {
     fn hit_and_run_dtor(e: GPtr<u8>) = thiscall 0x4AEA50 => crate::event_dtors::event_vehicle_hit_and_run_dtor;
     /// `CRopes::FindCoorsAlongRope(uint32 id, float along, CVector* pos, CVector* speed)` (0x555E40, sa-render)
     fn ropes_find_coors_along_rope(id: u32, along: f32, pos: GPtr<f32>, speed: GPtr<f32>) -> u8 = cdecl 0x555E40 => unported;
+    /// `CTaskGangHassleVehicle::GetTargetHeading(CPed*)` (0x65FDD0, `ret 4`, ST0)
+    fn target_heading(t: GPtr<u8>, ped: GPtr<u8>) -> X87 = reg("args = ecx stack; pop") 0x65FDD0 => crate::gang6::gang_hassle_vehicle_get_target_heading;
     /// `CTaskComplexUseSwatRope::CreateSubTask(int32 type, CPed*)` (0x659620, phase B native)
     fn use_swat_rope_create_sub_task(t: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x659620 => crate::frontier_a_subtasks::use_swat_rope_create_sub_task;
 }
@@ -304,9 +318,282 @@ pub fn use_swat_rope_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8>
     s
 }
 
+// ------------------------------------------------------------------------------------------- gang hassle vehicle
+
+/// `+0x1C²` (plus `add`) against the range (`fld o; fld st0; fmul st1; [fadd add]; fld range; fcompp; test ah, 41h`):
+/// the range is above it (ordered).
+fn range_above(this: GPtr<u8>, range: f32, add: Option<f32>) -> bool {
+    let o = x(rd::<f32>(this, 0x1C));
+    let o2 = o.fmul(o);
+    let o2 = match add {
+        Some(a) => o2.fadd_m(a),
+        None => o2,
+    };
+    !x(range).fcom(o2).test_any(0x41)
+}
+
+/// `range` against `+0x1C²` with `test ah, 41h; jp` not taken (0x663B69): exactly one of C0 / C3 set, `range <= o²`.
+fn range_at_most(this: GPtr<u8>, range: f32) -> bool {
+    let o = x(rd::<f32>(this, 0x1C));
+    !x(range).fcom(o.fmul(o)).test_parity(0x41)
+}
+
+/// `CTaskGangHassleVehicle::ControlSubTask(CPed*)` (0x6637C0, `ret 4`; gta-reversed only calls the original). The
+/// gang anim block ref (+0x30) follows `ShouldLoadGangAnims` (requested until loaded); no vehicle (+0x10): the
+/// sub-task (not a 0x3E8) is aborted into NULL. A timer (+0x40, restarted by +0x41; +0x38 start, +0x3C length) that
+/// ran out with +0x18: a `CTaskComplexKillPedOnFoot(+0x34, -1, 0, 0, 0, 1)` unless the sub-task already is 0x3E8.
+/// A driverless vehicle with a target (+0x34): the sub-task (not 0x4BC) aborted into `CTaskGangHasslePed(+0x34,
+/// +0x18 ? 2 : 1, 12000, 20000)`, +0x31 = 3. The range is 100, or the 0x39D sub-task's +0x50; a visible ped under
+/// range 4 not already looking may look at the driver (60 %, 1000..3000 ms). For a 0x39D / 0x38A sub-task: vehicle
+/// health under 250 → abort into `CreateNextSubTask`; then the state +0x31: 0 → maybe a shake-fist secondary task,
+/// state 1 once in range (`range <= +0x1C²`), `Say(0x101)`; 1 → the ped turns to `GetTargetHeading`, back to 0 out
+/// of range (0x39D only), 2 when within 0.05; 2 → 0 out of range + 0.05, 1 when off the heading by 0.1 or more, a
+/// random line (0xFE / 0xFF / 0x100), then with the anims loaded and the ped state below 6: no secondary task →
+/// a random 0..200 picks a gang anim, a hand signal or state 0 (0x663CD9); a playing gang anim at its hit time →
+/// the car is hit (0x663ECB). Returns the sub-task (+8).
+#[hook(addr = 0x6637C0, conv = thiscall, name = "CTaskGangHassleVehicle::ControlSubTask", expect = "6A FF 64 A1 00 00 00 00 68 8E 4B 84 00",
+       unverified = "frontier2-a12", route = "L2", hazards = "heap-writes",
+       note = "the fight task and matrix live on the Rust stack; SEH frame not modelled; FightHitCar's int16 piece argument has stale upper bytes in the original (movzx cx)")]
+pub fn gang_hassle_vehicle_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let sub = || rd::<GPtr<u8>>(this, 8);
+    if !sub().is_null() && task_get_type(sub()) != 0x3E8 && rd::<u32>(this, 0x10) == 0 {
+        return if task_make_abortable(sub(), ped, 1, GPtr::NULL) != 0 { GPtr::NULL } else { sub() };
+    }
+    let gangs = || get_animation_block_index(GPtr::from_addr(0x86F92C));
+    if rd::<u8>(this, 0x30) == 0 {
+        if should_load_gang_anims() != 0 {
+            let i = gangs();
+            if g::<u8>(0xB5D4A0usize.wrapping_add((i as u32).wrapping_shl(5) as usize) + 0x10).read() == 1 {
+                anim_add_block_ref(i);
+                wr::<u8>(this, 0x30, 1);
+            } else {
+                streaming_request_model(i.wrapping_add(0x63E7), 8);
+            }
+        }
+    } else if should_load_gang_anims() == 0 {
+        anim_remove_block_ref(gangs() as u32);
+        wr::<u8>(this, 0x30, 0);
+    }
+    let now = || g::<u32>(TIME_MS).read();
+    if rd::<u8>(this, 0x40) != 0 {
+        if rd::<u8>(this, 0x41) != 0 {
+            wr::<u32>(this, 0x38, now());
+            wr::<u8>(this, 0x41, 0);
+        }
+        let out = now() >= rd::<u32>(this, 0x3C).wrapping_add(rd::<u32>(this, 0x38));
+        if out && rd::<u8>(this, 0x18) != 0 {
+            if task_get_type(sub()) == 0x3E8 {
+                return sub();
+            }
+            let target = rd::<GPtr<u8>>(this, 0x34);
+            return new_task(0x38, |m| kill_ped_on_foot_ctor(m, target, -1, 0, 0, 0, 1));
+        }
+    }
+    let veh = rd::<GPtr<u8>>(this, 0x10);
+    if !veh.is_null()
+        && rd::<u32>(veh, 0x460) == 0
+        && rd::<u32>(this, 0x34) != 0
+        && task_get_type(sub()) != 0x4BC
+        && task_make_abortable(sub(), ped, 1, GPtr::NULL) != 0
+    {
+        wr::<u8>(this, 0x31, 3);
+        let kind = if rd::<u8>(this, 0x18) != 0 { 2 } else { 1 };
+        let target = rd::<GPtr<u8>>(this, 0x34);
+        return new_task(0x2C, |m| gang_hassle_ped_ctor(m, target, kind, 12000, 20000));
+    }
+    let mut range = f32::from_bits(0x42C8_0000);
+    if task_get_type(sub()) == 0x39D {
+        range = rd::<f32>(sub(), 0x50);
+    }
+    if entity_is_visible(ped) != 0
+        && !x(range).fcom(x(g::<f32>(0x858B90).read())).test_parity(5)
+        && ik_is_looking(GPtr::from_addr(0xC15448), ped) == 0
+        && general_random_int_in_range(0, 100) > 60
+    {
+        let t = xi(general_random_int_in_range(1000, 3000));
+        let driver = rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x10), 0x460);
+        if !driver.is_null() {
+            ik_look_at(GPtr::from_addr(0xC15448), GPtr::from_addr(0x86FC14), ped, driver, ftol32(t), 5, GPtr::NULL, 1,
+                       f32::from_bits(0x3E19_999A), 0x1F4, 3, 0);
+        }
+    }
+    if sub().is_null() {
+        return sub();
+    }
+    if task_get_type(sub()) != 0x39D && task_get_type(sub()) != 0x38A {
+        return sub();
+    }
+    let veh = rd::<GPtr<u8>>(this, 0x10);
+    if !x(rd::<f32>(veh, 0x4C0)).fcom(x(g::<f32>(0x859F80).read())).test_parity(5)
+        && task_make_abortable(sub(), ped, 1, GPtr::NULL) != 0
+    {
+        return task_create_next_sub_task(this, ped);
+    }
+    let say = |id: u32| {
+        ped_say(ped, id, 0, 1.0, 0, 0, 0);
+    };
+    let tm = || rd::<GPtr<u8>>(ped, 0x47C).byte_add(4);
+    match rd::<u8>(this, 0x31) {
+        0 => {
+            if tm_get_task_secondary(tm(), 4).is_null() && general_random_int_in_range(0, 100) > 60 {
+                let t = new_task(0x10, shake_fist_ctor);
+                tm_set_task_secondary(tm(), t, 4);
+            }
+            if range_at_most(this, range) {
+                wr::<u8>(this, 0x31, 1);
+            }
+            say(0x101);
+        }
+        1 => {
+            let h = target_heading(this, ped).to_f32();
+            wr::<f32>(ped, 0x55C, h);
+            let hd = X87::from_f64_exact(placeable_get_heading(ped)).to_f32();
+            if task_get_type(sub()) != 0x39D {
+                return sub();
+            }
+            if range_above(this, range, None) {
+                wr::<u8>(this, 0x31, 0);
+            } else if !x(hd).fsub_m(h).fabs().fcom(x(g::<f32>(0x858C28).read())).test_parity(5) {
+                wr::<u8>(this, 0x31, 2);
+            }
+        }
+        2 => {
+            if task_get_type(sub()) == 0x39D && range_above(this, range, Some(g::<f32>(0x858C28).read())) {
+                wr::<u8>(this, 0x31, 0);
+            }
+            let h = target_heading(this, ped).to_f32();
+            let off = X87::from_f64_exact(placeable_get_heading(ped)).fsub_m(h).fabs();
+            if !off.fcom(x(g::<f32>(0x858B1C).read())).test_any(1) {
+                wr::<u8>(this, 0x31, 1);
+            }
+            match general_random_int_in_range(0, 3) {
+                0 => say(0xFE),
+                1 => say(0xFF),
+                2 => say(0x100),
+                _ => {}
+            }
+            if rd::<u8>(this, 0x30) == 0 || rd::<i32>(ped, 0x534) >= 6 {
+                return sub();
+            }
+            if tm_get_task_secondary(tm(), 4).is_null() {
+                gang_hassle_pick_anim(this, ped);
+            } else {
+                gang_hassle_hit_car(this, ped, range);
+            }
+        }
+        _ => {}
+    }
+    sub()
+}
+
+/// 0x663CD9: no secondary task: `r = (float)GetRandomNumberInRange(0, 200)` picks the secondary task (each
+/// threshold a `test ah, 41h` "above"): > 166 / 133 / 100 the gang anims 0x128 / 0x129 / 0x12A, > 70 anim `0x117 +
+/// ftol((rand() & 0xFFFF) * 0x858B14 * 8)` (rand after `new`), > 60 a hand signal (none while one plays), > 40
+/// state 0, else nothing. The task (or NULL when `new` fails) becomes secondary task 4.
+fn gang_hassle_pick_anim(this: GPtr<u8>, ped: GPtr<u8>) {
+    let r = x(xi(general_random_int_in_range(0, 200)).to_f32());
+    let above = |c: usize| !r.fcom(x(g::<f32>(c).read())).test_any(0x41);
+    let run = |anim: u32| new_task(0x20, |m| run_anim_ctor(m, 0x34, anim, 4.0, 0));
+    let t = if above(0x86FC10) {
+        run(0x128)
+    } else if above(0x86FC0C) {
+        run(0x129)
+    } else if above(0x858628) {
+        run(0x12A)
+    } else if above(0x858CE0) {
+        new_task(0x20, |m| {
+            let v = xi(rand_at(0x663E04) & 0xFFFF).fmul_m(g::<f32>(0x858B14).read()).fmul_m(g::<f32>(0x859000).read());
+            run_anim_ctor(m, 0x34, (ftol32(v) as u32).wrapping_add(0x117), 4.0, 0)
+        })
+    } else if above(0x858B34) {
+        if ped_is_playing_hand_signal(ped) != 0 {
+            return;
+        }
+        new_task(0x18, |m| play_hand_signal_anim_ctor_61b2b0(m, u32::MAX, 4.0))
+    } else {
+        if above(0x858A10) {
+            wr::<u8>(this, 0x31, 0);
+        }
+        return;
+    };
+    tm_set_task_secondary(rd::<GPtr<u8>>(ped, 0x47C).byte_add(4), t, 4);
+}
+
+/// 0x663ECB: a secondary task plays. Out of range the sub-task is asked to abort (result unused). The first of the
+/// gang anims 0x128 (hit time 0.5) / 0x129 (0.7) / 0x12A (0.5) on the ped's clump, when it crosses its hit time this
+/// frame (`hit < time` and `time - delta <= hit`, as the bytes' NaN handling), hits the car: `ApplyTurnForce((0, 0,
+/// mass * 0.02), point)` with the point by hassle position (+0x14: 0 / 2 minus right, 1 / 3 right, 4 minus forward,
+/// 5 forward, else the force itself), a stack `CTaskSimpleFight(car, 0xB, 20000)` whose sphere (radius 0.5, at the
+/// ped's matrix moved by its forward vector) is tested against the car (`ProcessColModels` into 0xB9ACD0) and
+/// `FightHitCar` on contact, the car's health restored after, the 0x6C audio event.
+fn gang_hassle_hit_car(this: GPtr<u8>, ped: GPtr<u8>, range: f32) {
+    if range_above(this, range, None) {
+        task_make_abortable(rd::<GPtr<u8>>(this, 8), ped, 1, GPtr::NULL);
+    }
+    let clump = || rd::<GPtr<u8>>(ped, 0x18);
+    let Some((assoc, k)) = [(0x128, 0x858B8C), (0x129, 0x858CB0), (0x12A, 0x858B8C)]
+        .into_iter()
+        .map(|(a, k)| (clump_get_association(clump(), a), k))
+        .find(|(a, _)| !a.is_null())
+    else {
+        return;
+    };
+    let k = x(g::<f32>(k).read());
+    if k.fcom(x(rd::<f32>(assoc, 0x20))).test_parity(5) {
+        return;
+    }
+    if x(rd::<f32>(assoc, 0x20)).fsub_m(rd::<f32>(assoc, 0x28)).fcom(k).test_parity(0x41) {
+        return;
+    }
+    let veh = rd::<GPtr<u8>>(this, 0x10);
+    let f = x(rd::<f32>(veh, 0x8C)).fmul_m(g::<f32>(0x858B38).read()).to_f32();
+    let m = rd::<GPtr<u8>>(veh, 0x14);
+    let row = |o: isize, neg: bool| {
+        let c = |i: isize| if neg { x(rd::<f32>(m, o + i)).fchs().to_f32() } else { rd::<f32>(m, o + i) };
+        CVector { x: c(0), y: c(4), z: c(8) }
+    };
+    let point = match rd::<i32>(this, 0x14) {
+        0 | 2 => row(0, true),
+        1 | 3 => row(0, false),
+        4 => row(0x10, true),
+        5 => row(0x10, false),
+        _ => CVector { x: 0.0, y: 0.0, z: f },
+    };
+    physical_apply_turn_force(veh, CVector { x: 0.0, y: 0.0, z: f }, point);
+    let health = rd::<u32>(rd::<GPtr<u8>>(this, 0x10), 0x4C0);
+    let mut fight = [0u32; 10];
+    let fp: GPtr<u8> = GPtr::from_raw(fight.as_mut_ptr()).cast();
+    fight_ctor(fp, rd::<GPtr<u8>>(this, 0x10), 0xB, 20000);
+    let mut mat = [0u32; 18];
+    let mp: GPtr<u8> = GPtr::from_raw(mat.as_mut_ptr()).cast();
+    matrix_copy_ctor(mp, rd::<GPtr<u8>>(ped, 0x14));
+    let pm = rd::<GPtr<u8>>(ped, 0x14);
+    for i in 0..3 {
+        wr::<f32>(mp, 0x30 + 4 * i, x(rd::<f32>(mp, 0x30 + 4 * i)).fadd_m(rd::<f32>(pm, 0x10 + 4 * i)).to_f32());
+    }
+    fight_set_up_col(fp, 0x3F00_0000);
+    wr::<u8>(fp, 0x24, 4);
+    wr::<u8>(fp, 0x25, 1);
+    wr::<u8>(fp, 0x27, 0xB);
+    let veh = rd::<GPtr<u8>>(this, 0x10);
+    let vm = rd::<GPtr<u8>>(veh, 0x14);
+    let cm = entity_get_col_model(veh);
+    let n = process_col_models(mp, GPtr::from_addr(0xC17824), vm, cm, GPtr::from_addr(0xB9ACD0), GPtr::NULL, GPtr::NULL, 0);
+    if n > 0 {
+        let piece = u32::from(g::<u8>(0xB9ACF4).read());
+        let surface = u32::from(g::<u8>(0xB9ACF3).read());
+        fight_hit_car(fp, ped, rd::<GPtr<u8>>(this, 0x10), 0xB9ACD0, 0xB9ACE0, piece, surface);
+    }
+    wr::<u32>(rd::<GPtr<u8>>(this, 0x10), 0x4C0, health);
+    audio_add_event(rd::<GPtr<u8>>(this, 0x10).byte_add(0x138), 0x6C, 0.0);
+    matrix_dtor(mp);
+    fight_dtor_orig(fp);
+}
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_KILL_PED_WITH_CAR_DAMAGE_CAR_BONNET,
     HOOK_KILL_PED_WITH_CAR_SHAKE_PAD,
     HOOK_KILL_PED_WITH_CAR_PROCESS_PED,
     HOOK_USE_SWAT_ROPE_CONTROL_SUB_TASK,
+    HOOK_GANG_HASSLE_VEHICLE_CONTROL_SUB_TASK,
 ];
