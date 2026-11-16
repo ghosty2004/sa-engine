@@ -63,10 +63,7 @@ orig! {
     fn medic_create_sub_task(t: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x658DB0 => crate::frontier_a_subtasks::medic_treat_injured_ped_create_sub_task;
 }
 
-/// The ped's `bInVehicle` (+0x46C bit 8).
-fn in_vehicle(ped: GPtr<u8>) -> bool {
-    rd::<u32>(ped, 0x46C) & 0x100 != 0
-}
+use sa_world::world::cworld::in_vehicle;
 
 // ------------------------------------------------------------------------------------------- medic
 
