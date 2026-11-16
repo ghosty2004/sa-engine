@@ -2818,3 +2818,52 @@
 - Not done: CTaskInteriorSitAtDesk::ProcessPed 0x677920 (same shape as 0x6772E0, plus StartRandomLoopAnim /
   StartRandomOneOffAnim calls), the partial script switches 0x47A760 / 0x48B590, ProcessColModels' disk cases, POP
   0x422760 and the three POP partials, PED 0x60E530.
+
+## 2026-11-16 — FRONTIER-2 turn 6 lane C: ProcessMissionAudioEvent, replay vehicle / player info copies, pedless speech, user tracks, script pick-up, batch c12 (agent, branch worktree-agent-a666e9cf719f6e793)
+- Base: lane C turn 5 head 49ab9148 (branch worktree-agent-acc988eb6f9ea226b). Every port address checked against
+  `tools/gen/inflight.py` first (none in flight).
+- Batch frontier2-c12 (10 hooks + 1 native):
+  - CAEScriptAudioEntity::ProcessMissionAudioEvent 0x4ECCF0 (new module `sa-audio/src/mission_audio_event.rs`): the
+    compare tree with five jump tables is one `match` on the 16-bit event. The case map came from a unicorn run of the
+    dispatch for all 65536 event values (137 case blocks), each block then traced call by call under variants (physical
+    / no physical, callee results 0 / 1, +0x7D / +0x7E) and turned into arms over shared helpers (mission bank sound,
+    resident sound, frontend event, special ambience track, cancel with the physical variant, door event at the
+    physical's or the given position) plus the per-block helpers (crane winch / attach / move / stop / detach,
+    bank-by-loaded, the +0x7E toggle, stereo pair, blood crunch, water splash). gta-reversed's commented body has wrong
+    case labels. The 0x4A6 block's bank 0x8F is pushed by the SecuROM fragment 0x405BA1.
+  - tReplayVehicleBlock::ExtractVehicleUpdateData 0x45BA90 (sa-veh `replay_vehicle.rs`): a phase B native, not a hook
+    (the protection reads the entry dword 0x45BA91 as a key: 0x401831, 0x40A486, 0x156A03F, 0x156D5E5; the sa-hook INF-20
+    install test refused the hook). Unlike gta-reversed the bytes sign-extend the speed / steer / wheel / door bytes and
+    store the area byte directly. Its callee ApplyPanelDamageToCar 0x59CA10 is a hook.
+  - CPlayerInfo::operator= 0x45DEF0 (.HOODLUM 0x156AE50) and CPlayerData::operator= 0x45C4B0 (.HOODLUM 0x1561CF0;
+    sa-world `world/frontier_c.rs`): the no-CD body of the latter has ten NOPs where the source load of the first +0x34
+    bit-field step was, so that step reads the caller's ESI (a `reg("args = ecx stack esi; pop")` argument; the outer
+    copy passes `this`).
+  - CAEPedlessSpeechAudioEntity::AddSayEvent 0x4E60D0 next to the ped version (its declarations and checks reused).
+  - CAEUserRadioTrackManager::LoadUserTrack 0x4F35F0 and GetTrackPath 0x4F3050 (`sa-audio/src/user_track.rs`; the
+    decoders and CAEDataStream stay original).
+  - CRunningScript::ScriptTaskPickUpObject 0x46AF50 (.HOODLUM 0x156B440): the three protection values evaluated on the
+    image: `~[0x1560560] ^ [0x4C4572]` = 0 (hold-entity flag), `[0x1560564] - [0x6A9663] - 1` = 4 (secondary slot for
+    opcode 0x70A), VM 0xCB73E0 descriptor 0x1560028 = 0 (other opcodes, `tools/re/vm_eval.py` of lane A); the call/ret
+    trampoline's target `rol([0x1560568], [0x4D7191])` = 0x632D10 (CTaskComplexSequence::AddTask).
+  - The closest attractor search 0x6002F0 and the may-react-against test 0x603AF0 (sa-ai `frontier_c.rs`).
+- Bindings: new 0x4EC550 / 0x4EC6D0 / 0x4D6D60 / 0x4EFB90 / 0x5026B0 (sa-audio), 0x59B9F0 (sa-core), 0x601C90 (sa-ai),
+  0x4DCBE0 (sa-world, sa-audio port twin); the local declarations they replace removed; 0x4ECCF0 / 0x46AF50 / the
+  stream thread's 0x4F35F0 declaration reach the ports.
+- Not ported: 0x61D0B0, 0x61FF40, 0x66AB40 (time), the D3D9 raster helpers 0x4CA5A0 / 0x4CD050 / 0x4CC1D0, 0x477DA0
+  (CAT-12 not extended: needs a run_all with the Ghidra project), the 0x14274C2 junk proof. New callee left to lane B
+  (MATH): CMatrix::ScaleAll 0x45AF40 (its loop counter set in the fragment 0x401BA5).
+- VM tool note for the main session: `tools/re/vm_eval.py` evaluated 0x1560028 without help; lane C turn 5's
+  target/lc5/tools/vm.py had no feature it lacks for this site.
+- Gates: writer gate (base 49ab9148) all PASS (hooks: 10 new, all unverified, batch frontier2-c12; note: the batch spans
+  AUDIO / SCRIPT / UNK-game). The first run failed hooktest on 0x45BA90 (protection key reads of its entry, now a native)
+  and the 0x59CA10 hook name (now the catalogue's).
+- Scenarios (master's `frontier.sh`, i686 native sa-game of this branch; target/lc6/scen): pausemenu 416 / 0 blocked,
+  solicit 4016 / 0, crossing 1216 / 0, melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0, shootdriver 1216 / 0;
+  crossing-long 4014 / 2 (lane A's KillCriminal::CreateNextSubTask 0x68E4F0); roadblocks 254 / 1762 (registered on
+  master, not on this branch: CTaskSimpleGangDriveBy MakeAbortable 0x62D290 / ProcessPed 0x62D3B0, the
+  GenerateRoadBlocks fallback, CHeli::GenerateHeli 0x6C6520); quad 1215 / 1 (CCheat::VehicleCheat 0x43A0B0, on master);
+  0 blocked on lane C functions; no crash.
+- verify-all (lanes 6-7): `lanec6-c12` (SA_UNVERIFIED=frontier2-c12; DLL of 21aa7b02) IDENTICAL 13/13; `lanec6-default` (default set) IDENTICAL 13/13.
+- frontier.py: lane C subsystems 17 → 9 rows (2 of them lane A's partial switches); whole frontier "to port" 218 → 199
+  (other branches' registrations included); new MATH row 0x45AF40 (lane B).
