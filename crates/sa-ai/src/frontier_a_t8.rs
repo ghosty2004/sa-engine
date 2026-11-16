@@ -25,7 +25,10 @@ use sa_world::bindings::{
     get_vehicle_appearance, is_sunbather, pause_ctor, ped_set_ped_state, switch_vehicle_to_real_physics,
 };
 use crate::bindings::{can_sunbathe, event_group_add, history_get_current_event, task_timer_is_out_of_time};
-use sa_math::fpu::ftol32;
+use sa_math::fpu::{ftol32, le_or_nan};
+use crate::bindings::{stand_still_dtor, stand_still_process_ped};
+use sa_world::bindings::{enter_car_as_passenger_ctor, ped_groups_get_peds_group};
+use sa_math::x87::X87;
 use sa_core::crt::rand_at;
 use sa_input::bindings::pad_sprint_just_down;
 use crate::common::{task_make_abortable, task_new, xi};
@@ -1113,6 +1116,99 @@ pub fn flee_entity_control_sub_task_65bbb0(this: GPtr<u8>, ped: GPtr<u8>) -> GPt
     rd::<GPtr<u8>>(this, 8)
 }
 
+// ------------------------------------------------------------------------------------------- follow leader in formation
+
+/// The bounding-sphere radius of a vehicle's model collision (`ms_modelInfoPtrs[model]->m_pColModel` +0x24).
+fn vehicle_col_radius(veh: GPtr<u8>) -> f32 {
+    let mi = g::<GPtr<u8>>(0xA9B0C8 + (i32::from(rd::<i16>(veh, 0x22)) * 4) as usize).read();
+    rd::<f32>(rd::<GPtr<u8>>(mi, 0x14), 0x24)
+}
+
+/// `|ped - leader|²` through `CVector::Difference` and the magnitude helper 0x406DA0.
+fn ped_leader_dist2(ped: GPtr<u8>, leader: GPtr<u8>) -> X87 {
+    let mut d = [0f32; 3];
+    let dp: GPtr<u8> = GPtr::from_raw(d.as_mut_ptr()).cast();
+    vector_difference(dp, entity_pos(ped), entity_pos(leader));
+    vector_magnitude_sqr(dp)
+}
+
+/// `CTaskComplexFollowLeaderInFormation::ControlSubTask(CPed*)` (0x696940, `ret 4`; the epilogue restores the SEH link
+/// in the island 0x4019D9). No leader (+0x10): NULL. A 0x2C5 sub-task is kept. The leader in a vehicle: a 0x38B
+/// sub-task gets the vehicle's collision radius (0x6955D0); with a follow radius (+0x24 > 0) and the ped farther
+/// than it from the leader, an aborted sub-task is replaced by a pause (2000) after one `ProcessPed` of a stack
+/// `CTaskSimpleStandStill(0, false, false, 8.0)`; a 0xCB sub-task of a ped without a group: within the vehicle's
+/// radius (`|d|² < r²`) and a free passenger seat (+0x484 < +0x488) an aborted sub-task becomes
+/// `CTaskComplexEnterCarAsPassenger(vehicle, 0, false)`, else within +0x24 `CreateSubTask(0x38B)` after an abort.
+/// On foot: 0x2BC aborts into `CreateFirstSubTask`; 0xCA / 0xCB within +0x24 of the leader (`r² > (dz² + dy²) +
+/// dx²`) → `CreateSubTask(0x38B)`. Otherwise the sub-task.
+#[hook(addr = 0x696940, conv = thiscall, name = "CTaskComplexFollowLeaderInFormation::ControlSubTask",
+       expect = "64 A1 00 00 00 00 6A FF 68 BE 78 84 00",
+       unverified = "frontier2-a11", route = "L2", hazards = "heap-writes,stack-residue",
+       note = "the original stores the follow radius (or the squared vehicle radius) over its own ped argument slot")]
+pub fn follow_leader_in_formation_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    use crate::frontier_a_t5::follow_leader_in_formation_create_sub_task as create_sub;
+    let sub = rd::<GPtr<u8>>(this, 8);
+    if rd::<u32>(this, 0x10) == 0 {
+        return GPtr::NULL;
+    }
+    if task_get_type(sub) == 0x2C5 {
+        return sub;
+    }
+    let leader = rd::<GPtr<u8>>(this, 0x10);
+    let abort = || task_make_abortable(rd::<GPtr<u8>>(this, 8), ped, 0, GPtr::NULL) != 0;
+    if rd::<u32>(leader, 0x46C) & 0x100 != 0 && rd::<u32>(leader, 0x58C) != 0 {
+        let ty = task_get_type(rd::<GPtr<u8>>(this, 8));
+        if ty == 0x38B {
+            set_value_and_restart_timer_6955d0(rd::<GPtr<u8>>(this, 8),
+                vehicle_col_radius(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x10), 0x58C)));
+            if !gt(x(rd::<f32>(this, 0x24)), x(g::<f32>(0x858B50).read())) {
+                return sub;
+            }
+            let m = ped_leader_dist2(ped, rd::<GPtr<u8>>(this, 0x10));
+            let r = rd::<f32>(this, 0x24);
+            if x(r).fmul_m(r).fcom(m).test_parity(5) || !abort() {
+                return sub;
+            }
+            let mut stand = [0u32; 8];
+            let st = GPtr::from_raw(stand.as_mut_ptr()).cast::<u8>();
+            stand_still_ctor(st, 0, 0, 0, 8.0);
+            stand_still_process_ped(st, ped);
+            let t = crate::common::new_task(0x18, |m| pause_ctor(m, 2000));
+            stand_still_dtor(st);
+            return t;
+        }
+        if task_get_type(rd::<GPtr<u8>>(this, 8)) != 0xCB || ped_groups_get_peds_group(ped.addr() as u32) != 0 {
+            return sub;
+        }
+        let veh = rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x10), 0x58C);
+        let r = vehicle_col_radius(veh);
+        let v = x(r).fmul_m(r).to_f32();
+        let m = ped_leader_dist2(ped, rd::<GPtr<u8>>(this, 0x10));
+        if !m.fcom(x(v)).test_parity(5) {
+            if rd::<u8>(veh, 0x484) >= rd::<u8>(veh, 0x488) || !abort() {
+                return sub;
+            }
+            return crate::common::new_task(0x50, |t| {
+                enter_car_as_passenger_ctor(t, rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x10), 0x58C), 0, 0)
+            });
+        }
+        let f = rd::<f32>(this, 0x24);
+        if m.fcom(x(f).fmul_m(f)).test_parity(5) || !abort() {
+            return sub;
+        }
+        return create_sub(this, 0x38B, ped);
+    }
+    match task_get_type(rd::<GPtr<u8>>(this, 8)) {
+        0x2BC => if abort() { v_create_first_sub_task(this, ped) } else { sub },
+        0xCA | 0xCB => {
+            let r = x(rd::<f32>(this, 0x24));
+            let d2 = crate::flee::dist2(entity_pos(ped), entity_pos(rd::<GPtr<u8>>(this, 0x10)));
+            if le_or_nan(r.fmul(r), d2) { sub } else { create_sub(this, 0x38B, ped) }
+        }
+        _ => sub,
+    }
+}
+
 /// The batch's hooks.
 pub const HOOKS: &[HookReg] = &[
     HOOK_MEDIC_TREAT_INJURED_PED_CREATE_NEXT_SUB_TASK,
@@ -1133,4 +1229,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_DIE_IN_CAR_CREATE_FIRST_SUB_TASK,
     HOOK_FLEE_POINT_SET_FLEE_POSITION,
     HOOK_FLEE_ENTITY_CONTROL_SUB_TASK_65BBB0,
+    HOOK_FOLLOW_LEADER_IN_FORMATION_CONTROL_SUB_TASK,
 ];
