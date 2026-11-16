@@ -33,7 +33,9 @@ use sa_world::bindings::{
     entity_clean_up_old_reference, follow_node_route_ctor, fx_kill, get_pad_from_player, ik_is_looking, ik_look_at,
     membership_get_leader, ped_say, ped_set_ped_state, event_damage_ctor, event_damage_dtor, fire_extinguish,
     duck_ctor, find_player_wanted, get_task_swim, intel_get_task_duck, kill_ped_on_foot_ctor, stand_still_ctor,
-    intel_get_task_throw, vector_ctor_iterator, vector_ne, max_f, min_f, pad_get_accelerate, pad_get_brake,
+    intel_get_task_throw, vector_ctor_iterator, vector_ne, compute_target_door_to_enter_as_passenger,
+    enter_car_as_driver_ctor, enter_car_as_passenger_ctor, sequence_add_task, sequence_ctor, simple_car_drive_ctor,
+    max_f, min_f, pad_get_accelerate, pad_get_brake,
     pad_get_exit_vehicle, pad_get_ped_walk_left_right, pad_get_ped_walk_up_down, pad_get_target,
     ped_remove_weapon_when_entering_vehicle, physical_apply_move_force_5429f0,
 };
@@ -1369,6 +1371,63 @@ pub fn throw_control_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     0
 }
 
+orig! {
+    /// The scalar deleting destructor (vtable +0).
+    fn v_delete(o: GPtr<u8>, flags: u32) -> GPtr<u8> = thiscall vslot 0x0 => unported;
+}
+
+/// A new task of `size` bytes built by `ctor`, NULL when the task pool is full.
+fn new_task(size: u32, ctor: impl FnOnce(GPtr<u8>) -> GPtr<u8>) -> GPtr<u8> {
+    let mem = crate::common::task_new(size);
+    if mem.is_null() { GPtr::NULL } else { ctor(mem) }
+}
+
+/// A `CTaskComplexSequence` of `first` and a `CTaskSimpleCarDrive(veh, NULL, false)`, stored at the task pair `pair`
+/// (+4) when its ped (+0) is set and is `ped` (or `ped` is NULL), else deleted.
+fn sit_in_car_sequence(pair: GPtr<u8>, ped: GPtr<u8>, veh: GPtr<u8>, first: impl FnOnce() -> GPtr<u8>) {
+    let seq = new_task(0x40, sequence_ctor);
+    sequence_add_task(seq, first());
+    sequence_add_task(seq, new_task(0x60, |m| simple_car_drive_ctor(m, veh, GPtr::NULL, 0)));
+    let m = rd::<GPtr<u8>>(pair, 0);
+    if !m.is_null() && (ped.is_null() || m == ped) {
+        wr::<GPtr<u8>>(pair, 4, seq);
+    } else if !seq.is_null() {
+        v_delete(seq, 1);
+    }
+}
+
+/// `CPedGroupDefaultTaskAllocatorSitInLeaderCar::AllocateDefaultTasks(CPedGroup*, CPed*)` (0x5F6FC0, `ret 8`; `this`
+/// unused). With a leader (+0x28) in a vehicle (+0x58C): the leader's pair (+0x2A8) gets the sequence (enter as driver,
+/// drive); then each of the seven members (+0xC) up to the vehicle's passenger count (+0x488) gets, in seat order, the
+/// sequence (enter as passenger at `ComputeTargetDoorToEnterAsPassenger(veh, seat)`, drive) in its pair (+0x21C, 0x14
+/// each). A sequence whose pair is empty or belongs to another ped than the given one is deleted.
+#[hook(addr = 0x5F6FC0, conv = thiscall, name = "CPedGroupDefaultTaskAllocatorSitInLeaderCar::AllocateDefaultTasks",
+       expect = "64 A1 00 00 00 00 6A FF 68 D2 DF 83 00",
+       unverified = "frontier2-a10", route = "L2", hazards = "heap-writes",
+       note = "SEH frame not modelled")]
+pub fn sit_in_leader_car_allocate_default_tasks(_this: GPtr<u8>, group: GPtr<u8>, ped: GPtr<u8>) {
+    let leader = rd::<GPtr<u8>>(group, 0x28);
+    if leader.is_null() {
+        return;
+    }
+    let veh = rd::<GPtr<u8>>(leader, 0x58C);
+    if veh.is_null() {
+        return;
+    }
+    sit_in_car_sequence(group.byte_add(0x2A8), ped, veh, || new_task(0x50, |m| enter_car_as_driver_ctor(m, veh)));
+    let max = i32::from(rd::<u8>(veh, 0x488));
+    let mut seat = 0i32;
+    for k in 0..7isize {
+        if rd::<u32>(group, 0xC + k * 4) == 0 || seat >= max {
+            continue;
+        }
+        let door = compute_target_door_to_enter_as_passenger(veh, seat as u32);
+        sit_in_car_sequence(group.byte_add(0x21C + k * 0x14), ped, veh,
+                            || new_task(0x50, |m| enter_car_as_passenger_ctor(m, veh, door, 0)));
+        seat += 1;
+    }
+}
+
 /// Every hook of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_JET_PACK_PROCESS_CONTROL_INPUT,
@@ -1389,4 +1448,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_INTERIOR_GO_TO_INFO_CREATE_FIRST_SUB_TASK,
     HOOK_DUCK_TOGGLE_PROCESS_PED,
     HOOK_THROW_CONTROL_PROCESS_PED,
+    HOOK_SIT_IN_LEADER_CAR_ALLOCATE_DEFAULT_TASKS,
 ];
