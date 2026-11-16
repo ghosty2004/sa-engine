@@ -40,7 +40,7 @@ use sa_core::bindings::vector_normalise;
 use sa_world::bindings::physical_get_speed as get_speed;
 orig! {
     /// `CQuaternion::Set(RwV3d*, float)` (0x59C600)
-    fn quaternion_set(q: GPtr<u8>, axis: GPtr<u8>, angle: f32) = thiscall 0x59C600 => unported;
+    pub(crate) fn quaternion_set(q: GPtr<u8>, axis: GPtr<u8>, angle: f32) = thiscall 0x59C600 => unported;
     /// `CBike::DoBurstAndSoftGroundRatios()` (vtable +0xD0)
     fn v_do_burst_and_soft_ground_ratios(v: GPtr<u8>) = thiscall vslot 0xD0 => unported;
 }

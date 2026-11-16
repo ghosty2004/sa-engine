@@ -49,7 +49,7 @@ orig! {
     /// `CAutomobile::ProcessSwingingDoor(int32 node, eDoors)` (0x6A9D70)
     fn process_swinging_door(v: GPtr<u8>, node: i32, door: i32) = thiscall 0x6A9D70 => crate::mvpb_a5::process_swinging_door;
     /// `CBouncingPanel::ProcessPanel(CVehicle*, RwFrame*, CVector, CVector, float, float)` (0x6F49A0), floats as bits
-    fn process_panel(p: GPtr<u8>, v: GPtr<u8>, frame: GPtr<u8>, mx: u32, my: u32, mz: u32, tx: u32, ty: u32, tz: u32, ret: u32, damp: u32) = thiscall 0x6F49A0 => unported;
+    pub(crate) fn process_panel(p: GPtr<u8>, v: GPtr<u8>, frame: GPtr<u8>, mx: u32, my: u32, mz: u32, tx: u32, ty: u32, tz: u32, ret: u32, damp: u32) = thiscall 0x6F49A0 => unported;
     /// `CVehicle::SetTransmissionRotation(RwFrame*, float, float, CVector, bool)` (0x6DBBB0)
     pub(crate) fn set_transmission_rotation(v: GPtr<u8>, frame: GPtr<u8>, l: f32, r: f32, wx: f32, wy: f32, wz: f32, front: u32) = thiscall 0x6DBBB0 => unported;
     /// `CAutomobile::DoHoverSuspensionRatios()` (vtable +0x114)

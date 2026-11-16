@@ -24,9 +24,9 @@ orig! {
     /// float power, uint32 coronaIndex, uint8, uint8 drawShadow)` (0x6C45B0)
     fn add_heli_search_light(origin: GPtr<u8>, target: GPtr<u8>, radius: f32, power: u32, corona: u32, a: u32, shadow: u32) = cdecl 0x6C45B0 => unported;
     /// virtual (vtable +0xD0) of `CAutomobile`: the burst/soft-ground suspension ratios
-    fn v_slot_d0(v: GPtr<u8>) = thiscall vslot 0xD0 => unported;
+    pub(crate) fn v_slot_d0(v: GPtr<u8>) = thiscall vslot 0xD0 => unported;
     /// `CAutomobile::DoHeliDustEffect(float, float)` (0x6B0690)
-    fn do_heli_dust_effect(v: GPtr<u8>, a: f32, b: f32) = thiscall 0x6B0690 => unported;
+    pub(crate) fn do_heli_dust_effect(v: GPtr<u8>, a: f32, b: f32) = thiscall 0x6B0690 => unported;
 }
 
 use sa_core::field::ptr_of as buf;

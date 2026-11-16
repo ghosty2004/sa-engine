@@ -409,6 +409,11 @@ orig! {
 }
 
 orig! {
+    /// `CMotionBlurStreaks::RegisterStreak` (0x721DC0)
+    pub fn register_streak(id: u32, r: u32, g: u32, b: u32, a: u32, sx: u32, sy: u32, sz: u32, ex: u32, ey: u32, ez: u32) = cdecl 0x721DC0 => crate::motion_blur_streaks::motion_blur_streaks_register_streak;
+}
+
+orig! {
     /// `CBrightLights::RenderOutGeometryBuffer` (0x722150)
     pub fn bright_lights_render_out_geometry_buffer() = cdecl 0x722150 => unported;
 }

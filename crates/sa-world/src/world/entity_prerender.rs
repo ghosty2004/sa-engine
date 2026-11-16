@@ -73,6 +73,7 @@ use crate::bindings::vector_mul_scalar as vector_mul;
 use crate::bindings::entity_update_rw_frame as update_rw_frame;
 use crate::bindings::vector_sub;
 use crate::bindings::add_light;
+use crate::bindings::register_streak;
 use crate::bindings::register_corona_6fc180 as register_corona;
 use crate::bindings::store_shadow_to_be_rendered as store_shadow;
 use crate::bindings::max_f;
@@ -107,11 +108,6 @@ orig! {
     /// uint32 localId)` (0x70c750)
     #[allow(clippy::too_many_arguments)]
     fn store_shadow_for_pole(e: GPtr<u8>, ox: u32, oy: u32, oz: u32, h: u32, w: u32, id: u32) = cdecl 0x70c750 => unported;
-    /// `CMotionBlurStreaks::RegisterStreak(uint32 id, uint8 r, g, b, a, CVector left, CVector right)`
-    /// (0x721dc0; both vectors by value)
-    #[allow(clippy::too_many_arguments)]
-    fn register_streak(id: GPtr<u8>, r: u32, gr: u32, b: u32, a: u32, lx: u32, ly: u32, lz: u32, rx: u32, ry: u32,
-        rz: u32) = cdecl 0x721dc0 => unported;
 }
 
 fn mi_of(e: GPtr<u8>) -> GPtr<u8> {
@@ -354,7 +350,7 @@ fn streak(this: GPtr<u8>, wet: bool) {
         return;
     }
     if !wet {
-        register_streak(this, 0x64, 0x64, 0x64, 0xFF, a[0], a[1], a[2], b[0], b[1], b[2]);
+        register_streak(this.addr() as u32, 0x64, 0x64, 0x64, 0xFF, a[0], a[1], a[2], b[0], b[1], b[2]);
         return;
     }
     let p = pos_ptr(this);
@@ -365,7 +361,7 @@ fn streak(this: GPtr<u8>, wet: bool) {
     {
         return;
     }
-    register_streak(this, 0xFF, 0xA0, 0x64, 0xFF, a[0], a[1], a[2], b[0], b[1], b[2]);
+    register_streak(this.addr() as u32, 0xFF, 0xA0, 0x64, 0xFF, a[0], a[1], a[2], b[0], b[1], b[2]);
 }
 
 /// The traffic-light models (0x536977, objects and dummies): `DisplayActualLight` and / or a pole

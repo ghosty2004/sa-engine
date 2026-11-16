@@ -32,7 +32,7 @@ orig! {
     /// An atomic's render callback (`RpAtomic` +0x48), called with the atomic
     fn call_render_cb(f: u32, atomic: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
     /// `CVehicle::DoBoatSplashes(float)` (0x6DD130)
-    fn do_boat_splashes(v: GPtr<u8>, speed: f32) = thiscall 0x6DD130 => unported;
+    pub(crate) fn do_boat_splashes(v: GPtr<u8>, speed: f32) = thiscall 0x6DD130 => unported;
 }
 
 use sa_core::field::ptr_of as buf;

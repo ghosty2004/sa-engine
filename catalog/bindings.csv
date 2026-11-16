@@ -2670,6 +2670,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x71D780,sa-world,clear_drunk_blur,cdecl,,,,unported,CMBlur::ClearDrunkBlur,
 0x71E580,sa-world,call_is_point_within_occlusion_area,thiscall,,this:GPtr<u8>;px:f32;py:f32;r:f32,u8,unported,CActiveOccluder::IsPointWithinOcclusionArea,
 0x71FA40,sa-world,call_is_point_behind_occluder,thiscall,,this:GPtr<u8>;px:f32;py:f32;pz:f32;r:f32,u8,unported,CActiveOccluder::IsPointBehindOccluder,
+0x721DC0,sa-world,register_streak,cdecl,,id:u32;r:u32;g:u32;b:u32;a:u32;sx:u32;sy:u32;sz:u32;ex:u32;ey:u32;ez:u32,,unported,CMotionBlurStreaks::RegisterStreak,sa_render::motion_blur_streaks::motion_blur_streaks_register_streak
 0x725BA0,sa-world,place_marker_set,cdecl,,id:u32;ty:u32;pos:GPtr<u8>;size:u32;r:u32;g:u32;b:u32;a:u32;period:u32;fraction:u32;rotate:u32,,unported,C3dMarkers::PlaceMarkerSet,
 0x726D40,sa-world,markers_place_marker_cone,cdecl,,id:GPtr<u8>;pos:GPtr<u8>;size:f32;r:u32;gg:u32;bb:u32;a:u32;period:u32;fraction:f32;rotate:u32;collision:u32,,unported,C3dMarkers::PlaceMarkerCone,
 0x728520,sa-world,sprite2d_draw_quad,thiscall,,this:GPtr<u8>;x1:f32;y1:f32;x2:f32;y2:f32;x3:f32;y3:f32;x4:f32;y4:f32;colour:GPtr<u8>,,unported,CSprite2d::Draw-ffffffffCRGBA,

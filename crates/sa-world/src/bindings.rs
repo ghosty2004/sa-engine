@@ -4274,6 +4274,11 @@ orig! {
 }
 
 orig! {
+    /// `CMotionBlurStreaks::RegisterStreak` (0x721DC0)
+    pub fn register_streak(id: u32, r: u32, g: u32, b: u32, a: u32, sx: u32, sy: u32, sz: u32, ex: u32, ey: u32, ez: u32) = cdecl 0x721DC0 => unported;
+}
+
+orig! {
     /// `C3dMarkers::PlaceMarkerSet` (0x725BA0)
     pub fn place_marker_set(id: u32, ty: u32, pos: GPtr<u8>, size: u32, r: u32, g: u32, b: u32, a: u32, period: u32, fraction: u32, rotate: u32) = cdecl 0x725BA0 => unported;
 }
