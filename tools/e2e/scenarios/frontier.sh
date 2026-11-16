@@ -166,7 +166,7 @@ plane)
     export SA_GAME_KEYS="$keys,f:260:263,w:400:1150,a:800:840"
     run "${3:-1200}" --start-in-world ;;
 boat)
-    export SA_GAME_TELEPORT="60:2505.0:-1666.4:13.4;150:-2229.0:2443.0:8.0:-1.5708"
+    export SA_GAME_TELEPORT="60:2505.0:-1666.4:13.4;150:-2240.0:2420.0:8.0"
     export SA_GAME_KEYS="f:200:203,w:300:1100,a:700:760"
     run "${3:-1200}" --start-in-world ;;
 *)
