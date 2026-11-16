@@ -49,7 +49,7 @@ orig! {
 use sa_core::field::gf as ldf;
 
 /// `|v|` of the vector at `p` (x87: `x*x + y*y + z*z`, `fsqrt`).
-fn speed(p: GPtr<u8>) -> X87 {
+pub(crate) fn speed(p: GPtr<u8>) -> X87 {
     let (vx, vy, vz) = (x(rd::<f32>(p, 0)), x(rd::<f32>(p, 4)), x(rd::<f32>(p, 8)));
     vx.fmul(vx).fadd(vy.fmul(vy)).fadd(vz.fmul(vz)).fsqrt()
 }

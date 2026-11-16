@@ -11,6 +11,7 @@ use crate::bindings::{
     fight_ctor, fight_dtor_orig, gang_hassle_ped_ctor, ped_is_playing_hand_signal, play_hand_signal_anim_ctor_61b2b0,
     should_load_gang_anims, tm_get_task_secondary, tm_set_task_secondary,
 };
+use crate::cover_update::speed as magnitude;
 use crate::fighthelp::{fight_hit_car, fight_set_up_col};
 use sa_anim::bindings::anim_add_block_ref;
 use sa_core::bindings::{clump_get_association, general_random_int_in_range, matrix_dtor};
@@ -49,13 +50,6 @@ orig! {
     fn target_heading(t: GPtr<u8>, ped: GPtr<u8>) -> X87 = reg("args = ecx stack; pop") 0x65FDD0 => crate::gang6::gang_hassle_vehicle_get_target_heading;
     /// `CTaskComplexUseSwatRope::CreateSubTask(int32 type, CPed*)` (0x659620, phase B native)
     fn use_swat_rope_create_sub_task(t: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x659620 => crate::frontier_a_subtasks::use_swat_rope_create_sub_task;
-}
-
-/// `((v.x * v.x + v.y * v.y) + v.z * v.z)` then `fsqrt`: the inline magnitude of the vector at `v` (its components
-/// loaded z, y, x).
-fn magnitude(v: GPtr<u8>) -> X87 {
-    let (vx, vy, vz) = (x(rd::<f32>(v, 0)), x(rd::<f32>(v, 4)), x(rd::<f32>(v, 8)));
-    vx.fmul(vx).fadd(vy.fmul(vy)).fadd(vz.fmul(vz)).fsqrt()
 }
 
 /// `(a.z * b.z + a.y * b.y) + a.x * b.x` with `a` as three f32 and `b` read at `bp`.
