@@ -143,12 +143,53 @@ fn inside_2d(ar: &mut Area, px: f32, py: f32) -> bool {
         (X87::one(), ar.dy)
     };
     let d1 = X87::from_f32(ry).fmul_m(ny).fadd(X87::from_f32(rx).fmul(nx));
-    if d1.fcom(X87::zero()).test_any(1) || d1.fcom(X87::from_f32(ar.len1)).test_parity(0x41) {
-        return false;
+    in_range(d1, ar.len1) && side_ok(&mut ar.side, ar.len2, rx, ry)
+}
+
+/// `d` in [0, `len`] (`fcom 0; test ah, 1; jne` fails below 0 or NaN, `fcomp len; test ah, 41h; jp` above `len`).
+fn in_range(d: X87, len: f32) -> bool {
+    !(d.fcom(X87::zero()).test_any(1) || d.fcom(X87::from_f32(len)).test_parity(0x41))
+}
+
+/// The second half of every 2D test: the side vector normalised in place (`CVector2D::Normalise`, 0x44E480), the
+/// projection of `r` on it in [0, `len2`].
+fn side_ok(side: &mut [f32; 2], len2: f32, rx: f32, ry: f32) -> bool {
+    vector2d_normalise(GPtr::from_raw(side as *mut [f32; 2]).cast());
+    let d2 = X87::from_f32(ry).fmul_m(side[1]).fadd(X87::from_f32(rx).fmul_m(side[0]));
+    in_range(d2, len2)
+}
+
+/// The angled-area test of a position (0x477DA0, cdecl `(const CVector* pos, float x1, float y1, float x2, float y2,
+/// float width)`, AL; FRONTIER-2 lane C turn 7; reached from `GET_RANDOM_CAR_OF_TYPE_IN_ANGLED_AREA_NO_SAVE` 09C0).
+/// The [`corners`], `dx` stored (f32) and `dy` kept on the x87, the squared length `dy*dy + dx*dx` on the x87 with
+/// `len1 = f32(sqrt)`, the stored side vector and `len2`; `r = pos - (x1, y1)` (f32). The edge's unit vector: `sq > 0`
+/// or NaN: x = `1/sqrt(sq) * dx`, y = `f32(1/sqrt(sq)) * dy` (both on the x87), else (1.0, dy); then the two range
+/// tests (`in_range`, `side_ok`). The debug square when the flag byte 0x859CF8 is set; no highlight.
+#[hook(addr = 0x477DA0, conv = cdecl, name = "(missed by ghidra: cat7-call)", expect = "8B 44 24 08 83 EC 24",
+       unverified = "frontier2-c13", route = "L2", hazards = "x87-transcendental")]
+pub fn position_in_angled_area(pos: GPtr<u8>, x1: u32, y1: u32, x2: u32, y2: u32, width: u32) -> u8 {
+    let (fx1, fy1, fx2, fy2) = (f(x1), f(y1), f(x2), f(y2));
+    let (x3, y3, x4, y4) = corners(x1, y1, x2, y2, width);
+    let dx = X87::from_f32(fx2).fsub_m(fx1).to_f32();
+    let dy = X87::from_f32(fy2).fsub_m(fy1);
+    let mut side = [X87::from_f32(x4).fsub_m(fx1).to_f32(), X87::from_f32(y4).fsub_m(fy1).to_f32()];
+    let sq = dy.fmul(dy).fadd(X87::from_f32(dx).fmul_m(dx));
+    let len1 = sq.fsqrt().to_f32();
+    let len2 = X87::from_f32(side[1]).fmul_m(side[1]).fadd(X87::from_f32(side[0]).fmul_m(side[0])).fsqrt().to_f32();
+    let rx = X87::from_f32(rd::<f32>(pos, 0)).fsub_m(fx1).to_f32();
+    let ry = X87::from_f32(rd::<f32>(pos, 4)).fsub_m(fy1).to_f32();
+    let (nx, ny) = if sq.fcom(X87::zero()).test_parity(0x41) {
+        let inv = sq.fsqrt().fdivr_m(1.0);
+        (inv.fmul_m(dx), X87::from_f32(inv.to_f32()).fmul(dy))
+    } else {
+        (X87::one(), dy)
+    };
+    let d1 = X87::from_f32(ry).fmul(ny).fadd(X87::from_f32(rx).fmul(nx));
+    let inside = in_range(d1, len1) && side_ok(&mut side, len2, rx, ry);
+    if GPtr::<u8>::from_addr(0x859CF8).read() != 0 {
+        draw_debug_angled_square(x1, y1, x2, y2, x3.to_bits(), y3.to_bits(), x4.to_bits(), y4.to_bits());
     }
-    vector2d_normalise(GPtr::from_raw(&raw mut ar.side).cast());
-    let d2 = X87::from_f32(ry).fmul_m(ar.side[1]).fadd(X87::from_f32(rx).fmul_m(ar.side[0]));
-    !(d2.fcom(X87::zero()).test_any(1) || d2.fcom(X87::from_f32(ar.len2)).test_parity(0x41))
+    u8::from(inside)
 }
 
 /// The z test of the 3D commands: `zmin <= z` and `z <= zmax` (a NaN fails); always true for the 2D ones.
@@ -328,4 +369,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_OBJECT_IN_ANGLED_AREA_CHECK_COMMAND,
     HOOK_FLAME_IN_ANGLED_AREA_CHECK_COMMAND,
     HOOK_THE_SCRIPTS_DRAW_DEBUG_ANGLED_SQUARE,
+    HOOK_POSITION_IN_ANGLED_AREA,
 ];

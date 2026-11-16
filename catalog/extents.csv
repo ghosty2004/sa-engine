@@ -1371,6 +1371,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x4748f0,CTaskSimpleSetCharIgnoreWeaponRangeFlag::Destructor,gr-reversed,game,AI,ghidra,0x4748f0,0x4748f5,5,1,0x4748f0-0x4748f5,,1,0,0,0,0,0,0
 0x474900,CRunningScript::ProcessCommands2200To2299,unknown,game,SCRIPT,ghidra-created,0x401add,0x47613d,6202,5,0x401add-0x401ae9;0x474900-0x47552d;0x475530-0x4756fa;0x475700-0x47573a;0x475740-0x47613d,,1727,215,4,0,0,27,0
 0x4762d0,CRunningScript::ProcessCommands2300To2399,unknown,game,SCRIPT,ghidra-created,0x403a72,0x477c0a,6482,2,0x403a72-0x403a8a;0x4762d0-0x477c0a,,1963,201,1,0,0,36,0
+0x477da0,,unknown,game,UNK-game,ghidra-created,0x477da0,0x477f89,481,2,0x477da0-0x477dd8;0x477de0-0x477f89,,157,3,0,0,0,0,0
 0x478000,CRunningScript::ProcessCommands2400To2499,unknown,game,SCRIPT,ghidra-created,0x4074b7,0x479af9,103,3,0x4074b7-0x4074c3;0x478000-0x47803e;0x479adc-0x479af9,,29,0,0,0,1,0,0
 0x479d10,CPed::IsWearingGoggles,gr-reversed,game,PED,ghidra-created,0x479d10,0x479d1e,14,1,0x479d10-0x479d1e,,5,0,0,0,0,0,0
 0x479d60,CTheCarGenerators::Get,gr-reversed,game,POP,ghidra-created,0x479d60,0x479d6e,14,1,0x479d60-0x479d6e,,4,0,0,0,0,0,0

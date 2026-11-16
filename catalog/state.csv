@@ -2162,6 +2162,7 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x476129,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x4762d0,CRunningScript::ProcessCommands2300To2399,SCRIPT,implemented,REA,script-port ported; implemented (partial),2026-11-11,5,
 0x477be5,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
+0x477da0,,UNK-game,unknown,REA,unnamed (class game),2026-11-16,0,
 0x478000,CRunningScript::ProcessCommands2400To2499,SCRIPT,implemented,REA,script-port ported; implemented (partial),2026-11-11,2,
 0x479d10,CPed::IsWearingGoggles,PED,implemented,gta-reversed,PORT-WEAPON-PED (2026-11-11): implemented-needs-L2; no call in grove walk / pause-restart / world-cheats / weapon-combat; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart,2026-11-11,0,
 0x479d60,CTheCarGenerators::Get,POP,implemented,gta-reversed,POP-2 ported; implemented-needs-L2,2026-11-11,0,

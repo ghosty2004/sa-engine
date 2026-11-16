@@ -1157,6 +1157,7 @@ address,class,subsystem,name,evidence
 0x476129,excluded:mis-split,,,"SecuROM re-entry point inside 0x4748f0 (CTaskSimpleSetCharIgnoreWeaponRangeFlag::Destructor): mid-body (previous byte 0xff), only jumped to from protection code (0x401ae4)"
 0x4762d0,game,SCRIPT,CRunningScript::ProcessCommands2300To2399,plugin-sdk name CRunningScript::ProcessCommands2300To2399 (plugin_sa/game_sa/meta/meta.CRunningScript.h); refs=D
 0x477be5,excluded:mis-split,,,"tail of 0x4748f0: lies in its span, unaligned, only jumped to from it (0x403a85,0x4769ab,0x4769c5), ends in ret"
+0x477da0,game,UNK-game,,refs=C
 0x478000,game,SCRIPT,CRunningScript::ProcessCommands2400To2499,plugin-sdk name CRunningScript::ProcessCommands2400To2499 (plugin_sa/game_sa/meta/meta.CRunningScript.h); refs=D
 0x479da0,game,SCRIPT,CRunningScript::ProcessCommands2600To2699,plugin-sdk name CRunningScript::ProcessCommands2600To2699 (plugin_sa/game_sa/meta/meta.CRunningScript.h); refs=D
 0x47a6af,excluded:mis-split,,,"SecuROM re-entry point inside 0x479d60 (CTheCarGenerators::Get): mid-body (previous byte 0xff), only jumped to from protection code (0x409b73)"

@@ -158,8 +158,8 @@ orig! {
     /// 0x43EF90 (cdecl `(int32 index, uint32 flag, bool on)`; gr `CEntryExitManager::SetEntryExitFlagWithIndex`)
     fn set_entry_exit_flag_with_index_43ef90(i: u32, flag: u32, on: u32) = cdecl 0x43EF90 => unported;
     /// 0x477DA0 (cdecl `(const CVector* pos, float x1, float y1, float x2, float y2, float width)`, AL: the angled
-    /// area test; unnamed in the catalogue)
-    fn is_in_angled_area_477da0(pos: GPtr<u8>, x1: u32, y1: u32, x2: u32, y2: u32, w: u32) -> u8 = cdecl 0x477DA0 => unported;
+    /// area test)
+    fn is_in_angled_area_477da0(pos: GPtr<u8>, x1: u32, y1: u32, x2: u32, y2: u32, w: u32) -> u8 = cdecl 0x477DA0 => crate::angled_area::position_in_angled_area;
     /// `CDarkel::FailKillFrenzy()` (0x43DC60)
     fn fail_kill_frenzy() = cdecl 0x43DC60 => unported;
 }

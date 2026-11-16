@@ -6099,6 +6099,11 @@ function,address,section,name,near,size,access,mode
 0x4762d0,0xc09928,.data,,CPedGroups::ms_groups+0x8,0,A,imm
 0x4762d0,0xc17044,.data,,RsGlobal+0x4,4,R,direct
 0x4762d0,0xc17048,.data,,RsGlobal+0x8,4,R,direct
+0x477da0,0x858624,.rdata,,,4,R,direct
+0x477da0,0x858b50,.rdata,,,4,R,direct
+0x477da0,0x858cbc,.rdata,,,4,R,direct
+0x477da0,0x858fe4,.rdata,,,4,R,direct
+0x477da0,0x859cf8,.rdata,CTheScripts::DbgFlag,,1,R,direct
 0x479d60,0xc27ad0,.data,CTheCarGenerators::CarGeneratorArray,,0,A,imm
 0x479da0,0x859ef8,.rdata,,CTheScripts::DbgFlag+0x200,8,R,direct
 0x479da0,0x86fca4,.rdata,,,4,R,direct

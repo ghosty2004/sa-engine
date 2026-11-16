@@ -4408,6 +4408,9 @@ caller,callee,kind,callee_class,callee_name,sites
 0x4762d0,0x736a50,call,game,CExplosion::AddExplosion,1
 0x4762d0,0x8229b6,call,excluded:crt,__stricmp,1
 0x4762d0,,indirect-unresolved,,,1
+0x477da0,0x44e480,call,game,CVector2D::Normalise,1
+0x477da0,0x486990,call,game,CTheScripts::DrawDebugAngledSquare,1
+0x477da0,0x53cbe0,call,game,CGeneral::GetRadianAngleBetweenPoints-,1
 0x478000,0x61a5b0,eh-unwind,game,CTask::operator delete,1
 0x479da0,0x4048e0,call,game,FUN_004048e0,2
 0x479da0,0x404910,call,game,CPedPool::GetAtRef,3
