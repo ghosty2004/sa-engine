@@ -85,8 +85,8 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-b15 | 3 | VEH | 11ad9727 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
 | frontier2-b16 | 3 | VEH | 830d7883 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
 | frontier2-b17 | 1 | MATH | 76ca3fc2 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| frontier2-b18 | 3 | CAM | b822823d | (no branch) | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| frontier2-b19 | 1 | WEAPON | e1c8801f | (no branch) | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| frontier2-b18 | 3 | CAM | b822823d | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| frontier2-b19 | 1 | WEAPON | e1c8801f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | frontier2-b2 | 23 | RW | 2f47ba34 | master | 23 | 0 | 0 | 0 | 0 | L2 23 |
 | frontier2-b3 | 7 | VEH | 221f09a0 | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
 | frontier2-b4 | 5 | RW, SAVE | 2f47ba34 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
