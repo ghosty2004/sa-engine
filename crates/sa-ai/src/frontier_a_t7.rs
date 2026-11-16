@@ -6,19 +6,25 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-use crate::bindings::ped_replace_weapon_when_exiting_vehicle;
+use crate::bindings::{
+    compute_closest_surface_point_ped, ped_groups_get_peds_group, ped_replace_weapon_when_exiting_vehicle,
+    task_timer_is_out_of_time, tm_find_active_task_by_type, tm_get_task_secondary, tm_set_task_secondary,
+    use_gun_control_gun, use_gun_ctor,
+};
+use sa_core::bindings::{get_weapon_info, ped_is_alive, vector_difference, vector_magnitude_sqr, vector_sub};
 use crate::common::{g, rd, wr, x, xi, X87};
 use crate::fall::fild_u32;
 use crate::kill_ped_on_foot_armed::current_weapon_info;
 use sa_core::bindings::{general_get_radian_angle_between_points, general_limit_radian_angle};
 use sa_core::crt::rand_at;
 use sa_core::field::gf;
-use sa_math::fpu::{fcom_ne, ge_or_nan, gt, le_or_nan, lt, st0};
+use sa_math::fpu::{fcom_any, fcom_ne, fcom_parity, ge_or_nan, gt, le_or_nan, lt, st0};
 use sa_math::vector::CVector;
 use sa_pop::bindings::{get_look_behind_for_car, pad_get_look_left, pad_get_look_right};
 use sa_stream::bindings::{calculate_ground_height, ped_is_player};
 use sa_world::bindings::{
-    camera_get_look_direction, fx_kill, get_pad_from_player, max_f, min_f, pad_get_accelerate, pad_get_brake,
+    achieve_heading_ctor, camera_get_look_direction, car_enter_exit_compute_passenger_index_from_car_door,
+    follow_node_route_ctor, fx_kill, get_pad_from_player, membership_get_leader, ped_say, ped_set_ped_state, max_f, min_f, pad_get_accelerate, pad_get_brake,
     pad_get_exit_vehicle, pad_get_ped_walk_left_right, pad_get_ped_walk_up_down, pad_get_target,
     ped_remove_weapon_when_entering_vehicle, physical_apply_move_force_5429f0,
 };
@@ -526,9 +532,357 @@ pub fn jet_pack_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     0
 }
 
+// ------------------------------------------------------------------------------------------- AI virtuals
+
+/// `CTaskSimpleStealthKill::ProcessPed(CPed*)` (0x62E540, `ret 4`, AL). Finished (+0x14) or no target (+0xC): 1.
+/// Without an animation (+0x18): a non-attacker (+8 clear) gets `SetPedState(0x38)`; `ManageAnim(ped)`; still none with
+/// +0x15 set: 0. Then +0x528 |= 8 and `d` = target - ped position (dy through an f32 slot). The attacker: `e = |d| -
+/// 1` (z², x², then y²); when `|e| > 0.02`, +0x4DC = `e`, or `timeStep * 0.05` when `e` is above it (NaN keeps `e`),
+/// and +0x4D8 = 0; heading +0x55C = `atan2(-d.x, d.y)`. The victim: with no animation or animation id 0x15D the heading
+/// `atan2(d.x, -d.y)` (both negated, as the bytes). AL = 0.
+#[hook(addr = 0x62E540, conv = thiscall, name = "CTaskSimpleStealthKill::ProcessPed", expect = "83 EC 0C 56 8B F1 8A 46 14",
+       this = "CTaskSimpleStealthKill",
+       unverified = "frontier2-a10", route = "L2", hazards = "x87-transcendental,ax-al-return,heap-writes")]
+pub fn stealth_kill_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
+    if rd::<u8>(this, 0x14) != 0 || rd::<u32>(this, 0xC) == 0 {
+        return 1;
+    }
+    if rd::<u32>(this, 0x18) == 0 {
+        if rd::<u8>(this, 8) == 0 {
+            ped_set_ped_state(ped, 0x38);
+        }
+        crate::gen_bodies::g_task_simple_stealth_kill_manage_anim_6296d0(this.addr() as u32, ped.addr() as u32);
+        if rd::<u32>(this, 0x18) == 0 && rd::<u8>(this, 0x15) != 0 {
+            return 0;
+        }
+    }
+    wr::<u32>(ped, 0x528, rd::<u32>(ped, 0x528) | 8);
+    let pp = entity_pos(ped);
+    let tp = entity_pos(rd::<GPtr<u8>>(this, 0xC));
+    let dx = x(rd::<f32>(tp, 0)).fsub_m(rd::<f32>(pp, 0));
+    let dy = x(rd::<f32>(tp, 4)).fsub_m(rd::<f32>(pp, 4)).to_f32();
+    let dz = x(rd::<f32>(tp, 8)).fsub_m(rd::<f32>(pp, 8));
+    if rd::<u8>(this, 8) != 0 {
+        let len = dz.fmul(dz).fadd(dx.fmul(dx)).fadd(x(dy).fmul_m(dy)).fsqrt();
+        let e = len.fsub_m(gf(0x86D630));
+        if gt(e.fabs(), x(gf(0x86D634))) {
+            let m = x(ts()).fmul_m(gf(0x86D638)).to_f32();
+            let v = if le_or_nan(e, x(m)) { e } else { x(m) };
+            wr::<f32>(ped, 0x4DC, v.to_f32());
+            wr::<u32>(ped, 0x4D8, 0);
+        }
+        wr::<f32>(ped, 0x55C, dx.fchs().fpatan(x(dy)).to_f32());
+        return 0;
+    }
+    let anim = rd::<GPtr<u8>>(this, 0x18);
+    if anim.is_null() || rd::<u16>(anim, 0x2C) == 0x15D {
+        let neg = gf(0x858C1C);
+        let (nx, ny) = (dx.fmul_m(neg), x(dy).fmul_m(neg));
+        wr::<f32>(ped, 0x55C, nx.fchs().fpatan(ny).to_f32());
+    }
+    0
+}
+
+orig! {
+    /// `CTaskComplexDestroyCarMelee::CreateSubTask(int32 type, CPed*)` (0x628A70, `ret 8`)
+    fn destroy_car_melee_create_sub_task(t: u32, ty: u32, ped: u32) -> u32 = thiscall 0x628A70 => crate::gen_subtasks::g_task_complex_destroy_car_melee_create_sub_task_628a70;
+}
+
+/// `CTaskComplexDestroyCarMelee::CalculateSearchPositionAndRanges(CPed*)` (0x6289F0).
+fn destroy_car_melee_search(this: GPtr<u8>, ped: GPtr<u8>) {
+    crate::gen_bodies::g_task_complex_destroy_car_melee_calculate_search_position_and_ranges_6289f0(
+        this.addr() as u32, ped.addr() as u32);
+}
+
+/// [`destroy_car_melee_create_sub_task`] with pointers.
+fn destroy_car_melee_sub(this: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> {
+    GPtr::from_addr(destroy_car_melee_create_sub_task(this.addr() as u32, ty, ped.addr() as u32) as usize)
+}
+
+/// `CTaskComplexDestroyCarMelee::CreateNextSubTask(CPed*)` (0x62DC20, `ret 4`). Aborting (+0xC): NULL. By the
+/// sub-task's type: 0x387 → `CalculateSearchPositionAndRanges`, then `(+0x20)² > |car - ped|²` → 0x3FB, else 0x38B
+/// (0xCA in a car, +0x46C bit 21); 0x38B → 0x3FB; 0xCA / 0x3FB → on foot: `CalculateSearchPositionAndRanges` and
+/// 0x38B; in a car: 0x516 once more than 3000 ms passed since +0x30 (not -1), else 0xCA; 0x516 and others → NULL.
+#[hook(addr = 0x62DC20, conv = thiscall, name = "CTaskComplexDestroyCarMelee::CreateNextSubTask", expect = "83 EC 0C 56 8B F1 8A 46 0C",
+       this = "CTaskComplexDestroyCarMelee",
+       unverified = "frontier2-a10", route = "L2", hazards = "heap-writes,stack-residue",
+       note = "the original writes +0x20 into its own ped argument slot")]
+pub fn destroy_car_melee_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    if rd::<u8>(this, 0xC) != 0 {
+        return GPtr::NULL;
+    }
+    let in_car = |p: GPtr<u8>| rd::<u32>(p, 0x46C) & 0x20_0000 != 0;
+    match crate::common::task_get_type(rd::<GPtr<u8>>(this, 8)) {
+        0x387 => {
+            destroy_car_melee_search(this, ped);
+            let r = rd::<f32>(this, 0x20);
+            let mut d = [0f32; 3];
+            let dp: GPtr<u8> = GPtr::from_raw(d.as_mut_ptr()).cast();
+            let v = vector_sub(dp, entity_pos(rd::<GPtr<u8>>(this, 0x10)), entity_pos(ped));
+            let m = vector_magnitude_sqr(v);
+            if gt(x(r).fmul_m(r), m) {
+                destroy_car_melee_sub(this, 0x3FB, ped)
+            } else if in_car(ped) {
+                destroy_car_melee_sub(this, 0xCA, ped)
+            } else {
+                destroy_car_melee_sub(this, 0x38B, ped)
+            }
+        }
+        0x38B => destroy_car_melee_sub(this, 0x3FB, ped),
+        0xCA | 0x3FB => {
+            if !in_car(ped) {
+                destroy_car_melee_search(this, ped);
+                return destroy_car_melee_sub(this, 0x38B, ped);
+            }
+            let t = rd::<u32>(this, 0x30);
+            if t != u32::MAX && g::<u32>(TIME_MS).read().wrapping_sub(t) > 3000 {
+                destroy_car_melee_sub(this, 0x516, ped)
+            } else {
+                destroy_car_melee_sub(this, 0xCA, ped)
+            }
+        }
+        _ => GPtr::NULL,
+    }
+}
+
+/// `CTaskComplexShuffleSeats::CreateNextSubTask(CPed*)` (0x63D420, `ret 4`). With +0x28 set: after 0x328 / 0x32B /
+/// 0x32C → `CreateSubTask(0x330)`, after 0xC8 / 0x330 → 0x516. Otherwise after 0x32B / 0x32C / 0x330 / 0xC8 → 0x516;
+/// after 0x328 the target door +0x14 becomes the one beside +0x10 (8 → 10, 9 → 11, 10 → 8, 11 → 9; other values
+/// keep it): door 10 → 0x32C without a driver (+0x460), else 0x516; other doors → 0x32B when that passenger seat
+/// (+0x464 + `ComputePassengerIndexFromCarDoor` * 4) is empty, else 0x516. Other types: NULL.
+#[hook(addr = 0x63D420, conv = thiscall, name = "CTaskComplexShuffleSeats::CreateNextSubTask", expect = "56 8B F1 8A 46 28",
+       unverified = "frontier2-a10", route = "L2", hazards = "heap-writes")]
+pub fn shuffle_seats_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    use crate::frontier_a_subtasks::shuffle_seats_create_sub_task as sub;
+    let ty = crate::common::task_get_type(rd::<GPtr<u8>>(this, 8));
+    if rd::<u8>(this, 0x28) != 0 {
+        return match ty {
+            0x328 | 0x32B | 0x32C => sub(this, 0x330, ped),
+            0xC8 | 0x330 => sub(this, 0x516, ped),
+            _ => GPtr::NULL,
+        };
+    }
+    match ty {
+        0x32B | 0x32C | 0x330 | 0xC8 => sub(this, 0x516, ped),
+        0x328 => {
+            match rd::<i32>(this, 0x10) {
+                8 => wr::<u32>(this, 0x14, 10),
+                9 => wr::<u32>(this, 0x14, 11),
+                10 => wr::<u32>(this, 0x14, 8),
+                11 => wr::<u32>(this, 0x14, 9),
+                _ => {}
+            }
+            let door = rd::<i32>(this, 0x14);
+            let veh = rd::<GPtr<u8>>(this, 0xC);
+            if door == 10 {
+                if rd::<u32>(veh, 0x460) == 0 { sub(this, 0x32C, ped) } else { sub(this, 0x516, ped) }
+            } else {
+                let i = car_enter_exit_compute_passenger_index_from_car_door(veh, door);
+                let seat = rd::<u32>(rd::<GPtr<u8>>(this, 0xC), 0x464 + i as isize * 4);
+                if seat != 0 { sub(this, 0x516, ped) } else { sub(this, 0x32B, ped) }
+            }
+        }
+        _ => GPtr::NULL,
+    }
+}
+
+/// `CTaskComplexEnterCarAsPassengerWait::ControlSubTask(CPed*)` (0x640730, `ret 4`). Once (+0x20): with a ped to wait
+/// for (+0x10) that is a player, or else (none) with a group leader that is a player, and the ped running task 0x327:
+/// +0x20 = 1 and `Say(0x23 / 0x28, 0, 1.0, 0, 0, 0)`. With a car (+0xC) and a 0x387 sub-task: the closest surface
+/// point `p` (`ComputeClosestSurfacePoint(ped, car)`; an uninitialised stack vector when not written); when `|p -
+/// goal|² > 0.025` (goal = the sub-task's +0x10; z², y², x²) the sub-task's `GoToPoint(p, 1.5, [0x86FC88], 0)` when
+/// the point was found, else `GoToPoint(car position, car col radius + 1.5, [0x86FC88], 0)`. Returns the sub-task.
+#[hook(addr = 0x640730, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerWait::ControlSubTask", expect = "83 EC 0C 56 8B F1 8A 46 20",
+       unverified = "frontier2-a10", route = "L2", hazards = "heap-writes,uninit-locals",
+       note = "the closest point is an uninitialised stack vector when ComputeClosestSurfacePoint does not write it (zeros here)")]
+pub fn enter_car_as_passenger_wait_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    if rd::<u8>(this, 0x20) == 0 {
+        let wait_for = rd::<GPtr<u8>>(this, 0x10);
+        let tm = || rd::<GPtr<u8>>(ped, 0x47C).byte_add(4);
+        let say = if !wait_for.is_null() && ped_is_player(wait_for) != 0 {
+            (!tm_find_active_task_by_type(tm(), 0x327).is_null()).then_some(0x23)
+        } else if rd::<u8>(this, 0x20) == 0 && rd::<u32>(this, 0x10) == 0 {
+            let group = GPtr::<u8>::from_addr(ped_groups_get_peds_group(ped.addr() as u32) as usize);
+            let leader = if group.is_null() { GPtr::NULL } else { membership_get_leader(group.byte_add(8)) };
+            (!leader.is_null() && ped_is_player(leader) != 0 && !tm_find_active_task_by_type(tm(), 0x327).is_null())
+                .then_some(0x28)
+        } else {
+            None
+        };
+        if let Some(id) = say {
+            wr::<u8>(this, 0x20, 1);
+            ped_say(ped, id, 0, 1.0, 0, 0, 0);
+        }
+    }
+    let car = rd::<GPtr<u8>>(this, 0xC);
+    if !car.is_null() && crate::common::task_get_type(rd::<GPtr<u8>>(this, 8)) == 0x387 {
+        let mut p = [0f32; 3];
+        let pp: GPtr<u8> = GPtr::from_raw(p.as_mut_ptr()).cast();
+        let found = compute_closest_surface_point_ped(ped, car, pp) as u8 != 0;
+        let sub = rd::<GPtr<u8>>(this, 8);
+        let dx = x(p[0]).fsub_m(rd::<f32>(sub, 0x10));
+        let dy = x(p[1]).fsub_m(rd::<f32>(sub, 0x14));
+        let dz = x(p[2]).fsub_m(rd::<f32>(sub, 0x18));
+        let d2 = dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx));
+        if gt(d2, x(gf(0x859038))) {
+            let ms = g::<u32>(0x86FC88).read();
+            if found {
+                crate::walk::gtpss_go_to_point(sub, pp, 0x3FC0_0000, ms, 0);
+            } else {
+                let car = rd::<GPtr<u8>>(this, 0xC);
+                let mi = g::<GPtr<u8>>(0xA9B0C8 + rd::<i16>(car, 0x22) as isize as usize * 4).read();
+                let r = x(rd::<f32>(rd::<GPtr<u8>>(mi, 0x14), 0x24)).fadd_m(gf(0x858CE8)).to_f32();
+                crate::walk::gtpss_go_to_point(sub, entity_pos(car), r.to_bits(), ms, 0);
+            }
+        }
+    }
+    rd::<GPtr<u8>>(this, 8)
+}
+
+/// `CTaskInteriorGoToInfo::CreateNextSubTask(CPed*)` (0x675890, `ret 4`). No info (+0xC) or a sub-task other than
+/// 0x38A / 0x384 (the type read twice): NULL. The ped's 2D distance² to the info's position (+4) at most 0.04: a
+/// `CTaskSimpleAchieveHeading(LimitRadianAngle(angle(dir.x, dir.y, 0, 0)), 0.5, 0.2)` for the info's direction
+/// (+0x10); farther (or NaN) a `CTaskComplexFollowNodeRoute(4, info position, 0.2, 3.0, 2.0, false, -1, true)`. A
+/// failed task allocation: NULL.
+#[hook(addr = 0x675890, conv = thiscall, name = "CTaskInteriorGoToInfo::CreateNextSubTask", expect = "64 A1 00 00 00 00 6A FF 68 86 5C 84 00",
+       unverified = "frontier2-a10", route = "L2", hazards = "heap-writes",
+       note = "SEH frame not modelled")]
+pub fn interior_go_to_info_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    if rd::<u32>(this, 0xC) == 0 {
+        return GPtr::NULL;
+    }
+    if crate::common::task_get_type(rd::<GPtr<u8>>(this, 8)) != 0x38A
+        && crate::common::task_get_type(rd::<GPtr<u8>>(this, 8)) != 0x384
+    {
+        return GPtr::NULL;
+    }
+    let info = rd::<GPtr<u8>>(this, 0xC);
+    let mut pos = [rd::<u32>(info, 4), rd::<u32>(info, 8), rd::<u32>(info, 0xC)];
+    let pp = entity_pos(ped);
+    let dy = x(rd::<f32>(pp, 4)).fsub_m(f32::from_bits(pos[1]));
+    let dx = x(rd::<f32>(pp, 0)).fsub_m(f32::from_bits(pos[0]));
+    let d2 = dx.fmul(dx).fadd(dy.fmul(dy));
+    if fcom_parity(d2, x(gf(0x863244)), 0x41) {
+        let mem = crate::common::task_new(0x60);
+        if mem.is_null() {
+            return GPtr::NULL;
+        }
+        let r = GPtr::from_raw(pos.as_mut_ptr()).cast();
+        return follow_node_route_ctor(mem, 4, r, 0x3E4C_CCCD, g::<u32>(0x86FCA4).read(), g::<u32>(0x86FCA8).read(), 0,
+                                      u32::MAX, 1);
+    }
+    let a = general_get_radian_angle_between_points(rd::<f32>(info, 0x10), rd::<f32>(info, 0x14), 0.0, 0.0).to_f32();
+    let h = st0(general_limit_radian_angle(a)).to_f32();
+    let mem = crate::common::task_new(0x18);
+    if mem.is_null() {
+        return GPtr::NULL;
+    }
+    achieve_heading_ctor(mem, h, g::<u32>(0x86FC7C).read(), g::<u32>(0x86FC80).read())
+}
+
+/// `CTaskComplexWaitForBackup::CreateNextSubTask(CPed*)` (0x697F10, `ret 4`). By the sub-task's type: 0x2C0 → 0x386;
+/// 0xCA → 0x2C0 when the ped has a vehicle (+0x58C) and is in it (+0x46C bit 8), else 0x386; 0x386 → 0x3FC when the
+/// current weapon's fire type (skill 1) is 1, else 0x516; 0x3FC → 0x516 unless the backup ped (+0x14) is alive and the
+/// timer (+0x18) not out of time, then 0x386 when `(+0xC)²` is at most the 2D distance² from the ped to it (NaN
+/// too), else 0x516. Others: NULL.
+#[hook(addr = 0x697F10, conv = thiscall, name = "CTaskComplexWaitForBackup::CreateNextSubTask", expect = "83 EC 0C 56 8B F1 8B 4E 08",
+       unverified = "frontier2-a10", route = "L2", hazards = "heap-writes,stack-residue",
+       note = "the original writes +0xC into its own ped argument slot")]
+pub fn wait_for_backup_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    use crate::frontier_a_subtasks::wait_for_backup_create_sub_task as sub;
+    match crate::common::task_get_type(rd::<GPtr<u8>>(this, 8)) {
+        0x2C0 => sub(this, 0x386, ped),
+        0xCA => {
+            if rd::<u32>(ped, 0x58C) != 0 && rd::<u32>(ped, 0x46C) & 0x100 != 0 {
+                sub(this, 0x2C0, ped)
+            } else {
+                sub(this, 0x386, ped)
+            }
+        }
+        0x386 => {
+            let wt = rd::<i32>(sa_world::world::common::ped_active_weapon(ped), 0);
+            if rd::<u32>(get_weapon_info(wt, 1), 0) == 1 { sub(this, 0x3FC, ped) } else { sub(this, 0x516, ped) }
+        }
+        0x3FC => {
+            let other = rd::<GPtr<u8>>(this, 0x14);
+            if other.is_null() || ped_is_alive(other) as u8 == 0 || task_timer_is_out_of_time(this.byte_add(0x18)) != 0 {
+                return sub(this, 0x516, ped);
+            }
+            let mut d = [0f32; 3];
+            let dp: GPtr<u8> = GPtr::from_raw(d.as_mut_ptr()).cast();
+            vector_difference(dp, entity_pos(ped), entity_pos(rd::<GPtr<u8>>(this, 0x14)));
+            wr::<u32>(dp, 8, 0);
+            let r = rd::<f32>(this, 0xC);
+            if le_or_nan(x(r).fmul_m(r), vector_magnitude_sqr(dp)) {
+                sub(this, 0x386, ped)
+            } else {
+                sub(this, 0x516, ped)
+            }
+        }
+        _ => GPtr::NULL,
+    }
+}
+
+/// `CTaskComplexSeekEntityAiming::ControlSubTask(CPed*)` (0x694C70, `ret 4`). `d²` = the 2D distance² from the target
+/// (+0xC) to the ped (y², x²; f32, written over the ped argument slot); `gun` = the ped's secondary attack task (slot
+/// 0). After a 0x38B sub-task: within +0x14 (`d² < r²`) a new `CTaskSimpleUseGun(target, 0, 1, 1, false)` as that task
+/// when there is none, else a 0x3F9 gun's `ControlGun(ped, target, 1)`; otherwise a 0x3F9 gun's `ControlGun(ped,
+/// target, 6)`. After 0xCB: a 0x3F9 gun's `ControlGun(ped, target, 1)`, then unless `d² < (+0x10)²` (or NaN) the
+/// sub-task's `MakeAbortable(ped, 0, NULL)`. Returns the sub-task.
+#[hook(addr = 0x694C70, conv = thiscall, name = "CTaskComplexSeekEntityAiming::ControlSubTask", expect = "64 A1 00 00 00 00 6A FF 68 DB 75 84 00",
+       unverified = "frontier2-a10", route = "L2", hazards = "heap-writes,stack-residue",
+       note = "d² is stored over the ped argument slot; SEH frame not modelled")]
+pub fn seek_entity_aiming_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let tp = entity_pos(rd::<GPtr<u8>>(this, 0xC));
+    let pp = entity_pos(ped);
+    let dx = x(rd::<f32>(pp, 0)).fsub_m(rd::<f32>(tp, 0));
+    let dy = x(rd::<f32>(pp, 4)).fsub_m(rd::<f32>(tp, 4));
+    let d2 = dy.fmul(dy).fadd(dx.fmul(dx)).to_f32();
+    let gun = tm_get_task_secondary(rd::<GPtr<u8>>(ped, 0x47C).byte_add(4), 0);
+    let is_gun = |t: GPtr<u8>| !t.is_null() && crate::common::task_get_type(t) == 0x3F9;
+    match crate::common::task_get_type(rd::<GPtr<u8>>(this, 8)) {
+        0x38B => {
+            let r = rd::<f32>(this, 0x14);
+            if !ge_or_nan(x(d2), x(r).fmul_m(r)) {
+                if gun.is_null() {
+                    let mem = crate::common::task_new(0x3C);
+                    let t = if mem.is_null() {
+                        GPtr::NULL
+                    } else {
+                        use_gun_ctor(mem, rd::<GPtr<u8>>(this, 0xC), 0, 0, 0, 1, 1, 0)
+                    };
+                    tm_set_task_secondary(rd::<GPtr<u8>>(ped, 0x47C).byte_add(4), t, 0);
+                } else if is_gun(gun) {
+                    use_gun_control_gun(gun, ped, rd::<GPtr<u8>>(this, 0xC), 1);
+                }
+            } else if is_gun(gun) {
+                use_gun_control_gun(gun, ped, rd::<GPtr<u8>>(this, 0xC), 6);
+            }
+        }
+        0xCB => {
+            if is_gun(gun) {
+                use_gun_control_gun(gun, ped, rd::<GPtr<u8>>(this, 0xC), 1);
+            }
+            let r = rd::<f32>(this, 0x10);
+            if !fcom_any(x(d2), x(r).fmul_m(r), 1) {
+                crate::common::task_make_abortable(rd::<GPtr<u8>>(this, 8), ped, 0, GPtr::NULL);
+            }
+        }
+        _ => {}
+    }
+    rd::<GPtr<u8>>(this, 8)
+}
+
 /// Every hook of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_JET_PACK_PROCESS_CONTROL_INPUT,
     HOOK_JET_PACK_PROCESS_THRUST,
     HOOK_JET_PACK_PROCESS_PED,
+    HOOK_STEALTH_KILL_PROCESS_PED,
+    HOOK_DESTROY_CAR_MELEE_CREATE_NEXT_SUB_TASK,
+    HOOK_SHUFFLE_SEATS_CREATE_NEXT_SUB_TASK,
+    HOOK_ENTER_CAR_AS_PASSENGER_WAIT_CONTROL_SUB_TASK,
+    HOOK_INTERIOR_GO_TO_INFO_CREATE_NEXT_SUB_TASK,
+    HOOK_WAIT_FOR_BACKUP_CREATE_NEXT_SUB_TASK,
+    HOOK_SEEK_ENTITY_AIMING_CONTROL_SUB_TASK,
 ];
