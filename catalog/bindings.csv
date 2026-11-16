@@ -14,6 +14,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x486670,sa-ai,clean_up_this_vehicle,cdecl,,v:GPtr<u8>,,unported,CTheScripts::CleanUpThisVehicle,
 0x4893E0,sa-ai,intel_get_ped_entities,thiscall,,i:GPtr<u8>,GPtr<u8>,unported,CPedIntelligence::GetPedEntities,
 0x4ADDF0,sa-ai,event_death_ctor,thiscall,,e:GPtr<u8>;drowning:u32,GPtr<u8>,unported,CEventDeath::CEventDeath,
+0x5F1890,sa-ai,geom_compute_route_round_sphere,cdecl,,ped:GPtr<u8>;s:GPtr<u8>;a:GPtr<u8>;b:GPtr<u8>;o1:GPtr<u8>;o2:GPtr<u8>,u32,unported,CPedGeometryAnalyser::ComputeRouteRoundSphere,
 0x493730,sa-ai,task_seek_radius_angle_ctor,thiscall,,t:GPtr<u8>;e:GPtr<u8>;time:u32;period:u32;a:u32;b:u32;c:u32;d:u32;f:u32,GPtr<u8>,unported,CTaskComplexSeekEntityRadiusAngleOffset::Constructor,
 0x61F660,sa-ai,throw_projectile_ctor,thiscall,,t:GPtr<u8>;target:GPtr<u8>;x:u32;y:u32;z:u32,GPtr<u8>,unported,CTaskSimpleThrowProjectile::Constructor,
 0x634440,sa-ai,task_trigger_look_at_ctor,thiscall,,t:GPtr<u8>;e:GPtr<u8>;time:u32;bone:u32;x:u32;y:u32;z:u32;b:u32;speed:u32;blend:u32;prio:u32,GPtr<u8>,unported,FUN_00634440,

@@ -514,6 +514,11 @@ orig! {
 }
 
 orig! {
+    /// `CPedGeometryAnalyser::ComputeRouteRoundSphere` (0x5F1890)
+    pub fn geom_compute_route_round_sphere(ped: GPtr<u8>, s: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, o1: GPtr<u8>, o2: GPtr<u8>) -> u32 = cdecl 0x5F1890 => unported;
+}
+
+orig! {
     /// `CPedGeometryAnalyser::CanPedTargetPed` (0x5F1C40)
     pub fn can_ped_target_ped(a: GPtr<u8>, b: GPtr<u8>, c: u32) -> u8 = cdecl 0x5F1C40 => crate::mvpa_ai1::can_ped_target_ped;
 }

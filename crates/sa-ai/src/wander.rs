@@ -82,6 +82,7 @@ use sa_world::bindings::node_eq as node_address_eq_420920;
 use sa_world::bindings::ped_say;
 use crate::bindings::fpr_get_last_waypoint;
 use crate::bindings::go_to_point_fine_ctor_b as go_to_point_fine_ctor;
+use crate::bindings::geom_compute_route_round_sphere;
 orig! {
     // ---- virtual slots ----
     /// `CTask::GetTaskType` (vtable +0x10)
@@ -189,10 +190,6 @@ orig! {
     fn aop_compute_avoid_sphere(t: GPtr<u8>, ped: GPtr<u8>, s: GPtr<u8>) = thiscall 0x672080 => unported;
     /// `CTaskComplexAvoidOtherPedWhileWandering::ComputeRouteRoundSphere(CPed*, CColSphere&)` (0x66A7B0, `ret 8`)
     fn aop_compute_route_round_sphere(t: GPtr<u8>, ped: GPtr<u8>, s: GPtr<u8>) -> u32 = thiscall 0x66A7B0 => unported;
-    /// `CPedGeometryAnalyser::ComputeRouteRoundSphere(ped, sphere, from, to, out1, out2)` (0x5F1890)
-    pub(crate) fn geom_compute_route_round_sphere(
-        ped: GPtr<u8>, s: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, o1: GPtr<u8>, o2: GPtr<u8>
-    ) -> u32 = cdecl 0x5F1890 => unported;
     /// `CTaskComplexWanderStandard::LookForGangMembers(CPed*)` (0x670100, `ret 4`, AL)
     fn ws_look_for_gang_members(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x670100 => unported;
     /// `CTaskComplexWanderStandard::LookForChatPartners(CPed*)` (0x66FDA0, `ret 4`, AL)

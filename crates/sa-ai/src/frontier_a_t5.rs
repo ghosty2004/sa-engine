@@ -38,10 +38,14 @@ use crate::bindings::go_to_point_aiming_ctor;
 use crate::bindings::task_trigger_look_at_ctor;
 use crate::bindings::throw_projectile_ctor;
 use crate::bindings::track_entity_ctor;
-use crate::bindings::{climb_ctor, death_dtor, drive_to_point_ctor};
+use crate::bindings::{climb_ctor, death_dtor, drive_to_point_ctor, go_to_point_ctor, ped_position_ped_out_of_collision, vehicle_is_driver};
+use sa_world::bindings::{car_enter_exit_compute_passenger_index_from_car_door, col_sphere_set};
 use sa_world::bindings::{find_player_ped, ped_set_ped_state, stats_increment_stat};
 use crate::bindings::event_death_ctor;
+use crate::bindings::geom_compute_route_round_sphere;
 orig! {
+    /// `CCarEnterExit::ComputeOppositeDoorFlag(const CVehicle*, int32 door, bool)` (0x64E610, AL)
+    fn compute_opposite_door_flag(v: GPtr<u8>, door: i32, b: u32) -> u8 = cdecl 0x64E610 => unported;
     /// `CTask::Clone()` (vtable +4)
     fn v_clone(t: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x4 => unported;
     /// `CEntitySeekPosCalculator::ComputeEntitySeekPos(const CPed&, const CEntity&, CVector&)` (vtable +0)
@@ -984,6 +988,104 @@ pub fn in_water_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> 
     })
 }
 
+/// `CTaskComplexWalkRoundFire::CreateFirstSubTask(CPed* ped)` (0x6584E0, `ret 4`): the start (+0x2C) = the ped's
+/// position; the fire as a stack `CColSphere` (radius +0x1C, centre +0x10, surface 0 / 0 / 0xFF);
+/// `ComputeRouteRoundSphere(ped, sphere, start, target +0x20, &newTarget, &detour)`; then
+/// `CTaskSimpleGoToPoint(move state +0xC, &detour, the radius at 0x86FC78, false, false)`.
+#[hook(addr = 0x6584E0, conv = thiscall, name = "CTaskComplexWalkRoundFire::CreateFirstSubTask", expect = "64 A1 00 00 00 00 6A FF 68 AB 3A 84 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes,uninit-locals",
+       note = "the detour local stays uninitialised when the route test leaves it untouched")]
+pub fn walk_round_fire_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let p = entity_pos(ped);
+    for k in 0..3 {
+        wr::<u32>(this, 0x2C + 4 * k, rd::<u32>(p, 4 * k));
+    }
+    let mut sphere = [0u32; 5];
+    let sp = GPtr::from_raw(sphere.as_mut_ptr()).cast::<u8>();
+    col_sphere_set(sp, rd::<u32>(this, 0x1C), this.byte_add(0x10).cast(), 0, 0, 0xFF);
+    let (mut new_target, mut detour) = ([0u32; 3], [0u32; 3]);
+    let dp = GPtr::from_raw(detour.as_mut_ptr()).cast::<u8>();
+    geom_compute_route_round_sphere(ped, sp, this.byte_add(0x2C), this.byte_add(0x20), GPtr::from_raw(new_target.as_mut_ptr()).cast(), dp);
+    new_task(0x30, |m| go_to_point_ctor(m, rd::<u32>(this, 0xC), dp, g::<u32>(0x86FC78).read(), 0, 0))
+}
+
+/// `CTaskComplexSeekEntityAnyMeansXYOffset::ControlSubTask(CPed* ped)` (0x696160, `ret 4`). Without an entity (+0xC) a
+/// new 0x14-byte complex task (vtable 0x858EB0; +0xC 0, +0x10 1, +0x11 0) replaces the sub-task (null when `new` fails).
+/// With the timer on (+0x20): a restart flag (+0x21, cleared) restarts it at now (+0x18); once now reaches +0x18 +
+/// +0x1C (unsigned) it restarts with the period +0x10 and the sub-task's target (+0x24) gets the calculator's (+0x24)
+/// `ComputeEntitySeekPos(ped, entity, &pos)`. The sub-task (+8) stays.
+#[hook(addr = 0x696160, conv = thiscall, name = "CTaskComplexSeekEntityAnyMeansXYOffset::ControlSubTask", expect = "64 A1 00 00 00 00 6A FF 68 DB 77 84 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes,uninit-locals",
+       note = "the position stays uninitialised when the calculator writes nothing")]
+pub fn seek_entity_any_means_xy_offset_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    if rd::<u32>(this, 0xC) == 0 {
+        let t = task_new(0x14);
+        if t.is_null() {
+            return GPtr::NULL;
+        }
+        task_complex_ctor(t.addr() as u32);
+        wr::<u32>(t, 0xC, 0);
+        wr::<u8>(t, 0x11, 0);
+        wr::<u32>(t, 0, 0x858EB0);
+        wr::<u8>(t, 0x10, 1);
+        return t;
+    }
+    if rd::<u8>(this, 0x20) != 0 {
+        if rd::<u8>(this, 0x21) != 0 {
+            wr::<u32>(this, 0x18, g::<u32>(0xB7CB84).read());
+            wr::<u8>(this, 0x21, 0);
+        }
+        let end = rd::<u32>(this, 0x1C).wrapping_add(rd::<u32>(this, 0x18));
+        let now = g::<u32>(0xB7CB84).read();
+        if now >= end {
+            wr::<u32>(this, 0x18, now);
+            wr::<u32>(this, 0x1C, rd::<u32>(this, 0x10));
+            wr::<u8>(this, 0x20, 1);
+            let sub = rd::<GPtr<u8>>(this, 8);
+            let mut pos = [0u32; 3];
+            v_compute_entity_seek_pos(this.byte_add(0x24), ped, rd::<GPtr<u8>>(this, 0xC), GPtr::from_raw(pos.as_mut_ptr()).cast());
+            for (k, v) in pos.iter().enumerate() {
+                wr::<u32>(sub, 0x24 + 4 * k as isize, *v);
+            }
+        }
+    }
+    rd::<GPtr<u8>>(this, 8)
+}
+
+/// `vt_86ee94::ProcessPed(CPed* ped)` (0x6477F0, `ret 4`): no vehicle (+8): AL = 1. The driver, or when the door
+/// opposite +0xC (`ComputeOppositeDoorFlag(vehicle, door, false)`) is not among the vehicle's door flags (+0x487), or it
+/// is but the seats it serves are empty (no driver +0x460 and no passenger in the first
+/// `ComputePassengerIndexFromCarDoor(vehicle, door)` slots +0x464): `PositionPedOutOfCollision(door, vehicle, true)`
+/// and AL = 1; otherwise AL = 0.
+#[hook(addr = 0x6477F0, conv = thiscall, name = "vt_86ee94::ProcessPed", expect = "56 8B F1 8B 4E 08",
+       unverified = "frontier2-a8", route = "L2", hazards = "ax-al-return,heap-writes")]
+pub fn vt_86ee94_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
+    let veh = rd::<GPtr<u8>>(this, 8);
+    if veh.is_null() {
+        return 1;
+    }
+    let out = || {
+        ped_position_ped_out_of_collision(ped, rd::<u32>(this, 0xC), rd::<GPtr<u8>>(this, 8), 1);
+        1
+    };
+    if vehicle_is_driver(veh, ped) != 0 {
+        return out();
+    }
+    let flag = compute_opposite_door_flag(rd::<GPtr<u8>>(this, 8), rd::<i32>(this, 0xC), 0);
+    let v = rd::<GPtr<u8>>(this, 8);
+    if flag & rd::<u8>(v, 0x487) != 0 {
+        if rd::<u32>(v, 0x460) != 0 {
+            return 0;
+        }
+        let n = car_enter_exit_compute_passenger_index_from_car_door(v, rd::<i32>(this, 0xC));
+        let v = rd::<GPtr<u8>>(this, 8);
+        if (0..n.max(0)).any(|i| rd::<u32>(v, 0x464 + 4 * i as isize) != 0) {
+            return 0;
+        }
+    }
+    out()
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_FOLLOW_LEADER_IN_FORMATION_CREATE_SUB_TASK,
@@ -1015,4 +1117,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_USE_SCRIPTED_ATTRACTOR_CREATE_FIRST_SUB_TASK,
     HOOK_DEFAULT_TASK_ALLOCATOR_STAND_STILL_ALLOCATE_DEFAULT_TASKS,
     HOOK_IN_WATER_CREATE_NEXT_SUB_TASK,
+    HOOK_WALK_ROUND_FIRE_CREATE_FIRST_SUB_TASK,
+    HOOK_SEEK_ENTITY_ANY_MEANS_XY_OFFSET_CONTROL_SUB_TASK,
+    HOOK_VT_86EE94_PROCESS_PED,
 ];
