@@ -60,8 +60,9 @@ pub fn parse_args() -> Result<Args, String> {
                      the offscreen mode's synthetic input (Enter through the menus, SA_GAME_WALK).\n\
                      --fixed-step MS: deterministic mode (the game clock advances MS per main-loop iteration, streaming\n\
                      reads complete within their iteration; scripted input: SA_GAME_KEYS, SA_GAME_WALK, SA_GAME_MOUSE, SA_GAME_LMB, SA_GAME_POINTER).\n\
-                     Window runs serve the game heap from the deterministic mode's fixed-address region (one heap\n\
-                     layout everywhere); --system-heap uses the C library's allocator instead.\n\
+                     The game heap comes from the deterministic mode's fixed-address region at 0x18000000 (one heap\n\
+                     layout everywhere, in the original's address range); --system-heap uses the C library's allocator\n\
+                     instead (its addresses read as huge floats where the game reads stale pointers: not 1:1).\n\
                      --samp joins a SA:MP / open.mp server through the native game adapter (build with --features samp;\n\
                      without it a stand-in client only samples the adapter). The auth table comes from --samp-auth or SAMP_AUTH_TABLE.\n\
                      --samp-ui-demo draws the engine-drawn SA:MP UI (chat, dialogs, nametags, labels, textdraws) with sample content."
@@ -80,8 +81,10 @@ pub fn parse_args() -> Result<Args, String> {
     if a.game.as_os_str().is_empty() {
         return Err("--game DIR is required (the GTA San Andreas install)".into());
     }
-    // decided before the first game allocation: a block must be freed by the allocator that made it
-    det::set_fixed_heap(a.window && !system_heap);
+    // decided before the first game allocation: a block must be freed by the allocator that made it. Every run (window
+    // or offscreen) takes the fixed-address region, which keeps the game heap in the original's address range
+    // (platform.md section 23); --system-heap opts out.
+    det::set_fixed_heap(!system_heap);
     Ok(a)
 }
 

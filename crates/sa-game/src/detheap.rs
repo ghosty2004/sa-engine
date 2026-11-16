@@ -1,8 +1,15 @@
-//! The deterministic mode's game heap (`--fixed-step`, [`crate::det`]): `malloc` / `free` / `calloc` / `realloc` and
-//! `CMemoryMgr::MallocAlign` / `FreeAlign` are served from one region mapped at a fixed address, with size-class free
-//! lists (LIFO) and a bump pointer, so two runs of one scenario hand out the same addresses (the game seeds `rand`
-//! with entity addresses, e.g. the timed enex lights at 0x5339F5; glibc's addresses depend on what the other threads
-//! allocated first). Not a general-purpose allocator: freed blocks are reused only by requests of the same class.
+//! The game heap (the deterministic mode, and every other run unless `--system-heap`; [`crate::det::fixed_heap`]):
+//! `malloc` / `free` / `calloc` / `realloc` and `CMemoryMgr::MallocAlign` / `FreeAlign` are served from one region
+//! mapped at a fixed address, with size-class free lists (LIFO) and a bump pointer, so two runs of one scenario hand
+//! out the same addresses (the game seeds `rand` with entity addresses, e.g. the timed enex lights at 0x5339F5;
+//! glibc's addresses depend on what the other threads allocated first). Not a general-purpose allocator: freed blocks
+//! are reused only by requests of the same class.
+//!
+//! The region also keeps the heap in the original's address range: the game reads some stale pointers as floats,
+//! and the original's heap addresses (well below 0x3F800000, the bits of 1.0f) read as tiny values. A new ped's
+//! interpolated key frames hold `RtAnimInterpolatorSetCurrentAnim`'s key-frame pointers in their quaternion x / y
+//! until its first on-screen anim update; with glibc's heap after the 32-bit PIE (0x5Bxxxxxx) those read as 1e17,
+//! the bone matrices become NaN and `CPedIK::PitchForSlope` keeps the legs NaN on slopes (platform.md section 23).
 
 #![allow(unsafe_code)]
 
@@ -60,7 +67,10 @@ fn with<R>(f: impl FnOnce(&mut Heap) -> R) -> R {
                 )
             };
             if p == libc::MAP_FAILED {
-                eprintln!("sa-game: --fixed-step heap: {BASE:#x} is taken; the kernel picks the address (runs may differ)");
+                eprintln!(
+                    "sa-game: game heap: {BASE:#x} is taken; the kernel picks the address (runs may differ, and above \
+                     0x3F800000 stale pointers read as floats are not the original's)"
+                );
                 // SAFETY: as above, without a fixed address.
                 p = unsafe {
                     libc::mmap(

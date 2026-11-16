@@ -2043,3 +2043,48 @@ in the time.
 With that the page reaches the world at 14.6 s and the tapped RMS above 60 Hz matches WEB-AUDIO's (-28 to -30 dBFS).
 Suspects: a cooperative stream-thread pass that never returns (the decoder's first 786,432-byte fill and the seek
 decode run inside one main-loop pass), or a blocked-iteration exception during a stream pass.
+
+## 23. Peds without legs: the game heap's address range
+
+User report (play package, `./play.sh`, real time, `--system-heap`): some peds render without their lower body (a cop
+on a ramp: torso, arms and head drawn, belt and legs missing, the shadow drawn), randomly, not tied to one model.
+
+**Cause.** Not the renderer: the skinned vertices of the thigh, calf, foot and toe bones are NaN because those bones'
+matrices are NaN. The chain, measured with temporary diagnostics (per-atomic bone-matrix checks after
+`_rpSkinPrepareMatrices`, per-ped key-frame dumps, a probe in `CPedIK::PitchForSlope`):
+
+1. `CClumpModelInfo::CreateInstance` (0x4C5140) calls `RtAnimInterpolatorSetCurrentAnim` (0x7CD5A0) on a new skinned
+   clump. Its second loop writes RW's interpolated-frame header (the two key-frame pointers) at the start of every
+   interpolated frame, but SA's frames are `RpHAnimBlendInterpFrame` (quaternion + translation, 0x1C, no header): the
+   pointers land in the quaternion's x / y (checked against the 1.0 US bytes: the original does the same).
+2. Until the ped's first on-screen anim update (`FrameUpdateCallBackSkinned`) rewrites them, a hierarchy update builds
+   its bone matrices from those values. With the original's heap (Windows, well below 0x3F800000) a pointer read as a
+   float is a tiny value (0x0Axxxxxx is about 1e-32): a near-identity rotation. With glibc's heap behind the 32-bit
+   PIE (0x5Bxxxxxx with `setarch -R`) it is about 1e17: the pelvis matrix reaches 1e37 and every bone below it is
+   inf / NaN (seen as "all bones but the root NaN" for new peds).
+3. `CPedIK::PitchForSlope` (0x5FE0E0, ped on a slope) rotates the thigh / calf / foot key frames by
+   `asin(up.z)` of the previous frame's thigh matrix. A NaN or inf there makes the rotations NaN, the next hierarchy
+   update makes the leg matrices NaN again, and so on while the ped stands on the slope: the legs stay invisible while
+   the rest of the body is animated normally. Freed hierarchies also hand their NaN matrices to the next ped through
+   the uninitialised matrix array (`RpHAnimHierarchyCreate`, as in the original) whose first `PitchForSlope` reads them.
+
+**Fix (sa-game platform layer, no port changed).** Every run serves the game heap from the fixed-address region at
+0x18000000 (`detheap`, before only the window and deterministic runs; offscreen real-time runs used glibc), so the
+stale pointers read as the same tiny floats as in the original. `--system-heap` still opts out and is documented as
+not 1:1. The play package's `play.sh` passes `--system-heap`; it should drop it (main-session decision: it was kept
+until a long-session memory test of the fixed heap; see the measurement below).
+
+**Evidence** (offscreen, `target/legs/`, not committed; diagnostics not committed):
+* Real time, Grove Street start, 6,000 iterations: with glibc's heap 10 of 10 runs had NaN skeletons, 6 of them NaN
+  legs (masks 0xFF000000: bones 24..31) on bfypro, fam2/wfybe, bmyst, sfypro, bmydj, bmycr, fam3, bfyst; with the fixed
+  heap (forced, then the fix) 0 of 6.
+* Deterministic (`--fixed-step 40`, CJ running into Grove Street) with the fixed region moved to 0x60000000: 29 to 58
+  legs events (bmotr1, bmycr, bmydj), frame `before-legless-ped.png` (a ped floating without legs); the same run at
+  0x18000000: none (`after-*.png`). Every earlier deterministic run already used the low region, which is why the
+  bug only showed in real-time play.
+* Long session with the fixed region (real time, offscreen, 16,000 iterations, nine teleports across Los Santos, CJ
+  walking throughout): the bump pointer stood at 0x1A6DA9E0 after 1,000 iterations, 0x1B2FA410 after 10,000 and
+  0x1B372F90 from 14,000 to the end (55 MiB of the 896 MiB region; the free lists held about 9 MiB): no growth once
+  the areas had been visited. 0 NaN skeletons. A run that also went to San Fierro and Las Venturas stopped at
+  iteration 4,751 on unported functions (`CObject::ProcessSamSiteBehaviour`, a render callback 0x5D77D0), with the
+  same flat profile until then.

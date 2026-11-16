@@ -70,8 +70,8 @@ pub fn on() -> bool {
     STEP_US.load(Ordering::Relaxed) != 0
 }
 
-/// The fixed-address game heap outside the deterministic mode (window runs; platform.md section 21.1: one heap layout
-/// everywhere). `--system-heap` turns it off.
+/// The fixed-address game heap outside the deterministic mode (window and offscreen runs; platform.md sections 21.1
+/// and 23: one heap layout everywhere, in the original's address range). `--system-heap` turns it off.
 static FIXED_HEAP: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 /// Serves the game heap from [`crate::detheap`] in this run.

@@ -2975,3 +2975,30 @@
   0x74A880 (read; needs RpGeometryStreamWrite 0x74CED0, unbound), 0x4CAEA0, 0x75A960, the world-sector native stream
   0x763F20 / 0x7641C0, 0x7CC110, 0x7CF240, 0x7CF600, 0x5D0820, 0x81F360; WORLD / RENDER: PlaceObject's callers above
   and the rest of frontier.py's rows.
+## 2026-11-16 — peds without legs: the game heap's address range (agent, branch worktree-agent-a7644b7409a362326)
+
+- User report: in the play package (real time, `--system-heap`) some peds render without their lower body, randomly,
+  not tied to one model. Base master fd8240d3 (the worktree was created at 1f765b2a and fast-forwarded).
+- Root cause (offscreen evidence, temporary diagnostics not committed: bone-matrix checks after the skin matrix
+  preparation, per-ped key-frame dumps, a probe in `CPedIK::PitchForSlope`): the leg bones' matrices are NaN.
+  `CClumpModelInfo::CreateInstance` 0x4C5140 → `RtAnimInterpolatorSetCurrentAnim` 0x7CD5A0 writes RW's key-frame
+  pointers over the x / y of SA's header-less interpolated frames (checked against the bytes: the original does the
+  same). Until the first on-screen anim update those are the bone quaternions; with the original's heap (far below
+  0x3F800000) they read as tiny floats, with glibc's heap after the 32-bit PIE (0x5Bxxxxxx) as about 1e17, so the
+  bone matrices become inf / NaN. `CPedIK::PitchForSlope` 0x5FE0E0 reads the previous frame's thigh matrix (asin of
+  up.z) and keeps the thigh / calf / foot key frames NaN while the ped stands on a slope (the user's screenshot: a ramp);
+  freed NaN matrix arrays seed later peds through `RpHAnimHierarchyCreate`'s uninitialised array. Ruled out on the way:
+  the D3D9 seam (no draw errors, buffer / alpha-test states), the skin instancing and blenders, the mesh data (the cop
+  models have one mesh and one material), texture alpha.
+- Fix (sa-game platform layer, no port changed): every run serves the game heap from the fixed-address region at
+  0x18000000 (`det::set_fixed_heap(!system_heap)`; offscreen real-time runs used glibc before), help text and
+  `detheap` doc updated, `--system-heap` documented as not 1:1. platform.md section 23, ROADMAP STD-3 note.
+- Verified: real time, 6,000 iterations from Grove Street: glibc heap 10 of 10 runs with NaN skeletons, 6 with NaN legs
+  (bfypro, fam2 / wfybe, bmyst, sfypro, bmydj, bmycr, fam3, bfyst); fixed region 0 of 6 (3 forced before the fix, 3 with
+  it). Deterministic run (`--fixed-step 40`, CJ running into Grove Street) with the region moved to 0x60000000: 58
+  NaN-leg frames, `target/legs/evidence/before-legless-ped{,-crop}.png` (a ped drawn without legs); at 0x18000000: 0
+  (`after-*.png`). Long session (16,000 real-time iterations, nine teleports in Los Santos): heap top flat at 55 MiB
+  from iteration 14,000 on (platform.md section 23). Writer gate and wasm32: see the hand-back.
+- For the main session: the play package's `play.sh` passes `--system-heap` and keeps the bug; dropping it fixes it
+  (the long-session measurement above was the open condition). Seen but not investigated: the prepared skin matrices of
+  the right / left hand and finger bones (12..14, 18..20) sometimes have rows outside 0.5..2 in length, with either heap.
