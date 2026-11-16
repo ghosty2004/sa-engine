@@ -2696,8 +2696,4 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x821982,sa-world,crt_printf,cdecl,,fmt:u32,i32,unported,FID_conflict:_wprintf,
 0x8219F0,sa-world,crt_floor,cdecl,,v:f64,f64,unported,FUN_008219f0,
 0x823820,sa-world,crt_ceil,cdecl,,v:f64,f64,unported,FUN_00823820,
-0x4B2470,sa-world,event_player_command_to_group_dtor,thiscall,,e:GPtr<u8>,,unported,FUN_004b2470,sa_ai::mvpa_ai2::event_player_command_to_group_dtor
-0x601390,sa-ai,intel_clear_task_duck_secondary,thiscall,,intel:GPtr<u8>,,sa_ai::intelrest::intel_clear_task_duck_secondary,CPedIntelligence::ClearTaskDuckSecondary,
-0x668C70,sa-ai,go_to_point_shooting_ctor,thiscall,,t:GPtr<u8>;mode:u32;pos:GPtr<u32>;e:GPtr<u8>;ox:u32;oy:u32;oz:u32;a:u32;b:u32,GPtr<u8>,unported,CTaskComplexGoToPointShooting::Constructor,
-0x678CD0,sa-ai,in_air_ctor,thiscall,,t:GPtr<u8>;a:u32;b:u32;c:u32,GPtr<u8>,unported,CTaskSimpleInAir::Constructor,
 0x73AF00,sa-veh,weapon_fire_one_instant_hit_round,cdecl,,a:GPtr<u32>;b:GPtr<u32>;dmg:u32,,unported,CWeapon::FireOneInstantHitRound,
