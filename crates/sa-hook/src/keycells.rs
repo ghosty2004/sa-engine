@@ -43,7 +43,7 @@ pub struct Reader {
 
 /// Every absolute read of a hooked entry's bytes in gta_sa.exe 1.0 US (`.text`, the no-CD `.text` and
 /// `.HOODLUM`), found by the test below.
-pub const READERS: [Reader; 51] = [
+pub const READERS: [Reader; 53] = [
     // CStreaming::AreAnimsUsedByRequestedModels entry (0x407AD0)
     Reader {
         at: 0x401BCE,
@@ -117,17 +117,11 @@ pub const READERS: [Reader; 51] = [
         key: 0x444813,
         value: 0xFFFC_22C2,
     },
-    // MVP-C batches: CDraw::SetFOV entry 0x6FF410 (`sbb edx, [0x6FF415]` at 0x401375),
-    // CTaskComplexWalkRoundCar::Constructor entry 0x6541B0 (`xor ecx, [0x6541B2]` at 0x40153B,
+    // MVP-C batches: CTaskComplexWalkRoundCar::Constructor entry 0x6541B0 (`xor ecx, [0x6541B2]` at 0x40153B,
     // `add edx, [0x6541B2]` at 0x401591), CTaskSimpleIKChain::~CTaskSimpleIKChain entry 0x633A90
-    // (`add ebp, [0x633A93]` at 0x156BA30), found by the test below.
-    Reader {
-        at: 0x401375,
-        insn: [0x1B, 0x15, 0x15, 0xF4, 0x6F, 0x00],
-        disp_off: 2,
-        key: 0x6FF415,
-        value: 0xFFD0_1C0C,
-    },
+    // (`add ebp, [0x633A93]` at 0x156BA30), found by the test below. (CDraw::SetFOV's reader 0x401375 of
+    // 0x6FF415, entry + 5, and CPedClothesDesc::GetIsWearingBalaclava's 0x407E2C of 0x5A7955, entry + 5, were
+    // dropped in FRONTIER-2 lane C turn 7: an inline hook writes only its 5-byte `jmp` since then.)
     Reader {
         at: 0x40153B,
         insn: [0x33, 0x0D, 0xB2, 0x41, 0x65, 0x00],
@@ -271,14 +265,6 @@ pub const READERS: [Reader; 51] = [
         disp_off: 1,
         key: 0x54A2C1,
         value: 0xEBF4_89E9,
-    },
-    // Batch mvpi-ped-1: CPedClothesDesc::GetIsWearingBalaclava entry 0x5A7950, found by the test below.
-    Reader {
-        at: 0x407E2C,
-        insn: [0x1B, 0x05, 0x55, 0x79, 0x5A, 0x00],
-        disp_off: 2,
-        key: 0x5A7955,
-        value: 0xFFE5_BF2E,
     },
     // Batch mvpi-ped-1: CPed::RemoveGogglesModel entry 0x5DF170, found by the test below.
     Reader {
@@ -473,6 +459,37 @@ pub const READERS: [Reader; 51] = [
         key: 0x648B93,
         value: 0xFFDB_DC87,
     },
+    // FRONTIER-2 lane C turn 7: tReplayVehicleBlock::ExtractVehicleUpdateData entry 0x45BA90 (`nop; jmp 0x401D62`):
+    // `sbb ecx, [0x45BA91]` at 0x401831 (pointer key) and `mov ecx, [0x45BA91]` at 0x40A486 / 0x156A03F / 0x156D5E5
+    // (rotate counts), the jmp opcode and three rel32 bytes.
+    Reader {
+        at: 0x401831,
+        insn: [0x1B, 0x0D, 0x91, 0xBA, 0x45, 0x00],
+        disp_off: 2,
+        key: 0x45BA91,
+        value: 0xFA62_CCE9,
+    },
+    Reader {
+        at: 0x40A486,
+        insn: [0x8B, 0x0D, 0x91, 0xBA, 0x45, 0x00],
+        disp_off: 2,
+        key: 0x45BA91,
+        value: 0xFA62_CCE9,
+    },
+    Reader {
+        at: 0x156A03F,
+        insn: [0x8B, 0x0D, 0x91, 0xBA, 0x45, 0x00],
+        disp_off: 2,
+        key: 0x45BA91,
+        value: 0xFA62_CCE9,
+    },
+    Reader {
+        at: 0x156D5E5,
+        insn: [0x8B, 0x0D, 0x91, 0xBA, 0x45, 0x00],
+        disp_off: 2,
+        key: 0x45BA91,
+        value: 0xFA62_CCE9,
+    },
 ];
 
 #[cfg(windows)]
@@ -527,18 +544,10 @@ mod tests {
     use super::READERS;
     use crate::table::{HOOKS, Kind};
 
-    /// The bytes a hook rewrites: the rel32 of a `.HOODLUM` stub, or the relocated entry (whole
-    /// instructions covering 5 bytes, as `install_one` computes it).
+    /// The bytes a hook rewrites (`data_reads::changed`: the rel32 of a `.HOODLUM` stub, or the 5-byte
+    /// `jmp` of an inline hook).
     fn patched(exe: &crate::testexe::Exe, addr: u32, kind: Kind) -> (u32, u32) {
-        match kind {
-            Kind::HoodlumStub => (addr + 1, addr + 5),
-            Kind::Inline => {
-                let consumed = crate::x86::relocate_keep_return(exe.bytes(addr, 32), addr, 0x1000_0000, 5)
-                    .map(|r| r.consumed as u32)
-                    .unwrap_or(16);
-                (addr, addr + consumed)
-            }
-        }
+        crate::data_reads::changed(exe, addr, kind)
     }
 
     #[test]
@@ -607,11 +616,8 @@ mod tests {
             .collect();
         assert!(missing.is_empty(), "unlisted code-key readers: {missing:?}");
         // and no stale entry: every listed reader reads a hooked range
-        for at in listed {
-            assert!(
-                found.contains_key(&at),
-                "{at:#x} is listed but reads no hooked bytes"
-            );
-        }
+        let stale: Vec<String> =
+            listed.iter().filter(|at| !found.contains_key(at)).map(|at| format!("{at:#x}")).collect();
+        assert!(stale.is_empty(), "listed but reading no hooked bytes: {stale:?}");
     }
 }

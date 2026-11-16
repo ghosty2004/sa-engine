@@ -227,8 +227,10 @@ fn install_one(i: usize, slot: u32, mode: Mode) -> Result<String, String> {
             unsafe {
                 std::ptr::copy_nonoverlapping(r.code.as_ptr(), tramp as usize as *mut u8, r.code.len());
             }
-            let mut p = x86::jmp_rel32(h.addr, slot).to_vec();
-            p.resize(r.consumed, 0x90);
+            // Only the 5-byte `jmp` is written: the rest of the relocated instructions keeps its original
+            // bytes (dead code, no branch lands there: `inbound_branch` above), so the protection code that
+            // reads entry bytes as data sees them unchanged (INF-20, `data_reads::changed`).
+            let p = x86::jmp_rel32(h.addr, slot).to_vec();
             (tramp, p, format!("{} bytes relocated to {tramp:#x}", r.consumed))
         }
     };

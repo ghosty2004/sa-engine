@@ -259,8 +259,11 @@ generates `catalog/code-data-reads.csv`: every instruction in every code section
 `_rwcseg`, the no-CD `.text`, `.init`, the executable `.data`, `.HOODLUM`) whose memory operand or
 immediate address lies in the first 24 bytes of a catalogued function (3,326 candidates, 311 in
 protection chunks; flags `chunk`/`sweep` mark the decodes that are in line). sa-hook's install test
-(`every_hook_installs_on_the_exe`) fails for a hook whose changed bytes (stub: rel32; inline: the
-relocated instructions) such an instruction sees, unless it is redirected; negative test
+(`every_hook_installs_on_the_exe`) fails for a hook whose changed bytes (stub: rel32; inline: the 5-byte
+`jmp`: since FRONTIER-2 lane C turn 7 the installer no longer NOP-pads the rest of the relocated instructions,
+so a reader of those bytes, e.g. 0x14274C2 `fmul qword ptr [ebx + 0x506805]` behind
+`CAEWeatherAudioEntity::AddAudioEvent` 0x506800, sees the original bytes) such an instruction sees, unless it is
+redirected; negative test
 `data_reads::tests::a_hook_on_a_read_entry_is_rejected` (0x55C410, 0x563470, 0x410860 without redirect).
 
 Readers of registered hooks (all redirected by `keycells.rs`) and what they decode (values computed
@@ -273,6 +276,8 @@ from the exe):
 | 0x1564881 | 0x4C4570 `nop; jmp` (SetupVehicleUpgradeFlags) | rotate count for pointer 0x96A8A0 (SkipCanBeActivated) | wrong pointer (INF-10 peek: 0x4B545, unreadable) |
 | 0x156B570 | 0x4C4570 | pushed constant 0 (ScriptTaskPickUpObject call argument) | non-zero argument |
 | 0x40A4C3 | 0x54D690 `nop; jmp` (AttachEntityToEntity-quat, PORT-PHYS) | SEH handler 0x841408 of a prologue | wrong handler if an exception unwinds |
+| 0x401831 | 0x45BA90 `nop; jmp` (tReplayVehicleBlock::ExtractVehicleUpdateData, FRONTIER-2) | pointer key (`sbb ecx, [0x45BA91]; mov ecx, [ecx]`) | wrong pointer dereferenced |
+| 0x40A486, 0x156A03F, 0x156D5E5 | 0x45BA90 | rotate counts (low 5 bits of the dword at 0x45BA91) | wrong decoded values |
 
 A hook on an entry read by anything other than an absolute memory operand (immediates, indexed
 operands) cannot be redirected this way and is rejected by the install test. Not hooked yet but read:

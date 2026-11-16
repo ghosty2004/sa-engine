@@ -83,7 +83,6 @@ pub const NATIVE_MODULES: &[&[sa_core::abi::NativeReg]] = &[
     crate::bicycle_tyre_volume::NATIVES,
     crate::player_vehicle_engine::NATIVES,
     crate::frontier_c::NATIVES,
-    crate::weather_update_parameters::NATIVES,
 ];
 
 use sa_core::hooks::total;

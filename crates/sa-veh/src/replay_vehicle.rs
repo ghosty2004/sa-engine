@@ -71,9 +71,11 @@ fn scaled(b: i8, c: usize) -> u32 {
 /// (bit 1 of +0x42D); an automobile's +0x961 = 4; area (+0x2F) = `CGame::currArea`; `CWorld::Remove` and `Add`; bit 29
 /// of the physical flags +0x40 from bit 0 of +0x2F.
 ///
-/// A phase B native, not a hook: the protection reads the entry's dword at 0x45BA91 as a key (0x401831, 0x40A486,
-/// 0x156A03F, 0x156D5E5), which a 5-byte patch would change and keycells does not list (INF-20).
-#[sa_core::native(addr = 0x45BA90, conv = thiscall, name = "tReplayVehicleBlock::ExtractVehicleUpdateData")]
+/// A hook since FRONTIER-2 lane C turn 7 (a phase B native before): the protection reads the entry's dword at
+/// 0x45BA91 as a key (0x401831, 0x40A486, 0x156A03F, 0x156D5E5); sa-hook's keycells redirect those four reads to a copy
+/// of the original dword.
+#[hook(addr = 0x45BA90, conv = thiscall, name = "tReplayVehicleBlock::ExtractVehicleUpdateData", expect = "90 E9 CC 62 FA FF",
+       unverified = "frontier2-c13", route = "L2", hazards = "heap-writes")]
 pub fn extract_vehicle_update_data(this: GPtr<u8>, veh: GPtr<u8>, t: u32) {
     if veh.is_null() {
         return;
@@ -160,7 +162,4 @@ pub fn extract_vehicle_update_data(this: GPtr<u8>, veh: GPtr<u8>, t: u32) {
 }
 
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_APPLY_PANEL_DAMAGE_TO_CAR];
-
-/// Every `#[native]` of this module.
-pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_EXTRACT_VEHICLE_UPDATE_DATA];
+pub const HOOKS: &[HookReg] = &[HOOK_APPLY_PANEL_DAMAGE_TO_CAR, HOOK_EXTRACT_VEHICLE_UPDATE_DATA];

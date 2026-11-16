@@ -65,17 +65,14 @@ pub fn rows() -> Vec<Row> {
     out
 }
 
-/// The code bytes a hook changes: the rel32 of a `.HOODLUM` stub (its `E9` stays), or the
-/// relocated entry (whole instructions covering 5 bytes, as `win::install_one` computes it).
-pub fn changed(exe: &crate::testexe::Exe, addr: u32, kind: Kind) -> (u32, u32) {
+/// The code bytes a hook changes: the rel32 of a `.HOODLUM` stub (its `E9` stays), or the 5-byte
+/// `jmp` of an inline hook (`win::install_one` relocates the whole instructions covering 5 bytes but
+/// leaves the bytes after the `jmp` as they are). The exe is not needed any more; kept in the signature
+/// for the callers.
+pub fn changed(_exe: &crate::testexe::Exe, addr: u32, kind: Kind) -> (u32, u32) {
     match kind {
         Kind::HoodlumStub => (addr + 1, addr + 5),
-        Kind::Inline => {
-            let consumed = crate::x86::relocate_keep_return(exe.bytes(addr, 32), addr, 0x1000_0000, 5)
-                .map(|r| r.consumed as u32)
-                .unwrap_or(16);
-            (addr, addr + consumed)
-        }
+        Kind::Inline => (addr, addr + 5),
     }
 }
 
