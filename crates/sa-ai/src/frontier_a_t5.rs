@@ -40,7 +40,8 @@ use crate::bindings::throw_projectile_ctor;
 use crate::bindings::track_entity_ctor;
 use crate::bindings::{climb_ctor, death_dtor, drive_to_point_ctor, go_to_point_ctor, ped_position_ped_out_of_collision, vehicle_is_driver};
 use sa_world::bindings::{car_enter_exit_compute_passenger_index_from_car_door, col_sphere_set};
-use crate::bindings::{run_anim_ctor2, task_simple_ctor, task_simple_dtor};
+use crate::bindings::{in_air_ctor, run_anim_ctor2, task_simple_ctor, task_simple_dtor};
+use sa_world::bindings::{anim_blend_animation, physical_apply_move_force_5429f0};
 use sa_world::bindings::{camera_clear_player_weapon_mode, ped_set_current_weapon, player_clear_weapon_target};
 use sa_world::bindings::{find_player_ped, ped_set_ped_state, stats_increment_stat};
 use crate::bindings::event_death_ctor;
@@ -1131,6 +1132,33 @@ pub fn use_mobile_phone_create_first_sub_task(_this: GPtr<u8>, ped: GPtr<u8>) ->
     t
 }
 
+/// `CTaskComplexFallToDeath::CreateFirstSubTask(CPed* ped)` (0x679120, `ret 4`): the push `(f32(6.0 * dir.x), f32(6.0
+/// * dir.y), 9.0 with +0x21 bit 3 else 4.5)` (dir +0xC; 0x8D2F18 / 0x8D2F14 / 0x8D2F10) after clearing ped +0x46C
+/// bit 0 (`ApplyMoveForce`); the fall anim (+0x18) chosen by direction (+0x20: 0x1A / 0x1B / 0x18 / 0x19) and, when
+/// 0..3, blended (`BlendAnimation(clump, 0, anim, 1000.0)`); then `CTaskSimpleInAir(false, true, false)`.
+#[hook(addr = 0x679120, conv = thiscall, name = "CTaskComplexFallToDeath::CreateFirstSubTask", expect = "6A FF 68 2B 60 84 00",
+       unverified = "frontier2-a8", route = "L2", hazards = "heap-writes")]
+pub fn fall_to_death_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let k = || g::<f32>(0x8D2F18).read();
+    let fx = x(k()).fmul_m(rd::<f32>(this, 0xC)).to_f32();
+    let fy = x(k()).fmul_m(rd::<f32>(this, 0x10)).to_f32();
+    let fz = g::<f32>(if rd::<u8>(this, 0x21) & 8 != 0 { 0x8D2F14 } else { 0x8D2F10 }).read();
+    wr::<u32>(ped, 0x46C, rd::<u32>(ped, 0x46C) & !1);
+    physical_apply_move_force_5429f0(ped, sa_math::vector::CVector { x: fx, y: fy, z: fz });
+    match rd::<u8>(this, 0x20) {
+        0 => wr::<u32>(this, 0x18, 0x1A),
+        1 => wr::<u32>(this, 0x18, 0x1B),
+        2 => wr::<u32>(this, 0x18, 0x18),
+        3 => wr::<u32>(this, 0x18, 0x19),
+        _ => {}
+    }
+    let anim = rd::<i32>(this, 0x18);
+    if (0..4).contains(&anim) {
+        anim_blend_animation(rd::<GPtr<u8>>(ped, 0x18), 0, anim as u32, 1000.0);
+    }
+    new_task(0x3C, |m| in_air_ctor(m, 0, 1, 0))
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_FOLLOW_LEADER_IN_FORMATION_CREATE_SUB_TASK,
@@ -1166,4 +1194,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_SEEK_ENTITY_ANY_MEANS_XY_OFFSET_CONTROL_SUB_TASK,
     HOOK_VT_86EE94_PROCESS_PED,
     HOOK_USE_MOBILE_PHONE_CREATE_FIRST_SUB_TASK,
+    HOOK_FALL_TO_DEATH_CREATE_FIRST_SUB_TASK,
 ];
