@@ -397,7 +397,7 @@ orig! {
     /// `IDirect3DDevice9::Clear(count, rects, flags, color, z, stencil)` (+0xAC)
     fn dev_clear(dev: GPtr<u8>, count: u32, rects: u32, flags: u32, color: u32, z: f32, stencil: u32) -> i32 = stdcall vslot 0xAC => unported;
     /// `IDirect3DDevice9::SetViewport(viewport)` (+0xBC)
-    fn dev_set_viewport(dev: GPtr<u8>, vp: GPtr<u32>) -> i32 = stdcall vslot 0xBC => unported;
+    pub fn dev_set_viewport(dev: GPtr<u8>, vp: GPtr<u32>) -> i32 = stdcall vslot 0xBC => unported;
     /// `IDirect3DDevice9::Present(src, dst, hwnd, dirty)` (+0x44)
     fn dev_present(dev: GPtr<u8>, src: u32, dst: u32, hwnd: u32, dirty: u32) -> i32 = stdcall vslot 0x44 => unported;
     /// `IDirect3DSwapChain9::Present(src, dst, hwnd, dirty, flags)` (+0xC)

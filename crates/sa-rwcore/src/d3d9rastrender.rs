@@ -23,7 +23,7 @@ orig! {
     fn raster_copy(src: GPtr<u8>, rect: GPtr<u8>, scaled: u32) -> u32 = reg("args = eax stack stack") 0x4CAAE0 => crate::raster_copy::raster_copy_to_context;
     /// `FUN_004ca5a0` (0x4CA5A0, proposed `_rwD3D9RasterRenderQuad`): ESI = source raster, EBX =
     /// scaled flag, stack `(rect, blend)` (caller pops); its EAX is not used
-    fn raster_render_quad(src: GPtr<u8>, scaled: u32, rect: GPtr<u8>, blend: u32) = reg("args = esi ebx stack stack") 0x4CA5A0 => unported;
+    fn raster_render_quad(src: GPtr<u8>, scaled: u32, rect: GPtr<u8>, blend: u32) = reg("args = esi ebx stack stack") 0x4CA5A0 => crate::raster_copy::raster_render_quad;
     /// `_rwD3D9RasterRenderGeneric` (0x4CAD90): EAX = source, EDX = rect, ECX = scaled, stack blend
     fn render_generic_call(src: GPtr<u8>, rect: GPtr<u8>, scaled: u32, blend: u32) -> u32 = reg("args = eax edx ecx stack") 0x4CAD90 => raster_render_generic;
     /// `_rwD3D9RasterClearGeneric` (0x4CAEA0): ESI = rect (x, y, w, h), stack colour (caller pops)
