@@ -89,6 +89,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::attractor_scanner::HOOKS,
     crate::hold_entity_process::HOOKS,
     crate::ped_group_random_place::HOOKS,
+    crate::ped_group_formation_place::HOOKS,
     crate::walk_alongside_control::HOOKS,
     crate::ped_collision_responses::HOOKS,
     crate::entity_bbox_corners::HOOKS,

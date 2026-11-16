@@ -120,6 +120,7 @@ pub mod std11_natives;
 pub mod writerq_natives;
 pub mod hold_entity_process;
 pub mod ped_group_random_place;
+pub mod ped_group_formation_place;
 pub mod walk_alongside_control;
 pub mod ped_collision_responses;
 pub mod entity_bbox_corners;
