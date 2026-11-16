@@ -8,7 +8,7 @@ use sa_core::{hook, orig};
 
 use crate::bindings::{
     compute_closest_surface_point_ped, ped_groups_get_peds_group, ped_replace_weapon_when_exiting_vehicle,
-    scripted_2d_effects_get_index,
+    event_group_add, scripted_2d_effects_get_index,
     task_timer_is_out_of_time, tm_find_active_task_by_type, tm_get_task_secondary, tm_set_task_secondary,
     use_gun_control_gun, use_gun_ctor,
 };
@@ -27,7 +27,8 @@ use sa_stream::bindings::{calculate_ground_height, ped_is_player};
 use sa_world::bindings::{
     achieve_heading_ctor, camera_get_look_direction, car_enter_exit_compute_passenger_index_from_car_door,
     entity_clean_up_old_reference, follow_node_route_ctor, fx_kill, get_pad_from_player, ik_is_looking, ik_look_at,
-    membership_get_leader, ped_say, ped_set_ped_state, max_f, min_f, pad_get_accelerate, pad_get_brake,
+    membership_get_leader, ped_say, ped_set_ped_state, event_damage_ctor, event_damage_dtor, fire_extinguish,
+    find_player_wanted, get_task_swim, kill_ped_on_foot_ctor, stand_still_ctor, max_f, min_f, pad_get_accelerate, pad_get_brake,
     pad_get_exit_vehicle, pad_get_ped_walk_left_right, pad_get_ped_walk_up_down, pad_get_target,
     ped_remove_weapon_when_entering_vehicle, physical_apply_move_force_5429f0,
 };
@@ -986,6 +987,140 @@ pub fn flee_point_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     sub
 }
 
+orig! {
+    /// `CAudioEngine::SayPedless(event, ctx, attachTo, delay, probability, overrideSilence, forceAudible, frontEnd)`
+    /// (0x5073C0, `ret 0x20`)
+    fn audio_say_pedless(e: GPtr<u8>, event: u32, ctx: u32, attach: GPtr<u8>, delay: u32, prob: f32, a: u32, b: u32, c: u32) = thiscall 0x5073C0 => unported;
+    /// `CLocalisation::PedsOnFire()` (0x56D2D0)
+    fn localisation_peds_on_fire() -> u8 = cdecl 0x56D2D0 => unported;
+}
+
+/// The ped's target (+0xC) on the boat task's checks: the ped's +0x598 is 6 and the target a player.
+fn boat_target_is_player(this: GPtr<u8>, ped: GPtr<u8>) -> bool {
+    rd::<u32>(ped, 0x598) == 6 && {
+        let t = rd::<GPtr<u8>>(this, 0xC);
+        !t.is_null() && ped_is_player(t) != 0
+    }
+}
+
+/// `CTaskComplexKillPedFromBoat::ControlSubTask(CPed*)` (0x622980, `ret 4`). After 0x3E8 (+0x598 = 6, a player
+/// target): the audio engine's `SayPedless(0x34, 0xAD, ped, 0, 1.0, 0, 0, 0)` when the target sits (+0x46C bit 8) in a
+/// vehicle (+0x58C) of type 3 (+0x1B8), else 0xAF when its +0x40 has bit 8 (no vehicle or not in one); then, same
+/// test, with no wanted level (`FindPlayerWanted(-1)` +0x2C zero) and the sub-task abortable (`MakeAbortable(ped, 1,
+/// NULL)`): a `CTaskSimpleStandStill(0, true, false, 8.0)`. After 0xCB (same test) with a wanted level and the
+/// sub-task abortable: a `CTaskComplexKillPedOnFoot(target, -1, 0, 0, 0, 1)`. Else the sub-task.
+#[hook(addr = 0x622980, conv = thiscall, name = "CTaskComplexKillPedFromBoat::ControlSubTask", expect = "64 A1 00 00 00 00 6A FF 68 86 F9 83 00",
+       unverified = "frontier2-a10", route = "L2", hazards = "heap-writes",
+       note = "SEH frame not modelled")]
+pub fn kill_ped_from_boat_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let sub = rd::<GPtr<u8>>(this, 8);
+    match crate::common::task_get_type(sub) {
+        0x3E8 => {
+            if boat_target_is_player(this, ped) {
+                let t = rd::<GPtr<u8>>(this, 0xC);
+                let veh = rd::<GPtr<u8>>(t, 0x58C);
+                let id = if rd::<u32>(t, 0x46C) & 0x100 != 0 && !veh.is_null() {
+                    (rd::<u8>(veh, 0x1B8) == 3).then_some(0xAD)
+                } else {
+                    (rd::<u32>(t, 0x40) & 0x100 != 0).then_some(0xAF)
+                };
+                if let Some(id) = id {
+                    audio_say_pedless(GPtr::from_addr(0xB6BC90), 0x34, id, ped, 0, 1.0, 0, 0, 0);
+                }
+            }
+            if boat_target_is_player(this, ped)
+                && rd::<u32>(find_player_wanted(-1), 0x2C) == 0
+                && crate::common::task_make_abortable(rd::<GPtr<u8>>(this, 8), ped, 1, GPtr::NULL) != 0
+            {
+                let mem = crate::common::task_new(0x20);
+                return if mem.is_null() { GPtr::NULL } else { stand_still_ctor(mem, 0, 1, 0, 8.0) };
+            }
+            sub
+        }
+        0xCB => {
+            if boat_target_is_player(this, ped)
+                && rd::<u32>(find_player_wanted(-1), 0x2C) != 0
+                && crate::common::task_make_abortable(rd::<GPtr<u8>>(this, 8), ped, 1, GPtr::NULL) != 0
+            {
+                let mem = crate::common::task_new(0x38);
+                return if mem.is_null() {
+                    GPtr::NULL
+                } else {
+                    kill_ped_on_foot_ctor(mem, rd::<GPtr<u8>>(this, 0xC), -1, 0, 0, 0, 1)
+                };
+            }
+            sub
+        }
+        _ => sub,
+    }
+}
+
+/// `CTaskSimplePlayerOnFire::ProcessPed(CPed*)` (0x6335C0, `ret 4`, AL). First run: timer +8 = now, +0xC = 5000, +0x10
+/// on. No fire (+0x730): 1. The timer (restarted at now by +0x11) expired or swimming (`GetTaskSwim`): the fire is
+/// extinguished, 1. The local player (0xB7CD98) with the fireproof flag 0xB7CEE6: 0. Otherwise `ComputeFireDamage(ped,
+/// response)` (response zeroed): no effect (+8 byte clear) → `Say(0x15A, 0, 0.1, 0, 0, 0)` when peds may burn
+/// (`CLocalisation::PedsOnFire`), 0. With an effect: already reported (+0x14) → 1; else the same line, then a
+/// stack `CEventDamage(NULL, now, 37, 3, 0, 0, in-vehicle dword)` with the response copied to +0x38 is added to the
+/// ped's event group (+0x47C +0x68), +0x14 = 1, the event destroyed; 0.
+#[hook(addr = 0x6335C0, conv = thiscall, name = "CTaskSimplePlayerOnFire::ProcessPed", expect = "64 A1 00 00 00 00 6A FF 68 38 07 84 00",
+       unverified = "frontier2-a10", route = "L2", hazards = "ax-al-return,heap-writes",
+       note = "the event lives on the Rust stack; SEH frame not modelled")]
+pub fn player_on_fire_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
+    let now = || g::<u32>(TIME_MS).read();
+    if rd::<u8>(this, 0x10) == 0 {
+        wr::<u32>(this, 8, now());
+        wr::<u32>(this, 0xC, 5000);
+        wr::<u8>(this, 0x10, 1);
+    }
+    let fire = || rd::<GPtr<u8>>(ped, 0x730);
+    if fire().is_null() {
+        return 1;
+    }
+    if rd::<u8>(this, 0x10) != 0 {
+        if rd::<u8>(this, 0x11) != 0 {
+            wr::<u32>(this, 8, now());
+            wr::<u8>(this, 0x11, 0);
+        }
+        if now() >= rd::<u32>(this, 0xC).wrapping_add(rd::<u32>(this, 8)) {
+            fire_extinguish(fire());
+            return 1;
+        }
+    }
+    if !get_task_swim(rd::<GPtr<u8>>(ped, 0x47C)).is_null() {
+        fire_extinguish(fire());
+        return 1;
+    }
+    if g::<u32>(0xB7CD98).read() == ped.addr() as u32 && g::<u8>(0xB7CEE6).read() != 0 {
+        return 0;
+    }
+    let mut resp = [0u32; 3];
+    let rp: GPtr<u8> = GPtr::from_raw(resp.as_mut_ptr()).cast();
+    crate::frontier_a::on_fire_compute_fire_damage(ped, rp);
+    if rd::<u8>(rp, 8) == 0 {
+        if localisation_peds_on_fire() != 0 {
+            ped_say(ped, 0x15A, 0, f32::from_bits(0x3DCC_CCCD), 0, 0, 0);
+        }
+        return 0;
+    }
+    if rd::<u8>(this, 0x14) != 0 {
+        return 1;
+    }
+    if localisation_peds_on_fire() != 0 {
+        ped_say(ped, 0x15A, 0, f32::from_bits(0x3DCC_CCCD), 0, 0, 0);
+    }
+    let mut ev = [0u32; 0x14];
+    let ep: GPtr<u8> = GPtr::from_raw(ev.as_mut_ptr()).cast();
+    let in_veh = (rd::<u32>(ped, 0x46C) >> 8) & 0xFFFF_FF01;
+    event_damage_ctor(ep, GPtr::NULL, now(), 0x25, 3, 0, 0, in_veh);
+    for k in 0..3 {
+        wr::<u32>(ep, 0x38 + k * 4, rd::<u32>(rp, k * 4));
+    }
+    event_group_add(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), ep, 0);
+    wr::<u8>(this, 0x14, 1);
+    event_damage_dtor(ep);
+    0
+}
+
 /// Every hook of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_JET_PACK_PROCESS_CONTROL_INPUT,
@@ -1000,4 +1135,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_SEEK_ENTITY_AIMING_CONTROL_SUB_TASK,
     HOOK_USE_PAIRED_ATTRACTOR_CREATE_NEXT_SUB_TASK,
     HOOK_FLEE_POINT_CONTROL_SUB_TASK,
+    HOOK_KILL_PED_FROM_BOAT_CONTROL_SUB_TASK,
+    HOOK_PLAYER_ON_FIRE_PROCESS_PED,
 ];
