@@ -71,6 +71,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-c10 | 9 | AUDIO, HUD, UNK-game | 709cbb43 | worktree-agent-a666e9cf719f6e793 | 9 | 0 | 0 | 0 | 0 | L2 6, split 3 |
 | frontier2-c11 | 12 | AUDIO, CALLED-ONLY, SCRIPT, UNK-game | df984d3f | worktree-agent-a666e9cf719f6e793 | 12 | 0 | 0 | 0 | 0 | L2 12 |
 | frontier2-c12 | 10 | AUDIO, SCRIPT, UNK-game | 08439903 | worktree-agent-a666e9cf719f6e793 | 10 | 0 | 0 | 0 | 0 | L2 8, split 2 |
+| frontier2-c13 | 8 | AUDIO, UNK-game | b50a37eb | worktree-agent-a6e18bff35f33ca8b | 8 | 0 | 0 | 0 | 0 | L2 8 |
 | frontier2-c2 | 35 | AI, MATH, SCRIPT, UNK-game, VEH | 49bdb6d2 | master | 35 | 0 | 0 | 0 | 0 | L2 35 |
 | frontier2-c3 | 11 | AI, SCRIPT, UNK-game | 49bdb6d2 | master | 11 | 0 | 0 | 0 | 0 | L2 11 |
 | frontier2-c4 | 10 | AUDIO, CALLED-ONLY, SCRIPT, UNK-game | d18327f1 | master | 10 | 0 | 0 | 0 | 0 | L2 9, split 1 |
@@ -2412,6 +2413,28 @@ SA_UNVERIFIED=frontier2-c12 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c12 
 | 0x59CA10 | `(missed by ghidra: cat7-call)` | written | L2 | heap-writes |
 | 0x6002F0 | `FUN_006002f0` | written | L2 | heap-writes |
 | 0x603AF0 | `FUN_00603af0` | written | L2 | none |
+
+## frontier2-c13
+
+8 hooks in sa-ai, sa-audio, sa-rwcore, sa-script, sa-veh; hazards: heap-writes (6), x87-transcendental (1); recordings calling them: weapon-combat (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-c13 $SA_ROOT/target/e2e/corpus/weapon-combat.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-c13 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c13 $SA_ROOT/target/e2e/corpus/weapon-combat.sarec --runs "plain l2 rust" --tag frontier2-c13
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x45BA90 | `tReplayVehicleBlock::ExtractVehicleUpdateData` | written | L2 | heap-writes |
+| 0x477DA0 | `(missed by ghidra: cat7-call)` | written | L2 | x87-transcendental |
+| 0x4CC1D0 | `FUN_004cc1d0` | written | L2 | none |
+| 0x4CD050 | `FUN_004cd050` | written | L2 | heap-writes |
+| 0x506800 | `CAEWeatherAudioEntity::AddAudioEvent` | written | L2 | heap-writes |
+| 0x61D0B0 | `FUN_0061d0b0` | written | L2 | heap-writes |
+| 0x61FF40 | `FUN_0061ff40` | written | L2 | heap-writes |
+| 0x66AB40 | `FUN_0066ab40` | written | L2 | heap-writes |
 
 ## frontier2-c2
 
