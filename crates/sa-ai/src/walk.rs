@@ -238,11 +238,50 @@ pub fn goto_has_circled_target_port(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     (rd::<u8>(this, 0x1C) & 0xF == 0xF) as u8
 }
 
+/// The parent-task test of the two walk look-ats: the task's parent (+4) is 0x395 or 0x3AB (two `GetTaskType` calls).
+fn ik_parent_blocks(this: GPtr<u8>) -> bool {
+    let parent = rd::<GPtr<u8>>(this, 4);
+    !parent.is_null() && (v_get_task_type(parent) == 0x395 || v_get_task_type(rd::<GPtr<u8>>(this, 4)) == 0x3AB)
+}
+
+/// The look-at tail of 0x667AD0 and 0x66AB40: the direction `target - pos` must have squared length > [0x85EED4];
+/// normalised, its dot with the matrix forward (+0x10, no null check) must be < [0xC18D48]. Look-at point: target +
+/// 2·dir, z = (2·dir.z + pos.z) + [0x86FD40] (2·dir.z stored as f32 first); `LookAt(purpose, ped, null, 5000, -1,
+/// point, 0, 0.25, 500, 3, 0)`. False when a test fails (nothing done).
+fn look_at_walk_direction(ped: GPtr<u8>, target: GPtr<u8>, purpose: usize) -> bool {
+    let mut d = [0u32; 3];
+    let dp = buf(&mut d);
+    vector_sub(dp, target, ent_pos(ped));
+    let m2 = X87::from_f64_exact(vector_magnitude_sqr(dp.cast::<u8>()).to_f64());
+    if m2.fcom(gf(0x85EED4)).test_any(0x41) {
+        return false;
+    }
+    vector_normalise(dp.cast::<[f32;3]>());
+    let (vx, vy, vz) = (rd::<f32>(dp, 0), rd::<f32>(dp, 4), rd::<f32>(dp, 8));
+    let m = rd::<GPtr<u8>>(ped, 0x14);
+    let dot = x(vz)
+        .fmul_m(rd::<f32>(m, 0x18))
+        .fadd(x(vy).fmul_m(rd::<f32>(m, 0x14)))
+        .fadd(x(vx).fmul_m(rd::<f32>(m, 0x10)));
+    if dot.fcom(gf(0xC18D48)).test_parity(5) {
+        return false;
+    }
+    let (tx, ty) = (rd::<f32>(target, 0), rd::<f32>(target, 4));
+    let pos = if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) };
+    let pz = x(rd::<f32>(pos, 8));
+    let vz2 = f32_of(x(vz).fadd(x(vz)));
+    let nx = f32_of(x(vx).fadd(x(vx)).fadd_m(tx));
+    let ny = f32_of(x(ty).fadd(x(vy).fadd(x(vy))));
+    let nz = f32_of(x(vz2).fadd(pz).fadd_m(g::<f32>(0x86FD40).read()));
+    let mut posn = [nx.to_bits(), ny.to_bits(), nz.to_bits()];
+    ik_look_at(ik(), GPtr::from_addr(purpose), ped, GPtr::NULL, 0x1388, -1, buf(&mut posn), 0, f32::from_bits(0x3E80_0000), 0x1F4, 3, 0);
+    true
+}
+
 /// `CTaskSimpleGoTo::SetUpIK(CPed*)` (0x667AD0, `ret 4`): a look-at in the walking direction for an on-screen ped
 /// that has no IK yet (+0x1C bit 0x10), no look-at entity, no secondary task 5, is not the player with pad word
-/// +0x10E = 0 and whose parent task (+4) is neither 0x395 nor 0x3AB (two `GetTaskType` calls). The direction
-/// target - pos must have squared length > [0x85EED4]; normalised, its dot with the matrix forward (+0x10, no
-/// null check) must be < [0xC18D48]. Look-at point: target + 2·dir, z = (2·dir.z + pos.z) + [0x86FD40].
+/// +0x10E = 0 and whose parent task (+4) is neither 0x395 nor 0x3AB, then `look_at_walk_direction` to the target
+/// (+0xC, purpose 0x86FD44); +0x1C |= 0x10 when it looked.
 #[hook(addr = 0x667AD0, conv = thiscall, name = "CTaskSimpleGoTo::SetUpIK", expect = "83 EC 24 55 56 57 6A 00")]
 pub fn goto_set_up_ik_port(this: GPtr<u8>, ped: GPtr<u8>) {
     let pad = pad_get_pad(0);
@@ -258,42 +297,36 @@ pub fn goto_set_up_ik_port(this: GPtr<u8>, ped: GPtr<u8>) {
     if ped == find_player_ped(-1) && rd::<u16>(pad, 0x10E) == 0 {
         return;
     }
-    let parent = rd::<GPtr<u8>>(this, 4);
-    if !parent.is_null() {
-        if v_get_task_type(parent) == 0x395 {
-            return;
-        }
-        if v_get_task_type(rd::<GPtr<u8>>(this, 4)) == 0x3AB {
-            return;
-        }
-    }
-    let mut d = [0u32; 3];
-    let dp = buf(&mut d);
-    vector_sub(dp, this.byte_add(0xC), ent_pos(ped));
-    let m2 = X87::from_f64_exact(vector_magnitude_sqr(dp.cast::<u8>()).to_f64());
-    if m2.fcom(gf(0x85EED4)).test_any(0x41) {
+    if ik_parent_blocks(this) || !look_at_walk_direction(ped, this.byte_add(0xC), 0x86FD44) {
         return;
     }
-    vector_normalise(dp.cast::<[f32;3]>());
-    let (vx, vy, vz) = (rd::<f32>(dp, 0), rd::<f32>(dp, 4), rd::<f32>(dp, 8));
-    let m = rd::<GPtr<u8>>(ped, 0x14);
-    let dot = x(vz)
-        .fmul_m(rd::<f32>(m, 0x18))
-        .fadd(x(vy).fmul_m(rd::<f32>(m, 0x14)))
-        .fadd(x(vx).fmul_m(rd::<f32>(m, 0x10)));
-    if dot.fcom(gf(0xC18D48)).test_parity(5) {
-        return;
-    }
-    let (tx, ty) = (rd::<f32>(this, 0xC), rd::<f32>(this, 0x10));
-    let pos = if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) };
-    let pz = x(rd::<f32>(pos, 8));
-    let vz2 = f32_of(x(vz).fadd(x(vz)));
-    let nx = f32_of(x(vx).fadd(x(vx)).fadd_m(tx));
-    let ny = f32_of(x(ty).fadd(x(vy).fadd(x(vy))));
-    let nz = f32_of(x(vz2).fadd(pz).fadd_m(g::<f32>(0x86FD40).read()));
-    let mut posn = [nx.to_bits(), ny.to_bits(), nz.to_bits()];
-    ik_look_at(ik(), GPtr::from_addr(0x86FD44), ped, GPtr::NULL, 0x1388, -1, buf(&mut posn), 0, f32::from_bits(0x3E80_0000), 0x1F4, 3, 0);
     wr::<u8>(this, 0x1C, rd::<u8>(this, 0x1C) | 0x10);
+}
+
+/// The avoid-entity task's look-at (0x66AB40, `ret 4`; vtable 0x86FF00 "TaskAvoidEntity", unnamed in the catalogue,
+/// called by its ControlSubTask 0x66ADE0): the twin of `CTaskSimpleGoTo::SetUpIK` with its tests in this order: not the
+/// player with pad word +0x10E = 0, on screen, no look-at yet (+0x50 bit 0), no look-at entity, no secondary task 5,
+/// the parent (+4) neither 0x395 nor 0x3AB; then `look_at_walk_direction` to +0x20 (purpose 0x86FF2C) and +0x50 |= 1.
+#[hook(addr = 0x66AB40, conv = thiscall, name = "FUN_0066ab40", expect = "83 EC 24 53 56 57 6A 00",
+       unverified = "frontier2-c13", route = "L2", hazards = "heap-writes")]
+pub fn avoid_entity_set_up_ik(this: GPtr<u8>, ped: GPtr<u8>) {
+    let pad = pad_get_pad(0);
+    if ped == find_player_ped(-1) && rd::<u16>(pad, 0x10E) == 0 {
+        return;
+    }
+    if entity_get_is_on_screen(ped) == 0 || rd::<u8>(this, 0x50) & 1 != 0 {
+        return;
+    }
+    if GPtr::<u8>::addr(ik_get_look_at_entity(ik(), ped)) as u32 != 0 {
+        return;
+    }
+    if !tm_get_task_secondary(ped_intel(ped).byte_add(4), 5).is_null() {
+        return;
+    }
+    if ik_parent_blocks(this) || !look_at_walk_direction(ped, this.byte_add(0x20), 0x86FF2C) {
+        return;
+    }
+    wr::<u8>(this, 0x50, rd::<u8>(this, 0x50) | 1);
 }
 
 /// `CTaskSimpleGoTo::QuitIK(CPed*)` (0x667CA0, `ret 4`; continues through the island 0x40586C, which loads ECX =
@@ -1111,6 +1144,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_STAND_STILL_PROCESS_PED_PORT,
     HOOK_GOTO_HAS_CIRCLED_TARGET_PORT,
     HOOK_GOTO_SET_UP_IK_PORT,
+    HOOK_AVOID_ENTITY_SET_UP_IK,
     HOOK_GOTO_QUIT_IK_PORT,
     HOOK_GOTO_POINT_UPDATE_POINT,
     HOOK_GOTO_POINT_CTOR,
