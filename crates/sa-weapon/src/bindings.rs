@@ -104,6 +104,11 @@ orig! {
 }
 
 orig! {
+    /// `CWeapon::FindNearestTargetEntityWithScreenCoors` (0x73E240)
+    pub fn weapon_find_nearest_target_entity_with_screen_coors(sx: f32, sy: f32, range: f32, px: f32, py: f32, pz: f32, ox: GPtr<f32>, oy: GPtr<f32>) -> GPtr<u8> = cdecl 0x73E240 => crate::frontier_b2::weapon_find_nearest_target_entity_with_screen_coors;
+}
+
+orig! {
     /// `CWeapon::CheckForShootingVehicleOccupant` (0x73F480)
     pub fn check_for_shooting_vehicle_occupant(e: GPtr<u8>, cp: GPtr<u8>, ty: i32, a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x73F480 => crate::weapon_fire::check_for_shooting_vehicle_occupant;
 }

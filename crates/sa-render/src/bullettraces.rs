@@ -38,11 +38,7 @@ const CAM0_MODE: usize = 0xB6F1A8;
 pub use sa_world::bindings::find_player_ped;
 pub use sa_world::bindings::find_player_vehicle;
 pub use sa_core::bindings::vector_normalise;
-orig! {
-    /// `CBulletTraces::AddTrace(CVector* start, CVector* end, float radius, uint32 lifeTime, uint8
-    /// transparency)` (0x723750); the radius as a raw dword, the byte as its pushed dword
-    pub fn add_trace(start: GPtr<f32>, end: GPtr<f32>, radius: u32, life: u32, alpha: u32) = cdecl 0x723750 => unported;
-}
+pub use crate::bindings::bullet_traces_add_trace as add_trace;
 
 /// `CBulletTraces::Init()` (0x721D50): no trace exists.
 #[hook(addr = 0x721D50, conv = cdecl, name = "CBulletTraces::Init", expect = "B8 60 C7 C7 00")]

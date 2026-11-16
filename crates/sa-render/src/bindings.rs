@@ -419,6 +419,11 @@ orig! {
 }
 
 orig! {
+    /// `CBulletTraces::AddTrace-` (0x723750)
+    pub fn bullet_traces_add_trace(start: GPtr<f32>, end: GPtr<f32>, radius: u32, life: u32, alpha: u32) = cdecl 0x723750 => crate::bullet_trace_add::add_trace;
+}
+
+orig! {
     /// `CSprite2d::RenderVertexBuffer` (0x7273D0)
     pub fn render_vertex_buffer() = cdecl 0x7273D0 => crate::sprite2d::render_vertex_buffer;
 }

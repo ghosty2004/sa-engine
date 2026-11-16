@@ -4299,6 +4299,11 @@ orig! {
 }
 
 orig! {
+    /// `CBulletTraces::AddTrace-` (0x723750)
+    pub fn bullet_traces_add_trace(start: GPtr<f32>, end: GPtr<f32>, radius: u32, life: u32, alpha: u32) = cdecl 0x723750 => unported;
+}
+
+orig! {
     /// `C3dMarkers::PlaceMarkerSet` (0x725BA0)
     pub fn place_marker_set(id: u32, ty: u32, pos: GPtr<u8>, size: u32, r: u32, g: u32, b: u32, a: u32, period: u32, fraction: u32, rotate: u32) = cdecl 0x725BA0 => unported;
 }
@@ -4431,6 +4436,11 @@ orig! {
 orig! {
     /// `CWeapon::Update` (0x73DB40)
     pub fn weapon_update(w: GPtr<u8>, owner: GPtr<u8>) = thiscall 0x73DB40 => unported;
+}
+
+orig! {
+    /// `CWeapon::FindNearestTargetEntityWithScreenCoors` (0x73E240)
+    pub fn weapon_find_nearest_target_entity_with_screen_coors(sx: f32, sy: f32, range: f32, px: f32, py: f32, pz: f32, ox: GPtr<f32>, oy: GPtr<f32>) -> GPtr<u8> = cdecl 0x73E240 => unported;
 }
 
 orig! {

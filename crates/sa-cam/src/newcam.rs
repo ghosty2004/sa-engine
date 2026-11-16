@@ -20,10 +20,11 @@ use sa_core::bindings::{
 };
 use sa_world::bindings::{
     camera_set_cam_position_for_fixed_mode, camera_take_control, entity_get_is_on_screen, find_player_coors,
-    find_player_entity, find_player_ped, find_player_speed, find_player_vehicle, get_water_level_no_waves,
+    find_player_entity, find_player_ped, find_player_speed, get_water_level_no_waves,
     multiply3x3, player_get_wanted_level, vector_add_assign, vector_sub, vehicle_pool_get_at,
 };
 use sa_world::world::common::entity_pos;
+use sa_world::world::garage_update::player_vehicle;
 use sa_world::world::ground_z_for_coord::find_roof_z_for_3d_coord;
 use sa_world::world::mvpa2::find_ground_z_for_3d_coord;
 
@@ -53,9 +54,6 @@ const MI_RHINO: i16 = 0x1B0;
 /// `CVehicle::m_nVehicleType` (+0x590): 5 = boat.
 const VEHICLE_TYPE: isize = 0x590;
 
-fn player_vehicle() -> GPtr<u8> {
-    find_player_vehicle(-1, 0)
-}
 
 /// `GetIsLineOfSightClear(a, b, buildings only)`.
 fn los(a: GPtr<u8>, b: GPtr<u8>) -> bool {
@@ -224,7 +222,7 @@ fn time_for_newcam(this: GPtr<u8>, seq: i32, start: u32) -> bool {
             wr::<u8>(this, USE_NEAR_CLIP, 1);
             false
         }
-        15 | 16 | 17 => {
+        15..=17 => {
             if long() {
                 return true;
             }

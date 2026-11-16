@@ -199,11 +199,7 @@ fn fcos(f: &mut Fpu) {
     f.push(v.fcos());
 }
 
-sa_core::orig! {
-    /// `CWeapon::FindNearestTargetEntityWithScreenCoors(float screenX, float screenY, float range, CVector point,
-    /// float* outX, float* outY)` (0x73E240, cdecl; the vector by value)
-    fn find_nearest_target_entity_with_screen_coors(sx: f32, sy: f32, range: f32, px: u32, py: u32, pz: u32, ox: GPtr<u8>, oy: GPtr<u8>) -> GPtr<u8> = cdecl 0x73E240 => unported;
-}
+use sa_world::bindings::weapon_find_nearest_target_entity_with_screen_coors;
 
 /// `CDraw::ms_fAspectRatio`
 const ASPECT_RATIO: usize = 0xC3_EFA4;
@@ -235,13 +231,13 @@ pub fn get_two_player_aim_vector(this: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> {
     let info = get_weapon_info(wt, ped_get_weapon_skill(ped));
     let p = pos_of(ped);
     let range = f32_of(x(rd::<f32>(info, 8)).fadd(x(rd::<f32>(info, 8))));
-    let target = find_nearest_target_entity_with_screen_coors(
+    let target = weapon_find_nearest_target_entity_with_screen_coors(
         rd::<f32>(this, 0x108),
         rd::<f32>(this, 0x10C),
         range,
-        rd::<u32>(p, 0),
-        rd::<u32>(p, 4),
-        rd::<u32>(p, 8),
+        rd::<f32>(p, 0),
+        rd::<f32>(p, 4),
+        rd::<f32>(p, 8),
         GPtr::NULL,
         GPtr::NULL,
     );

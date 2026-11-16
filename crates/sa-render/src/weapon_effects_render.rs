@@ -21,14 +21,12 @@ use sa_world::bindings::is_coop_game_going_on;
 use sa_world::bindings::ped_get_weapon_skill as get_weapon_skill;
 use sa_world::bindings::max_f;
 use sa_world::bindings::min_f;
+use sa_world::bindings::weapon_find_nearest_target_entity_with_screen_coors as find_nearest_target;
 orig! {
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xc97b24 0x20 => unported;
     /// `CSprite::RenderOneXLUSprite_Triangle(x1, y1, x2, y2, x3, y3, z, r, g, b, intensity, recipZ, alpha)` (0x70d320)
     fn sprite_triangle(x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32, pz: f32, r: u8, gg: u8, b: u8, intensity: u32, recip_z: u32, alpha: u8) = cdecl 0x70d320 => crate::sprite_render::render_one_xlu_sprite_triangle;
-    /// `CWeapon::FindNearestTargetEntityWithScreenCoors(float x, float y, float range, CVector pos,
-    /// float*, float*)` (0x73e240; dwords as pushed)
-    fn find_nearest_target(sx: u32, sy: u32, range: u32, px: u32, py: u32, pz: u32, a: u32, b: u32) -> GPtr<u8> = cdecl 0x73e240 => unported;
     /// `FUN_0056ef90(int index)` on `CWorld::Players[i]` (0x56ef90)
     fn player_info_crosshair(this: GPtr<u8>, index: u32) = thiscall 0x56ef90 => unported;
 }
@@ -401,14 +399,14 @@ fn sniper(cam: usize) {
         let range = range.fadd(range).to_f32();
         let cam = 0x238 * usize::from(g::<u8>(ACTIVE_CAM).read());
         let e = find_nearest_target(
-            g::<u32>(0xb6_f2a4 + cam).read(),
-            g::<u32>(0xb6_f2a8 + cam).read(),
-            range.to_bits(),
-            rd::<u32>(pp, 0),
-            rd::<u32>(pp, 4),
-            rd::<u32>(pp, 8),
-            0,
-            0,
+            g::<f32>(0xb6_f2a4 + cam).read(),
+            g::<f32>(0xb6_f2a8 + cam).read(),
+            range,
+            rd::<f32>(pp, 0),
+            rd::<f32>(pp, 4),
+            rd::<f32>(pp, 8),
+            GPtr::NULL,
+            GPtr::NULL,
         );
         if e.addr() as u32 != g::<u32>(LAST_TARGET).read() {
             g::<u32>(LAST_TARGET).write(e.addr() as u32);

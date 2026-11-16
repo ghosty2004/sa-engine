@@ -12,15 +12,9 @@ use crate::bindings::{audio_report_bullet_hit, generate_damage_event};
 use crate::weapon_impact::ci_asin;
 use sa_core::bindings::vector_normalise;
 use sa_world::bindings::{
-    add_animation, add_light, get_local_direction, get_water_level, process_line_of_sight, vehicle_inflict_damage,
+    add_animation, bullet_traces_add_trace, add_light, get_local_direction, get_water_level, process_line_of_sight, vehicle_inflict_damage,
 };
 use sa_world::world::common::{entity_pos, rd, wr};
-
-sa_core::orig! {
-    /// `CBulletTraces::AddTrace(const CVector& from, const CVector& to, float radius, uint32 disappearTime,
-    /// uint8 alpha)` (0x723750, cdecl)
-    fn bullet_traces_add_trace(from: GPtr<u8>, to: GPtr<u8>, radius: f32, time: u32, alpha: u32) = cdecl 0x723750 => unported;
-}
 
 /// `AudioEngine` (CAudioEngine, 0xB6BC90).
 const AUDIO_ENGINE: usize = 0xB6_BC90;
@@ -49,7 +43,7 @@ fn v3(p: GPtr<u8>) -> [f32; 3] {
 /// `InflictDamage(null, 0x1C, (float)intensity, 0)`. Any hit then reports the bullet hit when `dot = normalise(end
 /// - start) . cp.normal` (`(nz*dz + ny*dy) + nx*dx`, compared in the register) is below 0, at `asin(-f32(dot)) *
 /// 57.29578`; no hit: a water level under `end.z + 10` reports a shallow-water hit at `(end.x, end.y, level)`.
-#[hook(addr = 0x73AF00, conv = cdecl, name = "FireOneInstantHitRound", expect = "83 EC 44 53 55 56 8B 74 24 54",
+#[hook(addr = 0x73AF00, conv = cdecl, name = "CWeapon::FireOneInstantHitRound", expect = "83 EC 44 53 55 56 8B 74 24 54",
        unverified = "frontier2-b19", route = "L2", hazards = "x87-transcendental",
        note = "_CIasin through sa_core::orig::x87_unary; the light's green 0.22 comes from the protection fragment 0x4015A0 (vm_eval.py)")]
 pub fn fire_one_instant_hit_round(start: GPtr<u8>, end: GPtr<u8>, intensity: i32) {
@@ -74,7 +68,7 @@ pub fn fire_one_instant_hit_round(start: GPtr<u8>, end: GPtr<u8>, intensity: i32
     let mut cp = [0u32; 11];
     let cpp = GPtr::<u32>::from_raw(cp.as_mut_ptr()).cast::<u8>();
     process_line_of_sight(start, end, cpp, GPtr::from_raw(&mut hit).cast(), 1, 1, 1, 1, 1, 1, 0, 0);
-    bullet_traces_add_trace(start, if hit.is_null() { end } else { cpp }, f32::from_bits(K_TRACE_RADIUS), 750, 150);
+    bullet_traces_add_trace(start.cast(), if hit.is_null() { end } else { cpp }.cast(), K_TRACE_RADIUS, 750, 150);
     if hit.is_null() {
         let e = v3(end);
         let mut level = 0f32;
