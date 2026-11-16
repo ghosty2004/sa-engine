@@ -8,6 +8,7 @@ use sa_core::field::ptr_of as vp;
 use sa_core::hook;
 use sa_core::mem::GPtr;
 use sa_math::fpu::{fld_fst, ge_or_nan, gt, le_or_nan};
+use sa_world::world::common::entity_pos as pos_of;
 use sa_world::world::common::find_player_ped;
 
 use crate::bindings::{group_intel_process, group_intel_set_default_task_allocator, membership_process, tm_set_task};
@@ -32,12 +33,6 @@ const OFFSETS: usize = 0xC196E8;
 /// 1.0 (0x858624), the creation distance factor (0x86C850)
 const K_ONE: usize = 0x858624;
 const K_CREATE_DIST: usize = 0x86C850;
-
-/// An entity's position (`matrix +0x30`, or `+4` without one).
-fn pos_of(e: GPtr<u8>) -> GPtr<u8> {
-    let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
 
 /// `ChooseGangOccupation(type - 7)` and whether its model info has an RW object (+0x1C).
 fn gang_model(ped_type: u32) -> (i32, bool) {
