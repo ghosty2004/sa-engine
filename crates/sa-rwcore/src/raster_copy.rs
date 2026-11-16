@@ -53,7 +53,7 @@ orig! {
     /// `IDirect3DDevice9::GetRenderTargetData(rt, dst)` (+0x80)
     fn dev_get_render_target_data(dev: GPtr<u8>, rt: GPtr<u8>, dst: GPtr<u8>) -> i32 = stdcall vslot 0x80 => unported;
     /// `_rwD3D9TestState()` (0x7F8300): the device's cooperative level (resets a lost device); 0 = not renderable
-    fn test_state() -> u32 = cdecl 0x7F8300 => unported;
+    fn test_state() -> u32 = cdecl 0x7F8300 => crate::d3d9cam::test_state;
     /// `IDirect3DDevice9::StretchRect(src, srcRect, dst, dstRect, filter)` (+0x88)
     fn dev_stretch_rect(dev: GPtr<u8>, src: GPtr<u8>, src_rect: GPtr<u8>, dst: GPtr<u8>, dst_rect: GPtr<u8>, filter: u32) -> i32 = stdcall vslot 0x88 => unported;
 }

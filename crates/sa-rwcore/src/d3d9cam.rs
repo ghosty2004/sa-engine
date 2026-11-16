@@ -675,6 +675,19 @@ pub fn camera_begin_update(_out: u32, camera: GPtr<u8>, _flags: u32) -> u32 {
         rd::<u32>(fb, 0xC),
         rd::<u32>(fb, 0x10),
     );
+    test_state()
+}
+
+/// `_rwD3D9TestState()` (0x7F8300; begin update ends with the same code inlined):
+/// `TestCooperativeLevel`; DEVICENOTRESET releases the default-pool objects and resets the device (an
+/// INVALIDCALL reset of a windowed device retries with the desktop format and its depth, a fullscreen
+/// one fails), then the post-reset sequence (result ignored) and the restore callback. A failure
+/// clears the in-scene flag and returns 0. Otherwise `BeginScene` unless already in a scene (a failed
+/// `BeginScene` leaves the flag); returns the in-scene flag.
+#[hook(addr = 0x7F8300, conv = cdecl, name = "_rwD3D9TestState", expect = "A1 28 7C C9 00 83 EC 10",
+       unverified = "frontier2-c14", route = "L3-only", hazards = "none", recs = "boot,menus-hud",
+       note = "device reset path needs a lost device (OS effects)")]
+pub fn test_state() -> u32 {
     let mut hr = dev_test_cooperative_level(device());
     if hr == D3DERR_DEVICENOTRESET {
         release_video_memory();
