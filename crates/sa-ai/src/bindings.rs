@@ -989,6 +989,11 @@ orig! {
 }
 
 orig! {
+    /// `CTaskSimpleDead::CTaskSimpleDead` (0x630590)
+    pub fn simple_dead_ctor(t: GPtr<u8>, time: u32, b: u32) -> GPtr<u8> = thiscall 0x630590 => crate::samp_reached_small::simple_dead_ctor;
+}
+
+orig! {
     /// `CTaskComplexSitDownThenIdleThenStandUp::Constructor` (0x631460)
     pub fn sit_ctor_o(t: GPtr<u8>, ms: i32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x631460 => crate::use_attractor_tasks::sit_down_then_idle_then_stand_up_ctor;
 }

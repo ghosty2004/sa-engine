@@ -262,3 +262,4 @@ pub mod gang_drive_by;
 pub mod frontier_a_t3;
 pub mod frontier_a_t4;
 pub mod frontier_a_t5;
+pub mod frontier_a_t6;
