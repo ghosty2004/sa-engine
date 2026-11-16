@@ -30,6 +30,10 @@ use sa_world::bindings::sequence_add_task;
 use crate::bindings::{affect_secondary_behaviour_ctor, read_label};
 use sa_core::bindings::{task_new, tm_set_task_secondary};
 use sa_world::bindings::hold_entity_ctor;
+use sa_world::bindings::{attractor_manager_has_empty_slot, find_objects_in_range, get_ped_attractor_manager, transform_from_object_space};
+use sa_stream::bindings::get_2d_effect;
+use sa_core::bindings::stricmp;
+use sa_world::world::common::x;
 use crate::bindings::get_vacant_slot;
 use sa_world::bindings::group_intel_get_task_script_command;
 orig! {
@@ -204,5 +208,89 @@ pub fn script_task_pick_up_object(this: GPtr<u8>, opcode: u32) {
     record_set_task(vacant_record(), ped, opcode, task);
 }
 
+/// `CModelInfo::ms_modelInfoPtrs` (0xA9B0C8)
+const MODEL_INFO_PTRS: usize = 0xA9B0C8;
+
+/// The closest attractor search behind the attractor script commands (0x6002F0, cdecl, unnamed): `*outEffect` and
+/// `*outEntity` = 0, then `CWorld::FindObjectsInRange(pos, range, false, &count, 0x400, list, buildings, objects)` (count
+/// starts at -1, the best squared distance at 1e8). For each entity whose model matches (`model == -1` for any), each
+/// 2D effect of its model info (`Get2dEffect`, count byte +0xD re-read per step) that is not `exclude`, is an attractor
+/// (type byte +0xC == 3) of `attractorType` (byte +0x34), named `name` when one is given (`_stricmp` with +0x38) and,
+/// with `checkSlot`, has an empty slot (`GetPedAttractorManager()->HasEmptySlot(effect, entity)`): its world position
+/// (`TransformFromObjectSpace(effect position)`), the squared distance `(dz² + dy²) + dx²` on the x87 and, when it is
+/// below the best, the best (rounded to f32) and both outputs. AL = whether one was found (upper EAX: the loop counter
+/// of the original, not modelled).
+#[allow(clippy::too_many_arguments)]
+#[hook(addr = 0x6002F0, conv = cdecl, name = "FUN_006002f0", expect = "B8 1C 10 00 00 E8 76 1D 22 00",
+       unverified = "frontier2-c12", route = "L2", hazards = "heap-writes",
+       note = "a 0x1000-byte entity list on the stack (_alloca_probe)")]
+pub fn find_closest_attractor(
+    pos: GPtr<u8>,
+    range: u32,
+    model: i32,
+    attractor_type: u32,
+    name: GPtr<u8>,
+    check_slot: u32,
+    exclude: u32,
+    out_effect: GPtr<u8>,
+    out_entity: GPtr<u8>,
+) -> u8 {
+    let mut list = [0u32; 0x400];
+    let mut count = [0xFFFF_FFFFu32];
+    let mut best = 1.0e8f32;
+    let mut found = 0u8;
+    at::<u32>(out_effect, 0).write(0);
+    at::<u32>(out_entity, 0).write(0);
+    find_objects_in_range(
+        pos,
+        f32::from_bits(range),
+        0,
+        GPtr::from_raw(count.as_mut_ptr().cast::<u8>()),
+        0x400,
+        GPtr::from_raw(list.as_mut_ptr().cast::<u8>()),
+        1,
+        0,
+        0,
+        1,
+        0,
+    );
+    let n = |c: &[u32; 1]| i32::from(c[0] as u16 as i16);
+    let mut i = 0i32;
+    while i < n(&count) {
+        let ent = ga::<u8>(list[i as usize] as usize);
+        let m = i32::from(at::<i16>(ent, 0x22).read());
+        if model == -1 || model == m {
+            let mi = ga::<GPtr<u8>>(MODEL_INFO_PTRS + 4 * m as usize).read();
+            let mut j = 0i32;
+            while j < i32::from(at::<u8>(mi, 0xD).read()) {
+                let effect = get_2d_effect(mi, j);
+                let take = (exclude == 0 || exclude != effect.addr() as u32)
+                    && at::<u8>(effect, 0xC).read() == 3
+                    && u32::from(at::<u8>(effect, 0x34).read()) == attractor_type
+                    && (name.is_null() || stricmp(name, effect.byte_add(0x38)) == 0)
+                    && (check_slot as u8 == 0
+                        || attractor_manager_has_empty_slot(get_ped_attractor_manager(), effect, ent) != 0);
+                if take {
+                    let mut w = [0u32; 3];
+                    let wp = GPtr::from_raw(w.as_mut_ptr().cast::<u8>());
+                    transform_from_object_space(ent, wp, effect);
+                    let p = |k: isize| x(at::<f32>(pos, k).read()).fsub_m(at::<f32>(wp, k).read());
+                    let (dx, dy, dz) = (p(0), p(4), p(8));
+                    let d = dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx));
+                    if d.fcom(x(best)) == sa_math::x87::Cmp::Less {
+                        best = d.to_f32();
+                        at::<u32>(out_effect, 0).write(effect.addr() as u32);
+                        at::<u32>(out_entity, 0).write(ent.addr() as u32);
+                        found = 1;
+                    }
+                }
+                j += 1;
+            }
+        }
+        i += 1;
+    }
+    found
+}
+
 /// Lane C turn 6 hooks (batch `frontier2-c12`).
-pub const HOOKS6: &[HookReg] = &[HOOK_SCRIPT_TASK_PICK_UP_OBJECT];
+pub const HOOKS6: &[HookReg] = &[HOOK_SCRIPT_TASK_PICK_UP_OBJECT, HOOK_FIND_CLOSEST_ATTRACTOR];
