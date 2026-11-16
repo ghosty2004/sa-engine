@@ -6,7 +6,7 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-use crate::common::{g, rd, wr, x, xi, X87};
+use crate::common::{g, rd, task_get_type, task_make_abortable, wr, x, xi, X87};
 use sa_core::bindings::vector_normalise;
 use sa_core::crt::rand_at;
 use sa_math::fpu::{ftol32, ge_or_nan, gt, le_or_nan};
@@ -19,6 +19,7 @@ use sa_world::bindings::{
 };
 use sa_input::bindings::get_pad;
 use crate::bindings::compute_ped_hit_side;
+use sa_world::bindings::{ped_placement_find_z_coor_for_ped, ped_say, placeable_set_posn};
 use sa_world::world::common::entity_pos;
 use sa_world::world::hand_object::model_info;
 
@@ -30,6 +31,10 @@ orig! {
     fn hit_and_run_ctor(e: u32, ped: u32, car: u32) -> u32 = thiscall 0x4AE990 => crate::gen_ctors::g_event_vehicle_hit_and_run_constructor_4ae990;
     /// `CEventVehicleHitAndRun::~CEventVehicleHitAndRun()` (0x4AEA50)
     fn hit_and_run_dtor(e: GPtr<u8>) = thiscall 0x4AEA50 => crate::event_dtors::event_vehicle_hit_and_run_dtor;
+    /// `CRopes::FindCoorsAlongRope(uint32 id, float along, CVector* pos, CVector* speed)` (0x555E40, sa-render)
+    fn ropes_find_coors_along_rope(id: u32, along: f32, pos: GPtr<f32>, speed: GPtr<f32>) -> u8 = cdecl 0x555E40 => unported;
+    /// `CTaskComplexUseSwatRope::CreateSubTask(int32 type, CPed*)` (0x659620, phase B native)
+    fn use_swat_rope_create_sub_task(t: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x659620 => crate::frontier_a_subtasks::use_swat_rope_create_sub_task;
 }
 
 /// `((v.x * v.x + v.y * v.y) + v.z * v.z)` then `fsqrt`: the inline magnitude of the vector at `v` (its components
@@ -243,8 +248,65 @@ pub fn kill_ped_with_car_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     1
 }
 
+// ------------------------------------------------------------------------------------------- swat rope
+
+/// `CTaskComplexUseSwatRope::ControlSubTask(CPed*)` (0x65A460, `ret 4`). On a heli (+0x14 bit 0) that is gone (+0x18
+/// null), crashing (mission +0x3BA = 0x3A) or at health (+0x4C0) `< 0` / `= 0` (a NaN keeps going): when the sub-task
+/// aborts (`MakeAbortable(ped, 1, NULL)`) the ped's +0x1C bit 0 is set, its standing flag cleared, its speed zeroed,
+/// NULL. A pause (0xCA) or abseil (0x1A7) sub-task: the ped's ground z (`FindZCoorForPed` on its position); with
+/// `z - 2 < ground` the sub-task is aborted into `CreateSubTask(0xC8)`; else +0x10 += `timeStep * 0.003` and the
+/// rope point (`FindCoorsAlongRope(+0xC, +0x10, &p, NULL)`) becomes the ped's position, +0x55C = +0x558 - `timeStep
+/// * 0.05`, z speed -0.03, `Say(0xB1)`; when the rope is not found the abort path runs (gta-reversed keeps the
+/// sub-task). Otherwise the sub-task.
+#[hook(addr = 0x65A460, conv = thiscall, name = "CTaskComplexUseSwatRope::ControlSubTask", expect = "83 EC 18 56 8B 74 24 20 57 8B",
+       unverified = "frontier2-a12", route = "L2", hazards = "heap-writes")]
+pub fn use_swat_rope_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let sub = || rd::<GPtr<u8>>(this, 8);
+    if rd::<u8>(this, 0x14) & 1 != 0 {
+        let heli = rd::<GPtr<u8>>(this, 0x18);
+        let gone = heli.is_null()
+            || rd::<u8>(heli, 0x3BA) == 0x3A
+            || !x(rd::<f32>(heli, 0x4C0)).fcom(x(g::<f32>(0x858B50).read())).test_parity(0x41);
+        if gone && task_make_abortable(sub(), ped, 1, GPtr::NULL) != 0 {
+            wr::<u32>(ped, 0x1C, rd::<u32>(ped, 0x1C) | 1);
+            wr::<u32>(ped, 0x46C, rd::<u32>(ped, 0x46C) & !1);
+            for o in [0x44, 0x48, 0x4C] {
+                wr::<u32>(ped, o, 0);
+            }
+            return GPtr::NULL;
+        }
+    }
+    let s = sub();
+    let ty = task_get_type(s);
+    if ty != 0xCA && ty != 0x1A7 {
+        return s;
+    }
+    let mut ground: [f32; 3] = core::array::from_fn(|i| rd::<f32>(entity_pos(ped), 4 * i as isize));
+    ped_placement_find_z_coor_for_ped(GPtr::from_raw(ground.as_mut_ptr()));
+    let low = !x(rd::<f32>(entity_pos(ped), 8)).fsub_m(g::<f32>(0x86F44C).read()).fcom(x(ground[2])).test_parity(5);
+    if !low {
+        let ts = g::<f32>(0xB7CB5C).read();
+        let t = x(ts).fmul_m(g::<f32>(0x86F450).read()).fadd_m(rd::<f32>(this, 0x10)).to_f32();
+        wr::<f32>(this, 0x10, t);
+        let mut p = [0f32; 3];
+        if ropes_find_coors_along_rope(rd::<u32>(this, 0xC), t, GPtr::from_raw(p.as_mut_ptr()), GPtr::NULL) != 0 {
+            placeable_set_posn(ped, GPtr::from_raw(p.as_mut_ptr()));
+            let ts = g::<f32>(0xB7CB5C).read();
+            wr::<f32>(ped, 0x55C, x(ts).fmul_m(g::<f32>(0x86F458).read()).fadd_m(rd::<f32>(ped, 0x558)).to_f32());
+            wr::<u32>(ped, 0x4C, g::<u32>(0x86F454).read());
+            ped_say(ped, 0xB1, 0, 1.0, 0, 0, 0);
+            return s;
+        }
+    }
+    if task_make_abortable(sub(), ped, 1, GPtr::NULL) != 0 {
+        return use_swat_rope_create_sub_task(this, 0xC8, ped);
+    }
+    s
+}
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_KILL_PED_WITH_CAR_DAMAGE_CAR_BONNET,
     HOOK_KILL_PED_WITH_CAR_SHAKE_PAD,
     HOOK_KILL_PED_WITH_CAR_PROCESS_PED,
+    HOOK_USE_SWAT_ROPE_CONTROL_SUB_TASK,
 ];
