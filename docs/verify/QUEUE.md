@@ -71,7 +71,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-a6 | 8 | AI | a6049c75 | worktree-agent-a198f2e01294e8cc9 | 8 | 0 | 0 | 0 | 0 | L2 8 |
 | frontier2-a7 | 16 | AI, POP | 0041ebcc | worktree-agent-a198f2e01294e8cc9 | 16 | 0 | 0 | 0 | 0 | L2 15, split 1 |
 | frontier2-a8 | 36 | AI | 3fd22dd2 | worktree-agent-a84f43d95c6a883c2 | 36 | 0 | 0 | 0 | 0 | L2 36 |
-| frontier2-a9 | 19 | AI, POP, UNK-game | a2efb994 | worktree-agent-aa16f3bdf26614476 | 19 | 0 | 0 | 0 | 0 | L2 19 |
+| frontier2-a9 | 23 | AI, POP, UNK-game | a2efb994 | worktree-agent-aa16f3bdf26614476 | 23 | 0 | 0 | 0 | 0 | L2 23 |
 | frontier2-b1 | 32 | MATH, RENDER, RW | ebd33c14 | master | 32 | 0 | 0 | 0 | 0 | L1-pure 1, L2 31 |
 | frontier2-b2 | 23 | RW | 2f47ba34 | master | 23 | 0 | 0 | 0 | 0 | L2 23 |
 | frontier2-b3 | 7 | VEH | 221f09a0 | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
@@ -2370,7 +2370,7 @@ SA_UNVERIFIED=frontier2-a8 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a8 $S
 
 ## frontier2-a9
 
-19 hooks in sa-ai, sa-pop; hazards: heap-writes (13), x87-transcendental (1); recordings calling them: no coverage data.
+23 hooks in sa-ai, sa-pop; hazards: heap-writes (14), x87-transcendental (2); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -2382,6 +2382,7 @@ SA_UNVERIFIED=frontier2-a9 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a9 $S
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x444530 | `CGangWars::TellGangMembersTo` | written | L2 | heap-writes |
+| 0x4B0810 | `CEventGunAimedAt::TakesPriorityOver` | written | L2 | none |
 | 0x5EACC0 | `FUN_005eacc0` | written | L2 | heap-writes |
 | 0x5EAEA0 | `FUN_005eaea0` | written | L2 | heap-writes |
 | 0x5EB1E0 | `FUN_005eb1e0` | written | L2 | heap-writes |
@@ -2390,16 +2391,19 @@ SA_UNVERIFIED=frontier2-a9 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a9 $S
 | 0x5EB9D0 | `FUN_005eb9d0` | written | L2 | heap-writes |
 | 0x5EC140 | `FUN_005ec140` | written | L2 | heap-writes |
 | 0x5ED750 | `FUN_005ed750` | written | L2 | heap-writes |
+| 0x5F6B40 | `CPedGroupDefaultTaskAllocatorFollowAnyMeans::AllocateDefaultTasks` | written | L2 | heap-writes |
 | 0x632190 | `CTaskComplexSunbathe::ShouldLoadSunbatheAnims` | written | L2 | none |
 | 0x6348F0 | `FUN_006348f0` | written | L2 | none |
 | 0x634930 | `CTaskComplexUseMobilePhone::MakeAbortable` | written | L2 | none |
 | 0x6381A0 | `CTaskComplexSunbathe::ControlSubTask` | written | L2 | none |
+| 0x661950 | `CTaskComplexGangJoinRespond::ControlSubTask` | written | L2 | none |
 | 0x66D550 | `FUN_0066d550` | written | L2 | none |
 | 0x670A70 | `FUN_00670a70` | written | L2 | none |
 | 0x670B00 | `FUN_00670b00` | written | L2 | heap-writes |
 | 0x670D80 | `vt_870114::CreateNextSubTask` | written | L2 | heap-writes |
 | 0x679270 | `CTaskComplexFallToDeath::CreateNextSubTask` | written | L2 | heap-writes |
 | 0x67F6A0 | `CTaskSimpleJetPack::RenderJetPack` | written | L2 | x87-transcendental,heap-writes |
+| 0x6946F0 | `CEntitySeekPosCalculatorRadiusAngleOffset::ComputeEntitySeekPos` | written | L2 | x87-transcendental |
 
 ## frontier2-b1
 

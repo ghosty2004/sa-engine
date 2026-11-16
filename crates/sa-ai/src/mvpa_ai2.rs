@@ -6,6 +6,7 @@
 //! function goes through `orig!` at the original address.
 #![allow(clippy::unreadable_literal)]
 
+use crate::bindings::compute_clear_target;
 use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
@@ -47,8 +48,6 @@ use sa_world::bindings::follow_point_route_ctor;
 orig! {
     /// `CEvent::GetEventType` (vtable +4)
     fn v_get_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
-    /// `CPedGeometryAnalyser::ComputeClearTarget(const CPed&, const CVector&, CVector&)` (0x5F5D80, cdecl)
-    fn compute_clear_target(ped: GPtr<u8>, target: GPtr<u8>, out: GPtr<u8>) -> u32 = cdecl 0x5F5D80 => unported;
     /// `CTaskSimpleCarDrive::UpdateBopping` (0x63C900)
     fn update_bopping_o(t: GPtr<u8>) = thiscall 0x63C900 => crate::mvpa_ai2::car_drive_update_bopping;
     /// `CTaskSimpleCarDrive::ProcessHeadBopping(CPed*, bool, float)` (0x6428C0, `ret 0xC`)

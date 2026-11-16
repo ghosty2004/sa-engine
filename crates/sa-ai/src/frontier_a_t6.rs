@@ -9,7 +9,21 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
 use crate::bindings::{can_sunbathe, go_to_point_ctor, in_air_ctor, simple_dead_ctor, task_new, task_simple_ctor};
-use crate::common::{g, rd, task_get_type, task_make_abortable, wr, x};
+use crate::bindings::{compute_clear_target, event_takes_priority_over, should_load_gang_anims};
+use crate::bindings::{car_enter_exit_is_vehicle_stealable, run_anim_ctor2, scanner_closest_vehicle, task_timer_is_out_of_time};
+use crate::common::X87;
+use sa_core::bindings::entity_register_reference;
+use sa_math::fpu::fcom_any;
+use sa_pop::bindings::add_weapon_model;
+use sa_world::bindings::{die_ctor, intel_find_task_by_type};
+use crate::common::{ftol32, g, rd, task_get_type, task_make_abortable, wr, x, xi};
+use sa_core::bindings::{
+    find_player_ped, general_get_radian_angle_between_points, general_limit_radian_angle, vector_normalise,
+};
+use sa_core::crt::rand_at;
+use sa_math::fpu::{fld_fst, st0};
+use sa_pop::bindings::wander_gang_ctor;
+use sa_stream::bindings::{anim_remove_block_ref, get_animation_block_index};
 use sa_anim::bindings::anim_add_block_ref;
 use crate::fall::fild_u32;
 use sa_core::bindings::{
@@ -25,6 +39,17 @@ use sa_world::bindings::{
 };
 
 orig! {
+    /// `CTaskComplexGoToPointAnyMeans::CreateSubTask(int32 type, CPed*)` (0x6705D0, `ret 8`)
+    fn go_to_point_any_means_create_sub_task_o(t: u32, ty: u32, ped: u32) -> u32 = thiscall 0x6705D0 => crate::gen_subtasks::g_task_complex_go_to_point_any_means_create_sub_task_6705d0;
+    /// `CTaskSimplePlayerOnFoot::PlayerControlZelda(CPlayerPed*, bool)` (0x6883D0, `ret 8`)
+    fn player_control_zelda_o(t: GPtr<u8>, ped: GPtr<u8>, b: u8) = thiscall 0x6883D0 => crate::player_on_foot::on_foot_player_control_zelda;
+    /// `CEvent::GetSourceEntity()` (vtable +0x28)
+    fn v_event_source_entity(e: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x28 => unported;
+    /// `CEvent::GetEventPriority()` (vtable +8)
+    fn v_event_priority(e: GPtr<u8>) -> i32 = thiscall vslot 0x8 => unported;
+    /// `CTaskComplexFollowLeaderAnyMeans::Constructor(CPedGroup*, CPed* leader, const CVector& offset)` (0x694AA0,
+    /// `ret 0xC`)
+    fn follow_leader_any_means_ctor(t: u32, group: u32, leader: u32, offset: u32) -> u32 = thiscall 0x694AA0 => crate::gen_ctors::g_task_complex_follow_leader_any_means_constructor_694aa0;
     /// `CTaskSimpleJetPack::DoJetPackEffect(CPed*)` (0x67B7F0, `ret 4`)
     fn jet_pack_do_effect(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x67B7F0 => unported;
     /// `CEvent::GetEventType()` (vtable +4)
@@ -570,6 +595,317 @@ pub fn jet_pack_render(this: GPtr<u8>, ped: GPtr<u8>) {
     wr::<u32>(this, 0x3C, rd::<u32>(ped, 0x558));
 }
 
+// ------------------------------------------------------------------------------------------- small virtuals
+
+/// `CEventGunAimedAt::TakesPriorityOver(const CEvent&)` (0x4B0810, `ret 4`). With a player as the aimer (+0x14): an
+/// event from that same source entity (`other.GetSourceEntity()`, vtable +0x28) compares priorities (`this >=
+/// other`, the other's read first); otherwise events of type 9, 0x24 and 0x27 lose to it and the rest go to
+/// `CEvent::TakesPriorityOver`. Without a player aimer: the priority comparison.
+#[hook(addr = 0x4B0810, conv = thiscall, name = "CEventGunAimedAt::TakesPriorityOver", expect = "56 57 8B F9 8B 4F 14 85 C9",
+       this = "CEventGunAimedAt",
+       unverified = "frontier2-a9", route = "L2", hazards = "none")]
+pub fn gun_aimed_at_takes_priority_over(this: GPtr<u8>, other: GPtr<u8>) -> u8 {
+    let aimer = rd::<GPtr<u8>>(this, 0x14);
+    if !aimer.is_null() && ped_is_player(aimer) != 0 {
+        if v_event_source_entity(other).addr() as u32 == rd::<u32>(this, 0x14) {
+            let o = v_event_priority(other);
+            return u8::from(v_event_priority(this) >= o);
+        }
+        return match v_event_type(other) {
+            9 | 0x24 | 0x27 => 1,
+            _ => event_takes_priority_over(this, other),
+        };
+    }
+    let o = v_event_priority(other);
+    u8::from(v_event_priority(this) >= o)
+}
+
+/// `CEntitySeekPosCalculatorRadiusAngleOffset::ComputeEntitySeekPos(const CPed&, const CEntity&, CVector&)` (0x6946F0,
+/// `ret 0xC`). +4 the radius, +8 the angle offset. The entity's forward (matrix +0x10, or `(-sin h, cos h)` of its
+/// heading +0x10 without a matrix, stored as f32) gives `a = LimitRadianAngle(f32(LimitRadianAngle(f32(
+/// GetRadianAngleBetweenPoints(f.x, f.y, 0, 0))) + offset))`; the target is the entity's position plus `(-sin a * r, r
+/// * cos a, r * 0)` (each sum stored as f32; FSIN / FCOS of the x87 result), and
+/// `CPedGeometryAnalyser::ComputeClearTarget(ped, target, out)` writes the result.
+#[hook(addr = 0x6946F0, conv = thiscall, name = "CEntitySeekPosCalculatorRadiusAngleOffset::ComputeEntitySeekPos",
+       expect = "83 EC 18 56 8B 74 24 24", this = "CEntitySeekPosCalculatorRadiusAngleOffset",
+       unverified = "frontier2-a9", route = "L2", hazards = "x87-transcendental")]
+pub fn radius_angle_offset_compute_entity_seek_pos(this: GPtr<u8>, ped: GPtr<u8>, entity: GPtr<u8>, out: GPtr<u8>) {
+    let m = rd::<GPtr<u8>>(entity, 0x14);
+    let (fx, fy) = if !m.is_null() {
+        (rd::<f32>(m, 0x10), rd::<f32>(m, 0x14))
+    } else {
+        let h = x(rd::<f32>(entity, 0x10));
+        (h.fsin().fchs().to_f32(), h.fcos().to_f32())
+    };
+    let a0 = general_get_radian_angle_between_points(fx, fy, 0.0, 0.0).to_f32();
+    let a1 = st0(general_limit_radian_angle(a0)).fadd_m(rd::<f32>(this, 8)).to_f32();
+    let a = st0(general_limit_radian_angle(a1));
+    let r = rd::<f32>(this, 4);
+    let s = a.fsin().fchs();
+    let c = a.fcos().to_f32();
+    let dx = s.fmul_m(r);
+    let dy = x(r).fmul_m(c);
+    let dz = x(r).fmul_m(g::<f32>(0x858B50).read()).to_f32();
+    let m = rd::<GPtr<u8>>(entity, 0x14);
+    let p = if m.is_null() { entity.byte_add(4) } else { m.byte_add(0x30) };
+    let mut t = [
+        dx.fadd_m(rd::<f32>(p, 0)).to_f32(),
+        dy.fadd_m(rd::<f32>(p, 4)).to_f32(),
+        x(dz).fadd_m(rd::<f32>(p, 8)).to_f32(),
+    ];
+    compute_clear_target(ped, GPtr::from_raw(t.as_mut_ptr()).cast(), out);
+}
+
+/// `CTaskComplexGangJoinRespond::ControlSubTask(CPed*)` (0x661950, `ret 4`). The ped turns to the player: `(player -
+/// ped)` in x / y (f32, z 0) normalised, `+0x55C = LimitRadianAngle(f32(GetRadianAngleBetweenPoints(d.x, d.y, 0,
+/// 0)))`. The "gangs" anim block (+0xD referenced): not referenced and `ShouldLoadGangAnims()`: referenced once loaded
+/// (state byte == 1), else requested (model 0x63E7 + index, flags 8); referenced and no longer wanted: released. Returns
+/// the sub-task.
+#[hook(addr = 0x661950, conv = thiscall, name = "CTaskComplexGangJoinRespond::ControlSubTask", expect = "83 EC 0C 53 8B 5C 24 14",
+       this = "CTaskComplexGangJoinRespond",
+       unverified = "frontier2-a9", route = "L2", hazards = "none")]
+pub fn gang_join_respond_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let pm = rd::<GPtr<u8>>(ped, 0x14);
+    let pp = if pm.is_null() { ped.byte_add(4) } else { pm.byte_add(0x30) };
+    let pl = find_player_ped(-1);
+    let lm = rd::<GPtr<u8>>(pl, 0x14);
+    let lp = if lm.is_null() { pl.byte_add(4) } else { lm.byte_add(0x30) };
+    let mut d = [
+        x(rd::<f32>(lp, 0)).fsub_m(rd::<f32>(pp, 0)).to_f32(),
+        x(rd::<f32>(lp, 4)).fsub_m(rd::<f32>(pp, 4)).to_f32(),
+        0.0,
+    ];
+    vector_normalise(GPtr::from_raw(d.as_mut_ptr()).cast());
+    let a = general_get_radian_angle_between_points(d[0], d[1], 0.0, 0.0).to_f32();
+    wr::<f32>(ped, 0x55C, st0(general_limit_radian_angle(a)).to_f32());
+    let gangs = GPtr::<u8>::from_addr(0x86F92C);
+    if rd::<u8>(this, 0xD) == 0 {
+        if should_load_gang_anims() != 0 {
+            let idx = get_animation_block_index(gangs);
+            if g::<u8>(0xB5D4B0 + ((idx as u32) << 5) as usize).read() == 1 {
+                anim_add_block_ref(idx);
+                wr::<u8>(this, 0xD, 1);
+            } else {
+                streaming_request_model(idx.wrapping_add(0x63E7), 8);
+            }
+        }
+    } else if should_load_gang_anims() == 0 {
+        let idx = get_animation_block_index(gangs);
+        anim_remove_block_ref(idx as u32);
+        wr::<u8>(this, 0xD, 0);
+    }
+    rd::<GPtr<u8>>(this, 8)
+}
+
+/// `CPedGroupDefaultTaskAllocatorFollowAnyMeans::AllocateDefaultTasks(CPedGroup*, CPed*)` (0x5F6B40, `ret 8`; `this`
+/// unused). The group intelligence's seven follower slots (+0x21C, 0x14 each): a member (all, or only `ped` when given)
+/// gets `CTaskComplexFollowLeaderAnyMeans(group, leader +0x28, offset k)` with the offset `(x, y)` of the formation
+/// table 0xC196E8 (y through `fld` / `fstp`), stored at the slot +4 (null when `new` fails). The leader slot (+0x2A8)
+/// likewise gets `CTaskComplexWanderGang(4, ftol((rand() & 0xFFFF) * [0x858B14] * [0x859000]), 5000, true,
+/// [0x86FCB0])` at +0x2AC.
+#[hook(addr = 0x5F6B40, conv = thiscall, name = "CPedGroupDefaultTaskAllocatorFollowAnyMeans::AllocateDefaultTasks",
+       expect = "64 A1 00 00 00 00 6A FF 68 26 DF 83 00",
+       unverified = "frontier2-a9", route = "L2", hazards = "heap-writes",
+       note = "rand() through rand_at (0x5F6C12); SEH frame not modelled")]
+pub fn follow_any_means_allocate_default_tasks(_this: GPtr<u8>, group: GPtr<u8>, ped: GPtr<u8>) {
+    for k in 0..7usize {
+        let slot = group.byte_add(0x21C + k as isize * 0x14);
+        let m = rd::<GPtr<u8>>(slot, 0);
+        if m.is_null() || (!ped.is_null() && m != ped) {
+            continue;
+        }
+        let mem = task_new(0x24);
+        let t = if mem.is_null() {
+            GPtr::NULL
+        } else {
+            let mut off = [g::<u32>(0xC196E8 + k * 8).read(), fld_fst(g::<f32>(0xC196EC + k * 8).read()).to_bits()];
+            GPtr::from_addr(follow_leader_any_means_ctor(
+                mem.addr() as u32,
+                group.addr() as u32,
+                rd::<u32>(group, 0x28),
+                GPtr::<u32>::from_raw(off.as_mut_ptr()).addr() as u32,
+            ) as usize)
+        };
+        wr::<GPtr<u8>>(slot, 4, t);
+    }
+    let m = rd::<GPtr<u8>>(group, 0x2A8);
+    if m.is_null() || (!ped.is_null() && m != ped) {
+        return;
+    }
+    let mem = task_new(0x38);
+    let t = if mem.is_null() {
+        GPtr::NULL
+    } else {
+        let r = rand_at(0x5F6C12) & 0xFFFF;
+        let f = g::<u32>(0x86FCB0).read();
+        let dir = ftol32(xi(r).fmul_m(g::<f32>(0x858B14).read()).fmul_m(g::<f32>(0x859000).read()));
+        wander_gang_ctor(mem, 4, dir, 5000, 1, f)
+    };
+    wr::<GPtr<u8>>(group, 0x2AC, t);
+}
+
+/// `CTaskComplexGoToPointAnyMeans::ControlSubTask(CPed*)` (0x672A50, `ret 4`). Only a follow-node-route sub-task
+/// (0x38A) is controlled. +0xC the target, +0x20 the vehicle to steal, +0x24 the timer flag (-1: no timer), +0x28 /
+/// +0x2C / +0x30 / +0x31 the task timer. With a timer (started at 3000 ms when not yet) that is out of time (`now >=
+/// start + interval`, unsigned; a pending restart (+0x31) restarts it first): `CreateSubTask(0x340)` and the timer
+/// restarted. Otherwise, more than 50 m (`50 * 50 < d²`, x87) from the target, the ped's closest scanned vehicle
+/// (`FUN_005ffee0` on the intelligence +0xD4), when not the remembered one and `CCarEnterExit::IsVehicleStealable`,
+/// is remembered (+0x20, with `RegisterReference`) and `CreateSubTask(0x2BD)` returned. Else the sub-task.
+#[hook(addr = 0x672A50, conv = thiscall, name = "CTaskComplexGoToPointAnyMeans::ControlSubTask", expect = "51 53 55 56 8B F1 57 8B 7E 08",
+       this = "CTaskComplexGoToPointAnyMeans",
+       unverified = "frontier2-a9", route = "L2", hazards = "none")]
+pub fn go_to_point_any_means_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let sub = rd::<GPtr<u8>>(this, 8);
+    if task_get_type(sub) != 0x38A {
+        return sub;
+    }
+    if rd::<i32>(this, 0x24) != -1 && rd::<u8>(this, 0x30) == 0 {
+        wr::<u32>(this, 0x28, g::<u32>(TIME_MS).read());
+        wr::<u32>(this, 0x2C, 3000);
+        wr::<u8>(this, 0x30, 1);
+    }
+    if rd::<u8>(this, 0x30) != 0 {
+        if rd::<u8>(this, 0x31) != 0 {
+            wr::<u32>(this, 0x28, g::<u32>(TIME_MS).read());
+            wr::<u8>(this, 0x31, 0);
+        }
+        let end = rd::<u32>(this, 0x2C).wrapping_add(rd::<u32>(this, 0x28));
+        if g::<u32>(TIME_MS).read() >= end {
+            let t = go_to_point_any_means_create_sub_task_o(this.addr() as u32, 0x340, ped.addr() as u32);
+            wr::<u32>(this, 0x2C, 3000);
+            wr::<u8>(this, 0x30, 1);
+            wr::<u32>(this, 0x28, g::<u32>(TIME_MS).read());
+            return GPtr::from_addr(t as usize);
+        }
+    }
+    let m = rd::<GPtr<u8>>(ped, 0x14);
+    let p = if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) };
+    let dx = x(rd::<f32>(p, 0)).fsub_m(rd::<f32>(this, 0xC));
+    let dy = x(rd::<f32>(p, 4)).fsub_m(rd::<f32>(this, 0x10));
+    let dz = x(rd::<f32>(p, 8)).fsub_m(rd::<f32>(this, 0x14));
+    let d2 = dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx));
+    let k = g::<f32>(0x86FD04).read();
+    if ge_or_nan(x(k).fmul_m(k), d2) {
+        return sub;
+    }
+    let veh = scanner_closest_vehicle(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0xD4));
+    if veh.is_null() || veh.addr() as u32 == rd::<u32>(this, 0x20) {
+        return sub;
+    }
+    if car_enter_exit_is_vehicle_stealable(veh, ped) == 0 {
+        return sub;
+    }
+    wr::<GPtr<u8>>(this, 0x20, veh);
+    let t = go_to_point_any_means_create_sub_task_o(this.addr() as u32, 0x2BD, ped.addr() as u32);
+    entity_register_reference(rd::<GPtr<u8>>(this, 0x20), this.byte_add(0x20));
+    GPtr::from_addr(t as usize)
+}
+
+/// `CTaskComplexUseMobilePhone::ControlSubTask(CPed*)` (0x634D60, `ret 4`). With player data (+0x480) its +0x85 is set
+/// first. Unless the sub-task is a pause (0xCA): the phone anims 0x91 (take out) and 0x92 (put away): while taking it
+/// out, from anim time 0.85 the phone model (330) is added; while putting it away, at time >= 1.566 and with `time -
+/// delta` below it, 0x6348F0 restores the weapon; with neither, once the task timer (+0x10) is out of time, a
+/// `CTaskSimpleRunAnim(0, 0x92, 4.0, 0x643, 0x86E48C, false)` replaces the sub-task (null when `new` fails). Then, with
+/// player data: +0x84 set, a negative +0x18 cleared, `PlayerControlZelda(ped, true)` on the ped's task of type 0 (when
+/// found), +0x84 cleared.
+#[hook(addr = 0x634D60, conv = thiscall, name = "CTaskComplexUseMobilePhone::ControlSubTask", expect = "64 A1 00 00 00 00 6A FF 68 2B 09 84 00",
+       this = "CTaskComplexUseMobilePhone",
+       unverified = "frontier2-a9", route = "L2", hazards = "heap-writes",
+       note = "SEH frame not modelled")]
+pub fn use_mobile_phone_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let mut res = rd::<GPtr<u8>>(this, 8);
+    let pd = rd::<GPtr<u8>>(ped, 0x480);
+    if !pd.is_null() {
+        wr::<u8>(pd, 0x85, 1);
+    }
+    if task_get_type(rd::<GPtr<u8>>(this, 8)) != 0xCA {
+        let a1 = clump_get_association(rd::<GPtr<u8>>(ped, 0x18), 0x91);
+        let a2 = clump_get_association(rd::<GPtr<u8>>(ped, 0x18), 0x92);
+        let k = X87::from_f64_exact(g::<f64>(0x86E4A0).read());
+        if !a1.is_null() {
+            if !fcom_any(x(rd::<f32>(a1, 0x20)), x(g::<f32>(0x862E1C).read()), 1) {
+                add_weapon_model(ped, 0x14A);
+            }
+        } else if !a2.is_null() {
+            if !fcom_any(x(rd::<f32>(a2, 0x20)), k, 1)
+                && lt(x(rd::<f32>(a2, 0x20)).fsub_m(rd::<f32>(a2, 0x28)), k)
+            {
+                use_mobile_phone_restore_weapon_o(this, ped);
+            }
+        } else if task_timer_is_out_of_time(this.byte_add(0x10)) != 0 {
+            let m = task_new(0x20);
+            res = if m.is_null() {
+                GPtr::NULL
+            } else {
+                run_anim_ctor2(m, 0, 0x92, 0x4080_0000, 0x643, 0x86E48C, 0)
+            };
+        }
+    }
+    if !rd::<GPtr<u8>>(ped, 0x480).is_null() {
+        wr::<u8>(rd::<GPtr<u8>>(ped, 0x480), 0x84, 1);
+        let pd = rd::<GPtr<u8>>(ped, 0x480);
+        if lt(x(rd::<f32>(pd, 0x18)), x(g::<f32>(0x858B50).read())) {
+            wr::<u32>(pd, 0x18, 0);
+        }
+        let t = intel_find_task_by_type(rd::<GPtr<u8>>(ped, 0x47C), 0);
+        if !t.is_null() {
+            player_control_zelda_o(t, ped, 1);
+        }
+        wr::<u8>(rd::<GPtr<u8>>(ped, 0x480), 0x84, 0);
+    }
+    res
+}
+
+/// `CTaskComplexFallToDeath::ControlSubTask(CPed*)` (0x679510, `ret 4`). A ped flagged +0x40 bit 0x100 (once, +0x21 bit
+/// 2): +0x470 |= 0x80000 and a `CTaskComplexDie(0x35, 0, 0x8C, 4.0, 1.0, false, false, 0, false)` (null when `new`
+/// fails). Otherwise, retried in air (bit 1) but not yet down (bit 2), with a sub-task other than 0xDA and `|z| < 0.01`
+/// (move speed +0x4C): bits 2 and 4 set, both fall anims (+0x18, +0x1C, when not -1) get blend delta -1000, and an
+/// inlined `CTaskSimpleLand(0x18)` (flags `(b & 0xFC) | 4`) replaces the sub-task (null when `new` fails). Else the
+/// sub-task.
+#[hook(addr = 0x679510, conv = thiscall, name = "CTaskComplexFallToDeath::ControlSubTask", expect = "64 A1 00 00 00 00 6A FF 68 96 60 84 00",
+       this = "CTaskComplexFallToDeath",
+       unverified = "frontier2-a9", route = "L2", hazards = "heap-writes",
+       note = "SEH frame not modelled")]
+pub fn fall_to_death_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let sub = rd::<GPtr<u8>>(this, 8);
+    if rd::<u32>(ped, 0x40) & 0x100 != 0 && rd::<u8>(this, 0x21) & 2 == 0 {
+        wr::<u8>(this, 0x21, rd::<u8>(this, 0x21) | 2);
+        wr::<u32>(ped, 0x470, rd::<u32>(ped, 0x470) | 0x8_0000);
+        let m = task_new(0x28);
+        if m.is_null() {
+            return GPtr::NULL;
+        }
+        return die_ctor(m, 0x35, 0, 0x8C, 4.0, 1.0, 0, 0, 0, 0);
+    }
+    let fl = rd::<u8>(this, 0x21);
+    if fl & 1 == 0 || fl & 2 != 0 || task_get_type(sub) == 0xDA {
+        return sub;
+    }
+    if !abs_lt(rd::<f32>(ped, 0x4C), f32::from_bits(0x3C23_D70A)) {
+        return sub;
+    }
+    wr::<u8>(this, 0x21, rd::<u8>(this, 0x21) | 6);
+    for o in [0x18, 0x1C] {
+        let anim = rd::<u32>(this, o);
+        if anim != 0xFFFF_FFFF {
+            let a = clump_get_association(rd::<GPtr<u8>>(ped, 0x18), anim);
+            if !a.is_null() {
+                wr::<u32>(a, 0x1C, 0xC47A_0000);
+            }
+        }
+    }
+    let m = task_new(0x14);
+    if m.is_null() {
+        return GPtr::NULL;
+    }
+    task_simple_ctor(m);
+    wr::<u8>(m, 0x10, (rd::<u8>(m, 0x10) & 0xFC) | 4);
+    wr::<u32>(m, 0, 0x8704FC);
+    wr::<u32>(m, 8, 0);
+    wr::<u32>(m, 0xC, 0x18);
+    m
+}
+
 /// Every hook of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_USE_MOBILE_PHONE_RESTORE_WEAPON,
@@ -582,4 +918,11 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_SHOULD_LOAD_SUNBATHE_ANIMS,
     HOOK_SUNBATHE_CONTROL_SUB_TASK,
     HOOK_JET_PACK_RENDER,
+    HOOK_GUN_AIMED_AT_TAKES_PRIORITY_OVER,
+    HOOK_RADIUS_ANGLE_OFFSET_COMPUTE_ENTITY_SEEK_POS,
+    HOOK_GANG_JOIN_RESPOND_CONTROL_SUB_TASK,
+    HOOK_FOLLOW_ANY_MEANS_ALLOCATE_DEFAULT_TASKS,
+    HOOK_GO_TO_POINT_ANY_MEANS_CONTROL_SUB_TASK,
+    HOOK_USE_MOBILE_PHONE_CONTROL_SUB_TASK,
+    HOOK_FALL_TO_DEATH_CONTROL_SUB_TASK,
 ];

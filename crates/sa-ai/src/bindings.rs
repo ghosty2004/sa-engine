@@ -84,6 +84,11 @@ orig! {
 }
 
 orig! {
+    /// `CEvent::TakesPriorityOver` (0x4ABC30)
+    pub fn event_takes_priority_over(ev: GPtr<u8>, other: GPtr<u8>) -> u8 = thiscall 0x4ABC30 => crate::events::event_takes_priority_over_4abc30;
+}
+
+orig! {
     /// `FUN_004abca0` (0x4ABCA0)
     pub fn damage_4abca0(e: GPtr<u8>) -> u8 = thiscall 0x4ABCA0 => unported;
 }
@@ -586,6 +591,11 @@ orig! {
 orig! {
     /// `CPedGeometryAnalyser::GetIsLineOfSightClear-ped` (0x5F5A30)
     pub fn geometry_line_of_sight_clear(ped: GPtr<u8>, target: GPtr<u8>, e: GPtr<u8>, dist: GPtr<u8>) -> u8 = cdecl 0x5F5A30 => unported;
+}
+
+orig! {
+    /// `CPedGeometryAnalyser::ComputeClearTarget` (0x5F5D80)
+    pub fn compute_clear_target(ped: GPtr<u8>, target: GPtr<u8>, out: GPtr<u8>) -> u32 = cdecl 0x5F5D80 => unported;
 }
 
 orig! {

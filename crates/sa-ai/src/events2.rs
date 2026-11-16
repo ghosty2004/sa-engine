@@ -3,6 +3,7 @@
 //! 1.0 US bytes (`docs/re/specs/AI/CEvent*.md` as reading aid); the exe wins over gta-reversed.
 #![allow(clippy::unreadable_literal)]
 
+use crate::bindings::event_takes_priority_over;
 use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
@@ -93,8 +94,6 @@ orig! {
     fn make_decision_ped(dm: GPtr<u8>, ped: GPtr<u8>, ev: i32, src: u32, b: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32, task: GPtr<u8>, facial: GPtr<u8>) = thiscall 0x606E70 => unported;
     /// `CDecisionMakerTypes::MakeDecision(CPedGroup*, ...)` (0x606F80, `ret 0x20`, AX = task)
     fn make_decision_group(dm: GPtr<u8>, grp: GPtr<u8>, ev: i32, src: u32, b: u32, a4: u32, a5: u32, a6: u32, a7: u32) -> u32 = thiscall 0x606F80 => unported;
-    /// `CEvent::TakesPriorityOver(const CEvent&)` (0x4ABC30, AL)
-    fn event_takes_priority_over(ev: GPtr<u8>, other: GPtr<u8>) -> u8 = thiscall 0x4ABC30 => unported;
     /// `CEvent::GetEventPriority` (vtable +8)
     fn ev_get_event_priority(ev: GPtr<u8>) -> i32 = thiscall vslot 0x8 => unported;
     /// `CPed::RemoveBodyPart(int, char)` (0x5F0140)
