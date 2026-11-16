@@ -36,6 +36,7 @@ use crate::bindings::{be_hit_ctor, car_drive_timed_ctor, fall_and_get_up_ctor, t
 use sa_core::bindings::{get_pad, vector2d_normalise};
 use sa_math::vector::CVector;
 use crate::bindings::{clean_up_this_vehicle, cleanup_remove_entity_from_list};
+use sa_core::bindings::{eh_vector_ctor, eh_vector_dtor};
 use sa_world::bindings::{
     camera_is_sphere_visible, create_car_for_script, find_node_closest_to_coors, find_node_coors_for_script,
     is_position_clear_for_ped, set_ped_in_as_driver_ctor, set_ped_in_as_driver_dtor, set_ped_in_as_driver_process_ped,
@@ -1664,6 +1665,79 @@ pub fn create_car_and_get_in_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     1
 }
 
+// ------------------------------------------------------------------------------------------- chat allocator
+
+/// `CPedGroupDefaultTaskAllocatorChat::AllocateDefaultTasks(CPedGroup*, CPed*)` (0x5F8180, `ret 8`; `this` unused; SEH
+/// frame). The group's occupied slots (members +0xC..+0x24, leader +0x28) in order; eight stack sequences
+/// (`eh vector constructor iterator`, 0x40 bytes). Each occupied slot's sequence gets
+/// `CTaskComplexGoToPointAndStandStill(4, its ped's position, 0x86FC84, 0x86FC88)` and `CTaskSimpleAchieveHeading(ped
+/// +0x558, 0x86FC7C, 0x86FC80)` and repeats (+0x30 = 1). Then `n` rounds: a talker `ftol(n * (rand() & 0xFFFF) *
+/// 0x858B14)` and a time `3000 - ftol((rand() & 0xFFFF) * 0x858B14 * 0x859A90)`; the talker's sequence gets a
+/// `CTaskSimpleRunTimedAnim(0, 0xC, 4.0, -4.0, time, 0x1A0, 0x86C7B4, false)` re-tabled 0x86C78C, the others a
+/// `CTaskSimpleStandStill(time, false, false, 8.0)`. Each slot's pair (+0x21C, 0x14 each) whose ped is the given one
+/// (or for a NULL ped) takes a clone of its sequence; the stack sequences are destroyed.
+#[hook(addr = 0x5F8180, conv = thiscall, name = "CPedGroupDefaultTaskAllocatorChat::AllocateDefaultTasks",
+       expect = "6A FF 68 8E E0 83 00",
+       unverified = "frontier2-a11", route = "L2", hazards = "heap-writes")]
+pub fn chat_allocate_default_tasks(_this: GPtr<u8>, group: GPtr<u8>, ped: GPtr<u8>) {
+    let mut list = [0i32; 8];
+    let mut n = 0usize;
+    for i in 0..8 {
+        if rd::<u32>(group, 0xC + i as isize * 4) != 0 {
+            list[n] = i;
+            n += 1;
+        }
+    }
+    let mut seqs = [0u32; 0x80];
+    let sp = GPtr::from_raw(seqs.as_mut_ptr()).cast::<u8>();
+    eh_vector_ctor(sp, 0x40, 8, 0x632BD0, 0x6389F0);
+    let seq = |i: i32| sp.byte_add(i as isize * 0x40);
+    for &i in &list[..n] {
+        let m = rd::<GPtr<u8>>(group, 0xC + i as isize * 4);
+        let go = crate::common::new_task(0x28, |t| {
+            let (a, b) = (g::<f32>(0x86FC84).read(), g::<f32>(0x86FC88).read());
+            go_to_point_and_stand_still_ctor(t, 4, entity_pos(m).cast(), a, b, 0, 0)
+        });
+        sequence_add_task(seq(i), go);
+        let h = crate::common::new_task(0x18, |t| {
+            achieve_heading_ctor(t, rd::<f32>(m, 0x558), g::<u32>(0x86FC7C).read(), g::<u32>(0x86FC80).read())
+        });
+        sequence_add_task(seq(i), h);
+        wr::<u32>(seq(i), 0x30, 1);
+    }
+    if n > 0 {
+        let nf = xi(n as i32).to_f32();
+        for _ in 0..n {
+            let r = rand_at(0x5F8365) & 0xFFFF;
+            let talker = ftol32(x(nf).fmul(xi(r).fmul_m(g::<f32>(0x858B14).read())));
+            let r = rand_at(0x5F838E) & 0xFFFF;
+            let time = 3000 - ftol32(xi(r).fmul_m(g::<f32>(0x858B14).read()).fmul_m(g::<f32>(0x859A90).read()));
+            for (b, &slot) in list[..n].iter().enumerate() {
+                let t = if talker == b as i32 {
+                    let m = task_new(0x34);
+                    if m.is_null() {
+                        GPtr::NULL
+                    } else {
+                        run_timed_anim_ctor2(m, 0, 0xC, 0x4080_0000, 0xC080_0000, time as u32, 0x1A0, 0x86C7B4, 0);
+                        wr::<u32>(m, 0, 0x86C78C);
+                        m
+                    }
+                } else {
+                    crate::common::new_task(0x20, |m| stand_still_ctor(m, time, 0, 0, 8.0))
+                };
+                sequence_add_task(seq(slot), t);
+            }
+        }
+    }
+    for &i in &list[..n] {
+        let pair = group.byte_add(0x21C + i as isize * 0x14);
+        if ped.is_null() || rd::<GPtr<u8>>(pair, 0) == ped {
+            wr::<GPtr<u8>>(pair, 4, crate::group_scan_loops::sequence_clone(seq(i)));
+        }
+    }
+    eh_vector_dtor(sp, 0x40, 8, 0x6389F0);
+}
+
 /// The batch's hooks.
 pub const HOOKS: &[HookReg] = &[
     HOOK_MEDIC_TREAT_INJURED_PED_CREATE_NEXT_SUB_TASK,
@@ -1697,4 +1771,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_SEEK_87004C_CREATE_NEXT_SUB_TASK,
     HOOK_SEEK_87004C_CONTROL_SUB_TASK,
     HOOK_CREATE_CAR_AND_GET_IN_PROCESS_PED,
+    HOOK_CHAT_ALLOCATE_DEFAULT_TASKS,
 ];
