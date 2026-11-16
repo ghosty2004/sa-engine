@@ -274,6 +274,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x669D20,sa-ai,dtor_669d20,thiscall,,this:GPtr<u8>,,unported,thunk_FUN_0040387c,
 0x66A100,sa-ai,avoid_other_ped_ctor,thiscall,,t:GPtr<u8>;ped:GPtr<u8>;target:GPtr<u8>;ms:u32,GPtr<u8>,unported,CTaskComplexAvoidOtherPedWhileWandering::Constructor,
 0x66AF60,sa-ai,wander_set_next_min_scan_time,thiscall,,t:GPtr<u8>;ped:GPtr<u8>,,unported,CTaskComplexWanderStandard::SetNextMinScanTime,
+0x66C720,sa-ai,investigate_disturbance_ctor,thiscall,,t:GPtr<u8>;pos:GPtr<u8>;e:GPtr<u8>,GPtr<u8>,unported,CTaskComplexInvestigateDisturbance::Constructor,
 0x66B640,sa-ai,go_to_attractor_ctor,thiscall,,t:GPtr<u8>;a:GPtr<u8>;pos:GPtr<u8>;heading:u32;time:u32;slot:i32;ms:u32,GPtr<u8>,unported,CTaskComplexGoToAttractor::Constructor,
 0x66F6C0,sa-ai,group_member_bounding_sphere,thiscall,,t:GPtr<u8>;sphere:GPtr<u8>;peds:GPtr<u8>,,sa_ai::frontier_c::bounding_sphere_of_peds,FUN_0066f6c0,
 0x671750,sa-ai,fnr_set_target_orig,thiscall,,t:GPtr<u8>;ped:GPtr<u8>;pos:GPtr<u8>;a:u32;b:u32;c:u32;d:u32,,unported,CTaskComplexFollowNodeRoute::SetTarget,

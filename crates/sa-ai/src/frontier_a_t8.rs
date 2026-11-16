@@ -16,7 +16,9 @@ use crate::bindings::{pad_jump_just_down, use_gun_control_gun, use_gun_control_g
 use sa_core::bindings::{
     entity_clean_up_old_reference, entity_register_reference, intel_get_task_use_gun, ped_is_alive, vector_normalise,
 };
-use sa_world::bindings::stand_still_ctor;
+use sa_world::bindings::{ctor_48df30, run_anim_ctor, sequence_add_task, sequence_ctor, stand_still_ctor};
+use crate::bindings::{can_ped_target_ped, intel_can_see_entity_with_lights, investigate_disturbance_ctor};
+use sa_math::fpu::{fcom_parity, st0};
 use sa_core::crt::rand_at;
 use sa_input::bindings::pad_sprint_just_down;
 use crate::common::{task_make_abortable, task_new, xi};
@@ -684,6 +686,89 @@ pub fn seek_cover_until_target_dead_control_sub_task(this: GPtr<u8>, ped: GPtr<u
     }
 }
 
+// ------------------------------------------------------------------------------------------- kill ped on foot stealth
+
+/// `CTaskComplexKillPedOnFootStealth::ControlSubTask(CPed*)` (0x62B840, `ret 4`). No target (+0x10): the base
+/// `CTaskComplexKillPedOnFoot::ControlSubTask`. +0x44 the time the target was lost (-1 while seen), +0x38 its last
+/// seen position, +0x40 a search range. Tracking: `CanPedTargetPed(ped, target, true)` while lost (-1 → +0x44 = now if
+/// not seen, else the position stored); while seen: seen again with `CanSeeEntityWithLights(target, true) > 0` and the
+/// unit direction to it dotted with the ped's forward above 0xC0B034 → +0x44 = -1 and the position stored. Lost for
+/// more than 5000 ms: `Say(0xCE)`, then with +0x40 above 0x86DB14 a non-investigating (0x3A7) abortable sub-task →
+/// `CTaskComplexInvestigateDisturbance(&+0x38, target)`; with +0x40 at most 0x86DB14 (ordered) a sub-task other than
+/// 0xF4 that aborts → a sequence of `CTaskSimpleStandStill(1000)`, `CTaskSimpleRunAnim(ped anim group, 4, 4.0)` and
+/// the 0x48DF30 task. Seen (-1) with an investigating or 0xF4 sub-task that aborts: the base `CreateFirstSubTask`.
+/// Otherwise the sub-task.
+#[hook(addr = 0x62B840, conv = thiscall, name = "CTaskComplexKillPedOnFootStealth::ControlSubTask",
+       expect = "64 A1 00 00 00 00 6A FF 68 E7 00 84 00",
+       unverified = "frontier2-a11", route = "L2", hazards = "heap-writes,stack-residue",
+       note = "the original stores the facing dot product over its own ped argument slot")]
+pub fn kill_ped_on_foot_stealth_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    use crate::kill_ped_on_foot::{kill_ped_on_foot_control_sub_task, kill_ped_on_foot_create_first_sub_task};
+    let target = rd::<GPtr<u8>>(this, 0x10);
+    if target.is_null() {
+        return kill_ped_on_foot_control_sub_task(this, ped);
+    }
+    let seen = can_ped_target_ped(ped, target, 1) != 0;
+    let store_pos = || {
+        wr::<u32>(this, 0x44, u32::MAX);
+        let p = entity_pos(rd::<GPtr<u8>>(this, 0x10));
+        for i in 0..3 {
+            wr::<u32>(this, 0x38 + i * 4, rd::<u32>(p, i * 4));
+        }
+    };
+    if rd::<i32>(this, 0x44) == -1 {
+        if seen {
+            store_pos();
+        } else {
+            wr::<u32>(this, 0x44, g::<u32>(TIME_MS).read());
+        }
+    } else if seen {
+        let tp = entity_pos(rd::<GPtr<u8>>(this, 0x10));
+        let pp = entity_pos(ped);
+        let mut d = [0f32; 3];
+        for (k, v) in d.iter_mut().enumerate() {
+            *v = x(rd::<f32>(tp, k as isize * 4)).fsub_m(rd::<f32>(pp, k as isize * 4)).to_f32();
+        }
+        vector_normalise(GPtr::from_raw(d.as_mut_ptr()).cast());
+        let m = rd::<GPtr<u8>>(ped, 0x14);
+        let dot = x(d[2]).fmul_m(rd::<f32>(m, 0x18)).fadd(x(d[1]).fmul_m(rd::<f32>(m, 0x14)))
+            .fadd(x(d[0]).fmul_m(rd::<f32>(m, 0x10))).to_f32();
+        let v = intel_can_see_entity_with_lights(rd::<GPtr<u8>>(ped, 0x47C), rd::<GPtr<u8>>(this, 0x10), 1);
+        if gt(st0(v), x(g::<f32>(0x858B50).read())) && gt(x(dot), x(g::<f32>(0xC0B034).read())) {
+            store_pos();
+        }
+    }
+    let sub = || rd::<GPtr<u8>>(this, 8);
+    let abortable = || task_make_abortable(sub(), ped, 1, GPtr::NULL) != 0;
+    let lost = rd::<i32>(this, 0x44);
+    if lost == -1 {
+        if !sub().is_null() && matches!(task_get_type(sub()), 0x3A7 | 0xF4) && abortable() {
+            return kill_ped_on_foot_create_first_sub_task(this, ped);
+        }
+        return sub();
+    }
+    if (g::<u32>(TIME_MS).read().wrapping_sub(lost as u32) as i32) <= 5000 {
+        return sub();
+    }
+    ped_say(ped, 0xCE, 0, 1.0, 0, 0, 0);
+    let range = x(rd::<f32>(this, 0x40));
+    let lim = x(g::<f32>(0x86DB14).read());
+    if gt(range, lim) && !sub().is_null() && task_get_type(sub()) != 0x3A7 && abortable() {
+        return crate::common::new_task(0x1C, |m| {
+            investigate_disturbance_ctor(m, this.byte_add(0x38), rd::<GPtr<u8>>(this, 0x10))
+        });
+    }
+    if fcom_parity(range, lim, 0x41) || sub().is_null() || task_get_type(sub()) == 0xF4 || !abortable() {
+        return sub();
+    }
+    let seq = crate::common::new_task(0x40, sequence_ctor);
+    sequence_add_task(seq, crate::common::new_task(0x20, |m| stand_still_ctor(m, 1000, 0, 0, 8.0)));
+    let grp = rd::<u32>(ped, 0x4D4);
+    sequence_add_task(seq, crate::common::new_task(0x20, |m| run_anim_ctor(m, grp, 4, 4.0, 0)));
+    sequence_add_task(seq, crate::common::new_task(0x20, ctor_48df30));
+    seq
+}
+
 /// The batch's hooks.
 pub const HOOKS: &[HookReg] = &[
     HOOK_MEDIC_TREAT_INJURED_PED_CREATE_NEXT_SUB_TASK,
@@ -694,4 +779,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_GO_TO_POINT_AIMING_CONTROL_SUB_TASK,
     HOOK_FOLLOW_PATROL_ROUTE_CREATE_FIRST_SUB_TASK,
     HOOK_SEEK_COVER_UNTIL_TARGET_DEAD_CONTROL_SUB_TASK,
+    HOOK_KILL_PED_ON_FOOT_STEALTH_CONTROL_SUB_TASK,
 ];

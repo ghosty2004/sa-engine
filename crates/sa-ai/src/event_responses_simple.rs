@@ -14,6 +14,7 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 
+use crate::bindings::investigate_disturbance_ctor;
 use crate::bindings::simple_dead_ctor;
 use crate::bindings::car_drive_mission_flee_scene_ctor;
 use crate::bindings::compute_knock_off_bike_response;
@@ -76,7 +77,6 @@ orig! {
     fn duck_restart_task(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x692390 => unported;
     /// `FUN_004ace80(CPed*)` (thiscall on the event, `ret 4`; result unused here)
     fn object_collision_4ace80(e: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4ACE80 => unported;
-    fn investigate_disturbance_ctor(t: GPtr<u8>, pos: GPtr<u8>, e: GPtr<u8>) -> GPtr<u8> = thiscall 0x66C720 => unported;
     fn prostitute_solicit_ctor(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x661A60 => unported;
     fn player_on_fire_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x633560 => unported;
     fn complex_on_fire_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x633390 => unported;
