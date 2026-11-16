@@ -65,7 +65,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-9 | 21 | AI | a06f78e1 | master | 21 | 0 | 0 | 0 | 0 | L2 21 |
 | frontier2-a1 | 2 | AI | bcaaada4 | worktree-agent-a198f2e01294e8cc9 | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | frontier2-a10 | 21 | AI | e18f44e5 | worktree-agent-a673f3b762ca00e8d | 21 | 0 | 0 | 0 | 0 | L2 21 |
-| frontier2-a11 | 33 | AI, UNK-game | a7bb4f40 | worktree-agent-a673f3b762ca00e8d | 33 | 0 | 0 | 0 | 0 | L2 33 |
+| frontier2-a11 | 31 | AI, UNK-game | a7bb4f40 | worktree-agent-a673f3b762ca00e8d | 31 | 0 | 0 | 0 | 0 | L2 31 |
 | frontier2-a2 | 23 | AI, UNK-game | 7d0524fc | worktree-agent-a198f2e01294e8cc9 | 23 | 0 | 0 | 0 | 0 | L2 23 |
 | frontier2-a3 | 5 | AI | 6aa6d889 | worktree-agent-a198f2e01294e8cc9 | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | frontier2-a4 | 2 | AI | 555a5634 | worktree-agent-a198f2e01294e8cc9 | 2 | 0 | 0 | 0 | 0 | L2 2 |
@@ -2213,7 +2213,7 @@ SA_UNVERIFIED=frontier2-a10 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a10 
 
 ## frontier2-a11
 
-33 hooks in sa-ai; hazards: ax-al-return (3), heap-writes (26), stack-residue (7); recordings calling them: no coverage data.
+31 hooks in sa-ai; hazards: ax-al-return (3), heap-writes (24), stack-residue (7); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -2226,14 +2226,12 @@ SA_UNVERIFIED=frontier2-a11 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a11 
 |---|---|---|---|---|
 | 0x5F8180 | `CPedGroupDefaultTaskAllocatorChat::AllocateDefaultTasks` | written | L2 | heap-writes |
 | 0x620490 | `CTaskSimpleChoking::ProcessPed` | written | L2 | heap-writes,ax-al-return |
-| 0x620C30 | `thunk_FUN_004020ff` | written | L2 | heap-writes |
 | 0x625C70 | `vt_86d868::CreateFirstSubTask` | written | L2 | heap-writes |
 | 0x62B840 | `CTaskComplexKillPedOnFootStealth::ControlSubTask` | written | L2 | heap-writes,stack-residue |
 | 0x62E8B0 | `CTaskComplexSeekCoverUntilTargetDead::ControlSubTask` | written | L2 | heap-writes |
 | 0x62EB80 | `FUN_0062eb80` | written | L2 | none |
 | 0x62FD00 | `CTaskComplexDieInCar::PreparePedVehicleForPedDeath` | written | L2 | heap-writes,ax-al-return |
 | 0x6375F0 | `CTaskComplexDieInCar::CreateFirstSubTask` | written | L2 | heap-writes |
-| 0x638290 | `CTaskComplexSunbathe::CreateSubTask` | written | L2 | heap-writes |
 | 0x6399F0 | `CTaskComplexSunbathe::CreateNextSubTask` | written | L2 | heap-writes |
 | 0x639CB0 | `CTaskComplexSunbathe::CreateFirstSubTask` | written | L2 | heap-writes |
 | 0x64CF40 | `CTaskSimpleCreateCarAndGetIn::ProcessPed` | written | L2 | heap-writes,ax-al-return,stack-residue |
