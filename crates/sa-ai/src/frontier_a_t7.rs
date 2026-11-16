@@ -601,7 +601,7 @@ orig! {
     fn destroy_car_melee_create_sub_task(t: u32, ty: u32, ped: u32) -> u32 = thiscall 0x628A70 => crate::gen_subtasks::g_task_complex_destroy_car_melee_create_sub_task_628a70;
 }
 
-/// `CTaskComplexDestroyCarMelee::CalculateSearchPositionAndRanges(CPed*)` (0x6289F0).
+/// Calls the generated body of `CTaskComplexDestroyCarMelee::CalculateSearchPositionAndRanges(CPed*)` (0x6289F0).
 fn destroy_car_melee_search(this: GPtr<u8>, ped: GPtr<u8>) {
     crate::gen_bodies::g_task_complex_destroy_car_melee_calculate_search_position_and_ranges_6289f0(
         this.addr() as u32, ped.addr() as u32);

@@ -67,7 +67,7 @@ use sa_world::world::cworld::in_vehicle;
 
 // ------------------------------------------------------------------------------------------- medic
 
-/// `CTaskComplexMedicTreatInjuredPed::FindNearestAccident(const CVector&)` (0x658CC0): +0x18 = the nearest free
+/// Calls the generated body of `CTaskComplexMedicTreatInjuredPed::FindNearestAccident(const CVector&)` (0x658CC0): +0x18 = the nearest free
 /// accident, returned.
 fn medic_find_nearest_accident(this: GPtr<u8>, pos: GPtr<u8>) -> GPtr<u8> {
     let a = crate::gen_bodies::g_task_complex_medic_treat_injured_ped_find_nearest_accident_658cc0(
@@ -75,13 +75,13 @@ fn medic_find_nearest_accident(this: GPtr<u8>, pos: GPtr<u8>) -> GPtr<u8> {
     GPtr::from_addr(a as usize)
 }
 
-/// `CTaskComplexMedicTreatInjuredPed::CalcTargetPosWithOffset(CPed*, CPed* injured)` (0x658D20).
+/// Calls the generated body of `CTaskComplexMedicTreatInjuredPed::CalcTargetPosWithOffset(CPed*, CPed* injured)` (0x658D20).
 fn medic_calc_target_pos(this: GPtr<u8>, ped: GPtr<u8>, injured: u32) {
     crate::gen_bodies::g_task_complex_medic_treat_injured_ped_calc_target_pos_with_offset_658d20(
         this.addr() as u32, ped.addr() as u32, injured);
 }
 
-/// `CTaskComplexMedicTreatInjuredPed::CreateDealWithNextAccidentTask(CPed*, CAccident*)` (0x65A020).
+/// Calls the generated body of `CTaskComplexMedicTreatInjuredPed::CreateDealWithNextAccidentTask(CPed*, CAccident*)` (0x65A020).
 fn medic_deal_with_next(this: GPtr<u8>, ped: GPtr<u8>, acc: u32) -> GPtr<u8> {
     let t = crate::gen_bodies::g_task_complex_medic_treat_injured_ped_create_deal_with_next_accident_task_65a020(
         this.addr() as u32, ped.addr() as u32, acc);
