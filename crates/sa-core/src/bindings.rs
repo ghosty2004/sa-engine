@@ -1499,6 +1499,11 @@ orig! {
 }
 
 orig! {
+    /// `CCompressedMatrixNotAligned::DecompressIntoFullMatrix` (0x59B9F0)
+    pub fn decompress_into_full_matrix(c: GPtr<u8>, m: GPtr<u8>) = thiscall 0x59B9F0 => crate::frontier_b2::decompress_into_full_matrix;
+}
+
+orig! {
     /// `CCompressedMatrixNotAligned::CompressFromFullMatrix` (0x59BAD0)
     pub fn compress_from_full_matrix(c: GPtr<u8>, m: GPtr<u8>) = thiscall 0x59BAD0 => unported;
 }

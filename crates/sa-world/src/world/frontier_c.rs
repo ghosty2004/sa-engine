@@ -86,3 +86,104 @@ pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_SYNC_WATER];
 
 /// The lane C turn-1 natives that became hooks once their bodies were catalogue rows (FRONTIER-2 turn 3).
 pub const HOOKS3: &[HookReg] = &[HOOK_HEALTH_CHEAT];
+
+orig! {
+    /// `CPlayerData::operator=` (stub 0x45C4B0 → .HOODLUM 0x1561CF0), with the caller's ESI
+    fn player_data_assign_call(this: GPtr<u8>, src: GPtr<u8>, esi: u32) -> GPtr<u8> = reg("args = ecx stack esi; pop") 0x45C4B0 => player_data_assign;
+}
+
+/// Copies the field of `size` bytes (1, 2 or 4) at `off` from `src` to `dst`.
+fn copy_field(dst: GPtr<u8>, src: GPtr<u8>, off: isize, size: u8) {
+    match size {
+        1 => wr::<u8>(dst, off, rd::<u8>(src, off)),
+        2 => wr::<u16>(dst, off, rd::<u16>(src, off)),
+        _ => wr::<u32>(dst, off, rd::<u32>(src, off)),
+    }
+}
+
+/// Copies the fields `(first, last, size)` (inclusive, step `size`) from `src` to `dst` in order.
+fn copy_fields(dst: GPtr<u8>, src: GPtr<u8>, runs: &[(isize, isize, u8)]) {
+    for &(first, last, size) in runs {
+        let mut off = first;
+        while off <= last {
+            copy_field(dst, src, off, size);
+            off += isize::from(size);
+        }
+    }
+}
+
+/// `CPlayerData::operator=(const CPlayerData&)` (stub 0x45C4B0 → .HOODLUM 0x1561CF0, thiscall, `ret 4`; its only caller
+/// is `CPlayerInfo::operator=`): the fields of the 0xAC-byte block one by one (padding +0x22, +0x87, +0x8F skipped).
+/// The bit-field word +0x34: the no-CD body has ten NOPs where the source load of the first bit-field copy was, so that
+/// step reads the caller's ESI: `+0x34 = ((+0x34 ^ esi) & 0x200) ^ esi`, then bits 0x400 / 0x800 / 0x1000 come from the
+/// source one at a time. +0xA0 is stored twice (bits 0..30 first, then the whole source word). EAX = `this`.
+#[hook(addr = 0x45C4B0, conv = reg("args = ecx stack esi; pop"), name = "thunk_FUN_01561cf0", expect = "E9 3B 58 10 01",
+       unverified = "frontier2-c12", route = "L2", hazards = "heap-writes",
+       note = "the +0x34 bit-field step reads the caller's ESI (NOPed source load in the no-CD body 0x1561D4C)")]
+pub fn player_data_assign(this: GPtr<u8>, src: GPtr<u8>, esi: u32) -> GPtr<u8> {
+    copy_fields(this, src, &[(0, 0x1C, 4), (0x20, 0x21, 1), (0x24, 0x30, 4)]);
+    let mut d = rd::<u32>(this, 0x34);
+    d = ((d ^ esi) & 0x200) ^ esi;
+    wr::<u32>(this, 0x34, d);
+    for m in [0x400u32, 0x800, 0x1000] {
+        d ^= (rd::<u32>(src, 0x34) ^ d) & m;
+        wr::<u32>(this, 0x34, d);
+    }
+    copy_fields(
+        this,
+        src,
+        &[
+            (0x38, 0x3C, 4),
+            (0x40, 0x43, 1),
+            (0x44, 0x80, 4),
+            (0x84, 0x86, 1),
+            (0x88, 0x8A, 2),
+            (0x8C, 0x8E, 1),
+            (0x90, 0x9C, 4),
+        ],
+    );
+    let old = rd::<u32>(this, 0xA0);
+    let first = ((old ^ rd::<u32>(src, 0xA0)) & 0x7FFF_FFFF) ^ old;
+    wr::<u32>(this, 0xA0, first);
+    let s = rd::<u32>(src, 0xA0);
+    wr::<u32>(this, 0xA0, ((s ^ first) & 0x7FFF_FFFF) ^ s);
+    copy_fields(this, src, &[(0xA4, 0xA8, 4)]);
+    this
+}
+
+/// `CPlayerInfo::operator=(const CPlayerInfo&)` (stub 0x45DEF0 → .HOODLUM 0x156AE50, thiscall, `ret 4`; callers
+/// `CReplay::RestorePlayerInfoVariables` / `RestoreStuffFromMem`): +0, then `CPlayerData::operator=` on +4 (with ESI =
+/// `this`), then the remaining fields of the 0x190-byte block one by one (the 32 bytes at +0x164 by a byte loop).
+/// EAX = `this`.
+#[hook(addr = 0x45DEF0, conv = thiscall, name = "thunk_FUN_0156ae50", expect = "E9 5B CF 10 01",
+       unverified = "frontier2-c12", route = "L2", hazards = "heap-writes")]
+pub fn player_info_assign(this: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> {
+    wr::<u32>(this, 0, rd::<u32>(src, 0));
+    player_data_assign_call(this.byte_add(4), src.byte_add(4), this.addr() as u32);
+    copy_fields(
+        this,
+        src,
+        &[
+            (0xB0, 0xD0, 4),
+            (0xD4, 0xD5, 1),
+            (0xD8, 0xD8, 4),
+            (0xDC, 0xDF, 1),
+            (0xE0, 0x12C, 4),
+            (0x130, 0x130, 2),
+            (0x134, 0x140, 4),
+            (0x144, 0x144, 2),
+            (0x148, 0x148, 4),
+            (0x14C, 0x154, 1),
+            (0x156, 0x156, 2),
+            (0x158, 0x160, 4),
+            (0x164, 0x183, 1),
+            (0x184, 0x184, 4),
+            (0x188, 0x188, 1),
+            (0x18C, 0x18C, 4),
+        ],
+    );
+    this
+}
+
+/// Lane C turn 6 hooks (batch `frontier2-c12`).
+pub const HOOKS6: &[HookReg] = &[HOOK_PLAYER_DATA_ASSIGN, HOOK_PLAYER_INFO_ASSIGN];

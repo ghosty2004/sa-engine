@@ -64,6 +64,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::fire_truck::HOOKS,
     // FRONTIER-2 lane B
     crate::frontier_b::HOOKS,
+    crate::replay_vehicle::HOOKS,
     crate::automobile_wheels::HOOKS,
     crate::automobile_damage::HOOKS,
     crate::automobile_ai::HOOKS,

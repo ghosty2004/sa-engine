@@ -170,6 +170,7 @@ pub const MODULES: &[&[HookReg]] = &[
     world::frontier_b2b::HOOKS,
     world::frontier_c::HOOKS3,
     world::frontier_b3::HOOKS,
+    world::frontier_c::HOOKS6,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

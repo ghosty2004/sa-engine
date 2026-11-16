@@ -803,6 +803,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x59B7E0,sa-core,matrix_force_up_vector,thiscall,,m:GPtr<u8>;up:sa_math::vector::CVector,,unported,CMatrix::ForceUpVector,
 0x59B8B0,sa-core,matrix_copy_to_rw_matrix,thiscall,,m:GPtr<u8>;rw:GPtr<u8>,,unported,CMatrix::CopyToRwMatrix,
 0x59B920,sa-core,matrix_invert,cdecl,,inp:GPtr<u8>;out:GPtr<u8>,GPtr<u8>,unported,CMatrix::Invert-1,
+0x59B9F0,sa-core,decompress_into_full_matrix,thiscall,,c:GPtr<u8>;m:GPtr<u8>,,sa_core::frontier_b2::decompress_into_full_matrix,CCompressedMatrixNotAligned::DecompressIntoFullMatrix,
 0x59BAD0,sa-core,compress_from_full_matrix,thiscall,,c:GPtr<u8>;m:GPtr<u8>,,unported,CCompressedMatrixNotAligned::CompressFromFullMatrix,
 0x59BB60,sa-core,matrix_update,thiscall,,this:GPtr<u8>,,unported,CMatrix::Update,
 0x59BBB0,sa-core,matrix_update_rw,thiscall,,m:GPtr<u8>,,unported,CMatrix::UpdateRW,
