@@ -7,7 +7,7 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
-use crate::common::{g, rd, wr};
+use crate::common::{ftol32, g, rd, wr};
 
 use sa_world::bindings::entity_register_reference;
 orig! {
@@ -203,4 +203,48 @@ pub fn ropes_set_speed_of_top_node(id: u32, sx: u32, sy: u32, sz: u32) {
     }
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_ROPES_REGISTER_ROPE, HOOK_ROPES_IS_CARRIED_BY_ROPE, HOOK_ROPES_SET_SPEED_OF_TOP_NODE];
+
+/// `CRopes::FindCoorsAlongRope(uint32 id, float along, CVector* pos, CVector* speed)` (0x555E40, cdecl, AL; not
+/// reversed in gta-reversed). The first active rope (byte +0x325) with `m_nId` (+0x300) = `id`, else 0. `s = clamp(along,
+/// 0, 0.999) * 31` (a NaN passes both tests), `n = ftol(s)`, `f = s - n`: `pos = (1 - f) * segment[n] + f * segment[n +
+/// 1]` with the original's f32 slots (the x sum adds the unrounded `f * x`); `speed`, when not null, = the released
+/// segment n + 1 (+0x180). 1.
+#[hook(addr = 0x555E40, conv = cdecl, name = "CRopes::FindCoorsAlongRope", expect = "8B 4C 24 04 83 EC 28 56 33 F6",
+       unverified = "frontier2-a12", route = "L2", hazards = "none")]
+pub fn ropes_find_coors_along_rope(id: u32, along: f32, pos: GPtr<f32>, speed: GPtr<f32>) -> u8 {
+    let Some(r) = (0..ROPE_COUNT)
+        .map(|i| g::<u8>(ROPES + ROPE_SIZE * i))
+        .find(|r| rd::<u8>(*r, 0x325) != 0 && rd::<u32>(*r, 0x300) == id)
+    else {
+        return 0;
+    };
+    let zero = g::<f32>(0x858B50).read();
+    let top = g::<f32>(0x863E2C).read();
+    let mut s = X87::from_f32(along);
+    if !X87::from_f32(zero).fcom(s).test_any(0x41) {
+        s = X87::from_f32(zero);
+    } else if !X87::from_f32(top).fcom(s).test_parity(5) {
+        s = X87::from_f32(top);
+    }
+    let s = s.fmul_m(g::<f32>(0x863E28).read());
+    let n = ftol32(s);
+    let f = s.fsub(X87::from_i32(n));
+    let next = (n as isize * 3 + 3) * 4;
+    let cur = n as isize * 12;
+    let a: [X87; 3] = core::array::from_fn(|k| f.fmul_m(rd::<f32>(r, next + 4 * k as isize)));
+    let w = X87::one().fsub(f);
+    let b: [f32; 3] = core::array::from_fn(|k| w.fmul_m(rd::<f32>(r, cur + 4 * k as isize)).to_f32());
+    let pos = pos.cast::<u8>();
+    wr::<f32>(pos, 0, X87::from_f32(b[0]).fadd(a[0]).to_f32());
+    wr::<f32>(pos, 4, X87::from_f32(b[1]).fadd_m(a[1].to_f32()).to_f32());
+    wr::<f32>(pos, 8, X87::from_f32(b[2]).fadd_m(a[2].to_f32()).to_f32());
+    if !speed.is_null() {
+        let sp = speed.cast::<u8>();
+        for k in 0..3 {
+            wr::<u32>(sp, 4 * k, rd::<u32>(r, 0x180 + next + 4 * k));
+        }
+    }
+    1
+}
+
+pub const HOOKS: &[HookReg] = &[HOOK_ROPES_REGISTER_ROPE, HOOK_ROPES_IS_CARRIED_BY_ROPE, HOOK_ROPES_SET_SPEED_OF_TOP_NODE, HOOK_ROPES_FIND_COORS_ALONG_ROPE];
