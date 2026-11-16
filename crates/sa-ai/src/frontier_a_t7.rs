@@ -8,13 +8,14 @@ use sa_core::{hook, orig};
 
 use crate::bindings::{
     compute_closest_surface_point_ped, ped_groups_get_peds_group, ped_replace_weapon_when_exiting_vehicle,
-    bbox_planes, compute_entity_hit_side_ped, event_group_add, go_to_point_ctor, scripted_2d_effects_get_index,
+    bbox_planes, compute_entity_hit_side_ped, event_group_add, go_to_point_ctor, history_get_current_event,
+    scripted_2d_effects_get_index,
     task_timer_is_out_of_time, tm_find_active_task_by_type, tm_get_task_secondary, tm_set_task_secondary,
     throw_projectile_ctor, use_gun_clear_anim, use_gun_control_gun, use_gun_ctor,
 };
 use sa_core::bindings::{
     get_weapon_info, intel_get_task_use_gun, matrix_set_rotate_z_only, ped_is_alive, tm_get_simplest_active_task,
-    vector_difference, vector_magnitude_sqr, vector_sub,
+    vector_difference, vector_magnitude_sqr, vector_normalise, vector_sub,
 };
 use sa_pop::bindings::get_position;
 use crate::common::{g, rd, wr, x, xi, X87};
@@ -35,6 +36,7 @@ use sa_world::bindings::{
     duck_ctor, find_player_wanted, get_task_swim, intel_get_task_duck, kill_ped_on_foot_ctor, stand_still_ctor,
     intel_get_task_throw, vector_ctor_iterator, vector_ne, compute_target_door_to_enter_as_passenger,
     enter_car_as_driver_ctor, enter_car_as_passenger_ctor, sequence_add_task, sequence_ctor, simple_car_drive_ctor,
+    task_turn_to_face_ctor, turn_to_face_entity_ctor,
     max_f, min_f, pad_get_accelerate, pad_get_brake,
     pad_get_exit_vehicle, pad_get_ped_walk_left_right, pad_get_ped_walk_up_down, pad_get_target,
     ped_remove_weapon_when_entering_vehicle, physical_apply_move_force_5429f0,
@@ -1428,6 +1430,59 @@ pub fn sit_in_leader_car_allocate_default_tasks(_this: GPtr<u8>, group: GPtr<u8>
     }
 }
 
+orig! {
+    /// `CEvent::GetEventType()` (vtable +4)
+    fn v_event_type(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
+}
+
+/// `CTaskComplexInvestigateDisturbance::CreateFirstSubTask(CPed*)` (0x66C820, `ret 4`). The current event (intelligence
+/// +0x38 history): type 0x3E → `Say(rand() / 32767 < 0.2 ? 0xCC : 0xCA, 0, 1.0, 0, 0, 0)`, type 0x3F likewise with
+/// 0xCB. The direction to the point (+0xC), normalised: facing it (`dir · forward >= 0.707`, NaN too) →
+/// `SetTaskDuckSecondary(5000)`; else `LookAt("TaskInvDisturb", ped, NULL, 5000, -1, &+0xC, false, 0.25, 500, 3,
+/// false)`. Then a `CTaskComplexTurnToFaceEntityOrCoord` towards the entity (+0x18) or else the point, 3.0 and 0.2
+/// (NULL when the pool is full).
+#[hook(addr = 0x66C820, conv = thiscall, name = "CTaskComplexInvestigateDisturbance::CreateFirstSubTask",
+       expect = "64 A1 00 00 00 00 6A FF 68 D6 52 84 00",
+       unverified = "frontier2-a10", route = "L2", hazards = "heap-writes,stack-residue",
+       note = "rand at 0x66C86A / 0x66C8B3 (stored over the ped argument slot); SEH frame not modelled")]
+pub fn investigate_disturbance_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let ev = history_get_current_event(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x38));
+    if !ev.is_null() {
+        let say = |site: u32, other: u32| {
+            let r = xi(rand_at(site)).fmul_m(gf(0x858C7C));
+            let id = if ge_or_nan(r, x(gf(0x858CC4))) { other } else { 0xCC };
+            ped_say(ped, id, 0, 1.0, 0, 0, 0);
+        };
+        if v_event_type(ev) == 0x3E {
+            say(0x66C86A, 0xCA);
+        } else if v_event_type(ev) == 0x3F {
+            say(0x66C8B3, 0xCB);
+        }
+    }
+    let pp = entity_pos(ped);
+    let pos = this.byte_add(0xC);
+    let dz = x(rd::<f32>(this, 0x14)).fsub_m(rd::<f32>(pp, 8));
+    let dy = x(rd::<f32>(pos, 4)).fsub_m(rd::<f32>(pp, 4));
+    let dx = x(rd::<f32>(pos, 0)).fsub_m(rd::<f32>(pp, 0));
+    let mut d = [dx.to_f32(), dy.to_f32(), dz.to_f32()];
+    vector_normalise(GPtr::from_raw(&mut d));
+    let m = rd::<GPtr<u8>>(ped, 0x14);
+    let dot = x(d[2]).fmul_m(rd::<f32>(m, 0x18)).fadd(x(d[1]).fmul_m(rd::<f32>(m, 0x14)))
+        .fadd(x(d[0]).fmul_m(rd::<f32>(m, 0x10)));
+    if ge_or_nan(dot, x(gf(0x863C1C))) {
+        crate::bindings::intel_set_task_duck_secondary(rd::<GPtr<u8>>(ped, 0x47C), 5000);
+    } else {
+        ik_look_at(GPtr::from_addr(0xC15448), GPtr::from_addr(0x87003C), ped, GPtr::NULL, 5000, -1, pos, 0, 0.25, 500, 3, 0);
+    }
+    let ent = rd::<GPtr<u8>>(this, 0x18);
+    let tol = g::<u32>(0x86FC80).read();
+    if !ent.is_null() {
+        new_task(0x28, |m| turn_to_face_entity_ctor(m, rd::<GPtr<u8>>(this, 0x18), 0x4040_0000, tol))
+    } else {
+        new_task(0x28, |m| task_turn_to_face_ctor(m, pos, 0x4040_0000, tol))
+    }
+}
+
 /// Every hook of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_JET_PACK_PROCESS_CONTROL_INPUT,
@@ -1449,4 +1504,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_DUCK_TOGGLE_PROCESS_PED,
     HOOK_THROW_CONTROL_PROCESS_PED,
     HOOK_SIT_IN_LEADER_CAR_ALLOCATE_DEFAULT_TASKS,
+    HOOK_INVESTIGATE_DISTURBANCE_CREATE_FIRST_SUB_TASK,
 ];
