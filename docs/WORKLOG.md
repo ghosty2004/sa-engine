@@ -2519,3 +2519,33 @@
 - verify-all (lanes 6-7): `lanec5-c11` (SA_UNVERIFIED=frontier2-c11; DLL of ce6322a3) IDENTICAL 13/13; `lanec5-default` (default set) IDENTICAL 13/13.
 - frontier.py: lane C subsystems 26 → 17 rows (2 of them lane A's partial switches; InsertTree's three callees came
   and went); whole frontier 263 → 251 (other branches' registrations included).
+## 2026-11-16 — FRONTIER-2 turn 5, lane B: CVehicle::FlyingControl (agent, branch worktree-agent-a39ff8008721099ec)
+- Base: worktree-agent-a743952821d102dbe 7f557d6e (turn 4 lane B). `inflight.py` checked: no other branch registers 0x6D85F0.
+- Batch `frontier2-b14` (1 hook): CVehicle::FlyingControl 0x6D85F0 (`crates/sa-veh/src/flying_control.rs`), the `roadblocks`
+  blocker. The body is ~2,900 instructions behind the `nop; jmp 0x403CE8` protection entry (the fragment does `sub esp, 0x250`
+  and jumps back to 0x6D85F6). Ported from the 1.0 US bytes, with gta-reversed as a reading aid only: its operand orders,
+  several constants (`mass * ts * 0.0072` for the dodo's ceiling lift; the ceiling handled per model) and the Hydra
+  automobile check differ from the bytes. Split into the jump-table blocks 0x6DAEE4 / 0x6DAEF4: `dodo` (model 0), `plane`
+  (1 / 3 / 4 / 5: stick-to-square 1 / cos, ground / water / air thrust kept in the accel argument's slot, the Hydra nozzle,
+  side slip, yaw, roll, roll stabiliser, pitch, stall counter, lift with HeightAboveCeiling called up to three times), `heli`
+  (2 / 6 / 8: move damping, autogyro pusher without the 0.008 scale and rotor spin, heli thrust with the minimum-tilt
+  asin / acos quadrupling, hover force, level-seeking roll / pitch, upside-down recovery, pad incl. the heli-controls cheat,
+  pitch / roll / side / yaw) and the shared `resistance` tail (turn damping, speed-resistance counter torques, the 1.5 / 0.2
+  speed clamps). Shared helpers for the original's interleaved x87 store patterns (`chain3`, `side_force`, `clamp_tilt`);
+  `_CIpow` / `_CIasin` / `_CIacos` via sa_core::orig::x87_* (reusing sa-world `ci_pow` and sa-veh `ci_asin`), HeightAboveCeiling
+  through `reg("args = ecx stack stack; pop")` (an `X87` result needs the reg form in phase A). mvpb_a1's FlyingControl
+  declaration now targets the port (CHeli / CPlane ProcessFlyingCarStuff reach it).
+- frontier.py, lane B subsystems: 142 → 141 rows (0x6D85F0); no new rows revealed.
+- Scenarios (`frontier.sh`, i686 native sa-game of this branch, default lengths): pausemenu 416 / 0 blocked, solicit 4016 / 0,
+  crossing 1216 / 0, melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0, shootdriver 1216 / 0, quad 1216 / 0, heli 1216 / 0,
+  plane 210 / 1006 (lane C's CAEPropellerAudioEntity path 0x4FD8F0, unchanged); no crash. Lane A's `roadblocks` (definition of
+  7f81981d, run locally, not committed): 254 / 1762 blocked, no longer on FlyingControl: lane A's CTaskSimpleGangDriveBy
+  MakeAbortable 0x62D290 (885) / ProcessPed 0x62D3B0 (37), CTaskComplexCopInCar::CreateSubTask 0x68C9E0 (2),
+  CTaskAllocatorKillThreatsBasicRandomGroup::AllocateTasks 0x69D460 (1), the GenerateRoadBlocks fallback (61), and lane C's
+  CAEPedlessSpeechAudioEntity::AddSayEvent 0x4E60D0 (776). 0 blocked on lane B functions.
+- Writer gate (base 7f557d6e, `GATE_SKIP=i686` while verify-all used the DLL): hooks / bindings / state / dupes / cfg / layers /
+  commits / clippy / wasm32 / hooktest / l1test / l1 PASS; queue FAIL on the first run (the amended commit's hash), regenerated,
+  `queue.py --check` up to date; full rerun below.
+- verify-all (lanes 4-5, fresh release sa-oracle, DLL of e33f4a8d): `lb5-u` (SA_UNVERIFIED=frontier2-b14) IDENTICAL 13/13; default set `lb5-def` IDENTICAL 13/13.
+- Not done (time): the boat scenario and ports (ProcessBoatControl 0x6DBCE0, CBoat::ProcessControl 0x6F1770), CPlane::PreRender
+  0x6C94A0 / ProcessFlyingCarStuff 0x6CB7C0 (docs/re/specs/VEH/CPlane.md has a full spec), the CCamera / CCam bodies, item 4.
