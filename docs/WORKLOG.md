@@ -2684,3 +2684,49 @@
   (PlaceFormationGroup's local copy of entity_pos, fixed in 8d0d5d28).
 - Not done: PlaceChatGroup 0x5FCE80, the jet pack ProcessPed chain, the other 46 AI virtuals, the partial script switches,
   ProcessColModels' disk cases.
+
+## 2026-11-16 — FRONTIER-2 turn 7, lane A: the jet pack ProcessPed chain, PlaceChatGroup, AI virtuals (agent, branch worktree-agent-aa15ab7791f090943)
+- Base: worktree-agent-aa16f3bdf26614476 (3796d82e, lane A turn 6). Every port from the 1.0 US bytes (gta-reversed read as an
+  aid; where it differs the bytes win), every address checked against `inflight.py` first (none registered elsewhere).
+  One batch, `frontier2-a10` (21 hooks, all AI), in the new module sa-ai `frontier_a_t7.rs` (PlaceChatGroup in
+  `ped_group_formation_place.rs`).
+- Jet pack (the `jetpack` scenario's lane A block): CTaskSimpleJetPack::ProcessPed 0x6801F0, ProcessControlInput 0x67E7B0
+  and ProcessThrust 0x67EF20, x87 throughout with the original's f32 stack slots modelled (`fstp` / `fld` round trips);
+  pow through `ci_pow` (orig::x87_binary 0x822130), FPATAN / FSIN / FCOS through X87; rand at 0x6802A9 / 0x680315;
+  ProcessControlInput's `mov eax, [edi+0x71C]` runs in the protection fragment 0x4075E5. Bytes vs gta-reversed:
+  ProcessPed sets the weapons-switched flag (+0xC) for any ped; the mouse heading negates the camera front instead of
+  subtracting pi; the targeted-object pull divides by max(0.1, dist) and scales by (1 - dist / limit) * 3; the
+  non-mouse forward thrust ignores the pad's up-down; the stop force includes the mass; the forward thrust clamps the
+  summed z (not the forward part) to 0.75; the height factor is `1 - (z - h) * 0.05`.
+- CPedGroupPlacer::PlaceChatGroup 0x5FCE80 (gta-reversed only calls the original): the jittered circle, ground / clear /
+  sight / height tests, the chat allocator 0xC09910; the first point is an uninitialised stack vector until point 0 is
+  placed (hazard uninit-locals); a failed AddPed calls RemovePed(NULL) as the bytes. PlaceFormationGroup's visibility
+  test and group set-up are now the shared helpers `seen_near_player` / `build_group` (no behaviour change).
+- Virtuals: 0x62E540 StealthKill::ProcessPed, 0x62DC20 DestroyCarMelee::CreateNextSubTask, 0x63D420
+  ShuffleSeats::CreateNextSubTask, 0x640730 EnterCarAsPassengerWait::ControlSubTask, 0x675890 InteriorGoToInfo::
+  CreateNextSubTask, 0x697F10 WaitForBackup::CreateNextSubTask, 0x694C70 SeekEntityAiming::ControlSubTask (the seven
+  named first), then 0x639E40 UsePairedAttractor::CreateNextSubTask, 0x65B660 FleePoint::ControlSubTask, 0x622980
+  KillPedFromBoat::ControlSubTask, 0x6335C0 PlayerOnFire::ProcessPed (CEventDamage on the stack), 0x657820
+  DiveFromAttachedEntityAndGetUp::CreateFirstSubTask, 0x676640 InteriorGoToInfo::CreateFirstSubTask, 0x62F6E0
+  DuckToggle::ProcessPed, 0x61F9F0 ThrowControl::ProcessPed, 0x5F6FC0 SitInLeaderCar::AllocateDefaultTasks, 0x66C820
+  InvestigateDisturbance::CreateFirstSubTask. Generated natives (0x628A70, 0x638D30) are reached through `orig!`.
+  Several originals store a value over their own ped argument slot (hazard stack-residue, noted per hook).
+- Reuse (ADR-003): kill_ped_on_foot_armed's `current_weapon_info` shared, `sa_core::field::gf` imported (a local copy
+  failed dupes once); no new bindings rows needed (bindings.py --check clean; CAEPedAudioEntity 0x4E28A0 / 0x4E0EE0,
+  SayPedless 0x5073C0 and PedsOnFire 0x56D2D0 declared once, in frontier_a_t7.rs).
+- frontier.py: AI 47 (1 direct + 46 virtual) → 28 (0 + 28); to port 240 → 217 (all lanes, this checkout).
+- Scenarios (frontier.sh, i686 native, final tree, SA_ROOT=~/sa-engine): pausemenu 416 / 0 blocked, solicit 4016 / 0,
+  crossing 1216 / 0, crossing-long 4016 / 0, melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0, shootdriver 1216 / 0,
+  roadblock-script 1016 / 0, gangwar 2016 / 0, roadblocks 875 / 1141 (lane B: CCam::ArrestCamOne 0x518500, CHeli::
+  GenerateHeli 0x6C6520), roadblock-wanted 1015 / 1001 (lane B: 0x518500, CWorld::FindObjectsIntersectingCube 0x568DD0,
+  0x6C6520), jetpack 228 / 788: no lane A blocker left; it now blocks only on lane C's CAEPedAudioEntity::UpdateJetPack
+  0x4E0EE0 at the end of ProcessThrust (565 bytes, unregistered everywhere); no crash.
+- Writer gate (base 3796d82e, target dir target/gate): all 15 steps PASS (hooks 21 new, all unverified, batch
+  frontier2-a10; queue up to date).
+- verify-all (lanes 1-3, sa-oracle rebuilt from this tree, DLL sha256 39955e05… of 144ab2bd): `f2a7-u2`
+  (SA_UNVERIFIED=frontier2-a10) IDENTICAL 13/13 and `f2a7-def` (default set) IDENTICAL 13/13; save-load identical except
+  the SAVE-1 stack residue. The first `f2a7-u` attempt stopped with "no spec entry for 0x5F6FC0 0x66C820" (the host
+  sa-oracle predated the last two ports); killed by PID, rebuilt, rerun.
+- Not done: the other 28 AI virtuals (0x65A990 / 0x65ABF0 / 0x64CF40 / 0x62E8B0 / 0x6689E0 / 0x670E20 / the vt_87004c and
+  vt_870b98 families / the interior ProcessPeds and others), the partial script switches, ProcessColModels' disk cases;
+  jetpack's remaining block is lane C's UpdateJetPack 0x4E0EE0.
