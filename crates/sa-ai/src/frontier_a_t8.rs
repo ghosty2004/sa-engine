@@ -35,6 +35,11 @@ use sa_world::bindings::{anim_blend_animation, pad_get_target, physical_apply_mo
 use crate::bindings::{be_hit_ctor, car_drive_timed_ctor, fall_and_get_up_ctor, task_simple_ctor};
 use sa_core::bindings::{get_pad, vector2d_normalise};
 use sa_math::vector::CVector;
+use crate::bindings::{clean_up_this_vehicle, cleanup_remove_entity_from_list};
+use sa_world::bindings::{
+    camera_is_sphere_visible, create_car_for_script, find_node_closest_to_coors, find_node_coors_for_script,
+    is_position_clear_for_ped, set_ped_in_as_driver_ctor, set_ped_in_as_driver_dtor, set_ped_in_as_driver_process_ped,
+};
 use sa_core::crt::rand_at;
 use sa_input::bindings::pad_sprint_just_down;
 use crate::common::{task_create_next_sub_task, task_make_abortable, task_new, xi};
@@ -1568,6 +1573,97 @@ pub fn seek_87004c_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     crate::seek::seek_control_sub_task_with(this, ped, true, seek_87004c_create_sub_task, crate::misc::fun_00673ba0)
 }
 
+// ------------------------------------------------------------------------------------------- create car and get in
+
+/// `CTaskSimpleCreateCarAndGetIn::ProcessPed(CPed*)` (0x64CF40, `ret 4`, AL; SEH frame). +8 the position, +0x14 the
+/// model, +0x18 the car, +0x1C the road node position, +0x28 / +0x2C / +0x30 / +0x31 a task timer. The car-path node
+/// closest to +8 (`FindNodeClosestToCoors(.., 0, 1e6, 1, 1, 0, 0, 0)`, `FindNodeCoorsForScript`): none found → the
+/// timer (2000 ms, started on first use) decides: expired 1, else 0. Found: +0x1C = the node, +0x30 = 0; without a car
+/// yet, the node visible (`IsSphereVisible(node, 3.0)`) or the ped visible (its model's bounding radius) or the node
+/// not clear for a ped (`IsPositionClearForPed(ped pos, 3.0, -1, NULL, 1, 1, 1)`) → 1. Then a stack
+/// `CTaskSimpleStandStill(0, false, false, 8.0)` is processed once; the model not loaded → `RequestModel(model, 0xC)`,
+/// 0. Else the car is created (`CreateCarForScript(model, node, true)`) with the ped set in as driver (a stack
+/// `CTaskSimpleCarSetPedInAsDriver(car, NULL)` with +0x18 = 1, processed once); a car flagged +0x1C bit 2 or bit 18 →
+/// 0; else it is released to the world (`CleanUpThisVehicle`, `RemoveEntityFromList(vehicle ref, 1)`), +0x18 = 0, 1.
+#[hook(addr = 0x64CF40, conv = thiscall, name = "CTaskSimpleCreateCarAndGetIn::ProcessPed",
+       expect = "6A FF 64 A1 00 00 00 00 68 A0 31 84 00",
+       unverified = "frontier2-a11", route = "L2", hazards = "heap-writes,ax-al-return,stack-residue",
+       note = "AL result; the original stores the ped's bounding radius over its own ped argument slot")]
+pub fn create_car_and_get_in_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
+    let paths = GPtr::<u8>::from_addr(0x96F050);
+    let mut node = [0u32; 1];
+    find_node_closest_to_coors(paths, GPtr::from_raw(node.as_mut_ptr()), rd::<f32>(this, 8), rd::<f32>(this, 0xC),
+        rd::<f32>(this, 0x10), 0, f32::from_bits(0x4974_23FE), 1, 1, 0, 0, 0);
+    let mut found = [0u8; 4];
+    let mut pos = [0u32; 3];
+    find_node_coors_for_script(paths, GPtr::from_raw(pos.as_mut_ptr()).cast(), node[0],
+        GPtr::from_raw(found.as_mut_ptr()));
+    if found[0] == 0 {
+        if rd::<u8>(this, 0x30) == 0 {
+            wr::<u32>(this, 0x28, g::<u32>(TIME_MS).read());
+            wr::<u32>(this, 0x2C, 2000);
+            wr::<u8>(this, 0x30, 1);
+        }
+        if rd::<u8>(this, 0x31) != 0 {
+            wr::<u32>(this, 0x28, g::<u32>(TIME_MS).read());
+            wr::<u8>(this, 0x31, 0);
+        }
+        let end = rd::<u32>(this, 0x2C).wrapping_add(rd::<u32>(this, 0x28));
+        return u8::from(g::<u32>(TIME_MS).read() >= end);
+    }
+    for (i, v) in pos.iter().enumerate() {
+        wr::<u32>(this, 0x1C + i as isize * 4, *v);
+    }
+    let target = this.byte_add(0x1C);
+    wr::<u8>(this, 0x30, 0);
+    let camera = GPtr::<u8>::from_addr(0xB6F028);
+    if rd::<u32>(this, 0x18) == 0 {
+        if camera_is_sphere_visible(camera, target, 3.0) != 0 {
+            return 1;
+        }
+        let mi = g::<GPtr<u8>>(0xA9B0C8 + (i32::from(rd::<i16>(ped, 0x22)) * 4) as usize).read();
+        let r = rd::<f32>(rd::<GPtr<u8>>(mi, 0x14), 0x24);
+        if camera_is_sphere_visible(camera, entity_pos(ped), r) != 0 {
+            return 1;
+        }
+        if is_position_clear_for_ped(entity_pos(ped), 3.0, -1, GPtr::NULL, 1, 1, 1) == 0 {
+            return 1;
+        }
+    }
+    let mut stand = [0u32; 8];
+    let st = GPtr::from_raw(stand.as_mut_ptr()).cast::<u8>();
+    stand_still_ctor(st, 0, 0, 0, 8.0);
+    stand_still_process_ped(st, ped);
+    let model = rd::<i32>(this, 0x14);
+    if g::<u8>((0x8E4CD0 + model * 20) as usize).read() != 1 {
+        streaming_request_model(model, 0xC);
+        stand_still_dtor(st);
+        return 0;
+    }
+    if rd::<u32>(this, 0x18) == 0 {
+        let car = create_car_for_script(model as u32, rd::<u32>(target, 0), rd::<u32>(target, 4), rd::<u32>(target, 8), 1);
+        wr::<GPtr<u8>>(this, 0x18, car);
+        let mut set_in = [0u32; 7];
+        let si = GPtr::from_raw(set_in.as_mut_ptr()).cast::<u8>();
+        set_ped_in_as_driver_ctor(si, car, GPtr::NULL);
+        wr::<u8>(si, 0x18, 1);
+        set_ped_in_as_driver_process_ped(si, ped);
+        set_ped_in_as_driver_dtor(si);
+    }
+    let car = rd::<GPtr<u8>>(this, 0x18);
+    let f = rd::<u32>(car, 0x1C);
+    if f & 4 != 0 || f & 0x4_0000 != 0 {
+        stand_still_dtor(st);
+        return 0;
+    }
+    clean_up_this_vehicle(car);
+    let handle = sa_core::pool::get_vehicle_ref(rd::<GPtr<u8>>(this, 0x18).cast());
+    cleanup_remove_entity_from_list(GPtr::from_addr(0xA90850), handle, 1);
+    wr::<u32>(this, 0x18, 0);
+    stand_still_dtor(st);
+    1
+}
+
 /// The batch's hooks.
 pub const HOOKS: &[HookReg] = &[
     HOOK_MEDIC_TREAT_INJURED_PED_CREATE_NEXT_SUB_TASK,
@@ -1600,4 +1696,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_SEEK_87004C_CREATE_FIRST_SUB_TASK,
     HOOK_SEEK_87004C_CREATE_NEXT_SUB_TASK,
     HOOK_SEEK_87004C_CONTROL_SUB_TASK,
+    HOOK_CREATE_CAR_AND_GET_IN_PROCESS_PED,
 ];
