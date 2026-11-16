@@ -506,6 +506,9 @@ const PRESERVE_SPECS_PENDING: &[u32] = &[
     // FRONTIER-1 batch frontier-1-1: the vtable-only destructor 0x4B1F00 (preserve ecx: its scalar deleting
     // destructor 0x4B6840 reads ECX after the call); spec queued.
     0x4B1F00,
+    // FRONTIER-2 batch frontier2-a11: CTaskSimpleGoToPointFine::SetTargetPos 0x65F330 (preserve ecx:
+    // CTaskComplexTrackEntity::ControlSubTask stores through ECX after the call, 0x66376C); spec queued.
+    0x65F330,
 ];
 
 /// Preserved registers (VER-2, verifier finding V-9): every spec that declares them names a port
