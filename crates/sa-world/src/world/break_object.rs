@@ -51,7 +51,7 @@ orig! {
 use sa_core::crt::rand_at;
 
 /// `fild` of a `rand()` result times 1/RAND_MAX (0x858C7C, 3.0518509e-05).
-fn rand_unit(site: u32) -> X87 {
+pub fn rand_unit(site: u32) -> X87 {
     xi(rand_at(site)).fmul_m(f32::from_bits(0x3800_0100))
 }
 

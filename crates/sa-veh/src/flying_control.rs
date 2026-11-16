@@ -34,7 +34,7 @@ use sa_world::bindings::{
 
 orig! {
     /// `CVehicle::HeightAboveCeiling(float height, eFlightModel)` (0x6D2600; ST0)
-    fn height_above_ceiling(v: GPtr<u8>, h: f32, model: u32) -> X87 = reg("args = ecx stack stack; pop") 0x6D2600 => crate::vehicle2::height_above_ceiling;
+    pub(crate) fn height_above_ceiling(v: GPtr<u8>, h: f32, model: u32) -> X87 = reg("args = ecx stack stack; pop") 0x6D2600 => crate::vehicle2::height_above_ceiling;
 }
 
 /// The "take the pad's value" marker of the control arguments (0x871F8C, -9999.99f).
@@ -95,7 +95,7 @@ fn acos(v: X87) -> X87 {
     X87::from_f64_exact(sa_core::orig::x87_unary(0x82_2380, v.to_f64()))
 }
 /// `GetPosition().z`: the matrix's when the entity has one, else the placement's.
-fn pos_z(v: GPtr<u8>) -> f32 {
+pub(crate) fn pos_z(v: GPtr<u8>) -> f32 {
     let m = mat(v);
     if m.is_null() { rd::<f32>(v, 0xC) } else { rd::<f32>(m, 0x38) }
 }

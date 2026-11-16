@@ -30,7 +30,9 @@ orig! {
     /// `CDamageManager::ProgressAeroplaneDamage(uint8)` (0x6C2460, AL)
     fn progress_aeroplane_damage(d: GPtr<u8>, node: u32) -> u8 = thiscall 0x6C2460 => unported;
     /// `CDamageManager::GetAeroplaneCompStatus(int32)` (0x6C2300)
-    fn get_aeroplane_comp_status(d: GPtr<u8>, node: u32) -> u32 = thiscall 0x6C2300 => unported;
+    pub(crate) fn get_aeroplane_comp_status(d: GPtr<u8>, node: u32) -> u32 = thiscall 0x6C2300 => crate::damage::get_aeroplane_comp_status;
+    /// `CDamageManager::SetAeroplaneCompStatus(uint8, uint32)` (0x6C22D0)
+    pub(crate) fn set_aeroplane_comp_status(d: GPtr<u8>, node: u32, status: u32) = thiscall 0x6C22D0 => crate::damage::set_aeroplane_comp_status;
     /// virtual `CVehicle::BlowUpCar(CEntity*, bool)` (vtable +0xA4)
     fn v_blow_up_car(v: GPtr<u8>, damager: GPtr<u8>, hide: u32) = thiscall vslot 0xA4 => unported;
 }
