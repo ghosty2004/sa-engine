@@ -108,5 +108,44 @@ pub fn set_random_damage(car: GPtr<u8>, remove_stuff: u32) {
     }
 }
 
+/// `CAutomobile::SetTotalDamage(bool randomness)` (0x6A27F0, thiscall `ret 4`; FRONTIER-2 turn 7 lane B, batch
+/// `frontier2-b16`; CRoadBlocks::GenerateRoadBlockCopsForCar's wrecks). For each door 0..5 and each panel 0..6 but 2 and 3
+/// whose node frame (+0x648) exists: with `randomness` and `_ftol(rand * 3) == 0` (rand sites 0x6A2827 / 0x6A28EC) it is
+/// knocked off (door status 4 / panel status 3, the frame hidden: visibility 0); otherwise an undamaged one the model
+/// marks damageable gets door status 2 / panel status 1 and visibility 2.
+#[hook(addr = 0x6A27F0, conv = thiscall, name = "CAutomobile::SetTotalDamage", expect = "51 53 55 56 57 8B F1 33 FF",
+       unverified = "frontier2-b16", route = "L2", hazards = "none")]
+pub fn set_total_damage(car: GPtr<u8>, randomness: u32) {
+    let dm = car.byte_add(0x5A0);
+    let random = randomness as u8 != 0;
+    let frame = |node: i32| rd::<GPtr<u8>>(car, 0x648 + 4 * node as isize);
+    for door in 0..6u32 {
+        let node = (node_from_door_call(door) as u32) as i32;
+        if frame(node).is_null() {
+            continue;
+        }
+        if random && random_below(0x6A2827, Some(k(0x858B3C))) == 0 {
+            dm_set_door_status(dm, door, 4);
+            set_component_visibility(car, frame(node), 0);
+        } else if dm_get_door_status(dm, door as i32) == 0 && damageable(car, node) {
+            dm_set_door_status(dm, door, 2);
+            set_component_visibility(car, frame(node), 2);
+        }
+    }
+    for panel in (0..7u32).filter(|p| !matches!(p, 2 | 3)) {
+        let node = (node_from_panel_call(panel) as u32) as i32;
+        if frame(node).is_null() {
+            continue;
+        }
+        if random && random_below(0x6A28EC, Some(k(0x858B3C))) == 0 {
+            dm_set_panel_status(dm, panel, 3);
+            set_component_visibility(car, frame(node), 0);
+        } else if dm_get_panel_status(dm, panel) == 0 && damageable(car, node) {
+            dm_set_panel_status(dm, panel, 1);
+            set_component_visibility(car, frame(node), 2);
+        }
+    }
+}
+
 /// This module's hooks.
-pub const HOOKS: &[HookReg] = &[HOOK_SET_RANDOM_DAMAGE];
+pub const HOOKS: &[HookReg] = &[HOOK_SET_RANDOM_DAMAGE, HOOK_SET_TOTAL_DAMAGE];
