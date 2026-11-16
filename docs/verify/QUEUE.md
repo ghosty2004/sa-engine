@@ -70,6 +70,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-a5 | 6 | AI, UNK-game | bc708147 | worktree-agent-a198f2e01294e8cc9 | 6 | 0 | 0 | 0 | 0 | L2 6 |
 | frontier2-a6 | 8 | AI | a6049c75 | worktree-agent-a198f2e01294e8cc9 | 8 | 0 | 0 | 0 | 0 | L2 8 |
 | frontier2-a7 | 16 | AI, POP | 0041ebcc | worktree-agent-a198f2e01294e8cc9 | 16 | 0 | 0 | 0 | 0 | L2 15, split 1 |
+| frontier2-a8 | 36 | AI | 3fd22dd2 | worktree-agent-a84f43d95c6a883c2 | 36 | 0 | 0 | 0 | 0 | L2 36 |
 | frontier2-b1 | 32 | MATH, RENDER, RW | ebd33c14 | master | 32 | 0 | 0 | 0 | 0 | L1-pure 1, L2 31 |
 | frontier2-b2 | 23 | RW | 2f47ba34 | master | 23 | 0 | 0 | 0 | 0 | L2 23 |
 | frontier2-b3 | 7 | VEH | 221f09a0 | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
@@ -2315,6 +2316,56 @@ SA_UNVERIFIED=frontier2-a7 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a7 $S
 | 0x69BCA0 | `CTaskAllocatorKillOnFoot::AllocateTasks` | written | L2 | heap-writes |
 | 0x69C4D0 | `CTaskAllocatorPlayerCommandAttack::AllocateTasks` | written | L2 | heap-writes,uninit-locals |
 | 0x69CC30 | `CTaskAllocatorKillThreatsDriveby::AllocateTasks` | written | L2 | heap-writes |
+
+## frontier2-a8
+
+36 hooks in sa-ai; hazards: ax-al-return (7), heap-writes (30), stack-residue (1), uninit-locals (4), x87-transcendental (1); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-a8 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-a8 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a8 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-a8
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x5EF570 | `CPedShelterAttractor::BroadcastDeparture` | written | L2 | heap-writes,uninit-locals,stack-residue,ax-al-return |
+| 0x5F6DA0 | `CPedGroupDefaultTaskAllocatorStandStill::AllocateDefaultTasks` | written | L2 | heap-writes |
+| 0x622D50 | `CTaskComplexSeekCoverUntilTargetDead::GetCoverPed` | written | L2 | none |
+| 0x622F20 | `CTaskSimpleUseGun::Clone` | written | L2 | heap-writes |
+| 0x623030 | `CTaskSimpleThrowProjectile::Clone` | written | L2 | heap-writes |
+| 0x62E6C0 | `CTaskComplexSeekCoverUntilTargetDead::CreateFirstSubTask` | written | L2 | heap-writes |
+| 0x62FF70 | `CTaskSimpleDrownInCar::ProcessPed` | written | L2 | heap-writes |
+| 0x633B00 | `CTaskSimpleIKChain::Clone` | written | L2 | heap-writes |
+| 0x633BD0 | `CTaskSimpleIKChain::CreateIKChain` | written | L2 | ax-al-return,heap-writes |
+| 0x634560 | `vt_86e3cc::Clone` | written | L2 | heap-writes |
+| 0x634740 | `CTaskComplexUseClosestFreeScriptedAttractor::ComputeClosestFreeScriptedEffect` | written | L2 | none |
+| 0x634C10 | `CTaskComplexUseMobilePhone::CreateFirstSubTask` | written | L2 | heap-writes |
+| 0x635110 | `CTaskComplexInWater::CreateNextSubTask` | written | L2 | heap-writes |
+| 0x6390C0 | `CTaskComplexUseScriptedAttractor::CreateFirstSubTask` | written | L2 | heap-writes |
+| 0x6477F0 | `vt_86ee94::ProcessPed` | written | L2 | ax-al-return,heap-writes |
+| 0x649550 | `CTaskSimpleWaitUntilPedIsOutCar::ProcessPed` | written | L2 | ax-al-return |
+| 0x6584E0 | `CTaskComplexWalkRoundFire::CreateFirstSubTask` | written | L2 | heap-writes,uninit-locals |
+| 0x65F4E0 | `CTaskComplexTrackEntity::Clone` | written | L2 | heap-writes |
+| 0x66CD80 | `CTaskComplexGoToPointAiming::Clone` | written | L2 | heap-writes |
+| 0x66CE10 | `CTaskComplexGoToPointShooting::Clone` | written | L2 | heap-writes |
+| 0x66DDB0 | `CTaskComplexGoToPointAiming::CreateFirstSubTask` | written | L2 | heap-writes |
+| 0x6750A0 | `CTaskInteriorBeInHouse::GetInfoForPedToUse` | written | L2 | heap-writes |
+| 0x6754D0 | `CTaskInteriorBeInShop::ScanForStuff` | written | L2 | heap-writes |
+| 0x675740 | `CTaskInteriorShopKeeper::ControlSubTask` | written | L2 | heap-writes |
+| 0x676200 | `CTaskInteriorBeInHouse::CreateNextSubTask` | written | L2 | heap-writes |
+| 0x6762B0 | `CTaskInteriorBeInHouse::CreateFirstSubTask` | written | L2 | heap-writes |
+| 0x676350 | `CTaskInteriorBeInOffice::CreateNextSubTask` | written | L2 | heap-writes |
+| 0x676550 | `CTaskInteriorShopKeeper::CreateFirstSubTask` | written | L2 | heap-writes |
+| 0x678AA0 | `vt_870480::MakeAbortable` | written | L2 | ax-al-return |
+| 0x679120 | `CTaskComplexFallToDeath::CreateFirstSubTask` | written | L2 | heap-writes |
+| 0x6796C0 | `CTaskComplexFallToDeath::CalcFall` | written | L2 | ax-al-return |
+| 0x689640 | `CTaskSimpleSwim::ProcessControlAI` | written | L2 | x87-transcendental |
+| 0x691320 | `CTaskSimpleAffectSecondaryBehaviour::ProcessPed` | written | L2 | ax-al-return,heap-writes |
+| 0x6960B0 | `CTaskComplexSeekEntityAnyMeansXYOffset::CreateFirstSubTask` | written | L2 | heap-writes,uninit-locals |
+| 0x696160 | `CTaskComplexSeekEntityAnyMeansXYOffset::ControlSubTask` | written | L2 | heap-writes,uninit-locals |
+| 0x6962A0 | `CTaskComplexFollowLeaderInFormation::CreateSubTask` | written | L2 | heap-writes |
 
 ## frontier2-b1
 
