@@ -51,7 +51,7 @@ orig! {
     /// `CObject::GetLightingFromCollisionBelow()` (0x59FD00)
     fn get_lighting_from_collision_below(o: GPtr<u8>) = thiscall 0x59FD00 => unported;
     /// `CObject::DoBurnEffect()` (0x59FB50)
-    fn do_burn_effect(o: GPtr<u8>) = thiscall 0x59FB50 => unported;
+    fn do_burn_effect(o: GPtr<u8>) = thiscall 0x59FB50 => crate::world::frontier_a_t10::object_do_burn_effect;
     /// CRT `sscanf` (0x8220AD), one target
     fn sscanf1(s: GPtr<u8>, fmt: u32, a: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
     /// CRT `sscanf` (0x8220AD), two targets
