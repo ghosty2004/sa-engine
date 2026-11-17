@@ -1547,9 +1547,19 @@ fn flat_water_colour(rgba: u32, a: u8) -> u32 {
 }
 
 /// The texture origin of a flat-water layer: `(x1 * s + shiftU, y1 * s + shiftV)` minus their floors,
-/// the per-unit scale and the layer alpha (layer 1: 0.04, the "first" shifts, alpha 1; layer 0: 0.08,
-/// the "second" shifts, alpha 0). Returns `(u0 as f32, v0 unrounded, scale, alpha)`.
-fn flat_water_layer(layer: i32, x1: i32, y1: i32) -> (f32, X87, u32, u8) {
+/// the per-unit scale, the layer alpha and the z offset (layer 1: 0.04, the "first" shifts, alpha 1; layer 0:
+/// 0.08, the "second" shifts, alpha 0; z offset 0). Returns `(u0 as f32, v0 unrounded, scale, alpha, z offset)`.
+///
+/// Any other layer (no caller passes one: RenderFlatWaterRectangle / Triangle draw layers 0 and 1) reads three
+/// locals the original never writes, `u0` at entry ESP - 0x10 and the z offset / scale at `z_slot` / `scale_slot`
+/// (stack residue, read through the hook's `peek`; 0 without an original frame), takes `v0` from the bits of
+/// the layer argument (`fld dword`) and the alpha from its low byte (ledger FRONTIER-2, water layers).
+fn flat_water_layer(hook: u32, z_slot: i32, scale_slot: i32, layer: i32, x1: i32, y1: i32) -> (f32, X87, u32, u8, u32) {
+    if layer != 0 && layer != 1 {
+        let peek = |off: i32| sa_core::abi::peek_stack(hook, off).unwrap_or(0);
+        let v0 = X87::from_f32(f32::from_bits(layer as u32));
+        return (f32::from_bits(peek(-0x10)), v0, peek(scale_slot), layer as u8, peek(z_slot));
+    }
     let (s, su, sv, scale, alpha) = if layer == 1 {
         (LAYER1_SCALE, TEXTURE_SHIFT_FIRST_U.get(), TEXTURE_SHIFT_FIRST_V.get(), LAYER1_SCALE, WATER_LAYER_ALPHA.get()[1])
     } else {
@@ -1559,7 +1569,7 @@ fn flat_water_layer(layer: i32, x1: i32, y1: i32) -> (f32, X87, u32, u8) {
     let v = f32_of(xi(y1).fmul_m(k(s)).fadd_m(sv));
     let u0 = f32_of(floor_x(x(u)).fsubr_m(u));
     let v0 = floor_x(x(v)).fsubr_m(v);
-    (u0, v0, scale, alpha as u8)
+    (u0, v0, scale, alpha as u8, 0)
 }
 
 /// `CWaterLevel::RenderFlatWaterRectangle_OneLayer(int32 x1, int32 x2, int32 y1, int32 y2, CRenPar p1,
@@ -1567,30 +1577,26 @@ fn flat_water_layer(layer: i32, x1: i32, y1: i32) -> (f32, X87, u32, u8) {
 /// (`RenderBuffer::RenderIfDoesntFit` at 0xFFA indices / 0x7FC vertices), then one quad (x1, y1) (x2,
 /// y1) (x1, y2) (x2, y2) with z = `p.z + 0`, the layer's uv (`u0 - 7`, `v0 -+ 7` by the sign of `y2 -
 /// y1`, plus `(x2 - x1) * scale` / `(y2 - y1) * scale`) and `flat_water_colour`; indices (n, n+1, n+2,
-/// n+3, n+1, n+2). Layers other than 0 / 1 read uninitialised locals in the original: they run the
-/// original body (`fallback`).
-#[hook(addr = 0x6E9940, conv = cdecl, name = "CWaterLevel::RenderFlatWaterRectangle_OneLayer", expect = "83 EC 10 53 55", fallback)]
+/// n+3, n+1, n+2); z is `p.z + z offset`. Layers other than 0 / 1 read uninitialised locals (see
+/// `flat_water_layer`; the z offset at entry ESP - 0xC, the scale at - 8).
+#[hook(addr = 0x6E9940, conv = cdecl, name = "CWaterLevel::RenderFlatWaterRectangle_OneLayer", expect = "83 EC 10 53 55", peek = 0x10,
+       unverified = "frontier2-c19", route = "L2", hazards = "stack-residue",
+       note = "was a fallback port: layers other than 0 / 1 (never passed) read never-written locals, now through peek")]
 #[allow(clippy::too_many_arguments)]
 pub fn render_flat_water_rectangle_one_layer(
     x1: i32, x2: i32, y1: i32, y2: i32,
-    p1z: u32, p1b: u32, p1s: u32, p1f: u32,
-    p2z: u32, p2b: u32, p2s: u32, p2f: u32,
-    p3z: u32, p3b: u32, p3s: u32, p3f: u32,
-    p4z: u32, p4b: u32, p4s: u32, p4f: u32,
+    p1z: u32, _p1b: u32, _p1s: u32, _p1f: u32,
+    p2z: u32, _p2b: u32, _p2s: u32, _p2f: u32,
+    p3z: u32, _p3b: u32, _p3s: u32, _p3f: u32,
+    p4z: u32, _p4b: u32, _p4s: u32, _p4f: u32,
     layer: i32,
 ) {
-    if layer != 0 && layer != 1 {
-        render_flat_water_rectangle_one_layer_original(
-            x1, x2, y1, y2, p1z, p1b, p1s, p1f, p2z, p2b, p2s, p2f, p3z, p3b, p3s, p3f, p4z, p4b, p4s, p4f, layer,
-        );
-        return;
-    }
     if g::<i32>(TEMP_INDICES_STORED).read() >= 0xFFA || g::<i32>(TEMP_VERTICES_STORED).read() >= 0x7FC {
         render_buffer_render_if_doesnt_fit();
     }
     let m = g::<i32>(TEMP_INDICES_STORED).read();
     let n = g::<i32>(TEMP_VERTICES_STORED).read();
-    let (u0, v0, scale, alpha) = flat_water_layer(layer, x1, y1);
+    let (u0, v0, scale, alpha, zoff) = flat_water_layer(0x6E9940, -0xC, -8, layer, x1, y1);
     let u0 = f32_of(x(u0).fsub_m(k(UV_SHIFT)));
     let dy = y2.wrapping_sub(y1);
     let v0 = if dy > 0 { v0.fsub_m(k(UV_SHIFT)) } else { v0.fadd_m(k(UV_SHIFT)) };
@@ -1598,7 +1604,7 @@ pub fn render_flat_water_rectangle_one_layer(
     let u1 = f32_of(xi(x2.wrapping_sub(x1)).fmul_m(k(scale)).fadd_m(u0));
     let v1 = f32_of(xi(dy).fmul_m(k(scale)).fadd(v0));
     let v0 = f32_of(v0);
-    let z = |p: u32| f32_of(x(f32::from_bits(p)).fadd_m(0.0));
+    let z = |p: u32| f32_of(x(f32::from_bits(p)).fadd_m(k(zoff)));
     let (fx1, fx2, fy1, fy2) = (f32_of(xi(x1)), f32_of(xi(x2)), f32_of(xi(y1)), f32_of(xi(y2)));
     let verts = [(fx1, fy1, z(p1z), u0, v0), (fx2, fy1, z(p2z), u1, v0), (fx1, fy2, z(p3z), u0, v1), (fx2, fy2, z(p4z), u1, v1)];
     for (i, (px, py, pz, u, w)) in verts.into_iter().enumerate() {
@@ -1634,33 +1640,30 @@ fn put_flat_vertices(n: i32, colour: u32, verts: &[(f32, f32, f32, f32, f32)]) {
 /// `CWaterLevel::RenderFlatWaterTriangle_OneLayer(int32 x1, int32 y1, CRenPar p1, x2, y2, p2, x3, y3, p3,
 /// int32 layer)` (0x6E8ED0): as `RenderFlatWaterRectangle_OneLayer` for one triangle (flush at 0xFFD
 /// indices / 0x7FD vertices, `WaterColorTriangle`, the v shift's sign from `y3 - y1`; vertex k's uv =
-/// `(xk - x1) * scale + u0`, `(yk - y1) * scale + v0`); indices (n, n+1, n+2). Other layers: `fallback`.
-#[hook(addr = 0x6E8ED0, conv = cdecl, name = "CWaterLevel::RenderFlatWaterTriangle_OneLayer", expect = "A1 54 B9 C4 00", fallback)]
+/// `(xk - x1) * scale + u0`, `(yk - y1) * scale + v0`); indices (n, n+1, n+2). Other layers: see
+/// `flat_water_layer` (the scale at entry ESP - 0xC, the z offset at - 8).
+#[hook(addr = 0x6E8ED0, conv = cdecl, name = "CWaterLevel::RenderFlatWaterTriangle_OneLayer", expect = "A1 54 B9 C4 00", peek = 0x10,
+       unverified = "frontier2-c19", route = "L2", hazards = "stack-residue",
+       note = "was a fallback port: layers other than 0 / 1 (never passed) read never-written locals, now through peek")]
 #[allow(clippy::too_many_arguments)]
 pub fn render_flat_water_triangle_one_layer(
-    x1: i32, y1: i32, p1z: u32, p1b: u32, p1s: u32, p1f: u32,
-    x2: i32, y2: i32, p2z: u32, p2b: u32, p2s: u32, p2f: u32,
-    x3: i32, y3: i32, p3z: u32, p3b: u32, p3s: u32, p3f: u32,
+    x1: i32, y1: i32, p1z: u32, _p1b: u32, _p1s: u32, _p1f: u32,
+    x2: i32, y2: i32, p2z: u32, _p2b: u32, _p2s: u32, _p2f: u32,
+    x3: i32, y3: i32, p3z: u32, _p3b: u32, _p3s: u32, _p3f: u32,
     layer: i32,
 ) {
-    if layer != 0 && layer != 1 {
-        render_flat_water_triangle_one_layer_original(
-            x1, y1, p1z, p1b, p1s, p1f, x2, y2, p2z, p2b, p2s, p2f, x3, y3, p3z, p3b, p3s, p3f, layer,
-        );
-        return;
-    }
     if g::<i32>(TEMP_INDICES_STORED).read() >= 0xFFD || g::<i32>(TEMP_VERTICES_STORED).read() >= 0x7FD {
         render_buffer_render_if_doesnt_fit();
     }
     let n = g::<i32>(TEMP_VERTICES_STORED).read();
-    let (u0, v0, scale, alpha) = flat_water_layer(layer, x1, y1);
+    let (u0, v0, scale, alpha, zoff) = flat_water_layer(0x6E8ED0, -8, -0xC, layer, x1, y1);
     let u0 = f32_of(x(u0).fsub_m(k(UV_SHIFT)));
     let dy = y3.wrapping_sub(y1);
     let v0 = if dy > 0 { v0.fsub_m(k(UV_SHIFT)) } else { v0.fadd_m(k(UV_SHIFT)) };
     let colour = flat_water_colour(WATER_COLOR_TRIANGLE.get(), alpha);
     let u = |xk: i32| f32_of(xi(xk.wrapping_sub(x1)).fmul_m(k(scale)).fadd_m(u0));
     let v = |yk: i32| f32_of(xi(yk.wrapping_sub(y1)).fmul_m(k(scale)).fadd(v0));
-    let z = |p: u32| f32_of(x(f32::from_bits(p)).fadd_m(0.0));
+    let z = |p: u32| f32_of(x(f32::from_bits(p)).fadd_m(k(zoff)));
     let f = |c: i32| f32_of(xi(c));
     put_flat_vertices(
         n,
