@@ -63,22 +63,22 @@ fn give_weapon(ped: GPtr<u8>, w: u32) {
 /// gang draws; with `makeWander`, 0x96915D gives type 0x16 an event about the player (0x4AEDF0, type word 0x4BC)
 /// and `GetRandomNumberInRange(10, 14)` without ammo, and 0x96913E sends a hate-acquaintance event (vtable
 /// 0x858E68, type word 0x3E8) about the nearest other ped of the pool (its own `type` argument slot holds the
-/// best distance in the original; callers only pop it, not reproduced). NOT PORTED (fallback to the whole
-/// original, decided at entry): types < 4, 21, > 31 (the original uses its `makeWander` argument slot as the ped
-/// pointer there).
-#[hook(addr = 0x612710, conv = cdecl, name = "CPopulation::AddPed", expect = "90 E9 AD F1 DE FF", fallback,
-       unverified = "popw4-partial-1", route = "split", hazards = "heap-writes",
-       note = "partial port widened: the cheat paths (0x969140 / 0x96913E / 0x96915C / 0x96915D) are new; the non-cheat paths were verified in pass 3")]
-pub fn add_ped(ty: u32, model: u32, pos: GPtr<f32>, make_wander: u8) -> GPtr<u8> {
+/// best distance in the original; callers only pop it, not reproduced). Types < 4, 21 and > 31 (the switch
+/// default 0x6129D1) take the whole `makeWander` argument slot as the ped pointer and go on with it (a caller's
+/// pushed 0 / 1 there faults in the original too), so the slot is read as a dword; `makeWander` itself is its low
+/// byte (`mov al, [esp+0x5C]`).
+#[hook(addr = 0x612710, conv = cdecl, name = "CPopulation::AddPed", expect = "90 E9 AD F1 DE FF",
+       unverified = "frontier2-a16", route = "split", hazards = "heap-writes",
+       note = "was a partial port (popw4-partial-1, cheat paths new there): the unhandled types no longer run the original")]
+pub fn add_ped(ty: u32, model: u32, pos: GPtr<f32>, make_wander_slot: u32) -> GPtr<u8> {
+    let make_wander = make_wander_slot as u8;
     // samp mode: no ambient peds (samp makes this entry return NULL).
     if sa_core::samp::disabled(sa_core::samp::feature::AMBIENT_PEDS) {
         return GPtr::from_addr(0);
     }
     let cheat = |a: usize| g::<u8>(a).read() != 0;
-    if !(4..=31).contains(&ty) || ty == 21 {
-        return add_ped_original(ty, model, pos, make_wander);
-    }
     let ped = match ty {
+        _ if !(4..=31).contains(&ty) || ty == 21 => GPtr::from_addr(make_wander_slot as usize),
         6 => {
             let m = ped_new(0x7C4);
             if m.is_null() { m } else { cop_ped_ctor(m, model) }
@@ -108,7 +108,7 @@ pub fn add_ped(ty: u32, model: u32, pos: GPtr<f32>, make_wander: u8) -> GPtr<u8>
             2 => 0x19,
             3 => 0x1F,
             4 => 0x23,
-            _ => u32::from(make_wander),
+            _ => make_wander_slot,
         };
         if weapon != 0 {
             give_weapon(ped, weapon);

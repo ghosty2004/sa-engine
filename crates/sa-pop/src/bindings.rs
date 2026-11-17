@@ -420,7 +420,7 @@ orig! {
 
 orig! {
     /// `CPopulation::AddPed` (0x612710)
-    pub fn add_ped(ty: u32, model: u32, pos: GPtr<f32>, b: u8) -> GPtr<u8> = cdecl 0x612710 => crate::population3::add_ped;
+    pub fn add_ped(ty: u32, model: u32, pos: GPtr<f32>, b: u32) -> GPtr<u8> = cdecl 0x612710 => crate::population3::add_ped;
 }
 
 orig! {

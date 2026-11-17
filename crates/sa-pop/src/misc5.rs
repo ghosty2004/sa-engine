@@ -816,18 +816,15 @@ fn road_block_cop_case(model: i32) -> (u32, i32, bool) {
 /// reference), +0x470 |= 0x40, clump alpha 0; gang peds: a delayed gang weapon (`rand` site 0x4617A3,
 /// percent of the gang's three weapons at 0xC091F4, 25001 rounds) selected by slot; `CWorld::Add`, and a
 /// `CEventScriptCommand(3, KillPedOnFoot(player, -1, 0, 0, 0, true))` added to its event group. The local
-/// `CMatrix` (never used) is destroyed on both exits. NOT PORTED (ADR-002 fallback, decided at entry from pure
-/// reads): offset indices beyond the 12 table entries (set A) or the 6 of set B, which read other stack
-/// locals in the original.
+/// `CMatrix` (never used) is destroyed on both exits. Offset indices beyond the 12 table entries (set A) or the 6
+/// of set B read other stack locals of the original's frame; the port reads (0, 0, 0) there (divergence ledger:
+/// unreachable, the only writers of the vehicle's pair +0x4AD / count +0x4AE, 0x4623A7..0x462489 in the road
+/// block generators that also set the road block flag the one caller tests, store pair 0..2 and count 1..2).
 #[hook(addr = 0x461170, conv = cdecl, name = "CRoadBlocks::GenerateRoadBlockPedsForCar", expect = "6A FF 68 07 7C 83 00 64",
-       unverified = "popw4-gang-1", route = "split", hazards = "heap-writes", recs = "police-gang", fallback)]
+       unverified = "frontier2-a16", route = "split", hazards = "heap-writes", recs = "police-gang",
+       note = "was a partial port (popw4-gang-1): the out-of-table offsets no longer run the original")]
 pub fn generate_road_block_peds_for_car(veh: GPtr<u8>, pair: i32, ped_type: i32) -> u8 {
-    let n = i32::from(rd::<u8>(veh, 0x4AE));
     let set_b = ped_type == 6 && road_block_cop_case(i32::from(rd::<i16>(veh, 0x22))).2;
-    let limit = if set_b { 6 } else { 12 };
-    if n > 0 && (!(0..=6).contains(&pair) || pair * 2 + n > limit) {
-        return generate_road_block_peds_for_car_original(veh, pair, ped_type);
-    }
     let mut local_matrix = [0u32; 0x12];
     let mut model: i32 = 0;
     let mut cop_type: u32 = 0;
@@ -862,7 +859,7 @@ pub fn generate_road_block_peds_for_car(veh: GPtr<u8>, pair: i32, ped_type: i32)
     let mut i = 0;
     while i < i32::from(rd::<u8>(veh, 0x4AE)) {
         let k = (pair * 2 + i) as usize + if set_b { 6 } else { 0 };
-        let o = ROAD_BLOCK_PED_OFFSETS[k];
+        let o = ROAD_BLOCK_PED_OFFSETS.get(k).copied().unwrap_or([0; 3]);
         let mut off = [0f32; 3];
         off[2] = x(ratio).fmul_m(f32::from_bits(o[2])).to_f32();
         off[1] = x(ratio).fmul_m(f32::from_bits(o[1])).to_f32();

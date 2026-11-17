@@ -2527,7 +2527,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x611550,sa-world,choose_gang_occupation,cdecl,,gang:i32,i32,unported,CPopulation::ChooseGangOccupation,
 0x611760,sa-world,is_sunbather,cdecl,,m:i32,u8,unported,CPopulation::IsSunbather-ModelID,
 0x6122C0,sa-world,population_remove_all_random_peds,cdecl,,,,unported,CPopulation::RemoveAllRandomPeds,
-0x612710,sa-world,add_ped,cdecl,,ty:u32;model:u32;pos:GPtr<f32>;b:u8,GPtr<u8>,unported,CPopulation::AddPed,sa_pop::population3::add_ped
+0x612710,sa-world,add_ped,cdecl,,ty:u32;model:u32;pos:GPtr<f32>;b:u32,GPtr<u8>,unported,CPopulation::AddPed,sa_pop::population3::add_ped
 0x613A00,sa-world,add_ped_in_car,cdecl,,veh:GPtr<u8>;driver:u32;gang:i32;seat:u32;male:u32;criminal:u32,GPtr<u8>,unported,CPopulation::AddPedInCar,
 0x616860,sa-world,is_position_clear_for_ped,cdecl,,p:GPtr<u8>;r:f32;max:i32;objs:GPtr<u8>;v:u8;pe:u8;o:u8,u8,unported,CPedPlacement::IsPositionClearForPed-OG,
 0x616920,sa-world,ped_placement_find_z_coor_for_ped,cdecl,,v:GPtr<f32>,u8,unported,CPedPlacement::FindZCoorForPed,sa_ped::ped_coll::find_z_coor_for_ped
