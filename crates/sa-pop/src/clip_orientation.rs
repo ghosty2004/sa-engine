@@ -1,8 +1,6 @@
-//! `CCarCtrl::ClitargetOrientationToLink` (0x422760, batch `frontier2-a16`), ported from the 1.0 US bytes
+//! `CCarCtrl::ClitargetOrientationToLink` (0x422760, phase B native), ported from the 1.0 US bytes
 //! (gta-reversed only calls the original).
 
-use sa_core::abi::HookReg;
-use sa_core::hook;
 use sa_core::mem::GPtr;
 use sa_math::fpu::st0;
 use sa_math::x87::X87;
@@ -50,10 +48,11 @@ fn angle_from(veh: GPtr<u8>, px: f32, py: X87) -> X87 {
 /// points minus the orientation, each wrapped into [-pi, pi] (the first stored as f32, the second kept extended):
 /// when both have the same sign the one closer to 0 is added to the orientation, which is then wrapped into
 /// [0, 2pi]. The original also computes (and drops) the angle to `(x, y)` first.
-#[hook(addr = 0x422760, conv = cdecl, name = "CCarCtrl::ClitargetOrientationToLink",
-       expect = "E9 04 F7 FD FF",
-       unverified = "frontier2-a16", route = "L2", hazards = "x87-transcendental,stack-residue",
-       note = "entry jmp 0x401E69 (chunk = movzx eax, word [esp+8]; jmp 0x422765), relocated whole; the original stores locals over its link argument slot")]
+///
+/// Phase B native only: the no-CD protection reads the entry bytes as data (`mov ecx, [0x422761]` at 0x4020E4; the
+/// entry is the chunk jmp 0x401E69 = `movzx eax, word [esp+8]; jmp 0x422765`). The original stores locals over its
+/// link argument slot (stack residue).
+#[sa_core::native(addr = 0x422760, conv = cdecl, name = "CCarCtrl::ClitargetOrientationToLink")]
 pub fn clip_target_orientation_to_link(veh: GPtr<u8>, link: u32, dir: u32, orient: GPtr<f32>, px: f32, py: f32) {
     let link = link & 0xFFFF;
     let area = (link >> 10) as usize;
@@ -145,5 +144,5 @@ pub fn clip_target_orientation_to_link(veh: GPtr<u8>, link: u32, dir: u32, orien
     }
 }
 
-/// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_CLIP_TARGET_ORIENTATION_TO_LINK];
+/// Every `#[native]` of this module.
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_CLIP_TARGET_ORIENTATION_TO_LINK];

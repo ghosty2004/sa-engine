@@ -15,7 +15,6 @@ pub const MODULES: &[&[HookReg]] = &[
     popcycle::HOOKS,
     population::HOOKS,
     carctrl::HOOKS,
-    crate::clip_orientation::HOOKS,
     cargen::HOOKS,
     gangs::HOOKS,
     misc::HOOKS,
