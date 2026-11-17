@@ -180,4 +180,99 @@ pub fn bike_blow_up_car(this: GPtr<u8>, damager: GPtr<u8>, hide: u32) {
 }
 
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_AUTOMOBILE_BLOW_UP_CAR, HOOK_BIKE_BLOW_UP_CAR];
+/// `CAutomobile::BlowUpCarCutSceneNoExtras(bool noCamShake, bool noSpawnFlyingComps, bool detachWheels, bool
+/// explosionSound)` (0x6B3BB0, vtable +0xA8, `ret 0x10`; FRONTIER-2 turn 9, batch `frontier2-b21`). Only when the
+/// car can be damaged (+0x42A bit 5). A non-player vehicle of subclass 4 whose autopilot mission (i8 +0x3BA) is
+/// 0x16, 0x23..0x25, 0x3B, 0x3E or 0x3F (jump table 0x6B3E54 / 0x6B3E5C) only gets mission 0x39. Otherwise as
+/// BlowUpCar without the rewards: the news chopper clears 0xB7CB8C; without `detachWheels` `ms.z += 0.13`; wrecked
+/// status, flag +0x40 bit 29, blow-up time, clump flags 0x4000, `FuckCarCompletely(detachWheels)`; except for the
+/// RC Bandit (441) the bumpers and doors get `noSpawnFlyingComps`, the bonnet flies off unless that flag is set
+/// and its atomic is hidden unless `detachWheels`; passenger bits / health / +0x4DE cleared; a 0.4 camera shake
+/// unless `noCamShake`; occupants killed (not the peds getting in); the siren / law flags; law enforcer off.
+/// Without `detachWheels`: Darkel's blown-up car (player 0), a fire (0.8, 7 s, no creator) and an explosion of
+/// type 1 at the car's position (no lifetime, sound `explosionSound`, camera shake -1, visible).
+#[hook(addr = 0x6B3BB0, conv = thiscall, name = "CAutomobile::BlowUpCarCutSceneNoExtras", this = "CAutomobile",
+       expect = "53 56 8B F1 F6 86 2A 04 00 00 20",
+       unverified = "frontier2-b21", route = "L2", hazards = "heap-writes",
+       note = "spawns the bonnet, starts a fire and an explosion")]
+pub fn automobile_blow_up_car_cut_scene_no_extras(this: GPtr<u8>, no_cam_shake: u32, no_flying: u32, detach: u32, sound: u32) {
+    if rd::<u8>(this, 0x42A) & 0x20 == 0 {
+        return;
+    }
+    if rd::<u32>(this, 0x594) == 4 && rd::<u8>(this, 0x36) & 0xF8 != 0 {
+        let k = (i32::from(rd::<i8>(this, 0x3BA)) - 0x16) as u32;
+        if k <= 0x29 && matches!(k, 0 | 13 | 14 | 15 | 37 | 40 | 41) {
+            wr::<u8>(this, 0x3BA, 0x39);
+            return;
+        }
+    }
+    if rd::<i16>(this, 0x22) == 0x1E8 {
+        g::<u8>(0xB7_CB8C).write(0);
+    }
+    let detach = detach as u8 != 0;
+    if !detach {
+        wr::<f32>(this, 0x4C, f32_of(x(rd::<f32>(this, 0x4C)).fadd_m(g::<f32>(0x85_9020).read())));
+    }
+    wr::<u8>(this, 0x36, (rd::<u8>(this, 0x36) & 7) | 0x28);
+    wr::<u32>(this, 0x40, rd::<u32>(this, 0x40) | 0x2000_0000);
+    wr::<u32>(this, 0x4D8, g::<u32>(0xB7_CB84).read());
+    clump_set_flags_7322f0(rd::<GPtr<u8>>(this, 0x18), 0x4000);
+    damage_fuck_car_completely(this.byte_add(0x5A0), u32::from(detach));
+    if rd::<i16>(this, 0x22) != 0x1B9 {
+        set_bumper_damage(this, 5, no_flying);
+        set_bumper_damage(this, 6, no_flying);
+        for door in 0..6 {
+            set_door_damage(this, door, no_flying);
+        }
+        if no_flying as u8 == 0 {
+            spawn_flying_component(this, 5, 1);
+        }
+        if !detach {
+            let mut atomic = [0u32; 1];
+            frame_for_all_objects(rd::<GPtr<u8>>(this, 0x65C), 0x6A_0750, GPtr::<u8>::addr(GPtr::from_raw(&mut atomic as *mut [u32; 1]).cast()) as u32);
+            if atomic[0] != 0 {
+                wr::<u8>(GPtr::from_addr(atomic[0] as usize), 2, 0);
+            }
+        }
+    }
+    wr::<u32>(this, 0x4C0, 0);
+    wr::<u16>(this, 0x4DE, 0);
+    wr::<u8>(this, 0x4A8, rd::<u8>(this, 0x4A8) & 0xF8);
+    let pos = || {
+        let m = rd::<GPtr<u8>>(this, 0x14);
+        if m.is_null() { this.byte_add(4) } else { m.byte_add(0x30) }
+    };
+    if no_cam_shake as u8 == 0 {
+        let p = pos();
+        cam_shake(GPtr::from_addr(0xB6_F028), f32::from_bits(0x3ECC_CCCD), rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8));
+    }
+    kill_peds_in_vehicle(this);
+    wr::<u8>(this, 0x4A8, rd::<u8>(this, 0x4A8) & 0xE7);
+    wr::<u8>(this, 0x428, rd::<u8>(this, 0x428) & 0xAF);
+    wr::<u8>(this, 0x42D, rd::<u8>(this, 0x42D) & 0x7F);
+    wr::<u8>(this, 0x868, rd::<u8>(this, 0x868) & 0xFE);
+    if rd::<u8>(this, 0x428) & 2 != 0 {
+        wr::<u8>(this, 0x428, rd::<u8>(this, 0x428) & 0xFD);
+        let c = g::<i32>(0x96_90A8);
+        c.write(c.read().wrapping_sub(1));
+    }
+    if rd::<u8>(this, 0x428) & 4 != 0 {
+        wr::<u8>(this, 0x428, rd::<u8>(this, 0x428) & 0xFB);
+        let c = g::<i32>(0x96_90AC);
+        c.write(c.read().wrapping_sub(1));
+    }
+    change_law_enforcer_state(this, 0);
+    if detach {
+        return;
+    }
+    darkel_register_car_blown_up(this, 0);
+    start_fire(GPtr::from_addr(0xB7_1F80), this, GPtr::NULL, f32::from_bits(0x3F4C_CCCD), 1, 7000, 0);
+    let p = pos();
+    add_explosion(this, GPtr::NULL, 1, rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8), 0, sound as u8, f32::from_bits(0xBF80_0000), 0);
+}
+
+pub const HOOKS: &[HookReg] = &[
+    HOOK_AUTOMOBILE_BLOW_UP_CAR,
+    HOOK_BIKE_BLOW_UP_CAR,
+    HOOK_AUTOMOBILE_BLOW_UP_CAR_CUT_SCENE_NO_EXTRAS,
+];
