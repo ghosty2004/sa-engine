@@ -2,7 +2,7 @@
 # FRONTIER-1 scenarios: native sa-game runs (deterministic, --fixed-step 40, offscreen) that reach the blockers the
 # user hit. Each must end with an empty blocker list in OUT/report.md and no crash.
 #
-#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack OUTDIR [FRAMES]
+#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite OUTDIR [FRAMES]
 #
 # pausemenu (400)  Esc, down x3, Enter (pause-menu item 4: Stats), down, Enter, Enter: the Stats pages draw
 #                  (was a SIGSEGV at iteration ~171: CStats::GetStatValue's X87 result dispatched as cdecl)
@@ -179,7 +179,20 @@ boat)
     export SA_GAME_TELEPORT="60:2505.0:-1666.4:13.4;150:-2240.0:2420.0:8.0"
     export SA_GAME_KEYS="f:200:203,w:300:1100,a:700:760"
     run "${3:-1200}" --start-in-world ;;
+copsf|coplv)
+    # the user's crash report: CJ teleported to San Fierro (Downtown, near the SFPD) or Las Venturas (the Strip, near
+    # the LVPD) and left there: the city's cops (CCopPed::ProcessControl) point their guns (CPedIK::MoveLimb 0x5FDB60)
+    if [ "$NAME" = copsf ]; then t="60:-1606.0:720.0:12.0"; else t="60:2287.0:2425.0:10.8"; fi
+    export SA_GAME_TELEPORT="$t" SA_GAME_KEYS="w:300:500"
+    run "${3:-2000}" --start-in-world ;;
+samsite)
+    # Area 51 (Restricted Area): CJ teleported into the base, the jet pack cheat ROCKETMAN, lift-off (space) and forward:
+    # the base's SAM sites (mil_samsite) turn towards a jet-pack player and fire (CObject::ProcessSamSiteBehaviour 0x5A07D0)
+    export SA_GAME_SCRIPT_SKIP=1 SA_GAME_TELEPORT="60:220.0:1800.0:18.0"
+    keys=; i=150; for c in r o c k e t m a n; do keys="$keys${keys:+,}$c:$i:$((i + 2))"; i=$((i + 6)); done
+    export SA_GAME_KEYS="$keys,space:300:700,w:500:900,a:900:960"
+    run "${3:-1600}" --start-in-world ;;
 *)
-    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack OUTDIR [FRAMES]" >&2
+    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite OUTDIR [FRAMES]" >&2
     exit 2 ;;
 esac
