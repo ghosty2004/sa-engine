@@ -3121,3 +3121,13 @@
   web runs and all WebGL2 runs were not completed (stopped at the usage limit).
 - Not run (usage limit): writer gate, verify-all lanes 1-3, frontier.sh beyond `crossing`. sa-core tests pass (host
   75/75; i686 orig:: 6/6 incl. the new index test).
+
+## 2026-11-17 — PERF-1 first optimisations on master (main session)
+- Integrated branch worktree-agent-a006f74127e94cd5b (f9cc0aa5) plus 527a6cbb (clippy: items after the test module):
+  Game::Idle's 14 ms rule skipped only with the frame limiter off (user decision 2026-11-16, divergence ledger), the
+  web worker yield via scheduler.postTask / MessageChannel, and the O(1) registry with the host stand-in bit filter.
+- Verified: writer gate (16 steps, clippy after 527a6cbb), every frontier.sh scenario unchanged from master, verify-all
+  lanes 1-7 IDENTICAL 13/13 in both modes (tag intp1).
+- Browser, headless Chromium, limiter off, 1200 frames, 0 blocked: WebGPU 13.28 ms mean (75 fps; PERF-0 29.69), WebGL2
+  16.58 ms (60 fps; PERF-0 30.07). Native (agent's numbers): 22.1 → 9.6 ms mean (~104 fps).
+- Still on its branch (unverified): the D3D9 translation work, worktree-agent-a2389600e44aadc60 261c6720.
