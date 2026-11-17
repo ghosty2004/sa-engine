@@ -3314,3 +3314,45 @@
   generated 0x5980F0 declaration's convention (web only), the rest of WORLD (CPickups::DoMineEffects /
   DoCollectableEffects, CReplay, CShopping, Interior_c furnishing, CEscalator, ...), WEAPON (5), STREAM (3), CORE
   ShutdownRenderWare, HUD / COLL partials.
+
+## 2026-11-17 — FRONTIER-2 turn 9 lane C: the plane and roadblocks blockers, the RtDict / RtAnim / UV animation stream reads, batch c17 (agent, branch worktree-agent-add579cfa4d6b421b)
+- Base: master 7dff58ad. Every port address checked against `tools/gen/inflight.py` first (none in flight).
+- 0x43E0E0 (the `plane` blocker): the plane radar ring's 8-byte vertex element constructor (`mov eax, ecx; ret`, three
+  bytes, not hookable) that the vector constructor iterator 0x403D60 calls from the radar draw: a phase B native in
+  sa-core `trivial_ctors.rs` next to the other three-byte constructors; patterns.py dropped its generated leaf.
+- Batch frontier2-c17 (RW, 16 hooks), from the 1.0 US bytes:
+  - RtDictSchemaStreamReadDict 0x7CF240 (the `roadblocks` blocker) and RtDictSchemaCreateDict 0x7CED90; the create
+    and RtDictDestroy the read inlines go through the ports of 0x7CED90 / 0x7CF130 (RtDictDestroy now bound once,
+    sa-core binding + sa-rwcore twin). The entry count is read into the original's own argument slot with the
+    chunk's length: a struct chunk longer than 4 bytes overwrites the caller's frame there; the port reads the count
+    and discards the rest (never the case in the game's files).
+  - The callees the dictionary read reaches in `roadblocks` (each one the next blocker): RtAnimAnimationStreamRead
+    0x7CD220, RtAnimGetInterpolatorInfo 0x7CCDE0 (one lookup, also used by the inline copy in
+    RtAnimInterpolatorSetKeyFrameCallBacks), `_rpUVAnimCustomDataStreamRead` 0x7CBF70, RpUVAnimKeyFrameStreamRead
+    0x7CC870, RpUVAnimDestroy 0x7CC0C0 (the material destructor's inline copy calls it now),
+    cb_UVANIMPLUGIN_RpMaterial_StreamRead 0x7CBC20, the UV matrices update 0x7CBD80, the dummy UV animation 0x7CBE00
+    (its identity matrix's flags word is `stack garbage | 0x20003` and its pads unset; the key frame set 0x7CC810 reads
+    only the six x / y values, so the port writes 0x20003 and zeros: no observable difference), RtDictFindNamedEntry
+    0x7CEFE0, RtAnimAnimationGetNumNodes 0x7CD4F0, RpUVAnimParamKeyFrameInterpolate 0x7CC600 /
+    RpUVAnimLinearKeyFrameInterpolate 0x7CCA40 (one x87 lerp; the param one wraps the angle by ±2π) and
+    RpUVAnimParamKeyFrameApply 0x7CC560.
+  - RtAnimInterpolatorAddAnimTime 0x7CD8D0 (x87: the wound-back time stays in ST0 across the animation restart).
+  - Shared: `common::error2_plugin` (the plugin RwError builders; trilist_mesh uses it), `anim::anim_error` reused;
+    RtAnimAnimationCreate 0x7CCE40 and RtAnimInterpolatorSetCurrentAnim 0x7CD5A0 bound once (sa-core bindings with
+    twins in sa-anim / sa-rwcore).
+- Not ported, looked at: RpMaterialUVAnimApplyUpdate 0x7CC110 builds a local RwMatrix whose flags word is never
+  initialised and `RwMatrixUpdate` / `RwMatrixTransform` carry it into the material's UV matrices (stack residue
+  that reaches state): needs a decision (ledger) before a port; `_rwD3D9RasterClearGeneric` 0x4CAEA0 (register
+  argument in ESI, six-way switch; too big for the end of the turn).
+- Gates: writer gate (base 7dff58ad, on c54a4c81) all PASS (hooks: 16 new, all unverified, batch frontier2-c17).
+- Scenarios (frontier.sh, i686 native sa-game of 0643f85c, SA_ROOT=~/sa-engine; target/lc9/scen-head): pausemenu
+  416 / 0 blocked, solicit 4016 / 0, crossing 1216 / 0, crossing-long 4016 / 0, melee 2616 / 0, sniper / shootcar /
+  shootdriver 1216 / 0, quad / heli / plane / boat 1216 / 0, roadblocks 2016 / 0, roadblock-script 1016 / 0, gangwar
+  2016 / 0, jetpack 1016 / 0, roadblock-wanted 2015 / 1 (CObject::Explode 0x5A1340, not RW / RENDER); no crash. On
+  master: plane 824 / 392 (0x43E0E0), roadblocks 2015 / 1 (0x7CF240).
+- Present frames (SA_GAME_PRESENT_GAME=1, every 6th in-game frame, vs the i686 sa-game of master 7dff58ad):
+  byte-identical in jetpack (158), boat (195), pausemenu (61), shootdriver (193); plane identical for the first 55
+  and roadblocks for the first 122, the frames before master's blocked iteration (master skips the blocked
+  iterations from there, so later frames are not comparable); the plane frames show the radar with the altimeter.
+- frontier.py --no-branches: "to port" 129 → 127 (RW 30 → 28: 0x7CF240, 0x7CD8D0; 0x43E0E0 was not a frontier row);
+  RENDER 19 rows unchanged; no new rows.
