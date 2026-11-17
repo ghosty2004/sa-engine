@@ -440,6 +440,21 @@ pub mod registry {
         NAMES_LEN.store(t.len(), Ordering::SeqCst);
     }
 
+    /// The name of an address (an entry or an import trap), else `""`.
+    pub fn describe(addr: usize) -> &'static str {
+        if let Some(n) = name_of(addr) {
+            return n;
+        }
+        let len = NAMES_LEN.load(Ordering::Acquire);
+        if len == 0 {
+            return "";
+        }
+        // SAFETY: `install_names` stores a `&'static` slice's pointer and length.
+        let t = unsafe { core::slice::from_raw_parts(NAMES.load(Ordering::Acquire), len) };
+        t.binary_search_by_key(&addr, |e| e.0 as usize)
+            .map_or("", |i| t[i].1)
+    }
+
     #[cfg(test)]
     mod tests {
         use super::{Entry, Index};
@@ -471,21 +486,6 @@ pub mod registry {
                 assert_eq!(ix.find(&t, 0), t.binary_search_by_key(&0, |e| e.addr).ok());
             }
         }
-    }
-
-    /// The name of an address (an entry or an import trap), else `""`.
-    pub fn describe(addr: usize) -> &'static str {
-        if let Some(n) = name_of(addr) {
-            return n;
-        }
-        let len = NAMES_LEN.load(Ordering::Acquire);
-        if len == 0 {
-            return "";
-        }
-        // SAFETY: `install_names` stores a `&'static` slice's pointer and length.
-        let t = unsafe { core::slice::from_raw_parts(NAMES.load(Ordering::Acquire), len) };
-        t.binary_search_by_key(&addr, |e| e.0 as usize)
-            .map_or("", |i| t[i].1)
     }
 }
 
