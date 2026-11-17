@@ -1834,10 +1834,10 @@ words from the buffer as the x86 entries read the stack. X87 results lose their 
 
 | need | wasm32 |
 |---|---|
-| threads (`CdStreamThread`, audio threads, DirectSound mixer) | none: `ResumeThread` of `CdStreamThread` marks it running and each release of the stream semaphore runs its loop body (`cd_stream_thread_step`, split out of the port without behaviour change) once per count on the main thread; audio threads run cooperatively (22.8); the DirectSound mixer runs once per iteration, paced by the page's AudioContext |
+| threads (`CdStreamThread`, audio threads, DirectSound mixer) | none: `ResumeThread` of `CdStreamThread` marks it running and each release of the stream semaphore runs its loop body (`cd_stream_thread_step`, split out of the port without behaviour change) once per count on the main thread, once the request's bytes are in the worker (22.10); audio threads run cooperatively (22.8); the DirectSound mixer runs once per iteration, paced by the page's AudioContext |
 | blocking waits | semaphores never block (an unsignalled wait times out at once); `Sleep` and the frame limiter do not sleep |
 | time | `web_time` (`performance.now()`) |
-| files | `webfs.rs`: the page's `File`s (`FileReaderSync`) or the localhost server's ranged synchronous requests, 64 KiB read-ahead per open file (the text loaders read byte by byte), 256 KiB block cache in JS |
+| files | `webfs.rs`: the page's `File`s (`FileReaderSync`) or, for a served folder, the worker's 256 KiB block cache that the loader worker fills asynchronously (22.10), 64 KiB read-ahead per open file (the text loaders read byte by byte) |
 | C heap | Rust allocator with a size header, **zeroed** (native fresh pages are mostly zero; dlmalloc reuses blocks at once and stale pointers in fields the original leaves uninitialised trapped in the FX blueprint code) |
 | CPUID | a fixed virtual SSE2 CPU (`abi::game_fpu::cpuid`): the SSE skinning paths of the native runs |
 | GPU | wgpu on an `OffscreenCanvas` in the worker: WebGPU, else WebGL2 (`?backend=gl|webgpu`); a positive base vertex becomes a vertex-buffer offset (WebGL2 has no base-vertex draws) |
@@ -2043,6 +2043,65 @@ in the time.
 With that the page reaches the world at 14.6 s and the tapped RMS above 60 Hz matches WEB-AUDIO's (-28 to -30 dBFS).
 Suspects: a cooperative stream-thread pass that never returns (the decoder's first 786,432-byte fill and the seek
 decode run inside one main-loop pass), or a blocked-iteration exception during a stream pass.
+
+### 22.10 RENDER-2 R2a (web): file loading off the game thread
+
+Problem (user-hit): the page lagged badly, worst from another device through a reverse proxy (Caddy :8080 ->
+serve.py). Every miss of the worker's block cache was a synchronous 256 KiB XHR on the game thread, so each new model,
+sound bank or radio block stalled the frame for a network round trip.
+
+Design:
+
+- **Loader worker** (`web/loader.js`, started by the page for a served folder; a picked folder stays on
+  `FileReaderSync`, which is local). It fetches 256 KiB blocks with `fetch` + `Range` (up to 6 requests in flight,
+  adjacent blocks of one queue merged into one request of up to 1-2 MiB), in four priorities: blocks a streaming read
+  waits for, read-ahead of files read front to back, the start-up list, and the optional "download everything". It
+  hands blocks to the game's worker over a `MessageChannel` (transferred `ArrayBuffer`s).
+- **Streaming reads complete when their data arrives**, as the original's `CdStreamThread` does on a slow disk. The
+  cooperative stream thread (`bind::coop`) runs a queued request only once `RandomRead::ready` says its bytes are
+  there (a new trait method: true for local files, natively always; `webfs` asks the worker, which asks the loader
+  and answers false). Until then `CdStreamGetStatus` answers `STATUS_WAITING`, and `CStreaming` /
+  `CAEMP3BankLoader` poll on later frames as they do natively; `web::frame` re-checks before each iteration, but
+  only after the loader delivered something (`io_arrived`: the loop runs thousands of iterations a second). The ports
+  are untouched: `cd_stream_thread_step` is the original loop body, and `sa-stream` only gained two non-port
+  helpers (`queue_head`, `is_sync_semaphore`).
+- **Waits stay synchronous.** `CdStreamSync` (a wait on a stream's sync semaphore with a timeout) and the original's
+  busy-wait loops on the stream thread (`sa_core::orig::busy_wait`, e.g. `CAudioEngine::InitialisePostLoading`
+  until its banks are loaded) run every pending request at once with synchronous reads, as before. So do the
+  non-streaming reads (`fopen`/`fread`/`ReadFile` of the data files, the audio stream thread's Ogg files). A
+  synchronous read takes its blocks from the worker's cache; a miss waits: in a cross-origin isolated page on the
+  loader through a `SharedArrayBuffer` (`Atomics.wait`; the loader answers from the persistent cache, else the
+  network), otherwise with a synchronous XHR. Such waits are counted (`io_waits` / `io_wait_us`, docs/perf/measure.md)
+  and the first 100 in the world are logged (`io: waited ...`).
+- **Deterministic mode**: `det::on()` makes every request run at its release, as before (reads complete within their
+  iteration).
+- **Persistent cache**: OPFS (sync access handles in the loader worker; per file `KEY.bin` holding the blocks at their
+  file offsets and `KEY.map` with one byte per block, written after the data), else IndexedDB (one record per block).
+  `KEY` is a hash of path, size and mtime (`serve.py`'s `/game-index.json` now carries mtime); entries of other keys
+  are deleted at start, so a changed file is fetched again. Nothing leaves the device.
+- **Prefetch**: before the boot the worker waits for the start-up list: the blocks an earlier load of the same index
+  read before it was in the world (the worker records them and the loader keeps them as metadata), else a first
+  guess (gta_sa.exe, `data/` and `text/` files up to 4 MiB, the IMG directories). The page shows the cache state and
+  a "Download everything" button (`?download=1`) for a full offline cache.
+
+**Threads or messages (decision).** Message passing, no shared memory needed: it works on a stable toolchain, on any
+host and in any context, which matters for the user's case: a page on plain http from another device is not a secure
+context, so it gets neither cross-origin isolation (no `SharedArrayBuffer`) nor OPFS. Goal 1 (no network wait on the
+game thread during play) needs only that the streaming reads complete asynchronously, which the game's own CdStream
+protocol already allows. Rust threads on wasm32 (`-Z build-std`, nightly, atomics) were not needed. Shared memory is
+an optional improvement: when the page is isolated, the synchronous reads wait on the loader with `Atomics.wait`
+instead of the network, so a warm cache serves them in ~1 ms. serve.py already sends COOP/COEP; a reverse proxy must
+pass response headers through and forward `Range` / `206 Content-Range` unchanged (Caddy's `reverse_proxy` and
+nginx's `proxy_pass` do); isolation and OPFS also need https (or localhost).
+
+**Measured** (WORKLOG 2026-11-17; WebGPU, CJ sprinting with four teleports, 2000 frames, a 40 ms / 50 Mbit/s link
+simulated by `serve.py --throttle-*`): frames over 100 ms 230 -> 1 (the first in-world frame's synchronous clothes
+load on a cold cache), p99 296.7 -> 54.5 ms, mean 55.6 -> 41.8 ms; the world after 44 s before, 3.6 s with a warm
+cache. Localhost: unchanged means (41.1 / 40.5 ms), p99 57.7 -> 54.4 ms.
+
+**Native side of R2a (not done).** The streaming thread is already a real thread natively and file reads are local;
+what R2a still lacks there is the RENDER-2 part: model decoding (RW stream reads, texture conversion) off the main
+thread, and the same `RandomRead::ready`-gated completion if a native backend ever reads remotely.
 
 ## 23. Peds without legs: the game heap's address range
 

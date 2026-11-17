@@ -58,6 +58,7 @@ dropped. Phase times are exclusive (a nested phase is not charged to its parent)
 | `present` | `IDirect3DDevice9::Present`: the last pass's submission, the window blit and the surface present |
 | `perf` | the measurement's own bookkeeping at the end of a frame |
 | `mods` | the mod host's overlay phase inside `Present` (feature `mods`, MOD-2): the mods' calls and the overlay draw; 0 without mods |
+| `io` | file reads served by the web backend (`webfs`: the worker's block cache, and the waits below); not measured natively (local reads) |
 | `gpu_ms` | (late column, not in the sum) GPU time of the frame's render passes from timestamp queries; empty without `TIMESTAMP_QUERY` (WebGL2) |
 
 Counters per frame: `d3d9_calls` (COM method calls), `d3d9_set_calls` (`IDirect3DDevice9::Set*`), `draws`,
@@ -66,7 +67,16 @@ Counters per frame: `d3d9_calls` (COM method calls), `d3d9_set_calls` (`IDirect3
 `buffer_uploads` / `buffer_bytes` (vertex / index buffer writes), `texture_uploads` / `texture_bytes`,
 `stream_bytes` (per-draw uniforms, shader constants and UP vertices written per pass), `dispatch_calls` (calls through
 the `orig!` address registry), `platform_calls` (Win32 / CRT / DirectX stand-ins served by sa-game),
-`game_allocs` (game heap allocations), `iterations` (main-loop iterations in the frame).
+`game_allocs` (game heap allocations), `iterations` (main-loop iterations in the frame), `io_waits` / `io_wait_us`
+(web: reads that had to wait for bytes the worker did not hold, and the microseconds waited; RENDER-2 R2a).
+
+## A slow link (RENDER-2 R2a)
+
+`tools/web/serve.sh --throttle-rtt MS --throttle-mbit N` delays every `/game/` answer by MS and shares N Mbit/s
+between them (the page and its module are not throttled). `tools/web/headless.mjs --teleport 'S:X:Y:Z,...'` moves
+the player S seconds after the game is in the world, to force streaming in new areas; a run's Chromium profile
+(`target/web1-chrome-PORT`) keeps the persistent cache, so delete it for a cold run and keep it for a warm one.
+`--web DIR` serves a saved copy of `web/` (a build from before a change) for before/after runs.
 
 ## How it is built (ADR-003)
 

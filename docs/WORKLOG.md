@@ -3211,3 +3211,47 @@
 - Verified: writer gate 16/16 PASS (base 3826139b, head 8f26ca5d); verify-all lanes 1-7 IDENTICAL 13/13 (tag mod2m1,
   default build); frontier crossing default vs mods build without mods equal (pacing aside). Tests: sa-mod-api 4,
   sa-mod-host 10, sa-mod-resolution 1, sa-game i686 (display, mods, frontend) 5.
+
+## 2026-11-17 — RENDER-2 R2a (web): file loading off the game thread (agent, branch worktree-agent-a2b410089870589bf)
+
+- Problem (user-hit): heavy lag in the browser, worst from another device through a reverse proxy. Every block-cache
+  miss in `web/worker.js` was a synchronous 256 KiB XHR on the game thread.
+- Design (docs/arch/platform.md 22.10): a loader worker (`web/loader.js`) fetches 256 KiB blocks with ranged
+  `fetch` (6 in flight, adjacent blocks merged, four priorities), keeps them in OPFS (else IndexedDB) keyed by
+  path / size / mtime (`/game-index.json` now has mtime), prefetches the start-up list (recorded by the previous
+  load, else a first guess) before the boot and offers a full "download everything". CdStream reads complete when
+  their bytes arrive: the cooperative stream thread (`bind::coop::pump`) runs a queued request only once
+  `RandomRead::ready` (new, default true) says the bytes are in the worker, so `CdStreamGetStatus` answers
+  WAITING until then, as on a slow disk; `CdStreamSync`, the original's busy-wait loops and the deterministic mode
+  read synchronously as before. Synchronous misses wait on the loader through a SharedArrayBuffer when the page is
+  cross-origin isolated (served from the persistent cache), else a synchronous XHR. Messages, not threads: works on
+  any host, including plain http from another device (no isolation, no OPFS there: IndexedDB).
+- Measurement: `SA_GAME_PERF=2000`, WebGPU (headless Chromium, `--gpu native`), CJ sprinting for 120 s with
+  four teleports across Los Santos (`headless.mjs --teleport`, new); slow link = `serve.py --throttle-rtt 40
+  --throttle-mbit 50` (new). New perf phase `io` and counters `io_waits` / `io_wait_us`. Frame times in ms:
+
+  | run | to world | mean | p50 | p95 | p99 | max | frames > 100 ms | read waits in play |
+  |---|---:|---:|---:|---:|---:|---:|---:|---:|
+  | before, localhost | 4.7 s | 41.14 | 39.46 | 51.72 | 57.71 | 267 | 4 | (not counted) |
+  | after, localhost, cold cache | 5.1 s | 40.50 | 37.49 | 50.45 | 54.35 | 246 | 1 | 15 (80 ms) |
+  | after, localhost, warm cache | 3.6 s | 40.48 | 37.87 | 50.45 | 53.66 | 179 | 1 | 18 (14 ms) |
+  | after, localhost, warm, WebGL2 | 3.6 s | 41.06 | 38.58 | 51.73 | 55.09 | 227 | 2 | 17 (22 ms) |
+  | before, slow link | 44.0 s | 55.56 | 38.85 | 138.51 | 296.74 | 2200 | 230 | (not counted) |
+  | after, slow link, cold cache | 43.0 s | 41.83 | 37.55 | 50.59 | 54.48 | 2897 | 1 | 16 (2707 ms) |
+  | after, slow link, warm cache | 3.6 s | 40.25 | 36.62 | 49.60 | 52.02 | 222 | 2 | 16 (161 ms) |
+
+  The remaining waits are the original's own synchronous loads: the first in-world frame's
+  `CClothes::RebuildPlayer` (`LoadAllRequestedModels` → `CdStreamSync`, 2.7 s on the cold slow link, ~16 ms warm)
+  and the teleports' `LoadAllRequestedModels`; no streaming read waits any more (`io: waited` log lines name each).
+  A cold load on the slow link is bandwidth-bound (~100 MiB before the world); the warm one reads it from OPFS.
+- On the rebased tree (master b4c92702 with PERF-1's D3D9 work; the start-up list now also covers the first 10 s
+  in the world): slow link, cold, WebGPU: world at 42.4 s, mean 41.93 / p99 51.06 / 4 frames > 100 ms, 0 blocked;
+  slow link, warm, WebGL2: world at 2.6 s (653 blocks from OPFS in 195 ms), mean 40.22 / p99 49.09 / max 133 ms,
+  0 read waits in play, 0 blocked.
+- Native unchanged: `frontier.sh crossing` with the i686 builds of master and of this branch gives the same
+  report.md; stdout differs only in the wall-clock frame pacing line.
+- Verified: verify-all lanes 1-7 (tag `r2a-def`, default build) IDENTICAL 13/13; writer gate (base b4c92702) all
+  steps PASS (cfg after moving three wasm-only `cfg_attr`s to a plain `allow(dead_code)`); wasm32 clippy of the
+  sa-game lib clean; browser runs on WebGPU and WebGL2 with 0 blocked iterations.
+- Found on master (not caused here): a trap in `sa_anim::pedik::move_limb_normalized` under
+  `CCopPed::ProcessControl` after teleports to San Fierro / Las Venturas (the measurement route stays in Los Santos).
