@@ -105,6 +105,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-c14 | 6 | RW | 165c184e | master | 6 | 0 | 0 | 0 | 0 | L2 4, L3-only 2 |
 | frontier2-c15 | 1 | WORLD | 7cfa0894 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | frontier2-c16 | 1 | RENDER | 725610d8 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| frontier2-c17 | 16 | RW | 7f728dd7 | worktree-agent-add579cfa4d6b421b | 16 | 0 | 0 | 0 | 0 | L2 16 |
 | frontier2-c2 | 35 | AI, MATH, SCRIPT, UNK-game, VEH | 49bdb6d2 | master | 35 | 0 | 0 | 0 | 0 | L2 35 |
 | frontier2-c3 | 11 | AI, SCRIPT, UNK-game | 49bdb6d2 | master | 11 | 0 | 0 | 0 | 0 | L2 11 |
 | frontier2-c4 | 10 | AUDIO, CALLED-ONLY, SCRIPT, UNK-game | d18327f1 | master | 10 | 0 | 0 | 0 | 0 | L2 9, split 1 |
@@ -3209,6 +3210,36 @@ SA_UNVERIFIED=frontier2-c16 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c16 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x71B620 | `CGlass::GeneratePanesForWindow` | written | L2 | heap-writes |
+
+## frontier2-c17
+
+16 hooks in sa-rwcore; hazards: heap-writes (9); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-c17 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-c17 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c17 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-c17
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x7CBC20 | `cb_UVANIMPLUGIN_RpMaterial_StreamRead` | written | L2 | heap-writes |
+| 0x7CBD80 | `FUN_007cbd80` | written | L2 | heap-writes |
+| 0x7CBE00 | `FUN_007cbe00` | written | L2 | heap-writes |
+| 0x7CBF70 | `_rpUVAnimCustomDataStreamRead` | written | L2 | heap-writes |
+| 0x7CC0C0 | `RpUVAnimDestroy` | written | L2 | heap-writes |
+| 0x7CC560 | `RpUVAnimParamKeyFrameApply` | written | L2 | none |
+| 0x7CC600 | `RpUVAnimParamKeyFrameInterpolate` | written | L2 | none |
+| 0x7CC870 | `RpUVAnimKeyFrameStreamRead` | written | L2 | heap-writes |
+| 0x7CCA40 | `RpUVAnimLinearKeyFrameInterpolate` | written | L2 | none |
+| 0x7CCDE0 | `RtAnimGetInterpolatorInfo` | written | L2 | none |
+| 0x7CD220 | `RtAnimAnimationStreamRead` | written | L2 | heap-writes |
+| 0x7CD4F0 | `RtAnimAnimationGetNumNodes` | written | L2 | none |
+| 0x7CD8D0 | `RtAnimInterpolatorAddAnimTime` | written | L2 | none |
+| 0x7CED90 | `RtDictSchemaCreateDict` | written | L2 | heap-writes |
+| 0x7CEFE0 | `RtDictFindNamedEntry` | written | L2 | none |
+| 0x7CF240 | `RtDictSchemaStreamReadDict` | written | L2 | heap-writes |
 
 ## frontier2-c2
 
