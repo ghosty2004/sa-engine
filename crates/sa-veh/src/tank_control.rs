@@ -17,6 +17,7 @@ use crate::common::{f32_of, rd, wr, x, xi};
 use crate::mvpd_v1::read_vec;
 
 use crate::bindings::get_car_gun_left_right;
+use crate::bindings::weapon_do_tank_doom_aiming as do_tank_doom_aiming;
 use sa_pop::bindings::{car_gun_just_down, get_car_gun_up_down};
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::{
@@ -27,8 +28,6 @@ use sa_world::bindings::{
 use sa_rwcore::bindings::frame_get_ltm;
 
 orig! {
-    /// `CWeapon::DoTankDoomAiming(CEntity* vehicle, CEntity* owner, CVector* start, CVector* end)` (0x73D1E0, cdecl)
-    fn do_tank_doom_aiming(v: GPtr<u8>, owner: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) = cdecl 0x73D1E0 => unported;
     /// `FxManager_c::TriggerTankFire(CVector& pos, CVector& dir)` (0x4A0FA0, thiscall on `g_fx` 0xA9AE00)
     fn fx_trigger_tank_fire(fx: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>) = thiscall 0x4A0FA0 => unported;
 }

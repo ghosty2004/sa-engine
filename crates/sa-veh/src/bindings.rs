@@ -564,6 +564,11 @@ orig! {
 }
 
 orig! {
+    /// `CWeapon::DoTankDoomAiming` (0x73D1E0)
+    pub fn weapon_do_tank_doom_aiming(v: GPtr<u8>, owner: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) = cdecl 0x73D1E0 => unported;
+}
+
+orig! {
     /// `CVehicle::FireFixedMachineGuns` (0x73DF00)
     pub fn fire_fixed_machine_guns(v: GPtr<u8>) = thiscall 0x73DF00 => crate::vehicle_guns::fire_fixed_machine_guns;
 }

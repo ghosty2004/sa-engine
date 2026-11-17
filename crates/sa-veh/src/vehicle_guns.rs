@@ -7,13 +7,14 @@ use sa_core::abi::HookReg;
 use sa_core::bindings::matrix_mul_vec;
 use sa_core::field::{gf, gr32, ptr_of as vp};
 use sa_core::mem::GPtr;
-use sa_core::{hook, orig};
+use sa_core::hook;
 use sa_math::vector::CVector;
 use sa_math::x87::X87;
 
 use crate::common::{f32_of, rand_at, rd, wr, x, xi};
 use crate::mvpd_v1::read_vec;
 
+use crate::bindings::weapon_do_tank_doom_aiming as do_tank_doom_aiming;
 use crate::bindings::weapon_fire_one_instant_hit_round;
 use crate::frontier_b2_veh2::{get_plane_ordnance_position, get_plane_ordnance_rate_of_fire, shake_and_stamp};
 use sa_math::fpu::lt;
@@ -24,11 +25,6 @@ use sa_world::bindings::pick_target_for_heat_seeking_missile;
 use sa_world::bindings::report_weapon_event;
 use sa_world::bindings::weapon_effects_mark_target;
 use sa_world::world::common::entity_pos;
-
-orig! {
-    /// `CWeapon::DoTankDoomAiming(CEntity* vehicle, CEntity* owner, CVector* start, CVector* end)` (0x73D1E0, cdecl)
-    fn do_tank_doom_aiming(v: GPtr<u8>, owner: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) = cdecl 0x73D1E0 => unported;
-}
 
 /// `CTimer::m_snTimeInMilliseconds`
 const TIME_MS: usize = 0xB7_CB84;
