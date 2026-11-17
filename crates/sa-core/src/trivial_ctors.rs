@@ -35,6 +35,13 @@ pub fn plant_col_ent_entry_ctor(this: GPtr<u8>) -> GPtr<u8> {
     identity(this)
 }
 
+/// The plane radar ring's 8-byte vertex element constructor (0x43E0E0, `mov eax, ecx; ret`), reached through the
+/// `vector constructor iterator` 0x403D60 from the radar draw (CHud::DrawRadar's plane branch).
+#[crate::native(addr = 0x43E0E0, conv = thiscall, name = "(missed by ghidra: data-code-immediate)")]
+pub fn radar_ring_vertex_ctor(this: GPtr<u8>) -> GPtr<u8> {
+    identity(this)
+}
+
 /// `CScriptsForBrains::CScriptsForBrains()` (0x46B260): `Init()`, returns `this`.
 #[crate::native(addr = 0x46B260, conv = thiscall, name = "CScriptsForBrains::CScriptsForBrains")]
 pub fn scripts_for_brains_ctor(this: GPtr<u8>) -> GPtr<u8> {
@@ -76,6 +83,7 @@ pub const NATIVES: &[crate::abi::NativeReg] = &[
     NATIVE_INTRO_RECTANGLE_CTOR,
     NATIVE_PLANT_LOC_TRI_CTOR,
     NATIVE_PLANT_COL_ENT_ENTRY_CTOR,
+    NATIVE_RADAR_RING_VERTEX_CTOR,
     NATIVE_SCRIPTS_FOR_BRAINS_CTOR,
     NATIVE_OCT_TREE_BASE_CTOR,
     NATIVE_HEAP_LIST_CTOR,
