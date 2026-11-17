@@ -80,6 +80,7 @@ pub use sa_core::bindings::frame_for_all_children as rw_frame_for_all_children;
 pub use sa_core::bindings::crt_new as operator_new;
 pub use crate::bindings::base_init;
 pub use crate::bindings::delete_collision_model;
+pub use sa_core::bindings::interpolator_set_current_anim as rt_anim_interpolator_set_current_anim;
 orig! {
     /// `CBaseModelInfo::Shutdown` (0x4C4D50)
     pub fn base_shutdown(this: MiPtr) = thiscall 0x4C4D50 => super::base::shutdown;
@@ -97,8 +98,6 @@ orig! {
     pub fn rp_clump_clone(clump: GPtr<u8>) -> GPtr<u8> = cdecl 0x749F70 => unported;
     /// `RpAnimBlend::RpAnimBlendCreateAnimationForHierarchy` (0x4D60E0)
     pub fn rp_anim_blend_create_animation_for_hierarchy(hier: GPtr<u8>) -> GPtr<u8> = cdecl 0x4D60E0 => unported;
-    /// `RtAnimInterpolatorSetCurrentAnim` (0x7CD5A0)
-    pub fn rt_anim_interpolator_set_current_anim(interp: GPtr<u8>, anim: GPtr<u8>) -> i32 = cdecl 0x7CD5A0 => unported;
     /// `CClumpModelInfo::~CClumpModelInfo` (0x4C5750)
     pub fn clump_destructor(this: MiPtr) = thiscall 0x4C5750 => unported;
 }

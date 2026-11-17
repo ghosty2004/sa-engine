@@ -247,3 +247,8 @@ orig! {
     /// `SkinGetBonePositionsToTable` (0x735360)
     pub fn skin_get_bone_positions_to_table(c: GPtr<u8>, t: GPtr<u8>) = cdecl 0x735360 => crate::rp_anim_blend::skin_get_bone_positions_to_table;
 }
+
+orig! {
+    /// `RtAnimAnimationCreate` (0x7CCE40)
+    pub fn animation_create(ty: u32, n: i32, flags: u32, duration: f32) -> GPtr<u8> = cdecl 0x7CCE40 => crate::rp_anim_blend::rt_anim_animation_create;
+}

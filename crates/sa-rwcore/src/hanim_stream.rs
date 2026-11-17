@@ -306,6 +306,29 @@ pub fn rt_anim_animation_stream_read(stream: GPtr<u8>) -> GPtr<u8> {
     anim
 }
 
+/// `RtAnimAnimationGetNumNodes(RtAnimAnimation*)` (0x7CD4F0): the key frames (scheme +8 bytes each, from +0x10)
+/// counted from the first while their previous-frame pointer (+0) is not the first frame: the leading frames
+/// that start a node.
+#[hook(addr = 0x7CD4F0, conv = cdecl, name = "RtAnimAnimationGetNumNodes", expect = "8B 4C 24 04 56 57",
+       unverified = "frontier2-c17", route = "L2", hazards = "none")]
+pub fn rt_anim_animation_get_num_nodes(anim: GPtr<u8>) -> i32 {
+    let size: u32 = rd(rd::<GPtr<u8>>(anim, 0), 8);
+    let first: u32 = rd(anim, 0x10);
+    let mut kf = first;
+    let mut n = 0i32;
+    if rd::<u32>(p8(kf), 0) == first {
+        return 0;
+    }
+    loop {
+        let prev = rd::<u32>(p8(kf.wrapping_add(size)), 0);
+        kf = kf.wrapping_add(size);
+        n = n.wrapping_add(1);
+        if prev == first {
+            return n;
+        }
+    }
+}
+
 /// `RtAnimInterpolatorSetKeyFrameCallBacks(interp, typeID)` (0x7CD660): the scheme's four callbacks
 /// (`RtAnimGetInterpolatorInfo`, inlined; else its error and 0). Returns 1.
 #[hook(addr = 0x7CD660, conv = cdecl, name = "RtAnimInterpolatorSetKeyFrameCallBacks", expect = "8B 15 00 79 C9 00 83 EC 08 33 C0 56",
@@ -355,4 +378,4 @@ pub fn rt_anim_interpolator_copy(dst: GPtr<u8>, src: GPtr<u8>) -> u32 {
 }
 
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_RT_ANIM_GET_INTERPOLATOR_INFO, HOOK_RT_ANIM_ANIMATION_STREAM_READ, HOOK_RT_ANIM_INTERPOLATOR_CREATE, HOOK_RT_ANIM_INTERPOLATOR_DESTROY, HOOK_HANIM_FRAME_STREAM_READ, HOOK_RP_HANIM_FRAME_SET_HIERARCHY, HOOK_RP_HANIM_FRAME_GET_HIERARCHY, HOOK_RP_HANIM_FRAME_SET_ID, HOOK_RP_HANIM_FRAME_GET_ID, HOOK_RT_ANIM_ANIMATION_DESTROY, HOOK_RT_ANIM_INTERPOLATOR_SET_CURRENT_ANIM, HOOK_RT_ANIM_INTERPOLATOR_SET_KEY_FRAME_CALLBACKS, HOOK_RT_ANIM_INTERPOLATOR_SET_ANIM_LOOP_CALLBACK, HOOK_RT_ANIM_INTERPOLATOR_SET_ANIM_CALLBACK, HOOK_RT_ANIM_INTERPOLATOR_COPY];
+pub const HOOKS: &[HookReg] = &[HOOK_RT_ANIM_ANIMATION_GET_NUM_NODES, HOOK_RT_ANIM_GET_INTERPOLATOR_INFO, HOOK_RT_ANIM_ANIMATION_STREAM_READ, HOOK_RT_ANIM_INTERPOLATOR_CREATE, HOOK_RT_ANIM_INTERPOLATOR_DESTROY, HOOK_HANIM_FRAME_STREAM_READ, HOOK_RP_HANIM_FRAME_SET_HIERARCHY, HOOK_RP_HANIM_FRAME_GET_HIERARCHY, HOOK_RP_HANIM_FRAME_SET_ID, HOOK_RP_HANIM_FRAME_GET_ID, HOOK_RT_ANIM_ANIMATION_DESTROY, HOOK_RT_ANIM_INTERPOLATOR_SET_CURRENT_ANIM, HOOK_RT_ANIM_INTERPOLATOR_SET_KEY_FRAME_CALLBACKS, HOOK_RT_ANIM_INTERPOLATOR_SET_ANIM_LOOP_CALLBACK, HOOK_RT_ANIM_INTERPOLATOR_SET_ANIM_CALLBACK, HOOK_RT_ANIM_INTERPOLATOR_COPY];

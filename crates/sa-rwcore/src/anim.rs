@@ -67,6 +67,8 @@ use crate::bindings::register_scheme_call;
 use crate::bindings::rp_material_register_plugin as material_register_plugin;
 use crate::bindings::rp_material_register_plugin_stream as material_register_plugin_stream;
 use crate::bindings::rw_matrix_destroy as matrix_destroy;
+use sa_core::bindings::animation_create;
+use crate::bindings::interpolator_set_current_anim;
 orig! {
     /// `_rwSListCreate(entrySize, hint)` (0x809160)
     pub fn slist_create(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x809160 => crate::rxpipeline::rw_slist_create;
@@ -76,6 +78,18 @@ orig! {
     fn dict_schema_init_call(schema: GPtr<u8>) -> GPtr<u8> = cdecl 0x7CED40 => rt_dict_schema_init;
     /// `_rpUVAnimCustomDataStreamRead(stream)` (0x7CBF70)
     fn custom_data_stream_read_call(stream: GPtr<u8>) -> GPtr<u8> = cdecl 0x7CBF70 => uv_anim_custom_data_stream_read;
+    /// `RtDictSchemaGetCurrentDict(schema)` (0x7CEEE0)
+    fn schema_get_current_dict(schema: GPtr<u8>) -> GPtr<u8> = cdecl 0x7CEEE0 => unported;
+    /// `RtDictFindNamedEntry(dict, name)` (0x7CEFE0)
+    fn dict_find_named_entry(dict: GPtr<u8>, name: GPtr<u8>) -> u32 = cdecl 0x7CEFE0 => crate::frontier_b::rt_dict_find_named_entry;
+    /// `RtAnimAnimationGetNumNodes(anim)` (0x7CD4F0)
+    fn animation_get_num_nodes(anim: GPtr<u8>) -> i32 = cdecl 0x7CD4F0 => crate::hanim_stream::rt_anim_animation_get_num_nodes;
+    /// The UV key frame set `(anim, frame, prev, time, matrix)` (0x7CC810)
+    fn key_frame_set(anim: u32, kf: u32, prev: u32, time: u32, m: u32) -> u32 = cdecl 0x7CC810 => unported;
+    /// The UV material stream read's dummy animation (0x7CBE00)
+    fn uv_anim_create_dummy_call(name: GPtr<u8>) -> GPtr<u8> = cdecl 0x7CBE00 => uv_anim_create_dummy;
+    /// The material extension's UV matrices update (0x7CBD80)
+    fn uv_matrices_update_call(ext: GPtr<u8>) -> GPtr<u8> = cdecl 0x7CBD80 => uv_matrices_update;
     /// `RtDictSchemaDestruct(schema)` (0x7CED70)
     fn dict_schema_destruct_call(schema: GPtr<u8>) -> i32 = cdecl 0x7CED70 => rt_dict_schema_destruct;
 }
@@ -470,6 +484,133 @@ pub fn uv_anim_destroy(anim: GPtr<u8>) -> u32 {
     1
 }
 
+/// `cb_UVANIMPLUGIN_RpMaterial_StreamRead(stream, len, material, offset, size)` (0x7CBC20): the struct chunk
+/// (type 1), a mask of the eight interpolator slots (int32, read into the material argument's slot; the extension
+/// pointer was taken before). For each set bit: the animation's 0x20-byte name (`RwStreamRead`), the animation
+/// found by name in the UV dictionary schema's current dictionary (`RtDictFindNamedEntry`; its custom data's
+/// reference count +1) or, without a dictionary or a match, a dummy one (0x7CBE00); a null animation or a null
+/// stream gives 0. The slot's interpolator: `RtAnimInterpolatorCreate(RtAnimAnimationGetNumNodes(anim), scheme
+/// +4)` with the animation set current; either failing releases the animation (`RpUVAnimDestroy`, inlined; the
+/// interpolator is kept) and gives 0. Then the two UV matrices (0x7CBD80): the stream when they are made, else 0.
+#[hook(addr = 0x7CBC20, conv = cdecl, name = "cb_UVANIMPLUGIN_RpMaterial_StreamRead", expect = "83 EC 24 8B 44 24 30",
+       unverified = "frontier2-c17", route = "L2", hazards = "heap-writes")]
+pub fn uvanim_material_stream_read(stream: GPtr<u8>, _len: i32, m: GPtr<u8>, _offset: i32, _size: i32) -> GPtr<u8> {
+    let ext = uv_ext(m);
+    if sa_core::bindings::rw_stream_find_chunk_call(stream, 1, GPtr::NULL, GPtr::NULL) == 0 {
+        return GPtr::NULL;
+    }
+    let mut mask = 0u32;
+    if crate::bindings::read_int32(stream, GPtr::from_raw(&mut mask).cast(), 4).is_null() {
+        return GPtr::NULL;
+    }
+    for i in 0..8u32 {
+        if mask & (1 << i) == 0 {
+            continue;
+        }
+        let mut name = [0u8; 0x20];
+        let name_p = GPtr::from_raw(name.as_mut_ptr());
+        if crate::bindings::stream_read(stream, name_p, 0x20) == 0 {
+            return GPtr::NULL;
+        }
+        let dict = schema_get_current_dict(p8(UV_DICT_SCHEMA));
+        let mut anim = GPtr::NULL;
+        if !dict.is_null() {
+            anim = p8(dict_find_named_entry(dict, name_p));
+            if !anim.is_null() {
+                let data = p8(rd::<u32>(anim, 0x14));
+                wr::<i32>(data, 0x40, rd::<i32>(data, 0x40).wrapping_add(1));
+            }
+        }
+        if anim.is_null() {
+            anim = uv_anim_create_dummy_call(name_p);
+        }
+        if anim.is_null() || stream.is_null() {
+            return GPtr::NULL;
+        }
+        let kfs: i32 = rd(rd::<GPtr<u8>>(anim, 0), 4);
+        let interp = crate::bindings::interpolator_create(animation_get_num_nodes(anim), kfs);
+        wr::<u32>(ext, 8 + i as isize * 4, interp.addr() as u32);
+        if interp.is_null() || interpolator_set_current_anim(interp, anim) == 0 {
+            uv_anim_destroy(anim);
+            return GPtr::NULL;
+        }
+    }
+    if uv_matrices_update_call(ext).is_null() {
+        GPtr::NULL
+    } else {
+        stream
+    }
+}
+
+/// The UV matrices of a material extension (0x7CBD80): for each of the two (+0, +4), whether a node of the eight
+/// interpolators (+8; the first node is always tested, then up to the node count +0x2C) maps to it (the current
+/// animation's custom data, +0x20 + node * 4, equal to the matrix index): a used matrix is made when missing
+/// (`RwMatrixCreate`; null → 0), an unused one destroyed (`RwMatrixDestroy`) and cleared. Returns the extension.
+#[hook(addr = 0x7CBD80, conv = cdecl, name = "FUN_007cbd80", expect = "53 55 56 57 8B 7C 24 14",
+       unverified = "frontier2-c17", route = "L2", hazards = "heap-writes")]
+pub fn uv_matrices_update(ext: GPtr<u8>) -> GPtr<u8> {
+    for j in 0..2u32 {
+        let used = (0..8isize).any(|k| {
+            let interp = p8(rd::<u32>(ext, 8 + k * 4));
+            if interp.is_null() {
+                return false;
+            }
+            let data = p8(rd::<u32>(p8(rd::<u32>(interp, 0)), 0x14));
+            let n = rd::<u32>(interp, 0x2C).max(1);
+            (0..n).any(|c| rd::<u32>(data, 0x20 + c as isize * 4) == j)
+        });
+        let slot = j as isize * 4;
+        if used {
+            if rd::<u32>(ext, slot) == 0 {
+                let mx = sa_core::bindings::rw_matrix_create();
+                wr::<u32>(ext, slot, mx.addr() as u32);
+                if mx.is_null() {
+                    return GPtr::NULL;
+                }
+            }
+        } else if rd::<u32>(ext, slot) != 0 {
+            matrix_destroy(p8(rd::<u32>(ext, slot)));
+            wr::<u32>(ext, slot, 0);
+        }
+    }
+    ext
+}
+
+/// The dummy UV animation of a name the dictionary does not hold (0x7CBE00): `RtAnimAnimationCreate(scheme A's
+/// type ([0x8DED84]), 2 frames, flags 0, 1.0)` (null → null); custom data from the freelist `[0xC978F4]` (hint
+/// 0x30135; null → null): the name (`strncpy` 0x20, byte +0x1F cleared), channel map +0x20 = 0, reference count
+/// +0x40 = 1. Both key frames are the identity (0x7CC810): the first at time 0 with no previous frame, the second
+/// at 1.0 after the first. The original's identity matrix leaves its flags word (`garbage | 0x20003`) and pads
+/// unset; the key frame set reads neither (only right / up / pos x, y), so the port writes 0x20003 and zeros.
+#[hook(addr = 0x7CBE00, conv = cdecl, name = "FUN_007cbe00", expect = "A1 84 ED 8D 00",
+       unverified = "frontier2-c17", route = "L2", hazards = "heap-writes")]
+pub fn uv_anim_create_dummy(name: GPtr<u8>) -> GPtr<u8> {
+    let anim = animation_create(GPtr::<u32>::from_addr(UV_SCHEME_A as usize).read(), 2, 0, 1.0);
+    if anim.is_null() {
+        return GPtr::NULL;
+    }
+    let data = crate::common::rw_memory_alloc(p8(UVANIM_FREELIST.get()), 0x30135);
+    if data.is_null() {
+        return GPtr::NULL;
+    }
+    sa_core::bindings::crt_strncpy(data, name, 0x20);
+    wr::<u8>(data, 0x1F, 0);
+    wr::<u32>(data, 0x20, 0);
+    wr::<u32>(data, 0x40, 1);
+    wr::<u32>(anim, 0x14, data.addr() as u32);
+    let frames: u32 = rd(anim, 0x10);
+    let second = rd::<u32>(rd::<GPtr<u8>>(anim, 0), 8).wrapping_add(frames);
+    let mut m = [0u32; 16];
+    m[0] = 0x3F80_0000;
+    m[3] = 0x20003;
+    m[5] = 0x3F80_0000;
+    m[10] = 0x3F80_0000;
+    let mp = GPtr::from_raw(m.as_mut_ptr()).addr() as u32;
+    key_frame_set(anim.addr() as u32, frames, 0, 0, mp);
+    key_frame_set(anim.addr() as u32, second, frames, 0x3F80_0000, mp);
+    anim
+}
+
 /// `_rpUVAnimCustomDataStreamRead(RwStream*)` (0x7CBF70): a UV animation's custom data from the freelist
 /// `[0xC978F4]` (`G->memoryAlloc`, hint 0x30135; null → null): its 0x20-byte name (`RwStreamRead`), then eight
 /// int32 node-to-UV-channel entries at +0x20 (`RwStreamReadInt32`, 0x20 bytes); either read failing returns null
@@ -525,6 +666,9 @@ pub fn uv_anim_key_frame_stream_read(stream: GPtr<u8>, anim: GPtr<u8>) -> GPtr<u
 }
 
 pub const HOOKS: &[HookReg] = &[
+    HOOK_UVANIM_MATERIAL_STREAM_READ,
+    HOOK_UV_MATRICES_UPDATE,
+    HOOK_UV_ANIM_CREATE_DUMMY,
     HOOK_UV_ANIM_DESTROY,
     HOOK_UV_ANIM_CUSTOM_DATA_STREAM_READ,
     HOOK_UV_ANIM_KEY_FRAME_STREAM_READ,

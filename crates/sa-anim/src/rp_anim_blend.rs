@@ -41,6 +41,7 @@ use crate::bindings::anim_blend_clump_data_dtor as clump_data_dtor;
 use crate::bindings::assoc_start;
 use crate::bindings::clump_is_initialized as is_initialized_call;
 use sa_core::bindings::crt_new as operator_new;
+use crate::bindings::animation_create as animation_create_call;
 orig! {
     /// `CAnimBlendClumpData::CAnimBlendClumpData()` (0x4CF0E0)
     fn clump_data_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4CF0E0 => crate::clumpdata::constructor;
@@ -48,8 +49,6 @@ orig! {
     fn assoc_vdtor(this: GPtr<u8>, flags: u32) = thiscall vslot 0 => unported;
     /// `NodeNamePlugin::SetFrameNodeName(frame, name)` (0x72FB00)
     fn set_frame_node_name_call(f: GPtr<u8>, name: GPtr<u8>) = cdecl 0x72FB00 => set_frame_node_name;
-    /// `RtAnimAnimationCreate(typeID, numFrames, flags, duration)` (0x7CCE40)
-    fn animation_create_call(ty: u32, n: i32, flags: u32, duration: f32) -> GPtr<u8> = cdecl 0x7CCE40 => rt_anim_animation_create;
     /// `G->rwmalloc(size, hint)` (`RwGlobals` +0x134)
     fn rw_malloc(size: u32, hint: u32) -> u32 = cdecl table 0xC97B24 0x134 => unported;
 }

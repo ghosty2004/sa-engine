@@ -2794,6 +2794,16 @@ orig! {
 }
 
 orig! {
+    /// `RtAnimAnimationCreate` (0x7CCE40)
+    pub fn animation_create(ty: u32, n: i32, flags: u32, duration: f32) -> GPtr<u8> = cdecl 0x7CCE40 => unported;
+}
+
+orig! {
+    /// `RtAnim::RtAnimInterpolatorSetCurrentAnim` (0x7CD5A0)
+    pub fn interpolator_set_current_anim(interp: GPtr<u8>, anim: GPtr<u8>) -> u32 = cdecl 0x7CD5A0 => unported;
+}
+
+orig! {
     /// `RtDictDestroy` (0x7CF130)
     pub fn dict_destroy(dict: GPtr<u8>) -> u32 = cdecl 0x7CF130 => unported;
 }

@@ -80,7 +80,7 @@ orig! {
     /// `G->stringFuncs.rwstrrchr(s, c)` (G+0x108)
     fn rw_strrchr(s: GPtr<u8>, c: u32) -> GPtr<u8> = cdecl table 0xC97B24 0x108 => unported;
     /// `G->stringFuncs.rwstrcmp(a, b)` (G+0x114)
-    fn rw_strcmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl table 0xC97B24 0x114 => unported;
+    pub(crate) fn rw_strcmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl table 0xC97B24 0x114 => unported;
     /// `_rwImageFindFileAndCall(name, mode, cb, data)` (0x8030C0): path search, file open, `cb`
     fn image_find_file_and_call(name: GPtr<u8>, mode: u32, cb: u32, data: GPtr<u8>) -> u32 = cdecl 0x8030C0 => unported;
     /// `RwImageMakeMask(image)` (0x802A20)

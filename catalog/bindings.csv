@@ -1065,6 +1065,8 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x7C7550,sa-core,rp_skin_geometry_get_skin,cdecl,,g:GPtr<u8>,u32,unported,RpSkinGeometryGetSkin,sa_rwcore::skin::rp_skin_geometry_get_skin
 0x7C77E0,sa-core,rp_skin_get_num_bones,cdecl,,s:GPtr<u8>,u32,unported,RpSkinGetNumBones,
 0x7C7810,sa-core,rp_skin_get_skin_to_bone_matrices,cdecl,,s:GPtr<u8>,u32,unported,RpSkinGetSkinToBoneMatrices,sa_rwcore::skin::rp_skin_get_skin_to_bone_matrices
+0x7CCE40,sa-core,animation_create,cdecl,,ty:u32;n:i32;flags:u32;duration:f32,GPtr<u8>,unported,RtAnimAnimationCreate,sa_anim::rp_anim_blend::rt_anim_animation_create
+0x7CD5A0,sa-core,interpolator_set_current_anim,cdecl,,interp:GPtr<u8>;anim:GPtr<u8>,u32,unported,RtAnim::RtAnimInterpolatorSetCurrentAnim,sa_rwcore::hanim_stream::rt_anim_interpolator_set_current_anim
 0x7CF130,sa-core,dict_destroy,cdecl,,dict:GPtr<u8>,u32,unported,RtDictDestroy,sa_rwcore::frontier_b::rt_dict_destroy
 0x7EB5C0,sa-core,rt_quat_convert_from_matrix,cdecl,,q:GPtr<u8>;m:GPtr<u8>,GPtr<u8>,unported,RtQuatConvertFromMatrix,
 0x7EB7C0,sa-core,rt_quat_rotate,cdecl,,q:GPtr<u8>;axis:GPtr<u8>;angle:f32;op:u32,GPtr<u8>,unported,RtQuatRotate,

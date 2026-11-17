@@ -369,6 +369,11 @@ orig! {
 }
 
 orig! {
+    /// `RtAnim::RtAnimInterpolatorSetCurrentAnim` (0x7CD5A0)
+    pub fn interpolator_set_current_anim(interp: GPtr<u8>, anim: GPtr<u8>) -> u32 = cdecl 0x7CD5A0 => crate::hanim_stream::rt_anim_interpolator_set_current_anim;
+}
+
+orig! {
     /// `RtDictDestroy` (0x7CF130)
     pub fn dict_destroy(dict: GPtr<u8>) -> u32 = cdecl 0x7CF130 => crate::frontier_b::rt_dict_destroy;
 }

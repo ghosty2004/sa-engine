@@ -453,6 +453,70 @@ pub fn uv_anim_matrix_decompose(out: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> {
     out
 }
 
+/// The UV key frame interpolation shared by the two schemes: `r = (time - a.t) / (b.t - a.t)` (+4, kept in ST0),
+/// then for each of the six values (+8 .. +0x1C) `out = (b - a) * r + a`, stored as f32; `wrap` first brings the
+/// +8 angle difference into range (below -pi (0x858CC0): + 2pi (0x858CBC); above pi (0x858CB8): - 2pi). The
+/// output's time (+4) is not written.
+fn uv_key_frame_lerp(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, time: f32, wrap: bool) {
+    let r = X87::from_f32(time)
+        .fsub_m(rd(a, 4))
+        .fdiv(X87::from_f32(rd(b, 4)).fsub_m(rd(a, 4)));
+    for o in (8..0x20isize).step_by(4) {
+        let mut d = X87::from_f32(rd(b, o)).fsub_m(rd(a, o));
+        if wrap && o == 8 {
+            if !d.fcom(X87::from_f32(g::<f32>(0x85_8CC0).read())).test_parity(5) {
+                d = d.fadd_m(g::<f32>(0x85_8CBC).read());
+            } else if !d.fcom(X87::from_f32(g::<f32>(0x85_8CB8).read())).test_any(0x41) {
+                d = d.fsub_m(g::<f32>(0x85_8CBC).read());
+            }
+        }
+        wr(out, o, d.fmul(r).fadd_m(rd(a, o)).to_f32());
+    }
+}
+
+/// `RpUVAnimParamKeyFrameInterpolate(out, a, b, time, customData)` (0x7CC600): [`uv_key_frame_lerp`] with the
+/// angle wrap.
+#[hook(addr = 0x7CC600, conv = cdecl, name = "RpUVAnimParamKeyFrameInterpolate", expect = "8B 4C 24 08 8B 54 24 0C",
+       unverified = "frontier2-c17", route = "L2", hazards = "none")]
+pub fn uv_anim_param_key_frame_interpolate(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, time: f32, _custom: u32) {
+    uv_key_frame_lerp(out, a, b, time, true);
+}
+
+/// `RpUVAnimLinearKeyFrameInterpolate(out, a, b, time, customData)` (0x7CCA40): [`uv_key_frame_lerp`].
+#[hook(addr = 0x7CCA40, conv = cdecl, name = "RpUVAnimLinearKeyFrameInterpolate", expect = "8B 44 24 08 8B 4C 24 0C",
+       unverified = "frontier2-c17", route = "L2", hazards = "none")]
+pub fn uv_anim_linear_key_frame_interpolate(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, time: f32, _custom: u32) {
+    uv_key_frame_lerp(out, a, b, time, false);
+}
+
+/// `RpUVAnimParamKeyFrameApply(RwMatrix* m, const RpUVAnimParamKeyFrameData* kf)` (0x7CC560): right = (kf +0xC,
+/// +0x14, 0), up = (0, kf +0x10, 0), at = 0, pos = (kf +0x18, +0x1C, 0) (flags and pads untouched),
+/// `RwMatrixUpdate`, then translated by 0x882ED4, rotated about z (0, 0, 1) by `kf +8 * [0x859878]` (degrees)
+/// and translated by 0x882EE0 (all post-concatenated): the inverse of [`uv_anim_matrix_decompose`].
+#[hook(addr = 0x7CC560, conv = cdecl, name = "RpUVAnimParamKeyFrameApply", expect = "83 EC 0C 56 8B 74 24 14",
+       unverified = "frontier2-c17", route = "L2", hazards = "none")]
+pub fn uv_anim_param_key_frame_apply(m: GPtr<u8>, kf: GPtr<u8>) {
+    let mut axis = [0u32, 0, 0];
+    wr::<u32>(m, 0, rd(kf, 0xC));
+    wr::<u32>(m, 4, rd(kf, 0x14));
+    for o in [8, 0x10, 0x18] {
+        wr::<u32>(m, o, 0);
+    }
+    wr::<u32>(m, 0x14, rd(kf, 0x10));
+    for o in [0x20, 0x24, 0x28] {
+        wr::<u32>(m, o, 0);
+    }
+    axis[2] = 0x3F80_0000;
+    wr::<u32>(m, 0x30, rd(kf, 0x18));
+    wr::<u32>(m, 0x34, rd(kf, 0x1C));
+    wr::<u32>(m, 0x38, 0);
+    sa_core::bindings::rw_matrix_update(m);
+    rw_matrix_translate(m, p8(0x88_2ED4), 2);
+    let angle = X87::from_f32(rd(kf, 8)).fmul_m(g::<f32>(0x85_9878).read()).to_f32();
+    rw_matrix_rotate(m, GPtr::from_raw(axis.as_mut_ptr()).cast(), angle, 2);
+    rw_matrix_translate(m, p8(0x88_2EE0), 2);
+}
+
 // ---------------------------------------------------------------------------------------------------------------
 // Strings, lists, resources
 
@@ -810,6 +874,25 @@ pub fn rt_dict_destroy(dict: GPtr<u8>) -> u32 {
     1
 }
 
+/// `RtDictFindNamedEntry(RtDict*, const RwChar*)` (0x7CEFE0): the first entry of the dictionary's list (+4)
+/// whose name (the schema's +0x20 callback, `(entry)`) compares equal (`G->rwstrcmp(entryName, name)`); null when
+/// none does.
+#[hook(addr = 0x7CEFE0, conv = cdecl, name = "RtDictFindNamedEntry", expect = "83 EC 08 53 55 56",
+       unverified = "frontier2-c17", route = "L2", hazards = "none")]
+pub fn rt_dict_find_named_entry(dict: GPtr<u8>, name: GPtr<u8>) -> u32 {
+    let get_name: u32 = rd(rd::<GPtr<u8>>(dict, 0), 0x20);
+    let end = slist_get_end(rd(dict, 4));
+    let mut p = slist_get_begin(rd(dict, 4));
+    while p != end {
+        let e: u32 = rd(p, 0);
+        if crate::image2::rw_strcmp(p8(call_dict_cb(get_name, e)), name) == 0 {
+            return e;
+        }
+        p = p.byte_add(4);
+    }
+    0
+}
+
 /// The memory hint of a schema's allocations: its dictionary chunk type (+4) | `rwMEMHINTDUR_EVENT`.
 fn dict_hint(schema: GPtr<u8>) -> u32 {
     rd::<u32>(schema, 4) | 0x30000
@@ -930,6 +1013,9 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_RP_MATERIAL_UV_ANIM_ADD_ANIM_TIME,
     HOOK_UV_ANIM_STREAM_GET_SIZE,
     HOOK_UV_ANIM_MATRIX_DECOMPOSE,
+    HOOK_UV_ANIM_PARAM_KEY_FRAME_INTERPOLATE,
+    HOOK_UV_ANIM_LINEAR_KEY_FRAME_INTERPOLATE,
+    HOOK_UV_ANIM_PARAM_KEY_FRAME_APPLY,
     HOOK_RW_STRING_STREAM_GET_SIZE,
     HOOK_RW_STRING_STREAM_WRITE,
     HOOK_RW_SLIST_GET_NEW_ENTRY,
@@ -944,6 +1030,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_RP_WORLD_SECTOR_LIGHT_TIE_DESTROY,
     HOOK_RT_DICT_DESTROY,
     HOOK_RT_DICT_SCHEMA_CREATE_DICT,
+    HOOK_RT_DICT_FIND_NAMED_ENTRY,
     HOOK_RT_DICT_SCHEMA_STREAM_READ_DICT,
 ];
 
