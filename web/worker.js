@@ -1,6 +1,8 @@
 // The game's worker (WEB-1): runs sa-game's wasm module, reads the user's game folder synchronously, draws into the
 // OffscreenCanvas the page transferred, and turns the page's input messages into platform input.
 import init, * as sa from './pkg/sa_game.js';
+// WebAssembly mods (FEATURES=mods): self.saGameMods
+import './mods.js';
 
 const post = (type, data) => self.postMessage({ type, ...data });
 Error.stackTraceLimit = 60;

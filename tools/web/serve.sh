@@ -3,6 +3,7 @@
 #
 #   tools/web/serve.sh                       then open the page and choose your GTA San Andreas folder
 #   tools/web/serve.sh --game DIR            also serve DIR (your own install) to this machine, no picker needed
+#   tools/web/serve.sh --mods DIR            serve the mod folders in DIR under /mods/ (?mods=NAME,...; MOD-2)
 #   tools/web/serve.sh --port N
 set -eu
 exec python3 -I "$(dirname "$0")/serve.py" "$@"

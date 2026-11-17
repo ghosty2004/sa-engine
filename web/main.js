@@ -2,6 +2,7 @@
 // URL query: ?inworld=0 (play the intro), ?backend=gl|webgpu, ?auto=1 (scripted Enter / SA_GAME_WALK, for unattended runs), any SA_* name
 // (SA_GAME_STUB, SA_GAME_WALK, SA_GAME_SCRIPT_SKIP, ...) is passed to the game as a development variable.
 // ?samp=HOST:PORT[&proxy=ws://127.0.0.1:7781][&name=NAME]: join a SA:MP / open.mp server through sa-udp-proxy (build with FEATURES=samp).
+// ?mods=NAME,...: load these WebAssembly mods from the server's mods/ (build with FEATURES=mods).
 // ?audiotap=1 keeps a copy of the audio output for evidence runs (window.saGame.audioTap(), tools/web/headless.mjs --audio).
 // &stub=ADDR=RET/N,... replaces the default exploration stubs (the play package's, DEFAULT_STUBS); &stub=none drops them.
 const $ = (id) => document.getElementById(id);
@@ -191,6 +192,9 @@ async function start(files) {
   if (stub !== 'none') env.SA_GAME_STUB = stub ?? DEFAULT_STUBS;
   for (const [k, v] of params) if (k.startsWith('SA_')) env[k] = v;
   if (params.get('auto') === '1') env.SA_WEB_AUTO_INPUT = '1';
+  // ?mods=a,b: the WebAssembly mods mods/a/, mods/b/ of the server (tools/web/serve.sh --mods DIR; build with
+  // FEATURES=mods; docs/mods/getting-started.md)
+  if (params.get('mods')) env.SA_MODS = params.get('mods');
   // SA:MP: ?samp=HOST:PORT&proxy=ws://127.0.0.1:7781&name=NAME joins that server through sa-udp-proxy
   // (docs/samp/web-proxy.md); the auth table (third-party data) comes from the local server (serve.sh --samp-auth FILE)
   const samp = params.get('samp');

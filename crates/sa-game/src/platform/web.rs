@@ -212,6 +212,8 @@ pub fn boot() -> Result<(), JsValue> {
         &format!("your game folder ({} files)", crate::platform::webfs::count()),
         "browser memory (not kept)",
         &samp_options(),
+        // the page's `?mods=a,b`: mods/a/, mods/b/ on its server (feature `mods`)
+        crate::env::var_os("SA_MODS").filter(|s| !s.is_empty()).as_deref(),
     )
     .map_err(|e| JsValue::from_str(&e))?;
     SESSION.with(|c| c.set(Box::into_raw(Box::new(s))));

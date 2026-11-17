@@ -37,6 +37,8 @@ pub struct Args {
     pub samp_proxy: Option<String>,
     /// `--samp-ui-demo`: the engine-drawn SA:MP UI with sample content (`samp_ui_demo.rs`)
     pub samp_ui_demo: bool,
+    /// `--mods DIR`: WebAssembly mods (feature `mods`, `crate::mods`)
+    pub mods: Option<String>,
 }
 
 /// The current main-loop iteration (the numbering of `SA_GAME_KEYS` / `SA_GAME_TELEPORT`), for exploration output.
@@ -135,6 +137,16 @@ pub(crate) fn install_samp(o: &SampOptions) -> Result<Option<crate::samp::Target
     Ok(target)
 }
 
+/// Loads the mods (before the boot, so they see its first frames).
+#[allow(clippy::needless_return)]
+fn install_mods(spec: Option<&str>) -> Result<(), String> {
+    let Some(spec) = spec else { return Ok(()) };
+    #[cfg(feature = "mods")]
+    return crate::mods::install(spec);
+    #[cfg(not(feature = "mods"))]
+    return Err(format!("mods {spec}: build with --features mods"));
+}
+
 /// A booted game: the report so far and the main loop's state.
 pub struct Session {
     pub(crate) rep: Report,
@@ -161,6 +173,7 @@ pub fn boot_with(
     game_label: &str,
     docs_label: &str,
     samp: &SampOptions,
+    mods: Option<&str>,
 ) -> Result<Session, String> {
     if !game.exists("models/gta3.img") {
         return Err(format!("{game_label} does not look like a GTA San Andreas folder (no models/gta3.img)"));
@@ -186,6 +199,7 @@ pub fn boot_with(
         calls: Default::default(),
     });
     let samp_target = install_samp(samp)?;
+    install_mods(mods)?;
 
     println!("sa-game: game folder {game_label} (read-only), user documents {docs_label}");
     println!("sa-game: arena: {arena_info}");

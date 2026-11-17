@@ -57,6 +57,7 @@ dropped. Phase times are exclusive (a nested phase is not charged to its parent)
 | `d3d9` | our D3D9 COM methods: the translation to the seam and `WgpuDevice` (state, buffer / texture uploads, draws, render-pass encoding) |
 | `present` | `IDirect3DDevice9::Present`: the last pass's submission, the window blit and the surface present |
 | `perf` | the measurement's own bookkeeping at the end of a frame |
+| `mods` | the mod host's overlay phase inside `Present` (feature `mods`, MOD-2): the mods' calls and the overlay draw; 0 without mods |
 | `gpu_ms` | (late column, not in the sum) GPU time of the frame's render passes from timestamp queries; empty without `TIMESTAMP_QUERY` (WebGL2) |
 
 Counters per frame: `d3d9_calls` (COM method calls), `d3d9_set_calls` (`IDirect3DDevice9::Set*`), `draws`,

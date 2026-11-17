@@ -59,6 +59,8 @@ pub const D3D9: usize = 24;
 pub const PRESENT: usize = 25;
 /// The measurement's own bookkeeping at the end of a frame.
 pub const PERF: usize = 26;
+/// The mod host's overlay phase (feature `mods`; inside `Present`): the mods' calls and the overlay draw.
+pub const MODS: usize = 27;
 
 const PHASES: &[&str] = &[
     "other",
@@ -88,6 +90,7 @@ const PHASES: &[&str] = &[
     "d3d9",
     "present",
     "perf",
+    "mods",
 ];
 
 // ---- counters (per frame) ----------------------------------------------------------------------------------------

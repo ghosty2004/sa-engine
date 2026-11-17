@@ -39,6 +39,8 @@ pub mod dsound;
 pub mod dx;
 pub mod frontend;
 pub mod imports;
+#[cfg(feature = "mods")]
+pub mod mods;
 pub mod native;
 pub mod perf;
 pub mod rw_standin;

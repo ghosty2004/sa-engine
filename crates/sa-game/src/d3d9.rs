@@ -150,6 +150,9 @@ fn present_frame() -> i32 {
     let in_game = IN_GAME_FRAME.load(std::sync::atomic::Ordering::SeqCst);
     let read_back = PRESENT_DIR.lock().unwrap_or_else(|e| e.into_inner()).is_some();
     let r = with_device(|d| {
+        // the mods' overlay phase (MOD-2): after the game's drawing, before the present
+        #[cfg(feature = "mods")]
+        crate::mods::overlay(d);
         let r = d.present();
         // wasm32: the canvas shows only the last frame of a task (the worker yields between main-loop iterations), so
         // inside one long iteration (the loading screens of `CGame::Initialise`) only the first present per
