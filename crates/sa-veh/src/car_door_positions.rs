@@ -504,8 +504,121 @@ fn bike_side_entry(ped: GPtr<u8>, veh: GPtr<u8>, door: GPtr<u8>) -> bool {
     want == 0x12
 }
 
+/// `CCarEnterExit::GetNearestCarPassengerDoor(const CPed*, const CVehicle*, CVector* outPos, int32* outDoor, bool
+/// checkOccupied, bool checkEnterable, bool checkRoom)` (0x650BB0, cdecl, AL; the entry fragment 0x401896 loads the
+/// handling into ECX). FRONTIER-2 turn 10 lane B, batch `frontier2-b22`.
+///
+/// "Try door N": unless `checkRoom` and no room (`IsRoomForPedToLeaveCar(v, N, null)`), the door's position and its
+/// 2D offset from the ped; found. Coaches / buses (animation group + 0x58 is 0x67 / 0x68) only try door 8 (not with
+/// `checkEnterable` and getting-in flag 4) and return at once. Cars (type +0x590 not 9, no tandem seats) try door 8
+/// unless `checkOccupied` with a first passenger or `checkEnterable` with flag 4; bikes / tandem seats (skipped
+/// with `checkOccupied` and a first passenger) try 11 (flag 2) then 9 (flag 8). With more than two doors 11 and 9
+/// are tried again (force-door-check models need an automobile with the door's node; the second / third passenger
+/// and flags 2 / 8 as above). The 2D offsets start at (999, 999). Then `*outPos` = the door 8 slot, `*outDoor` = 8,
+/// replaced by 11 when its squared distance is smaller (strictly) and by 9 likewise against the winner. The locals
+/// are modelled as the original's frame, so the slots the original shares keep their values: the bike path's
+/// positions pass through the door 8 slot, the car path's door 8 position through the door 9 slot. Never-written
+/// slots read 0 here (stack garbage in the original, written out when nothing was found).
+#[hook(addr = 0x650BB0, conv = cdecl, name = "CCarEnterExit::GetNearestCarPassengerDoor", expect = "83 EC 48 53 56 8B 74 24 58 90 E9",
+       unverified = "frontier2-b22", route = "L2", hazards = "ax-al-return", recs = "enter-car",
+       note = "entry chunk 0x401896 (`mov ecx, [esi+0x384]`); with nothing found the original writes uninitialised stack to *outPos (0 here)")]
+pub fn get_nearest_car_passenger_door(
+    ped: GPtr<u8>,
+    veh: GPtr<u8>,
+    out_pos: GPtr<u8>,
+    out_door: GPtr<u8>,
+    check_occupied: u32,
+    check_enterable: u32,
+    check_room: u32,
+) -> u8 {
+    let (occupied, enterable, room) = (check_occupied as u8 != 0, check_enterable as u8 != 0, check_room as u8 != 0);
+    let getting_in = |m: u8| enterable && rd::<u8>(veh, 0x486) & m != 0;
+    let no_room = |d: i32| room && is_room_for_ped_to_leave_car_o(veh, d, GPtr::NULL) == 0;
+    let hd = rd::<GPtr<u8>>(veh, 0x384);
+    let grp = u32::from(rd::<u8>(hd, 0xDE)) + 0x58;
+    if grp == 0x67 || grp == 0x68 {
+        if getting_in(4) || no_room(8) {
+            return 0;
+        }
+        let mut p = [0f32; 3];
+        get_position_to_open_car_door_o(vp(&mut p), veh, 8);
+        write3(out_pos, p);
+        wr::<i32>(out_door, 0, 8);
+        return 1;
+    }
+    // the frame after `push edi`: d11 at +0xC, d8 at +0x14, d9 at +0x1C, P11 at +0x24, P9 at +0x30, P8 at +0x3C,
+    // the rear doors' result at +0x48
+    let mut fr = [0u32; 0x54 / 4];
+    let far = 999.0f32.to_bits();
+    fr[0xC / 4..0x24 / 4].fill(far);
+    let mut found = 0u8;
+    let pp = || read3(entity_pos(ped));
+    // GetPositionToOpenCarDoor into the frame slot `res`, then the copy to `pos` and the offset `d`
+    let mut try_door = |fr: &mut [u32; 0x54 / 4], door: i32, res: usize, pos: usize, d: usize| {
+        let mut p = [0f32; 3];
+        get_position_to_open_car_door_o(vp(&mut p), veh, door);
+        for k in 0..3 {
+            fr[res / 4 + k] = p[k].to_bits();
+        }
+        for k in 0..3 {
+            fr[pos / 4 + k] = p[k].to_bits();
+        }
+        let q = pp();
+        fr[d / 4] = f(x(p[0]).fsub_m(q[0])).to_bits();
+        fr[d / 4 + 1] = f(x(p[1]).fsub_m(q[1])).to_bits();
+    };
+    let vtype = rd::<u32>(veh, 0x590);
+    if vtype != 9 && rd::<u32>(hd, 0xCC) & 0x200 == 0 {
+        if !(occupied && rd::<u32>(veh, 0x464) != 0) && !getting_in(4) && !no_room(8) {
+            try_door(&mut fr, 8, 0x30, 0x3C, 0x14);
+            found = 1;
+        }
+    } else if !(occupied && rd::<u32>(veh, 0x464) != 0) {
+        if !getting_in(2) && !no_room(11) {
+            try_door(&mut fr, 11, 0x3C, 0x24, 0xC);
+            found = 1;
+        }
+        if !getting_in(8) && !no_room(9) {
+            try_door(&mut fr, 9, 0x3C, 0x30, 0x1C);
+            found = 1;
+        }
+    }
+    if rd::<i8>(model_info(i32::from(rd::<i16>(veh, 0x22))), 0x4C) > 2 {
+        let node_ok = |node: isize| {
+            rd::<u32>(rd::<GPtr<u8>>(veh, 0x384), 0xCC) & 0x8000 == 0 || (vtype == 0 && rd::<u32>(veh, node) != 0)
+        };
+        if node_ok(0x674) && !(occupied && rd::<u32>(veh, 0x468) != 0) && !getting_in(2) && !no_room(11) {
+            try_door(&mut fr, 11, 0x48, 0x24, 0xC);
+            found = 1;
+        }
+        if node_ok(0x66C) && !(occupied && rd::<u32>(veh, 0x46C) != 0) && !getting_in(8) && !no_room(9) {
+            try_door(&mut fr, 9, 0x48, 0x30, 0x1C);
+            found = 1;
+        }
+    }
+    let v = |o: usize| f32::from_bits(fr[o / 4]);
+    let slot = |o: usize| [v(o), v(o + 4), v(o + 8)];
+    let sq = |o: usize| x(v(o + 4)).fmul_m(v(o + 4)).fadd(x(v(o)).fmul_m(v(o)));
+    write3(out_pos, slot(0x3C));
+    wr::<i32>(out_door, 0, 8);
+    let mut best = 0x14;
+    // fcompp: ST0 = s8, ST1 = s11; `test ah, 0x41; jne` keeps door 8 on <=, == or NaN
+    if !jne_mask(sq(0x14), sq(0xC), 0x41) {
+        wr::<i32>(out_door, 0, 11);
+        write3(out_pos, slot(0x24));
+        best = 0xC;
+    }
+    let sb = x(v(best)).fmul_m(v(best)).fadd(x(v(best + 4)).fmul_m(v(best + 4)));
+    if !jne_mask(sb, sq(0x1C), 0x41) {
+        wr::<i32>(out_door, 0, 9);
+        write3(out_pos, slot(0x30));
+    }
+    found
+}
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_GET_POSITION_TO_OPEN_CAR_DOOR,
     HOOK_IS_ROOM_FOR_PED_TO_LEAVE_CAR,
     HOOK_GET_NEAREST_CAR_DOOR,
+    HOOK_GET_NEAREST_CAR_PASSENGER_DOOR,
 ];

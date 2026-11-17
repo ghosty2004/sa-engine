@@ -149,6 +149,11 @@ orig! {
 }
 
 orig! {
+    /// `CCarEnterExit::GetNearestCarPassengerDoor` (0x650BB0)
+    pub fn get_nearest_car_passenger_door(ped: GPtr<u8>, v: GPtr<u8>, out: GPtr<u8>, door: GPtr<u8>, a: u32, b: u32, c: u32) -> u8 = cdecl 0x650BB0 => crate::car_door_positions::get_nearest_car_passenger_door;
+}
+
+orig! {
     /// `CAutomobile::ResetSuspension` (0x6A2AE0)
     pub fn automobile_reset_suspension(car: GPtr<u8>) = thiscall 0x6A2AE0 => crate::automobile::reset_suspension;
 }

@@ -229,7 +229,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x64F680,sa-ai,car_enter_exit_remove_car_sit_anim,cdecl,,p:GPtr<u8>,,unported,CCarEnterExit::RemoveCarSitAnim,
 0x64FBB0,sa-ai,line_up_ped_with_car_ctor,thiscall,,t:GPtr<u8>;offset:GPtr<u8>;a:u32;b:u32;c:u32,GPtr<u8>,unported,CTaskUtilityLineUpPedWithCar::Constructor,
 0x64FC00,sa-ai,line_up_dtor,thiscall,,u:GPtr<u8>,,unported,CTaskUtilityLineUpPedWithCar::Destructor,
-0x650BB0,sa-ai,get_nearest_car_passenger_door,cdecl,,ped:GPtr<u8>;v:GPtr<u8>;out:GPtr<u8>;door:GPtr<u8>;a:u32;b:u32;c:u32,u8,unported,CCarEnterExit::GetNearestCarPassengerDoor,
+0x650BB0,sa-ai,get_nearest_car_passenger_door,cdecl,,ped:GPtr<u8>;v:GPtr<u8>;out:GPtr<u8>;door:GPtr<u8>;a:u32;b:u32;c:u32,u8,unported,CCarEnterExit::GetNearestCarPassengerDoor,sa_veh::car_door_positions::get_nearest_car_passenger_door
 0x6510D0,sa-ai,car_enter_exit_is_vehicle_stealable,cdecl,,v:GPtr<u8>;ped:GPtr<u8>,u8,unported,CCarEnterExit::IsVehicleStealable,
 0x6513A0,sa-ai,line_up_ped_with_car_process_ped,thiscall,,u:GPtr<u8>;ped:GPtr<u8>;veh:GPtr<u8>;a:GPtr<u8>,,unported,CTaskUtilityLineUpPedWithCar::ProcessPed,
 0x652F90,sa-ai,hit_wall_ctor,thiscall,,t:GPtr<u8>,GPtr<u8>,unported,CTaskSimpleHitWall::Constructor,
