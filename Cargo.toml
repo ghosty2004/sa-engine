@@ -9,3 +9,22 @@ edition = "2024"
 license = "UNLICENSED"
 publish = false
 
+
+# MOD-2: the mod host's compiler (wasmtime + Cranelift, only in the `mods` build) optimised for size; the Pulley
+# interpreter that runs the mods keeps the default level
+[profile.release.package.cranelift-codegen]
+opt-level = "s"
+[profile.release.package.cranelift-assembler-x64]
+opt-level = "s"
+[profile.release.package.cranelift-frontend]
+opt-level = "s"
+[profile.release.package.cranelift-bforest]
+opt-level = "s"
+[profile.release.package.cranelift-entity]
+opt-level = "s"
+[profile.release.package.wasmtime-internal-cranelift]
+opt-level = "s"
+[profile.release.package.wasmtime-environ]
+opt-level = "s"
+[profile.release.package.wasmtime]
+opt-level = "s"
