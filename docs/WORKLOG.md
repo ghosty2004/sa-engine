@@ -3511,3 +3511,45 @@
   commits after it change no code; lanes shared by flock with lanes A / B and the main session's runs):
   `lanec10-c1819` (SA_UNVERIFIED=frontier2-c18,frontier2-c19) IDENTICAL 13/13; `lanec10-default` (default set)
   IDENTICAL 13/13.
+
+## 2026-11-18 — FRONTIER-2 turn 10, lane B: the monster truck suspension, tow links, vehicle guns and missiles, TankControl (agent, branch worktree-agent-acdc10ccd3cf0e0a3)
+- Base: lane B turn 9's head e87dcae2. `tools/gen/inflight.py` checked first: no other branch registers any address
+  ported here.
+- Batch `frontier2-b22` (VEH, 6 hooks), from the 1.0 US bytes with docs/re/specs/VEH as reading aid:
+  - CMonsterTruck::SetupSuspensionLines 0x6C7FB0 / ProcessSuspension 0x6C83A0 (`monster_truck.rs`): the four col disks
+    through CColDisk::Set (the generated port), the ride height in x87 order; the spring / contact speed / damping
+    passes and the push on a vehicle under a wheel (z without the 0.25 factor; the damage component's upper 16 bits
+    are the colpoint address's, reproduced). mvpd_v1's vector helpers reused (pub(crate)).
+  - CCarEnterExit::GetNearestCarPassengerDoor 0x650BB0 (`car_door_positions.rs`): the locals modelled as the original's
+    frame so the shared slots keep their values (the bike path through the door 8 slot, the car path's door 8 result
+    through the door 9 slot); the sa-ai binding gets the port as its twin.
+  - CVehicle::UpdateTrailerLink 0x6DFC50 / UpdateTractorLink 0x6E0050 (`vehicle_tow_link.rs`): gta-reversed's shared
+    impl differs (the distance speed is divided by max(1, timeStep), and the trailer link returns without breaking for
+    a tow truck / tractor with its hoist up); the trailer's link mass is an f32 through CVector * float, the
+    tractor's stays in x87.
+- Batch `frontier2-b23` (VEH guns / tank + the tanker scenario's cheat, 5 hooks):
+  - CVehicle::FireFixedMachineGuns 0x73DF00 (`vehicle_guns.rs`): the right gun adds the unrounded reach, the left gun
+    its f32 stores; six rand() sites.
+  - CVehicle::ScanAndMarkTargetForHeatSeekingMissile 0x6E0400: a plane's +0x9E4 bit field (mark compared as zero /
+    non-zero, bit 31 the line of sight); a vehicle not driven by the player gets null (gta-reversed: the target).
+  - CVehicle::FireHeatSeakingMissile 0x6E05C0: the untransformed ordnance offset plus this frame's forward travel;
+    the free-fall bomb's pad shake / shot time tail shared (`frontier_b2_veh2::shake_and_stamp`).
+  - CAutomobile::TankControl 0x6AE850 (`tank_control.rs`): the RC Tiger's minigun, the Rhino's turret (on-a-string
+    camera with fpatan targets; unlike gta-reversed the heading snaps to the target within a step; pad axes), the
+    limits, the cannon. CWeapon::AddGunshell's binding moved to sa-world (twin in sa-weapon).
+  - CCheat::TankerCheat 0x43A570 (WORLD, `cheat.rs`): it blocked the tanker scenario's set-up.
+- Declarations retargeted to the ports (automobile_control's tow links / TankControl, vehicle_tow_hitch's 0x6C7FB0,
+  vehicle2's 0x6E05C0, the plane weapon module's 0x6E0400, sa-pop's 0x73DF00 twin); CWeapon::DoTankDoomAiming 0x73D1E0
+  bound once in sa-veh.
+- Divergence ledger (original UB): GetNearestCarPassengerDoor's never-written door 8 slot and TankControl's no-node
+  muzzle read 0 in the ports.
+- New frontier.sh scenarios: monster (AGBDLCID), tanker (AMOMHRER: the Petro with its trailer), tank (AIWPRTON, turret
+  turned and fired), hydra (JUMPJET, fire held).
+- frontier.py --no-branches: to port 122 -> 115 (VEH 19 -> 10, CAM 6); revealed: CWeapon::DoTankDoomAiming 0x73D1E0
+  (WEAPON, called by TankControl and FireFixedMachineGuns) and FxManager_c::TriggerTankFire 0x4A0FA0 (RENDER).
+- Verification, scenarios and the writer gate: below.
+- Open (lane B): CAM Process_WheelCam 0x512110, Process_Editor 0x50F3F0, the two-player cams 0x513510 / 0x513BE0 /
+  0x519810 / 0x525E50; VEH DoNitroEffect 0x6A3BD0, TowTruckControl 0x6A40F0, ProcessHarvester 0x6A9680,
+  RcbanditCheckHitWheels 0x6B45E0, AddReplacementUpgrade 0x6D3830 (its entry continues through the VM fragment
+  0x408121: vm_eval.py), FirePlaneGuns 0x6D4D30, FireUnguidedMissile 0x6D5110, BladeColSectorList 0x6DAF00 (entry
+  fragment 0x401589), AddWaterSplashParticles 0x6DDF60, CTrain::AddNearbyPedAsRandomPassenger 0x6F8170.
