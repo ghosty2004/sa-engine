@@ -1909,9 +1909,12 @@ pub fn draw_subtitles() {
 
 /// `CHud::DrawVehicleName()` (0x58AEA0). State machine in `m_VehicleState` (1 shown, 2 fading in, 3 fading
 /// out, 4 fading out for a new name), then the name at the bottom right while no brief shows.
-/// Partial port (ADR-002): with a state outside 0..=4 the original's switch default leaves its alpha local
-/// uninitialised (stack garbage), so that path runs the original body. No writer stores such a state.
-#[hook(addr = 0x58AEA0, conv = cdecl, name = "CHud::DrawVehicleName", expect = "51 8B 15 58 A4 BA 00", fallback)]
+/// With a state outside 0..=4 a new name only becomes the last name (no state change) and the switch default
+/// 0x58B040 draws with the alpha local never written: the dword `push ecx` reserved, i.e. the caller's ECX. The
+/// port draws with alpha 0 there (divergence ledger; no writer stores such a state).
+#[hook(addr = 0x58AEA0, conv = cdecl, name = "CHud::DrawVehicleName", expect = "51 8B 15 58 A4 BA 00",
+       unverified = "frontier2-a17", route = "L2", hazards = "none",
+       note = "was a partial port: a state outside 0..=4 no longer runs the original")]
 pub fn draw_vehicle_name() {
     use crate::hud::{VEHICLE_FADE_TIMER, VEHICLE_NAME, VEHICLE_NAME_TIMER, VEHICLE_NAME_TO_PRINT, VEHICLE_STATE};
     const LAST_VEHICLE_NAME: usize = 0xBAA454;
@@ -1924,12 +1927,9 @@ pub fn draw_vehicle_name() {
         return;
     }
     let mut state = VEHICLE_STATE.get() as i32;
-    if !(0..=4).contains(&state) {
-        draw_vehicle_name_original();
-        return;
-    }
     let mut last = g::<u32>(LAST_VEHICLE_NAME).read();
     if name != last {
+        // a state outside 0..=4 is left alone (0x58AEE3 / 0x58AEE8)
         if state == 0 {
             let zs = crate::hud::ZONE_STATE.get();
             state = 2;
@@ -1940,7 +1940,7 @@ pub fn draw_vehicle_name() {
             if zs == 1 || zs == 2 {
                 crate::hud::ZONE_STATE.set(3);
             }
-        } else {
+        } else if (1..=4).contains(&state) {
             state = 4;
             VEHICLE_STATE.set(4);
             VEHICLE_NAME_TIMER.set(0);
@@ -1978,7 +1978,7 @@ pub fn draw_vehicle_name() {
             }
             fade_alpha()
         }
-        _ => {
+        4 => {
             let f = (VEHICLE_FADE_TIMER.get() as i32).wrapping_add(wanted_step(K_M1000));
             VEHICLE_FADE_TIMER.set(f as u32);
             if f < 0 {
@@ -1989,6 +1989,8 @@ pub fn draw_vehicle_name() {
             }
             fade_alpha()
         }
+        // the alpha local is never written (the caller's ECX in the original)
+        _ => 0.0,
     };
     if b(MESSAGE_0) != 0 {
         return;
