@@ -1318,7 +1318,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x72DAD0,sa-pop,cull_zones_find_zone_with_stairs_for_player,cdecl,,,GPtr<u8>,unported,CCullZones::FindZoneWithStairsAttributeForPlayer,
 0x72DD30,sa-pop,cam_stairs_for_player,cdecl,,,u8,unported,CCullZones::CamStairsForPlayer,
 0x72DD90,sa-pop,cull_zones_fewer_peds,cdecl,,,u8,unported,CCullZones::FewerPeds,
-0x73DF00,sa-pop,fire_fixed_machine_guns,thiscall,,v:GPtr<u8>,,unported,CVehicle::FireFixedMachineGuns,
+0x73DF00,sa-pop,fire_fixed_machine_guns,thiscall,,v:GPtr<u8>,,unported,CVehicle::FireFixedMachineGuns,sa_veh::vehicle_guns::fire_fixed_machine_guns
 0x742CA0,sa-pop,clear_cross_hair_immediately,cdecl,,n:i32,,unported,CWeaponEffects::ClearCrossHairImmediately,
 0x7F1170,sa-pop,rw_frame_ortho_normalize,cdecl,,f:GPtr<u8>,GPtr<u8>,unported,RwFrameOrthoNormalize,
 0x49E660,sa-render,init_static_systems,thiscall,,this:GPtr<u8>,,sa_render::mvpc_fx1::fx_init_static_systems,Fx_c::InitStaticSystems,

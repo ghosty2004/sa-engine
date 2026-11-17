@@ -564,6 +564,11 @@ orig! {
 }
 
 orig! {
+    /// `CVehicle::FireFixedMachineGuns` (0x73DF00)
+    pub fn fire_fixed_machine_guns(v: GPtr<u8>) = thiscall 0x73DF00 => crate::vehicle_guns::fire_fixed_machine_guns;
+}
+
+orig! {
     /// `CVehicle::DoDriveByShootings` (0x741FD0)
     pub fn do_drive_by_shootings(v: GPtr<u8>) = thiscall 0x741FD0 => unported;
 }

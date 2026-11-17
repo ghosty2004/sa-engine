@@ -159,3 +159,4 @@ pub mod trailer_ai;
 pub mod inflict_damage;
 pub mod monster_truck;
 pub mod vehicle_tow_link;
+pub mod vehicle_guns;
