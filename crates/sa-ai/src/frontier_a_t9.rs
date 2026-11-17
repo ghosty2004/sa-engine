@@ -54,7 +54,7 @@ orig! {
     /// `CRopes::FindCoorsAlongRope(uint32 id, float along, CVector* pos, CVector* speed)` (0x555E40, sa-render)
     fn ropes_find_coors_along_rope(id: u32, along: f32, pos: GPtr<f32>, speed: GPtr<f32>) -> u8 = cdecl 0x555E40 => unported;
     /// `InteriorManager_c::AreAnimsLoaded(int32 block)` (0x5980F0, static, `ret 4`)
-    fn are_anims_loaded(block: i32) -> u8 = stdcall 0x5980F0 => sa_world::world::interior_wall_fillers::are_anims_loaded;
+    pub(crate) fn are_anims_loaded(block: i32) -> u8 = stdcall 0x5980F0 => sa_world::world::interior_wall_fillers::are_anims_loaded;
     /// `CTaskGangHassleVehicle::GetTargetHeading(CPed*)` (0x65FDD0, `ret 4`, ST0)
     fn target_heading(t: GPtr<u8>, ped: GPtr<u8>) -> X87 = reg("args = ecx stack; pop") 0x65FDD0 => crate::gang6::gang_hassle_vehicle_get_target_heading;
     /// `CTaskComplexUseSwatRope::CreateSubTask(int32 type, CPed*)` (0x659620, phase B native)
@@ -611,7 +611,7 @@ fn scanner_only_script_peds(ped: GPtr<u8>) {
 /// right and forward rows (`(r.z * n.z + r.y * n.y) + n.x * r.x`), then +0x55C = `LimitRadianAngle(f32(
 /// GetRadianAngleBetweenPoints(info +0x10, info +0x14, 0, 0)))`. The original stores `len` over its own ped
 /// argument slot.
-fn interior_step_to_info(this: GPtr<u8>, ped: GPtr<u8>) {
+pub(crate) fn interior_step_to_info(this: GPtr<u8>, ped: GPtr<u8>) {
     let info = rd::<GPtr<u8>>(this, 0xC);
     let pp = entity_pos(ped);
     let dx = x(rd::<f32>(info, 4)).fsub_m(rd::<f32>(pp, 0)).to_f32();
@@ -640,16 +640,21 @@ fn interior_step_to_info(this: GPtr<u8>, ped: GPtr<u8>) {
 /// `SetDeleteCallback(default)` on the task's anim (+0x14), then a new `BlendAnimation(clump, 0x54, anim, delta)`
 /// as the task's anim with the finish callback `cb` (data = the task).
 fn interior_blend(this: GPtr<u8>, ped: GPtr<u8>, anim: u32, delta: f32, cb: u32, drop_old: bool) {
+    interior_blend_group(this, ped, 0x54, anim, delta, cb, drop_old);
+}
+
+/// [`interior_blend`] with the anim group (0x54 int_house, 0x55 int_office).
+pub(crate) fn interior_blend_group(this: GPtr<u8>, ped: GPtr<u8>, group: u32, anim: u32, delta: f32, cb: u32, drop_old: bool) {
     if drop_old {
         anim_set_delete_callback(rd::<GPtr<u8>>(this, 0x14), 0x4D1390, 0);
     }
-    let a = anim_blend_animation(rd::<GPtr<u8>>(ped, 0x18), 0x54, anim, delta);
+    let a = anim_blend_animation(rd::<GPtr<u8>>(ped, 0x18), group, anim, delta);
     wr::<GPtr<u8>>(this, 0x14, a);
     assoc_set_finish_callback(a, cb, this.addr() as u32);
 }
 
 /// The interior anim tasks' timer start (`+8 >= 0`: +0x1C = now, +0x20 = +8, +0x24 = 1).
-fn interior_start_timer(this: GPtr<u8>) {
+pub(crate) fn interior_start_timer(this: GPtr<u8>) {
     let d = rd::<i32>(this, 8);
     if d >= 0 {
         wr::<u32>(this, 0x1C, g::<u32>(TIME_MS).read());

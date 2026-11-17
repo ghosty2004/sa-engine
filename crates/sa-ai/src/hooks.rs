@@ -245,6 +245,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::frontier_a_t6::HOOKS,
     crate::frontier_a_t7::HOOKS,
     crate::frontier_a_t8::HOOKS,
+    crate::frontier_a_t10::HOOKS,
     crate::frontier_a_t9::HOOKS,
     crate::frontier_c::HOOKS6,
 ];
