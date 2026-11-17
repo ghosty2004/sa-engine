@@ -14,9 +14,9 @@ use sa_world::world::common::entity_pos;
 
 orig! {
     /// `CVehicle::GetPlaneOrdnanceRateOfFire(eOrdnanceType)` (0x6D4590)
-    fn get_plane_ordnance_rate_of_fire(v: GPtr<u8>, ty: u32) -> i32 = thiscall 0x6D4590 => crate::vehicle_fire_rates_upgrades::vehicle_get_plane_ordnance_rate_of_fire;
+    pub(crate) fn get_plane_ordnance_rate_of_fire(v: GPtr<u8>, ty: u32) -> i32 = thiscall 0x6D4590 => crate::vehicle_fire_rates_upgrades::vehicle_get_plane_ordnance_rate_of_fire;
     /// `CVehicle::GetPlaneOrdnancePosition(CVector* out, eOrdnanceType)` (0x6D46E0)
-    fn get_plane_ordnance_position(v: GPtr<u8>, out: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x6D46E0 => crate::frontier_b2_veh2::vehicle_get_plane_ordnance_position;
+    pub(crate) fn get_plane_ordnance_position(v: GPtr<u8>, out: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x6D46E0 => crate::frontier_b2_veh2::vehicle_get_plane_ordnance_position;
 }
 
 /// `CVehicle::GetPlaneOrdnancePosition(CVector* out, eOrdnanceType type)` (0x6D46E0, thiscall, `ret 8`, returns `out`):
@@ -87,6 +87,12 @@ pub fn vehicle_possibly_drop_free_fall_bomb(this: GPtr<u8>, ty: u32, check: u32)
     let pz = x(rd(bp, 8)).fadd_m(a[2]).to_f32();
     wr::<u8>(this, 0x4A9, new);
     add_projectile(this, 0x15, px, py, pz, 0.0, m.byte_add(0x10), GPtr::NULL);
+    shake_and_stamp(this, ty);
+}
+
+/// The ordnance shot's tail: a player driver's pad (player 0 or 1, +0x598) shakes (240, 160, 0); the shot time
+/// (+0x4FC for type 1, else +0x500) = now.
+pub(crate) fn shake_and_stamp(this: GPtr<u8>, ty: u32) {
     let d = rd::<GPtr<u8>>(this, 0x460);
     if !d.is_null() && ped_is_player(d) != 0 {
         let n = rd::<u32>(rd::<GPtr<u8>>(this, 0x460), 0x598);

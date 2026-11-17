@@ -20,7 +20,7 @@ orig! {
     /// `CWorld::FindPlayerSlotWithVehiclePointer(CEntity*)` (0x564000)
     fn find_player_slot_with_vehicle(v: GPtr<u8>) -> i32 = cdecl 0x564000 => unported;
     /// `CVehicle::ScanAndMarkTargetForHeatSeekingMissile(CEntity*)` (0x6E0400)
-    fn scan_and_mark_target(v: GPtr<u8>, e: GPtr<u8>) -> GPtr<u8> = thiscall 0x6E0400 => unported;
+    fn scan_and_mark_target(v: GPtr<u8>, e: GPtr<u8>) -> GPtr<u8> = thiscall 0x6E0400 => crate::vehicle_guns::scan_and_mark_target_for_heat_seeking_missile;
 }
 
 use sa_pop::carctrl3::time_ms as now;

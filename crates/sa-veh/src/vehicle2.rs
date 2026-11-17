@@ -2326,7 +2326,7 @@ orig! {
     /// `CVehicle::PossiblyDropFreeFallBombForPlayer(eOrdnanceType, bool)` (0x6E07E0)
     pub fn possibly_drop_free_fall_bomb(v: GPtr<u8>, ord: u32, b: u32) = thiscall 0x6E07E0 => unported;
     /// `CVehicle::FireHeatSeakingMissile(CEntity*, eOrdnanceType, bool)` (0x6E05C0)
-    pub fn fire_heat_seaking_missile(v: GPtr<u8>, target: GPtr<u8>, ord: u32, b: u32) = thiscall 0x6E05C0 => unported;
+    pub fn fire_heat_seaking_missile(v: GPtr<u8>, target: GPtr<u8>, ord: u32, b: u32) = thiscall 0x6E05C0 => crate::vehicle_guns::fire_heat_seaking_missile;
     /// `CVehicle::FireUnguidedMissile(eOrdnanceType, bool)` (0x6D5110)
     pub fn fire_unguided_missile(v: GPtr<u8>, ord: u32, b: u32) = thiscall 0x6D5110 => unported;
 }
