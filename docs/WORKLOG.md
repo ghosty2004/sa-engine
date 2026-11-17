@@ -3356,3 +3356,5 @@
   iterations from there, so later frames are not comparable); the plane frames show the radar with the altimeter.
 - frontier.py --no-branches: "to port" 129 → 127 (RW 30 → 28: 0x7CF240, 0x7CD8D0; 0x43E0E0 was not a frontier row);
   RENDER 19 rows unchanged; no new rows.
+- verify-all (lanes 6-7, host sa-oracle and satool rebuilt; DLL of c54a4c81, docs-only commits after it):
+  `lanec9-c17` (SA_UNVERIFIED=frontier2-c17) IDENTICAL 13/13; `lanec9-default` (default set) IDENTICAL 13/13.
