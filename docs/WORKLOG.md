@@ -3296,3 +3296,21 @@
   0x49CF90 / SetAlpha 0x49CEC0 became sa-world bindings with sa-pop twins), CSetPiece::TryToGenerateCopCar 0x4998A0,
   the named-anim CTaskSimpleHoldEntity constructor 0x691470, vector<CVector>::_Xlen 0x5ECC30 (native, as its four
   siblings).
+- Scenarios (frontier.sh, i686 native, SA_ROOT=~/sa-engine, sa-game of bd7c9c25): pausemenu 416 / 0 blocked, solicit
+  4016 / 0, crossing 1216 / 0, crossing-long 4016 / 0, roadblocks 2016 / 1 (lane C: RtDictSchemaStreamReadDict
+  0x7CF240), melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0, shootdriver 1216 / 0, quad 1216 / 0, heli 1216 / 0,
+  plane 1216 / 392 (lane C: 0x43E0E0), roadblock-script 1016 / 0, roadblock-wanted 2016 / 0, boat 1216 / 0, gangwar
+  2016 / 0, jetpack 1016 / 0, copsf 2016 / 1 (0x7CF240), coplv 2016 / 0, samsite 1616 / 1 (0x7CF240); no crash, no
+  lane A blocker. Web (headless Chromium, `--gpu native`, WebGL2): the pre-fix build traps in move_limb_normalized
+  6.7 s after the SF teleport; the fixed build (MoveLimb + CBoat raster) runs 240 s there with no trap.
+- frontier.py --no-branches: to port 129 -> 118 (WORLD 27 -> 21, AI 2 -> 0, PED 1 -> 0, POP 4 -> 3, UNK-game 1 -> 0).
+- Writer gate (base 489d7495): all 16 steps PASS on bd7c9c25 (8 new hooks, all unverified, batches frontier2-a14 /
+  frontier2-a15). An earlier run failed hooktest: 0x422760's entry is read by the protection (0x4020E4), so it became
+  a native (6f715fea).
+- verify-all (lanes 1-3, host sa-oracle rebuilt from this tree, DLL sha256 60cd67b3… of d8b7372e, same code as the
+  head): `f2a10-u` (SA_UNVERIFIED=frontier2-a14,frontier2-a15) IDENTICAL 13/13, `f2a10-def` (default set)
+  IDENTICAL 13/13; save-load identical except the SAVE-1 stack residue.
+- Not done: the partial script switches 0x47A760 / 0x48B590, ProcessColModels' disk cases, the POP partials, the
+  generated 0x5980F0 declaration's convention (web only), the rest of WORLD (CPickups::DoMineEffects /
+  DoCollectableEffects, CReplay, CShopping, Interior_c furnishing, CEscalator, ...), WEAPON (5), STREAM (3), CORE
+  ShutdownRenderWare, HUD / COLL partials.
