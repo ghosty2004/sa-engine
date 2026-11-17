@@ -2,10 +2,10 @@
 //! an aid; where it differs the bytes win).
 
 use sa_core::abi::HookReg;
-use sa_core::hook;
+use sa_core::{hook, orig};
 use sa_core::mem::GPtr;
 
-use sa_core::bindings::{eh_vector_dtor, list_dtor, matrix_mul_vec};
+use sa_core::bindings::{automobile_ctor, eh_vector_dtor, list_dtor, matrix_mul_vec, vector_normalise};
 use sa_core::crt::rand_at;
 use sa_core::field::ptr_of as p;
 use sa_math::fpu::ftol32;
@@ -15,7 +15,17 @@ use crate::bindings::{
     find_objects_in_range, fx_add_particle, fx_prt_mult_ctor, placeable_allocate_matrix, tag_manager_get_alpha,
     tag_manager_is_tag, tag_manager_set_alpha,
 };
-use sa_stream::bindings::simple_transform_update_matrix;
+use crate::bindings::{
+    find_objects_kinda_colliding, vehicle_change_law_enforcer_state, vehicle_new, world_add, world_process_vertical_line,
+};
+use sa_stream::bindings::{get_default_cop_car_model, simple_transform_update_matrix};
+
+orig! {
+    /// `CVehicle::GetHeightAboveRoad()` (vtable +0xD4, ST0)
+    fn v_get_height_above_road(v: GPtr<u8>) -> f64 = thiscall vslot 0xD4 => unported;
+    /// scalar deleting destructor (vtable +0)
+    fn v_delete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
+}
 
 /// `CModelInfo::ms_modelInfoPtrs`
 const MODEL_INFO_PTRS: usize = 0xA9_B0C8;
@@ -132,5 +142,63 @@ pub fn world_spray_paint_world(pos: GPtr<u8>, out_dir: GPtr<u32>, radius: f32, p
     }
 }
 
+/// `CSetPiece::TryToGenerateCopCar(CVector2D posn, CVector2D target)` (0x4998A0, thiscall, `ret 0x10`; `this` unused).
+/// No car without a default cop car model (`GetDefaultCopCarModel(1)` < 0). A new `CAutomobile(model, 1, true)` (a
+/// failed allocation leaves a null car that the next steps dereference, as the bytes) placed at `(posn, 1000)`, or on
+/// the ground of a vertical line down to -1000 (buildings and dummies: `GetHeightAboveRoad() + hit z`), facing the
+/// normalised `(target - posn, 0)` (right `(d.y, -d.x, 0)`, up z). With nothing (vehicles, peds) within the model's
+/// bounding radius it turns law enforcer, joins the world and is returned; otherwise it is deleted and 0 returned.
+/// The vertical line's entity output slot is not initialised by the original (written by the callee only).
+#[hook(addr = 0x4998A0, conv = thiscall, name = "CSetPiece::TryToGenerateCopCar", this = "CSetPiece",
+       expect = "64 A1 00 00 00 00 6A FF",
+       unverified = "frontier2-a14", route = "L2", hazards = "heap-writes,x87-transcendental",
+       note = "set-piece cop cars (CSetPiece::Update, wanted level road blocks); GetHeightAboveRoad is ST0")]
+pub fn set_piece_try_to_generate_cop_car(_this: GPtr<u8>, sx: f32, sy: f32, tx: f32, ty: f32) -> GPtr<u8> {
+    let model = get_default_cop_car_model(1);
+    if model < 0 {
+        return GPtr::NULL;
+    }
+    let mem = vehicle_new(0x988);
+    let car = if mem.is_null() { GPtr::NULL } else { automobile_ctor(mem, model as u32, 1, 1) };
+    let mut point = [sx, sy, 1000.0f32];
+    let mut cp = [0u32; 0x2C / 4];
+    let mut ent = GPtr::<u8>::NULL;
+    if world_process_vertical_line(p(&mut point), -1000.0, p(&mut cp), p(&mut ent), 1, 0, 0, 0, 1, 0, GPtr::NULL) != 0 {
+        point[2] = sa_math::fpu::st0(v_get_height_above_road(car)).fadd_m(f32::from_bits(cp[2])).to_f32();
+    }
+    let mut d = [x(tx).fsub_m(sx).to_f32(), x(ty).fsub_m(sy).to_f32(), 0.0f32];
+    vector_normalise(GPtr::from_raw(&mut d));
+    let m = rd::<GPtr<u8>>(car, 0x14);
+    let w = |o: isize, v: f32| sa_core::field::wr::<f32>(m, o, v);
+    w(0x10, d[0]);
+    w(0x14, d[1]);
+    w(0x18, 0.0);
+    w(0, d[1]);
+    w(4, x(d[0]).fchs().to_f32());
+    w(8, 0.0);
+    w(0x20, 0.0);
+    w(0x24, 0.0);
+    w(0x28, 1.0);
+    w(0x30, point[0]);
+    w(0x34, point[1]);
+    w(0x38, point[2]);
+    let mi = g::<GPtr<u8>>(MODEL_INFO_PTRS + 4 * rd::<i16>(car, 0x22) as usize).read();
+    let radius = rd::<f32>(rd::<GPtr<u8>>(mi, 0x14), 0x24);
+    let mut count: i16 = 0;
+    find_objects_kinda_colliding(GPtr::from_raw(point.as_mut_ptr()), radius, 0, GPtr::from_raw(&mut count), 16, GPtr::NULL, 0, 1, 1, 0, 0);
+    if count != 0 {
+        v_delete(car, 1);
+        return GPtr::NULL;
+    }
+    vehicle_change_law_enforcer_state(car, 1);
+    world_add(car);
+    car
+}
+
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_INTERIOR_MANAGER_DTOR, HOOK_OBJECT_DO_BURN_EFFECT, HOOK_WORLD_SPRAY_PAINT_WORLD];
+pub const HOOKS: &[HookReg] = &[
+    HOOK_INTERIOR_MANAGER_DTOR,
+    HOOK_OBJECT_DO_BURN_EFFECT,
+    HOOK_WORLD_SPRAY_PAINT_WORLD,
+    HOOK_SET_PIECE_TRY_TO_GENERATE_COP_CAR,
+];
