@@ -687,22 +687,84 @@ pub(crate) mod coop {
         Some(t.entry)
     }
 
+    /// A release of semaphore `h`: for the stream semaphore (`CdStreamRead` queued a request), the requests whose
+    /// bytes are available run now ([`pump`]).
     #[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
     pub fn released(h: u32) {
-        if STREAM_RUNNING.load(Ordering::Relaxed) == 0
-            || h != sa_stream::cdstream::STREAM_SEMAPHORE.get().addr() as u32
-        {
+        if h == sa_stream::cdstream::STREAM_SEMAPHORE.get().addr() as u32 {
+            STALLED.store(false, Ordering::Relaxed);
+            pump(false);
+        }
+    }
+
+    /// The head request was not ready at the last [`pump`] and nothing arrived since ([`io_arrived`]): the
+    /// per-iteration [`pump_stream`] has nothing to check (the main loop runs thousands of iterations a second).
+    static STALLED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+    /// The game folder's backend received bytes: the next [`pump_stream`] checks the head request again.
+    #[allow(dead_code)] // called by the web backend only (platform/web.rs)
+    pub fn io_arrived() {
+        STALLED.store(false, Ordering::Relaxed);
+    }
+
+    /// Runs the cooperative stream thread's loop body once per pending count of the stream semaphore, in queue
+    /// order (RENDER-2 R2a). A request runs only once the game folder's backend has its bytes
+    /// ([`sa_platform::fs::RandomRead::ready`], which starts fetching them otherwise): until then the stream stays
+    /// queued (`CdStreamGetStatus` answers `STATUS_WAITING`) and a later call completes it, as the original's
+    /// thread does on a slow disk. `block` (a wait for the stream: `CdStreamSync`, a busy-wait loop) and the
+    /// deterministic mode (each read completes at its request) run every pending request, reading synchronously.
+    fn pump(block: bool) {
+        let sema = sa_stream::cdstream::STREAM_SEMAPHORE.get().addr() as u32;
+        if STREAM_RUNNING.load(Ordering::Relaxed) == 0 || sema == 0 {
             return;
         }
-        while kernel().wait(h, 0) == sa_platform::kernel::WAIT_OBJECT_0 {
+        let block = block || crate::det::on();
+        loop {
+            if !block
+                && let Some((file, offset, len)) = sa_stream::cdstream::queue_head()
+                && !super::with("CdStream ready", |p| p.files.ready_at(super::h32(file), offset.into(), len.into()))
+            {
+                STALLED.store(true, Ordering::Relaxed);
+                return;
+            }
+            if kernel().wait(sema, 0) != sa_platform::kernel::WAIT_OBJECT_0 {
+                return;
+            }
             sa_stream::cdstream::cd_stream_thread_step();
+        }
+    }
+
+    /// The streaming requests whose bytes arrived since the last call complete (once per main-loop iteration,
+    /// before it: `web::frame`).
+    #[allow(dead_code)] // called by the web backend only (platform/web.rs)
+    pub fn pump_stream() {
+        if !STALLED.load(Ordering::Relaxed) {
+            pump(false);
+        }
+    }
+
+    /// Every pending streaming request completes now, reading synchronously: the handler of
+    /// `sa_core::orig::busy_wait` (the original's busy-wait loops on the streaming thread's progress, e.g.
+    /// `CAudioEngine::InitialisePostLoading` until its banks are loaded).
+    #[allow(dead_code)] // called by the web backend only (platform/web.rs)
+    pub fn drain_stream() {
+        pump(true);
+    }
+
+    /// Before a wait on semaphore `h` with a timeout: a wait on a stream's sync semaphore (`CdStreamSync`)
+    /// completes the pending requests first (synchronous reads), since no thread can release it meanwhile.
+    pub fn before_wait(h: u32, ms: u32) {
+        if ms != 0 && STREAM_RUNNING.load(Ordering::Relaxed) != 0 && sa_stream::cdstream::is_sync_semaphore(h) {
+            pump(true);
         }
     }
 }
 pub(crate) fn wait_for_single_object(h: GPtr<u8>, ms: u32) -> u32 {
+    coop::before_wait(h32(h), ms);
     crate::det::wait(h32(h), ms, |h, ms| kernel().wait(h, ms))
 }
 pub(crate) fn wait_for_single_object_ex(h: GPtr<u8>, ms: u32, _alertable: i32) -> u32 {
+    coop::before_wait(h32(h), ms);
     crate::det::wait(h32(h), ms, |h, ms| kernel().wait(h, ms))
 }
 /// `ReadFile`. With an `OVERLAPPED` the read happens at its offset and completes synchronously

@@ -61,6 +61,9 @@ pub const PRESENT: usize = 25;
 pub const PERF: usize = 26;
 /// The mod host's overlay phase (feature `mods`; inside `Present`): the mods' calls and the overlay draw.
 pub const MODS: usize = 27;
+/// File reads served by the game folder's backend (the web's block cache; its waits for the network are counted by
+/// [`C_IO_WAITS`] / [`C_IO_WAIT_US`]). Charged out of the phase the read was made in.
+pub const IO: usize = 28;
 
 const PHASES: &[&str] = &[
     "other",
@@ -91,6 +94,7 @@ const PHASES: &[&str] = &[
     "present",
     "perf",
     "mods",
+    "io",
 ];
 
 // ---- counters (per frame) ----------------------------------------------------------------------------------------
@@ -111,6 +115,9 @@ const C_PLATFORM: usize = 13;
 pub const C_GAME_ALLOCS: usize = 14;
 const C_ITERATIONS: usize = 15;
 const C_SUBMITS: usize = 16;
+/// File reads that waited for the network (the web backend's synchronous requests), and the microseconds waited.
+pub const C_IO_WAITS: usize = 17;
+pub const C_IO_WAIT_US: usize = 18;
 
 const COUNTERS: &[&str] = &[
     "d3d9_calls",
@@ -130,6 +137,8 @@ const COUNTERS: &[&str] = &[
     "game_allocs",
     "iterations",
     "submits",
+    "io_waits",
+    "io_wait_us",
 ];
 
 /// Late column: the GPU time of the frame's render passes (timestamp queries; empty where unsupported).

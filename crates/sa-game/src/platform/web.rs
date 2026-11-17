@@ -241,6 +241,11 @@ pub fn boot() -> Result<(), JsValue> {
     SESSION.with(|c| c.set(Box::into_raw(Box::new(s))));
     // `SA_WEB_AUTO_INPUT=1`: the offscreen mode's synthetic input is added (unattended evidence runs)
     FRONT.with(|f| *f.borrow_mut() = FrontEnd::new(crate::env::var_os("SA_WEB_AUTO_INPUT").is_some()));
+    // the original's busy-wait loops on the streaming thread's progress complete the pending reads (synchronously);
+    // the deterministic mode keeps its own handler
+    if !crate::det::on() {
+        sa_core::orig::set_busy_wait_handler(crate::bind::coop::drain_stream);
+    }
     // from now on an unported callee leaves the main-loop iteration instead of aborting the module
     if crate::env::var_os("SA_WEB_NO_RECOVER").is_none() {
         sa_core::orig::set_unported_handler(unported);
@@ -271,6 +276,8 @@ pub fn frame() -> bool {
             }
         }
     }
+    // streaming reads whose bytes arrived since the last iteration complete now (RENDER-2 R2a, bind::coop)
+    crate::bind::coop::pump_stream();
     // the front end's input pipeline (crate::frontend): keys pending until a frame, motion handed over once
     let Some((input, before)) = with_session(|s| s.n).map(|n| FRONT.with(|f| f.borrow_mut().take(n))) else {
         return false;
@@ -320,6 +327,13 @@ pub fn recover() -> bool {
     }
     log_line(format!("{BLOCKED_TAG}{msg}"));
     with_session(|s| s.finish_blocked(&msg)).unwrap_or(false)
+}
+
+/// The loader delivered blocks of the game folder: a streaming read waiting for them is checked again at the next
+/// iteration (RENDER-2 R2a, `bind::coop`).
+#[wasm_bindgen]
+pub fn io_arrived() {
+    crate::bind::coop::io_arrived();
 }
 
 /// One pass of each due audio thread (`CAESmoothFadeThread`, `CAEStreamThread`; cooperative on wasm32, `bind::coop`).

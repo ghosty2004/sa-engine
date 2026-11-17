@@ -3,7 +3,9 @@
 //! The page registers every file of the user's own GTA San Andreas folder (chosen with a folder picker, or listed by
 //! the local development server; never shipped) with its path relative to the folder and its size; reads go back to
 //! the page synchronously (`saGameIo.read(id, offset, length)` on the worker's global scope: `FileReaderSync` on the
-//! picked `File`, or a ranged synchronous request to the localhost server), with a block cache on the JS side.
+//! picked `File`, or the worker's block cache, which the loader worker fills asynchronously from the network and the
+//! browser's persistent cache; a synchronous request only for bytes it does not hold yet). The streaming reads ask
+//! first ([`RandomRead::ready`]) and run once the bytes are there (RENDER-2 R2a, `bind::coop`).
 //! Paths are matched case-insensitively with either separator, as the game spells them.
 
 use std::collections::{HashMap, HashSet};
@@ -18,6 +20,14 @@ extern "C" {
     /// `saGameIo.read(id, offset, length)`: the bytes `[offset, offset + length)` of file `id` (fewer at its end).
     #[wasm_bindgen(js_namespace = saGameIo, js_name = read)]
     fn io_read(id: u32, offset: f64, length: u32) -> js_sys::Uint8Array;
+    /// `saGameIo.ready(id, offset, length)`: whether the worker holds those bytes in memory; when not, it asks the
+    /// loader for them (asynchronously) and answers false.
+    #[wasm_bindgen(js_namespace = saGameIo, js_name = ready)]
+    fn io_ready(id: u32, offset: f64, length: f64) -> bool;
+    /// `saGameIo.waited()`: the milliseconds the last `read` spent waiting for the network (a synchronous request
+    /// for bytes the worker did not hold), 0 when it had them.
+    #[wasm_bindgen(js_namespace = saGameIo, js_name = waited)]
+    fn io_waited() -> f64;
 }
 
 struct Entry {
@@ -66,7 +76,17 @@ fn read_into(id: u32, offset: u64, buf: &mut [u8]) -> io::Result<()> {
     let mut done = 0usize;
     while done < buf.len() {
         let n = (buf.len() - done).min(16 << 20);
-        let a = io_read(id, (offset + done as u64) as f64, n as u32);
+        let a = {
+            let _io = crate::perf::scope(crate::perf::IO);
+            io_read(id, (offset + done as u64) as f64, n as u32)
+        };
+        if crate::perf::enabled() {
+            let ms = io_waited();
+            if ms > 0.0 {
+                crate::perf::add(crate::perf::C_IO_WAITS, 1);
+                crate::perf::add(crate::perf::C_IO_WAIT_US, (ms * 1000.0) as u64);
+            }
+        }
         let got = a.length() as usize;
         if got < n {
             return Err(io::Error::new(io::ErrorKind::UnexpectedEof, "short read from the game folder"));
@@ -114,6 +134,16 @@ impl RandomRead for WebFile {
 
     fn len(&self) -> u64 {
         self.len
+    }
+
+    fn ready(&mut self, offset: u64, len: u64) -> bool {
+        let end = (offset + len).min(self.len);
+        if end <= offset || (offset >= self.at && end <= self.at + self.window.len() as u64) {
+            return true;
+        }
+        // what `read_at` will fetch: a small read fills the read-ahead window
+        let fetch = if len >= READ_AHEAD as u64 { end - offset } else { (READ_AHEAD as u64).min(self.len - offset) };
+        io_ready(self.id, offset as f64, fetch as f64)
     }
 }
 

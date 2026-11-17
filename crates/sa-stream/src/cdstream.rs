@@ -357,6 +357,29 @@ pub fn cd_stream_thread_step() {
     }
 }
 
+/// The read the next [`cd_stream_thread_step`] makes: the file handle, byte offset and byte count of the request at
+/// the head of the queue; `None` when the queue is empty or the request will not read (its status is already set).
+/// Not part of the original: a host without threads (wasm32, `bind::coop`) runs the step only once the bytes are
+/// available, so the read completes on a later frame, as the original's with a slow disk.
+pub fn queue_head() -> Option<(GPtr<u8>, u32, u32)> {
+    if QUEUE_HEAD.get() == QUEUE_TAIL.get() {
+        return None;
+    }
+    let s = stream(QUEUE_DATA.get().wrapping_index(QUEUE_HEAD.get()).read());
+    if f_u32(s, STATUS).read() != 0 {
+        return None;
+    }
+    Some((f_ptr(s, FILE).read(), f_u32(s, 0).read() << 11, f_u32(s, SECTORS).read() << 11))
+}
+
+/// Whether `h` is the sync semaphore of one of the streams (the one `CdStreamSync` waits on). Not part of the
+/// original (see [`queue_head`]).
+pub fn is_sync_semaphore(h: u32) -> bool {
+    STREAMING_INITIALIZED.get() != 0
+        && !CD_STREAMS.get().is_null()
+        && (0..STREAM_COUNT.get()).any(|i| f_ptr(stream(i), SEMA).read().addr() as u32 == h)
+}
+
 /// `CdStreamRemoveImages()` (0x406690, cdecl): sync every stream, close every open image.
 #[hook(addr = 0x406690, conv = cdecl, name = "CdStream::CdStreamRemoveImages", expect = "A1 90 40 8E 00")]
 pub fn cd_stream_remove_images() {

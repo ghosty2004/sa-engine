@@ -16,6 +16,13 @@ pub trait RandomRead: Send {
     fn is_empty(&self) -> bool {
         self.len() == 0
     }
+    /// Whether a read of `[offset, offset + len)` would complete without waiting for the file's backend. When it
+    /// would wait (the browser's network: RENDER-2 R2a), the backend starts fetching the range in the background,
+    /// so a later call returns true. Local files are always ready (the default).
+    fn ready(&mut self, offset: u64, len: u64) -> bool {
+        let _ = (offset, len);
+        true
+    }
 }
 
 /// The user's game folder (and, writable, the user-files directory).

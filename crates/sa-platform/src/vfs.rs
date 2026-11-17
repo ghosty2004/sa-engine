@@ -567,6 +567,15 @@ impl FileTable {
         n
     }
 
+    /// Whether a read of `len` bytes at `offset` of `h` would complete without waiting ([`RandomRead::ready`]); an
+    /// unknown handle or an in-memory file is ready.
+    pub fn ready_at(&mut self, h: u32, offset: u64, len: u64) -> bool {
+        match self.get(h).map(|f| &mut f.body) {
+            Some(Body::Stream(r)) => r.ready(offset, len),
+            _ => true,
+        }
+    }
+
     /// Writes buffered changes back (`fflush`).
     pub fn flush(&mut self, vfs: &Vfs, h: u32) -> io::Result<()> {
         let Some(f) = self.get(h) else {
