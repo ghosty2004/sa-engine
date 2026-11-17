@@ -27,23 +27,23 @@ use crate::im2d::im2d_render_primitive;
 use sa_math::fpu::xi;
 
 /// The raster extension offset.
-const EXT_OFFSET: usize = 0xB4E9E0;
+pub(crate) const EXT_OFFSET: usize = 0xB4E9E0;
 /// The current context (destination) raster.
 const CONTEXT_RASTER: usize = 0xB4E9E4;
 /// `IDirect3DDevice9*`.
-const DEVICE: usize = 0xC97C28;
+pub(crate) const DEVICE: usize = 0xC97C28;
 /// The default render surface (camera rasters without a swap chain).
-const RENDER_SURFACE: usize = 0xC97C30;
+pub(crate) const RENDER_SURFACE: usize = 0xC97C30;
 /// `D3DCAPS9.StretchRectFilterCaps` (0x1000100: min/mag point, 0x2000200: min/mag linear).
 const STRETCH_FILTER_CAPS: usize = 0xC9BFF4;
 /// The default depth-stencil surface.
-const DEPTH_SURFACE: usize = 0xC97C2C;
+pub(crate) const DEPTH_SURFACE: usize = 0xC97C2C;
 /// The quad 0x4CA5A0 draws: four `{x, y, z, rhw, colour, u, v}` vertices (stride 0x1C).
 const QUAD: usize = 0xB4E770;
 
 orig! {
     /// `IUnknown::Release()` (+8)
-    fn release(o: GPtr<u8>) -> u32 = stdcall vslot 0x8 => unported;
+    pub(crate) fn release(o: GPtr<u8>) -> u32 = stdcall vslot 0x8 => unported;
     /// `IDirect3DTexture9::GetSurfaceLevel(level, out)` (+0x48)
     fn tex_get_surface_level(tex: GPtr<u8>, level: u32, out: GPtr<u32>) -> i32 = stdcall vslot 0x48 => unported;
     /// `IDirect3DCubeTexture9::GetCubeMapSurface(face, level, out)` (+0x48)
@@ -61,11 +61,11 @@ orig! {
 /// A `RECT` (or a `POINT` in the first two words) local.
 #[repr(C)]
 #[derive(Clone, Copy, Default)]
-struct Rect {
-    left: i32,
-    top: i32,
-    right: i32,
-    bottom: i32,
+pub(crate) struct Rect {
+    pub(crate) left: i32,
+    pub(crate) top: i32,
+    pub(crate) right: i32,
+    pub(crate) bottom: i32,
 }
 
 // SAFETY: four integers.
@@ -75,7 +75,7 @@ unsafe impl sa_core::mem::GameData for Rect {}
 use sa_core::field::gr32 as u;
 
 /// The top parent: follow +0 until it points at itself (the walk starts at the raster itself).
-fn top_of(r: GPtr<u8>) -> GPtr<u8> {
+pub(crate) fn top_of(r: GPtr<u8>) -> GPtr<u8> {
     let mut t = r;
     loop {
         let n = p8(rd::<u32>(t, 0));
@@ -96,10 +96,16 @@ fn surface_of(top: GPtr<u8>, out: &mut u32) {
         *out = if rd::<u32>(e, 0x1C) != 0 { rd::<u32>(e, 0) } else { u(RENDER_SURFACE) };
         return;
     }
+    level0_surface(e, out);
+}
+
+/// Level 0 of an extension's texture (+0): `GetCubeMapSurface(face, 0)` when the cube nibble (+9) is
+/// set (face = its high nibble), else `GetSurfaceLevel(0)`; the result is ignored.
+pub(crate) fn level0_surface(e: GPtr<u8>, out: &mut u32) {
     let cube = rd::<u8>(e, 9);
     let tex = p8(rd::<u32>(e, 0));
     if cube & 0xF != 0 {
-        cube_get_cube_map_surface(tex, (cube >> 4) as u32, 0, GPtr::from_raw(out));
+        cube_get_cube_map_surface(tex, u32::from(cube) >> 4, 0, GPtr::from_raw(out));
     } else {
         tex_get_surface_level(tex, 0, GPtr::from_raw(out));
     }
@@ -303,13 +309,7 @@ pub fn raster_render_quad(src: GPtr<u8>, scaled: u32, rect: GPtr<u8>, blend: u32
         return;
     }
     let mut surf: u32 = 0;
-    let cube = rd::<u8>(e, 9);
-    let tex = p8(rd::<u32>(e, 0));
-    if cube & 0xF != 0 {
-        cube_get_cube_map_surface(tex, u32::from(cube) >> 4, 0, GPtr::from_raw(&mut surf));
-    } else {
-        tex_get_surface_level(tex, 0, GPtr::from_raw(&mut surf));
-    }
+    level0_surface(e, &mut surf);
     let ctx = p8(u(CONTEXT_RASTER));
     let (cx, cy) = (i32::from(rd::<i16>(ctx, 0x1C)), i32::from(rd::<i16>(ctx, 0x1E)));
     let mut ctx_rect = Rect { left: cx, top: cy, right: rd::<i32>(ctx, 0xC).wrapping_add(cx), bottom: rd::<i32>(ctx, 0x10).wrapping_add(cy) };

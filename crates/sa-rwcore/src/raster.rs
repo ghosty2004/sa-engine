@@ -1190,7 +1190,7 @@ orig! {
     fn native_texture_get_size_call(out: GPtr<u32>, t: GPtr<u8>, n: u32) -> u32 = cdecl 0x4CD360 => d3d9_native_texture_get_size;
 
     /// `IDirect3D(Cube)Texture9::GetLevelDesc(level, desc)` (+0x44)
-    fn tex_get_level_desc(tex: GPtr<u8>, level: u32, desc: GPtr<u8>) -> i32 = stdcall vslot 0x44 => unported;
+    pub(crate) fn tex_get_level_desc(tex: GPtr<u8>, level: u32, desc: GPtr<u8>) -> i32 = stdcall vslot 0x44 => unported;
     /// `IDirect3DTexture9::LockRect(level, locked, rect, flags)` (+0x4C)
     fn tex_lock_rect(tex: GPtr<u8>, level: u32, locked: GPtr<u8>, rect: u32, flags: u32) -> i32 = stdcall vslot 0x4C => unported;
     /// `IDirect3DCubeTexture9::LockRect(face, level, locked, rect, flags)` (+0x4C)
