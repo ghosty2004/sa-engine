@@ -34,7 +34,7 @@ const K_ONE: u32 = 0x3F80_0000;
 /// `.rdata` 0x859014: -100.0f
 const K_MINUS_100: u32 = 0xC2C8_0000;
 /// `CPopulation::ms_nTotalMissionPeds` 0xC0EC24.
-const TOTAL_MISSION_PEDS: usize = 0xC0EC24;
+pub(crate) const TOTAL_MISSION_PEDS: usize = 0xC0EC24;
 
 pub use crate::bindings::vehicle_get_ref;
 pub use sa_world::bindings::civilian_ped_ctor;

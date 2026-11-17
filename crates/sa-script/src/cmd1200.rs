@@ -1,6 +1,6 @@
-//! `CRunningScript::ProcessCommands1200To1299` (0x48B590): partial port (PORT-SCRIPT-2, ADR-002).
-//! Opcodes in [`PORTED`] run in Rust; every other opcode (and the default, -1) runs the original body
-//! through the fallback. Cases follow the 1.0 US bytes and
+//! `CRunningScript::ProcessCommands1200To1299` (0x48B590): a whole port since FRONTIER-2 turn 11 (a partial
+//! one, PORT-SCRIPT-2 / ADR-002, before). Every opcode of the range is in [`PORTED`]; a command outside it gets
+//! the default -1. Cases follow the 1.0 US bytes and
 //! `docs/re/specs/SCRIPT/commands/ProcessCommands1200To1299.md`.
 //!
 //! Text-label buffers: the original's 16-byte stack buffer is not cleared before
@@ -23,7 +23,8 @@ pub const PORTED: &[u16] = &[
     0x04CC, 0x04CD, 0x04CE, 0x04CF, 0x04D0, 0x04D1, 0x04D2, 0x04D3, 0x04D4, 0x04D5, 0x04D6, 0x04D7, 0x04D8, 0x04D9,
     0x04DA, 0x04DB, 0x04DC, 0x04DD, 0x04DE, 0x04DF, 0x04E0, 0x04E1, 0x04E2, 0x04E3, 0x04E4, 0x04E5, 0x04E6, 0x04E7,
     0x04E8, 0x04E9, 0x04EA, 0x04EB, 0x04EC, 0x04ED, 0x04EE, 0x04EF, 0x04F0, 0x04F1, 0x04F2, 0x04F3, 0x04F4, 0x04F5,
-    0x04F6, 0x04F7, 0x04F8, 0x04F9, 0x04FA, 0x04FB, 0x04FC, 0x04FD, 0x04FE, 0x04FF, 0x0500, 0x0501, 0x0502, 0x0504,
+    0x04F6, 0x04F7, 0x04F8, 0x04F9, 0x04FA, 0x04FB, 0x04FC, 0x04FD, 0x04FE, 0x04FF, 0x0500, 0x0501, 0x0502, 0x0503,
+    0x0504,
     0x0505, 0x0506, 0x0507, 0x0508, 0x0509, 0x050A, 0x050B, 0x050C, 0x050D, 0x050E, 0x050F, 0x0510, 0x0511, 0x0512,
     0x0513,
 ];
@@ -96,6 +97,10 @@ orig! {
     fn locate_object_command(s: Scr, command: u32) = thiscall 0x487D10 => unported;
     /// `CRunningScript::ObjectInAreaCheckCommand(int32 command)` (0x489150)
     fn object_in_area_check_command(s: Scr, command: u32) = thiscall 0x489150 => unported;
+    /// `CRopes::CreateRopeForSwatPed(const CVector&)` (0x558D10): the rope id
+    fn create_rope_for_swat_ped(pos: GPtr<u8>) -> u32 = cdecl 0x558D10 => unported;
+    /// `CTaskComplexUseSwatRope::CTaskComplexUseSwatRope(uint32 ropeId)` (0x659410, `ret 4`)
+    fn use_swat_rope_ctor(t: GPtr<u8>, rope: u32) -> GPtr<u8> = thiscall 0x659410 => unported;
 }
 
 /// `.rdata` 0x859014: -100.0f
@@ -150,7 +155,9 @@ fn set_bits(e: GPtr<u8>, off: isize, mask: u32, on: bool) {
 
 /// `CRunningScript::ProcessCommands1200To1299(int32 command)` (0x48B590, thiscall, `ret 4`): AL = 0
 /// continue, -1 unknown.
-#[hook(addr = 0x48B590, conv = thiscall, name = "CRunningScript::ProcessCommands1200To1299", expect = "6A FF 68 BA 84 83 00", this = "CRunningScript", fallback)]
+#[hook(addr = 0x48B590, conv = thiscall, name = "CRunningScript::ProcessCommands1200To1299", expect = "6A FF 68 BA 84 83 00", this = "CRunningScript",
+       unverified = "frontier2-a18", route = "L2", hazards = "heap-writes",
+       note = "was a partial port: 0503 CREATE_SWAT_ROPE is new (the rest was verified); every opcode is a case now")]
 pub fn process_commands_1200_to_1299(s: Scr, command: u32) -> i8 {
     match command {
         // The 27 opcodes whose jump-table entry (byte table 0x48CD64 -> 65) is the default 0x48CC3D (`or al, 0xFF`): no
@@ -830,12 +837,60 @@ pub fn process_commands_1200_to_1299(s: Scr, command: u32) -> i8 {
             player_info(sp(0)).byte_add(0x153).write(u8::from(sp(1) != 0));
             0
         }
-        _ => fallback(
-            process_commands_1200_to_1299_original,
-            "CRunningScript::ProcessCommands1200To1299",
-            s,
-            command,
-        ),
+        // 0503 CREATE_SWAT_ROPE (case 0x48C863)
+        0x0503 => {
+            create_swat_rope(s, command);
+            0
+        }
+        // outside 1200..1299: the default 0x48CC3D
+        _ => -1,
+    }
+}
+
+/// 0503 CREATE_SWAT_ROPE (case 0x48C863): `CollectParameters(5)` (type, model, x, y, z); the rope
+/// `CRopes::CreateRopeForSwatPed(pos)`, the ped `CPopulation::AddPed(type, model, pos, true)`, a primary
+/// `CTaskComplexUseSwatRope(rope)` recorded as the opcode's scripted task (`GetVacantSlot` record), created by
+/// script, flag +0x46C bit 31 cleared, a secondary `CTaskSimpleStandStill(999999, true, false, 8.0)`,
+/// `ClearSpaceForMissionEntity` at a stack vector the case never writes (`[esp+0x6C]`, residue of earlier calls in
+/// the original; zero here, divergence ledger), +0x1C |= 0x40000 for a mission script, `CPopulation::
+/// ms_nTotalMissionPeds`++, the handle stored, and the mission cleanup entry (type 2). No `CWorld::Add` (AddPed
+/// adds the ped).
+fn create_swat_rope(s: Scr, command: u32) {
+    collect(s, 5);
+    let (ty, model) = (sp(0), sp(1));
+    let pos = [sp(2), sp(3), sp(4)];
+    let pos_p = GPtr::from_raw(pos.as_ptr().cast_mut());
+    let rope = create_rope_for_swat_ped(pos_p.cast());
+    let ped = sa_pop::bindings::add_ped(ty, model, pos_p.cast(), 1);
+    let t = crate::cmd0::task_new(0x1C);
+    let t = if t.is_null() { GPtr::NULL } else { use_swat_rope_ctor(t, rope) };
+    let tm = ped.byte_add(0x47C).cast::<GPtr<u8>>().read().byte_add(4);
+    crate::cmd0::task_manager_set_task(tm, t, 3, 0);
+    crate::script_tasks::record_scripted_task(ped, command, t);
+    crate::cmd0::set_char_created_by(ped, 2);
+    let fl = ped.byte_add(0x46C).cast::<u32>();
+    fl.write(fl.read() & 0x7FFF_FFFF);
+    let t2 = crate::cmd0::task_new(0x20);
+    let t2 = if t2.is_null() {
+        GPtr::NULL
+    } else {
+        crate::cmd100::task_simple_stand_still_ctor(t2, 999_999, 1, 0, 8.0)
+    };
+    let tm = ped.byte_add(0x47C).cast::<GPtr<u8>>().read().byte_add(4);
+    crate::cmd0::task_manager_set_task(tm, t2, 4, 0);
+    let unwritten = [0u32; 3];
+    crate::cmd0::clear_space_for_mission_entity(GPtr::from_raw(unwritten.as_ptr().cast_mut()).cast(), ped);
+    if uses_mission_cleanup(s) {
+        let fl = ped.byte_add(0x1C).cast::<u32>();
+        fl.write(fl.read() | 0x40000);
+    }
+    let n = GPtr::<u32>::from_addr(crate::cmd100::TOTAL_MISSION_PEDS);
+    n.write(n.read().wrapping_add(1));
+    let h = ped_get_ref(pool(PED_POOL), ped);
+    set_sp(0, h);
+    store(s, 1);
+    if uses_mission_cleanup(s) {
+        mission_cleanup_add(GPtr::from_addr(MISSION_CLEANUP), spi(0), 2);
     }
 }
 

@@ -205,6 +205,11 @@ pub fn script_task_pick_up_object(this: GPtr<u8>, opcode: u32) {
     let ped = ped_at(ped_handle);
     let tm = at::<GPtr<u8>>(ped, 0x47C).read().byte_add(4);
     tm_set_task_secondary(tm, task, if opcode == 0x70A { 4 } else { 0 });
+    record_scripted_task(ped, opcode, task);
+}
+
+/// `CPedScriptedTaskRecord::ms_scriptedTasks[GetVacantSlot()].Set(ped, opcode, task)` (0x608540 + 0x6083E0).
+pub(crate) fn record_scripted_task(ped: GPtr<u8>, opcode: u32, task: GPtr<u8>) {
     record_set_task(vacant_record(), ped, opcode, task);
 }
 
