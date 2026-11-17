@@ -125,7 +125,7 @@ orig! {
     /// `RpMaterialUVAnimAddAnimTime(RpMaterial*, float)` (0x7CC4B0)
     pub fn rp_material_uv_anim_add_anim_time(m: GPtr<u8>, t: f32) -> GPtr<u8> = cdecl 0x7CC4B0 => unported;
     /// `RpMaterialUVAnimApplyUpdate(RpMaterial*)` (0x7CC110)
-    pub fn rp_material_uv_anim_apply_update(m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7CC110 => unported;
+    pub fn rp_material_uv_anim_apply_update(m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7CC110 => sa_rwcore::frontier_b::rp_material_uv_anim_apply_update;
     /// `RpHAnimHierarchyUpdateMatrices(RpHAnimHierarchy*)` (0x7C51D0)
     pub fn rp_h_anim_hierarchy_update_matrices(h: GPtr<u8>) -> u32 = cdecl 0x7C51D0 => unported;
     /// `CRect::StretchToPoint(float, float)` (0x5327F0)

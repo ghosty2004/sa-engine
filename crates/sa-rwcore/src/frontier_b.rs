@@ -29,6 +29,8 @@ orig! {
     fn call_render_cb(f: u32, atomic: GPtr<u8>) -> GPtr<u8> = cdecl dyn => unported;
     /// `RtAnimInterpolatorAddAnimTime(interp, time)` (0x7CD8D0)
     fn anim_interpolator_add_anim_time(interp: GPtr<u8>, t: u32) -> u32 = cdecl 0x7CD8D0 => unported;
+    /// An interpolator's key frame apply callback `(result, keyFrame)` (+0x3C)
+    fn call_key_frame_apply(f: u32, result: GPtr<u8>, kf: GPtr<u8>) = cdecl dyn => unported;
     /// `_rpWorldSectorLightTieDestroy(tie)` (0x74FFF0)
     fn sector_light_tie_destroy(tie: GPtr<u8>) -> u32 = cdecl 0x74FFF0 => rp_world_sector_light_tie_destroy;
     /// `_rpWorldSectorTieDestroy(tie)` (0x74FFA0)
@@ -515,6 +517,86 @@ pub fn uv_anim_param_key_frame_apply(m: GPtr<u8>, kf: GPtr<u8>) {
     let angle = X87::from_f32(rd(kf, 8)).fmul_m(g::<f32>(0x85_9878).read()).to_f32();
     rw_matrix_rotate(m, GPtr::from_raw(axis.as_mut_ptr()).cast(), angle, 2);
     rw_matrix_translate(m, p8(0x88_2EE0), 2);
+}
+
+/// `RpUVAnimLinearKeyFrameApply` (0x7CC9F0), compared by address.
+const UV_LINEAR_APPLY: u32 = 0x7CC9F0;
+/// `RpUVAnimParamKeyFrameApply` (0x7CC560), compared by address.
+const UV_PARAM_APPLY: u32 = 0x7CC560;
+/// The flags word of `RpMaterialUVAnimApplyUpdate`'s local matrix when no original frame is below it (phases
+/// B/C, a direct Rust call): see [`rp_material_uv_anim_apply_update`] and the ROADMAP divergence ledger.
+const UV_LOCAL_FLAGS: u32 = 8;
+
+/// `RpMaterialUVAnimApplyUpdate(RpMaterial*)` (0x7CC110): the material extension's (`+[0xC9B8D0]`) two UV matrices
+/// (+0, +4) reset to the identity (`flags |= 0x20003`, pads kept); then, for each of the eight interpolators (+8),
+/// each node `n < +0x2C` (re-read) whose channel (the current animation's custom data +0x20 + 4n) is 0 or 1 and
+/// whose matrix exists: the node's key frame (interpolator +0x4C, advancing by the stride +0x24 only on applied
+/// nodes) into one local matrix by the key frame apply callback (+0x3C; the linear (0x7CC9F0) and param (0x7CC560)
+/// ones inlined: the same stores, then `RwMatrixUpdate` / the param transforms; any other is called), then
+/// `RwMatrixTransform(matrix, &local, PRECONCAT)`. Last `RpMatFXMaterialSetUVTransformMatrices(material, +0, +4)`.
+/// Returns the material.
+///
+/// The local matrix is never initialised: its flags word (and pads) are stack residue that `RwMatrixUpdate` /
+/// `RwMatrixTransform` carry into the material's matrix (the first transform onto a reset matrix copies the local
+/// whole). On the game's call path (CEntity::PreRender → MaterialUpdateUVAnimCB 0x532D70) the word is the EDI
+/// that `RtAnimInterpolatorAddAnimTime` saved for `RpMaterialUVAnimAddAnimTime` just before. Phase A reads the
+/// 16 words as they were at entry (`peek`); without them the port starts from zeros with `UV_LOCAL_FLAGS`.
+#[hook(addr = 0x7CC110, conv = cdecl, name = "RpMaterialUVAnimApplyUpdate", expect = "83 EC 68 A1 D0 B8 C9 00", peek = 0x40,
+       unverified = "frontier2-c18", route = "L2", hazards = "stack-residue,heap-writes",
+       note = "local RwMatrix (entry ESP - 0x40) never initialised: read with peek; ledger FRONTIER-2 0x7CC110")]
+pub fn rp_material_uv_anim_apply_update(material: GPtr<u8>) -> GPtr<u8> {
+    let ext = material.byte_add(off(UVANIM_OFFSET));
+    for i in 0..2isize {
+        let m = p8(rd::<u32>(ext, 4 * i));
+        if m.is_null() {
+            continue;
+        }
+        let flags = rd::<u32>(m, 0xC);
+        for o in [0x28, 0x14, 0] {
+            wr::<u32>(m, o, 0x3F80_0000);
+        }
+        for o in [0x10, 8, 4, 0x24, 0x20, 0x18, 0x38, 0x34, 0x30] {
+            wr::<u32>(m, o, 0);
+        }
+        wr::<u32>(m, 0xC, flags | 0x20003);
+    }
+    let mut local = [0u32; 16];
+    local[3] = UV_LOCAL_FLAGS;
+    if sa_core::abi::peek_entry_esp(0x7CC110).is_some() {
+        for (k, w) in local.iter_mut().enumerate() {
+            *w = sa_core::abi::peek_stack(0x7CC110, -0x40 + 4 * k as i32).unwrap_or(0);
+        }
+    }
+    let lp: GPtr<u8> = GPtr::from_raw(local.as_mut_ptr()).cast();
+    for slot in 0..8isize {
+        let interp = p8(rd::<u32>(ext, 8 + 4 * slot));
+        if interp.is_null() {
+            continue;
+        }
+        let stride = rd::<u32>(interp, 0x24);
+        let apply = rd::<u32>(interp, 0x3C);
+        let channels = p8(rd::<u32>(p8(rd::<u32>(interp, 0)), 0x14)).byte_add(0x20);
+        let mut kf = interp.byte_add(0x4C);
+        let mut node = 0i32;
+        while node < rd::<i32>(interp, 0x2C) {
+            let ch = rd::<u32>(channels, 4 * node as isize);
+            let m = if ch < 2 { p8(rd::<u32>(ext, 4 * ch as isize)) } else { GPtr::NULL };
+            if !m.is_null() {
+                match apply {
+                    UV_LINEAR_APPLY => {
+                        crate::generated::generated_small::g_rp_uvanim_linear_key_frame_apply_7cc9f0(lp.addr() as u32, kf.addr() as u32);
+                    }
+                    UV_PARAM_APPLY => uv_anim_param_key_frame_apply(lp, kf),
+                    f => call_key_frame_apply(f, lp, kf),
+                }
+                crate::matrix::rw_matrix_transform(m, lp, 1);
+                kf = kf.byte_add(stride as i32 as isize);
+            }
+            node += 1;
+        }
+    }
+    crate::matfx::rp_matfx_material_set_uv_transform_matrices(material, rd(ext, 0), rd(ext, 4));
+    material
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -1016,6 +1098,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_UV_ANIM_PARAM_KEY_FRAME_INTERPOLATE,
     HOOK_UV_ANIM_LINEAR_KEY_FRAME_INTERPOLATE,
     HOOK_UV_ANIM_PARAM_KEY_FRAME_APPLY,
+    HOOK_RP_MATERIAL_UV_ANIM_APPLY_UPDATE,
     HOOK_RW_STRING_STREAM_GET_SIZE,
     HOOK_RW_STRING_STREAM_WRITE,
     HOOK_RW_SLIST_GET_NEW_ENTRY,
