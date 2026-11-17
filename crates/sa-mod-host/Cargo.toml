@@ -1,0 +1,34 @@
+[package]
+name = "sa-mod-host"
+version = "0.1.0"
+description = "MOD-2 (ADR-004): the mod host: mod.toml manifests and permissions, module checks, the API implementation (2D overlay, log), call budgets (fuel, memory cap), and one engine trait with two backends: wasmtime natively (Pulley on i686), the browser's WebAssembly on wasm32 (web/mods.js glue, fuel metering by instrumentation). Linked into sa-game only with its feature `mods`"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sa-mod-api = { path = "../sa-mod-api" }
+sa-platform = { path = "../sa-platform", default-features = false }
+# the module checks (imports, exports, memory) and, on wasm32, the fuel instrumentation
+wasmparser = { version = "0.261", default-features = false, features = ["std", "validate"] }
+# the manifest
+toml = { version = "1.1", default-features = false, features = ["std", "parse", "serde"] }
+# the host's 8x8 overlay font (MIT)
+font8x8 = { version = "0.3", default-features = false }
+web-time = "1.1"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+# Cranelift natively on x86_64; on i686 (no Cranelift backend) Cranelift compiles to Pulley bytecode, which wasmtime's
+# interpreter runs
+wasmtime = { version = "=50.0.0", default-features = false, features = ["runtime", "cranelift", "std"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-encoder = { version = "0.261", default-features = false, features = ["std", "wasmparser"] }
+wasm-bindgen = "=0.2.130"
+
+[dev-dependencies]
+wat = "1"
+wasm-encoder = { version = "0.261", default-features = false, features = ["std", "wasmparser"] }
+
+[lints.rust]
+missing_docs = "warn"
