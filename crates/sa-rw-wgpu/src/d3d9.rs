@@ -613,12 +613,15 @@ struct StreamKey {
     attrs: Vec<(u32, u8, u32)>,
 }
 
+/// One stream of an [`InputLayout`]: (stream, end of its last attribute, attributes (offset, D3DDECLTYPE,
+/// shader location)).
+type InputStream = (u32, u32, SmallVec<[(u32, u8, u32); 8]>);
+
 /// A vertex input (FVF or declaration) resolved for one vertex shader (or fixed function): which elements feed
 /// which locations, per stream. Independent of the streams' strides; cached per (input, vertex shader).
 struct InputLayout {
-    /// per stream used, in first-use order: (stream, end of its last attribute, attributes (offset, D3DDECLTYPE,
-    /// shader location))
-    streams: SmallVec<[(u32, u32, SmallVec<[(u32, u8, u32); 8]>); 2]>,
+    /// per stream used, in first-use order
+    streams: SmallVec<[InputStream; 2]>,
     /// `F_PRETRANSFORMED` / `F_HAS_NORMAL` / `F_HAS_C0` / `F_HAS_C1` (fixed function)
     flags: u32,
     /// the error a draw with this input returns before looking at strides

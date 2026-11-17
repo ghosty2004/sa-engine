@@ -356,9 +356,8 @@ fn skip_idle_spin_when_unlimited() {
     if rd::<u8>(MENU_PREFS_FRAME_LIMITER) != 0 || crate::det::on() {
         return;
     }
-    let per = get_cycles_per_millisecond();
-    if per != 0 {
-        wr::<u32>(LAST_TICK_TIME, (get_current_time_in_cycles() / per).wrapping_sub(14));
+    if let Some(now_ms) = get_current_time_in_cycles().checked_div(get_cycles_per_millisecond()) {
+        wr::<u32>(LAST_TICK_TIME, now_ms.wrapping_sub(14));
     }
 }
 
