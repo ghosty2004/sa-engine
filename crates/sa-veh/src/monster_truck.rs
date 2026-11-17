@@ -11,6 +11,7 @@ use sa_core::{hook, orig};
 use sa_math::fpu::{gt, lt};
 use sa_math::vector::CVector;
 use sa_stream::bindings::get_wheel_posn;
+use sa_world::world::common::entity_pos;
 
 use crate::common::{f32_of, model_info, rd, wr, x};
 use crate::mvpd_v1::{read_vec, vptr};
@@ -128,11 +129,6 @@ fn compressed(this: GPtr<u8>, i: isize) -> bool {
     lt(x(rd::<f32>(this, 0x7D4 + 4 * i)), x(ONE))
 }
 
-/// The entity position: the matrix's when there is one, else the placement's.
-fn position(e: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> {
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
-}
-
 /// `a - b` per component, each an f32 store.
 fn sub(a: GPtr<u8>, b: GPtr<u8>) -> CVector {
     let c = |k: isize| f32_of(x(rd::<f32>(a, 4 * k)).fsub_m(rd::<f32>(b, 4 * k)));
@@ -166,7 +162,7 @@ pub fn monster_truck_process_suspension(this: GPtr<u8>) {
         let up = |k: isize| f32_of(x(rd::<f32>(m, 0x20 + 4 * k)).fmul_m(minus_one));
         dir[i as usize] = CVector::new(up(0), up(1), up(2));
         pt[i as usize] = if compressed(this, i) {
-            sub(this.byte_add(0x724 + 0x2C * i), position(this, m))
+            sub(this.byte_add(0x724 + 0x2C * i), entity_pos(this))
         } else {
             CVector::default()
         };
@@ -240,7 +236,7 @@ pub fn monster_truck_process_suspension(this: GPtr<u8>) {
                 let ny = f32_of(x(rd::<f32>(normal, 4)).fmul_m(quarter));
                 let ax = x(rd::<f32>(normal, 0)).fmul_m(quarter).fmul_m(km5);
                 let e = rd::<GPtr<u8>>(slot, 0);
-                let point = sub(cp, position(e, rd::<GPtr<u8>>(e, 0x14)));
+                let point = sub(cp, entity_pos(e));
                 let cy = x(km5).fmul_m(ny);
                 let dz = f32_of(x(rd::<f32>(normal, 8)).fmul_m(km5));
                 let k = f32_of(x(ONE).fsub_m(rd::<f32>(this, 0x7D4 + 4 * i)));

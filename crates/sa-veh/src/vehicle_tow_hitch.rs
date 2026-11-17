@@ -14,7 +14,7 @@ use sa_world::bindings::audio_add_event;
 use crate::bindings::automobile_ctor;
 orig! {
     /// `CMonsterTruck::SetupSuspensionLines()` (0x6C7FB0)
-    fn monster_truck_setup_suspension_lines(v: GPtr<u8>) = thiscall 0x6C7FB0 => unported;
+    fn monster_truck_setup_suspension_lines(v: GPtr<u8>) = thiscall 0x6C7FB0 => crate::monster_truck::monster_truck_setup_suspension_lines;
     /// `CTrailer::SetupSuspensionLines()` (0x6CF1A0)
     fn trailer_setup_suspension_lines(v: GPtr<u8>) = thiscall 0x6CF1A0 => crate::trailer_susp::trailer_setup_suspension_lines;
 }

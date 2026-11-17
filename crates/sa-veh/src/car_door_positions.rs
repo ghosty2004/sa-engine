@@ -554,7 +554,7 @@ pub fn get_nearest_car_passenger_door(
     let mut found = 0u8;
     let pp = || read3(entity_pos(ped));
     // GetPositionToOpenCarDoor into the frame slot `res`, then the copy to `pos` and the offset `d`
-    let mut try_door = |fr: &mut [u32; 0x54 / 4], door: i32, res: usize, pos: usize, d: usize| {
+    let try_door = |fr: &mut [u32; 0x54 / 4], door: i32, res: usize, pos: usize, d: usize| {
         let mut p = [0f32; 3];
         get_position_to_open_car_door_o(vp(&mut p), veh, door);
         for k in 0..3 {
