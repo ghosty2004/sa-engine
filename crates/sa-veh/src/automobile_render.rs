@@ -2,6 +2,7 @@
 //! four-wheeled vehicle (wheel suspension display, wheel particles, rain splashes, exhaust,
 //! emergency / taxi lights, lights and shadow, wheel rotation and matrices, doors, panels and the
 //! special moving parts of some models). Ported from the 1.0 US bytes (gta-reversed has no body).
+//! FRONTIER-2 turn 9 (batch `frontier2-b21`): `CAutomobile::DoHoverSuspensionRatios` (0x6A45C0).
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
@@ -39,6 +40,7 @@ use sa_stream::bindings::get_frame_from_id;
 use sa_world::bindings::entity_get_col_model as get_col_model;
 use crate::bindings::get_vehicle_appearance;
 use sa_world::bindings::multiply3x3;
+use sa_world::bindings::get_water_level;
 use sa_world::bindings::placeable_get_top_direction as get_top_direction;
 use sa_world::bindings::physical_get_speed as get_speed;
 orig! {
@@ -1073,6 +1075,69 @@ fn combine(this: GPtr<u8>, mi: GPtr<u8>, l100: &mut StackMatrix) {
     set_component_rotation(this, frame(this, 1), 1, v, 1);
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_AUTOMOBILE_PRE_RENDER];
+/// `CAutomobile::DoHoverSuspensionRatios()` (0x6A45C0, vtable +0x114; the cars-on-water cheat): for
+/// an upright car (`up.z` not below 0.3) without +0x42B bit 6, each of the four suspension lines
+/// (colData +0x10, 0x20 bytes each) is put in the world (`M * start`, `M * end`); where the water
+/// level at the line's end lies above the wheel's ground (its col point z while the ratio is below
+/// 1.0, else -100) and less than 1.0 below the start, the ratio becomes `(s.z - level) / (s.z - e.z)`
+/// (0.99999 when the level is at or below the end, 0 above the start) and the wheel col point
+/// (+0x724, 0x2C each) is set on the water: surface 39, `pos = (s.xy + (e - s).xy * ratio, level)`
+/// (x through an f32 product, y not), normal (0, 0, 1).
+#[hook(addr = 0x6A45C0, conv = thiscall, name = "CAutomobile::DoHoverSuspensionRatios", expect = "83 EC 70 55 8B E9",
+       this = "CAutomobile", unverified = "frontier2-b21", route = "L2", hazards = "none")]
+pub fn automobile_do_hover_suspension_ratios(this: GPtr<u8>) {
+    use sa_math::fpu::{fcom_any, fcom_parity, f32_of};
+    let k = f32::from_bits;
+    if !fcom_parity(x(rd::<f32>(rd::<GPtr<u8>>(this, 0x14), 0x28)), x(k(0x3E99_999A)), 5) {
+        return;
+    }
+    if rd::<u8>(this, 0x42B) & 0x40 != 0 {
+        return;
+    }
+    let col_data = rd::<GPtr<u8>>(get_col_model(this), 0x2C);
+    for i in 0..4isize {
+        let line = rd::<GPtr<u8>>(col_data, 0x10).byte_add(i * 0x20);
+        let cp = this.byte_add(0x724 + i * 0x2C);
+        let ratio = this.byte_add(0x7D4 + i * 4);
+        let mut t = [0f32; 3];
+        let o = matrix_mul_vector(sa_core::field::ptr_of(&mut t), rd::<GPtr<u8>>(this, 0x14), line);
+        let s = [rd::<f32>(o, 0), rd::<f32>(o, 4), rd::<f32>(o, 8)];
+        let mut t2 = [0f32; 3];
+        let o = matrix_mul_vector(sa_core::field::ptr_of(&mut t2), rd::<GPtr<u8>>(this, 0x14), line.byte_add(0x10));
+        let e = [rd::<f32>(o, 0), rd::<f32>(o, 4), rd::<f32>(o, 8)];
+        let ground = if fcom_parity(x(rd::<f32>(ratio, 0)), x(1.0), 5) { k(0xC2C8_0000) } else { rd::<f32>(cp, 8) };
+        let mut level = [0f32; 1];
+        if get_water_level(e[0], e[1], e[2], sa_core::field::ptr_of(&mut level), 0, GPtr::NULL) == 0 {
+            continue;
+        }
+        let level = level[0];
+        if fcom_any(x(level), x(ground), 0x41) {
+            continue;
+        }
+        if fcom_parity(x(s[2]).fsub_m(1.0), x(level), 5) {
+            continue;
+        }
+        let r = if !fcom_parity(x(level), x(e[2]), 0x41) {
+            k(0x3F7F_FF58)
+        } else if !fcom_any(x(level), x(s[2]), 0x41) {
+            0.0
+        } else {
+            f32_of(x(s[2]).fsub_m(level).fdiv(x(s[2]).fsub_m(e[2])))
+        };
+        wr::<f32>(ratio, 0, r);
+        let r = rd::<f32>(ratio, 0);
+        wr::<u8>(cp, 0x23, 0x27);
+        let px = f32_of(x(f32_of(x(e[0]).fsub_m(s[0]).fmul_m(r))).fadd_m(s[0]));
+        let py = f32_of(x(e[1]).fsub_m(s[1]).fmul_m(r).fadd_m(s[1]));
+        wr::<f32>(cp, 0, px);
+        wr::<f32>(cp, 4, py);
+        wr::<f32>(cp, 8, level);
+        wr::<u32>(cp, 0x10, 0);
+        wr::<u32>(cp, 0x14, 0);
+        wr::<u32>(cp, 0x18, 0x3F80_0000);
+    }
+}
+
+pub const HOOKS: &[HookReg] = &[HOOK_AUTOMOBILE_PRE_RENDER, HOOK_AUTOMOBILE_DO_HOVER_SUSPENSION_RATIOS];
 
 pub const GLOBALS: &[sa_core::mem::GlobalDesc] = &[];

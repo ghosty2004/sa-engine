@@ -1,9 +1,15 @@
 //! FRONTIER-2 (batch `frontier2-1`): `CAutomobile::UpdateMovingCollision` (0x6A1460, user-hit at the level crossing),
 //! `CVehicle::GetSpecialColModel` (0x6DF3D0) and the vertex compression it uses (0x536E90). Ported from the 1.0 US
-//! bytes. gta-reversed differs in the dumper test (the bytes check the vehicle subclass +0x594 == 1) and reads
+//! bytes; FRONTIER-2 turn 9 (batch `frontier2-b21`): `CAutomobile::AddMovingCollisionSpeed` (0x6A1ED0). gta-reversed
+//! differs in the dumper test (the bytes check the vehicle subclass +0x594 == 1) and reads
 //! the pad's up/down only once per step; the bytes call `GetCarGunUpDown` again for the clamp and are followed.
 
 use sa_core::abi::HookReg;
+use sa_core::bindings::cross_product;
+use sa_core::field::ptr_of as vp;
+use sa_core::timer::TIME_STEP;
+use sa_math::x87::X87;
+use sa_world::bindings::multiply3x3;
 use sa_core::bindings::{entity_register_reference, matrix_dtor, matrix_mul_vec, matrix_set_rotate_x, matrix_set_translate};
 use sa_core::field::gf;
 use sa_core::{hook, orig};
@@ -309,4 +315,88 @@ pub fn update_moving_collision(this: GPtr<u8>, angle_bits: u32) -> u8 {
     1
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_COMPRESS_VECTOR, HOOK_GET_SPECIAL_COL_MODEL, HOOK_UPDATE_MOVING_COLLISION];
+/// `CAutomobile::AddMovingCollisionSpeed(CVector& point)` (0x6A1ED0, thiscall, `ret 8`, the result
+/// in the hidden return slot, EAX = it): the speed a moving part adds at `point`. Zero unless the
+/// vehicle is the player's (status 0), status 9, or a mission vehicle (+0x4A4 == 2) whose part angle
+/// (u16 +0x86C) or previous angle (+0x86E) is non-zero, and zero when the angle moved more than 100
+/// in one frame. The forklift (530) lifts along its up axis at `(a - b) / ts * 0.0006 * 2`; the
+/// Dumper (406) / Dozer (486) / Andromada (592) with their part frame turn about the right axis at
+/// `(a - b) / ts * k` (k = 0.0002 / 0.0002 / 0.00015) around the frame position, the Packer (443)
+/// at -0.0001 around (0, 0, 2): `CrossProduct(M * (w, 0, 0), point - M * centre)`.
+#[hook(addr = 0x6A1ED0, conv = thiscall, name = "CAutomobile::AddMovingCollisionSpeed", expect = "83 EC 44 56 8B F1",
+       this = "CAutomobile", unverified = "frontier2-b21", route = "L2", hazards = "none")]
+pub fn automobile_add_moving_collision_speed(this: GPtr<u8>, out: GPtr<u8>, point: GPtr<u8>) -> GPtr<u8> {
+    let zero = |out: GPtr<u8>| {
+        for o in [0isize, 4, 8] {
+            wr::<u32>(out, o, 0);
+        }
+        out
+    };
+    let status = rd::<u8>(this, 0x36) >> 3;
+    if status != 0 && status != 9 {
+        if rd::<u8>(this, 0x4A4) != 2 {
+            return zero(out);
+        }
+        if rd::<u16>(this, 0x86C) == 0 && rd::<u16>(this, 0x86E) == 0 {
+            return zero(out);
+        }
+    }
+    let a = i32::from(rd::<u16>(this, 0x86C));
+    let b = i32::from(rd::<u16>(this, 0x86E));
+    let d = a - b;
+    if !(-100..=100).contains(&d) {
+        return zero(out);
+    }
+    let model = rd::<i16>(this, 0x22);
+    let mut speed = 0u32;
+    let mut centre = [0u32; 3];
+    let frame_pos = |fr: GPtr<u8>| [rd::<u32>(fr, 0x40), rd::<u32>(fr, 0x44), rd::<u32>(fr, 0x48)];
+    if model == 0x196 && !rd::<GPtr<u8>>(this, 0x6A0).is_null() {
+        speed = 0x3951_B717;
+        centre = frame_pos(rd::<GPtr<u8>>(this, 0x6A0));
+    } else if model == 0x1BB {
+        speed = 0xB8D1_B717;
+        centre = [g::<u32>(0x8D3174).read(), g::<u32>(0x8D3178).read(), g::<u32>(0x8D317C).read()];
+    } else if model == 0x1E6 && !rd::<GPtr<u8>>(this, 0x698).is_null() {
+        speed = 0x3951_B717;
+        centre = frame_pos(rd::<GPtr<u8>>(this, 0x698));
+    } else if model == 0x250 && !rd::<GPtr<u8>>(this, 0x6A8).is_null() {
+        speed = 0x391D_4952;
+        centre = frame_pos(rd::<GPtr<u8>>(this, 0x6A8));
+    }
+    // fild a; fisub b; fdiv ts
+    let rate = || X87::from_i32(a).fsub(X87::from_i32(b)).fdiv_m(TIME_STEP.get());
+    if model == 0x212 {
+        let up = rd::<GPtr<u8>>(this, 0x14).byte_add(0x20);
+        let t = rate().fmul_m(f32::from_bits(0x3A1D_4952)).fmul_m(g::<f32>(0x8D31C0).read());
+        for o in [0isize, 4, 8] {
+            wr::<f32>(out, o, f32_of(t.fmul_m(rd::<f32>(up, o))));
+        }
+        return out;
+    }
+    if speed == 0 {
+        return zero(out);
+    }
+    let m = rd::<GPtr<u8>>(this, 0x14);
+    let mut w = [f32_of(rate().fmul_m(f32::from_bits(speed))), 0.0f32, 0.0f32];
+    let mut tmp = [0f32; 3];
+    let r = multiply3x3(vp(&mut tmp), m, vp(&mut w));
+    let rot = [rd::<f32>(r, 0), rd::<f32>(r, 4), rd::<f32>(r, 8)];
+    let mut rot = rot;
+    let mut c = centre.map(f32::from_bits);
+    let mut tmp2 = [0f32; 3];
+    let rc = multiply3x3(vp(&mut tmp2), m, vp(&mut c));
+    let mut d = [0f32; 3];
+    for (i, o) in [0isize, 4, 8].into_iter().enumerate() {
+        d[i] = f32_of(x(rd::<f32>(point, o)).fsub_m(rd::<f32>(rc, o)));
+    }
+    let mut tmp3 = [0f32; 3];
+    let res = cross_product(vp(&mut tmp3), vp(&mut rot), vp(&mut d));
+    for o in [0isize, 4, 8] {
+        wr::<u32>(out, o, rd::<u32>(res, o));
+    }
+    out
+}
+
+pub const HOOKS: &[HookReg] = &[HOOK_COMPRESS_VECTOR, HOOK_GET_SPECIAL_COL_MODEL, HOOK_UPDATE_MOVING_COLLISION,
+    HOOK_AUTOMOBILE_ADD_MOVING_COLLISION_SPEED];
