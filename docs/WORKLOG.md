@@ -3131,3 +3131,16 @@
 - Browser, headless Chromium, limiter off, 1200 frames, 0 blocked: WebGPU 13.28 ms mean (75 fps; PERF-0 29.69), WebGL2
   16.58 ms (60 fps; PERF-0 30.07). Native (agent's numbers): 22.1 → 9.6 ms mean (~104 fps).
 - Still on its branch (unverified): the D3D9 translation work, worktree-agent-a2389600e44aadc60 261c6720.
+
+## 2026-11-17 — PERF-1: the D3D9→wgpu translation work on master (main session)
+- Integrated branch worktree-agent-a2389600e44aadc60 (261c6720, rebased onto e5ebfd1d as 69d8d726) plus d7525947
+  (clippy: the InputStream alias in sa-rw-wgpu, checked_div in skip_idle_spin_when_unlimited): one command
+  encoder / submission per frame, a staging belt for vertex/index updates, per-submission belts for uniforms /
+  constants / UP data, redundant pass-state filtering, cached input and pipeline layouts, game-thread thread_local
+  device (no per-call mutex), GPtr::with_bytes for UP draws.
+- Verified: writer gate (15 steps, clippy fixed by d7525947 and re-run on sa-rw-wgpu / sa-game host and i686), every
+  frontier.sh scenario unchanged, verify-all lanes 1-7 IDENTICAL 13/13 in both modes (tag intp2); present frames
+  vs master byte-identical in plane, jetpack, pausemenu, boat, roadblocks, shootdriver (941 frames, --fixed-step,
+  every 6th frame); WebGL2 frame checked by eye.
+- Browser, headless Chromium, limiter off, 1200 frames, 0 blocked: WebGPU 13.28 → 12.20 ms (82 fps), WebGL2
+  16.58 → 14.35 ms (70 fps).
