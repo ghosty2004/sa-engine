@@ -1,6 +1,7 @@
 //! `CCustomBuildingDNPipeline::CustomPipeRenderCB` and the two instance-data draw helpers it calls (batch
-//! `std9-render-4`): ported from the 1.0 US bytes (the render callback is not reversed in gta-reversed). Unverified
-//! (docs/verify/HOWTO.md).
+//! `std9-render-4`), and `CCustomBuildingPipeline::CustomPipeRenderCB` (batch `frontier2-c18`; the same body with
+//! its own texture-transform cells and stage-1 COLORARG2): ported from the 1.0 US bytes (the DN render callback is
+//! not reversed in gta-reversed). Unverified (docs/verify/HOWTO.md).
 //!
 //! `RxD3D9ResEntryHeader` / `RxD3D9InstanceData` layouts as in sa-rwcore's `d3d9_mesh_instance.rs`.
 #![allow(clippy::unreadable_literal)]
@@ -34,12 +35,23 @@ orig! {
     fn draw_primitive(ty: u32, start: u32, count: u32) = cdecl 0x7FA360 => unported;
 }
 
-/// The DN material plugin offset (`[0x8D12C4]`) and the texture-transform matrix cells it fills.
+/// The building material plugin offset (`[0x8D12C4]`, shared by both pipelines).
 const DN_PLUGIN_OFFSET: usize = 0x8D12C4;
-const UV_MATRIX_U: usize = 0xC02C28;
-const UV_MATRIX_V: usize = 0xC02C3C;
-const UV_MATRIX_ONE_A: usize = 0xC02C64;
-const UV_MATRIX_ONE_B: usize = 0xC02C50;
+
+/// The texture-transform matrix cells a building render callback fills (u offset, v offset, the two 1.0 cells in
+/// store order) and its stage-1 COLORARG2.
+struct Stage1 {
+    u: usize,
+    v: usize,
+    one_a: usize,
+    one_b: usize,
+    color_arg2: u32,
+}
+
+/// `CCustomBuildingDNPipeline`'s cells, COLORARG2 CURRENT.
+const DN_STAGE1: Stage1 = Stage1 { u: 0xC02C28, v: 0xC02C3C, one_a: 0xC02C64, one_b: 0xC02C50, color_arg2: 0 };
+/// `CCustomBuildingPipeline`'s cells, COLORARG2 TFACTOR.
+const BUILDING_STAGE1: Stage1 = Stage1 { u: 0xC02C70, v: 0xC02C84, one_a: 0xC02CAC, one_b: 0xC02C98, color_arg2: 3 };
 
 /// The shared draw: pixel shader 0, the instance's vertex shader (+0x10), then an indexed draw (`primType` +0xC,
 /// base +0x14, min 0, vertices +0x18, start +0x1C, primitives +0x20) when the header has an index buffer (+8), else a
@@ -95,6 +107,20 @@ pub fn instance_data_render_lighting(h: GPtr<u8>, inst: GPtr<u8>, flags: u32, te
 #[hook(addr = 0x5D6480, conv = cdecl, name = "CCustomBuildingDNPipeline::CustomPipeRenderCB", expect = "51 0F B6 44 24 10 8B 4C",
        unverified = "std9-render-4", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn building_dn_render_cb(entry: GPtr<u8>, object: GPtr<u8>, ty: u32, flags: u32) {
+    building_render(&DN_STAGE1, entry, object, ty, flags);
+}
+
+/// `CCustomBuildingPipeline::CustomPipeRenderCB(RwResEntry*, void* object, RwUInt8 type, RwUInt32 flags)` (0x5D77D0,
+/// cdecl): [`building_dn_render_cb`]'s body with this pipeline's transform cells and stage-1 COLORARG2 TFACTOR. (The
+/// original keeps temporaries and the mesh counter in its own argument slots; the port uses locals.)
+#[hook(addr = 0x5D77D0, conv = cdecl, name = "CCustomBuildingPipeline::CustomPipeRenderCB", expect = "51 0F B6 44 24 10 8B 4C",
+       unverified = "frontier2-c18", route = "L2", hazards = "none", recs = "grove-walk")]
+pub fn building_render_cb(entry: GPtr<u8>, object: GPtr<u8>, ty: u32, flags: u32) {
+    building_render(&BUILDING_STAGE1, entry, object, ty, flags);
+}
+
+/// The body of the two building render callbacks.
+fn building_render(st: &Stage1, entry: GPtr<u8>, object: GPtr<u8>, ty: u32, flags: u32) {
     enable_clipping_if_needed(object, ty & 0xFF);
     let mut lighting = 0u32;
     get_render_state(0x89, GPtr::from_raw(&raw mut lighting));
@@ -124,10 +150,10 @@ pub fn building_dn_render_cb(entry: GPtr<u8>, object: GPtr<u8>, ty: u32, flags: 
         if dual {
             rw_render_state_set(2, 1);
             let k = g::<f32>(0x858C48).read();
-            g::<f32>(UV_MATRIX_U).write(f32_of(xi(i32::from(rd::<i8>(plug, 0))).fmul_m(k)));
-            g::<u32>(UV_MATRIX_ONE_A).write(0x3F80_0000);
-            g::<u32>(UV_MATRIX_ONE_B).write(0x3F80_0000);
-            g::<f32>(UV_MATRIX_V).write(f32_of(xi(i32::from(rd::<i8>(plug, 1))).fmul_m(k)));
+            g::<f32>(st.u).write(f32_of(xi(i32::from(rd::<i8>(plug, 0))).fmul_m(k)));
+            g::<u32>(st.one_a).write(0x3F80_0000);
+            g::<u32>(st.one_b).write(0x3F80_0000);
+            g::<f32>(st.v).write(f32_of(xi(i32::from(rd::<i8>(plug, 1))).fmul_m(k)));
             set_texture(GPtr::from_addr(rd::<u32>(plug, 8) as usize), 1);
             let a = xi(i32::from(rd::<u8>(plug, 4))).fmul_m(g::<f32>(0x859A3C).read()).fmul_m(g::<f32>(0x86BE90).read());
             let mut v = ftol32(a);
@@ -136,7 +162,7 @@ pub fn building_dn_render_cb(entry: GPtr<u8>, object: GPtr<u8>, ty: u32, flags: 
             }
             let a = (v as u32) & 0xFF;
             set_render_state(0x3C, (((a | 0xFFFF_FF00) << 8) | a) << 8 | a);
-            for (t, val) in [(1, 0x19), (0x1A, 1), (2, 2), (3, 0), (4, 3), (5, 2), (6, 1), (0xB, 0x1_0001), (0x18, 0)] {
+            for (t, val) in [(1, 0x19), (0x1A, 1), (2, 2), (3, st.color_arg2), (4, 3), (5, 2), (6, 1), (0xB, 0x1_0001), (0x18, 0)] {
                 set_tss(1, t, val);
             }
             set_tss(2, 1, 1);
@@ -160,4 +186,5 @@ pub fn building_dn_render_cb(entry: GPtr<u8>, object: GPtr<u8>, ty: u32, flags: 
 }
 
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_INSTANCE_DATA_RENDER, HOOK_INSTANCE_DATA_RENDER_LIGHTING, HOOK_BUILDING_DN_RENDER_CB];
+pub const HOOKS: &[HookReg] =
+    &[HOOK_INSTANCE_DATA_RENDER, HOOK_INSTANCE_DATA_RENDER_LIGHTING, HOOK_BUILDING_DN_RENDER_CB, HOOK_BUILDING_RENDER_CB];
