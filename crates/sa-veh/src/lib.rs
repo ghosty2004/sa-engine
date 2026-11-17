@@ -157,3 +157,4 @@ pub mod moving_collision;
 pub mod bike_burst_tyre;
 pub mod trailer_ai;
 pub mod inflict_damage;
+pub mod monster_truck;

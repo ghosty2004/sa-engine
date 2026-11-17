@@ -34,7 +34,7 @@ pub fn sb(addr: usize, v: u8) {
     g::<u8>(addr).write(v)
 }
 
-fn vf(p: GPtr<u8>, i: isize) -> f32 {
+pub(crate) fn vf(p: GPtr<u8>, i: isize) -> f32 {
     rd::<f32>(p, 4 * i)
 }
 
@@ -534,11 +534,11 @@ pub fn vehicle_process_bike_wheel(
     apply_turn_force(this, force, point);
 }
 
-fn vptr(v: &mut CVector) -> GPtr<u8> {
+pub(crate) fn vptr(v: &mut CVector) -> GPtr<u8> {
     GPtr::from_raw(v).cast()
 }
 
-fn read_vec(p: GPtr<u8>) -> CVector {
+pub(crate) fn read_vec(p: GPtr<u8>) -> CVector {
     CVector::new(vf(p, 0), vf(p, 1), vf(p, 2))
 }
 
