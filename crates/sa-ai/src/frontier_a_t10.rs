@@ -6,7 +6,9 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-use crate::bindings::task_timer_is_out_of_time;
+use crate::bindings::{task_simple_ctor, task_timer_is_out_of_time};
+use sa_anim::bindings::{anim_add_block_ref, anim_get_animation, get_animation_block};
+use sa_world::bindings::entity_register_reference;
 use crate::common::{g, rd, wr, x};
 use crate::frontier_a_t9::{are_anims_loaded, interior_blend_group, interior_start_timer, interior_step_to_info};
 use sa_core::bindings::{clump_get_association, general_limit_radian_angle, matrix_mul_vec, matrix_set_rotate_z_only};
@@ -133,5 +135,57 @@ pub fn interior_sit_at_desk_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     0
 }
 
+/// `CTaskSimpleHoldEntity::CTaskSimpleHoldEntity(CEntity*, const CVector* offset, uint8 boneFrameId, uint8 boneFlags,
+/// const char* animName, const char* animBlockName, eAnimationFlags)` (0x691470, `ret 0x1C`): the `CTaskSimple` base,
+/// vtable 0x870B2C, +8 the entity, +0xC..+0x14 the offset (0 without one), +0x18 / +0x19 the bone bytes, +0x20 = 0xBF
+/// (no anim id), +0x24 = 0, +0x34 = 0, +0x35 = 1, +0x36 = 0, +0x38 = 0; a held entity gets flag 0x400 in +0x1C and a
+/// registered reference; +0x28 the anim flags, +0x2C `GetAnimationBlock(animBlockName)`, +0x30
+/// `GetAnimation(animName, block)`, and the block gets a reference (`AddAnimBlockRef(block index)`). Returns this.
+#[hook(addr = 0x691470, conv = thiscall, name = "CTaskSimpleHoldEntity::Constructor-2", this = "CTaskSimpleHoldEntity",
+       expect = "6A FF 68 68 72 84 00",
+       unverified = "frontier2-a15", route = "L2", hazards = "heap-writes")]
+#[allow(clippy::too_many_arguments)]
+pub fn hold_entity_ctor_named(
+    this: GPtr<u8>,
+    ent: GPtr<u8>,
+    off: GPtr<u32>,
+    bone: u8,
+    bone_flags: u8,
+    anim: GPtr<u8>,
+    block_name: GPtr<u8>,
+    anim_flags: u32,
+) -> GPtr<u8> {
+    task_simple_ctor(this);
+    wr(this, 8, ent);
+    wr::<u32>(this, 0, 0x870B2C);
+    for o in [0xC, 0x10, 0x14] {
+        wr::<u32>(this, o, 0);
+    }
+    wr::<u8>(this, 0x18, bone);
+    wr::<u8>(this, 0x19, bone_flags);
+    wr::<u32>(this, 0x20, 0xBF);
+    wr::<u32>(this, 0x24, 0);
+    wr::<u8>(this, 0x34, 0);
+    wr::<u8>(this, 0x35, 1);
+    wr::<u8>(this, 0x36, 0);
+    wr::<u32>(this, 0x38, 0);
+    if !off.is_null() {
+        wr::<u32>(this, 0xC, off.read());
+        wr::<u32>(this, 0x10, off.wrapping_index(1).read());
+        wr::<u32>(this, 0x14, off.wrapping_index(2).read());
+    }
+    let e = rd::<GPtr<u8>>(this, 8);
+    if !e.is_null() {
+        wr::<u32>(e, 0x1C, rd::<u32>(e, 0x1C) | 0x400);
+        entity_register_reference(rd::<GPtr<u8>>(this, 8), this.byte_add(8));
+    }
+    wr::<u32>(this, 0x28, anim_flags);
+    let block = get_animation_block(block_name);
+    wr(this, 0x2C, block);
+    wr(this, 0x30, anim_get_animation(anim, block));
+    anim_add_block_ref(((rd::<u32>(this, 0x2C).wrapping_sub(0xB5_D4A0)) as i32) >> 5);
+    this
+}
+
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_INTERIOR_SIT_AT_DESK_PROCESS_PED];
+pub const HOOKS: &[HookReg] = &[HOOK_INTERIOR_SIT_AT_DESK_PROCESS_PED, HOOK_HOLD_ENTITY_CTOR_NAMED];
