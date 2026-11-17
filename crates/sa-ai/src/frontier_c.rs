@@ -789,9 +789,16 @@ pub fn vector_attractor_xlen(_this: GPtr<u8>) {
     panic!("std::vector<CPedAttractor*>::_Xlen: {XLEN_MSG}")
 }
 
+/// `std::vector<CVector>::_Xlen()` (0x5ECC30): as `vector_ped_xlen` (the same body, message 0x860AB0).
+#[sa_core::native(addr = 0x5ECC30, conv = thiscall, name = "std::vector<CVector>::_Xlen")]
+pub fn vector_cvector_xlen(_this: GPtr<u8>) {
+    panic!("std::vector<CVector>::_Xlen: {XLEN_MSG}")
+}
+
 /// Every `#[native]` of this module.
 pub const NATIVES: &[sa_core::abi::NativeReg] = &[
     NATIVE_VECTOR_PED_XLEN,
+    NATIVE_VECTOR_CVECTOR_XLEN,
     NATIVE_VECTOR_TASK_PAIR_XLEN,
     NATIVE_VECTOR_TASK_XLEN,
     NATIVE_VECTOR_ATTRACTOR_XLEN,
