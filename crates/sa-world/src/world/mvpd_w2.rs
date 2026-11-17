@@ -248,7 +248,7 @@ orig! {
     /// `CSetPiece::Update()` (0x499A80)
     fn set_piece_update(p: GPtr<u8>) = thiscall 0x499A80 => unported;
     /// `CObject::ProcessSamSiteBehaviour()` (0x5A07D0)
-    fn object_process_sam_site_behaviour(o: GPtr<u8>) = thiscall 0x5A07D0 => unported;
+    fn object_process_sam_site_behaviour(o: GPtr<u8>) = thiscall 0x5A07D0 => crate::world::object_sam_site::object_process_sam_site_behaviour;
     /// `CObject::ProcessTrainCrossingBehaviour()` (0x5A0B50)
     fn object_process_train_crossing_behaviour(o: GPtr<u8>) = thiscall 0x5A0B50 => unported;
     /// `CObject::ProcessGarageDoorBehaviour()` (0x44A4D0)

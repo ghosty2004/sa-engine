@@ -118,6 +118,7 @@ pub mod interior_bounding_box;
 pub mod office_edge_desks;
 pub mod world_peds_fire;
 pub mod world_clear_cars;
+pub mod object_sam_site;
 pub mod object_train_crossing;
 pub mod frontier_c;
 pub mod frontier_b2;

@@ -107,7 +107,7 @@ orig! {
     /// `CObject::Init()` (0x59F840)
     pub fn object_init(o: GPtr<u8>) = thiscall 0x59F840 => unported;
     /// `CObject::Explode()` (0x5A1340)
-    pub fn object_explode(o: GPtr<u8>) = thiscall 0x5A1340 => unported;
+    pub fn object_explode(o: GPtr<u8>) = thiscall 0x5A1340 => crate::world::object_sam_site::object_explode;
     /// `CObject::~CObject` (0x59F660)
     pub fn object_dtor(o: GPtr<u8>) = thiscall 0x59F660 => unported;
     /// `CObject::ResetDoorAngle()` (0x59F4B0)
