@@ -2,7 +2,7 @@
 # FRONTIER-1 scenarios: native sa-game runs (deterministic, --fixed-step 40, offscreen) that reach the blockers the
 # user hit. Each must end with an empty blocker list in OUT/report.md and no crash.
 #
-#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite OUTDIR [FRAMES]
+#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema OUTDIR [FRAMES]
 #
 # pausemenu (400)  Esc, down x3, Enter (pause-menu item 4: Stats), down, Enter, Enter: the Stats pages draw
 #                  (was a SIGSEGV at iteration ~171: CStats::GetStatValue's X87 result dispatched as cdecl)
@@ -57,6 +57,11 @@
 #                  attack waves 0x444810, CGangWars::TellGangMembersTo 0x444530)
 # jetpack  (1000)  on foot at Grove Street, the jet pack cheat ROCKETMAN, then lift-off (space), forward (w) and strafes:
 #                  CTaskSimpleJetPack::RenderJetPack 0x67F6A0 every frame (FRONTIER-2 turn 6 lane A)
+# cinema   (1200)  the crossing run's Greenwood driven along Grove Street with the in-car camera on the cinematic
+#                  zoom (TheCamera +0xB4 m_nCarZoom = 5, poked every 10 iterations as the camera key would set it):
+#                  CCamera::ProcessObbeCinemaCameraCar's IsItTimeForNewcam 0x51D770 / TryToStartNewCamMode 0x51E560
+#                  and the DW cameras (Process_DW_HeliChaseCam 0x51A740, Process_DW_BirdyCam 0x51B850, ...)
+#                  (FRONTIER-2 turn 9 lane B)
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-a5-counts.gdb --args" counts the road block / gang war / jet pack
 # calls.
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-counts.gdb --args" counts the FRONTIER-2 ports' calls
@@ -175,6 +180,12 @@ plane)
     keys=; i=150; for c in u r k q s r k; do keys="$keys${keys:+,}$c:$i:$((i + 2))"; i=$((i + 6)); done
     export SA_GAME_KEYS="$keys,f:260:263,w:400:1150,a:800:840"
     run "${3:-1200}" --start-in-world ;;
+cinema)
+    export SA_GAME_TELEPORT="60:2505.0:-1666.4:13.4"
+    export SA_GAME_KEYS="f:100:103,w:330:700,a:500:540,w:760:1150,d:900:940"
+    p=; i=200; while [ $i -le "${3:-1200}" ]; do p="$p${p:+;}$i:0xB6F0DC:5"; i=$((i + 10)); done
+    export SA_GAME_POKE="$p"
+    run "${3:-1200}" --start-in-world ;;
 boat)
     export SA_GAME_TELEPORT="60:2505.0:-1666.4:13.4;150:-2240.0:2420.0:8.0"
     export SA_GAME_KEYS="f:200:203,w:300:1100,a:700:760"
@@ -193,6 +204,6 @@ samsite)
     export SA_GAME_KEYS="$keys,space:300:700,w:500:900,a:900:960"
     run "${3:-1600}" --start-in-world ;;
 *)
-    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite OUTDIR [FRAMES]" >&2
+    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema OUTDIR [FRAMES]" >&2
     exit 2 ;;
 esac
