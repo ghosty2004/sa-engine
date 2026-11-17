@@ -134,6 +134,7 @@ pub const MODULES: &[&[HookReg]] = &[
     // FRONTIER-2
     crate::trailer_susp::HOOKS,
     crate::moving_collision::HOOKS,
+    crate::bike_burst_tyre::HOOKS,
     crate::trailer_ai::HOOKS,
     crate::inflict_damage::HOOKS,
     // FRONTIER-2 turn 2, lane B

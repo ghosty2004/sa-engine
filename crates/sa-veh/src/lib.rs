@@ -154,5 +154,6 @@ pub mod vehicle_can_ped_enter;
 pub mod recording_start;
 pub mod trailer_susp;
 pub mod moving_collision;
+pub mod bike_burst_tyre;
 pub mod trailer_ai;
 pub mod inflict_damage;
