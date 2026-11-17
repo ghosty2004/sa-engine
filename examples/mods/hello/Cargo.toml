@@ -1,0 +1,13 @@
+[package]
+name = "sa-mod-hello"
+version = "0.1.0"
+description = "MOD-2 example mod: draws a text line in the bottom right corner of every frame (docs/mods/getting-started.md)"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+sa-mod = { path = "../../../crates/sa-mod" }

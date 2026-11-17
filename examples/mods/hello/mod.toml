@@ -1,0 +1,10 @@
+# The hello mod's manifest (docs/arch/ADR-004-mods.md section 3.3). examples/mods/build.sh puts it next to hello.wasm.
+[mod]
+id = "hello"
+name = "Hello overlay"
+version = "0.1.0"
+api_version = "1.0"
+entry = "hello.wasm"
+
+[permissions]
+render = true

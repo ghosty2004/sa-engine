@@ -1,0 +1,10 @@
+# A test mod that traps in its 30th overlay call (examples/mods/broken, default features).
+[mod]
+id = "broken-trap"
+name = "Broken mod (trap)"
+version = "0.1.0"
+api_version = "1.0"
+entry = "broken-trap.wasm"
+
+[permissions]
+render = true

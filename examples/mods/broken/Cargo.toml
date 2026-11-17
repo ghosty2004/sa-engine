@@ -1,0 +1,16 @@
+[package]
+name = "sa-mod-broken"
+version = "0.1.0"
+description = "MOD-2 test mod: draws for 30 frames, then traps (default) or loops forever (feature `spin`); the host must disable it and the game must keep running"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+spin = []
+
+[dependencies]
+sa-mod = { path = "../../../crates/sa-mod" }

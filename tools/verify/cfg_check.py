@@ -35,6 +35,8 @@ BACKENDS = [
     'crates/sa-oracle-format/', 'crates/phase_a_build.rs',
     'crates/sa-game/src/game_window.rs', 'crates/sa-game/src/web.rs', 'crates/sa-game/src/webfs.rs',
     'crates/sa-game/src/platform/',
+    # MOD-2: the mod host's engine backends, the mod SDK's wasm import / export layer
+    'crates/sa-mod-host/src/backend/', 'crates/sa-mod/src/ffi.rs',
 ]
 
 

@@ -1,0 +1,10 @@
+# A test mod that loops forever in its 30th overlay call (examples/mods/broken, feature `spin`).
+[mod]
+id = "broken-spin"
+name = "Broken mod (infinite loop)"
+version = "0.1.0"
+api_version = "1.0"
+entry = "broken-spin.wasm"
+
+[permissions]
+render = true
