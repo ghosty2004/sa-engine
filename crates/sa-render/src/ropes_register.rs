@@ -247,4 +247,24 @@ pub fn ropes_find_coors_along_rope(id: u32, along: f32, pos: GPtr<f32>, speed: G
     1
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_ROPES_REGISTER_ROPE, HOOK_ROPES_IS_CARRIED_BY_ROPE, HOOK_ROPES_SET_SPEED_OF_TOP_NODE, HOOK_ROPES_FIND_COORS_ALONG_ROPE];
+/// `CRopes::m_nRopeIdCreationCounter` (0xB781F8).
+const ROPE_ID_COUNTER: usize = 0xB781F8;
+
+/// `CRopes::CreateRopeForSwatPed(const CVector& pos)` (0x558D10, cdecl): id = counter + 0x64,
+/// `RegisterRope(id, 8, pos, true, 0, false, null, 4000)`; a negative result → -1, else the counter goes up
+/// (`& 0xFF`) and the id is returned.
+#[hook(addr = 0x558D10, conv = cdecl, name = "CRopes::CreateRopeForSwatPed", expect = "8B 44 24 04 8B 10 56",
+       unverified = "frontier2-a18", route = "L2", hazards = "heap-writes")]
+pub fn ropes_create_rope_for_swat_ped(pos: GPtr<u32>) -> i32 {
+    let id = g::<u32>(ROPE_ID_COUNTER).read().wrapping_add(0x64);
+    let (x, y, z) = (pos.read(), pos.wrapping_index(1).read(), pos.wrapping_index(2).read());
+    if (ropes_register_rope(id, 8, x, y, z, 1, 0, 0, GPtr::NULL, 0xFA0) as i32) < 0 {
+        return -1;
+    }
+    let c = g::<u32>(ROPE_ID_COUNTER);
+    c.write(c.read().wrapping_add(1) & 0xFF);
+    id as i32
+}
+
+pub const HOOKS: &[HookReg] = &[HOOK_ROPES_REGISTER_ROPE, HOOK_ROPES_IS_CARRIED_BY_ROPE, HOOK_ROPES_SET_SPEED_OF_TOP_NODE, HOOK_ROPES_FIND_COORS_ALONG_ROPE,
+    HOOK_ROPES_CREATE_ROPE_FOR_SWAT_PED];

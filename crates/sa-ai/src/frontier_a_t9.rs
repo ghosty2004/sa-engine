@@ -887,7 +887,22 @@ pub fn interior_sit_in_chair_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     0
 }
 
+/// `CTaskComplexUseSwatRope::CTaskComplexUseSwatRope(uint32 ropeId)` (0x659410, `ret 4`; catalogue `FUN_00659410`):
+/// `CTaskComplex` base, +0xC = the rope id, +0x10 = +0x18 = 0, +0x14 bit 0 cleared, vtable 0x86F59C.
+#[hook(addr = 0x659410, conv = thiscall, name = "FUN_00659410", expect = "56 8B F1 E8 98 0F FC FF",
+       unverified = "frontier2-a18", route = "L2", hazards = "heap-writes")]
+pub fn use_swat_rope_ctor(this: GPtr<u8>, rope: u32) -> GPtr<u8> {
+    crate::bindings::task_complex_ctor(this.addr() as u32);
+    wr::<u32>(this, 0xC, rope);
+    wr::<u32>(this, 0x10, 0);
+    wr::<u32>(this, 0x18, 0);
+    wr::<u32>(this, 0, 0x86F59C);
+    wr::<u8>(this, 0x14, rd::<u8>(this, 0x14) & 0xFE);
+    this
+}
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_USE_SWAT_ROPE_CTOR,
     HOOK_KILL_PED_WITH_CAR_DAMAGE_CAR_BONNET,
     HOOK_KILL_PED_WITH_CAR_SHAKE_PAD,
     HOOK_KILL_PED_WITH_CAR_PROCESS_PED,
