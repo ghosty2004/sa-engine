@@ -282,6 +282,9 @@ fn b14_before_loop() -> String {
     "SetErrorMode(1), RwInitialized = 1, RsMouseSetPos(centre), gamma.Init".into()
 }
 
+/// The address of the boot step running `RsEventHandler(rsRWINITIALIZE)` (psSelectDevice, the D3D device).
+pub const RW_INITIALIZE_STEP: u32 = 0x5BF390;
+
 /// WinMain up to the main loop, in the original order.
 pub fn boot_steps() -> Vec<Step> {
     vec![
@@ -293,7 +296,7 @@ pub fn boot_steps() -> Vec<Step> {
         rust("ControlsManager.MakeControllerActionsBlank + InitDefaultControlConfiguration", 0x530640, b6_controls),
         rust("DirectInput8Create + Input::diMouseInit + Input::diPadInit", 0x7469A0, b7_direct_input),
         rust("Input::GetMouseSetUp + InitDefaultControlConfigMouse", 0x53F2D0, b8_mouse_setup),
-        rust("RsEventHandler(rsRWINITIALIZE) → Game::RwInitialize → RsRwInitialize (RW engine)", 0x5BF390, b9_rw_initialize),
+        rust("RsEventHandler(rsRWINITIALIZE) → Game::RwInitialize → RsRwInitialize (RW engine)", RW_INITIALIZE_STEP, b9_rw_initialize),
         rust("rsCOMMANDLINE + fullscreen window style", 0x7488EE, b10_window_style),
         rust("RsEventHandler(rsCAMERASIZE) → CameraSize", 0x72FC70, b11_camera_size),
         rust("SystemParametersInfoA + ShowWindow + UpdateWindow", 0x748980, b12_show_window),

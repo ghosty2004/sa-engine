@@ -7,12 +7,12 @@
   body { margin: 0; background: #111; color: #ddd; font: 14px system-ui, sans-serif; }
   #bar, #bar2 { padding: 8px 12px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
   #stage { display: flex; justify-content: center; align-items: center; background: #000; }
-  #screen { display: block; background: #000; width: 800px; height: 600px; image-rendering: auto; }
+  #screen { display: block; background: #000; width: 800px; height: calc(800px / var(--aspect, 4 / 3)); image-rendering: auto; }
   #screen.menu { cursor: none; }
-  /* full window / fullscreen: the canvas fills the viewport at the game's 4:3 aspect (letterboxed, smooth scaling) */
+  /* full window / fullscreen: the canvas fills the viewport at the aspect of the game's video mode (letterboxed, smooth scaling) */
   body.full #bar, body.full #bar2, body.full #log { display: none; }
   body.full #stage, #stage:fullscreen { position: fixed; inset: 0; z-index: 1; }
-  body.full #screen, #stage:fullscreen #screen { width: min(100vw, calc(100vh * 4 / 3)); height: min(100vh, calc(100vw * 3 / 4)); }
+  body.full #screen, #stage:fullscreen #screen { width: min(100vw, calc(100vh * var(--aspect, 4 / 3))); height: min(100vh, calc(100vw / var(--aspect, 4 / 3))); }
   #corner { display: none; position: fixed; top: 6px; right: 6px; z-index: 2; opacity: 0.35; font: 12px monospace; gap: 6px; align-items: center; }
   #corner:hover { opacity: 0.9; }
   body.full #corner, #stage:fullscreen #corner { display: flex; }

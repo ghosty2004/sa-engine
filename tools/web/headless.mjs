@@ -114,7 +114,11 @@ await s('Runtime.enable');
 handlers.push((m) => {
   if (m.method === 'Runtime.exceptionThrown') note(`page exception: ${JSON.stringify(m.params.exceptionDetails.exception?.description ?? m.params.exceptionDetails.text)}`);
 });
-await s('Emulation.setDeviceMetricsOverride', { width: 820, height: 700, deviceScaleFactor: 1, mobile: false });
+{
+  // --window W,H (the page's viewport too), --dpr N (the device pixel ratio)
+  const [vw, vh] = arg('window', '820,700').split(',').map(Number);
+  await s('Emulation.setDeviceMetricsOverride', { width: vw, height: vh, deviceScaleFactor: Number(arg('dpr', '1')), mobile: false });
+}
 const cast = process.argv.includes('--screencast');
 const castDir = `${out}/cast`;
 let castN = 0;

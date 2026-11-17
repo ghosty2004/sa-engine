@@ -18,6 +18,10 @@ pub use window::{WindowApp, WindowConfig, map_key, run_windowed, set_pointer_cap
 /// The native window type handed to [`WindowApp::init`] (implements the raw window handle
 /// traits wgpu needs for a surface).
 pub use winit::window::Window;
+/// Full screen modes of a [`Window`] (`Window::set_fullscreen`).
+pub use winit::window::Fullscreen;
+/// Window sizes in physical pixels.
+pub use winit::dpi::PhysicalSize;
 
 /// The per-user folder that stands in for `My Documents` (`SHGetFolderPathA(CSIDL_PERSONAL)`):
 /// `$XDG_DATA_HOME/sa-engine/documents`, else `~/.local/share/sa-engine/documents`.

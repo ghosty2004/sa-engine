@@ -214,6 +214,8 @@ function status(extra) {
     inMenu: sa.in_menu?.(),
     presents: sa.in_game_presents(),
     allPresents: sa.presents(),
+    // the game's client size (its video mode): the page fits the canvas to it and maps pointer positions to it
+    client: Array.from(sa.client_size()),
     mib: Math.round(bytesRead / 1048576),
     ...extra,
   });
@@ -329,6 +331,8 @@ self.onmessage = async (ev) => {
         }
         console.log(`${files.length} game files registered`);
         canvas = m.canvas;
+        // the canvas's size on the page in device pixels (the display a mod sees, e.g. the resolution mod)
+        if (m.display) sa.set_display(m.display[0], m.display[1]);
         const gpu = await sa.init_gpu(m.canvas, m.backend || '');
         console.log(`GPU: ${gpu}`);
         phase = 'booting';
@@ -348,6 +352,9 @@ self.onmessage = async (ev) => {
         console.error(`sa-game: ${e}\n${e.stack || ''}`);
         status({ error: `${e}` });
       }
+      break;
+    case 'display':
+      if (phase === 'running') sa.set_display(m.w, m.h);
       break;
     case 'key':
       sa.key(m.code, m.down, !!m.repeat);

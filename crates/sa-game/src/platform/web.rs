@@ -155,6 +155,9 @@ pub async fn init_gpu(canvas: web_sys::OffscreenCanvas, backend: String) -> Resu
         view_formats: vec![],
     };
     surface.configure(&device, &config);
+    // a video mode is shown 1:1: the canvas's drawing buffer takes the back buffer's size (the page scales the canvas
+    // element; a mod chooses the mode from the canvas's size in device pixels, `set_display`)
+    crate::display::set_window_apply(Box::new(|w, h, _fullscreen| crate::d3d9::resize_window(w, h)));
     crate::d3d9::set_window(crate::d3d9::WindowTarget {
         surface,
         config,
@@ -162,6 +165,25 @@ pub async fn init_gpu(canvas: web_sys::OffscreenCanvas, backend: String) -> Resu
         queue,
     });
     Ok(format!("{:?} ({}, {:?})", info.backend, info.name, format))
+}
+
+/// The page's display: the canvas's size on the page in device pixels (CSS pixels times the device pixel ratio), as
+/// the desktop and first display mode, then the platform's fixed modes (`crate::display`). Called before the boot and
+/// again whenever it changes (the resize event of the mods, feature `mods`).
+#[wasm_bindgen]
+pub fn set_display(width: u32, height: u32) {
+    let (w, h) = (width.max(1), height.max(1));
+    crate::display::set_reported((w, h, 60), std::iter::once((w, h, 60)).chain(crate::dx::ADAPTER_MODES));
+    #[cfg(feature = "mods")]
+    crate::mods::resize(w, h);
+}
+
+/// The game's client size in pixels (its back buffer; 800 x 600 before the device exists): the page maps pointer
+/// positions to it and fits the canvas to its aspect.
+#[wasm_bindgen]
+pub fn client_size() -> Vec<u32> {
+    let (w, h) = crate::frontend::client_size();
+    vec![w, h]
 }
 
 /// The web "display" (WebGL2 surfaces need one; there is nothing behind it).

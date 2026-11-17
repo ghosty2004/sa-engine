@@ -93,16 +93,17 @@ const CLASSES: [Class; 4] = [
     Class { name: "IDirect3DDevice9", object: DEVICE9, vtable: PAGE + 0x400, methods: &DEVICE9_METHODS },
 ];
 
-/// The display modes the native adapter reports for a format, `(width, height, refresh)`: the
+/// The display modes the native adapter reports by default for a format, `(width, height, refresh)`: the
 /// usual 4:3/16:9 sizes at 60 Hz in X8R8G8B8 (0x16) and R5G6B5 (0x17), none in A2R10G10B10.
-/// Not measured (docs/arch/platform.md §8, platform values).
+/// Not measured (docs/arch/platform.md §8, platform values). A mod's video mode replaces them with the real
+/// display's modes ([`crate::display`]).
 pub const ADAPTER_MODES: [(u32, u32, u32); 7] =
     [(640, 480, 60), (800, 600, 60), (1024, 768, 60), (1280, 720, 60), (1280, 1024, 60), (1600, 900, 60), (1920, 1080, 60)];
 /// The desktop mode (`GetAdapterDisplayMode`): width, height, refresh, format.
 pub const DESKTOP_MODE: [u32; 4] = [1920, 1080, 60, 0x16];
 
-fn modes_for(format: u32) -> &'static [(u32, u32, u32)] {
-    if format == 0x16 || format == 0x17 { &ADAPTER_MODES } else { &[] }
+fn modes_for(format: u32) -> Vec<(u32, u32, u32)> {
+    if format == 0x16 || format == 0x17 { crate::display::adapter_modes() } else { Vec::new() }
 }
 
 /// `D3DCAPS9` (0x130 bytes) of the native device, as `(offset, value)`: a hardware T&L device
@@ -275,7 +276,8 @@ fn d3d_enum_adapter_modes(_this: u32, adapter: u32, format: u32, mode: u32, out:
     }
 }
 fn d3d_get_adapter_display_mode(_this: u32, _adapter: u32, out: GPtr<u32>) -> i32 {
-    for (i, v) in DESKTOP_MODE.iter().enumerate() {
+    let (w, h, r) = crate::display::adapter_desktop();
+    for (i, v) in [w, h, r, DESKTOP_MODE[3]].iter().enumerate() {
         out.wrapping_index(i as i32).write(*v);
     }
     0

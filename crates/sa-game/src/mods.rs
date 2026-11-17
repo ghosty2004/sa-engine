@@ -1,36 +1,195 @@
 //! The mod host in the game (feature `mods`, MOD-2, docs/arch/ADR-004-mods.md): the mods of `--mods DIR` (natively)
-//! or the page's `?mods=a,b` (web) are loaded before the boot, and called at the game's fixed frame points. M0 has
-//! one: the overlay phase, at every `IDirect3DDevice9::Present` after the game's own drawing ([`overlay`]); what the
-//! mods draw goes to the render layer's 2D overlay (`WgpuDevice::draw_overlay`), outside the game's D3D9 state.
-//! Nothing here reads or writes game memory or calls a port.
+//! or the page's `?mods=a,b` (web) are loaded before the boot, and called at the game's fixed points:
+//!
+//! * the settings phase ([`settings`]): once in the boot, after `RsEventHandler(rsINITIALIZE)` has read the
+//!   settings file (`CMenuManager::LoadSettings`) and before `RsEventHandler(rsRWINITIALIZE)` selects the video mode
+//!   (`psSelectDevice`) and creates the D3D device;
+//! * the overlay phase ([`overlay`]), at every `IDirect3DDevice9::Present` after the game's own drawing; what the
+//!   mods draw goes to the render layer's 2D overlay (`WgpuDevice::draw_overlay`), outside the game's D3D9 state;
+//! * the resize event ([`resize`]), from the window / canvas backends.
+//!
+//! **Video modes (ADR-004 §4.1).** A mod's requested video mode is applied through the original's own state, so
+//! the game sees what it would see had the player chosen it: the adapter (`IDirect3D9`, [`crate::display`]) lists
+//! the real display's modes plus the requested size, and the request becomes the menu's video mode
+//! (`FrontEndMenuManager.m_nDisplayVideoMode`, as `gta_sa.set` would hold it) when the original's mode list offers
+//! it (`VideoMode::GetVideoModeList`: aspect 4:3, 5:4, 5:3, 16:10). Sizes the original's list leaves out (16:9 and
+//! the rest) take the original's other selection path in `psSelectDevice`: `IsVMNotSelected` clear and
+//! `gCurrentVideoMode` set (the mode a previous session selected); the menu's own video mode then names the closest
+//! listed mode, since the menu's resolution row can only show listed modes ([`after_select`]). No port body changes.
+//! Later requests (resize, overlay) are applied at the next main-loop iteration as the menu's resolution change
+//! (`m_nPrefsVideoMode`, `VideoMode::SetVideoMode`, `CPostEffects::DoScreenModeDependentInitializations`), when the
+//! adapter lists the size.
 
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 
+use sa_core::mem::GPtr;
 use sa_mod_host::Host;
+use sa_mod_host::api::{Display, VideoRequest};
 use sa_rw_wgpu::d3d9::WgpuDevice;
+
+use crate::display;
 
 thread_local! {
     /// The host (game thread only; `None` without mods).
     static HOST: RefCell<Option<Host>> = const { RefCell::new(None) };
     /// The overlay rectangles of the current frame (kept to reuse the allocation).
     static RECTS: RefCell<Vec<sa_platform::gpu::OverlayRect>> = const { RefCell::new(Vec::new()) };
+    /// The request of the settings phase and, for a size the original's list leaves out, the listed mode the menu
+    /// shows instead ([`after_select`]).
+    static SELECTED: Cell<Option<(VideoRequest, i32, Option<i32>)>> = const { Cell::new(None) };
+}
+
+/// `FrontEndMenuManager.m_nPrefsVideoMode`, `m_nDisplayVideoMode`.
+const MENU_PREFS_VIDEO_MODE: usize = 0xBA681C;
+const MENU_DISPLAY_VIDEO_MODE: usize = 0xBA6820;
+/// R5G6B5 and X8R8G8B8, in the order RW enumerates the adapter's formats (`rwD3D9` mode list, 0x884788).
+const RW_FORMATS: usize = 2;
+
+fn rd(a: usize) -> i32 {
+    GPtr::<i32>::from_addr(a).read()
+}
+fn wr(a: usize, v: i32) {
+    GPtr::<i32>::from_addr(a).write(v)
+}
+
+/// The display as the mods see it.
+fn mod_display(d: &display::Display) -> Display {
+    Display { desktop: (d.desktop.0, d.desktop.1), modes: d.modes.iter().map(|m| (m.0, m.1)).collect() }
 }
 
 /// Loads the mods of `spec` (a folder natively, a list of mod names on the web). A mod that cannot be loaded is
 /// reported and skipped; an unreadable `spec` is an error.
 pub fn install(spec: &str) -> Result<(), String> {
     let mut host = Host::new(Box::new(|s| println!("sa-game: {s}")));
+    host.set_display(mod_display(&display::reported()));
     let sources = sa_mod_host::sources(spec)?;
     if sources.is_empty() {
         println!("sa-game: mods: none found in {spec}");
     }
     for s in sources {
-        if let Err(e) = host.load(s.as_ref()) {
+        if let Err(e) = host.load(s) {
             println!("sa-game: mod not loaded: {e}");
         }
     }
     HOST.with_borrow_mut(|h| *h = Some(host));
     Ok(())
+}
+
+fn with_host<R>(f: impl FnOnce(&mut Host) -> R) -> Option<R> {
+    HOST.with_borrow_mut(|h| h.as_mut().map(f))
+}
+
+/// RW's index of the 32-bit mode `(w, h)` among `modes` (the adapter's list): RW numbers the desktop 0, then the
+/// adapter's R5G6B5 modes, then its X8R8G8B8 modes (one entry per size and format, `rwD3D9`'s mode list 0x7F7540).
+fn rw_index(modes: &[display::Mode], w: u32, h: u32) -> Option<i32> {
+    let i = modes.iter().position(|m| (m.0, m.1) == (w, h))?;
+    Some(1 + ((RW_FORMATS - 1) * modes.len() + i) as i32)
+}
+
+/// Whether the original's mode list (`VideoMode::GetVideoModeList`) offers the 32-bit exclusive mode `m`.
+fn listed(m: display::Mode) -> bool {
+    sa_core::video::mode_is_listed(&[m.0 as i32, m.1 as i32, 32, 1, m.2 as i32, 0], sa_core::video::VRAM_AVAIL.get())
+}
+
+/// The settings phase (see the module doc): the mods' `sa_settings`, then a requested video mode becomes the
+/// adapter's mode list and the original's video-mode state, and the window shows it.
+pub fn settings() {
+    let Some(req) = with_host(|h| h.settings()).flatten() else { return };
+    let reported = display::reported();
+    let mut modes = reported.modes.clone();
+    if !modes.iter().any(|m| (m.0, m.1) == (req.width, req.height)) {
+        modes.push((req.width, req.height, 60));
+    }
+    let Some(idx) = rw_index(&modes, req.width, req.height) else { return };
+    let refresh = modes.iter().find(|m| (m.0, m.1) == (req.width, req.height)).map_or(60, |m| m.2);
+    let desktop = reported.desktop;
+    display::set_adapter(display::Display { desktop, modes: modes.clone() });
+    let placeholder = if listed((req.width, req.height, refresh)) {
+        // as `gta_sa.set` holds the menu's choice: psSelectDevice takes it as the preferred and current mode
+        wr(MENU_DISPLAY_VIDEO_MODE, idx);
+        None
+    } else {
+        // psSelectDevice's other path: with IsVMNotSelected clear it takes gCurrentVideoMode as it is
+        sa_core::video::IS_VM_NOT_SELECTED.set(0);
+        sa_core::video::CURRENT_VIDEO_MODE.set(idx);
+        wr(MENU_DISPLAY_VIDEO_MODE, 0);
+        // the menu's row names the closest listed mode
+        modes
+            .iter()
+            .filter(|m| listed(**m))
+            .min_by_key(|m| (m.0 as i64 * m.1 as i64 - req.width as i64 * req.height as i64).abs())
+            .and_then(|m| rw_index(&modes, m.0, m.1))
+    };
+    SELECTED.set(Some((req, idx, placeholder)));
+    display::apply_window(req.width, req.height, req.fullscreen);
+    println!(
+        "sa-game: mods: video mode {}x{} ({}, RW mode {idx}, {}) requested; the adapter lists {} modes",
+        req.width,
+        req.height,
+        if req.fullscreen { "full screen" } else { "window" },
+        if placeholder.is_none() { "in the original's mode list: the menu's video mode" } else { "not in the original's mode list: gCurrentVideoMode" },
+        modes.len()
+    );
+}
+
+/// After `psSelectDevice` (the boot's rsRWINITIALIZE step): checks the mode the game selected and, for a size the
+/// original's list leaves out, sets the menu's video mode (`m_nPrefsVideoMode` / `m_nDisplayVideoMode`) to the
+/// closest listed mode, which its resolution row can show (a size outside the list would name no mode).
+pub fn after_select() {
+    let Some((req, idx, placeholder)) = SELECTED.get() else { return };
+    let cur = sa_core::camerasize::call::rw_engine_get_current_video_mode();
+    let mut vmi = [0i32; 6];
+    sa_core::bindings::rw_engine_get_video_mode_info(GPtr::from_raw(vmi.as_mut_ptr()).cast(), cur);
+    if cur != idx || (vmi[0], vmi[1]) != (req.width as i32, req.height as i32) {
+        println!("sa-game: mods: the game selected RW mode {cur} ({}x{}), not the requested {idx}", vmi[0], vmi[1]);
+    }
+    if let Some(p) = placeholder {
+        wr(MENU_PREFS_VIDEO_MODE, p);
+        wr(MENU_DISPLAY_VIDEO_MODE, p);
+    }
+}
+
+/// A video mode requested after the settings phase, applied at the start of a main-loop iteration as the menu's
+/// resolution change, when the adapter lists the size (the RW mode list is built once, when RW opens).
+pub fn frame_boundary() {
+    let Some(req) = with_host(|h| h.take_video_request()).flatten() else { return };
+    if !crate::d3d9::with_device(|_| ()).is_some() {
+        return;
+    }
+    let size = crate::d3d9::with_device(|d| sa_platform::gpu::D3d9Device::back_buffer_size(d));
+    if size == Some((req.width, req.height)) {
+        return;
+    }
+    let modes = display::adapter_modes();
+    let Some(idx) = rw_index(&modes, req.width, req.height) else {
+        println!(
+            "sa-game: mods: video mode {}x{} is not in the adapter's mode list (built when the game started): not applied",
+            req.width, req.height
+        );
+        return;
+    };
+    let m = modes.iter().find(|m| (m.0, m.1) == (req.width, req.height)).copied().unwrap_or((0, 0, 0));
+    let menu = if listed(m) {
+        idx
+    } else {
+        SELECTED.get().and_then(|s| s.2).unwrap_or(rd(MENU_PREFS_VIDEO_MODE))
+    };
+    // CMenuManager's MENU_ACTION_RESOLUTION (accept): the preference, SetVideoMode, the screen-mode dependent setup
+    wr(MENU_PREFS_VIDEO_MODE, menu);
+    wr(MENU_DISPLAY_VIDEO_MODE, menu);
+    sa_hud::menu_mgr::set_video_mode(idx as u32);
+    sa_hud::menu_mgr::post_effects_screen_mode_init();
+    display::apply_window(req.width, req.height, req.fullscreen);
+    println!("sa-game: mods: video mode {}x{} (RW mode {idx}) applied", req.width, req.height);
+}
+
+/// The resize event: the window's client area / the canvas is now `width` x `height` pixels.
+pub fn resize(width: u32, height: u32) {
+    let screen = crate::d3d9::with_device(|d| sa_platform::gpu::D3d9Device::back_buffer_size(d)).unwrap_or((0, 0));
+    with_host(|h| {
+        h.set_display(mod_display(&display::reported()));
+        h.resize(width, height, screen)
+    });
 }
 
 /// The overlay phase: runs every mod's overlay callback and draws the result over the back buffer (call before
@@ -51,4 +210,17 @@ pub fn overlay(d: &mut WgpuDevice) {
 /// The mods' state and cost, for the end of a run.
 pub fn summary() -> Option<String> {
     HOST.with_borrow(|h| h.as_ref().map(Host::summary))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rw_numbers_32_bit_modes_after_the_16_bit_ones() {
+        let modes = [(1920, 1080, 60), (800, 600, 60), (640, 480, 60)];
+        assert_eq!(rw_index(&modes, 1920, 1080), Some(4));
+        assert_eq!(rw_index(&modes, 640, 480), Some(6));
+        assert_eq!(rw_index(&modes, 1024, 768), None);
+    }
 }

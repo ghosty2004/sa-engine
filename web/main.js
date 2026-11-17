@@ -167,6 +167,10 @@ async function start(files) {
       statusEl.textContent = `loading... ${m.mib} MiB read`;
     } else if (m.type === 'status') {
       window.saGame.status = m;
+      if (m.client && (m.client[0] !== client[0] || m.client[1] !== client[1])) {
+        client = m.client;
+        document.documentElement.style.setProperty('--aspect', String(client[0] / client[1]));
+      }
       const st = STATES[m.state] ?? m.state;
       statusEl.textContent = m.error ? `error: ${m.error}` : m.done ? m.done :
         `${m.phase ?? ''} gGameState ${st}, ${m.iterations} iterations${m.blocked ? ` (${m.blocked} blocked)` : ''}, ${m.presents} in-game frames, ${m.mib} MiB read`;
@@ -212,7 +216,7 @@ async function start(files) {
   }
   const audioOut = await initAudio();
   const off = canvas.transferControlToOffscreen();
-  worker.postMessage({ type: 'start', canvas: off, files, env, audio: audioOut, audioTap: params.get('audiotap') === '1', startInWorld: $('inworld').checked, backend: params.get('backend') ?? '' }, [off]);
+  worker.postMessage({ type: 'start', canvas: off, files, env, audio: audioOut, audioTap: params.get('audiotap') === '1', startInWorld: $('inworld').checked, backend: params.get('backend') ?? '', display: displaySize() }, [off]);
   canvas.focus();
 }
 
@@ -258,12 +262,33 @@ window.addEventListener('keydown', onKey(true));
 window.addEventListener('keyup', onKey(false));
 window.addEventListener('blur', () => worker?.postMessage({ type: 'blur' }));
 
-// full window (?full=1) and fullscreen: CSS scales the canvas (the game keeps its video mode, letterboxed at 4:3)
+// the game's client size (its video mode; the worker's status reports it): the canvas keeps its aspect
+let client = [800, 600];
+// the display the game's mods see (e.g. the resolution mod): the space the canvas can take on the page in device
+// pixels: the viewport in full window / fullscreen, else the canvas's 800 x 600 CSS box
+function displaySize() {
+  const full = document.body.classList.contains('full') || !!document.fullscreenElement;
+  const [w, h] = full ? [window.innerWidth, window.innerHeight] : [800, 600];
+  const dpr = window.devicePixelRatio || 1;
+  return [Math.round(w * dpr), Math.round(h * dpr)];
+}
+let displayTimer = null;
+function displayChanged() {
+  clearTimeout(displayTimer);
+  displayTimer = setTimeout(() => {
+    const [w, h] = displaySize();
+    worker?.postMessage({ type: 'display', w, h });
+  }, 250);
+}
+window.addEventListener('resize', displayChanged);
+
+// full window (?full=1) and fullscreen: CSS scales the canvas to the page, at the game's aspect (letterboxed)
 let inMenu = true;
 // the page released the pointer lock itself (the SA:MP UI shows its cursor), not the user's Esc
 let selfRelease = false;
 function setFull(on) {
   document.body.classList.toggle('full', on);
+  displayChanged();
   $('unfull').textContent = document.fullscreenElement ? 'Exit fullscreen' : 'Exit full window';
   canvas.focus();
 }
@@ -275,6 +300,7 @@ document.addEventListener('fullscreenchange', () => {
   if (document.fullscreenElement) navigator.keyboard?.lock?.(['Escape']).catch(() => {});
   else navigator.keyboard?.unlock?.();
   $('unfull').textContent = document.fullscreenElement ? 'Exit fullscreen' : 'Exit full window';
+  displayChanged();
   canvas.focus();
 });
 if (params.get('full') === '1') setFull(true);
@@ -282,7 +308,7 @@ if (params.get('full') === '1') setFull(true);
 // the pointer position in the game's client pixels (the canvas is scaled by CSS)
 function gamePos(e) {
   const r = canvas.getBoundingClientRect();
-  return [Math.round((e.clientX - r.left) * canvas.width / r.width), Math.round((e.clientY - r.top) * canvas.height / r.height)];
+  return [Math.round((e.clientX - r.left) * client[0] / r.width), Math.round((e.clientY - r.top) * client[1] / r.height)];
 }
 
 // menus (gGameState other than IDLE): no pointer lock; the absolute position goes to the game as WM_MOUSEMOVE (the

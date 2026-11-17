@@ -21,15 +21,22 @@ use sa_platform::input::{GamepadState, InputEvent, InputState, Key, MouseButton}
 
 use crate::app::{Session, merge_input, synthetic_input};
 
-/// The game's client size in pixels (its default video mode, 800 x 600): pointer positions are given in these.
+/// The game's client size in pixels before its device exists (its default video mode, 800 x 600).
 pub const CLIENT_WIDTH: u32 = 800;
 pub const CLIENT_HEIGHT: u32 = 600;
 
-/// A position in a drawable of `size` pixels as the game's client pixels (the back buffer is stretched over it).
-pub fn to_client(x: i32, y: i32, size: (u32, u32)) -> (i32, i32) {
+/// The game's client size in pixels: the back buffer of its video mode (`GetClientRect`), which the drawable shows
+/// stretched; [`CLIENT_WIDTH`] x [`CLIENT_HEIGHT`] before the device exists.
+pub fn client_size() -> (u32, u32) {
+    crate::d3d9::with_device(|d| sa_platform::gpu::D3d9Device::back_buffer_size(d)).unwrap_or((CLIENT_WIDTH, CLIENT_HEIGHT))
+}
+
+/// A position in a drawable of `size` pixels as the game's client pixels (`client`, the back buffer stretched over
+/// the drawable).
+pub fn to_client(x: i32, y: i32, size: (u32, u32), client: (u32, u32)) -> (i32, i32) {
     (
-        (x as i64 * CLIENT_WIDTH as i64 / size.0.max(1) as i64) as i32,
-        (y as i64 * CLIENT_HEIGHT as i64 / size.1.max(1) as i64) as i32,
+        (x as i64 * client.0 as i64 / size.0.max(1) as i64) as i32,
+        (y as i64 * client.1 as i64 / size.1.max(1) as i64) as i32,
     )
 }
 
@@ -211,8 +218,10 @@ mod tests {
 
     #[test]
     fn client_positions_scale_to_the_video_mode() {
-        assert_eq!(to_client(1600, 1200, (1600, 1200)), (800, 600));
-        assert_eq!(to_client(400, 300, (800, 600)), (400, 300));
-        assert_eq!(to_client(5, 5, (0, 0)), (4000, 3000));
+        let c = (CLIENT_WIDTH, CLIENT_HEIGHT);
+        assert_eq!(to_client(1600, 1200, (1600, 1200), c), (800, 600));
+        assert_eq!(to_client(400, 300, (800, 600), c), (400, 300));
+        assert_eq!(to_client(5, 5, (0, 0), c), (4000, 3000));
+        assert_eq!(to_client(960, 540, (1920, 1080), (1280, 720)), (640, 360));
     }
 }

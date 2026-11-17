@@ -17,12 +17,12 @@ use std::sync::Arc;
 use web_time::Instant;
 
 use sa_platform::input::{InputEvent, InputState};
-use sa_platform::native::{Window, WindowApp, WindowConfig, run_windowed, set_pointer_capture};
+use sa_platform::native::{Fullscreen, Window, WindowApp, WindowConfig, run_windowed, set_pointer_capture};
 use sa_rw_wgpu::d3d9::WgpuDevice;
 
 use crate::app::{Args, Session};
 use crate::d3d9;
-use crate::frontend::{CLIENT_HEIGHT as HEIGHT, CLIENT_WIDTH as WIDTH, FrontEnd, in_menu, to_client};
+use crate::frontend::{CLIENT_HEIGHT as HEIGHT, CLIENT_WIDTH as WIDTH, FrontEnd, client_size, in_menu, to_client};
 
 use sa_rw_wgpu::d3d9::block_on;
 
@@ -78,6 +78,43 @@ fn window_target(window: Arc<Window>) -> Result<d3d9::WindowTarget, String> {
     })
 }
 
+/// The window's monitor as the display (its current mode and video modes, [`crate::display`]), and how a video mode
+/// is shown: the window resized to it, or full screen (the monitor's video mode of that size when it has one, else
+/// borderless over the monitor, the image scaled).
+fn report_display(window: &Arc<Window>) {
+    if let Some(m) = window.current_monitor().or_else(|| window.primary_monitor()) {
+        let size = m.size();
+        let hz = |mhz: Option<u32>| mhz.map_or(60, |v| v.div_ceil(1000));
+        let desktop = (size.width, size.height, hz(m.refresh_rate_millihertz()));
+        let modes = m
+            .video_modes()
+            .filter(|v| v.bit_depth() >= 24)
+            .map(|v| (v.size().width, v.size().height, v.refresh_rate_millihertz().div_ceil(1000)));
+        crate::display::set_reported(desktop, std::iter::once(desktop).chain(modes));
+    }
+    let w = window.clone();
+    crate::display::set_window_apply(Box::new(move |width, height, fullscreen| {
+        if fullscreen {
+            let exclusive = w.current_monitor().and_then(|m| {
+                m.video_modes().filter(|v| (v.size().width, v.size().height) == (width, height)).max_by_key(|v| {
+                    (v.bit_depth(), v.refresh_rate_millihertz())
+                })
+            });
+            w.set_fullscreen(Some(match exclusive {
+                Some(v) => Fullscreen::Exclusive(v),
+                None => Fullscreen::Borderless(None),
+            }));
+        } else {
+            w.set_fullscreen(None);
+            let _ = w.request_inner_size(sa_platform::native::PhysicalSize::new(width, height));
+        }
+        // the surface at once (the window's resize event follows)
+        let s = w.inner_size();
+        let (sw, sh) = if fullscreen || s.width == 0 { (width, height) } else { (s.width, s.height) };
+        d3d9::resize_window(sw, sh);
+    }));
+}
+
 struct GameWindow<'a> {
     args: &'a Args,
     session: Option<Session>,
@@ -97,6 +134,7 @@ impl GameWindow<'_> {
     /// The window's events since the last redraw into the front end (positions in client pixels).
     fn feed(&mut self, input: &InputState, size: (u32, u32)) {
         let f = &mut self.front;
+        let client = client_size();
         for e in &input.events {
             match *e {
                 InputEvent::KeyDown { key, repeat } => f.key(key, true, repeat),
@@ -105,7 +143,7 @@ impl GameWindow<'_> {
                 InputEvent::MouseDown(b) => f.mouse_button(b, true),
                 InputEvent::MouseUp(b) => f.mouse_button(b, false),
                 InputEvent::MouseMove { x, y } => {
-                    let (x, y) = to_client(x, y, size);
+                    let (x, y) = to_client(x, y, size, client);
                     f.mouse_pos(x, y)
                 }
                 InputEvent::Wheel(lines) => f.wheel(lines),
@@ -127,6 +165,7 @@ impl WindowApp for GameWindow<'_> {
             }
         }
         crate::boot::NO_PROBE.store(true, std::sync::atomic::Ordering::SeqCst);
+        report_display(&window);
         match super::native_main::boot(self.args) {
             Ok(s) => self.session = Some(s),
             Err(e) => self.error = Some(e),
@@ -139,6 +178,8 @@ impl WindowApp for GameWindow<'_> {
 
     fn resized(&mut self, width: u32, height: u32) {
         d3d9::resize_window(width, height);
+        #[cfg(feature = "mods")]
+        crate::mods::resize(width, height);
     }
 
     fn frame(&mut self, input: &InputState) -> bool {

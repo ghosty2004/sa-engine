@@ -239,8 +239,18 @@ pub fn boot_with(
         if winmain::aborted() {
             break;
         }
+        // the mods' settings phase: after the settings file is read (rsINITIALIZE), before psSelectDevice selects
+        // the video mode and the D3D device is created (rsRWINITIALIZE)
+        #[cfg(feature = "mods")]
+        if s.addr == winmain::RW_INITIALIZE_STEP {
+            crate::mods::settings();
+        }
         let o = run_step(&s);
         rep.add("boot", &s, &o);
+        #[cfg(feature = "mods")]
+        if s.addr == winmain::RW_INITIALIZE_STEP {
+            crate::mods::after_select();
+        }
     }
     for s in boot::checks() {
         let o = run_step(&s);
@@ -390,6 +400,9 @@ impl Session {
         #[cfg(feature = "samp")]
         crate::samp_ui_demo::take_input(&mut input);
         crate::samp_input::filter(&mut input);
+        // a video mode a mod requested since the last iteration (MOD-2)
+        #[cfg(feature = "mods")]
+        crate::mods::frame_boundary();
         let n = self.n;
         self.n += 1;
         det::begin_iteration();

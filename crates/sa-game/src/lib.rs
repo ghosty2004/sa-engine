@@ -36,6 +36,7 @@ pub mod d3d9_shader;
 pub mod det;
 pub mod detheap;
 pub mod dsound;
+pub mod display;
 pub mod dx;
 pub mod frontend;
 pub mod imports;
