@@ -18,6 +18,7 @@ extern crate std;
 
 pub use sa_core::hook;
 
+pub mod clip_orientation;
 pub mod common;
 pub mod hooks;
 pub mod frontier_c_natives;

@@ -1653,7 +1653,7 @@ orig! {
     /// `CPathFind::FindLinkBetweenNodes(CNodeAddress, CNodeAddress)` (0x451350, thiscall, hidden return pointer)
     fn find_link_between_nodes(this: GPtr<u8>, out: GPtr<u16>, a: u32, b: u32) -> GPtr<u16> = thiscall 0x451350 => crate::pathfind::find_link_between_nodes;
     /// `CCarCtrl::ClitargetOrientationToLink(CVehicle*, CCarPathLinkAddress, int8 side, float* heading, float x, float y)` (0x422760)
-    fn clitarget_orientation_to_link(v: GPtr<u8>, link: u32, side: u32, heading: GPtr<f32>, x: f32, y: f32) = cdecl 0x422760 => unported;
+    fn clitarget_orientation_to_link(v: GPtr<u8>, link: u32, side: u32, heading: GPtr<f32>, x: f32, y: f32) = cdecl 0x422760 => crate::clip_orientation::clip_target_orientation_to_link;
     /// `CCarCtrl::FindPercDependingOnDistToLink(CVehicle*, CCarPathLinkAddress)` (0x422620, ST0)
     fn find_perc_depending_on_dist_to_link(v: GPtr<u8>, link: u16) -> f64 = cdecl 0x422620 => find_perc_abi;
 }
