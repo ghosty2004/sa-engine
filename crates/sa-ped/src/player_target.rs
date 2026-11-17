@@ -1191,9 +1191,10 @@ fn ped_lock_on_excluded(this: GPtr<u8>, p: GPtr<u8>) -> bool {
 /// `CPlayerPed.md`. The forward heading is computed and discarded; objects and vehicles use the stale EBP of
 /// the ped loop as TargetWeaponRangeMultiplier's victim: the ped at slot 0 (0 when that slot is free, the
 /// pool base otherwise, whatever the exclusions), or curTarget when the ped pool has size 0.
-// Not registered (INF-20): the no-CD protection reads the patched entry bytes as data (`mov edi, [0x60E533]`
+// Phase B native only (INF-20): the no-CD protection reads the patched entry bytes as data (`mov edi, [0x60E533]`
 // at 0x401E55, `sbb ebx, [0x60E533]` at 0x406405, `adc ecx, [0x60E533]` at 0x1566A2D; sa-hook's install,
-// keycells and patch_refs tests reject the hook).
+// keycells and patch_refs tests reject a hook).
+#[sa_core::native(addr = 0x60E530, conv = thiscall, name = "CPlayerPed::FindNextWeaponLockOnTarget")]
 pub fn find_next_weapon_lock_on_target(this: GPtr<u8>, cur: GPtr<u8>, left: u32) -> u8 {
     let ty = rd::<i32>(active_weapon(this), 0);
     let skill = (ped_get_weapon_skill_current(this) as u32) as u8;
@@ -1868,6 +1869,9 @@ pub fn set_real_move_anim(this: GPtr<u8>) {
     let r = if !x(1.0).fcom(r).test_any(0x41) { x(1.0) } else { r };
     wr::<f32>(sprint, 0x24, r.to_f32());
 }
+
+/// Every `#[native]` of this module.
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_FIND_NEXT_WEAPON_LOCK_ON_TARGET];
 
 pub const HOOKS: &[HookReg] = &[
     HOOK_DISBAND_PLAYER_GROUP,
