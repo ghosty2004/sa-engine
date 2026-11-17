@@ -687,9 +687,9 @@ orig! {
     pub fn cam_arrest_cam_one(c: GPtr<u8>) -> u8 = thiscall 0x518500 => crate::frontier_b4_cam::process_arrest_cam_one;
     pub fn cam_attached_cam(c: GPtr<u8>) = thiscall 0x512B10 => unported;
     /// `CCam` DW processors `(bool)`, AL
-    pub fn cam_dw_heli_chase(c: GPtr<u8>, b: u32) -> u8 = thiscall 0x51A740 => unported;
+    pub fn cam_dw_heli_chase(c: GPtr<u8>, b: u32) -> u8 = thiscall 0x51A740 => crate::dwcams::process_dw_heli_chase_cam;
     pub fn cam_dw_cam_man(c: GPtr<u8>, b: u32) -> u8 = thiscall 0x51B120 => crate::dwcams::process_dw_cam_man_cam;
-    pub fn cam_dw_birdy(c: GPtr<u8>, b: u32) -> u8 = thiscall 0x51B850 => unported;
+    pub fn cam_dw_birdy(c: GPtr<u8>, b: u32) -> u8 = thiscall 0x51B850 => crate::dwcams::process_dw_birdy_cam;
     pub fn cam_dw_plane_spotter(c: GPtr<u8>, b: u32) -> u8 = thiscall 0x51C250 => crate::dwcams::process_dw_plane_spotter_cam;
     pub fn cam_dw_plane_cam1(c: GPtr<u8>, b: u32) -> u8 = thiscall 0x51C760 => crate::dwcams::process_dw_plane_cam1;
     pub fn cam_dw_plane_cam2(c: GPtr<u8>, b: u32) -> u8 = thiscall 0x51CC30 => crate::dwcams::process_dw_plane_cam2;

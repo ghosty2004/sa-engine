@@ -20,11 +20,10 @@ use crate::bindings::pad_clear;
 use crate::bindings::base_model_info_ctor as base_model_info_ctor_call;
 use crate::bindings::list_ctor as list_ctor_call;
 use crate::bindings::list_item_ctor as list_item_ctor_call;
+use crate::bindings::dw_heli_chase_settings_init;
 orig! {
     /// `CBoundingBox::CBoundingBox()` (0x40FAF0)
     fn bounding_box_ctor_call(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x40FAF0 => bounding_box_ctor;
-    /// `CCam::Init()` (0x50E180)
-    fn cam_init(this: GPtr<u8>) = thiscall 0x50E180 => unported;
 }
 
 /// `CBaseModelInfo::CBaseModelInfo()` (0x4C4A60): vtable 0x85BB9C, u16 +8 = 0, u16 +0xA = 0xFFFF.
@@ -116,10 +115,10 @@ pub fn saved_weapon_ctor(this: GPtr<u8>) -> GPtr<u8> {
     this
 }
 
-/// `CCam::CCam()` (0x5173F0): `CCam::Init()` (0x50E180, which keeps ECX), returns `this`.
+/// `CCam::CCam()` (0x5173F0): the DW heli-chase settings defaults (0x50E180, which keep ECX), returns `this`.
 #[crate::native(addr = 0x5173F0, conv = thiscall, name = "CCam::CCam")]
 pub fn cam_ctor(this: GPtr<u8>) -> GPtr<u8> {
-    cam_init(this);
+    dw_heli_chase_settings_init(this);
     this
 }
 

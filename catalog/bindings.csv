@@ -651,6 +651,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x50C100,sa-core,camera_set_rw_camera,thiscall,,this:GPtr<u8>;cam:GPtr<u8>,,unported,CCamera::SetRwCamera,
 0x50C140,sa-core,camera_set_wide_screen_on,thiscall,,cam:GPtr<u8>,,unported,CCamera::SetWideScreenOn,
 0x50C150,sa-core,camera_set_wide_screen_off,thiscall,,c:GPtr<u8>,,unported,CCamera::SetWideScreenOff,
+0x50E180,sa-core,dw_heli_chase_settings_init,thiscall,,s:GPtr<u8>,u32,unported,FUN_0050e180,sa_cam::camproc::heli_chase_settings_init
 0x514860,sa-core,camera_draw_borders_for_wide_screen,thiscall,,this:GPtr<u8>,,unported,CCamera::DrawBordersForWideScreen,
 0x52B730,sa-core,camera_process,thiscall,,this:GPtr<u8>,,unported,CCamera::Process,
 0x52CD90,sa-core,clock_initialise,cdecl,,scale:u32,,unported,CClock::Initialise,

@@ -129,6 +129,11 @@ orig! {
 }
 
 orig! {
+    /// `FUN_0050e180` (0x50E180)
+    pub fn dw_heli_chase_settings_init(s: GPtr<u8>) -> u32 = thiscall 0x50E180 => crate::camproc::heli_chase_settings_init;
+}
+
+orig! {
     /// `CCam::Init` (0x50E490)
     pub fn cam_init(this: GPtr<u8>) = thiscall 0x50E490 => crate::cam::cam_init;
 }

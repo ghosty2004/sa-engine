@@ -60,6 +60,8 @@ pub use sa_stream::bindings::simple_transform_update_matrix;
 pub use sa_world::bindings::entity_get_bound_centre as get_bound_centre;
 pub use sa_world::bindings::entity_get_col_model as get_col_model;
 pub use sa_world::bindings::find_objects_in_range;
+use sa_world::bindings::world_test_sphere_against_world;
+use sa_world::bindings::vector_ctor_iterator;
 pub use sa_world::bindings::multiply3x3_vm;
 pub use sa_world::bindings::process_line_of_sight;
 pub use sa_core::bindings::world_get_is_line_of_sight_clear as get_is_line_of_sight_clear;
@@ -1792,7 +1794,938 @@ pub fn process_dw_cam_man_cam(this: GPtr<u8>, _arg: u32) -> u8 {
     1
 }
 
+use crate::bindings::dw_heli_chase_settings_init as heli_chase_settings_init_call;
+orig! {
+    /// `FUN_0050e090` (0x50E090): the heli-chase settings block's random scales
+    fn heli_chase_settings_randomise_call(s: GPtr<u8>) = thiscall 0x50E090 => heli_chase_settings_randomise;
+}
+
+/// The heli-chase settings block `S` (0x9C bytes, `0xB6FEC0 - k * 0x9C` with `k` always 0).
+const HELI_CHASE_SETTINGS: usize = 0xB6FEC0;
+/// `1/32767` (0x858C7C), `2^-15` (0x858B14).
+const K_RAND_UNIT: u32 = 0x3800_0100;
+const K_RAND_15: u32 = 0x3800_0000;
+
+/// `FUN_0050e090` (0x50E090, thiscall on the heli-chase settings block): five random scales, one
+/// `rand()` each (sites 0x50E099 / 0x50E0BE / 0x50E0E3 / 0x50E108 / 0x50E12D): `+0x18 *= u * 1.4 +
+/// 0.1`, `+0x1C / +0x20 / +0x24 *= u * 0.5 + 0.5`, `+0x28 *= u * 1.5 + 0.5` with `u = rand() / 32767`.
+#[hook(addr = 0x50E090, conv = thiscall, name = "FUN_0050e090", expect = "51 56 8B F1 E8",
+       unverified = "frontier2-b20", route = "L2", hazards = "none")]
+pub fn heli_chase_settings_randomise(this: GPtr<u8>) {
+    for (site, off, mul, add) in [
+        (0x50E099, 0x18, 0x3FB3_3333u32, 0x3DCC_CCCDu32),
+        (0x50E0BE, 0x1C, K_HALF, K_HALF),
+        (0x50E0E3, 0x20, K_HALF, K_HALF),
+        (0x50E108, 0x24, K_HALF, K_HALF),
+        (0x50E12D, 0x28, 0x3FC0_0000, K_HALF),
+    ] {
+        let r = sa_core::crt::rand_at(site);
+        let mut f = Fpu::new();
+        f.fild(r);
+        f.fmul_m(k(K_RAND_UNIT));
+        f.fmul_m(k(mul));
+        f.fadd_m(k(add));
+        f.fmul_m(m(this, off));
+        st(this, off, f.fstp());
+    }
+}
+
+/// The scene-reset part of the heli-chase start and failure paths (inlined twice): `+0x7C = +0x2C -
+/// +0x30`, the flags +0x40 / +0x5C / +0x80 / +0x81 / +0x88 cleared, `+0x64 = +0x60`, `+0x44 = +0x48`.
+fn heli_chase_reset(s: GPtr<u8>) {
+    let mut f = Fpu::new();
+    f.fld(m(s, 0x2C));
+    f.fsub_m(m(s, 0x30));
+    st(s, 0x7C, f.fstp());
+    for o in [0x40, 0x5C, 0x80, 0x81] {
+        wr::<u8>(s, o, 0);
+    }
+    stu(s, 0x64, mu(s, 0x60));
+    stu(s, 0x44, mu(s, 0x48));
+    wr::<u8>(s, 0x88, 0);
+}
+
+/// `CCam::Process_DW_HeliChaseCam(bool)` (0x51A740, thiscall, `ret 4`, AL; entry fragment 0x409B4B:
+/// `sub esp, 0xEC`; mode 0x14, scene id 0x38): a chase helicopter. The settings block `S`
+/// (0xB6FEC0) is reset (0x50E180) and randomised (0x50E090) at scene start; up to `S+0x58` tries put
+/// the start `S+0xC` behind and the end `S+0x0` ahead of the target, both offset sideways by a random
+/// sign, until the start sphere is free and the line to the target clear (none: `s_ExitCam[0x14]`).
+/// Per frame the heli moves from start to end, keeps `S+0x74` away (2D), the FOV eases in and out,
+/// the sphere lock 0xB70058 holds it near obstacles, the LOS counter `S+0x64` locks the target point
+/// (`S+0x4C`), then `IsTimeToExit(0x14)` and `Finalise(src, dest, t * S+0x38, fov, S+0x3C, 1)`.
+#[hook(addr = 0x51A740, conv = thiscall, name = "CCam::Process_DW_HeliChaseCam", expect = "90 E9 05 F4 EE FF",
+       this = "CCam", unverified = "frontier2-b20", route = "L2", hazards = "x87-transcendental",
+       note = "FSIN of the FOV ease curves")]
+pub fn process_dw_heli_chase_cam(this: GPtr<u8>, _arg: u32) -> u8 {
+    const EXIT: usize = 0xB6EC70;
+    const LOCK_POS: usize = 0xB70058;
+    const LOCK_GUARD: usize = 0xB70064;
+    const LOCK_COUNT: usize = 0x8CCD24;
+    g::<u8>(CAMERA_B6F059).write(0);
+    // k = _ftol2((rand() & 0xFFFF) * 2^-15 * 0.0): always 0, the rand() is still drawn
+    let r = sa_core::crt::rand_at(0x51A75C) & 0xFFFF;
+    let mut f = Fpu::new();
+    f.fild(r);
+    f.fmul_m(k(K_RAND_15));
+    f.fmul_m(k(K_ZERO));
+    let kk = sa_math::fpu::ftol32(f.pop());
+    let s = GPtr::<u8>::from_addr(HELI_CHASE_SETTINGS.wrapping_sub((kk as usize).wrapping_mul(0x9C)));
+    let t = rd::<GPtr<u8>>(this, 0x21C);
+    if t.is_null() || rd::<u8>(t, 0x36) & 7 != 2 {
+        return 0;
+    }
+    let mut fr = Frame::new();
+    let b = fr.b();
+    core_data(
+        this,
+        b,
+        [
+            0x6C, 0x10, 0x1C, 0x38, 0x8C, 0x80, 0x28, 0x54, 0x14, 0x70, 0x44, 0xBC,
+        ],
+    );
+    let fail = || {
+        g::<u8>(EXIT).write(1);
+        0
+    };
+    let now = TIME_MS.get();
+    stu(b, 0x44, now);
+    let ent = rd::<GPtr<u8>>(b, 0x6C);
+    let bs = s.byte_add(0xC);
+    if !scene_running(0x38) {
+        let end = g::<u32>(DW_DURATIONS as usize).read().wrapping_add(now);
+        g::<u8>(EXIT).write(0);
+        g::<i32>(DW_LAST_MODE).write(0x38);
+        g::<u32>(DW_SCENE_START_TIME).write(now);
+        DW_SCENE_END_TIME.set(end);
+        heli_chase_settings_init_call(s);
+        heli_chase_reset(s);
+        heli_chase_settings_randomise_call(s);
+        hand_shaker_reset(GPtr::from_addr(HAND_SHAKER));
+        let mut n: i32 = 0;
+        let found = loop {
+            if n >= g::<i32>(s.addr() + 0x58).read() {
+                break false;
+            }
+            // Bs = dest - fwd * S.1C
+            f.fld(m(s, 0x1C));
+            f.fld(m(b, 0x28));
+            f.fmul_st(1);
+            f.fld(m(b, 0x2C));
+            f.fmul_st(2);
+            st(b, 0xA8, f.fstp());
+            f.fld(m(b, 0x30));
+            f.fmul_st(2);
+            st(b, 0xAC, f.fstp());
+            f.fld(m(b, 0x1C));
+            f.fsub_st(1);
+            st(b, 0x48, f.fstp());
+            stu(bs, 0, mu(b, 0x48));
+            f.fstp_st(0);
+            f.fstp_st(0);
+            f.fld(m(b, 0x20));
+            f.fsub_m(m(b, 0xA8));
+            st(b, 0x4C, f.fstp());
+            f.fld(m(b, 0x24));
+            stu(bs, 4, mu(b, 0x4C));
+            f.fsub_m(m(b, 0xAC));
+            st(b, 0x50, f.fstp());
+            // A = fwd * S.18 + dest
+            f.fld(m(s, 0x18));
+            f.fld(m(b, 0x28));
+            stu(bs, 8, mu(b, 0x50));
+            f.fmul_st(1);
+            f.fld(m(b, 0x2C));
+            f.fmul_st(2);
+            st(b, 0x9C, f.fstp());
+            f.fld(m(b, 0x30));
+            f.fmul_st(2);
+            st(b, 0xA0, f.fstp());
+            f.fadd_m(m(b, 0x1C));
+            st(b, 0x60, f.fstp());
+            stu(s, 0, mu(b, 0x60));
+            f.fstp_st(0);
+            f.fld(m(b, 0x9C));
+            f.fadd_m(m(b, 0x20));
+            st(b, 0x64, f.fstp());
+            f.fld(m(b, 0xA0));
+            stu(s, 4, mu(b, 0x64));
+            f.fadd_m(m(b, 0x24));
+            st(b, 0x68, f.fstp());
+            stu(s, 8, mu(b, 0x68));
+            // the heights
+            f.fld(m(s, 0x14));
+            f.fadd_m(m(s, 0x20));
+            st(s, 0x14, f.fstp());
+            f.fld(m(s, 0x20));
+            f.fadd_m(m(s, 8));
+            st(s, 8, f.fstp());
+            // the random sides: sx in memory (B+0x10), sy on the stack
+            let neg_x = sa_core::crt::rand_at(0x51A97D) < 0x3FFF;
+            let neg_y = sa_core::crt::rand_at(0x51A98A) < 0x3FFF;
+            f.fld(k(K_ONE));
+            stu(b, 0x10, K_ONE);
+            if neg_x {
+                stu(b, 0x10, K_M1);
+            }
+            if neg_y {
+                f.fstp_st(0);
+                f.fld(k(K_M1));
+            }
+            // Bs += (right.x * S.24, right.y * S.24, S.24 * 0) * sx
+            f.fld(m(s, 0x24));
+            f.fld(m(b, 0x80));
+            f.fmul_st(1);
+            f.fld(m(b, 0x84));
+            f.fmul_st(2);
+            st(b, 0xB4, f.fstp());
+            f.fxch(1);
+            f.fmul_m(k(K_ZERO));
+            st(b, 0xB8, f.fstp());
+            f.fmul_m(m(b, 0x10));
+            f.fld(m(b, 0xB4));
+            f.fmul_m(m(b, 0x10));
+            f.fld(m(b, 0xB8));
+            f.fmul_m(m(b, 0x10));
+            st(b, 0x78, f.fstp());
+            f.fxch(1);
+            f.fadd_m(m(bs, 0));
+            st(bs, 0, f.fstp());
+            f.fadd_m(m(bs, 4));
+            st(bs, 4, f.fstp());
+            f.fld(m(b, 0x78));
+            f.fadd_m(m(bs, 8));
+            st(bs, 8, f.fstp());
+            // A += (right.x * S.24, right.y * S.24, S.24 * 0) * sy
+            f.fld(m(s, 0x24));
+            f.fld(m(b, 0x80));
+            f.fmul_st(1);
+            f.fld(m(b, 0x84));
+            let sphere_c = sa_math::vector::CVector::new(m(bs, 0), m(bs, 4), m(bs, 8));
+            f.fmul_st(2);
+            st(b, 0x90, f.fstp());
+            f.fxch(1);
+            f.fmul_m(k(K_ZERO));
+            st(b, 0x94, f.fstp());
+            f.fmul_st(1);
+            st(b, 0x54, f.fstp());
+            f.fld(m(b, 0x90));
+            f.fmul_st(1);
+            st(b, 0x58, f.fstp());
+            f.fmul_m(m(b, 0x94));
+            f.fld(m(b, 0x54));
+            f.fadd_m(m(s, 0));
+            st(s, 0, f.fstp());
+            f.fld(m(b, 0x58));
+            f.fadd_m(m(s, 4));
+            st(s, 4, f.fstp());
+            f.fadd_m(m(s, 8));
+            st(s, 8, f.fstp());
+            let hit = world_test_sphere_against_world(sphere_c, m(s, 0x78), 0, 1, 1, 0, 0, 0, 0);
+            if hit.is_null() {
+                IGNORE_ENTITY.set(ent);
+                let r = process_line_of_sight(
+                    b.byte_add(0x1C),
+                    bs,
+                    b.byte_add(0xD0),
+                    b.byte_add(0x7C),
+                    1,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                );
+                wr::<u8>(b, 0x37, u8::from(r == 0));
+                IGNORE_ENTITY.set(GPtr::NULL);
+                if r == 0 {
+                    break true;
+                }
+            }
+            n += 1;
+        };
+        if !found {
+            heli_chase_reset(s);
+            return fail();
+        }
+        let a = sa_core::crt::rand_at(0x51AB5C) < 0x3FFF;
+        wr::<u8>(s, 0x81, u8::from(a));
+        let c = sa_core::crt::rand_at(0x51AB6F) < 0x3FFF;
+        wr::<u8>(s, 0x88, u8::from(c));
+    }
+    if g::<u8>(EXIT).read() != 0 {
+        return 0;
+    }
+    // f = elapsed / duration (B+0x10)
+    scene_t(&mut f, now);
+    st(b, 0x10, f.fstp());
+    // P = (A - Bs) * f + Bs, also the source Q (B+0x38)
+    for (i, d) in [(0isize, 0x48isize), (4, 0x4C), (8, 0x50)] {
+        f.fld(m(s, i));
+        f.fsub_m(m(s, 0xC + i));
+        f.fmul_m(m(b, 0x10));
+        f.fadd_m(m(s, 0xC + i));
+        st(b, d, f.fstp());
+        stu(b, 0x38 + i, mu(b, d));
+    }
+    // dest += fwd * speed * S.34 + fwd
+    f.fld(m(b, 0x28));
+    f.fmul_m(m(b, 0x14));
+    f.fld(m(b, 0x2C));
+    f.fmul_m(m(b, 0x14));
+    f.fld(m(b, 0x30));
+    f.fmul_m(m(b, 0x14));
+    stu(b, 0x14, mu(s, 0x34));
+    st(b, 0x78, f.fstp());
+    f.fxch(1);
+    f.fmul_m(m(b, 0x14));
+    st(b, 0x54, f.fstp());
+    f.fmul_m(m(b, 0x14));
+    f.fld(m(b, 0x78));
+    f.fmul_m(m(b, 0x14));
+    f.fld(m(b, 0x54));
+    f.fadd_m(m(b, 0x28));
+    st(b, 0x54, f.fstp());
+    f.fxch(1);
+    f.fadd_m(m(b, 0x2C));
+    st(b, 0x58, f.fstp());
+    f.fadd_m(m(b, 0x30));
+    f.fld(m(b, 0x54));
+    f.fadd_m(m(b, 0x1C));
+    st(b, 0x1C, f.fstp());
+    f.fld(m(b, 0x58));
+    f.fadd_m(m(b, 0x20));
+    st(b, 0x20, f.fstp());
+    f.fadd_m(m(b, 0x24));
+    st(b, 0x24, f.fstp());
+    // keep S.74 away (2D)
+    f.fld(m(b, 0x1C));
+    f.fsub_m(m(b, 0x48));
+    st(b, 0x28, f.fstp());
+    f.fld(m(b, 0x20));
+    f.fsub_m(m(b, 0x4C));
+    st(b, 0x2C, f.fst());
+    f.fmul_m(m(b, 0x2C));
+    f.fld(m(b, 0x28));
+    f.fmul_m(m(b, 0x28));
+    f.faddp(1);
+    f.fsqrt();
+    f.fld(k(K_ONE));
+    f.fdiv_st(1);
+    f.fld(m(b, 0x28));
+    f.fmul_st(1);
+    st(b, 0x28, f.fstp());
+    f.fmul_m(m(b, 0x2C));
+    st(b, 0x2C, f.fstp());
+    f.fcomp_m(m(s, 0x74));
+    if !f.jp(0x05) {
+        f.fld(m(b, 0x28));
+        f.fmul_m(m(s, 0x74));
+        f.fsubr_m(m(b, 0x1C));
+        st(b, 0x38, f.fstp());
+        f.fld(m(b, 0x2C));
+        f.fmul_m(m(s, 0x74));
+        f.fsubr_m(m(b, 0x20));
+        st(b, 0x3C, f.fstp());
+    }
+    // the FOV, eased in from S.2C over the first S.28 unless S.81
+    f.fld(m(s, 0x30));
+    f.fld(m(b, 0x10));
+    f.fcomp_m(m(s, 0x28));
+    if !f.jp(0x05) && rd::<u8>(s, 0x81) == 0 {
+        f.fstp_st(0);
+        f.fld(k(K_ONE));
+        f.fdiv_m(m(s, 0x28));
+        f.fmul_m(m(b, 0x10));
+        f.fmul_m(k(0x4334_0000));
+        f.fsubr_m(k(0x4387_0000));
+        f.fmul_m(k(K_DEG2RAD));
+        fsin(&mut f);
+        f.fadd_m(k(K_ONE));
+        f.fmul_m(k(K_HALF));
+        f.fld(m(s, 0x30));
+        f.fsub_m(m(s, 0x2C));
+        f.fmulp(1);
+        f.fadd_m(m(s, 0x2C));
+    }
+    // the zoom with the distance beyond S.68
+    f.fld(k(K_ZERO));
+    f.fld(m(b, 0x38));
+    f.fsub_m(m(b, 0x1C));
+    f.fld(m(b, 0x3C));
+    f.fsub_m(m(b, 0x20));
+    f.fld(m(b, 0x40));
+    f.fsub_m(m(b, 0x24));
+    f.fld_st(0);
+    f.fmul_st(1);
+    f.fld_st(2);
+    f.fmul_st(3);
+    f.faddp(1);
+    f.fld_st(3);
+    f.fmul_st(4);
+    f.faddp(1);
+    f.fsqrt();
+    f.fstp_st(3);
+    f.fstp_st(0);
+    f.fstp_st(0);
+    st(b, 0x18, f.fst());
+    f.fcomp_m(m(s, 0x68));
+    if !f.jne(0x41) {
+        f.fstp_st(0);
+        f.fld(m(b, 0x18));
+        f.fsub_m(m(s, 0x68));
+        f.fld(m(s, 0x6C));
+        f.fsub_m(m(s, 0x68));
+        f.fdivp(1);
+        ease(&mut f);
+        f.fmul_m(m(s, 0x70));
+    }
+    f.fxch(1);
+    f.fsub_st(1);
+    st(b, 0x14, f.fstp());
+    f.fstp_st(0);
+    f.fld(m(b, 0x10));
+    f.fmul_m(m(s, 0x38));
+    st(b, 0x18, f.fstp());
+    // the sphere lock
+    let mut lock = rd::<u8>(s, 0x5C) != 0;
+    if !lock {
+        let c = sa_math::vector::CVector::new(m(b, 0x38), m(b, 0x3C), m(b, 0x40));
+        let hit = world_test_sphere_against_world(c, g::<f32>(0x8CCD28).read(), 0, 1, 1, 0, 0, 0, 0);
+        lock = !hit.is_null();
+        if lock {
+            if g::<u8>(LOCK_GUARD).read() & 1 == 0 {
+                g::<u32>(LOCK_GUARD).write(g::<u32>(LOCK_GUARD).read() | 1);
+            }
+            for (i, o) in [0x38isize, 0x3C, 0x40].into_iter().enumerate() {
+                g::<u32>(LOCK_POS + 4 * i).write(mu(b, o));
+            }
+            wr::<u8>(s, 0x5C, 1);
+            g::<i32>(LOCK_COUNT).write(100 - 1);
+        }
+    } else {
+        if g::<u8>(LOCK_GUARD).read() & 1 == 0 {
+            g::<u32>(LOCK_GUARD).write(g::<u32>(LOCK_GUARD).read() | 1);
+        }
+        let c = g::<i32>(LOCK_COUNT).read();
+        g::<i32>(LOCK_COUNT).write(c.wrapping_sub(1));
+        if c < 0 {
+            return fail();
+        }
+    }
+    if lock {
+        let lp = GPtr::<u8>::from_addr(LOCK_POS);
+        f.fld(m(b, 0x38));
+        f.fsub_m(m(lp, 0));
+        f.fld(m(b, 0x3C));
+        f.fsub_m(m(lp, 4));
+        f.fld(m(b, 0x40));
+        f.fsub_m(m(lp, 8));
+        st(b, 0x78, f.fstp());
+        f.fxch(1);
+        f.fmul_m(g::<f32>(0x8CCD20).read());
+        st(b, 0x54, f.fstp());
+        f.fmul_m(g::<f32>(0x8CCD20).read());
+        f.fld(m(b, 0x78));
+        f.fmul_m(g::<f32>(0x8CCD20).read());
+        f.fld(m(b, 0x54));
+        f.fadd_m(m(lp, 0));
+        st(b, 0x60, f.fstp());
+        stu(b, 0x38, mu(b, 0x60));
+        f.fxch(1);
+        f.fadd_m(m(lp, 4));
+        st(b, 0x64, f.fstp());
+        stu(b, 0x3C, mu(b, 0x64));
+        f.fadd_m(m(lp, 8));
+        st(b, 0x68, f.fstp());
+        stu(b, 0x40, mu(b, 0x68));
+    }
+    // the target point: tracked while the line is clear, then locked (S.4C) for S.44 frames
+    if rd::<u8>(s, 0x40) == 0 {
+        IGNORE_ENTITY.set(ent);
+        let r = process_line_of_sight(
+            b.byte_add(0x1C),
+            b.byte_add(0x38),
+            b.byte_add(0xD0),
+            b.byte_add(0x7C),
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        );
+        wr::<u8>(b, 0x37, u8::from(r == 0));
+        IGNORE_ENTITY.set(GPtr::NULL);
+        if r == 0 {
+            wr::<u8>(s, 0x80, 1);
+            if rd::<u8>(s, 0x88) == 0 && rd::<i32>(s, 0x64) < rd::<i32>(s, 0x60) / 4 {
+                stu(s, 0x84, mu(b, 0x14));
+                wr::<u8>(s, 0x88, 1);
+                stu(s, 0x8C, now);
+                stu(s, 0x90, mu(s, 0x98).wrapping_add(now));
+            }
+            let c = rd::<i32>(s, 0x64);
+            wr::<i32>(s, 0x64, c.wrapping_sub(1));
+            if c == 0 {
+                for o in [0isize, 4, 8] {
+                    stu(s, 0x4C + o, mu(b, 0x1C + o));
+                }
+                wr::<u8>(s, 0x40, 1);
+            }
+        } else {
+            let c = rd::<i32>(s, 0x64).wrapping_add(1);
+            wr::<i32>(s, 0x64, c);
+            if c > rd::<i32>(s, 0x60) {
+                stu(s, 0x64, mu(s, 0x60));
+            }
+        }
+    } else {
+        for o in [0isize, 4, 8] {
+            stu(b, 0x1C + o, mu(s, 0x4C + o));
+        }
+        let c = rd::<i32>(s, 0x44);
+        wr::<i32>(s, 0x44, c.wrapping_sub(1));
+        if c == 0 {
+            return fail();
+        }
+    }
+    // the zoom out after S.94 of the scene
+    if rd::<u8>(s, 0x88) == 0 {
+        f.fld(m(b, 0x10));
+        f.fcomp_m(m(s, 0x94));
+        if !f.jne(0x01) {
+            stu(s, 0x84, mu(b, 0x14));
+            wr::<u8>(s, 0x88, 1);
+            stu(s, 0x8C, now);
+            stu(s, 0x90, mu(s, 0x98).wrapping_add(now));
+        }
+    }
+    if rd::<u8>(s, 0x88) != 0 {
+        f.fild(rd::<i32>(s, 0x8C));
+        f.fild(now as i32);
+        f.fsub_st(1);
+        f.fild(rd::<i32>(s, 0x90));
+        f.fsub_st(2);
+        f.fdivp(1);
+        f.fstp_st(1);
+        ease(&mut f);
+        f.fld(m(s, 0x2C));
+        f.fsub_m(m(s, 0x84));
+        f.fmulp(1);
+        f.fadd_m(m(s, 0x84));
+        st(b, 0x14, f.fstp());
+    }
+    if is_time_to_exit_call(this, 0x14, b.byte_add(0x38), b.byte_add(0x1C), mu(b, 0x10), 0) != 0 {
+        return fail();
+    }
+    finalise_call(
+        this,
+        b.byte_add(0x38),
+        b.byte_add(0x1C),
+        mu(b, 0x18),
+        mu(b, 0x14),
+        mu(s, 0x3C),
+        K_ONE,
+    );
+    1
+}
+
+/// The birdy cam's lamp filter `(flags & 4 || flags & 0x40000) && matrix.up.z > 0.9 &&
+/// IsLampPost(model)` (the matrix allocated from the placement when missing).
+fn birdy_lamp_ok(e: GPtr<u8>) -> bool {
+    let fl = rd::<u32>(e, 0x1C);
+    if fl & 4 == 0 && fl & 0x40000 == 0 {
+        return false;
+    }
+    ensure_matrix(e);
+    if jne(x(rd::<f32>(rd::<GPtr<u8>>(e, 0x14), 0x28)), x(k(K_0_9)), 0x41) {
+        return false;
+    }
+    is_lamp_post(i32::from(rd::<i16>(e, 0x22))) != 0
+}
+
+/// The birdy cam's lamp top at frame offset `t` (`matrix * colModel.bbox.max` via the frame slot
+/// `tmp`), lowered by `(h - 1) * u + 1` with `h = max.z - min.z * 0.5` (stored at `h_off`) and `u =
+/// rand() / 32767` (the raw value stored at `r_off`, `rand()` at `site`).
+fn birdy_lamp_top(e: GPtr<u8>, b: GPtr<u8>, t: isize, tmp: isize, h_off: isize, r_off: isize, site: u32) {
+    let cm = get_col_model(e);
+    for o in [0isize, 4, 8] {
+        stu(b, t + o, rd::<u32>(cm, 0xC + o));
+    }
+    ensure_matrix(e);
+    let o = matrix_mul_vec(b.byte_add(tmp), rd::<GPtr<u8>>(e, 0x14), b.byte_add(t));
+    let (ox, oy, oz) = (rd::<u32>(o, 0), rd::<u32>(o, 4), rd::<u32>(o, 8));
+    stu(b, t, ox);
+    stu(b, t + 4, oy);
+    stu(b, t + 8, oz);
+    let cm_a = get_col_model(e);
+    let cm_b = get_col_model(e);
+    let mut f = Fpu::new();
+    f.fld(rd::<f32>(cm_b, 8));
+    f.fmul_m(k(K_HALF));
+    f.fsubr_m(rd::<f32>(cm_a, 0x14));
+    st(b, h_off, f.fstp());
+    let r = sa_core::crt::rand_at(site);
+    wr::<i32>(b, r_off, r);
+    f.fild(r);
+    f.fmul_m(k(K_RAND_UNIT));
+    f.fld(m(b, h_off));
+    f.fsub_m(k(K_ONE));
+    f.fmul_st(1);
+    f.fadd_m(k(K_ONE));
+    f.fsubr_m(m(b, t + 8));
+    st(b, t + 8, f.fstp());
+}
+
+/// `CCam::Process_DW_BirdyCam(bool)` (0x51B850, thiscall, `ret 4`, AL; SEH frame, `sub esp, 0x8F0`;
+/// mode 0x16, scene id 0x3A): a camera sliding between two lamp posts. At scene start (also
+/// `CHandShaker::Reset`, the LOS counter 0xB7007C = [0x8CCD74]) it collects up to 127 objects within
+/// [0x8CCD70] of a point 2 x [0x8CCD70] ahead and of a point [0x8CCD68] behind the target, keeps
+/// the static lamp posts of each list, then looks for a pair (lamp i of the first list, lamp j >= i
+/// of the second: the inner index starts at the outer one) whose tops (each lowered by a random
+/// amount, one `rand()` each, sites 0x51BCF1 / 0x51BEA1) see each other and the second sees the
+/// target; none exits. Per frame the source eases from one lamp to the other (each pulled 1.0 /
+/// 2.0 towards the other) unless `s_ExitCam[0x16]` is set, `IsTimeToExit(0x16)`, the LOS hysteresis,
+/// then `Finalise(src, dest, 0, 70, 0.3, 0)`.
+#[hook(addr = 0x51B850, conv = thiscall, name = "CCam::Process_DW_BirdyCam", expect = "6A FF 68 7E C8 83 00",
+       this = "CCam", unverified = "frontier2-b20", route = "L2", hazards = "x87-transcendental",
+       note = "FSIN of the lamp-to-lamp ease; the SEH frame of the static sLamps construction is not modelled")]
+pub fn process_dw_birdy_cam(this: GPtr<u8>, _arg: u32) -> u8 {
+    const EXIT: usize = 0xB6EC72;
+    const GUARD: usize = 0xB70098;
+    const COUNTER: usize = 0xB7007C;
+    const LAMPS: usize = 0xB70080;
+    g::<u8>(CAMERA_B6F059).write(0);
+    let t = rd::<GPtr<u8>>(this, 0x21C);
+    if t.is_null() || rd::<u8>(t, 0x36) & 7 != 2 {
+        return 0;
+    }
+    // the frame holds the object and lamp lists up to B+0x8FF
+    let mut frame = [0u32; 0x240];
+    let b = GPtr::<u32>::from_raw(frame.as_mut_ptr()).cast::<u8>();
+    core_data(
+        this,
+        b,
+        [
+            0xAC, 0x50, 0x44, 0x74, 0x24, 0x90, 0x30, 0x68, 0x80, 0x84, 0x1C, 0xC0,
+        ],
+    );
+    let fail = || {
+        g::<u8>(EXIT).write(1);
+        0
+    };
+    let now = TIME_MS.get();
+    stu(b, 0x1C, now);
+    if g::<u8>(GUARD).read() & 1 == 0 {
+        g::<u32>(GUARD).write(g::<u32>(GUARD).read() | 1);
+        // the static CVector sLamps[2] (CVector::CVector 0x404350)
+        vector_ctor_iterator(GPtr::from_addr(LAMPS), 0xC, 2, 0x404350);
+    }
+    let max = g::<u32>(0x8CCD74).read();
+    if g::<u8>(GUARD).read() & 2 == 0 {
+        g::<u32>(GUARD).write(g::<u32>(GUARD).read() | 2);
+        g::<u32>(COUNTER).write(max);
+    }
+    let mut f = Fpu::new();
+    if !scene_running(0x3A) {
+        g::<i32>(DW_LAST_MODE).write(0x3A);
+        DW_SCENE_END_TIME.set(g::<u32>(0x8CCBB0).read().wrapping_add(now));
+        g::<u8>(EXIT).write(0);
+        g::<u32>(DW_SCENE_START_TIME).write(now);
+        g::<u32>(COUNTER).write(max);
+        hand_shaker_reset(GPtr::from_addr(HAND_SHAKER));
+        let kd = |a: usize| g::<f32>(a).read();
+        // the point ahead: dest + fwd * 50 * 2
+        f.fld(m(b, 0x30));
+        f.fmul_m(kd(0x8CCD70));
+        f.fld(m(b, 0x34));
+        f.fmul_m(kd(0x8CCD70));
+        f.fld(m(b, 0x38));
+        f.fmul_m(kd(0x8CCD70));
+        st(b, 0x70, f.fstp());
+        f.fxch(1);
+        f.fmul_m(kd(0x8CCD6C));
+        st(b, 0x90, f.fstp());
+        f.fmul_m(kd(0x8CCD6C));
+        f.fld(m(b, 0x70));
+        f.fmul_m(kd(0x8CCD6C));
+        f.fld(m(b, 0x90));
+        f.fadd_m(m(b, 0x44));
+        st(b, 0x90, f.fstp());
+        f.fld(m(b, 0x48));
+        f.fadd_st(2);
+        st(b, 0x94, f.fstp());
+        f.fld(m(b, 0x4C));
+        f.fadd_st(1);
+        st(b, 0x98, f.fstp());
+        f.fstp_st(0);
+        f.fstp_st(0);
+        find_objects_in_range(
+            b.byte_add(0x90),
+            kd(0x8CCD70),
+            1,
+            b.byte_add(0x20),
+            0x7F,
+            b.byte_add(0x100),
+            0,
+            0,
+            0,
+            1,
+            1,
+        );
+        // the point behind: dest - fwd * 50 * 1
+        f.fld(m(b, 0x30));
+        f.fmul_m(kd(0x8CCD68));
+        f.fld(m(b, 0x34));
+        f.fmul_m(kd(0x8CCD68));
+        f.fld(m(b, 0x38));
+        f.fmul_m(kd(0x8CCD68));
+        st(b, 0x38, f.fstp());
+        f.fxch(1);
+        f.fmul_m(kd(0x8CCD64));
+        st(b, 0x84, f.fstp());
+        f.fmul_m(kd(0x8CCD64));
+        f.fld(m(b, 0x38));
+        f.fmul_m(kd(0x8CCD64));
+        f.fld(m(b, 0x44));
+        f.fsub_m(m(b, 0x84));
+        st(b, 0x68, f.fstp());
+        f.fld(m(b, 0x48));
+        f.fsub_st(2);
+        st(b, 0x6C, f.fstp());
+        f.fld(m(b, 0x4C));
+        f.fsub_st(1);
+        st(b, 0x70, f.fstp());
+        f.fstp_st(0);
+        f.fstp_st(0);
+        find_objects_in_range(
+            b.byte_add(0x68),
+            kd(0x8CCD68),
+            1,
+            b.byte_add(0x40),
+            0x7F,
+            b.byte_add(0x300),
+            0,
+            0,
+            0,
+            1,
+            1,
+        );
+        // the lamp posts of each list
+        let mut n1: i32 = 0;
+        let mut i = 0;
+        while i < i32::from(rd::<i16>(b, 0x20)) {
+            let e = rd::<GPtr<u8>>(b, 0x100 + 4 * i as isize);
+            if birdy_lamp_ok(e) {
+                wr::<GPtr<u8>>(b, 0x500 + 4 * isize::from(n1 as i16), e);
+                n1 += 1;
+            }
+            i += 1;
+        }
+        stu(b, 0x54, 0);
+        let mut i = 0;
+        while i < i32::from(rd::<i16>(b, 0x40)) {
+            let e = rd::<GPtr<u8>>(b, 0x300 + 4 * i as isize);
+            if birdy_lamp_ok(e) {
+                let n2 = rd::<i32>(b, 0x54);
+                wr::<GPtr<u8>>(b, 0x700 + 4 * isize::from(n2 as i16), e);
+                wr::<i32>(b, 0x54, n2.wrapping_add(1));
+            }
+            i += 1;
+        }
+        // the lamp pair
+        let n1 = i32::from(n1 as i16);
+        let mut found = false;
+        let mut i = 0;
+        while i < n1 && !found {
+            let e1 = rd::<GPtr<u8>>(b, 0x500 + 4 * i as isize);
+            'outer: {
+                if !birdy_lamp_ok(e1) {
+                    break 'outer;
+                }
+                birdy_lamp_top(e1, b, 0x10, 0x84, 0x50, 0x64, 0x51BCF1);
+                for (q, d) in [(0x24isize, 0x30isize), (0x28, 0x34), (0x2C, 0x38)] {
+                    f.fld(m(b, q - 0x14));
+                    f.fsub_m(m(b, 0x44 + (q - 0x24)));
+                    st(b, d, f.fstp());
+                    stu(b, q, mu(b, d));
+                }
+                vector_normalise(GPtr::<u8>::cast::<[f32; 3]>(b.byte_add(0x24)));
+                f.fld(m(b, 0x24));
+                f.fadd_m(m(b, 0x44));
+                st(b, 0x24, f.fstp());
+                f.fld(m(b, 0x28));
+                f.fadd_m(m(b, 0x48));
+                st(b, 0x28, f.fstp());
+                f.fld(m(b, 0x4C));
+                f.fadd_m(m(b, 0x2C));
+                st(b, 0x2C, f.fstp());
+                // fld qword [0x859EF8] (0.0); fabs; fcomp [0x8CCD60]
+                f.push(X87::from_f64_exact(0.0));
+                f.fabs();
+                f.fcomp_m(kd(0x8CCD60));
+                if f.jp(0x05) {
+                    break 'outer;
+                }
+                let mut j = i;
+                while j < i32::from(rd::<i16>(b, 0x54)) && !found {
+                    let e2 = rd::<GPtr<u8>>(b, 0x700 + 4 * j as isize);
+                    if birdy_lamp_ok(e2) {
+                        birdy_lamp_top(e2, b, 0x58, 0xB4, 0x64, 0x50, 0x51BEA1);
+                        if get_is_line_of_sight_clear(b.byte_add(0x10), b.byte_add(0x58), 1, 0, 0, 0, 0, 1, 1) != 0
+                            && get_is_line_of_sight_clear(b.byte_add(0x58), b.byte_add(0x24), 1, 0, 0, 0, 0, 1, 1) != 0
+                        {
+                            for (n, o) in [0x10isize, 0x14, 0x18].into_iter().enumerate() {
+                                stu(b, 0x74 + 4 * n as isize, mu(b, o));
+                                g::<u32>(LAMPS + 4 * n).write(mu(b, o));
+                            }
+                            for (n, o) in [0x58isize, 0x5C, 0x60].into_iter().enumerate() {
+                                g::<u32>(LAMPS + 0xC + 4 * n).write(mu(b, o));
+                            }
+                            found = true;
+                        }
+                    }
+                    j += 1;
+                }
+            }
+            i += 1;
+        }
+        if !found {
+            return fail();
+        }
+    }
+    // per frame: the source between the two lamps
+    let start = g::<u32>(DW_SCENE_START_TIME).read();
+    f.fild(now.wrapping_sub(start) as i32);
+    fidiv(&mut f, DW_SCENE_END_TIME.get().wrapping_sub(start) as i32);
+    let lamps = GPtr::<u8>::from_addr(LAMPS);
+    for (n, o) in [0x10isize, 0x14, 0x18].into_iter().enumerate() {
+        stu(b, o, mu(lamps, 0xC + 4 * n as isize));
+        stu(b, 0x24 + 4 * n as isize, mu(lamps, 4 * n as isize));
+    }
+    st(b, 0x3C, f.fstp());
+    for n in 0..3isize {
+        f.fld(m(lamps, 0xC + 4 * n));
+        f.fsub_m(m(lamps, 4 * n));
+        st(b, 0x9C + 4 * n, f.fstp());
+    }
+    vector_normalise(GPtr::<u8>::cast::<[f32; 3]>(b.byte_add(0x9C)));
+    f.fld(m(b, 0x9C));
+    f.fmul_m(k(g::<u32>(0x8CCD5C).read()));
+    let failed = g::<u8>(EXIT).read() != 0;
+    st(b, 0x84, f.fst());
+    f.fld(m(b, 0xA0));
+    f.fmul_m(k(g::<u32>(0x8CCD5C).read()));
+    f.fld_st(0);
+    f.fld(m(b, 0xA4));
+    f.fmul_m(k(g::<u32>(0x8CCD5C).read()));
+    st(b, 0x1C, f.fst());
+    f.fld(m(b, 0x10));
+    f.fsub_m(m(b, 0x84));
+    st(b, 0x10, f.fstp());
+    f.fld(m(b, 0x14));
+    f.fsub_st(2);
+    st(b, 0x14, f.fstp());
+    f.fld(m(b, 0x18));
+    f.fsub_st(1);
+    st(b, 0x18, f.fstp());
+    f.fstp_st(0);
+    f.fstp_st(0);
+    f.fxch(1);
+    st(b, 0x84, f.fstp());
+    f.fld(m(b, 0x1C));
+    f.fld(m(b, 0x84));
+    f.fadd_st(0);
+    st(b, 0x68, f.fstp());
+    f.fxch(1);
+    f.fadd_st(0);
+    st(b, 0x6C, f.fstp());
+    f.fadd_st(0);
+    f.fld(m(b, 0x68));
+    f.fadd_m(m(b, 0x24));
+    st(b, 0x24, f.fstp());
+    f.fld(m(b, 0x6C));
+    f.fadd_m(m(b, 0x28));
+    st(b, 0x28, f.fstp());
+    f.fadd_m(m(b, 0x2C));
+    if !failed {
+        f.fld(m(b, 0x3C));
+        f.fmul_m(k(0x4334_0000));
+        f.fsubr_m(k(0x4387_0000));
+        f.fmul_m(k(K_DEG2RAD));
+        fsin(&mut f);
+        f.fld(k(K_ONE));
+        f.fadd_st(1);
+        f.fmul_m(k(K_HALF));
+        f.fld(m(b, 0x24));
+        f.fsub_m(m(b, 0x10));
+        f.fmul_st(1);
+        f.fadd_m(m(b, 0x10));
+        st(b, 0x30, f.fstp());
+        stu(b, 0x74, mu(b, 0x30));
+        f.fld(m(b, 0x28));
+        f.fsub_m(m(b, 0x14));
+        f.fmul_st(1);
+        f.fadd_m(m(b, 0x14));
+        st(b, 0x34, f.fstp());
+        stu(b, 0x78, mu(b, 0x34));
+        f.fstp_st(0);
+        f.fadd_m(k(K_ONE));
+        f.fmul_m(k(K_HALF));
+        f.fxch(1);
+        f.fsub_m(m(b, 0x18));
+        f.fmulp(1);
+        f.fadd_m(m(b, 0x18));
+        st(b, 0x38, f.fstp());
+        stu(b, 0x7C, mu(b, 0x38));
+    } else {
+        f.fstp_st(0);
+    }
+    if is_time_to_exit_call(this, 0x16, b.byte_add(0x74), b.byte_add(0x44), mu(b, 0x3C), 0) != 0 {
+        return fail();
+    }
+    IGNORE_ENTITY.set(rd::<GPtr<u8>>(b, 0xAC));
+    let r = process_line_of_sight(
+        b.byte_add(0x44),
+        b.byte_add(0x74),
+        b.byte_add(0xD4),
+        b.byte_add(0xB0),
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+    );
+    wr::<u8>(b, 0x20, u8::from(r == 0));
+    let c = g::<i32>(COUNTER).read();
+    IGNORE_ENTITY.set(GPtr::NULL);
+    if r != 0 {
+        g::<i32>(COUNTER).write(c.wrapping_sub(1));
+        if c == 0 {
+            return fail();
+        }
+    } else {
+        g::<i32>(COUNTER).write(c.wrapping_add(1));
+        let mx = g::<i32>(0x8CCD74).read();
+        if c > mx {
+            g::<i32>(COUNTER).write(mx);
+        }
+    }
+    finalise_call(this, b.byte_add(0x74), b.byte_add(0x44), 0, K_FOV70, 0x3E99_999A, 0);
+    1
+}
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_PROCESS_DW_BIRDY_CAM,
+    HOOK_PROCESS_DW_HELI_CHASE_CAM,
+    HOOK_HELI_CHASE_SETTINGS_RANDOMISE,
     HOOK_PROCESS_DW_CAM_MAN_CAM,
     HOOK_PROCESS_DW_PLANE_SPOTTER_CAM,
     HOOK_PROCESS_DW_PLANE_CAM3,

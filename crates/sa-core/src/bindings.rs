@@ -724,6 +724,11 @@ orig! {
 }
 
 orig! {
+    /// `FUN_0050e180` (0x50E180)
+    pub fn dw_heli_chase_settings_init(s: GPtr<u8>) -> u32 = thiscall 0x50E180 => unported;
+}
+
+orig! {
     /// `CCamera::DrawBordersForWideScreen` (0x514860)
     pub fn camera_draw_borders_for_wide_screen(this: GPtr<u8>) = thiscall 0x514860 => unported;
 }
