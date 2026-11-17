@@ -16,11 +16,13 @@ use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
 use sa_core::bindings::rt_quat_rotate;
 use sa_core::bindings::rw_matrix_destroy;
 orig! {
-    /// `CPedIK::MoveLimb(LimbOrientation&, float yaw, float pitch, LimbMovementInfo&)` (0x5FDA60, thiscall, `ret 0x10`)
-    fn move_limb(ik: GPtr<u8>, limb: GPtr<u8>, yaw: u32, pitch: u32, info: u32) -> i32 = thiscall 0x5FDA60 => unported;
+    /// `CPedIK::MoveLimb(LimbOrientation&, float yaw, float pitch, LimbMovementInfo&)` (0x5FDA60, `ret 0x10`). The
+    /// original's caller sets ECX, which the callee never reads: declared as the port is registered (stdcall), so the
+    /// wasm32 dispatch (its words start with `this` for a thiscall declaration) passes the limb first.
+    fn move_limb(limb: GPtr<u8>, yaw: u32, pitch: u32, info: u32) -> i32 = stdcall 0x5FDA60 => unported;
     /// `CPedIK::MoveLimb(LimbOrientation&, float yaw, float pitch, LimbMovementInfo&, float normalize)` (0x5FDB60,
-    /// thiscall, `ret 0x14`)
-    fn move_limb_normalized(ik: GPtr<u8>, limb: GPtr<u8>, yaw: u32, pitch: u32, info: u32, n: u32) -> i32 = thiscall 0x5FDB60 => unported;
+    /// `ret 0x14`; ECX unused, stdcall as above)
+    fn move_limb_normalized(limb: GPtr<u8>, yaw: u32, pitch: u32, info: u32, n: u32) -> i32 = stdcall 0x5FDB60 => unported;
 }
 
 /// `CPedIK::ms_torsoInfo` (0x8D22E4), `XaxisIK` (0x8D232C), the radians-to-degrees factor 0x859878 (57.2958f).
@@ -57,9 +59,9 @@ pub fn ped_ik_point_gun_in_direction(this: GPtr<u8>, z_angle: f32, distance: u32
     rw_matrix_destroy(m);
     let torso = this.byte_add(4);
     let r = if X87::from_f32(normalize).fcom(X87::from_f32(0.0)).c0() {
-        move_limb(this, torso, angle.to_bits(), distance, TORSO_INFO)
+        move_limb(torso, angle.to_bits(), distance, TORSO_INFO)
     } else {
-        move_limb_normalized(this, torso, angle.to_bits(), distance, TORSO_INFO, normalize.to_bits())
+        move_limb_normalized(torso, angle.to_bits(), distance, TORSO_INFO, normalize.to_bits())
     };
     if r == 0 {
         result = 0;

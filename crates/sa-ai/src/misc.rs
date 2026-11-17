@@ -572,8 +572,9 @@ orig! {
     fn ped_attractor_ctor(this: GPtr<u8>, a0: u32, a1: u32, a2: u32, a3: u32, c0: u32, c1: u32, c2: u32, c3: u32, c4: u32, c5: u32, c6: u32) -> GPtr<u8> = thiscall 0x5EDFB0 => unported;
     /// `thunk_FUN_01567930` (0x4650F0): `CDecisionMakerTypes` constructor
     fn decision_maker_types_ctor(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4650F0 => unported;
-    /// `CPedAttractorManager::FindAssociatedAttractor<CPedAttractor>` (0x5EB6F0, `ret 0xC`)
-    fn find_associated_attractor(effect: GPtr<u8>, entity: u32, vec: GPtr<u8>) -> GPtr<u8> = stdcall 0x5EB6F0 => unported;
+    /// `CPedAttractorManager::FindAssociatedAttractor<CPedAttractor>` (0x5EB6F0, `ret 0xC`; ECX = the manager, as the
+    /// port is registered: thiscall, so the wasm32 dispatch's words line up)
+    fn find_associated_attractor(mgr: GPtr<u8>, effect: GPtr<u8>, entity: u32, vec: GPtr<u8>) -> GPtr<u8> = thiscall 0x5EB6F0 => unported;
     /// `CPedAttractor::HasEmptySlot` (0x5EAF10)
     fn ped_attractor_has_empty_slot(this: GPtr<u8>) -> u8 = thiscall 0x5EAF10 => unported;
     /// scalar deleting destructor (vtable +0)
@@ -813,7 +814,7 @@ pub fn ped_attractor_manager_has_empty_slot_5ebb00(this: GPtr<u8>, effect: GPtr<
         t @ 2..=9 => 0x10 * t as isize,
         _ => return 1,
     };
-    let a = find_associated_attractor(effect, entity, this.byte_add(off));
+    let a = find_associated_attractor(this, effect, entity, this.byte_add(off));
     if a.is_null() {
         return 1;
     }
@@ -1413,7 +1414,7 @@ pub fn ped_attractor_manager_has_queue_tail_arrived_at_slot_5ebba0(
         t @ 2..=9 => 0x10 * t as isize,
         _ => return 1,
     };
-    let a = find_associated_attractor(effect, entity, this.byte_add(off));
+    let a = find_associated_attractor(this, effect, entity, this.byte_add(off));
     if a.is_null() {
         return 1;
     }

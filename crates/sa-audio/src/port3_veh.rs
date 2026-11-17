@@ -2584,8 +2584,9 @@ pub fn process_dummy_train_engine(this: GPtr<u8>, params: GPtr<u8>) {
 }
 
 orig! {
-    /// `CAEVehicleAudioEntity::GetBaseVolumeForBicycleTyre(float)` (0x4F60B0, called with `this`), ST0
-    fn bicycle_tyre_volume_st0(this: GPtr<u8>, v: u32) -> f64 = thiscall 0x4F60B0 => unported;
+    /// `CAEVehicleAudioEntity::GetBaseVolumeForBicycleTyre(float)` (0x4F60B0, `ret 4`), ST0. Called with `this`, which
+    /// the callee never reads: declared as the native is registered (stdcall) for the wasm32 dispatch's words
+    fn bicycle_tyre_volume_st0(v: u32) -> f64 = stdcall 0x4F60B0 => unported;
     /// `CAEVehicleAudioEntity::PlayBicycleSound` (0x4F9710)
     fn play_bicycle_sound_call(this: GPtr<u8>, ty: u32, slot: u32, sfx: u32, volume: u32, speed: u32) = thiscall 0x4F9710 => play_bicycle_sound;
 }
@@ -2642,7 +2643,7 @@ fn bicycle_body(this: GPtr<u8>, params: GPtr<u8>, flag: usize) {
     let contact = rd::<u8>(veh(), 0x834) != 0;
     let chain_speed = s1.fmul(sn.fmul_m(gf(0x8CBD60)).fadd_m(gf(FLT_1))).to_f32();
     let tv = if contact {
-        st0(bicycle_tyre_volume_st0(this, t.to_bits())).to_f32()
+        st0(bicycle_tyre_volume_st0(t.to_bits())).to_f32()
     } else {
         0.0
     };
