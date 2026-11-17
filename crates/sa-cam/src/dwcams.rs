@@ -1809,7 +1809,7 @@ const K_RAND_15: u32 = 0x3800_0000;
 /// `FUN_0050e090` (0x50E090, thiscall on the heli-chase settings block): five random scales, one
 /// `rand()` each (sites 0x50E099 / 0x50E0BE / 0x50E0E3 / 0x50E108 / 0x50E12D): `+0x18 *= u * 1.4 +
 /// 0.1`, `+0x1C / +0x20 / +0x24 *= u * 0.5 + 0.5`, `+0x28 *= u * 1.5 + 0.5` with `u = rand() / 32767`.
-#[hook(addr = 0x50E090, conv = thiscall, name = "FUN_0050e090", expect = "51 56 8B F1 E8",
+#[hook(addr = 0x50E090, conv = thiscall, name = "FUN_0050e090", expect = "51 56 8B F1 E8 85 3A 31 00",
        unverified = "frontier2-b20", route = "L2", hazards = "none")]
 pub fn heli_chase_settings_randomise(this: GPtr<u8>) {
     for (site, off, mul, add) in [
