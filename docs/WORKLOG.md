@@ -3400,7 +3400,7 @@
   0 blocked on lane B.
 - Writer gate (base 7dff58ad): the first run (`GATE_SKIP=i686`, verify-all was using the DLL) failed only hooktest:
   0x50E090's expect string cut the stolen `call rand` (fixed in 0d58b2a9); full rerun on the final head, no step
-  skipped: see below.
+  skipped (on 10af5c57): all 17 steps PASS.
 - verify-all (lanes 4-5, fresh release sa-oracle): `lb9-u` (SA_UNVERIFIED=frontier2-b20, DLL of 304ab86b) IDENTICAL
   13/13; `lb9-u2` (SA_UNVERIFIED=frontier2-b20,frontier2-b21, DLL of 0d58b2a9, the final code) IDENTICAL 13/13; default
   set `lb9-def` (DLL of 0d58b2a9) IDENTICAL 13/13.
