@@ -1,0 +1,7 @@
+# The resolution mod's settings (examples/mods/resolution).
+# "auto" (the desktop; in the browser the canvas's size in device pixels) or "WIDTHxHEIGHT"
+resolution = "auto"
+# natively: full screen instead of a window
+fullscreen = false
+# with "auto": follow the window / canvas when it changes size
+follow_resize = true

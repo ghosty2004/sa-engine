@@ -21,7 +21,7 @@
 #   i686     cargo build --release --target i686-pc-windows-gnu -p sa-launcher -p sa-hook (the in-process
 #            DLL, every port's naked entry) + clippy -D warnings of sa-hook for that target
 #   wasm32   cargo build --target wasm32-unknown-unknown -p sa-ports (every port crate) and the mod crates
-#            (sa-mod-api, sa-mod, sa-mod-host, the hello example mod; MOD-2)
+#            (sa-mod-api, sa-mod, sa-mod-host, the hello and resolution example mods; MOD-2)
 #   hooktest cargo test -p sa-hook --lib (table vs exe and catalogue, callers, patch_refs, keycells, INF-20)
 #   l1test   cargo test --release -p sa-oracle --test l1 (harness self-tests, preserve/route checks)
 #   l1       for every new hook with route = "L1-pure": sa-oracle l1 0xADDR --backend native (the real CPU
@@ -119,7 +119,7 @@ if ! skip i686; then
         clippy "$J" --release --target i686-pc-windows-gnu -p sa-hook -- -D warnings
 fi
 cargo_step wasm32 "wasm32-unknown-unknown build of sa-ports (every port crate) and the mod crates" \
-    build "$J" --target wasm32-unknown-unknown -p sa-ports -p sa-mod-api -p sa-mod -p sa-mod-host -p sa-mod-hello
+    build "$J" --target wasm32-unknown-unknown -p sa-ports -p sa-mod-api -p sa-mod -p sa-mod-host -p sa-mod-hello -p sa-mod-resolution
 cargo_step hooktest "sa-hook lib tests" test "$J" -p sa-hook --lib
 cargo_step l1test "sa-oracle --test l1" test "$J" --release -p sa-oracle --test l1
 

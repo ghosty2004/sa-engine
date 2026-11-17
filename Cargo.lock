@@ -2662,6 +2662,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "sa-mod-resolution"
+version = "0.1.0"
+dependencies = [
+ "sa-mod",
+]
+
+[[package]]
 name = "sa-net"
 version = "0.1.0"
 dependencies = [

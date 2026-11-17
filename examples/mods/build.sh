@@ -4,6 +4,8 @@
 #   examples/mods/build.sh [OUT]      (default OUT: target/mods)
 #
 #   OUT/hello/{mod.toml,hello.wasm}               the hello overlay
+#   OUT/resolution/{mod.toml,resolution.wasm}     the game at the desktop / a chosen resolution, with its
+#                                                 config.toml (copied only when missing: the mod rewrites it)
 #   OUT/broken-trap/{mod.toml,broken-trap.wasm}   traps after 30 frames (test of the host's error handling)
 #   OUT/broken-spin/{mod.toml,broken-spin.wasm}   loops forever after 30 frames (test of the fuel budget)
 #
@@ -18,6 +20,11 @@ cargo build -q --release --target wasm32-unknown-unknown -p sa-mod-hello
 mkdir -p "$out/hello"
 cp "$wasm/sa_mod_hello.wasm" "$out/hello/hello.wasm"
 cp examples/mods/hello/mod.toml "$out/hello/mod.toml"
+cargo build -q --release --target wasm32-unknown-unknown -p sa-mod-resolution
+mkdir -p "$out/resolution"
+cp "$wasm/sa_mod_resolution.wasm" "$out/resolution/resolution.wasm"
+cp examples/mods/resolution/mod.toml "$out/resolution/mod.toml"
+[ -e "$out/resolution/config.toml" ] || cp examples/mods/resolution/config.toml "$out/resolution/config.toml"
 for v in trap spin; do
     feat=""
     [ "$v" = spin ] && feat="--features spin"

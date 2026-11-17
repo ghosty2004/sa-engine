@@ -1,0 +1,12 @@
+# The resolution mod's manifest (docs/arch/ADR-004-mods.md section 3.3). examples/mods/build.sh puts it next to
+# resolution.wasm, with config.toml (the mod's settings, which it reads and writes itself).
+[mod]
+id = "resolution"
+name = "Resolution"
+version = "0.1.0"
+api_version = "1.1"
+entry = "resolution.wasm"
+
+[permissions]
+render = true    # display modes, the video mode
+files = "own"    # config.toml in the mod's folder
