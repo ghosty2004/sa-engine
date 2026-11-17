@@ -23,8 +23,8 @@ orig! {
     fn c_4a9a10_t0(this: u32) -> u32 = thiscall 0x4A9A10 => unported;
     /// `FxSphere_c` (0x4A9F70), thiscall, 0 stack argument(s)
     fn c_4a9f70_t0(this: u32) -> u32 = thiscall 0x4A9F70 => unported;
-    /// `Common::LittleTest` (0x541330), thiscall, 0 stack argument(s)
-    fn c_541330_t0(this: u32) -> u32 = thiscall 0x541330 => unported;
+    /// `Common::LittleTest` (0x541330), cdecl, 0 stack argument(s)
+    fn c_541330_c0() -> u32 = cdecl 0x541330 => unported;
     /// `CCustomRoadsignMgr::CreateRoadsignTexture` (0x6FECA0), cdecl, 2 stack argument(s)
     fn c_6feca0_c2(a0: u32, a1: u32) -> u32 = cdecl 0x6FECA0 => unported;
     /// `CShadowCamera::Destroy` (0x705400), thiscall, 0 stack argument(s)
@@ -115,14 +115,14 @@ pub fn g_fx_system_c_add_offset_pos_4aa690(this: u32, a0: u32) -> u32 {
 
 /// `RenderBuffer::RenderIfDoesntFit` (0x6E7680, RENDER): small, thiscall, `ret`; 26 instruction(s) matched.
 #[hook(addr = 0x6E7680, conv = thiscall, name = "RenderBuffer::RenderIfDoesntFit", expect = "A1 50 B9 C4 00", route = "L2", hazards = "none")]
-pub fn g_render_buffer_render_if_doesnt_fit_6e7680(this: u32) -> u32 {
+pub fn g_render_buffer_render_if_doesnt_fit_6e7680(_this: u32) -> u32 {
     let v1 = g::<u32>(0xC4_B950).read();
     if v1 == 0 {
         g::<u32>(0xC4_B950).write(0);
         g::<u32>(0xC4_B954).write(0);
         return v1;
     } else {
-        c_541330_t0(this);
+        c_541330_c0();
         let v3 = g::<u32>(0xC4_B950).read();
         let v4 = c_7ef450_c4(0xC4_D958, v3, 0, 1);
         if v4 == 0 {
@@ -142,12 +142,12 @@ pub fn g_render_buffer_render_if_doesnt_fit_6e7680(this: u32) -> u32 {
 
 /// `CCoronas::RenderOutGeometryBufferForReflections` (0x6FAA10, RENDER): small, thiscall, `ret`; 23 instruction(s) matched.
 #[hook(addr = 0x6FAA10, conv = thiscall, name = "CCoronas::RenderOutGeometryBufferForReflections", expect = "A1 54 B9 C4 00", unverified = "gen2-render-4", route = "L2", hazards = "none")]
-pub fn g_ccoronas_render_out_geometry_buffer_for_reflections_6faa10(this: u32) -> u32 {
+pub fn g_ccoronas_render_out_geometry_buffer_for_reflections_6faa10(_this: u32) -> u32 {
     let v1 = g::<u32>(0xC4_B954).read();
     if v1 == 0 {
         return v1;
     } else {
-        c_541330_t0(this);
+        c_541330_c0();
         let v3 = g::<u32>(0xC4_B950).read();
         let v4 = c_7ef450_c4(0xC4_D958, v3, 0, 1);
         if v4 == 0 {
@@ -211,12 +211,12 @@ pub fn g_cskidmarks_shutdown_720570(_this: u32) -> u32 {
 
 /// `CBrightLights::RenderOutGeometryBuffer` (0x722150, RENDER): small, thiscall, `ret`; 23 instruction(s) matched.
 #[hook(addr = 0x722150, conv = thiscall, name = "CBrightLights::RenderOutGeometryBuffer", expect = "A1 54 B9 C4 00", route = "L2", hazards = "none", recs = "pause-restart")]
-pub fn g_cbright_lights_render_out_geometry_buffer_722150(this: u32) -> u32 {
+pub fn g_cbright_lights_render_out_geometry_buffer_722150(_this: u32) -> u32 {
     let v1 = g::<u32>(0xC4_B954).read();
     if v1 == 0 {
         return v1;
     } else {
-        c_541330_t0(this);
+        c_541330_c0();
         let v3 = g::<u32>(0xC4_B950).read();
         let v4 = c_7ef450_c4(0xC4_D958, v3, 0, 1);
         if v4 == 0 {
@@ -236,12 +236,12 @@ pub fn g_cbright_lights_render_out_geometry_buffer_722150(this: u32) -> u32 {
 
 /// `CShinyTexts::RenderOutGeometryBuffer` (0x7221C0, RENDER): small, thiscall, `ret`; 23 instruction(s) matched.
 #[hook(addr = 0x7221C0, conv = thiscall, name = "CShinyTexts::RenderOutGeometryBuffer", expect = "A1 54 B9 C4 00", route = "L2", hazards = "none", recs = "pause-restart")]
-pub fn g_cshiny_texts_render_out_geometry_buffer_7221c0(this: u32) -> u32 {
+pub fn g_cshiny_texts_render_out_geometry_buffer_7221c0(_this: u32) -> u32 {
     let v1 = g::<u32>(0xC4_B954).read();
     if v1 == 0 {
         return v1;
     } else {
-        c_541330_t0(this);
+        c_541330_c0();
         let v3 = g::<u32>(0xC4_B950).read();
         let v4 = c_7ef450_c4(0xC4_D958, v3, 0, 1);
         if v4 == 0 {

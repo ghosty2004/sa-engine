@@ -75,8 +75,8 @@ orig! {
     fn c_5046f0_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x5046F0 => unported;
     /// `CAEWeaponAudioEntity::PlayMiniGunFireSounds` (0x5047C0), thiscall, 2 stack argument(s)
     fn c_5047c0_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x5047C0 => unported;
-    /// `CTimer::GetIsSlowMotionActive` (0x561AD0), thiscall, 0 stack argument(s)
-    fn c_561ad0_t0(this: u32) -> u32 = thiscall 0x561AD0 => unported;
+    /// `CTimer::GetIsSlowMotionActive` (0x561AD0), cdecl, 0 stack argument(s)
+    fn c_561ad0_c0() -> u32 = cdecl 0x561AD0 => unported;
     /// `CEntity::CleanUpOldReference-` (0x571A00), thiscall, 1 stack argument(s)
     fn c_571a00_t1(this: u32, a0: u32) -> u32 = thiscall 0x571A00 => unported;
 }
@@ -651,7 +651,7 @@ pub fn g_caesound_get_slow_mo_frequency_scaling_factor_4ef440(this: u32) -> X87 
         let v2 = g::<u32>(0x85_8624).read();
         return x(f32::from_bits(v2));
     } else {
-        let v3 = c_561ad0_t0(this);
+        let v3 = c_561ad0_c0();
         if ((v3 & 0xFF) as u8) == (0 as u8) {
             let v4 = g::<u32>(0x85_8624).read();
             return x(f32::from_bits(v4));

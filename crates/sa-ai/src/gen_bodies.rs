@@ -89,8 +89,8 @@ orig! {
     fn c_562430_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x562430 => unported;
     /// `CWorld::GetIsLineOfSightClear` (0x56A490), cdecl, 9 stack argument(s)
     fn c_56a490_c9(a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32) -> u32 = cdecl 0x56A490 => unported;
-    /// `CAccidentManager::GetInstance` (0x56CF20), thiscall, 0 stack argument(s)
-    fn c_56cf20_t0(this: u32) -> u32 = thiscall 0x56CF20 => unported;
+    /// `CAccidentManager::GetInstance` (0x56CF20), cdecl, 0 stack argument(s)
+    fn c_56cf20_c0() -> u32 = cdecl 0x56CF20 => unported;
     /// `CAccidentManager::GetNearestFreeAccidentExceptThisOne` (0x56CF90), thiscall, 3 stack argument(s)
     fn c_56cf90_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x56CF90 => unported;
     /// `CAccidentManager::GetNearestFreeAccident` (0x56D050), thiscall, 2 stack argument(s)
@@ -3141,7 +3141,7 @@ pub fn g_task_simple_give_cpr_revive_dead_ped_658900(this: u32, _a0: u32) -> u32
 #[hook(addr = 0x658CC0, conv = thiscall, name = "CTaskComplexMedicTreatInjuredPed::FindNearestAccident", expect = "8B 44 24 04 56", unverified = "ai8g-4", route = "L2", hazards = "heap-writes")]
 pub fn g_task_complex_medic_treat_injured_ped_find_nearest_accident_658cc0(this: u32, a0: u32) -> u32 {
     wr::<u32>(p(this), 0x18, 0);
-    let v1 = c_56cf20_t0(this);
+    let v1 = c_56cf20_c0();
     let v2 = c_56d050_t2(v1, a0, 1);
     wr::<u32>(p(this), 0x18, v2);
     v2
@@ -3201,7 +3201,7 @@ pub fn g_task_complex_medic_treat_injured_ped_create_deal_with_next_accident_tas
     let v1 = rd::<u32>(p(a0), 0x14);
     if v1 == 0 {
         wr::<u32>(p(this), 0x18, 0);
-        let v2 = c_56cf20_t0(a1);
+        let v2 = c_56cf20_c0();
         let v3 = c_56cf90_t3(v2, a0.wrapping_add(4), a1, 1);
         wr::<u32>(p(this), 0x18, v3);
         if v3 == 0 {
@@ -3252,7 +3252,7 @@ pub fn g_task_complex_medic_treat_injured_ped_create_deal_with_next_accident_tas
         }
     } else {
         wr::<u32>(p(this), 0x18, 0);
-        let v23 = c_56cf20_t0(a1);
+        let v23 = c_56cf20_c0();
         let v24 = c_56cf90_t3(v23, v1.wrapping_add(0x30), a1, 1);
         wr::<u32>(p(this), 0x18, v24);
         if v24 == 0 {

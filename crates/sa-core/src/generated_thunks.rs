@@ -13,14 +13,14 @@
 use super::*;
 
 orig! {
-    /// `Rs::RsTimer` (0x619410), thiscall, 0 stack argument(s)
-    fn c_619410_t0(this: u32) -> u32 = thiscall 0x619410 => unported;
+    /// `Rs::RsTimer` (0x619410), cdecl, 0 stack argument(s)
+    fn c_619410_c0() -> u32 = cdecl 0x619410 => unported;
 }
 
-/// `GetMillisecondTime` (0x5617C0, CORE): thunk, thiscall, `ret`; 3 instruction(s) matched.
-#[hook(addr = 0x5617C0, conv = thiscall, name = "GetMillisecondTime", expect = "E8 4B 7C 0B 00", unverified = "gen2-core-1", route = "L2", hazards = "none")]
-pub fn g_get_millisecond_time_5617c0(this: u32) -> u32 {
-    let v1 = c_619410_t0(this);
+/// `GetMillisecondTime` (0x5617C0, CORE): thunk, cdecl, `ret`; 3 instruction(s) matched.
+#[hook(addr = 0x5617C0, conv = cdecl, name = "GetMillisecondTime", expect = "E8 4B 7C 0B 00", unverified = "gen2-core-1", route = "L2", hazards = "none")]
+pub fn g_get_millisecond_time_5617c0() -> u32 {
+    let v1 = c_619410_c0();
     v1
 }
 

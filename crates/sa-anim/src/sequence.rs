@@ -34,8 +34,6 @@ pub use sa_core::bindings::crt_new_821195 as operator_new_array;
 orig! {
     /// `CMemoryMgr::MoveMemory(p)` (0x72F500; returns its argument in this build)
     pub fn mem_move_memory(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x72F500 => unported;
-    /// `CKeyGen::GetKey(const char*)` (0x53CED0)
-    pub fn get_key(s: GPtr<u8>) -> u32 = cdecl 0x53CED0 => unported;
     /// CRT `strncpy` (0x8245A0)
     pub fn strncpy(d: GPtr<u8>, s: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x8245A0 => unported;
 }

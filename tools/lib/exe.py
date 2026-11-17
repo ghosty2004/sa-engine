@@ -379,3 +379,44 @@ def call_sites(a):
     for nxt, e_ in sorted(set(_sites.get(a, []))):
         out.append((nxt, linear(nxt, min(e_, nxt + 120))[:24]))
     return out
+
+
+# ---- registered calling conventions ----------------------------------------------------------------
+REG_CONV = {}
+_CONV_RE = re.compile(r'^[ \t]*#\[(?:[\w:]+::)?(?:hook|native)\(\s*addr\s*=\s*0x([0-9A-Fa-f_]+)(?:(?!\)\]).)*?\bconv\s*=\s*'
+                      r'(cdecl|stdcall|thiscall|fastcall|reg)\b', re.M | re.S)
+
+
+def load_registered_convs(own):
+    """Fill REG_CONV: address -> the calling convention of its `#[hook]` / `#[native]` registration anywhere in
+    `crates/`, outside the files `own(path, head)` says are the running generator's own output."""
+    REG_CONV.clear()
+    for dirpath, dirs, files in os.walk(os.path.join(ROOT, 'crates')):
+        dirs[:] = sorted(d for d in dirs if d != 'target')
+        for f in sorted(files):
+            if not f.endswith('.rs'):
+                continue
+            path = os.path.join(dirpath, f)
+            s = open(path, encoding='utf-8').read()
+            if own(path, s[:400]):
+                continue
+            for m in _CONV_RE.finditer(s):
+                REG_CONV[int(m.group(1).replace('_', ''), 16)] = m.group(2)
+    return REG_CONV
+
+
+def conv_as_registered(a, conv, nargs, pops_n, ecx_known):
+    """The convention a generated `orig!` declaration of callee A must use: its registration's (REG_CONV), so the
+    phase B wasm32 dispatch, which passes the declaration's arguments as words in order, hands the port the words
+    it reads (`this` only for a thiscall port; tools/verify/convcheck.py checks every declaration). CONV is what
+    the call site's bytes allow (`thiscall` whenever ECX holds a known value), POPS_N the callee's `ret N`.
+    Returns None when the registration cannot be honoured (a thiscall port with an unknown ECX, a cdecl port the
+    bytes say pops its arguments or the reverse); fastcall / reg registrations keep CONV (convcheck decides)."""
+    r = REG_CONV.get(a)
+    if r is None or r == conv or r not in ('cdecl', 'stdcall', 'thiscall'):
+        return conv
+    if r == 'thiscall':
+        return 'thiscall' if ecx_known and (nargs == 0 or pops_n) else None
+    if nargs == 0:
+        return r
+    return r if r == ('stdcall' if pops_n else 'cdecl') else None

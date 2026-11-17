@@ -1223,6 +1223,12 @@ def do_call(fn, st, out, target, nxt, obj=None, vload=None):
         else:
             nargs = 0
             conv = 'thiscall' if uses_ecx or not has_unknown(st.r['ecx']) else 'cdecl'
+    if target[0] == 'd':
+        # declare the callee as its port is registered (wasm32 dispatch words, tools/verify/convcheck.py)
+        c = exe.conv_as_registered(target[1], conv, nargs, p, obj is not None or not has_unknown(st.r['ecx']))
+        if c is None:
+            raise Reject('callee %#x: %s call against its %s registration' % (target[1], conv, exe.REG_CONV[target[1]]))
+        conv = c
     if len(outs) < nargs:
         raise Reject('outstanding pushes %d != %d arguments' % (len(outs), nargs))
     # nesting is accepted only when the callee's argument count is proven (its own `ret N`, or the caller's
@@ -1291,6 +1297,10 @@ def tail(fn, st, out, tgt):
     if ecx_first_read(tgt):
         regs = regs | {'ecx'}
     conv = 'thiscall' if 'ecx' in regs or not has_unknown(st.r['ecx']) else 'stdcall'
+    c = exe.conv_as_registered(tgt, conv, nargs, p, not has_unknown(st.r['ecx']))
+    if c is None:
+        raise Reject('tail callee %#x: %s call against its %s registration' % (tgt, conv, exe.REG_CONV[tgt]))
+    conv = c
     args = []
     for k in range(nargs):
         v = st.stack.get(4 + 4 * k, ('arg', k))
@@ -2052,6 +2062,8 @@ def fnv(data):
 def main():
     check = '--check' in sys.argv
     done = already_ported()
+    exe.load_registered_convs(lambda path, head: os.path.basename(path).startswith('gen_') and
+                              os.path.dirname(path).endswith(os.path.join('sa-ai', 'src')))
     for l in open(os.path.join(ROOT, 'tools', 'gen', 'ai_patterns_exclude.txt')):
         l = l.split('#')[0].strip()
         if l:

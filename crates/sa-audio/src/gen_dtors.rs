@@ -24,8 +24,6 @@ orig! {
     fn c_4d83a0_t0(this: u32) -> u32 = thiscall 0x4D83A0 => unported;
     /// `CAEPoliceScannerAudioEntity::FinishedPlayingScannerDialogue` (0x4E6C30), cdecl, 0 stack argument(s)
     fn c_4e6c30_c0() -> u32 = cdecl 0x4E6C30 => unported;
-    /// `CAEPoliceScannerAudioEntity::FinishedPlayingScannerDialogue` (0x4E6C30), thiscall, 0 stack argument(s)
-    fn c_4e6c30_t0(this: u32) -> u32 = thiscall 0x4E6C30 => unported;
     /// `CAESound` (0x4EF660), thiscall, 0 stack argument(s)
     fn c_4ef660_t0(this: u32) -> u32 = thiscall 0x4EF660 => unported;
     /// `CAESound::StopSoundAndForget` (0x4EF850), thiscall, 0 stack argument(s)
@@ -87,7 +85,7 @@ pub fn g_caepolice_scanner_audio_entity_destructor_4e6e00(this: u32) {
             let v5 = g::<u32>(0xB6_1D00).read();
             g::<u8>(0xB6_1CFC).write(1 as u8);
             if v5 == 0 {
-                c_4e6c30_t0(v5);
+                c_4e6c30_c0();
                 wr::<u32>(p(this), 0, 0x85_9988);
                 let _v7 = c_4ef660_t0(this.wrapping_add(8));
                 return;

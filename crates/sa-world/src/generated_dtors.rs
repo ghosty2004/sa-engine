@@ -19,8 +19,8 @@ orig! {
     fn c_45b110_t0(this: u32) -> u32 = thiscall 0x45B110 => unported;
     /// `tReplayVehicleBlock::MakeVehicleUpdateData` (0x45B730), thiscall, 2 stack argument(s)
     fn c_45b730_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x45B730 => unported;
-    /// `FUN_004a8dc0` (0x4A8DC0), thiscall, 0 stack argument(s)
-    fn c_4a8dc0_t0(this: u32) -> u32 = thiscall 0x4A8DC0 => unported;
+    /// `FUN_004a8dc0` (0x4A8DC0), cdecl, 0 stack argument(s)
+    fn c_4a8dc0_c0() -> u32 = cdecl 0x4A8DC0 => unported;
     /// `FUN_004a8de0` (0x4A8DE0), thiscall, 0 stack argument(s)
     fn c_4a8de0_t0(this: u32) -> u32 = thiscall 0x4A8DE0 => unported;
     /// `CMatrixLinkList::~CMatrixLinkList` (0x54EB70), thiscall, 0 stack argument(s)
@@ -102,14 +102,14 @@ pub fn g_t_replay_train_block_make_train_update_data_45cd10(this: u32, a0: u32, 
 #[hook(addr = 0x590E70, conv = thiscall, name = "FurnitureSubGroup_c::~FurnitureSubGroup_c", expect = "6A FF 68 A8 CE 83 00", unverified = "gen2-world-1", route = "L2", hazards = "none")]
 pub fn g_furniture_sub_group_c_furniture_sub_group_c_590e70(this: u32) {
     c_4a8de0_t0(this.wrapping_add(0xC));
-    let _v2 = c_4a8dc0_t0(this);
+    let _v2 = c_4a8dc0_c0();
 }
 
 /// `Interior_c::Destructor` (0x591360, WORLD): dtor, thiscall, `ret`; 20 instruction(s) matched.
 #[hook(addr = 0x591360, conv = thiscall, name = "Interior_c::Destructor", expect = "6A FF 68 48 CF 83 00", unverified = "gen2-world-1", route = "L2", hazards = "none")]
 pub fn g_interior_c_destructor_591360(this: u32) {
     c_4a8de0_t0(this.wrapping_add(0x5C));
-    let _v2 = c_4a8dc0_t0(this);
+    let _v2 = c_4a8dc0_c0();
 }
 
 /// `cBuoyancy::~cBuoyancy` (0x6C2B80, PHYS): dtor, thiscall, `ret`; 2 instruction(s) matched.

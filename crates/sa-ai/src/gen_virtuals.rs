@@ -31,8 +31,8 @@ orig! {
     fn c_4100e0_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x4100E0 => unported;
     /// `CTaskTimer::IsOutOfTime` (0x420E30), thiscall, 0 stack argument(s)
     fn c_420e30_t0(this: u32) -> u32 = thiscall 0x420E30 => unported;
-    /// `CTheScripts::IsPlayerOnAMission` (0x464D50), thiscall, 0 stack argument(s)
-    fn c_464d50_t0(this: u32) -> u32 = thiscall 0x464D50 => unported;
+    /// `CTheScripts::IsPlayerOnAMission` (0x464D50), cdecl, 0 stack argument(s)
+    fn c_464d50_c0() -> u32 = cdecl 0x464D50 => unported;
     /// `CEventAcquaintancePed::AffectsPed` (0x4AFA30), thiscall, 1 stack argument(s)
     fn c_4afa30_t1(this: u32, a0: u32) -> u32 = thiscall 0x4AFA30 => unported;
     /// `CEventHandlerHistory::GetCurrentEvent` (0x4B8CA0), thiscall, 0 stack argument(s)
@@ -715,7 +715,7 @@ pub fn g_event_vehicle_to_steal_affects_ped_4af760(this: u32, a0: u32) -> u8 {
                         }
                     }
                 } else {
-                    let v16 = c_464d50_t0(v7);
+                    let v16 = c_464d50_c0();
                     if ((v16 & 0xFF) as u8) != (0 as u8) {
                         return (v16 & 0xFFFF_FF00) as u8;
                     } else {
@@ -801,7 +801,7 @@ pub fn g_event_vehicle_to_steal_affects_ped_4af760(this: u32, a0: u32) -> u8 {
                             }
                         }
                     } else {
-                        let v37 = c_464d50_t0(v28);
+                        let v37 = c_464d50_c0();
                         if ((v37 & 0xFF) as u8) != (0 as u8) {
                             return (v37 & 0xFFFF_FF00) as u8;
                         } else {

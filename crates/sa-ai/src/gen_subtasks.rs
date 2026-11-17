@@ -33,8 +33,8 @@ orig! {
     fn c_4241c0_t1(this: u32, a0: u32) -> u32 = thiscall 0x4241C0 => unported;
     /// `CPlaceable::SetOrientation-xyz` (0x439A80), thiscall, 3 stack argument(s)
     fn c_439a80_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x439A80 => unported;
-    /// `CTheScripts::IsPlayerOnAMission` (0x464D50), thiscall, 0 stack argument(s)
-    fn c_464d50_t0(this: u32) -> u32 = thiscall 0x464D50 => unported;
+    /// `CTheScripts::IsPlayerOnAMission` (0x464D50), cdecl, 0 stack argument(s)
+    fn c_464d50_c0() -> u32 = cdecl 0x464D50 => unported;
     /// `CTaskComplexSeekEntityStandard::Constructor` (0x46AC10), thiscall, 8 stack argument(s)
     fn c_46ac10_t8(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32) -> u32 = thiscall 0x46AC10 => unported;
     /// `CTaskComplexGoToPointAndStandStill::GoToPoint` (0x46FE60), thiscall, 4 stack argument(s)
@@ -75,8 +75,8 @@ orig! {
     fn c_571b70_t1(this: u32, a0: u32) -> u32 = thiscall 0x571B70 => unported;
     /// `InteriorGroup_c::GetPed` (0x594B90), thiscall, 1 stack argument(s)
     fn c_594b90_t1(this: u32, a0: u32) -> u32 = thiscall 0x594B90 => unported;
-    /// `InteriorManager_c::AreAnimsLoaded` (0x5980F0), thiscall, 1 stack argument(s)
-    fn c_5980f0_t1(this: u32, a0: u32) -> u32 = thiscall 0x5980F0 => unported;
+    /// `InteriorManager_c::AreAnimsLoaded` (0x5980F0), stdcall, 1 stack argument(s)
+    fn c_5980f0_s1(a0: u32) -> u32 = stdcall 0x5980F0 => unported;
     /// `CPed::SetMoveState` (0x5DEC00), thiscall, 1 stack argument(s)
     fn c_5dec00_t1(this: u32, a0: u32) -> u32 = thiscall 0x5DEC00 => unported;
     /// `CPed::DoWeHaveWeaponAvailable` (0x5DF300), thiscall, 1 stack argument(s)
@@ -101,8 +101,8 @@ orig! {
     fn c_5e7ec0_t0(this: u32) -> u32 = thiscall 0x5E7EC0 => unported;
     /// `CPedAttractorManager::BroadcastDeparture-` (0x5EC980), thiscall, 2 stack argument(s)
     fn c_5ec980_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x5EC980 => unported;
-    /// `CPedAttractorManager::GetPedAttractorManager` (0x5EE190), thiscall, 0 stack argument(s)
-    fn c_5ee190_t0(this: u32) -> u32 = thiscall 0x5EE190 => unported;
+    /// `CPedAttractorManager::GetPedAttractorManager` (0x5EE190), cdecl, 0 stack argument(s)
+    fn c_5ee190_c0() -> u32 = cdecl 0x5EE190 => unported;
     /// `CPed::Say` (0x5EFFE0), thiscall, 6 stack argument(s)
     fn c_5effe0_t6(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) -> u32 = thiscall 0x5EFFE0 => unported;
     /// `FUN_005f13a0` (0x5F13A0), thiscall, 1 stack argument(s)
@@ -3218,7 +3218,7 @@ pub fn g_task_complex_use_paired_attractor_create_sub_task_638d30(this: u32, a0:
             return 0;
         } else {
             let v1 = rd::<u32>(p(this), 0xC);
-            let v2 = c_5ee190_t0(a1);
+            let v2 = c_5ee190_c0();
             c_5ec980_t2(v2, a1, v1);
             return 0;
         }
@@ -5360,7 +5360,7 @@ pub fn g_task_complex_scream_in_car_then_leave_create_next_sub_task_6442d0(this:
 /// `CTaskComplexScreamInCarThenLeave::CreateFirstSubTask` (0x644320): subtask, thiscall, `ret 4`; 19 instruction(s) matched.
 #[hook(addr = 0x644320, conv = thiscall, name = "CTaskComplexScreamInCarThenLeave::CreateFirstSubTask", expect = "56 8B F1 E8 28 0A E2 FF")]
 pub fn g_task_complex_scream_in_car_then_leave_create_first_sub_task_644320(this: u32, a0: u32) -> u32 {
-    let v1 = c_464d50_t0(this);
+    let v1 = c_464d50_c0();
     if ((v1 & 0xFF) as u8) == (0 as u8) {
         let v2 = c_642510_t2(this, 0x2C5, a0);
         return v2;
@@ -9027,7 +9027,7 @@ pub fn g_task_interior_use_info_create_next_sub_task_676880(this: u32, a0: u32) 
                                                     }
                                                 }
                                             } else {
-                                                let v13 = c_5980f0_t1(0xBA_F670, 1);
+                                                let v13 = c_5980f0_s1(1);
                                                 if ((v13 & 0xFF) as u8) == (0 as u8) {
                                                     let v14 = rd::<u32>(p(this), 0xC);
                                                     let v15 = rd::<u32>(p(v14), 0x1C);
@@ -9096,7 +9096,7 @@ pub fn g_task_interior_use_info_create_next_sub_task_676880(this: u32, a0: u32) 
                                                 }
                                             }
                                         } else {
-                                            let v36 = c_5980f0_t1(0xBA_F670, 1);
+                                            let v36 = c_5980f0_s1(1);
                                             if ((v36 & 0xFF) as u8) == (0 as u8) {
                                                 let v37 = rd::<u32>(p(this), 0xC);
                                                 let v38 = rd::<u32>(p(v37), 0x1C);
@@ -9118,7 +9118,7 @@ pub fn g_task_interior_use_info_create_next_sub_task_676880(this: u32, a0: u32) 
                                             }
                                         }
                                     } else {
-                                        let v42 = c_5980f0_t1(0xBA_F670, 2);
+                                        let v42 = c_5980f0_s1(2);
                                         if ((v42 & 0xFF) as u8) == (0 as u8) {
                                             let v43 = rd::<u32>(p(this), 0xC);
                                             let v44 = rd::<u32>(p(v43), 0x1C);
@@ -9151,7 +9151,7 @@ pub fn g_task_interior_use_info_create_next_sub_task_676880(this: u32, a0: u32) 
                                     }
                                 }
                             } else {
-                                let v52 = c_5980f0_t1(0xBA_F670, 0);
+                                let v52 = c_5980f0_s1(0);
                                 if ((v52 & 0xFF) as u8) == (0 as u8) {
                                     let v53 = rd::<u32>(p(this), 0xC);
                                     let v54 = rd::<u32>(p(v53), 0x1C);

@@ -94,6 +94,8 @@ def main():
     check = '--check' in sys.argv
     A.BOOL_METHODS = set(A.BOOL_METHODS) | bool_methods()
     done = already_ported() | PORTED_UNHOOKED | EXCLUDE_ADDR
+    A.exe.load_registered_convs(lambda path, head: os.path.basename(path).startswith('gen_') and
+                                os.path.dirname(path).endswith(os.path.join('sa-audio', 'src')))
     extra = unk_audio()
     cand = []
     for a in sorted(A.PROCS):
