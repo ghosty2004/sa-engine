@@ -69,8 +69,9 @@
 #                  in, driven: CVehicle::UpdateTrailerLink 0x6DFC50 / UpdateTractorLink 0x6E0050 (FRONTIER-2 turn 10)
 # tank     (1200)  on foot at Grove Street, the Rhino cheat AIWPRTON, `f` to get in, driven with the turret turned
 #                  (mouse) and fired (left button): CAutomobile::TankControl 0x6AE850
-# hydra    (1200)  on foot at Grove Street, the Hydra cheat JUMPJET, `f` to get in, throttle and the fire button
-#                  (left button): the Hydra's missiles (CVehicle::FireUnguidedMissile 0x6D5110 / heat-seeking 0x6E05C0)
+# WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-b10-counts.gdb --args" counts the turn 10 lane B ports' calls
+# (monster: SetupSuspensionLines 1, ProcessSuspension 282; tanker: TankerCheat 1, UpdateTrailerLink 1996,
+# UpdateTractorLink 1498; tank: TankControl 998).
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-a5-counts.gdb --args" counts the road block / gang war / jet pack
 # calls.
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-counts.gdb --args" counts the FRONTIER-2 ports' calls
@@ -195,13 +196,13 @@ cinema)
     p=; i=200; while [ $i -le "${3:-1200}" ]; do p="$p${p:+;}$i:0xB6F0DC:5"; i=$((i + 10)); done
     export SA_GAME_POKE="$p"
     run "${3:-1200}" --start-in-world ;;
-monster|tanker|tank|hydra)
+monster|tanker|tank)
     # a cheat vehicle in front of CJ at Grove Street, `f` to get in, then driven (w) with a left and a right turn
     export SA_GAME_SCRIPT_SKIP=1
-    case $NAME in monster) c="a g b d l c i d";; tanker) c="a m o m h r e r";; tank) c="a i w p r t o n";; *) c="j u m p j e t";; esac
+    case $NAME in monster) c="a g b d l c i d";; tanker) c="a m o m h r e r";; *) c="a i w p r t o n";; esac
     keys=; i=150; for k in $c; do keys="$keys${keys:+,}$k:$i:$((i + 2))"; i=$((i + 6)); done
     export SA_GAME_KEYS="$keys,f:260:263,w:400:1150,a:600:660,d:800:860"
-    if [ "$NAME" = tank ] || [ "$NAME" = hydra ]; then
+    if [ "$NAME" = tank ]; then
         export SA_GAME_MOUSE="${SA_GAME_MOUSE:-12:0:500:560,-12:0:700:760}" SA_GAME_LMB="${SA_GAME_LMB:-520:1100}"
     fi
     run "${3:-1200}" --start-in-world ;;
