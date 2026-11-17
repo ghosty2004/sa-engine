@@ -58,14 +58,36 @@ User decisions (2026-11-17):
 
 ### 3.2 The interface and the ABI
 
-- One interface definition is the source of truth: **WIT** (WebAssembly Interface Types). Guest bindings come from
-  `wit-bindgen`; the host side natively uses wasmtime's component model.
-- **Open point (decide in the first step):** browsers do not run components directly. Two options:
-  (a) transpile each component with `jco` to core modules + JS glue at build/load time;
-  (b) define the ABI as **core wasm** (plain imports/exports, structs in linear memory, a small generated glue on both
-  sides), and keep WIT only as documentation/generator input.
-  Leaning: (b) for the first version (one ABI, identical natively and on the web, no extra toolchain in the browser),
-  revisited when browsers ship the component model.
+- **Decision (M0, 2026-11-17): a core-wasm ABI.** A mod is a plain core WebAssembly module: it imports the host
+  functions from the module `"sa"`, exports its entry points (`sa_api_version`, `sa_init`, `sa_overlay`, ...) and its
+  memory as `"memory"`, passes only `i32` / `f32` values, and hands text and buffers over as `(ptr, len)` in its own
+  linear memory, which the host reads with bounds checks (a bad range is a status code, never a wild read). Every
+  host function returns an `i32` (a result `>= 0` or a status: `-1` denied, `-2` bad argument). No component
+  model, no WIT, no `jco`.
+- **The interface is defined once**, in `crates/sa-mod-api` (no dependencies, no `unsafe`): two `macro_rules!` lists,
+  `for_each_import!` (name, parameters, result, the permission it needs) and `for_each_export!`. Everything is
+  generated from them: the host's import table and typed call decoder (`IMPORTS`, `Call::decode`) and the export
+  signature checks (`EXPORTS`); the SDK's `extern "C"` import block and its exported entry points (`sa-mod`'s `ffi`
+  and `entry!`). The browser glue (`web/mods.js`) knows no API function: the host passes it the import names at load
+  time and every import calls back into one host entry with its index. Adding a function is one line in
+  `sa-mod-api`.
+- **Why core wasm** (the spike, `target/mod-spike`, and M0 itself):
+  - it is the one format both engines run as is: wasmtime natively (Cranelift on x86_64; on i686, which has no
+    Cranelift backend, Cranelift's Pulley bytecode and wasmtime's interpreter: fuel, traps and memory limits work
+    the same; a host call costs ~120 ns there) and the browser's `WebAssembly.Module` / `Instance`, synchronously, in
+    the game's worker. The component model would need `jco` transpiling to core modules plus generated JS per mod
+    in the browser and wasmtime's component runtime natively: two ABIs to keep equal;
+  - one ABI means one host implementation of every API function (`sa-mod-host/src/api.rs`), reached through a
+    backend-neutral `dispatch(index, values, memory reader)` from both engines;
+  - mods stay buildable from any language with a wasm32 target and no extra toolchain (`cargo build --target
+    wasm32-unknown-unknown`; hello.wasm is 26 KB).
+  - The cost: hand-kept value conventions (UTF-8 `(ptr, len)`, `0xRRGGBBAA` colours, handles) instead of WIT's rich
+    types. They stay few because the definition is one place. Revisit when browsers ship the component model; the
+    `sa-mod-api` lists can then generate a WIT file.
+- Budgets per engine: wasmtime fuel natively; on the web the host instruments the module at load time (one counter
+  global, decremented at every function entry and loop header, a trap below zero; `sa-mod-host/src/backend/meter.rs`),
+  which also catches endless loops, which a time check could not interrupt. The memory cap is the store limiter
+  natively and the instrumented memory's maximum on the web.
 - The API is **versioned** (`api_version` in the manifest, semver). The host supports the current major version; a mod
   built for a newer minor version is refused with a clear message.
 - Handles, never pointers: peds, vehicles and objects are the generational pool references `sa-samp` already uses
@@ -192,7 +214,7 @@ data only, with no `.wasm`):
 
 ## 8. Risks
 
-- **The browser and the component model** (§3.2): mitigated by the core-wasm ABI.
+- **The browser and the component model** (§3.2): avoided by the core-wasm ABI (decided in M0).
 - **Call overhead** at mid-frame hooks (SA:MP hooks ped rendering, weapon fire, vehicle control): a wasm call is tens of
   nanoseconds; measured with the PERF-0 instrumentation from M2 on.
 - **API stability**: once outside developers depend on it, breaking changes need a major version; keep level 1 small.

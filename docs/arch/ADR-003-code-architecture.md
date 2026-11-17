@@ -82,8 +82,9 @@ stays legal for fields the layout table does not know yet (then the field is add
 
 `sa-math` → `sa-core` → `sa-rwcore` / `sa-stream` / `sa-anim` / `sa-input` → `sa-world` → `sa-pop` →
 `sa-ped` / `sa-veh` / `sa-cam` / `sa-ai` / `sa-weapon` / `sa-render` → `sa-script` / `sa-hud` / `sa-audio` →
-`sa-samp` / `sa-ports` → `sa-rw-wgpu` / `sa-hook` → `sa-game` / `sa-oracle` (the leaf crates `sa-macros`,
-`sa-platform`, `sa-net`, `sa-samp-api`, `sa-oracle-format`, `sa-launcher`, `sa-udp-proxy` at the bottom). This is
+`sa-samp` / `sa-ports` / `sa-mod-host` → `sa-rw-wgpu` / `sa-hook` → `sa-game` / `sa-oracle` (the leaf crates `sa-macros`,
+`sa-platform`, `sa-net`, `sa-samp-api`, `sa-oracle-format`, `sa-launcher`, `sa-udp-proxy`, `sa-mod-api` at the bottom;
+the mod SDK `sa-mod` beside `sa-core`). This is
 the order the code has (measured 2026-11-14; `sa-pop` sits below the vehicle, camera and render crates, which call
 its car-control code). A helper lives in the lowest layer that owns its concept. No cycles. `tools/lib/layers.py`
 holds the order; the writer gate's `layers` step (`tools/verify/crate_layers.py`) fails a dependency on a crate of
