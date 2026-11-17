@@ -9,6 +9,7 @@
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
+use sa_math::x87::X87;
 
 use crate::common::{p8, rd, rw_free, rw_malloc, rw_memory_alloc, wr};
 
@@ -329,6 +330,89 @@ pub fn rt_anim_animation_get_num_nodes(anim: GPtr<u8>) -> i32 {
     }
 }
 
+/// `RtAnimInterpolatorAddAnimTime(RtAnimInterpolator*, RwReal time)` (0x7CD8D0). A time not above 0 does
+/// nothing. The callback (+0xC, data +0x10) fires when the current time (+4) was below the callback time (+0x14)
+/// and `cur + time` is not; `cur + time` (x87) is stored. Past the duration (anim +0xC) it is wound back by the
+/// duration until it is not above it (each step also fires the callback when the wound time is not below the
+/// callback time), stored, the animation restarted (`RtAnimInterpolatorSetCurrentAnim`, which resets the time)
+/// and the time stored again; a looped run fires the loop callback (+0x18, data +0x1C) at the end. Without a next
+/// frame (+8) the animation is restarted the same way. Then, while the next frame lies before the end (anim
+/// frames +0x10 + frames +4 * key frame size +0x28) and its previous frame's time (+4) is not above the current
+/// time, the node (from the 0x4C header, +0x24 bytes each, the search index kept across frames and wrapping at the
+/// node count +0x2C) whose second frame (+4) is that previous frame moves on (first = second, second = next) and
+/// the next frame advances. Each node is interpolated (+0x44: `(node, first, second, time, anim custom data
+/// +0x14)`). A callback returning 0 is cleared. Returns 1.
+#[hook(addr = 0x7CD8D0, conv = cdecl, name = "RtAnimInterpolatorAddAnimTime", expect = "D9 44 24 08 D8 1D 50 8B 85 00",
+       unverified = "frontier2-c17", route = "L2", hazards = "none")]
+pub fn rt_anim_interpolator_add_anim_time(it: GPtr<u8>, time: f32) -> u32 {
+    let t = X87::from_f32(time);
+    if t.fcom(X87::from_f32(0.0)).test_any(0x41) {
+        return 1;
+    }
+    let anim = p8(rd::<u32>(it, 0));
+    let cb_time: f32 = rd(it, 0x14);
+    let duration: f32 = rd(anim, 0xC);
+    let nodes: i32 = rd(it, 0x2C);
+    let mut looped = false;
+    let cur = X87::from_f32(rd(it, 4));
+    let mut fire = !cur.fcom(X87::from_f32(cb_time)).test_parity(5)
+        && !t.fadd_m(rd(it, 4)).fcom(X87::from_f32(cb_time)).c0();
+    let mut now = t.fadd_m(rd(it, 4));
+    wr::<f32>(it, 4, now.to_f32());
+    if !now.fcom(X87::from_f32(duration)).test_any(0x41) {
+        looped = true;
+        loop {
+            now = now.fsub_m(duration);
+            fire |= !now.fcom(X87::from_f32(cb_time)).c0();
+            if now.fcom(X87::from_f32(duration)).test_any(0x41) {
+                break;
+            }
+        }
+        wr::<f32>(it, 4, now.to_f32());
+        crate::bindings::interpolator_set_current_anim(it, anim);
+        wr::<f32>(it, 4, now.to_f32());
+    }
+    if rd::<u32>(it, 8) == 0 {
+        let keep = X87::from_f32(rd(it, 4));
+        crate::bindings::interpolator_set_current_anim(it, anim);
+        wr::<f32>(it, 4, keep.to_f32());
+    }
+    let end = rd::<u32>(anim, 4).wrapping_mul(rd(it, 0x28)).wrapping_add(rd(anim, 0x10));
+    let mut idx = 0i32;
+    while rd::<u32>(it, 8) < end {
+        let prev = p8(rd::<u32>(p8(rd::<u32>(it, 8)), 0));
+        if !X87::from_f32(rd(prev, 4)).fcom(X87::from_f32(rd(it, 4))).test_any(0x41) {
+            break;
+        }
+        let node = loop {
+            let n = p8((rd::<i32>(it, 0x24).wrapping_mul(idx) as u32).wrapping_add(it.addr() as u32 + 0x4C));
+            idx += 1;
+            if idx >= nodes {
+                idx = 0;
+            }
+            if rd::<u32>(n, 4) == prev.addr() as u32 {
+                break n;
+            }
+        };
+        wr::<u32>(node, 0, rd(node, 4));
+        wr::<u32>(node, 4, rd::<u32>(it, 8));
+        wr::<u32>(it, 8, rd::<u32>(it, 8).wrapping_add(rd(it, 0x28)));
+    }
+    let mut node = it.byte_add(0x4C);
+    for _ in 0..nodes.max(0) {
+        let a = p8(rd::<u32>(it, 0));
+        call_interpolate_cb(rd(it, 0x44), node, rd(node, 0), rd(node, 4), rd(it, 4), rd(a, 0x14));
+        node = node.byte_add(rd::<i32>(it, 0x24) as isize);
+    }
+    if fire && rd::<u32>(it, 0xC) != 0 && call_scheme_cb2(rd(it, 0xC), it.addr() as u32, rd(it, 0x10)) == 0 {
+        wr::<u32>(it, 0xC, 0);
+    }
+    if looped && rd::<u32>(it, 0x18) != 0 && call_scheme_cb2(rd(it, 0x18), it.addr() as u32, rd(it, 0x1C)) == 0 {
+        wr::<u32>(it, 0x18, 0);
+    }
+    1
+}
+
 /// `RtAnimInterpolatorSetKeyFrameCallBacks(interp, typeID)` (0x7CD660): the scheme's four callbacks
 /// (`RtAnimGetInterpolatorInfo`, inlined; else its error and 0). Returns 1.
 #[hook(addr = 0x7CD660, conv = cdecl, name = "RtAnimInterpolatorSetKeyFrameCallBacks", expect = "8B 15 00 79 C9 00 83 EC 08 33 C0 56",
@@ -378,4 +462,4 @@ pub fn rt_anim_interpolator_copy(dst: GPtr<u8>, src: GPtr<u8>) -> u32 {
 }
 
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_RT_ANIM_ANIMATION_GET_NUM_NODES, HOOK_RT_ANIM_GET_INTERPOLATOR_INFO, HOOK_RT_ANIM_ANIMATION_STREAM_READ, HOOK_RT_ANIM_INTERPOLATOR_CREATE, HOOK_RT_ANIM_INTERPOLATOR_DESTROY, HOOK_HANIM_FRAME_STREAM_READ, HOOK_RP_HANIM_FRAME_SET_HIERARCHY, HOOK_RP_HANIM_FRAME_GET_HIERARCHY, HOOK_RP_HANIM_FRAME_SET_ID, HOOK_RP_HANIM_FRAME_GET_ID, HOOK_RT_ANIM_ANIMATION_DESTROY, HOOK_RT_ANIM_INTERPOLATOR_SET_CURRENT_ANIM, HOOK_RT_ANIM_INTERPOLATOR_SET_KEY_FRAME_CALLBACKS, HOOK_RT_ANIM_INTERPOLATOR_SET_ANIM_LOOP_CALLBACK, HOOK_RT_ANIM_INTERPOLATOR_SET_ANIM_CALLBACK, HOOK_RT_ANIM_INTERPOLATOR_COPY];
+pub const HOOKS: &[HookReg] = &[HOOK_RT_ANIM_INTERPOLATOR_ADD_ANIM_TIME, HOOK_RT_ANIM_ANIMATION_GET_NUM_NODES, HOOK_RT_ANIM_GET_INTERPOLATOR_INFO, HOOK_RT_ANIM_ANIMATION_STREAM_READ, HOOK_RT_ANIM_INTERPOLATOR_CREATE, HOOK_RT_ANIM_INTERPOLATOR_DESTROY, HOOK_HANIM_FRAME_STREAM_READ, HOOK_RP_HANIM_FRAME_SET_HIERARCHY, HOOK_RP_HANIM_FRAME_GET_HIERARCHY, HOOK_RP_HANIM_FRAME_SET_ID, HOOK_RP_HANIM_FRAME_GET_ID, HOOK_RT_ANIM_ANIMATION_DESTROY, HOOK_RT_ANIM_INTERPOLATOR_SET_CURRENT_ANIM, HOOK_RT_ANIM_INTERPOLATOR_SET_KEY_FRAME_CALLBACKS, HOOK_RT_ANIM_INTERPOLATOR_SET_ANIM_LOOP_CALLBACK, HOOK_RT_ANIM_INTERPOLATOR_SET_ANIM_CALLBACK, HOOK_RT_ANIM_INTERPOLATOR_COPY];
