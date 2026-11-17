@@ -3358,3 +3358,55 @@
   RENDER 19 rows unchanged; no new rows.
 - verify-all (lanes 6-7, host sa-oracle and satool rebuilt; DLL of c54a4c81, docs-only commits after it):
   `lanec9-c17` (SA_UNVERIFIED=frontier2-c17) IDENTICAL 13/13; `lanec9-default` (default set) IDENTICAL 13/13.
+
+## 2026-11-17 — FRONTIER-2 turn 9, lane B: the DW heli-chase / birdy cameras, the cinema scenario, five VEH virtuals (agent, branch worktree-agent-ab3b10b20eff4ec65)
+- Base: master 7dff58ad. `tools/gen/inflight.py` checked first: no other branch registers 0x51A740, 0x51B850,
+  0x50E090, 0x6A1ED0, 0x6A45C0, 0x6BEB20, 0x6F6370, 0x6B3BB0.
+- Scenarios first (i686 native sa-game of 7dff58ad): no lane B blocker anywhere (plane 392 on lane C's 0x43E0E0,
+  roadblocks 1 on lane C's RtDictSchemaStreamReadDict 0x7CF240, roadblock-wanted 1 on CObject::Explode 0x5A1340,
+  in flight on another branch; all others 0 blocked).
+- Batch `frontier2-b20` (CAM, 3 hooks), from the 1.0 US bytes with docs/re/specs/CAM/CCam.md as reading aid
+  (`crates/sa-cam/src/dwcams.rs`):
+  - CCam::Process_DW_HeliChaseCam 0x51A740: the settings block index `_ftol2(rand() * 2^-15 * 0.0)` is always 0 (the
+    rand() still drawn); start / end tries with the random sides, the 2D keep-away, the FOV ease and zoom, the sphere
+    lock (its counter starts at the immediate 100, not [0x8CCD24]), the LOS-locked target point, the late zoom out.
+  - FUN_0050e090 0x50E090 (UNK-game, only HeliChaseCam calls it): five rand() scales of the settings block.
+  - CCam::Process_DW_BirdyCam 0x51B850: the frame keeps the 127-entry object / lamp lists at their offsets; the
+    pair search's inner index starts at the outer one; the static sLamps[2] is constructed through 0x403D60 (its
+    SEH frame not modelled).
+  - 0x50E180 (the settings defaults, ported in camproc.rs) is one sa-core binding with an sa-cam twin
+    (`bindings.py --resolve`; sa-core's CCam::CCam had declared it as `CCam::Init`); the camproc DW processor
+    bindings of 0x51A740 / 0x51B850 target the ports.
+- New scenario `cinema` (frontier.sh): the Greenwood at Grove Street driven with TheCamera +0xB4 (m_nCarZoom) poked
+  to 5 every 10 iterations; `tools/e2e/scenarios/frontier2-b9-counts.gdb` counts IsItTimeForNewcam 991,
+  TryToStartNewCamMode 54, Process_DW_HeliChaseCam 1395, Process_DW_CamManCam 155, Process_DW_BirdyCam 14,
+  Finalise_DW_CineyCams 1540 calls in 1200 iterations; 0 blocked.
+- Batch `frontier2-b21` (VEH, 5 hooks), from the 1.0 US bytes:
+  - CAutomobile::AddMovingCollisionSpeed 0x6A1ED0 (`moving_collision.rs`): forklift lift along up, dumper / dozer /
+    andromada / packer turn about right around their part frame: `CrossProduct(M * (w, 0, 0), point - M * centre)`.
+  - CAutomobile::DoHoverSuspensionRatios 0x6A45C0 (`automobile_render.rs`): the cars-on-water ratios and wheel col
+    points (x through an f32 product, y not, z = the level).
+  - CBike::BurstTyre 0x6BEB20 (`bike_burst_tyre.rs`): only component 14 reaches the rider test (a turn force); the
+    wheel-13 CEventKnockOffBike branch is unreachable after the 13 -> 0 remap and not ported.
+  - CTrain::OpenDoor 0x6F6370 (`train.rs`, sharing CAutomobile::OpenDoor's sound event helper): doors 2 / 3 only,
+    the sound events need only a ped (playSound unread), the Streak carriage slides its door.
+  - CAutomobile::BlowUpCarCutSceneNoExtras 0x6B3BB0 (`automobile_blow_up.rs`, on BlowUpCar's helpers): the seven
+    autopilot missions of jump table 0x6B3E54 / 0x6B3E5C only get mission 0x39; the four flags as in the bytes.
+- frontier.py --no-branches: to port 129 -> 122 (VEH 24 -> 19, CAM 8 -> 6, MATH 0); no new rows.
+- Scenarios on the final head (i686 native sa-game of b8c2e365): pausemenu 416 / 0 blocked, solicit 4016 / 0,
+  crossing 1216 / 0, crossing-long 4016 / 0, melee 2616 / 0, sniper / shootcar / shootdriver / quad / heli / boat /
+  cinema 1216 / 0, roadblock-script 1016 / 0, gangwar 2016 / 0, jetpack 1016 / 0, roadblocks 2015 / 1 (lane C's
+  0x7CF240), roadblock-wanted 2015 / 1 (0x5A1340, another branch), plane 824 / 392 (lane C's 0x43E0E0); no crash,
+  0 blocked on lane B.
+- Writer gate (base 7dff58ad): the first run (`GATE_SKIP=i686`, verify-all was using the DLL) failed only hooktest:
+  0x50E090's expect string cut the stolen `call rand` (fixed in 0d58b2a9); full rerun on the final head, no step
+  skipped: see below.
+- verify-all (lanes 4-5, fresh release sa-oracle): `lb9-u` (SA_UNVERIFIED=frontier2-b20, DLL of 304ab86b) IDENTICAL
+  13/13; `lb9-u2` (SA_UNVERIFIED=frontier2-b20,frontier2-b21, DLL of 0d58b2a9, the final code) IDENTICAL 13/13; default
+  set `lb9-def` (DLL of 0d58b2a9) IDENTICAL 13/13.
+- Resources: after the 21:34 global OOM, builds with `CARGO_BUILD_JOBS=4`, one cargo build / verify-all at a time.
+- Open (lane B): CAM Process_WheelCam 0x512110, Process_Editor 0x50F3F0, the two-player cams 0x513510 / 0x513BE0 /
+  0x519810 / 0x525E50; VEH CMonsterTruck::ProcessSuspension 0x6C83A0 + SetupSuspensionLines 0x6C7FB0,
+  GetNearestCarPassengerDoor 0x650BB0, UpdateTrailerLink / UpdateTractorLink 0x6DFC50 / 0x6E0050, FireFixedMachineGuns
+  0x73DF00, the nitro / tow truck / harvester / tank / RC bandit / plane gun / missile / water splash / train passenger
+  / replacement upgrade direct rows.
