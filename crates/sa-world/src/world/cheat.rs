@@ -57,6 +57,8 @@ orig! {
     pub fn player_cheat_wanted_level(ped: GPtr<u8>, level: i32) = thiscall 0x609F50 => unported;
     /// `CCheat::VehicleCheat(eModelID)` (0x43A0B0)
     pub fn vehicle_cheat(model: i32) -> GPtr<u8> = cdecl 0x43A0B0 => crate::world::cheat::vehicle_cheat_port;
+    /// `CVehicle::SetTowLink(CVehicle*, bool)` (vtable +0xF4)
+    fn v_set_tow_link(v: GPtr<u8>, tractor: GPtr<u8>, b: u32) -> u8 = thiscall vslot 0xF4 => unported;
 }
 
 pub fn add_to_cheat_string_port(c: u32) {
@@ -439,6 +441,36 @@ pub fn stunt_plane_cheat() {
     vehicle_cheat(0x201);
 }
 
+/// `CCheat::TankerCheat` (0x43A570, cdecl; SEH frame for the trailer's `new`, not modelled). FRONTIER-2 turn 10
+/// lane B, batch `frontier2-b23` (the tanker scenario's set-up): `VehicleCheat(0x202)` (Petro); with a vehicle,
+/// `RequestModel(0x248, 0)` + `LoadAllRequestedModels(false)`; once the trailer model's load state (0x8E7A70) is 1,
+/// a `CTrailer(0x248, RANDOM_VEHICLE)` (`CVehicle::operator new(0x9F4)`) is put at the vehicle's position, oriented
+/// (0, 0, 3.4906585), set abandoned (status 4), added to the world and towed (`SetTowLink(vehicle, true)`).
+#[hook(addr = 0x43A570, conv = cdecl, name = "CCheat::TankerCheat", expect = "6A FF 68 0B 76 83 00",
+       unverified = "frontier2-b23", route = "L2", hazards = "heap-writes",
+       note = "creates a CTrailer (vehicle pool) and adds it to the world")]
+pub fn tanker_cheat() {
+    let v = vehicle_cheat(0x202);
+    if v.is_null() {
+        return;
+    }
+    sa_core::bindings::streaming_request_model(0x248, 0);
+    sa_core::bindings::load_all_requested_models(0);
+    if g::<u8>(0x8E_7A70).read() != 1 {
+        return;
+    }
+    let mem = crate::bindings::vehicle_new(0x9F4);
+    let t = if mem.is_null() { GPtr::NULL } else { sa_core::bindings::trailer_ctor(mem, 0x248, 1) };
+    if t.is_null() {
+        return;
+    }
+    crate::bindings::placeable_set_posn(t, super::common::entity_pos(v).cast());
+    crate::bindings::set_orientation(t, 0.0, 0.0, f32::from_bits(0x405F_66F3));
+    wr::<u8>(t, 0x36, (rd::<u8>(t, 0x36) & 7) | 0x20);
+    sa_core::bindings::world_add(t);
+    v_set_tow_link(t, v, 1);
+}
+
 /// `CCheat::MonsterTruckCheat` (0x43A680): `VehicleCheat(0x22c)`.
 #[hook(addr = 0x43A680, conv = cdecl, name = "CCheat::MonsterTruckCheat", expect = "68 2C 02 00 00")]
 pub fn monster_truck_cheat() {
@@ -641,6 +673,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_WEAPON_SKILLS_CHEAT,
     HOOK_VEHICLE_SKILLS_CHEAT,
     HOOK_TANK_CHEAT,
+    HOOK_TANKER_CHEAT,
     HOOK_STOCK_CAR_CHEAT,
     HOOK_STOCK_CAR2_CHEAT,
     HOOK_STOCK_CAR3_CHEAT,

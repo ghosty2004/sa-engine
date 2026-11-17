@@ -2,7 +2,7 @@
 # FRONTIER-1 scenarios: native sa-game runs (deterministic, --fixed-step 40, offscreen) that reach the blockers the
 # user hit. Each must end with an empty blocker list in OUT/report.md and no crash.
 #
-#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema OUTDIR [FRAMES]
+#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra OUTDIR [FRAMES]
 #
 # pausemenu (400)  Esc, down x3, Enter (pause-menu item 4: Stats), down, Enter, Enter: the Stats pages draw
 #                  (was a SIGSEGV at iteration ~171: CStats::GetStatValue's X87 result dispatched as cdecl)
@@ -62,6 +62,15 @@
 #                  CCamera::ProcessObbeCinemaCameraCar's IsItTimeForNewcam 0x51D770 / TryToStartNewCamMode 0x51E560
 #                  and the DW cameras (Process_DW_HeliChaseCam 0x51A740, Process_DW_BirdyCam 0x51B850, ...)
 #                  (FRONTIER-2 turn 9 lane B)
+# monster  (1200)  on foot at Grove Street, the monster truck cheat AGBDLCID (a CMonsterTruck in front of CJ: its
+#                  constructor's SetupSuspensionLines 0x6C7FB0), `f` to get in, driven with turns:
+#                  CMonsterTruck::ProcessSuspension 0x6C83A0 every step (FRONTIER-2 turn 10 lane B)
+# tanker   (1200)  on foot at Grove Street, the tanker cheat AMOMHRER (a Petro with its trailer hooked up), `f` to get
+#                  in, driven: CVehicle::UpdateTrailerLink 0x6DFC50 / UpdateTractorLink 0x6E0050 (FRONTIER-2 turn 10)
+# tank     (1200)  on foot at Grove Street, the Rhino cheat AIWPRTON, `f` to get in, driven with the turret turned
+#                  (mouse) and fired (left button): CAutomobile::TankControl 0x6AE850
+# hydra    (1200)  on foot at Grove Street, the Hydra cheat JUMPJET, `f` to get in, throttle and the fire button
+#                  (left button): the Hydra's missiles (CVehicle::FireUnguidedMissile 0x6D5110 / heat-seeking 0x6E05C0)
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-a5-counts.gdb --args" counts the road block / gang war / jet pack
 # calls.
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-counts.gdb --args" counts the FRONTIER-2 ports' calls
@@ -186,6 +195,16 @@ cinema)
     p=; i=200; while [ $i -le "${3:-1200}" ]; do p="$p${p:+;}$i:0xB6F0DC:5"; i=$((i + 10)); done
     export SA_GAME_POKE="$p"
     run "${3:-1200}" --start-in-world ;;
+monster|tanker|tank|hydra)
+    # a cheat vehicle in front of CJ at Grove Street, `f` to get in, then driven (w) with a left and a right turn
+    export SA_GAME_SCRIPT_SKIP=1
+    case $NAME in monster) c="a g b d l c i d";; tanker) c="a m o m h r e r";; tank) c="a i w p r t o n";; *) c="j u m p j e t";; esac
+    keys=; i=150; for k in $c; do keys="$keys${keys:+,}$k:$i:$((i + 2))"; i=$((i + 6)); done
+    export SA_GAME_KEYS="$keys,f:260:263,w:400:1150,a:600:660,d:800:860"
+    if [ "$NAME" = tank ] || [ "$NAME" = hydra ]; then
+        export SA_GAME_MOUSE="${SA_GAME_MOUSE:-12:0:500:560,-12:0:700:760}" SA_GAME_LMB="${SA_GAME_LMB:-520:1100}"
+    fi
+    run "${3:-1200}" --start-in-world ;;
 boat)
     export SA_GAME_TELEPORT="60:2505.0:-1666.4:13.4;150:-2240.0:2420.0:8.0"
     export SA_GAME_KEYS="f:200:203,w:300:1100,a:700:760"
@@ -204,6 +223,6 @@ samsite)
     export SA_GAME_KEYS="$keys,space:300:700,w:500:900,a:900:960"
     run "${3:-1600}" --start-in-world ;;
 *)
-    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema OUTDIR [FRAMES]" >&2
+    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra OUTDIR [FRAMES]" >&2
     exit 2 ;;
 esac
