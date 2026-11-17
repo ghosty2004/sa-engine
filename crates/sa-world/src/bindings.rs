@@ -4414,6 +4414,11 @@ orig! {
 }
 
 orig! {
+    /// `CWeapon::AddGunshell` (0x73A3E0)
+    pub fn add_gunshell(w: GPtr<u8>, e: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<f32>, size: f32) = thiscall 0x73A3E0 => unported;
+}
+
+orig! {
     /// `CWeapon::GenerateDamageEvent` (0x73A530)
     pub fn generate_damage_event(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, damage: i32, piece: i32, dir: u32) -> u8 = cdecl 0x73A530 => unported;
 }

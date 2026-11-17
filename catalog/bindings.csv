@@ -1869,7 +1869,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x53A450,sa-weapon,try_to_start_fire_at_coors,cdecl,,x:f32;y:f32;z:f32;gens:i8;a:u8;script:u8;zdist:f32,u8,sa_weapon::fire::try_to_start_fire_at_coors,CCreepingFire::TryToStartFireAtCoors,
 0x53F9A0,sa-weapon,pad_start_shake_distance,thiscall,,pad:GPtr<u8>;time:u32;freq:u32;x:f32;y:f32;z:f32,,unported,CPad::StartShake_Distance,
 0x71C0D0,sa-weapon,glass_was_hit_by_bullet,cdecl,,e:GPtr<u8>;x:f32;y:f32;z:f32,,unported,CGlass::WasGlassHitByBullet,
-0x73A3E0,sa-weapon,add_gunshell,thiscall,,w:GPtr<u8>;e:GPtr<u8>;pos:GPtr<u8>;dir:GPtr<f32>;size:f32,,sa_weapon::weapon::add_gunshell,CWeapon::AddGunshell,
+0x73A3E0,sa-world,add_gunshell,thiscall,,w:GPtr<u8>;e:GPtr<u8>;pos:GPtr<u8>;dir:GPtr<f32>;size:f32,,unported,CWeapon::AddGunshell,sa_weapon::weapon::add_gunshell
 0x73F480,sa-weapon,check_for_shooting_vehicle_occupant,cdecl,,e:GPtr<u8>;cp:GPtr<u8>;ty:i32;a:GPtr<u8>;b:GPtr<u8>,u8,sa_weapon::weapon_fire::check_for_shooting_vehicle_occupant,CWeapon::CheckForShootingVehicleOccupant,
 0x743D70,sa-weapon,get_weapon_reload_time_call,thiscall,,info:GPtr<u8>,u32,sa_weapon::weapon_info::get_weapon_reload_time,CWeaponInfo::GetWeaponReloadTime,
 0x403D60,sa-world,vector_ctor_iterator,stdcall,,p:GPtr<u8>;size:u32;count:u32;ctor:u32,,unported,FUN_00403d60,

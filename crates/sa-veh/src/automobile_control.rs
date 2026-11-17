@@ -80,7 +80,7 @@ orig! {
     /// `CAutomobile::TowTruckControl()` (0x6A40F0)
     fn tow_truck_control(v: GPtr<u8>) = thiscall 0x6A40F0 => unported;
     /// `CAutomobile::TankControl()` (0x6AE850)
-    fn tank_control(v: GPtr<u8>) = thiscall 0x6AE850 => unported;
+    fn tank_control(v: GPtr<u8>) = thiscall 0x6AE850 => crate::tank_control::tank_control;
     /// `CVehicle::ProcessBoatControl(tBoatHandlingData*, float*, bool, bool)` (0x6DBCE0)
     pub(crate) fn process_boat_control(v: GPtr<u8>, h: GPtr<u8>, res: GPtr<u8>, hit_wall: u32, post_collision: u32) = thiscall 0x6DBCE0 => crate::boat_physics::process_boat_control;
     /// `CAutomobile::ProcessBuoyancy()` (0x6A8C00)
