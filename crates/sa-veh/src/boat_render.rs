@@ -68,14 +68,14 @@ fn draw_quad(this: GPtr<u8>) {
 
 /// `CBoat::Render()` (0x6F0210): the boat stays rendered for 3 s (+0x4D0 = now + 3000) and is drawn
 /// as a vehicle unless 0x96914B is set; except for the Skimmer (460) a water-mask quad (white, indices
-/// 0,2,1,1,2,3) with per-model corners is drawn into the z-buffer only (texture raster from 0xC22EA8,
+/// 0,2,1,1,2,3) with per-model corners is drawn into the z-buffer only (texture raster `CWaterLevel::waterclear256Raster` 0xC228A8,
 /// z-write on, z-test off, src blend 1 / dst blend 2) for the boats that have one; the Coastguard (472)
 /// draws a second quad; the render states are reset (z-test on, blend 5/6). The draws are skipped
 /// while 0x96914B is set.
 #[hook(addr = 0x6F0210, conv = thiscall, name = "CBoat::Render", this = "CBoat",
        expect = "A1 84 CB B7 00",
        unverified = "veh4-2", route = "L3-only", hazards = "none",
-       note = "rendering: RW render states and Im3D; the quad statics 0xC278F8.. are written; the texture-raster value is decoded by a protection fragment (0x40120A: [0xC22EA8])")]
+       note = "rendering: RW render states and Im3D; the quad statics 0xC278F8.. are written; the texture-raster address is decoded by a protection fragment (0x40120A: [0x156060C] + [0x5594CB] + CF 0 = 0xC228A8)")]
 pub fn boat_render(this: GPtr<u8>) {
     wr::<u32>(this, 0x4D0, g::<u32>(0xB7_CB84).read().wrapping_add(0xBB8));
     let hidden = || g::<u8>(0x96_914B).read() != 0;
@@ -94,7 +94,7 @@ pub fn boat_render(this: GPtr<u8>) {
     }
     let Some(c) = quad_corners(model) else { return };
     set_corners(c);
-    let raster = g::<u32>(0xC2_2EA8).read();
+    let raster = g::<u32>(0xC2_28A8).read();
     set_uvs();
     rw_render_state_set(1, raster);
     rw_render_state_set(0xC, 1);
