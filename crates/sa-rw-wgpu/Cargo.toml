@@ -6,6 +6,10 @@ edition.workspace = true
 license.workspace = true
 publish.workspace = true
 
+[features]
+# `WgpuDevice::draw_overlay`: a 2D overlay over the presented image (the mod host's overlay phase, MOD-2)
+overlay = []
+
 [dependencies]
 sa-platform = { path = "../sa-platform", default-features = false }
 wgpu = "29"

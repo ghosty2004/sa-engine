@@ -448,6 +448,17 @@ pub struct Caps {
     pub non_pow2_textures: bool,
 }
 
+/// A filled rectangle of a 2D overlay drawn over the presented image, outside the game's D3D9 call stream (the mod
+/// host's overlay phase, MOD-2): pixels from the top left of the back buffer, colour `0xRRGGBBAA`, alpha-blended.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct OverlayRect {
+    pub x: f32,
+    pub y: f32,
+    pub w: f32,
+    pub h: f32,
+    pub rgba: u32,
+}
+
 /// The `IDirect3DDevice9` subset of the RW D3D9 driver, plus the swap-chain operations of
 /// `_rwD3D9CameraEndUpdate`/`RasterShowRaster` ([`D3d9Device::present`]).
 ///

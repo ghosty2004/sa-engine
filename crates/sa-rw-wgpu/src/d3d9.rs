@@ -93,6 +93,9 @@ use sa_platform::gpu::{
 };
 use crate::dxt;
 
+#[cfg(feature = "overlay")]
+mod overlay;
+
 use crate::sm::{self, wgsl::ConstBlock};
 
 /// Colour format of the back buffer and render-target textures (non-sRGB: D3D9 blends in gamma space).
@@ -938,6 +941,9 @@ pub struct WgpuDevice {
     /// Writes alpha 1 into a rectangle of a colour target (the blit shader on the white texture, alpha
     /// writes only): `StretchRect` into a target without alpha.
     alpha_one_pipeline: Option<(wgpu::RenderPipeline, wgpu::BindGroup)>,
+    /// The 2D overlay's pipeline ([`WgpuDevice::draw_overlay`], feature `overlay`).
+    #[cfg(feature = "overlay")]
+    overlay_pipeline: Option<wgpu::RenderPipeline>,
 
     errors: Arc<Mutex<Vec<String>>>,
     pub stats: D3d9Stats,
@@ -1175,6 +1181,8 @@ impl WgpuDevice {
             back_view,
             back_opaque: false,
             alpha_one_pipeline: None,
+            #[cfg(feature = "overlay")]
+            overlay_pipeline: None,
             target,
             depth_by_size,
             next_id: 1,
