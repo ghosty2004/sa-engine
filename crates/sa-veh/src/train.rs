@@ -8,7 +8,7 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-use crate::common::{ftol32, rd, wr, x};
+use crate::common::{f32_of, ftol32, rd, wr, x};
 
 /// `CTrain*`.
 type Train = GPtr<u8>;
@@ -143,7 +143,77 @@ pub fn is_room_for_ped_to_leave_car(_t: Train, _door: u32, _offset: GPtr<u8>) ->
     1
 }
 
+/// `CTrain::OpenDoor(CPed* ped, int32 node, eDoors door, float ratio, bool playSound)` (0x6F6370, vtable +0x6C,
+/// thiscall, `ret 0x14`; SEH frame for the CMatrix and event locals). Only doors 2 / 3 (train nodes 1 / 2 at
+/// +0x668; the `node` argument is overwritten); with the node's frame: a CMatrix attached to its RwMatrix
+/// (position saved), a closed door (+0x5D8 + 0x18 * door) gets `ClearAtomicFlagCB(0x400)`, `CDoor::Open(ratio)`.
+/// Was closed and the angle changed (+4 != +0xC, unordered counts): `SetAtomicFlagCB(0x400)` and, with a ped, a
+/// quiet sound event (60.0); was open and ratio == 0.0 with a ped: the event with 120.0 (no door status change,
+/// unlike CAutomobile; `playSound` is never read). The Streak carriage (570) slides: `y = (+0 - +4) * ratio +
+/// +4` with the saved x / z; other models rotate about the door axis (+0xA, unchecked: the original indexes its
+/// stack, where the matrix follows the rotation vector) and add the saved position. `UpdateRW`.
+#[hook(addr = 0x6F6370, conv = thiscall, name = "CTrain::OpenDoor", expect = "64 A1 00 00 00 00 6A FF 68 F8 8A 84 00",
+       this = "CTrain", unverified = "frontier2-b21", route = "L2", hazards = "heap-writes",
+       note = "writes the door frame's RwMatrix; the SEH frame is not reproduced")]
+pub fn train_open_door(t: Train, ped: GPtr<u8>, _node: i32, door: u32, ratio: f32, _play_sound: u32) {
+    use crate::automobile2::{
+        add_sound_quiet_event, door_is_closed, door_open, matrix_ctor_attach, matrix_dtor, matrix_set_rotate,
+        matrix_update_rw, rw_frame_for_all_objects,
+    };
+    use sa_core::bindings::matrix_set_translate;
+    let node: isize = match door {
+        2 => 1,
+        3 => 2,
+        _ => return,
+    };
+    let frame = rd::<GPtr<u8>>(t, 0x668 + 4 * node);
+    if frame.is_null() {
+        return;
+    }
+    // the original's stack: the rotation vector, then the CMatrix (0x48 bytes)
+    let mut st = [0u32; 3 + 18];
+    let base = GPtr::from_raw(st.as_mut_ptr()).cast::<u8>();
+    let mp = base.byte_add(0xC);
+    matrix_ctor_attach(mp, frame.byte_add(0x10), 0);
+    let pos0 = [rd::<f32>(mp, 0x30), rd::<f32>(mp, 0x34), rd::<f32>(mp, 0x38)];
+    let d = t.byte_add(0x5D8 + 0x18 * door as isize);
+    let was_closed = door_is_closed(d) != 0;
+    if was_closed {
+        rw_frame_for_all_objects(rd::<GPtr<u8>>(t, 0x668 + 4 * node), 0x4C_7BB0, 0x400);
+    }
+    door_open(d, ratio);
+    if was_closed {
+        if x(rd::<f32>(d, 4)).fcom(x(rd::<f32>(d, 0xC))).test_parity(0x44) {
+            rw_frame_for_all_objects(rd::<GPtr<u8>>(t, 0x668 + 4 * node), 0x4C_7B90, 0x400);
+            if !ped.is_null() {
+                add_sound_quiet_event(ped, 60.0);
+            }
+        }
+    } else if !x(ratio).fcom(x(0.0)).test_parity(0x44) && !ped.is_null() {
+        add_sound_quiet_event(ped, 120.0);
+    }
+    if rd::<u16>(t, 0x22) == 0x23A {
+        let a = x(rd::<f32>(d, 4));
+        let y = f32_of(x(rd::<f32>(d, 0)).fsub(a).fmul_m(ratio).fadd(a));
+        matrix_set_translate(mp, pos0[0], y, pos0[2]);
+    } else {
+        let axis = rd::<u8>(d, 0xA) as isize;
+        if axis < 21 {
+            wr::<f32>(base, 4 * axis, rd::<f32>(d, 0xC));
+        }
+        let (rx, ry, rz) = (rd::<f32>(base, 0), rd::<f32>(base, 4), rd::<f32>(base, 8));
+        matrix_set_rotate(mp, rx, ry, rz);
+        for (k, p) in pos0.iter().enumerate() {
+            let o = 0x30 + 4 * k as isize;
+            wr::<f32>(mp, o, f32_of(x(rd::<f32>(mp, o)).fadd_m(*p)));
+        }
+    }
+    matrix_update_rw(mp);
+    matrix_dtor(mp);
+}
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_TRAIN_OPEN_DOOR,
     HOOK_DISABLE_RANDOM_TRAINS,
     HOOK_FIND_NUM_CARRIAGES_PULLED,
     HOOK_REMOVE_ONE_MISSION_TRAIN,

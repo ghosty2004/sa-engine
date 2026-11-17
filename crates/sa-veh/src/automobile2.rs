@@ -380,7 +380,7 @@ pub fn set_door_damage(car: Car, door: u32, skip_flying: u32) {
 
 /// `CEventSoundQuiet(ped, volume, -1, (0,0,0))` built on the stack, added to the global event group,
 /// destroyed (OpenDoor's door sound events; the object fits the original's 0x2C-byte slot).
-fn add_sound_quiet_event(ped: GPtr<u8>, volume: f32) {
+pub(crate) fn add_sound_quiet_event(ped: GPtr<u8>, volume: f32) {
     let mut pos = [0u32; 3];
     let mut ev = [0u32; 11];
     let evp = GPtr::from_raw(ev.as_mut_ptr()).cast::<u8>();
