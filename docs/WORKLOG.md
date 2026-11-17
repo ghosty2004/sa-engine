@@ -3144,3 +3144,31 @@
   every 6th frame); WebGL2 frame checked by eye.
 - Browser, headless Chromium, limiter off, 1200 frames, 0 blocked: WebGPU 13.28 → 12.20 ms (82 fps), WebGL2
   16.58 → 14.35 ms (70 fps).
+
+## 2026-11-17 — MOD-2 M0: core-wasm ABI, mod host, hello mod native and web (agent, worktree)
+- ABI decision (ADR-004 §3.2): core wasm, the interface defined once in `crates/sa-mod-api` (`for_each_import!` /
+  `for_each_export!`, generating the host's import table and call decoder, the SDK's import block and exports; the
+  web glue gets the names at run time). Spike (`target/mod-spike`): wasmtime 50 on i686 runs through Pulley (no
+  Cranelift x86-32 backend): fuel, traps and memory limits work, 100k host calls in 12 ms.
+- New crates: `sa-mod-api` (leaf), `sa-mod` (SDK, `entry!`), `sa-mod-host` (manifest, module checks, the API once in
+  `api::dispatch`, `Host` with load order / overlay phase / disabling; backends wasmtime and browser WebAssembly with
+  load-time fuel instrumentation, `backend/meter.rs`); `sa-rw-wgpu` feature `overlay` (`WgpuDevice::draw_overlay`);
+  sa-game feature `mods` (`--mods DIR`, `?mods=a,b`; overlay phase at every Present; perf phase `mods`); web/mods.js,
+  serve.py `--mods`; `examples/mods/{hello,broken}` + build.sh; docs/mods/getting-started.md.
+- Deterministic crossing scenario (1200 iterations, `--fixed-step 40`, frames every 6th in-game present): default build,
+  `mods` build without mods and `mods` build with hello give identical reports apart from wall-clock pacing (5423
+  functions, 56,995,849 dispatches, platform calls, 0 blocked); default vs mods-without-mods frames byte-identical
+  195/195; with hello every difference lies in the hello box (x 252..791, y 564..591 of 800x600). Frames:
+  target/mod-e2e/{default,mods-none,mods-hello}/frames/.
+- Broken mods: `--mods target/mods` (broken-spin, broken-trap, hello), 200 iterations: broken-spin disabled at its frame
+  30 (fuel budget exceeded), broken-trap disabled (wasm `unreachable`; its panic message logged), hello keeps drawing,
+  0 blocked, exit 0. Web (headless Chromium, WebGPU, `?mods=hello,broken-trap,broken-spin`): the same two disables
+  (`RuntimeError: unreachable`, fuel), hello drawn (target/mod-e2e/web/frame-t0122-state9-it58486517.png).
+- Cost: native (i686, limiter off, 1475 frames, `--perf`): `mods` phase 0.059 ms mean / 0.069 p95 per frame (hello's
+  call ~15-20 us on Pulley, the rest the overlay draw), frame 8.58 ms. Web (WebGPU, 600 frames, limiter on): 0.083 ms
+  mean. Size: native i686 stripped 35.9 MB -> 49.5 MB (+13.6 MB: wasmtime + Cranelift); web sa_game_bg.wasm 31.49 ->
+  32.88 MB (+1.4 MB). hello.wasm 30 KB.
+- Verified: writer gate 16/16 PASS (base 328f4149; its wasm32 step now also builds sa-mod-api, sa-mod, sa-mod-host and
+  the hello mod, run by hand after the gate: ok); verify-all lanes 1-7 IDENTICAL 13/13 (tag mod2m0b, default build;
+  the mod code is behind the feature and touches no port). Tests: sa-mod-api 3, sa-mod 1, sa-mod-host 8 (host and
+  i686/Pulley: manifest, module checks, dispatch, metering, trap / fuel / memory-cap disabling), sa-rw-wgpu overlay 1.
