@@ -3172,3 +3172,42 @@
   the hello mod, run by hand after the gate: ok); verify-all lanes 1-7 IDENTICAL 13/13 (tag mod2m0b, default build;
   the mod code is behind the feature and touches no port). Tests: sa-mod-api 3, sa-mod 1, sa-mod-host 8 (host and
   i686/Pulley: manifest, module checks, dispatch, metering, trap / fuel / memory-cap disabling), sa-rw-wgpu overlay 1.
+
+## 2026-11-17 — MOD-2 M1: API 1.1 and the resolution mod (agent, worktree)
+- API 1.1 (`sa-mod-api`, minor): `display_mode_count/width/height` (index -1 = desktop / canvas), `request_video_mode`
+  (permission `render`), `file_read` / `file_write` of the mod's own files (`files = "own"`), optional exports
+  `sa_settings` (once, after LoadSettings, before psSelectDevice / the D3D device) and `sa_resize`. Host: `Mem` with
+  writes, `Host::settings / resize / take_video_request`, `ModSource::write`. SDK: `display`, `files`,
+  `Mod::settings / resize`. `examples/mods/resolution` (desktop / canvas or WIDTHxHEIGHT, window / full screen,
+  config.toml written with the defaults when missing).
+- How the mode is applied (sa-game `mods.rs`, `display.rs`, no port body touched): the D3D9 adapter lists the reported
+  display's modes plus the request (offscreen: the fixed table; window: the monitor's modes; web: the canvas in device
+  pixels + the fixed table); RW numbers them desktop 0, R5G6B5, X8R8G8B8 (format table 0x884788 = 0x17, 0x16, 0x23).
+  A size the original's menu list offers becomes m_nDisplayVideoMode (as gta_sa.set); 1.0 lists only 4:3, 5:4, 5:3
+  and 16:10 (`mode_is_listed`), so 16:9 takes psSelectDevice's IsVMNotSelected = 0 / gCurrentVideoMode path, and after
+  psSelectDevice the menu's mode names the closest listed one (1920x1080 -> RW 12, 1280x1024: a null list entry
+  would crash the resolution row's text). Pointer positions now map to the back buffer (was a fixed 800x600).
+- Frames (not committed): native offscreen 1920x1080 `target/res/native-1920x1080.png`, browser (WebGPU, full window
+  1920x1080, canvas drawing buffer 1920x1080) `target/res/web-1920x1080.png`; both sharp (1:1, no stretching).
+- In-game menu resolution change (Esc, menu poked to Display Setup > Advanced > Resolution, right, Enter;
+  `target/res/menu.sh`): without the mod 800x600 (RW 9) -> 1024x768 (RW 10), RsGlobal and frames 1024x768; with the
+  mod 1920x1080 -> the next listed mode after the placeholder (wraps to RW 1, 640x480) applied the same way. 0 blocked.
+- Determinism (frontier `crossing`, 1200 iterations, `--fixed-step 40`): default vs mods build without mods: reports
+  equal except the pacing line; mods + resolution at 800x600: only the video-mode selection calls differ
+  (RwEngineGetVideoModeInfo 1210/1200, GetNumVideoModes 12/1, D3D9System, RwErrorSet 41/40); at 1920x1080: 27
+  functions differ, all render-side: screen-space occlusion (CActiveOccluder::IsPointWithinOcclusionArea 970502 ->
+  997976, IsPointBehindOccluder, CalcScreenCoors), on-screen vs off-screen ped animation (FrameUpdateCallBackSkinned /
+  Offscreen, CAnimBlendNode::Update +336, CQuaternion::Slerp), +6 visible entities. The `det:` rand trace (state,
+  call count, srand seeds) is identical in all 1200 iterations, and SA_GAME_DUMP of CWorld::Players[0], the player and
+  car positions, the ped / vehicle / object pool maps and the game timer is identical at all 16,051 dumps. So in this
+  scenario the video mode changes no game state. Not done: the original under wine at 1920x1080 (1.0 cannot select a
+  16:9 mode from its menu; the oracle would need the same IsVMNotSelected poke and a 1920x1080 gamescope lane).
+- Perf, limiter off: native offscreen 3000 iterations, 800x600 7.70 ms mean (130 fps) -> 1920x1080 8.10 ms (123 fps;
+  render.coronas 0.91 -> 1.33 ms, present 0.80 -> 0.86, `mods` 0.006 ms); browser WebGPU (headless Chromium, full
+  window 1920x1080, 600 frames): 800x600 (scaled) 10.07 ms -> 1920x1080 11.16 ms.
+- Size (M0 open point): opt-level "s" for wasmtime / Cranelift (Pulley interpreter kept): native stripped mods build
+  49.61 -> 46.99 MB (default 35.95 MB); hello's overlay call 14.7-15.4 -> 15.0-16.2 us (noise); broken mods still
+  disabled. Precompiling to Pulley (runtime-only wasmtime) not tried: it would make a mod's `.wasm` engine-specific.
+- Verified: writer gate 16/16 PASS (base 3826139b, head 8f26ca5d); verify-all lanes 1-7 IDENTICAL 13/13 (tag mod2m1,
+  default build); frontier crossing default vs mods build without mods equal (pacing aside). Tests: sa-mod-api 4,
+  sa-mod-host 10, sa-mod-resolution 1, sa-game i686 (display, mods, frontend) 5.

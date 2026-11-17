@@ -122,6 +122,8 @@ no permission for gets an error, not a crash.
 
 - The game is single-threaded (`docs/samp/game-adapter.md` §3); mods are called on the game thread, in a fixed order
   (the load order), at fixed points:
+  - the settings phase (API 1.1, M1): once in the boot, after the game read its settings file and before it selects
+    its video mode and creates its D3D device (graphics settings requested there apply from the first frame);
   - frame phases (before logic, after logic, before render, after render / overlay, before present);
   - platform events (input, resize, focus);
   - registry hooks (before/after a named original function), from level 2.
@@ -151,6 +153,13 @@ the mode list, a longer draw distance) live in the platform/render layer (RENDER
 loaded, the renderer behaves exactly as today (image diff vs the parity renderer stays the RENDER-2 acceptance).
 A setting that the original *does* have (video mode, frame limiter, draw distance slider) is applied through the
 original's own menu state, so the game sees what it would see if the player had chosen it in the menu.
+
+The video mode (M1, `crates/sa-game/src/mods.rs`): the D3D9 adapter (platform layer) lists the real display's modes
+plus the requested size instead of its fixed table; a size the original's mode list offers (4:3, 5:4, 5:3, 16:10)
+becomes the menu's video mode as `gta_sa.set` would hold it, any other (16:9, ...) takes `psSelectDevice`'s other
+original path (`IsVMNotSelected` clear, `gCurrentVideoMode` = the mode), the menu then naming the closest listed mode.
+No port body changes. A different video mode is a different game input (screen size and aspect reach the camera and
+the HUD): its reference is the original at the same mode, not the 800x600 run (WORKLOG, MOD-2 M1).
 
 ### 4.2 Data mods (added by the user, 2026-11-17)
 
