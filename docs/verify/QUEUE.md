@@ -68,9 +68,8 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-a11 | 31 | AI, UNK-game | 09ead615 | master | 31 | 0 | 0 | 0 | 0 | L2 31 |
 | frontier2-a12 | 6 | AI, RENDER | a6f02e11 | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
 | frontier2-a13 | 2 | AI | 20445ac0 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| frontier2-a14 | 5 | WORLD | ee8975f6 | worktree-agent-a25fa2bbd9d4f79b5 | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| frontier2-a14 | 6 | WORLD | ee8975f6 | worktree-agent-a25fa2bbd9d4f79b5 | 6 | 0 | 0 | 0 | 0 | L2 6 |
 | frontier2-a15 | 2 | AI | cf8ade5b | worktree-agent-a25fa2bbd9d4f79b5 | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| frontier2-a16 | 1 | POP | 6c236b56 | worktree-agent-a25fa2bbd9d4f79b5 | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | frontier2-a2 | 23 | AI, UNK-game | 40c90c34 | master | 23 | 0 | 0 | 0 | 0 | L2 23 |
 | frontier2-a3 | 5 | AI | 7104be38 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | frontier2-a4 | 2 | AI | 4b0ec921 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
@@ -2328,7 +2327,7 @@ SA_UNVERIFIED=frontier2-a13 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a13 
 
 ## frontier2-a14
 
-5 hooks in sa-world; hazards: heap-writes (5), x87-transcendental (1); recordings calling them: no coverage data.
+6 hooks in sa-world; hazards: heap-writes (6), x87-transcendental (2); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -2339,6 +2338,7 @@ SA_UNVERIFIED=frontier2-a14 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a14 
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
+| 0x4998A0 | `CSetPiece::TryToGenerateCopCar` | written | L2 | heap-writes,x87-transcendental |
 | 0x565B70 | `CWorld::SprayPaintWorld` | written | L2 | heap-writes |
 | 0x598580 | `InteriorManager_c::~InteriorManager_c` | written | L2 | heap-writes |
 | 0x59FB50 | `CObject::DoBurnEffect` | written | L2 | heap-writes |
@@ -2360,21 +2360,6 @@ SA_UNVERIFIED=frontier2-a15 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a15 
 |---|---|---|---|---|
 | 0x677920 | `CTaskInteriorSitAtDesk::ProcessPed` | written | L2 | heap-writes,ax-al-return,stack-residue |
 | 0x691470 | `CTaskSimpleHoldEntity::Constructor-2` | written | L2 | heap-writes |
-
-## frontier2-a16
-
-1 hooks in sa-pop; hazards: stack-residue (1), x87-transcendental (1); recordings calling them: no coverage data.
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh frontier2-a16 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=frontier2-a16 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-a16 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-a16
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x422760 | `CCarCtrl::ClitargetOrientationToLink` | written | L2 | x87-transcendental,stack-residue |
 
 ## frontier2-a2
 
