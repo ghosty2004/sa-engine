@@ -16,6 +16,9 @@
 // --pointer 'S:X:Y[:click],...': S seconds after gGameState first reaches IDLE, real mouse moves to the game client
 // position (X, Y) (scaled to the canvas on the page); with `click` a real left click there (press, 80 ms, release).
 // The page passes them to the game while the SA:MP UI shows its cursor (dialogs, class-selection panel) or in menus.
+// --teleport 'S:X:Y:Z[:HEADING],...': S seconds after gGameState first reaches IDLE, the player is moved to (X, Y, Z)
+// (window.saGame.teleport: SA_GAME_TELEPORT a few iterations later), to force streaming in new areas (RENDER-2 R2a
+// measurements).
 // --screencast: records the page (status line included) with Page.startScreencast into OUT/cast/ (JPEG frames +
 // frames.jsonl with their times, events.jsonl with the status timeline); tools/web/make_video.py assembles an MP4.
 // --audio: Chromium may start audio without a gesture (--autoplay-policy=no-user-gesture-required); the page's audio
@@ -47,6 +50,10 @@ const KEYS = { w: ['KeyW', 'w', 87], a: ['KeyA', 'a', 65], s: ['KeyS', 's', 83],
 const pointerPlan = (arg('pointer', '') || '').split(',').filter(Boolean).map((x) => {
   const [secs, px, py, click] = x.split(':');
   return { secs: Number(secs), x: Number(px), y: Number(py), click: click === 'click', done: false };
+});
+const teleportPlan = (arg('teleport', '') || '').split(',').filter(Boolean).map((x) => {
+  const [secs, tx, ty, tz, th] = x.split(':').map(Number);
+  return { secs, x: tx, y: ty, z: tz, h: th || 0, done: false };
 });
 let held = new Set();
 let locked = false, mx = 0, my = 0;
@@ -273,6 +280,12 @@ while ((Date.now() - t0) / 1000 < seconds) {
     await key('keyUp', 'Enter', 'Enter', 13);
     note(`t=${t.toFixed(1)} s: Enter (real key event)`);
   }
+  for (const p of teleportPlan) {
+    if (p.done || inGameAt === null || t - inGameAt < p.secs) continue;
+    p.done = true;
+    await evalJs(`window.saGame?.teleport?.(${p.x}, ${p.y}, ${p.z}, ${p.h})`);
+    note(`t=${t.toFixed(1)} s: teleport to (${p.x}, ${p.y}, ${p.z})`);
+  }
   for (const p of pointerPlan) {
     if (p.done || inGameAt === null || t - inGameAt < p.secs) continue;
     p.done = true;
@@ -366,7 +379,7 @@ if (audioOn) {
   await tapAudio((Date.now() - t0) / 1000, 'end');
   writeWav();
 }
-note(`final status: ${JSON.stringify(await evalJs('window.saGame?.status'))} progress ${JSON.stringify(await evalJs('window.saGame?.progress'))}`);
+note(`final status: ${JSON.stringify(await evalJs('window.saGame?.status'))} progress ${JSON.stringify(await evalJs('window.saGame?.progress'))} cache ${JSON.stringify(await evalJs('window.saGame?.cache ?? null'))}`);
 await shot('final');
 // the page's log panel (the game's console lines, the last 4000)
 writeFileSync(`${out}/page-log.txt`, ((await evalJs('(window.saGame?.logs ?? []).join("\\n")')) ?? '') + '\n');

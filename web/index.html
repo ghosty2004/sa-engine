@@ -24,6 +24,9 @@
   #mouse.on, #audio.on { color: #9c9; } #mouse.off, #audio.off { color: #fc6; }
   #audio { font-family: monospace; }
   #blocked { font-family: monospace; color: #fc6; }
+  #cache { padding: 0 12px 8px; display: flex; gap: 12px; align-items: center; }
+  #cache[hidden], body.full #cache { display: none; }
+  #cachestatus { font-family: monospace; color: #9bd; }
 </style>
 </head>
 <body>
@@ -44,6 +47,10 @@
   <span id="blocked"></span>
   <button id="fullwin" title="the picture fills the browser window (also ?full=1)">Full window</button>
   <button id="fullscreen" title="the picture fills the screen (Esc leaves)">Fullscreen</button>
+</div>
+<div id="cache" hidden>
+  <span id="cachestatus"></span>
+  <button id="download" title="fetch every file of the served folder into this browser's storage (it stays on this device)">Download everything (offline cache)</button>
 </div>
 <div id="stage">
   <canvas id="screen" width="800" height="600" tabindex="0"></canvas>

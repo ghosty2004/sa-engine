@@ -3,6 +3,8 @@
 // (SA_GAME_STUB, SA_GAME_WALK, SA_GAME_SCRIPT_SKIP, ...) is passed to the game as a development variable.
 // ?samp=HOST:PORT[&proxy=ws://127.0.0.1:7781][&name=NAME]: join a SA:MP / open.mp server through sa-udp-proxy (build with FEATURES=samp).
 // ?mods=NAME,...: load these WebAssembly mods from the server's mods/ (build with FEATURES=mods).
+// ?cache_mb=N: the game worker's in-memory block cache (default 256 MiB); the persistent cache (web/loader.js) is
+// separate. ?io_stacks=1 logs the wasm stack of each read that waited in the world. ?download=1 starts the background download of the whole folder into the persistent cache.
 // ?audiotap=1 keeps a copy of the audio output for evidence runs (window.saGame.audioTap(), tools/web/headless.mjs --audio).
 // &stub=ADDR=RET/N,... replaces the default exploration stubs (the play package's, DEFAULT_STUBS); &stub=none drops them.
 const $ = (id) => document.getElementById(id);
@@ -30,7 +32,9 @@ function log(text, level = 'log') {
 
 const STATES = ['INITIAL', 'LOGO', 'PLAYING_LOGO', 'TITLE', 'PLAYING_INTRO', 'FRONTEND_LOADING', 'FRONTEND_LOADED',
   'FRONTEND_IDLE', 'LOADING_STARTED', 'IDLE', 'EXIT'];
-window.saGame = { status: {}, logs: [], logBase: 0, snapshots: [], snapshot: () => worker?.postMessage({ type: 'snapshot' }) };
+window.saGame = { status: {}, logs: [], logBase: 0, snapshots: [], snapshot: () => worker?.postMessage({ type: 'snapshot' }),
+  // evidence runs (tools/web/headless.mjs --teleport): the player to (x, y, z)
+  teleport: (x, y, z, heading) => worker?.postMessage({ type: 'teleport', x, y, z, heading }) };
 
 // ---------------------------------------------------------------- audio (WEB-AUDIO) ---
 // The game's DirectSound mix plays through an AudioWorklet (web/audio-worklet.js). With cross-origin isolation (the
@@ -123,8 +127,46 @@ $('vol').oninput = () => {
 };
 applyVolume();
 
+// ---------------------------------------------------------------- the loader (RENDER-2 R2a) ---
+// A served folder is fetched by web/loader.js (asynchronous ranged requests, the browser's persistent cache); the
+// game's worker talks to it over a MessageChannel. Its cache status goes to the bar.
+let loader = null;
+function mib(n) {
+  return n >= 10 * 1048576 ? `${Math.round(n / 1048576)} MiB` : `${(n / 1048576).toFixed(1)} MiB`;
+}
+// With cross-origin isolation (a secure context: localhost or https, and the COOP/COEP headers serve.py sends) the
+// game's synchronous reads ask the loader through shared memory (SYNC_MAX bytes at a time) and wait with Atomics, so
+// they are served from the persistent cache too; without it they fall back to a synchronous request.
+const SYNC_MAX = 4 << 20;
+let ioSab = null;
+function startLoader(files) {
+  loader = new Worker('loader.js');
+  ioSab = self.crossOriginIsolated && typeof SharedArrayBuffer !== 'undefined' ? new SharedArrayBuffer(16 + SYNC_MAX) : null;
+  const ch = new MessageChannel();
+  loader.onmessage = (ev) => {
+    const m = ev.data;
+    if (m.type !== 'cache') return;
+    window.saGame.cache = m;
+    const pct = m.total ? ((100 * m.cached) / m.total).toFixed(1) : '0';
+    $('cache').hidden = false;
+    $('cachestatus').textContent = `cache (${m.store}): ${mib(m.cached)} of ${mib(m.total)} (${pct}%) on this device, ` +
+      `${mib(m.net)} downloaded this session${m.flight ? `, ${m.flight} requests in flight` : ''}` +
+      `${m.storeError ? `; not kept: ${m.storeError}` : ''}`;
+    $('download').textContent = m.downloadAll ? 'Stop downloading' : m.cached >= m.total ? 'All files cached' : 'Download everything (offline cache)';
+    $('download').disabled = !m.downloadAll && m.cached >= m.total;
+    downloading = m.downloadAll;
+  };
+  loader.onerror = (e) => log(`loader error: ${e.message}`, 'error');
+  loader.postMessage({ type: 'init', files: files.map(({ path, size, mtime, url }) => ({ path, size, mtime, url })), port: ch.port1, sab: ioSab }, [ch.port1]);
+  if (params.get('download') === '1') loader.postMessage({ type: 'downloadAll', on: true });
+  return ch.port2;
+}
+let downloading = false;
+$('download').onclick = () => loader?.postMessage({ type: 'downloadAll', on: !downloading });
+
 async function start(files) {
   if (worker) return;
+  const loaderPort = files.some((f) => f.url) ? startLoader(files) : null;
   worker = new Worker('worker.js', { type: 'module' });
   // evidence runs (?audiotap=1): the PCM produced since the last call, as base64 little-endian 16-bit stereo
   window.saGame.audioTap = () => new Promise((res) => {
@@ -164,7 +206,7 @@ async function start(files) {
       window.saGame.snapshots.push({ state: m.state, iterations: m.iterations, png: b64 });
     } else if (m.type === 'progress') {
       window.saGame.progress = m;
-      statusEl.textContent = `loading... ${m.mib} MiB read`;
+      statusEl.textContent = m.preload ? `fetching the start-up files... ${m.preload}` : `loading... ${m.mib} MiB read`;
     } else if (m.type === 'status') {
       window.saGame.status = m;
       if (m.client && (m.client[0] !== client[0] || m.client[1] !== client[1])) {
@@ -173,7 +215,8 @@ async function start(files) {
       }
       const st = STATES[m.state] ?? m.state;
       statusEl.textContent = m.error ? `error: ${m.error}` : m.done ? m.done :
-        `${m.phase ?? ''} gGameState ${st}, ${m.iterations} iterations${m.blocked ? ` (${m.blocked} blocked)` : ''}, ${m.presents} in-game frames, ${m.mib} MiB read`;
+        `${m.phase ?? ''} gGameState ${st}, ${m.iterations} iterations${m.blocked ? ` (${m.blocked} blocked)` : ''}, ${m.presents} in-game frames, ${m.mib} MiB read` +
+        (m.io?.waits ? `, ${m.io.waits} reads waited for the network (${m.io.waitMs} ms)` : '');
       statusEl.className = m.error ? 'err' : '';
       $('ministatus').textContent = m.error ? `error: ${m.error}` : m.blocked ? `${m.blocked} blocked` : '';
       // the SA:MP UI's cursor (dialogs, scoreboard, class-selection panel) takes the pointer like the menus
@@ -216,7 +259,8 @@ async function start(files) {
   }
   const audioOut = await initAudio();
   const off = canvas.transferControlToOffscreen();
-  worker.postMessage({ type: 'start', canvas: off, files, env, audio: audioOut, audioTap: params.get('audiotap') === '1', startInWorld: $('inworld').checked, backend: params.get('backend') ?? '', display: displaySize() }, [off]);
+  const transfer = loaderPort ? [off, loaderPort] : [off];
+  worker.postMessage({ type: 'start', canvas: off, files, loaderPort, ioSab, ioStacks: params.get('io_stacks') === '1', cacheMb: Number(params.get('cache_mb') || 0), env, audio: audioOut, audioTap: params.get('audiotap') === '1', startInWorld: $('inworld').checked, backend: params.get('backend') ?? '', display: displaySize() }, transfer);
   canvas.focus();
 }
 
@@ -238,7 +282,7 @@ $('pick').addEventListener('change', (e) => {
 async function served() {
   const r = await fetch('game-index.json');
   const idx = await r.json();
-  return idx.map((f) => ({ path: f.path, size: f.size, url: 'game/' + f.path.split('/').map(encodeURIComponent).join('/') }));
+  return idx.map((f) => ({ path: f.path, size: f.size, mtime: f.mtime, url: 'game/' + f.path.split('/').map(encodeURIComponent).join('/') }));
 }
 fetch('game-index.json').then((r) => r.ok ? r.json() : []).then((idx) => {
   if (idx.length) {

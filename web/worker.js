@@ -1,5 +1,6 @@
-// The game's worker (WEB-1): runs sa-game's wasm module, reads the user's game folder synchronously, draws into the
-// OffscreenCanvas the page transferred, and turns the page's input messages into platform input.
+// The game's worker (WEB-1): runs sa-game's wasm module, reads the user's game folder (a picked folder synchronously,
+// a served folder through the loader worker, web/loader.js), draws into the OffscreenCanvas the page transferred, and
+// turns the page's input messages into platform input.
 import init, * as sa from './pkg/sa_game.js';
 // WebAssembly mods (FEATURES=mods): self.saGameMods
 import './mods.js';
@@ -28,45 +29,137 @@ function flushLogs() {
   }
 }
 
-// ---------------------------------------------------------------- the game folder (synchronous reads) ---
-// files[id] = { size, file } (picked folder: FileReaderSync) or { size, url } (localhost dev server: ranged sync XHR)
+// ---------------------------------------------------------------- the game folder ---
+// files[id] = { size, file } (picked folder: FileReaderSync, local) or { size, url } (served folder). A served folder's
+// bytes come from the loader worker (web/loader.js: asynchronous ranged fetches, the browser's persistent cache) into
+// an in-memory block cache here. The game's streaming reads (CdStream) ask `ready` first and run only once their
+// blocks are here (crates/sa-game/src/bind.rs `coop`), so play never waits for the network; the synchronous reads
+// (`read`: the data files at start-up, CdStreamSync, the audio stream thread) use the cache and fetch what is
+// missing with a synchronous request (counted: `waits`), then read ahead asynchronously.
 const files = [];
 const BLOCK = 256 * 1024;
-const MAX_BLOCKS = 384; // ~96 MiB of cached blocks
+let MAX_BLOCKS = 1024; // 256 MiB; the page's ?cache_mb=N
+const READ_AHEAD = 8; // blocks after a synchronous read that missed
 const cache = new Map(); // `${id}:${block}` -> Uint8Array (Map order = LRU order)
+const asked = new Set(); // blocks asked of the loader, not here yet
 const reader = typeof FileReaderSync !== 'undefined' ? new FileReaderSync() : null;
+let loader = null; // MessagePort to web/loader.js
+// shared memory with the loader for synchronous reads (cross-origin isolated pages): Int32 [state, bytes, error, 0],
+// then the data; state 0 = asked, 1 = answered
+let sync = null;
 let bytesRead = 0;
+const io = { stacks: false, logged: 0, waits: 0, waitMs: 0, waitBytes: 0, lastWaitMs: 0, asked: 0, arrived: 0, failed: 0, store: 'none' };
+// the blocks read before the game is in the world (sent to the loader as the next load's start-up list)
+let startup = new Set();
 
-function fetchRange(f, start, end) {
-  bytesRead += end - start;
-  if (f.file) return new Uint8Array(reader.readAsArrayBuffer(f.file.slice(start, end)));
+function syncFetch(f, start, end) {
   const xhr = new XMLHttpRequest();
   xhr.open('GET', f.url, false);
   xhr.responseType = 'arraybuffer';
   xhr.setRequestHeader('Range', `bytes=${start}-${end - 1}`);
-  const t0 = performance.now();
-  post('progress', { mib: Math.round(bytesRead / 1048576), pending: `${f.url} ${start}-${end}` });
   xhr.send();
-  const dt = performance.now() - t0;
-  if (dt > 1000) console.warn(`slow read: ${f.url} ${start}-${end}: ${Math.round(dt)} ms`);
   if (xhr.status !== 206 && xhr.status !== 200) throw new Error(`${f.url}: HTTP ${xhr.status}`);
   return new Uint8Array(xhr.response);
 }
 
-function block(id, b) {
-  const k = `${id}:${b}`;
-  let v = cache.get(k);
+function put(k, v) {
+  cache.set(k, v);
+  while (cache.size > MAX_BLOCKS) cache.delete(cache.keys().next().value);
+}
+
+function hit(k) {
+  const v = cache.get(k);
   if (v) {
     cache.delete(k);
     cache.set(k, v);
-    return v;
   }
+  return v;
+}
+
+// asks the loader for the blocks of `list` (ids of file `id`) that are neither here nor asked yet
+function ask(id, list, prio) {
+  if (!loader) return;
+  const need = list.filter((b) => b >= 0 && b * BLOCK < files[id].size && !cache.has(`${id}:${b}`) && !asked.has(`${id}:${b}`));
+  if (!need.length) return;
+  for (const b of need) asked.add(`${id}:${b}`);
+  io.asked += need.length;
+  loader.postMessage({ type: 'get', id, blocks: need, prio });
+}
+
+function onLoader(ev) {
+  const m = ev.data;
+  if (m.type === 'block') {
+    const k = `${m.id}:${m.block}`;
+    asked.delete(k);
+    io.arrived++;
+    put(k, new Uint8Array(m.data));
+    preloadArrived(k);
+    if (phase === 'running') sa.io_arrived();
+  } else if (m.type === 'failed') {
+    asked.delete(`${m.id}:${m.block}`);
+    io.failed++;
+    if (phase === 'running') sa.io_arrived();
+    console.warn(`loader: ${files[m.id]?.url} block ${m.block}: ${m.error}`);
+    preloadArrived(`${m.id}:${m.block}`);
+  } else if (m.type === 'hello') {
+    hello?.(m);
+  }
+}
+
+// blocks [b, e] of file id, waiting: from the loader through shared memory (its persistent cache, else the network),
+// else with a synchronous request (then given to the loader, which keeps them)
+function fetchWait(id, b, e) {
   const f = files[id];
   const start = b * BLOCK;
-  v = fetchRange(f, start, Math.min(f.size, start + BLOCK));
-  cache.set(k, v);
-  if (cache.size > MAX_BLOCKS) cache.delete(cache.keys().next().value);
-  return v;
+  const end = Math.min(f.size, (e + 1) * BLOCK);
+  if (sync) {
+    Atomics.store(sync.hdr, 0, 0);
+    loader.postMessage({ type: 'sync', id, first: b, last: e });
+    if (Atomics.wait(sync.hdr, 0, 0, 120000) !== 'timed-out' && Atomics.load(sync.hdr, 2) === 0) {
+      const n = Atomics.load(sync.hdr, 1);
+      if (n === end - start) return { data: sync.data.slice(0, n), kept: true };
+    }
+    console.warn(`io: the loader did not answer for ${f.url} ${start}-${end}; asking the server`);
+  }
+  return { data: syncFetch(f, start, end), kept: false };
+}
+
+// the blocks [first, last] of file id from the cache, the missing runs waited for (fetchWait)
+function blocksSync(id, first, last) {
+  const f = files[id];
+  let b = first;
+  while (b <= last) {
+    if (hit(`${id}:${b}`)) {
+      b++;
+      continue;
+    }
+    let e = b;
+    while (e < last && !cache.has(`${id}:${e + 1}`) && e - b < 15) e++;
+    const start = b * BLOCK;
+    const end = Math.min(f.size, (e + 1) * BLOCK);
+    post('progress', { mib: Math.round(bytesRead / 1048576), pending: `${f.url} ${start}-${end}` });
+    const t0 = performance.now();
+    const { data, kept } = fetchWait(id, b, e);
+    const dt = performance.now() - t0;
+    io.waits++;
+    io.waitMs += dt;
+    io.lastWaitMs += dt;
+    io.waitBytes += end - start;
+    if (dt > 1000) console.warn(`slow read: ${f.url} ${start}-${end}: ${Math.round(dt)} ms`);
+    // in the world, a read that waited is a stall: the first ones are logged
+    else if (!startup && io.logged < 100) {
+      io.logged++;
+      console.log(`io: waited ${dt.toFixed(1)} ms for ${f.url} ${start}-${end}${io.logged === 100 ? ' (no more of these)' : ''}`);
+      if (io.stacks) console.log(new Error().stack.split('\n').filter((l) => l.includes('wasm')).slice(0, 40).join('\n'));
+    }
+    for (let k = b; k <= e; k++) {
+      const v = data.slice((k - b) * BLOCK, Math.min(data.length, (k - b + 1) * BLOCK));
+      put(`${id}:${k}`, v);
+      asked.delete(`${id}:${k}`);
+      if (!kept) loader?.postMessage({ type: 'put', id, block: k, data: v.slice().buffer });
+    }
+    b = e + 1;
+  }
 }
 
 // progress while one long main-loop iteration runs (CGame::Initialise loads the world in one): JS-only state, no
@@ -77,7 +170,12 @@ function progress() {
   if (t - lastProgress < 500) return;
   lastProgress = t;
   flushLogs();
-  post('progress', { mib: Math.round(bytesRead / 1048576) });
+  post('progress', { mib: Math.round(bytesRead / 1048576), io: ioStatus() });
+}
+
+function ioStatus() {
+  return { store: io.store, waits: io.waits, waitMs: Math.round(io.waitMs), waitMiB: +(io.waitBytes / 1048576).toFixed(1),
+    asked: io.asked, arrived: io.arrived, failed: io.failed, cached: cache.size, maxBlocks: MAX_BLOCKS };
 }
 
 self.saGameIo = {
@@ -88,15 +186,23 @@ self.saGameIo = {
   },
   read(id, offset, length) {
     progress();
+    io.lastWaitMs = 0;
     const f = files[id];
     const end = Math.min(f.size, offset + length);
     if (end <= offset) return new Uint8Array(0);
-    // large reads (whole files) bypass the block cache
-    if (end - offset > 4 * BLOCK) return fetchRange(f, offset, end);
+    bytesRead += end - offset;
+    if (f.file) return new Uint8Array(reader.readAsArrayBuffer(f.file.slice(offset, end)));
+    const first = Math.floor(offset / BLOCK);
+    const last = Math.floor((end - 1) / BLOCK);
+    if (startup) for (let b = first; b <= last; b++) startup.add(`${id}:${b}`);
+    blocksSync(id, first, last);
+    // a file read front to back (the audio stream thread, the text loaders) is read ahead
+    if (offset === f.next) ask(id, Array.from({ length: READ_AHEAD }, (_, i) => last + 1 + i), 1);
+    f.next = end;
     const out = new Uint8Array(end - offset);
     for (let p = offset; p < end; ) {
       const b = Math.floor(p / BLOCK);
-      const blk = block(id, b);
+      const blk = cache.get(`${id}:${b}`);
       const from = p - b * BLOCK;
       const n = Math.min(blk.length - from, end - p);
       out.set(blk.subarray(from, from + n), p - offset);
@@ -104,7 +210,60 @@ self.saGameIo = {
     }
     return out;
   },
+  // whether [offset, offset + length) of file id is here; when not, its blocks are asked of the loader
+  ready(id, offset, length) {
+    const f = files[id];
+    if (f.file || !loader) return true;
+    const first = Math.floor(offset / BLOCK);
+    const last = Math.floor((Math.min(f.size, offset + length) - 1) / BLOCK);
+    const missing = [];
+    for (let b = first; b <= last; b++) {
+      if (startup) startup.add(`${id}:${b}`);
+      if (!cache.has(`${id}:${b}`)) missing.push(b);
+    }
+    if (!missing.length) return true;
+    ask(id, missing, 0);
+    return false;
+  },
+  // the milliseconds the last `read` waited for the network
+  waited() {
+    return io.lastWaitMs;
+  },
 };
+
+// ---------------------------------------------------------------- start-up prefetch ---
+// Before the boot: the loader's start-up list (the blocks an earlier load read before it was in the world, else a
+// first guess), fetched in parallel or read from the persistent cache, so the boot's synchronous reads find them here.
+let hello = null;
+let preloadWaiting = null; // Set of keys the boot waits for
+let preloadDone = null;
+function preloadArrived(k) {
+  if (!preloadWaiting?.delete(k)) return;
+  if (preloadWaiting.size === 0) preloadDone?.();
+}
+async function preload(port) {
+  loader = port;
+  loader.onmessage = onLoader;
+  const h = await new Promise((res) => (hello = res));
+  io.store = h.store;
+  const list = h.startup.slice(0, MAX_BLOCKS - 16);
+  preloadWaiting = new Set(list.map(([id, b]) => `${id}:${b}`));
+  const total = preloadWaiting.size;
+  console.log(`start-up prefetch: ${total} blocks (${(total / 4).toFixed(0)} MiB, ${h.manifestKnown ? 'the list of an earlier load' : 'first guess'}), cache: ${h.store}`);
+  const t0 = performance.now();
+  const done = new Promise((res) => (preloadDone = res));
+  const byFile = new Map();
+  for (const [id, b] of list) (byFile.get(id) ?? byFile.set(id, []).get(id)).push(b);
+  for (const [id, bs] of byFile) ask(id, bs, 2);
+  if (total) {
+    const timer = setInterval(() => post('progress', { mib: 0, preload: `${total - preloadWaiting.size} / ${total} blocks`, io: ioStatus() }), 250);
+    await done;
+    clearInterval(timer);
+  }
+  preloadWaiting = null;
+  console.log(`start-up prefetch: done in ${Math.round(performance.now() - t0)} ms`);
+  return h.manifestKnown;
+}
 
 // ---------------------------------------------------------------- audio (WEB-AUDIO) ---
 // sa-game's DirectSound mixer (crates/sa-game/src/dsound.rs) calls these once per main-loop iteration. With the
@@ -194,20 +353,29 @@ let stopped = false;
 let phase = 'starting';
 let lastStatus = 0;
 
+let inWorldAt = null;
 function status(extra) {
   flushLogs();
   lastStatus = performance.now();
   // after a trap the module's state is torn (a panic aborts mid-call): no more calls into it
   if (extra.error) {
-    post('status', { phase, mib: Math.round(bytesRead / 1048576), ...extra });
+    post('status', { phase, mib: Math.round(bytesRead / 1048576), io: ioStatus(), ...extra });
     return;
+  }
+  const state = sa.game_state();
+  // 10 s in the world (the first frames load the player's clothes synchronously): the blocks read so far are the
+  // next load's start-up list
+  if (startup && state === 9) inWorldAt ??= performance.now();
+  if (startup && inWorldAt !== null && performance.now() - inWorldAt > 10000) {
+    if (loader) loader.postMessage({ type: 'manifest', list: [...startup].map((k) => k.split(':').map(Number)) });
+    startup = null;
   }
   post('status', {
     phase,
     iterations: sa.iterations(),
     blocked,
     lastBlocked,
-    state: sa.game_state(),
+    state,
     uiCursor: sa.ui_cursor?.() ?? false,
     menuActive: sa.menu_active?.() ?? false,
     // the front end's pointer rule (crate::frontend::in_menu), the same as the native window's
@@ -217,6 +385,7 @@ function status(extra) {
     // the game's client size (its video mode): the page fits the canvas to it and maps pointer positions to it
     client: Array.from(sa.client_size()),
     mib: Math.round(bytesRead / 1048576),
+    io: ioStatus(),
     ...extra,
   });
 }
@@ -330,6 +499,14 @@ self.onmessage = async (ev) => {
           sa.add_game_file(f.path, id, f.size);
         }
         console.log(`${files.length} game files registered`);
+        io.stacks = !!m.ioStacks;
+        if (m.cacheMb) MAX_BLOCKS = Math.max(64, Math.round(m.cacheMb * 4));
+        if (m.ioSab) sync = { hdr: new Int32Array(m.ioSab, 0, 4), data: new Uint8Array(m.ioSab, 16) };
+        if (m.loaderPort) {
+          phase = 'prefetch';
+          status({});
+          await preload(m.loaderPort);
+        }
         canvas = m.canvas;
         // the canvas's size on the page in device pixels (the display a mod sees, e.g. the resolution mod)
         if (m.display) sa.set_display(m.display[0], m.display[1]);
@@ -374,6 +551,10 @@ self.onmessage = async (ev) => {
       break;
     case 'snapshot':
       snapshotWanted = true;
+      break;
+    case 'teleport':
+      // evidence runs (tools/web/headless.mjs --teleport): SA_GAME_TELEPORT a few iterations from now
+      sa.set_env('SA_GAME_TELEPORT', `${sa.iterations() + 5}:${m.x}:${m.y}:${m.z}:${m.heading ?? 0}`);
       break;
     case 'blur':
       sa.blur();

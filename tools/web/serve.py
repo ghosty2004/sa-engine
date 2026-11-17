@@ -12,6 +12,19 @@ With --samp-dir DIR (the files of a SA:MP client install: samp.saa, sampgui.png,
 overlaid on the game folder: listed in /game-index.json and served under /game/ like the game's own files (a file
 of the game folder wins; DLLs are left out), so the page's file layer finds them where the native build looks for
 them (the game folder).
+
+Every file of /game-index.json carries its mtime: the page's persistent cache (RENDER-2 R2a, web/loader.js) keys its
+blocks by path, size and mtime, so a changed file is fetched again.
+
+Headers: COOP/COEP (cross-origin isolation: the audio ring's SharedArrayBuffer, 5 us timers). A reverse proxy in
+front of this server (another device reaching the page) must pass the response headers through unchanged (Caddy's
+reverse_proxy and nginx's proxy_pass do) and must not buffer or re-chunk ranged responses away: the loader sends
+`Range` requests and expects `206` with `Content-Range`. Over plain http from another host the page is not a
+secure context: no cross-origin isolation, no OPFS; the loader then keeps its cache in IndexedDB.
+
+--throttle-rtt MS / --throttle-mbit N: simulate a slow link for /game/ (each request waits MS before its answer;
+all answers share N Mbit/s), for measurements (docs/perf/measure.md).
+--web DIR: serve another build of the page (e.g. a saved copy of web/ for before/after measurements).
 """
 
 import argparse
@@ -19,6 +32,8 @@ import json
 import os
 import posixpath
 import sys
+import threading
+import time
 import urllib.parse
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
@@ -34,7 +49,8 @@ def game_index(game, skip_dll=False):
                 continue
             p = os.path.join(d, f)
             rel = os.path.relpath(p, game).replace(os.sep, "/")
-            out.append({"path": rel, "size": os.path.getsize(p)})
+            st = os.stat(p)
+            out.append({"path": rel, "size": st.st_size, "mtime": int(st.st_mtime)})
     out.sort(key=lambda e: e["path"])
     return out
 
@@ -50,7 +66,29 @@ def merged_index(game, samp):
     return out
 
 
+class Link:
+    """The simulated link of --throttle-*: a delay per request and one shared bandwidth."""
+
+    rtt = 0.0
+    rate = 0.0  # bytes per second, 0 = unlimited
+    lock = threading.Lock()
+    free_at = 0.0
+
+    @classmethod
+    def send(cls, n):
+        """Waits until `n` more bytes fit through the shared link."""
+        if cls.rate <= 0:
+            return
+        with cls.lock:
+            now = time.monotonic()
+            start = max(now, cls.free_at)
+            cls.free_at = start + n / cls.rate
+            done = cls.free_at
+        time.sleep(max(0.0, done - time.monotonic()))
+
+
 class Handler(SimpleHTTPRequestHandler):
+    web = WEB
     game = None
     index = b"[]"
     samp_auth = None
@@ -59,7 +97,7 @@ class Handler(SimpleHTTPRequestHandler):
     mods = None
 
     def __init__(self, *a, **kw):
-        super().__init__(*a, directory=WEB, **kw)
+        super().__init__(*a, directory=Handler.web, **kw)
 
     def end_headers(self):
         self.send_header("Cache-Control", "no-store")
@@ -154,6 +192,8 @@ class Handler(SimpleHTTPRequestHandler):
             self.end_headers()
             return
         n = end - start + 1
+        if Link.rtt > 0:
+            time.sleep(Link.rtt)
         self.send_response(206 if partial else 200)
         self.send_header("Content-Type", "application/octet-stream")
         self.send_header("Content-Length", str(n))
@@ -163,9 +203,10 @@ class Handler(SimpleHTTPRequestHandler):
         with open(path, "rb") as f:
             f.seek(start)
             while n > 0:
-                chunk = f.read(min(n, 1 << 20))
+                chunk = f.read(min(n, 64 << 10 if Link.rate > 0 else 1 << 20))
                 if not chunk:
                     break
+                Link.send(len(chunk))
                 self.wfile.write(chunk)
                 n -= len(chunk)
 
@@ -178,7 +219,14 @@ def main():
     ap.add_argument("--samp-dir", help="a SA:MP client folder (samp.saa, sampgui.png, mouse.png) overlaid on the game folder")
     ap.add_argument("--samp-auth", help="the SA:MP auth table (third-party data, served to this machine only as /samp-auth.txt)")
     ap.add_argument("--mods", help="a folder of mod folders (MOD-2), served under /mods/ for the page's ?mods=NAME,...")
+    ap.add_argument("--web", help="serve this directory instead of web/ (a saved build of the page)")
+    ap.add_argument("--throttle-rtt", type=float, default=0, help="milliseconds each /game/ request waits (slow link)")
+    ap.add_argument("--throttle-mbit", type=float, default=0, help="shared bandwidth of /game/ answers in Mbit/s")
     a = ap.parse_args()
+    if a.web:
+        Handler.web = os.path.abspath(a.web)
+    Link.rtt = a.throttle_rtt / 1000
+    Link.rate = a.throttle_mbit * 1e6 / 8
     if a.bind not in ("127.0.0.1", "::1", "localhost"):
         sys.exit("serve.py: binds to the loopback address only (the game files must not leave this machine)")
     if a.game:
@@ -201,10 +249,12 @@ def main():
         if not os.path.isdir(a.mods):
             sys.exit(f"serve.py: --mods {a.mods} is not a folder")
         Handler.mods = os.path.abspath(a.mods)
-    if not os.path.isfile(os.path.join(WEB, "pkg", "sa_game.js")):
+    if not os.path.isfile(os.path.join(Handler.web, "pkg", "sa_game.js")):
         print("serve.py: web/pkg is missing: run tools/web/build.sh first", file=sys.stderr)
     srv = ThreadingHTTPServer((a.bind, a.port), Handler)
     where = f" with the game folder {Handler.game}" if Handler.game else " (choose the game folder in the page)"
+    if Link.rtt or Link.rate:
+        where += f" (simulated link: {a.throttle_rtt:g} ms per request, {a.throttle_mbit:g} Mbit/s)"
     print(f"sa-game web: http://localhost:{a.port}/{where}", flush=True)
     try:
         srv.serve_forever()
