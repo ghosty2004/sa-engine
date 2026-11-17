@@ -2041,6 +2041,8 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x49BBE0,sa-world,load_shop,cdecl,,s:GPtr<u8>,,unported,CShopping::LoadShop,
 0x49C9E0,sa-world,stunt_jump_pool_new,thiscall,,p:GPtr<u8>,GPtr<u8>,unported,thunk_FUN_01566280,
 0x49CCE0,sa-world,tag_manager_is_tag,cdecl,,e:GPtr<u8>,u8,unported,CTagManager::IsTag,
+0x49CF90,sa-world,tag_manager_get_alpha,cdecl,,e:GPtr<u8>,u8,unported,CTagManager::GetAlpha-Entity,sa_pop::misc2::get_alpha_entity
+0x49CEC0,sa-world,tag_manager_set_alpha,cdecl,,e:GPtr<u8>;a:u8,,unported,CTagManager::SetAlpha-Entity,sa_pop::misc2::set_alpha_entity
 0x49EB00,sa-world,fx_add_blood,thiscall,,fx:GPtr<u8>;pos:GPtr<u8>;dir:GPtr<u8>;amount:i32;light:f32,,unported,Fx_c::AddBlood,
 0x49F040,sa-world,fx_add_sparks,thiscall,,fx:GPtr<u8>;origin:GPtr<u8>;dir:GPtr<u8>;force:f32;amount:i32;across:sa_math::vector::CVector;kind:u32;spread:f32;life:f32,,unported,Fx_c::AddSparks,
 0x4A0D70,sa-world,trigger_water_hydrant,thiscall,,fx:GPtr<u8>;pos:GPtr<u8>,,unported,Fx_c::TriggerWaterHydrant,

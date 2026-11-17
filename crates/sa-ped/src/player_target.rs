@@ -16,6 +16,7 @@ use sa_core::{hook, orig};
 
 use crate::common::*;
 use sa_world::world::common::cam_pos;
+use sa_pop::bindings::tag_manager_get_alpha as tag_get_alpha;
 
 /// `CPedGroups::ms_groups`
 const GROUPS: usize = 0xC09920;
@@ -138,8 +139,6 @@ orig! {
     pub fn group_intel_report_all_bar_script_tasks_finished(gi: GPtr<u8>) = thiscall 0x5F8780 => unported;
     /// `CPedGroup::PlayerGaveCommand_Attack(CPed* player, CPed* target)` (0x5F7CC0, `ret 8`)
     pub fn group_player_gave_command_attack(g: GPtr<u8>, player: GPtr<u8>, target: GPtr<u8>) = thiscall 0x5F7CC0 => unported;
-    /// `CTagManager::GetAlpha(CEntity*)` (0x49CF90)
-    pub fn tag_get_alpha(e: GPtr<u8>) -> u8 = cdecl 0x49CF90 => unported;
     /// `CObject::CanBeTargetted` (0x59F320)
     pub fn object_can_be_targetted(o: GPtr<u8>) -> u8 = thiscall 0x59F320 => unported;
     /// `CPlayerPed::FindPedToAttack` (0x60C5F0)

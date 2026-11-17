@@ -314,6 +314,16 @@ orig! {
 }
 
 orig! {
+    /// `CTagManager::SetAlpha-Entity` (0x49CEC0)
+    pub fn tag_manager_set_alpha(e: GPtr<u8>, a: u8) = cdecl 0x49CEC0 => crate::misc2::set_alpha_entity;
+}
+
+orig! {
+    /// `CTagManager::GetAlpha-Entity` (0x49CF90)
+    pub fn tag_manager_get_alpha(e: GPtr<u8>) -> u8 = cdecl 0x49CF90 => crate::misc2::get_alpha_entity;
+}
+
+orig! {
     /// `CTrafficLights::ShouldCarStopForBridge` (0x49D420)
     pub fn should_car_stop_for_bridge(v: GPtr<u8>) -> u8 = cdecl 0x49D420 => crate::misc2::should_car_stop_for_bridge;
 }

@@ -919,6 +919,16 @@ orig! {
 }
 
 orig! {
+    /// `CTagManager::SetAlpha-Entity` (0x49CEC0)
+    pub fn tag_manager_set_alpha(e: GPtr<u8>, a: u8) = cdecl 0x49CEC0 => unported;
+}
+
+orig! {
+    /// `CTagManager::GetAlpha-Entity` (0x49CF90)
+    pub fn tag_manager_get_alpha(e: GPtr<u8>) -> u8 = cdecl 0x49CF90 => unported;
+}
+
+orig! {
     /// `Fx_c::AddBlood` (0x49EB00)
     pub fn fx_add_blood(fx: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>, amount: i32, light: f32) = thiscall 0x49EB00 => unported;
 }

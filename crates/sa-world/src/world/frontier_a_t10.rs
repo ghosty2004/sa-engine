@@ -11,7 +11,11 @@ use sa_core::field::ptr_of as p;
 use sa_math::fpu::ftol32;
 
 use super::common::{g, rd, x, xi};
-use crate::bindings::{fx_add_particle, fx_prt_mult_ctor};
+use crate::bindings::{
+    find_objects_in_range, fx_add_particle, fx_prt_mult_ctor, placeable_allocate_matrix, tag_manager_get_alpha,
+    tag_manager_is_tag, tag_manager_set_alpha,
+};
+use sa_stream::bindings::simple_transform_update_matrix;
 
 /// `CModelInfo::ms_modelInfoPtrs`
 const MODEL_INFO_PTRS: usize = 0xA9_B0C8;
@@ -80,5 +84,53 @@ pub fn interior_manager_dtor(this: GPtr<u8>) {
     eh_vector_dtor(this, 0x794, 8, 0x591360);
 }
 
+/// `CWorld::SprayPaintWorld(CVector& pos, CVector& outDir, float radius, bool processTagAlpha)` (0x565B70, cdecl):
+/// up to 15 buildings within `radius` (3D, `FindObjectsInRange`); for every tag among them `outDir` = its matrix's
+/// forward row (the matrix allocated from the placement first when missing) and, with `processTagAlpha`, its alpha
+/// raised by the short at 0x8CDEF0 (at most 255); the new alpha (a register the bytes never set without
+/// `processTagAlpha`: the found count, then the previous tag's value) is written back. 2 when a tag reached 255 now,
+/// else 1 when a tag was found, else 0.
+#[hook(addr = 0x565B70, conv = cdecl, name = "CWorld::SprayPaintWorld", expect = "83 EC 4C 8B 54 24 58",
+       unverified = "frontier2-a14", route = "L2", hazards = "heap-writes",
+       note = "the spray can on gang tags; without processTagAlpha the alpha written is EDI's leftover (modelled)")]
+pub fn world_spray_paint_world(pos: GPtr<u8>, out_dir: GPtr<u32>, radius: f32, process: u8) -> u32 {
+    let mut objs = [GPtr::<u8>::NULL; 15];
+    let mut count: i16 = 0;
+    find_objects_in_range(pos, radius, 0, p(&mut count), 15, p(&mut objs), 1, 0, 0, 0, 0);
+    if count <= 0 {
+        return 0;
+    }
+    let (mut found, mut reached) = (false, false);
+    let mut edi = u32::from(count as u16);
+    for &e in objs.iter().take(count as u16 as usize) {
+        if tag_manager_is_tag(e) == 0 {
+            continue;
+        }
+        found = true;
+        if rd::<GPtr<u8>>(e, 0x14).is_null() {
+            placeable_allocate_matrix(e);
+            simple_transform_update_matrix(e.byte_add(4), rd::<GPtr<u8>>(e, 0x14));
+        }
+        let f = rd::<GPtr<u8>>(e, 0x14).byte_add(0x10);
+        for k in 0..3 {
+            out_dir.wrapping_index(k).write(rd::<u32>(f, 4 * k as isize));
+        }
+        let a = u16::from(tag_manager_get_alpha(e));
+        if process != 0 {
+            let v = i32::from(g::<i16>(0x8C_DEF0).read()) + i32::from(a as i16);
+            edi = if v > 0xFF { 0xFF } else { v as u32 };
+        }
+        if (a as i16) < 0xFF && edi as u16 == 0xFF {
+            reached = true;
+        }
+        tag_manager_set_alpha(e, edi as u8);
+    }
+    if reached {
+        2
+    } else {
+        u32::from(found)
+    }
+}
+
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_INTERIOR_MANAGER_DTOR, HOOK_OBJECT_DO_BURN_EFFECT];
+pub const HOOKS: &[HookReg] = &[HOOK_INTERIOR_MANAGER_DTOR, HOOK_OBJECT_DO_BURN_EFFECT, HOOK_WORLD_SPRAY_PAINT_WORLD];
