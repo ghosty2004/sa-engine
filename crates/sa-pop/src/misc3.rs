@@ -991,6 +991,7 @@ use sa_stream::bindings::streaming_request_model as request_model;
 use sa_world::bindings::find_ground_z_for_coord;
 use sa_world::bindings::set_orientation as placeable_set_orientation;
 use sa_world::bindings::world_process_vertical_line as process_vertical_line;
+use sa_world::bindings::{attach_ped_to_entity, brains_check_if_new_entity_needs_script};
 orig! {
     /// `CCarGenerator::CheckForBlockage(int32)` (0x6F32E0)
     fn check_for_blockage_call(this: GPtr<u8>, model: i32) -> u8 = thiscall 0x6F32E0 => check_for_blockage;
@@ -1007,10 +1008,34 @@ fn model_loaded(mi: i32) -> bool {
     g::<u8>((0x8E4CD0 + mi * 20) as usize).read() == 1
 }
 
-/// `CCarGenerator::DoInternalProcessing()` (0x6F34D0, thiscall, SEH frame), partial port (ADR-002 fallback):
-/// the hotdog van generators (`m_nModelId` == 0x24C: the vendor ped of model 0xA8 is created through
-/// `AddPed(4, 0xA8, pos)` whose fourth argument is the caller's saved EDI, which the port cannot reproduce) run the
-/// whole original. PORTED: everything else. Parked car limit `NumParkedCars` (0x9690A0) 10 at night (hour > 21
+/// DoInternalProcessing's hotdog vendor (0x6F3CCD..0x6F3D7B): `pos - right * 3.0` (`operator*` 0x40FE90 on the
+/// matrix's right axis, `VectorSub` 0x40FE60 from the matrix position, or the placement position without a
+/// matrix), `AddPed(4, 0xA8, .., false)`, then the attach and the brains script check.
+fn add_hotdog_vendor(veh: GPtr<u8>) {
+    let m = rd::<GPtr<u8>>(veh, 0x14);
+    let pos = if m.is_null() { veh.byte_add(4) } else { m.byte_add(0x30) };
+    let mut scaled = [0f32; 3];
+    let mut at = [0f32; 3];
+    let s = vector_scale(GPtr::from_raw(scaled.as_mut_ptr()).cast(), f32::from_bits(0x4040_0000), m);
+    let p = vector_sub(GPtr::from_raw(at.as_mut_ptr()).cast(), pos, s);
+    let ped = crate::population3::add_ped(4, 0xA8, p.cast(), 0);
+    if ped.is_null() {
+        return;
+    }
+    const GUARD: usize = 0xC2B974;
+    const OFFSET: usize = 0xC2B968;
+    if g::<u32>(GUARD).read() & 1 == 0 {
+        g::<u32>(GUARD).write(g::<u32>(GUARD).read() | 1);
+        g::<u32>(OFFSET).write(0);
+        g::<u32>(OFFSET + 4).write(0);
+        g::<u32>(OFFSET + 8).write(0x3F19_999A);
+    }
+    let (ox, oy, oz) = (g::<u32>(OFFSET).read(), g::<u32>(OFFSET + 4).read(), g::<u32>(OFFSET + 8).read());
+    attach_ped_to_entity(ped, veh, ox, oy, oz, 3, 0, 0);
+    brains_check_if_new_entity_needs_script(GPtr::from_addr(0xA90CF0), ped, 0, 0);
+}
+
+/// `CCarGenerator::DoInternalProcessing()` (0x6F34D0, thiscall, SEH frame). Parked car limit `NumParkedCars` (0x9690A0) 10 at night (hour > 21
 /// or < 7), else 5, unless the generator ignores it (+0xD bit 4); a negative model is a random-car generator
 /// (`-model` if loaded, else `m_LoadedAppropriateCars.PickRandomCar(true, true)` after `GetZoneInfo` of the
 /// player position, rejecting model-info +0x4D == 5 and col-model lengths > 8.0, stored back as `-model` with
@@ -1027,12 +1052,15 @@ fn model_loaded(mi: i32) -> bool {
 /// (`FindNodeClosestToCoors` 20.0) become driving cars with a farmer (ped type 4); `CWorld::Add`; alarm and
 /// door-lock chances (`GetRandomNumberInRange(0, 100)` x2); colours copied or saved back; clump alpha 0; the
 /// vehicle handle; the generate count is never decremented (signed compare with -1, original bug); next
-/// time = now + 4.
-#[hook(addr = 0x6F34D0, conv = thiscall, name = "CCarGenerator::DoInternalProcessing", expect = "6A FF 68 14 8A 84 00", this = "CCarGenerator", fallback)]
+/// time = now + 4. Hotdog van generators (`m_nModelId` == 0x24C) also request the vendor model 0xA8, wait until it
+/// is loaded, and after the driver set-up create the vendor: `AddPed(4, 0xA8, pos - right * 3.0, false)` (the
+/// `false` is pushed first, before the position's temporaries: 0x6F3CDA), attached to the van with the function
+/// static offset (0, 0, 0.6) (guard 0xC2B974 bit 0), direction 3, then `CScriptsForBrains::
+/// CheckIfNewEntityNeedsScript(ped, 0, 0)`.
+#[hook(addr = 0x6F34D0, conv = thiscall, name = "CCarGenerator::DoInternalProcessing", expect = "6A FF 68 14 8A 84 00", this = "CCarGenerator",
+       unverified = "frontier2-a16", route = "split", hazards = "heap-writes",
+       note = "was a partial port: the hotdog van path (vendor ped) is new; the rest was verified")]
 pub fn do_internal_processing(this: GPtr<u8>) {
-    if rd::<i16>(this, 0) == 0x24C {
-        return do_internal_processing_original(this);
-    }
     let hours = g::<u8>(0xB70153).read();
     let night = !(7..=0x15).contains(&hours);
     if rd::<u8>(this, 0xD) & 0x10 == 0 && g::<i32>(0x9690A0).read() >= if night { 10 } else { 5 } {
@@ -1083,7 +1111,9 @@ pub fn do_internal_processing(this: GPtr<u8>) {
     if !model_loaded(model) {
         return;
     }
-    // (the 0x24C / 0xA8 load test only matters for the hotdog generators, which took the fallback)
+    if model == 0x24C && rd::<u16>(this, 0) == 0x24C && !model_loaded(0xA8) {
+        return;
+    }
     let mi = model_info(model);
     let veh: GPtr<u8>;
     let mut ground: f32;
@@ -1246,6 +1276,9 @@ pub fn do_internal_processing(this: GPtr<u8>) {
     world_add(veh);
     if driver != -1 {
         set_up_driver_and_passengers_for_vehicle(veh, driver, 0, 0, 0, 0x63);
+    }
+    if model == 0x24C && rd::<u16>(this, 0) == 0x24C && model_loaded(0xA8) {
+        add_hotdog_vendor(veh);
     }
     if random_int_in_range(0, 100) < i32::from(rd::<u8>(this, 0xB)) {
         wr::<u16>(veh, 0x45C, 0xFFFF);
