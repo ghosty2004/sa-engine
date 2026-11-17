@@ -33,7 +33,7 @@ use sa_core::bindings::entity_update_rw_frame;
 use sa_core::bindings::get_atan_of_xy;
 use sa_core::bindings::matrix_mul_vec;
 use sa_core::bindings::matrix_set_rotate_z_only;
-use sa_stream::bindings::rand;
+use sa_core::crt::rand_at;
 orig! {
     /// `CEntity::SetIsStatic(bool)` (vtable +0x10)
     fn v_set_is_static(e: GPtr<u8>, v: u8) = thiscall vslot 0x10 => unported;
@@ -206,9 +206,9 @@ pub fn object_explode(this: GPtr<u8>) {
         object_damage(this, 10000.0, p(&mut v), p(&mut dir), this, 0x33);
     } else if rd::<u8>(this, 0x40) & 4 == 0 {
         wr::<f32>(this, 0x4C, x(rd::<f32>(this, 0x4C)).fadd_m(F_0_5).to_f32());
-        let r = (rand() & 0xFF) - 0x80;
+        let r = (rand_at(0x5A13EE) & 0xFF) - 0x80;
         wr::<f32>(this, 0x44, xi(r).fmul_m(F_RAND).fadd_m(rd::<f32>(this, 0x44)).to_f32());
-        let r = (rand() & 0xFF) - 0x80;
+        let r = (rand_at(0x5A1411) & 0xFF) - 0x80;
         let f = rd::<u32>(this, 0x1C);
         wr::<f32>(this, 0x48, xi(r).fmul_m(F_RAND).fadd_m(rd::<f32>(this, 0x48)).to_f32());
         if f & 4 != 0 || f & 0x4_0000 != 0 {
