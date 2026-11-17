@@ -130,6 +130,33 @@ loaded, the renderer behaves exactly as today (image diff vs the parity renderer
 A setting that the original *does* have (video mode, frame limiter, draw distance slider) is applied through the
 original's own menu state, so the game sees what it would see if the player had chosen it in the menu.
 
+### 4.2 Data mods (added by the user, 2026-11-17)
+
+Code mods (levels 1–4) cannot add content on their own: a new vehicle, ped, weapon or building needs files (models,
+textures, collision, definitions). A mod may therefore also ship a **data folder** next to its `.wasm` (a mod may be
+data only, with no `.wasm`):
+
+- **Virtual file system overlay.** The mod's `data/` tree is laid over the game folder: a file with the same path
+  replaces the original for that session (`models/gta3.img` entries, `data/handling.cfg`, `data/vehicles.ide`,
+  `models/generic/*.txd`, audio banks, `.ifp` animations, `.col`, `.dat` / `.ide` / `.ipl` lines), without changing the
+  user's install. Text definition files are merged line by line (a mod adds or overrides entries; it does not ship a
+  full copy). Load order decides conflicts and is shown to the user. The game reads every file through the existing
+  file layer, so the overlay sits there (platform layer, ADR-003), not in the ports.
+- **New model IDs.** A mod registers new content through the API ("a new vehicle based on class `automobile`, with
+  these files"); the host assigns free IDs and inserts the definitions as if they came from `vehicles.ide`,
+  `handling.cfg`, `carcols.dat` and friends. Typed registrations for vehicles, peds, weapons, objects and their
+  handling / colours / sounds.
+- **Raised limits only with `mods`.** The original has fixed limits (model info count, IMG entries, the vehicle, ped,
+  object and building pools, the TXD and COL slots). The parity build keeps them exactly (ADR-001 layouts, oracle).
+  The `mods` build may raise them (a "limits" table read at start-up), recorded in the divergence ledger as a
+  mods-only difference; verify-all runs on the parity build.
+- **New behaviour on top** comes from levels 2–3 (hooks and state), e.g. a vehicle class with custom physics. A new
+  vehicle on an existing class (car, bike, boat, plane, heli, quad, monster truck) needs data only.
+- **SA:MP:** 0.3.7 has no custom models (0.3.DL added them), so on 0.3.7 servers custom content is single-player or
+  needs a server that supports it explicitly; the SA:MP mod decides.
+- Permission: `data = true` in `mod.toml` (`[permissions]`); a data mod that adds model IDs also declares them
+  (`[content]` section: kind, name, base class, files).
+
 ## 5. SA:MP as a mod (MOD-2 level 4)
 
 - `samp-rs` is split into a **client core** (protocol, RakNet, sync, UI logic: `samp-proto`, `samp-client`, `samp-ui`,
@@ -156,6 +183,7 @@ original's own menu state, so the game sees what it would see if the player had 
 |---|---|---|
 | M0 | decide the ABI (§3.2 open point); `sa-mod-api` level 1 definition; `sa-mod-host` skeleton with wasmtime and the browser backend; `--features mods`; a "hello" mod that draws text | the same `.wasm` draws the text natively and in the browser; verify-all IDENTICAL with and without `mods` |
 | M1 | level 1 complete; the **resolution** mod (desktop resolution / any size, window and fullscreen, saved per mod), MSAA, anisotropic filtering, FPS overlay | 1920×1080 natively and in the browser; corpus replays IDENTICAL with the mods loaded |
+| MD | data mods (§4.2): the virtual file system overlay with line-merged definition files, content registration with new model IDs, the mods-only limits table | an example mod adds a new car (own model, textures, handling) that spawns and drives natively and in the browser; the parity build and verify-all unchanged |
 | M2 | level 2: events, read-only state, before/after hooks on registry functions | an example mini-map / trainer read-only overlay |
 | M3 | level 3: state write, entities, script commands, audio | an example gameplay mod |
 | M4 | level 4: network, storage; samp-rs client core split from its hosts | samp-rs builds as a mod |
