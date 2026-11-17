@@ -3255,3 +3255,44 @@
   sa-game lib clean; browser runs on WebGPU and WebGL2 with 0 blocked iterations.
 - Found on master (not caused here): a trap in `sa_anim::pedik::move_limb_normalized` under
   `CCopPed::ProcessControl` after teleports to San Fierro / Las Venturas (the measurement route stays in Los Santos).
+## 2026-11-17 — FRONTIER-2 turn 10, lane A: SAM sites, CObject::Explode, the MoveLimb web trap, WORLD / AI / POP frontier (agent, branch worktree-agent-a25fa2bbd9d4f79b5)
+- Base: master 489d7495. Every port from the 1.0 US bytes (gta-reversed read as an aid; where it differs the bytes
+  win), every address checked against `inflight.py` first (none registered elsewhere). Batches `frontier2-a14`
+  (WORLD: 6 hooks) and `frontier2-a15` (AI: 2 hooks), plain `#[hook(`; three phase B natives where the hook table
+  tests (or INF-20 notes) show protection reads of the entry bytes. The machine ran out of RAM at 21:34 (five agents);
+  the work resumed with `-j4` builds, one cargo / Chromium at a time.
+- User-hit 1: `CObject::ProcessSamSiteBehaviour` 0x5A07D0 (the height test is `pos.z - 2 <= target.z`, the wrapped
+  angle difference stays extended for the turn and is read back as its stored f32 for the 0.1 rad fire test, a
+  heat-seeking rocket from (0, 2, 4) once per 4-second period) and `CObject::Explode` 0x5A1340 (the breakable-object
+  damage point is `(x, z - 1, z)`: the bytes store `z - 1` over the y of the position copy whose z was never raised,
+  the `+ 0.5` went to a temporary; rand sites 0x5A13EE / 0x5A1411). New scenario `samsite` (Area 51 on a jet pack):
+  6 AddProjectile / 7 TryToExplode calls, 0 lane A blockers; `roadblock-wanted` 2016 / 0 blocked (Explode was its last
+  blocker).
+- User-hit 2, the trap in `sa_anim::pedik::move_limb_normalized` under `CCopPed::ProcessControl` (SF / LV): a web
+  (wasm32) only bug. `CPedIK::PointGunInDirection` declared `MoveLimb` 0x5FDA60 / 0x5FDB60 as thiscall with the
+  CPedIK first, while the ports register them stdcall (the original's caller sets ECX, the callee never reads it). On
+  i686 both agree; wasm32's type-erased dispatch passes a thiscall declaration's `this` as the first word, so the
+  port took the CPedIK as the limb, the limb pointer as the yaw and the pitch's float bits as the `LimbMovementInfo`
+  pointer: "memory access out of bounds" as soon as an armed cop aimed with a normalised MoveLimb. Reproduced in
+  headless Chromium (pre-fix web build, `SA_GAME_TELEPORT=60:-1606:720:12`: trap 6.7 s after entering the world,
+  stack `move_limb_normalized` <- `__sa_hook_native_move_limb_normalized`); fixed by declaring both as registered
+  (a5c6b28b), after which the same run went on to a second trap, `set_texture_internal` under `CBoat::Render`:
+  0x6F0210 read its water-mask raster from 0xC22EA8 instead of 0xC228A8 (`CWaterLevel::waterclear256Raster`; the
+  protection fragment 0x40120A gives `[0x156060C] + [0x5594CB]` = 0xC228A8), fixed in 7e4cd3b4; the fixed build ran
+  the SF run 240 s in the world with no trap. Native runs never trapped (`copsf` / `coplv` scenarios: 2862 / 1925
+  normalised MoveLimb calls). A scan of every `orig!` declaration against its registered port's convention found
+  the same thiscall/stdcall mismatch at GetBaseVolumeForBicycleTyre 0x4F60B0 and FindAssociatedAttractor 0x5EB6F0
+  (fixed in the same commit); the remaining mismatches are harmless (no arguments shifted) or in generated
+  declarations (`gen_subtasks` 0x5980F0 AreAnimsLoaded: thiscall with `this` + 1 word against the stdcall port,
+  so on the web the block number is the caller's ECX: open, needs ai_patterns.py to take the registered convention).
+- Lane A leftovers: CTaskInteriorSitAtDesk::ProcessPed 0x677920 (frontier2-a15; lane A turn 9's interior helpers,
+  `interior_blend_group` for the int_office group 0x55), CCarCtrl::ClitargetOrientationToLink 0x422760 (phase B
+  native: 0x4020E4 reads 0x422761), CPlayerPed::FindNextWeaponLockOnTarget 0x60E530 (already ported, now a phase B
+  native in sa-ports). Not done: the partial script switches 0x47A760 / 0x48B590, ProcessColModels' disk cases, the
+  POP partials 0x461170 / 0x612710 / 0x6F34D0 (their fallback cases read other stack locals of the original).
+- WORLD / AI / UNK-game: InteriorManager_c::~InteriorManager_c 0x598580, CObject::DoBurnEffect 0x59FB50 (the
+  original's default-constructed stack FxPrtMult_c, overwritten by the full one, is not reproduced),
+  CWorld::SprayPaintWorld 0x565B70 (without processTagAlpha the alpha written is EDI's leftover, modelled; GetAlpha
+  0x49CF90 / SetAlpha 0x49CEC0 became sa-world bindings with sa-pop twins), CSetPiece::TryToGenerateCopCar 0x4998A0,
+  the named-anim CTaskSimpleHoldEntity constructor 0x691470, vector<CVector>::_Xlen 0x5ECC30 (native, as its four
+  siblings).
