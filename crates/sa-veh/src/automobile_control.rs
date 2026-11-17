@@ -90,9 +90,9 @@ orig! {
     /// `CCarAI::MakeWayForCarWithSiren(CVehicle*)` (0x41D660)
     fn make_way_for_car_with_siren(v: GPtr<u8>) = cdecl 0x41D660 => sa_pop::carctrl4::make_way_for_car_with_siren;
     /// `CVehicle::UpdateTractorLink(bool, bool)` (0x6E0050)
-    pub fn update_tractor_link(v: GPtr<u8>, a: u32, b: u32) = thiscall 0x6E0050 => unported;
+    pub fn update_tractor_link(v: GPtr<u8>, a: u32, b: u32) = thiscall 0x6E0050 => crate::vehicle_tow_link::update_tractor_link;
     /// `CVehicle::UpdateTrailerLink(bool, bool)` (0x6DFC50)
-    pub fn update_trailer_link(v: GPtr<u8>, a: u32, b: u32) = thiscall 0x6DFC50 => unported;
+    pub fn update_trailer_link(v: GPtr<u8>, a: u32, b: u32) = thiscall 0x6DFC50 => crate::vehicle_tow_link::update_trailer_link;
     /// `CAutomobile::ProcessHarvester()` (0x6A9680)
     fn process_harvester(v: GPtr<u8>) = thiscall 0x6A9680 => unported;
 }
