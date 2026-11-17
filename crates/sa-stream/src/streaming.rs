@@ -411,6 +411,7 @@ pub use crate::bindings::car_group_clear;
 pub use sa_core::bindings::directory_ctor;
 pub use sa_core::bindings::directory_dtor;
 pub use sa_core::bindings::directory_find_item;
+pub use sa_core::bindings::dict_destroy as rt_dict_destroy;
 orig! {
     /// `CdStreamGetLastPosn()` (0x406450)
     pub fn cd_stream_get_last_posn() -> u32 = cdecl 0x406450 => unported;
@@ -478,8 +479,6 @@ orig! {
     pub fn rt_dict_schema_stream_read_dict(schema: GPtr<u8>, s: GPtr<u8>) -> GPtr<u8> = cdecl 0x7CF240 => unported;
     /// `RtDictSchemaSetCurrentDict(schema, dict)` (0x7CEEF0)
     pub fn rt_dict_schema_set_current_dict(schema: GPtr<u8>, dict: GPtr<u8>) -> GPtr<u8> = cdecl 0x7CEEF0 => unported;
-    /// `RtDictDestroy(dict)` (0x7CF130)
-    pub fn rt_dict_destroy(dict: GPtr<u8>) -> i32 = cdecl 0x7CF130 => unported;
     /// CRT `sscanf(s, "%d", int*)` (0x8220AD)
     pub fn sscanf_int(s: GPtr<u8>, fmt: GPtr<u8>, out: GPtr<i32>) -> i32 = cdecl 0x8220AD => unported;
     /// `CDirectory::AddItem(const DirectoryInfo&)` (0x532310)

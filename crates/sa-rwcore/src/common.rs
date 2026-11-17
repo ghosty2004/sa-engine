@@ -85,8 +85,13 @@ pub fn error1_code(code: u32) -> u32 {
 
 /// `RwErrorSet({1, _rwerror(code, a)})`.
 pub fn error2(code: u32, a: u32) {
+    error2_plugin(1, code, a);
+}
+
+/// `RwErrorSet({plugin, _rwerror(code, a)})`: a plugin's error as the originals build it on their stack.
+pub fn error2_plugin(plugin_id: i32, code: u32, a: u32) {
     let mut e = RwError {
-        plugin_id: 1,
+        plugin_id,
         error_code: 0,
     };
     e.error_code = rw_error2(code, a) as i32;

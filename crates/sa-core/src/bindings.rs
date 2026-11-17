@@ -2794,6 +2794,11 @@ orig! {
 }
 
 orig! {
+    /// `RtDictDestroy` (0x7CF130)
+    pub fn dict_destroy(dict: GPtr<u8>) -> u32 = cdecl 0x7CF130 => unported;
+}
+
+orig! {
     /// `RtQuatConvertFromMatrix` (0x7EB5C0)
     pub fn rt_quat_convert_from_matrix(q: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EB5C0 => unported;
 }

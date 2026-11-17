@@ -12,13 +12,13 @@ use sa_core::{hook, orig};
 
 use crate::common::{p8, rd, rw_free, rw_malloc, rw_memory_alloc, wr};
 
-use crate::bindings::read_int32;
-use sa_core::bindings::rw_error1;
-use sa_core::bindings::rw_error_set;
+use crate::bindings::{read_int32, read_real};
 use crate::bindings::interpolator_create as interpolator_create_call;
 orig! {
     /// A key-frame interpolate callback `cb(out, in1, in2, time, customData)`
     fn call_interpolate_cb(f: u32, out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, t: f32, custom: u32) = cdecl dyn => unported;
+    /// A scheme's stream read callback `cb(stream, anim)` (+0x20)
+    fn call_scheme_cb2(f: u32, a: u32, b: u32) -> u32 = cdecl dyn => unported;
 }
 
 /// RtAnim interpolation schemes (0x30 each) and their count.
@@ -234,25 +234,91 @@ pub fn rt_anim_interpolator_set_current_anim(it: GPtr<u8>, anim: GPtr<u8>) -> u3
     1
 }
 
-/// `RtAnimInterpolatorSetKeyFrameCallBacks(interp, typeID)` (0x7CD660): the scheme's four callbacks
-/// (else error {0x1B7, `_rwerror(2)`} and 0). Returns 1.
-#[hook(addr = 0x7CD660, conv = cdecl, name = "RtAnimInterpolatorSetKeyFrameCallBacks", expect = "8B 15 00 79 C9 00 83 EC 08 33 C0 56",
-       unverified = "std6-rw-1", route = "L2", hazards = "none")]
-pub fn rt_anim_interpolator_set_key_frame_callbacks(it: GPtr<u8>, ty: u32) -> u32 {
+/// The scheme lookup of `RtAnimGetInterpolatorInfo` (inlined in its callers): the first of the
+/// `[0xC97900]` schemes (0x30 each from 0xC9B920) whose +0 type id is `ty`, else
+/// `RwErrorSet({0x1B7, _rwerror(2)})` and null.
+pub(crate) fn interpolator_info(ty: u32) -> GPtr<u8> {
     let count = GPtr::<i32>::from_addr(SCHEME_COUNT).read();
     for i in 0..count.max(0) {
         let info = p8(SCHEMES + i as u32 * 0x30);
         if rd::<u32>(info, 0) == ty {
-            for k in 0..4 {
-                wr::<u32>(it, 0x3C + k * 4, rd::<u32>(info, 0xC + k * 4));
-            }
-            return 1;
+            return info;
         }
     }
-    let mut e = [0x1B7u32, 0];
-    e[1] = rw_error1(2);
-    rw_error_set(GPtr::<u32>::cast::<crate::common::RwError>(GPtr::from_raw(e.as_mut_ptr())).cast::<u8>());
-    0
+    crate::anim::anim_error(2);
+    GPtr::NULL
+}
+
+/// `RtAnimGetInterpolatorInfo(typeID)` (0x7CCDE0): [`interpolator_info`].
+#[hook(addr = 0x7CCDE0, conv = cdecl, name = "RtAnimGetInterpolatorInfo", expect = "8B 15 00 79 C9 00 83 EC 08",
+       unverified = "frontier2-c17", route = "L2", hazards = "none")]
+pub fn rt_anim_get_interpolator_info(ty: u32) -> GPtr<u8> {
+    interpolator_info(ty)
+}
+
+/// `RtAnimAnimationStreamRead(RwStream*)` (0x7CD220): version (int32, must be 0x100, else null), type id
+/// (int32), its scheme (`RtAnimGetInterpolatorInfo`, inlined; unknown: null), frame count and flags (int32),
+/// duration (real); any failed read gives null. The scheme is looked up a second time (inlined again) before the
+/// animation is made: `RwMalloc(keyFrameSize (+8) * frames + customDataSize (+0x2C) + 0x18, 0x3001B)`
+/// (unchecked); +0 scheme, +4 frames, +8 flags, +0xC duration, +0x10 the key frames (+0x18), +0x14 the custom
+/// data after them (null for a size <= 0, signed); then the scheme's stream read (+0x20, `(stream, anim)`,
+/// result ignored). Returns the animation.
+#[hook(addr = 0x7CD220, conv = cdecl, name = "RtAnimAnimationStreamRead", expect = "83 EC 20 8D 44 24 04",
+       unverified = "frontier2-c17", route = "L2", hazards = "heap-writes")]
+pub fn rt_anim_animation_stream_read(stream: GPtr<u8>) -> GPtr<u8> {
+    let mut version = 0u32;
+    if read_int32(stream, GPtr::from_raw(&mut version).cast(), 4).is_null() || version != 0x100 {
+        return GPtr::NULL;
+    }
+    let mut ty = 0u32;
+    if read_int32(stream, GPtr::from_raw(&mut ty).cast(), 4).is_null() {
+        return GPtr::NULL;
+    }
+    let scheme = interpolator_info(ty);
+    if scheme.is_null() {
+        return GPtr::NULL;
+    }
+    let (mut frames, mut flags, mut duration) = (0u32, 0u32, 0u32);
+    if read_int32(stream, GPtr::from_raw(&mut frames).cast(), 4).is_null()
+        || read_int32(stream, GPtr::from_raw(&mut flags).cast(), 4).is_null()
+        || read_real(stream, GPtr::from_raw(&mut duration).cast(), 4).is_null()
+    {
+        return GPtr::NULL;
+    }
+    let info = interpolator_info(ty);
+    if info.is_null() {
+        return GPtr::NULL;
+    }
+    let keys = rd::<u32>(info, 8).wrapping_mul(frames);
+    let anim = rw_malloc(keys.wrapping_add(rd::<u32>(info, 0x2C)).wrapping_add(0x18), 0x3001B);
+    wr::<u32>(anim, 0xC, duration);
+    wr::<u32>(anim, 4, frames);
+    wr::<u32>(anim, 8, flags);
+    wr::<u32>(anim, 0, info.addr() as u32);
+    let first = anim.addr() as u32 + 0x18;
+    wr::<u32>(anim, 0x10, first);
+    if rd::<i32>(info, 0x2C) > 0 {
+        wr::<u32>(anim, 0x14, rd::<u32>(info, 8).wrapping_mul(frames).wrapping_add(first));
+    } else {
+        wr::<u32>(anim, 0x14, 0);
+    }
+    call_scheme_cb2(rd(scheme, 0x20), stream.addr() as u32, anim.addr() as u32);
+    anim
+}
+
+/// `RtAnimInterpolatorSetKeyFrameCallBacks(interp, typeID)` (0x7CD660): the scheme's four callbacks
+/// (`RtAnimGetInterpolatorInfo`, inlined; else its error and 0). Returns 1.
+#[hook(addr = 0x7CD660, conv = cdecl, name = "RtAnimInterpolatorSetKeyFrameCallBacks", expect = "8B 15 00 79 C9 00 83 EC 08 33 C0 56",
+       unverified = "std6-rw-1", route = "L2", hazards = "none")]
+pub fn rt_anim_interpolator_set_key_frame_callbacks(it: GPtr<u8>, ty: u32) -> u32 {
+    let info = interpolator_info(ty);
+    if info.is_null() {
+        return 0;
+    }
+    for k in 0..4 {
+        wr::<u32>(it, 0x3C + k * 4, rd::<u32>(info, 0xC + k * 4));
+    }
+    1
 }
 
 /// `RtAnimInterpolatorSetAnimLoopCallBack(interp, cb, data)` (0x7CD6F0): +0x18 / +0x1C. Returns
@@ -289,4 +355,4 @@ pub fn rt_anim_interpolator_copy(dst: GPtr<u8>, src: GPtr<u8>) -> u32 {
 }
 
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_RT_ANIM_INTERPOLATOR_CREATE, HOOK_RT_ANIM_INTERPOLATOR_DESTROY, HOOK_HANIM_FRAME_STREAM_READ, HOOK_RP_HANIM_FRAME_SET_HIERARCHY, HOOK_RP_HANIM_FRAME_GET_HIERARCHY, HOOK_RP_HANIM_FRAME_SET_ID, HOOK_RP_HANIM_FRAME_GET_ID, HOOK_RT_ANIM_ANIMATION_DESTROY, HOOK_RT_ANIM_INTERPOLATOR_SET_CURRENT_ANIM, HOOK_RT_ANIM_INTERPOLATOR_SET_KEY_FRAME_CALLBACKS, HOOK_RT_ANIM_INTERPOLATOR_SET_ANIM_LOOP_CALLBACK, HOOK_RT_ANIM_INTERPOLATOR_SET_ANIM_CALLBACK, HOOK_RT_ANIM_INTERPOLATOR_COPY];
+pub const HOOKS: &[HookReg] = &[HOOK_RT_ANIM_GET_INTERPOLATOR_INFO, HOOK_RT_ANIM_ANIMATION_STREAM_READ, HOOK_RT_ANIM_INTERPOLATOR_CREATE, HOOK_RT_ANIM_INTERPOLATOR_DESTROY, HOOK_HANIM_FRAME_STREAM_READ, HOOK_RP_HANIM_FRAME_SET_HIERARCHY, HOOK_RP_HANIM_FRAME_GET_HIERARCHY, HOOK_RP_HANIM_FRAME_SET_ID, HOOK_RP_HANIM_FRAME_GET_ID, HOOK_RT_ANIM_ANIMATION_DESTROY, HOOK_RT_ANIM_INTERPOLATOR_SET_CURRENT_ANIM, HOOK_RT_ANIM_INTERPOLATOR_SET_KEY_FRAME_CALLBACKS, HOOK_RT_ANIM_INTERPOLATOR_SET_ANIM_LOOP_CALLBACK, HOOK_RT_ANIM_INTERPOLATOR_SET_ANIM_CALLBACK, HOOK_RT_ANIM_INTERPOLATOR_COPY];

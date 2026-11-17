@@ -1,4 +1,4 @@
-//! FRONTIER-2 lane B (batches `frontier2-b2`, `frontier2-b4`): RenderWare functions on the phase B frontier: world-sector teardown and
+//! FRONTIER-2 lane B (batches `frontier2-b2`, `frontier2-b4`) and lane C (`frontier2-c17`: the RtDict stream read): RenderWare functions on the phase B frontier: world-sector teardown and
 //! lookup (`_rpWorldSectorDeinstanceAll`, `_rpWorldSectorDestroyRecurse`, `RpWorldSectorGetWorld`,
 //! `RwCameraForAllSectorsInFrustum`, `RpWorldAddClump`, the D3D9 geometry-list close), geometry / atomic helpers
 //! (`_rpGeometryStructGetSize`, the geometry free helper, `RpAtomicInstance`), the UV-animation material plugin,
@@ -753,6 +753,7 @@ pub fn rp_world_sector_light_tie_destroy(tie: GPtr<u8>) -> u32 {
     1
 }
 
+use crate::bindings::dict_destroy;
 orig! {
     /// `_rwSListGetBegin(sl)` (0x809530)
     fn slist_get_begin(sl: GPtr<u8>) -> GPtr<u8> = cdecl 0x809530 => unported;
@@ -764,8 +765,13 @@ orig! {
     fn slist_get_entry(sl: GPtr<u8>, i: i32) -> GPtr<u8> = cdecl 0x809510 => unported;
     /// `_rwSListDestroyEndEntries(sl, n)` (0x809400)
     fn slist_destroy_end_entries(sl: GPtr<u8>, n: i32) -> GPtr<u8> = cdecl 0x809400 => unported;
-    /// A dictionary schema's entry destructor (`schema +0x1C`)
-    fn call_entry_dtor(f: u32, e: u32) -> u32 = cdecl dyn => unported;
+    /// A dictionary schema callback with one argument: the entry add-ref (+0x18) / destructor (+0x1C) and the
+    /// stream read (+0x28) / compatibility read (+0x2C) callbacks
+    fn call_dict_cb(f: u32, a: u32) -> u32 = cdecl dyn => unported;
+    /// `RtDictSchemaCreateDict(schema)` (0x7CED90)
+    fn schema_create_dict(schema: GPtr<u8>) -> GPtr<u8> = cdecl 0x7CED90 => rt_dict_schema_create_dict;
+    /// `_rwSListGetNewEntry(sl, hint)` (0x809240)
+    fn slist_get_new_entry(sl: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x809240 => rw_slist_get_new_entry;
 }
 
 /// `RtDictDestroy(RtDict*)` (0x7CF130): the schema (+0) forgets it as its current dictionary (+0x14); it is
@@ -797,11 +803,117 @@ pub fn rt_dict_destroy(dict: GPtr<u8>) -> u32 {
     while p != end {
         let e: u32 = rd(p, 0);
         p = p.byte_add(4);
-        call_entry_dtor(rd(rd::<GPtr<u8>>(dict, 0), 0x1C), e);
+        call_dict_cb(rd(rd::<GPtr<u8>>(dict, 0), 0x1C), e);
     }
     crate::anim::slist_destroy(rd(dict, 4));
     rw_free(dict);
     1
+}
+
+/// The memory hint of a schema's allocations: its dictionary chunk type (+4) | `rwMEMHINTDUR_EVENT`.
+fn dict_hint(schema: GPtr<u8>) -> u32 {
+    rd::<u32>(schema, 4) | 0x30000
+}
+
+/// `RtDictSchemaCreateDict(RtDictSchema*)` (0x7CED90): an 8-byte dictionary (`G->rwmalloc`; failure:
+/// `RwErrorSet({0x1BF, _rwerror(0x80000013, 8)})`, null) with its entry list (+4, `_rwSListCreate(4, hint)`),
+/// schema +0; then added to the schema's dictionary list (+0x10). Either list step failing frees what was made
+/// (the entry list destroyed first when the second fails) and returns null. The hint is the schema's +4 | 0x30000.
+#[hook(addr = 0x7CED90, conv = cdecl, name = "RtDictSchemaCreateDict", expect = "83 EC 08 8B 0D 24 7B C9 00",
+       unverified = "frontier2-c17", route = "L2", hazards = "heap-writes")]
+pub fn rt_dict_schema_create_dict(schema: GPtr<u8>) -> GPtr<u8> {
+    let dict = rw_malloc(8, dict_hint(schema));
+    if dict.is_null() {
+        crate::common::error2_plugin(0x1BF, 0x8000_0013, 8);
+        return GPtr::NULL;
+    }
+    let list = crate::anim::slist_create(4, dict_hint(schema));
+    wr::<u32>(dict, 4, list.addr() as u32);
+    if !list.is_null() {
+        wr::<u32>(dict, 0, schema.addr() as u32);
+        let slot = slist_get_new_entry(rd(schema, 0x10), dict_hint(schema));
+        if !slot.is_null() {
+            wr::<u32>(slot, 0, dict.addr() as u32);
+            return dict;
+        }
+        crate::anim::slist_destroy(rd(dict, 4));
+    }
+    rw_free(dict);
+    GPtr::NULL
+}
+
+/// The entry-count read of [`rt_dict_schema_stream_read_dict`]: `RwStreamRead(stream, &count, len)`. A struct
+/// chunk of at most 4 bytes is the original's single read; a longer one (the original overwrites its caller's
+/// frame past the count) is read as the count's 4 bytes and the rest into a discarded buffer, in pieces. Returns
+/// the bytes read (0 when the first read gives 0).
+fn read_count(stream: GPtr<u8>, count: &mut u32, len: u32) -> u32 {
+    if len <= 4 {
+        return crate::bindings::stream_read(stream, GPtr::from_raw(count).cast(), len);
+    }
+    let mut got = crate::bindings::stream_read(stream, GPtr::from_raw(count).cast(), 4);
+    let mut scratch = [0u8; 0x40];
+    let mut left = len - 4;
+    while got != 0 && left != 0 {
+        let n = left.min(scratch.len() as u32);
+        got += crate::bindings::stream_read(stream, GPtr::from_raw(scratch.as_mut_ptr()), n);
+        left -= n;
+    }
+    got
+}
+
+/// `RtDictSchemaStreamReadDict(RtDictSchema*, RwStream*)` (0x7CF240): finds the struct chunk (type 1); a version
+/// below the schema's compatibility version (+0xC, unsigned) is read by the schema's compatibility callback
+/// (+0x2C, `(stream)`, its result returned). Else the entry count is read (`RwStreamRead` of the chunk's length;
+/// the original reads it into its own argument slot: see [`read_count`] for chunks longer than 4 bytes), a
+/// dictionary created (`RtDictSchemaCreateDict`, inlined in the original) and, per entry, the entry chunk (+8)
+/// found and read by the schema's read callback (+0x28); the entry is appended to the dictionary's list (the new
+/// slot is not checked), then add-ref'd (+0x18) and released (+0x1C). A missing chunk or a null entry destroys
+/// the dictionary (`RtDictDestroy`, inlined) and returns null.
+#[hook(addr = 0x7CF240, conv = cdecl, name = "RtDictSchemaStreamReadDict", expect = "83 EC 10 8D 44 24 00",
+       unverified = "frontier2-c17", route = "L2", hazards = "heap-writes")]
+pub fn rt_dict_schema_stream_read_dict(schema: GPtr<u8>, stream: GPtr<u8>) -> GPtr<u8> {
+    let mut version = 0u32;
+    let mut len = 0u32;
+    if sa_core::bindings::rw_stream_find_chunk_call(stream, 1, GPtr::from_raw(&mut len), GPtr::from_raw(&mut version))
+        == 0
+    {
+        return GPtr::NULL;
+    }
+    if version < rd::<u32>(schema, 0xC) {
+        return p8(call_dict_cb(rd(schema, 0x2C), stream.addr() as u32));
+    }
+    let mut count = 0u32;
+    if read_count(stream, &mut count, len) == 0 {
+        return GPtr::NULL;
+    }
+    let dict = schema_create_dict(schema);
+    if dict.is_null() {
+        return GPtr::NULL;
+    }
+    while count != 0 {
+        count -= 1;
+        if sa_core::bindings::rw_stream_find_chunk_call(
+            stream,
+            rd(schema, 8),
+            GPtr::from_raw(&mut len),
+            GPtr::from_raw(&mut version),
+        ) == 0
+        {
+            dict_destroy(dict);
+            return GPtr::NULL;
+        }
+        let entry = call_dict_cb(rd(schema, 0x28), stream.addr() as u32);
+        if entry == 0 {
+            dict_destroy(dict);
+            return GPtr::NULL;
+        }
+        let own: GPtr<u8> = rd(dict, 0);
+        let slot = slist_get_new_entry(rd(dict, 4), dict_hint(own));
+        wr::<u32>(slot, 0, entry);
+        call_dict_cb(rd(rd::<GPtr<u8>>(dict, 0), 0x18), entry);
+        call_dict_cb(rd(schema, 0x1C), entry);
+    }
+    dict
 }
 
 pub const HOOKS: &[HookReg] = &[
@@ -831,6 +943,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_RP_WORLD_SECTOR_TIE_DESTROY,
     HOOK_RP_WORLD_SECTOR_LIGHT_TIE_DESTROY,
     HOOK_RT_DICT_DESTROY,
+    HOOK_RT_DICT_SCHEMA_CREATE_DICT,
+    HOOK_RT_DICT_SCHEMA_STREAM_READ_DICT,
 ];
 
 /// This module's phase B natives (entries shorter than the 5-byte patch).

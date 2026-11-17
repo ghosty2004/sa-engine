@@ -69,11 +69,13 @@ use crate::bindings::rp_material_register_plugin_stream as material_register_plu
 use crate::bindings::rw_matrix_destroy as matrix_destroy;
 orig! {
     /// `_rwSListCreate(entrySize, hint)` (0x809160)
-    fn slist_create(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x809160 => crate::rxpipeline::rw_slist_create;
+    pub fn slist_create(size: u32, hint: u32) -> GPtr<u8> = cdecl 0x809160 => crate::rxpipeline::rw_slist_create;
     /// `_rwSListDestroy(list)` (0x809440)
     pub fn slist_destroy(s: GPtr<u8>) -> i32 = cdecl 0x809440 => crate::rxpipeline::rw_slist_destroy;
     /// `RtDictSchemaInit(schema)` (0x7CED40)
     fn dict_schema_init_call(schema: GPtr<u8>) -> GPtr<u8> = cdecl 0x7CED40 => rt_dict_schema_init;
+    /// `_rpUVAnimCustomDataStreamRead(stream)` (0x7CBF70)
+    fn custom_data_stream_read_call(stream: GPtr<u8>) -> GPtr<u8> = cdecl 0x7CBF70 => uv_anim_custom_data_stream_read;
     /// `RtDictSchemaDestruct(schema)` (0x7CED70)
     fn dict_schema_destruct_call(schema: GPtr<u8>) -> i32 = cdecl 0x7CED70 => rt_dict_schema_destruct;
 }
@@ -81,7 +83,7 @@ orig! {
 use sa_core::field::addr32 as a32;
 
 /// `RwErrorSet({0x1B7, _rwerror(code)})` (the RtAnim toolkit's plugin id).
-fn anim_error(code: u32) {
+pub(crate) fn anim_error(code: u32) {
     let mut e = RwError {
         plugin_id: 0x1B7,
         error_code: 0,
@@ -403,14 +405,7 @@ pub fn uvanim_material_dtor(m: GPtr<u8>, _offset: i32, _size: i32) -> GPtr<u8> {
         if interp.is_null() {
             continue;
         }
-        let anim = p8(rd::<u32>(interp, 0));
-        let data = p8(rd::<u32>(anim, 0x14));
-        let rc = rd::<i32>(data, 0x40).wrapping_sub(1);
-        wr::<i32>(data, 0x40, rc);
-        if rc == 0 {
-            rw_memory_free(p8(UVANIM_FREELIST.get()), p8(rd::<u32>(anim, 0x14)));
-            animation_destroy(anim);
-        }
+        uv_anim_destroy(p8(rd::<u32>(interp, 0)));
         interpolator_destroy(interp);
     }
     m
@@ -459,7 +454,80 @@ pub fn rt_dict_schema_destruct(schema: GPtr<u8>) -> i32 {
 }
 
 /// Every `#[hook]` of this module.
+/// `RpUVAnimDestroy(RtAnimAnimation*)` (0x7CC0C0; inlined in the material destructor above): the custom data's
+/// (+0x14) reference count (+0x40) drops; at 0 the custom data goes back to the freelist `[0xC978F4]` and the
+/// animation is destroyed (`RtAnimAnimationDestroy`). Returns 1.
+#[hook(addr = 0x7CC0C0, conv = cdecl, name = "RpUVAnimDestroy", expect = "56 8B 74 24 08 8B 46 14",
+       unverified = "frontier2-c17", route = "L2", hazards = "heap-writes")]
+pub fn uv_anim_destroy(anim: GPtr<u8>) -> u32 {
+    let data = p8(rd::<u32>(anim, 0x14));
+    let rc = rd::<i32>(data, 0x40).wrapping_sub(1);
+    wr::<i32>(data, 0x40, rc);
+    if rc == 0 {
+        rw_memory_free(p8(UVANIM_FREELIST.get()), p8(rd::<u32>(anim, 0x14)));
+        animation_destroy(anim);
+    }
+    1
+}
+
+/// `_rpUVAnimCustomDataStreamRead(RwStream*)` (0x7CBF70): a UV animation's custom data from the freelist
+/// `[0xC978F4]` (`G->memoryAlloc`, hint 0x30135; null → null): its 0x20-byte name (`RwStreamRead`), then eight
+/// int32 node-to-UV-channel entries at +0x20 (`RwStreamReadInt32`, 0x20 bytes); either read failing returns null
+/// (the entry is not freed); +0x40 reference count 1. Returns the custom data.
+#[hook(addr = 0x7CBF70, conv = cdecl, name = "_rpUVAnimCustomDataStreamRead", expect = "A1 F4 78 C9 00",
+       unverified = "frontier2-c17", route = "L2", hazards = "heap-writes")]
+pub fn uv_anim_custom_data_stream_read(stream: GPtr<u8>) -> GPtr<u8> {
+    let data = crate::common::rw_memory_alloc(p8(UVANIM_FREELIST.get()), 0x30135);
+    if data.is_null() {
+        return GPtr::NULL;
+    }
+    if crate::bindings::stream_read(stream, data, 0x20) == 0 {
+        return GPtr::NULL;
+    }
+    if crate::bindings::read_int32(stream, data.byte_add(0x20), 0x20).is_null() {
+        return GPtr::NULL;
+    }
+    wr::<u32>(data, 0x40, 1);
+    data
+}
+
+/// `RpUVAnimKeyFrameStreamRead(RwStream*, RtAnimAnimation*)` (0x7CC870): an int32 (discarded), the custom data
+/// (`_rpUVAnimCustomDataStreamRead`, stored at +0x14), then per key frame (+4 frames, 0x20 bytes each from +0x10)
+/// its time and data (`RwStreamReadReal`, 0x1C bytes at +4) and the previous frame's index (int32; +0 = frames +
+/// index * 0x20). Any failure returns null; else the animation.
+#[hook(addr = 0x7CC870, conv = cdecl, name = "RpUVAnimKeyFrameStreamRead", expect = "83 EC 08 8D 44 24 04",
+       unverified = "frontier2-c17", route = "L2", hazards = "heap-writes")]
+pub fn uv_anim_key_frame_stream_read(stream: GPtr<u8>, anim: GPtr<u8>) -> GPtr<u8> {
+    let mut unused = 0u32;
+    if crate::bindings::read_int32(stream, GPtr::from_raw(&mut unused).cast(), 4).is_null() {
+        return GPtr::NULL;
+    }
+    let custom = custom_data_stream_read_call(stream);
+    if custom.is_null() {
+        return GPtr::NULL;
+    }
+    let frames: u32 = rd(anim, 0x10);
+    wr::<u32>(anim, 0x14, custom.addr() as u32);
+    let mut i = 0i32;
+    while i < rd::<i32>(anim, 4) {
+        let kf = p8(frames.wrapping_add(i as u32 * 0x20));
+        if crate::bindings::read_real(stream, kf.byte_add(4), 0x1C).is_null() {
+            return GPtr::NULL;
+        }
+        let mut prev = 0u32;
+        if crate::bindings::read_int32(stream, GPtr::from_raw(&mut prev).cast(), 4).is_null() {
+            return GPtr::NULL;
+        }
+        wr::<u32>(kf, 0, (prev << 5).wrapping_add(frames));
+        i += 1;
+    }
+    anim
+}
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_UV_ANIM_DESTROY,
+    HOOK_UV_ANIM_CUSTOM_DATA_STREAM_READ,
+    HOOK_UV_ANIM_KEY_FRAME_STREAM_READ,
     HOOK_RT_ANIM_INITIALIZE,
     HOOK_ANIM_TOOLKIT_OPEN,
     HOOK_ANIM_TOOLKIT_CLOSE,

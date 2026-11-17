@@ -10,7 +10,7 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::hook;
 
-use crate::common::{RwError, module, p8, rd, rw_error_set, rw_error2, rw_free, rw_malloc, wr};
+use crate::common::{error2_plugin, module, p8, rd, rw_free, rw_malloc, wr};
 
 use crate::bindings::crt_qsort;
 use crate::bindings::mesh_header_for_all_meshes;
@@ -27,12 +27,7 @@ const REORDER_CB: u32 = 0x75D730;
 
 /// `RwErrorSet({2, _rwerror(0x80000013, size)})`: the out-of-memory error.
 fn out_of_memory(size: u32) {
-    let mut e = RwError {
-        plugin_id: 2,
-        error_code: 0,
-    };
-    e.error_code = rw_error2(0x8000_0013, size) as i32;
-    rw_error_set(GPtr::from_raw(&mut e).cast());
+    error2_plugin(2, 0x8000_0013, size);
 }
 
 /// `_rpTriListMeshGenerate(RpBuildMesh* bm, void* data)` (0x75D530, cdecl). An array of pointers to the `n`

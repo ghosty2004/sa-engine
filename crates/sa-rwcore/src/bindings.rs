@@ -369,6 +369,11 @@ orig! {
 }
 
 orig! {
+    /// `RtDictDestroy` (0x7CF130)
+    pub fn dict_destroy(dict: GPtr<u8>) -> u32 = cdecl 0x7CF130 => crate::frontier_b::rt_dict_destroy;
+}
+
+orig! {
     /// `RwStreamRead` (0x7EC9D0)
     pub fn stream_read(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => crate::stream::rw_stream_read;
 }
