@@ -9,7 +9,9 @@ use sa_math::x87::X87;
 
 use crate::common::{ftol32, g, rd, wr};
 
-use sa_world::bindings::entity_register_reference;
+use sa_core::bindings::matrix_mul_vec;
+use sa_world::bindings::{entity_register_reference, physical_add_to_moving_list};
+use sa_world::world::entity::entity_vset_is_static;
 orig! {
     /// `CRope::CreateHookObjectForRope()` (0x556070)
     fn rope_create_hook_object(rope: GPtr<u8>) = thiscall 0x556070 => crate::mvpb_r1::rope_create_hook_object;
@@ -266,5 +268,72 @@ pub fn ropes_create_rope_for_swat_ped(pos: GPtr<u32>) -> i32 {
     id as i32
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_ROPES_REGISTER_ROPE, HOOK_ROPES_IS_CARRIED_BY_ROPE, HOOK_ROPES_SET_SPEED_OF_TOP_NODE, HOOK_ROPES_FIND_COORS_ALONG_ROPE,
-    HOOK_ROPES_CREATE_ROPE_FOR_SWAT_PED];
+pub const HOOKS: &[HookReg] = &[
+    HOOK_ROPES_REGISTER_ROPE,
+    HOOK_ROPES_IS_CARRIED_BY_ROPE,
+    HOOK_ROPES_SET_SPEED_OF_TOP_NODE,
+    HOOK_ROPES_FIND_COORS_ALONG_ROPE,
+    HOOK_ROPES_CREATE_ROPE_FOR_SWAT_PED,
+    HOOK_ROPE_PICK_UP_OBJECT,
+];
+
+/// `CRope::PickUpObject(CEntity* obj)` (0x5569C0, thiscall): nothing when `obj` is already the picked-up object
+/// (+0x318); otherwise the current one released (`ReleasePickedUpObject` 0x556030, when set), `obj` stored there and
+/// registered on that slot (`CEntity::RegisterReference`). The hook object (+0x314) moves to `obj`'s matrix times
+/// `(0, 0, obj's col model bbox max z)` (the model info's col model +0x14; into its matrix position, or the
+/// placement position without a matrix) and stops using collision (+0x1C bit 0 cleared); `obj` +0x40 |= 0x2000000.
+/// By `obj`'s type (+0x36 & 7): a vehicle whose status (bits 3..7) is 2 becomes 3; an object with the static
+/// (+0x1C bit 2) or 0x40000 flag gets `SetIsStatic(false)` (vtable +0x10), `AddToMovingList` and +0xB8 = 0. (The
+/// original's argument is passed on without a null test, as here.)
+#[hook(addr = 0x5569C0, conv = thiscall, name = "CRope::PickUpObject", this = "CRope", expect = "83 EC 18 53 56 8B D9",
+       unverified = "frontier2-c19", route = "L2", hazards = "heap-writes")]
+pub fn rope_pick_up_object(this: GPtr<u8>, obj: GPtr<u8>) {
+    let slot = this.byte_add(0x318);
+    let cur = rd::<GPtr<u8>>(slot, 0);
+    if cur == obj {
+        return;
+    }
+    if !cur.is_null() {
+        crate::generated::generated_leaf_logic::g_crope_release_picked_up_object_556030(this.addr() as u32);
+    }
+    wr::<u32>(slot, 0, obj.addr() as u32);
+    entity_register_reference(obj, slot);
+    let mi = g::<u32>(MODEL_INFO_PTRS + 4 * rd::<i16>(obj, 0x22) as i32 as isize as usize).read();
+    let col = GPtr::<u8>::from_addr(rd::<u32>(GPtr::from_addr(mi as usize), 0x14) as usize);
+    let mut v = [0u32, 0, fcopy(rd::<f32>(col, 0x14)).to_bits()];
+    let mut out = [0u32; 3];
+    let held = rd::<GPtr<u8>>(slot, 0);
+    let r = matrix_mul_vec(GPtr::from_raw(out.as_mut_ptr()).cast(), rd(held, 0x14), GPtr::from_raw(v.as_mut_ptr()).cast());
+    let (px, py, pz) = (rd::<f32>(r, 0), rd::<f32>(r, 4), rd::<f32>(r, 8));
+    let hook_obj = rd::<GPtr<u8>>(this, 0x314);
+    let m = rd::<GPtr<u8>>(hook_obj, 0x14);
+    let (dst, o) = if m.is_null() { (hook_obj, 4) } else { (m, 0x30) };
+    wr::<f32>(dst, o, fcopy(px));
+    wr::<f32>(dst, o + 4, fcopy(py));
+    wr::<f32>(dst, o + 8, fcopy(pz));
+    let h = rd::<GPtr<u8>>(this, 0x314);
+    wr::<u32>(h, 0x1C, rd::<u32>(h, 0x1C) & !1);
+    let held = rd::<GPtr<u8>>(slot, 0);
+    wr::<u32>(held, 0x40, rd::<u32>(held, 0x40) | 0x200_0000);
+    let ty = rd::<u8>(obj, 0x36);
+    match ty & 7 {
+        2 => {
+            if ty & 0xF8 == 0x10 {
+                wr::<u8>(obj, 0x36, (ty & 7) | 0x18);
+            }
+        }
+        4 => {
+            let held = rd::<GPtr<u8>>(slot, 0);
+            let f = rd::<u32>(held, 0x1C);
+            if f & 4 != 0 || f & 0x4_0000 != 0 {
+                entity_vset_is_static(held, 0);
+                physical_add_to_moving_list(rd(slot, 0));
+                wr::<u8>(rd::<GPtr<u8>>(slot, 0), 0xB8, 0);
+            }
+        }
+        _ => {}
+    }
+}
+
+/// `CModelInfo::ms_modelInfoPtrs` (0xA9B0C8).
+const MODEL_INFO_PTRS: usize = 0xA9B0C8;
