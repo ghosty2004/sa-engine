@@ -30,7 +30,7 @@ pub const EXPORT_MEMORY: &str = "memory";
 /// The API's major version.
 pub const API_MAJOR: u16 = 1;
 /// The API's minor version.
-pub const API_MINOR: u16 = 0;
+pub const API_MINOR: u16 = 1;
 
 /// `major << 16 | minor`, the value of the `sa_api_version` export.
 pub const fn pack_version(major: u16, minor: u16) -> i32 {
@@ -57,6 +57,8 @@ pub mod status {
     /// An argument is invalid: a `(ptr, len)` range outside the mod's memory, text that is not UTF-8, a value out
     /// of range.
     pub const BAD_ARG: i32 = -2;
+    /// The file does not exist (`file_read`).
+    pub const NOT_FOUND: i32 = -3;
 }
 
 /// Log levels of the `log` import.
@@ -104,6 +106,8 @@ pub enum Permission {
     None,
     /// `render = true`: graphics settings, post-processing, overlays.
     Render,
+    /// `files = "own"`: the mod's own files (its folder, through the host).
+    Files,
 }
 
 /// One host function (an import of the mod).
@@ -124,6 +128,8 @@ pub struct ImportDef {
 pub struct ExportDef {
     /// Its export name.
     pub name: &'static str,
+    /// Every mod exports it (API 1.0); an optional one may be missing (the host skips its call point).
+    pub required: bool,
     /// Parameter names and types.
     pub params: &'static [(&'static str, Ty)],
     /// The result type.
@@ -154,24 +160,58 @@ macro_rules! for_each_import {
             /// pixel), colour `rgba` (`0xRRGGBBAA`). Characters the font lacks draw as `?`. Returns the text's width
             /// in pixels. Valid in the overlay phase.
             [Render] fn overlay_text(x: f32, y: f32, size: f32, rgba: i32, text_ptr: i32, text_len: i32) -> i32;
+            /// (1.1) The number of display modes the platform offers (natively the monitor's video modes, offscreen
+            /// the platform's fixed mode table; in the browser the canvas size). Valid in every phase.
+            [Render] fn display_mode_count() -> i32;
+            /// (1.1) The width of display mode `index` (`0 .. display_mode_count()`); `index` -1 is the desktop
+            /// (natively the monitor's current mode; in the browser the canvas's size on the page in device
+            /// pixels, i.e. CSS pixels times the device pixel ratio).
+            [Render] fn display_mode_width(index: i32) -> i32;
+            /// (1.1) The height of display mode `index`; -1: the desktop (see `display_mode_width`).
+            [Render] fn display_mode_height(index: i32) -> i32;
+            /// (1.1) Requests the game's video mode `width` x `height` (32-bit colour), in a window (`fullscreen`
+            /// 0) or full screen (1; natively). In the settings phase it applies from the game's first frame,
+            /// through the original's own video-mode selection; later (a resize event, the overlay phase) it is
+            /// applied at the next frame boundary as the menu's resolution change, when the adapter lists the
+            /// size. The last request of a phase wins. Returns 0, or `BAD_ARG` (a size outside 320x240 ..
+            /// 16384x16384).
+            [Render] fn request_video_mode(width: i32, height: i32, fullscreen: i32) -> i32;
+            /// (1.1) Reads the mod's own file `name` (UTF-8, `name_len` bytes at `name_ptr`: a plain file name
+            /// of `A-Z a-z 0-9 . _ -`, not `mod.toml`, not a `.wasm`) into the buffer (`buf_ptr`, `buf_len`):
+            /// copies `min(size, buf_len)` bytes and returns the file's size, or `NOT_FOUND`.
+            [Files] fn file_read(name_ptr: i32, name_len: i32, buf_ptr: i32, buf_len: i32) -> i32;
+            /// (1.1) Writes (replaces) the mod's own file `name` (as `file_read`) with `data_len` bytes at
+            /// `data_ptr` (at most 1 MiB). Natively the file lives in the mod's folder; in the browser it is kept
+            /// for the session (the page keeps no files). Returns 0.
+            [Files] fn file_write(name_ptr: i32, name_len: i32, data_ptr: i32, data_len: i32) -> i32;
         }
     };
 }
 
 /// Expands `$cb! { ... }` with the mod's entry points (its exports), one item per function:
-/// `$(#[doc])* fn name(param: ty, ...) -> ty;`. An optional `[tokens]` after `$cb` is passed through first.
+/// `$(#[doc])* [Required|Optional] fn name(param: ty, ...) -> ty;`. An optional `[tokens]` after `$cb` is passed
+/// through first. `Required` entry points are those of API 1.0; the ones added later are `Optional` (a mod built for
+/// an older minor version lacks them; the host then skips that call point).
 #[macro_export]
 macro_rules! for_each_export {
     ($cb:ident $([$($extra:tt)*])?) => {
         $cb! {
             $([$($extra)*])?
             /// The API version the mod was built against ([`pack_version`]).
-            fn sa_api_version() -> i32;
+            [Required] fn sa_api_version() -> i32;
             /// Called once after loading; anything but 0 refuses the mod.
-            fn sa_init() -> i32;
+            [Required] fn sa_init() -> i32;
             /// The overlay phase: called once per presented frame, after the game's own drawing, before the
             /// present. `frame` counts the overlay calls since the mod was loaded (0, 1, ...). Returns 0.
-            fn sa_overlay(frame: i32) -> i32;
+            [Required] fn sa_overlay(frame: i32) -> i32;
+            /// (1.1) The settings phase: called once at start-up, after the game has read its settings file and
+            /// before it selects its video mode and creates its D3D device. Graphics settings requested here
+            /// (`request_video_mode`) apply from the first frame. Returns 0.
+            [Optional] fn sa_settings() -> i32;
+            /// (1.1) A platform event: the drawable the game is shown in (the native window's client area, the
+            /// browser canvas's size on the page in device pixels) changed to `width` x `height`. The game's video
+            /// mode does not follow by itself (the image is scaled); a mod may request a new one. Returns 0.
+            [Optional] fn sa_resize(width: i32, height: i32) -> i32;
         }
     };
 }
@@ -184,6 +224,17 @@ macro_rules! __ty {
     };
     (f32) => {
         $crate::Ty::F32
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __required {
+    (Required) => {
+        true
+    };
+    (Optional) => {
+        false
     };
 }
 
@@ -249,10 +300,15 @@ macro_rules! import_table {
 for_each_import!(import_table);
 
 macro_rules! export_table {
-    ($( $(#[$m:meta])* fn $name:ident( $($p:ident : $t:ident),* ) -> $r:ident; )*) => {
+    ($( $(#[$m:meta])* [$req:ident] fn $name:ident( $($p:ident : $t:ident),* ) -> $r:ident; )*) => {
         /// Every mod entry point.
         pub static EXPORTS: &[ExportDef] = &[$(
-            ExportDef { name: stringify!($name), params: &[$((stringify!($p), __ty!($t))),*], result: __ty!($r) },
+            ExportDef {
+                name: stringify!($name),
+                required: __required!($req),
+                params: &[$((stringify!($p), __ty!($t))),*],
+                result: __ty!($r),
+            },
         )*];
     };
 }
@@ -264,6 +320,27 @@ pub const EXPORT_API_VERSION: &str = "sa_api_version";
 pub const EXPORT_INIT: &str = "sa_init";
 /// The name of the `sa_overlay` export.
 pub const EXPORT_OVERLAY: &str = "sa_overlay";
+/// The name of the `sa_settings` export (1.1).
+pub const EXPORT_SETTINGS: &str = "sa_settings";
+/// The name of the `sa_resize` export (1.1).
+pub const EXPORT_RESIZE: &str = "sa_resize";
+
+/// `request_video_mode`'s accepted sizes (inclusive).
+pub const VIDEO_MODE_MIN: (i32, i32) = (320, 240);
+/// See [`VIDEO_MODE_MIN`].
+pub const VIDEO_MODE_MAX: i32 = 16_384;
+/// The largest file `file_write` writes.
+pub const MAX_FILE: usize = 1 << 20;
+
+/// True for a name `file_read` / `file_write` accept: 1..=64 bytes of `A-Z a-z 0-9 . _ -`, not starting with `.`,
+/// not `mod.toml`, not a `.wasm`.
+pub fn valid_file_name(name: &str) -> bool {
+    (1..=64).contains(&name.len())
+        && name.bytes().all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'_' | b'-'))
+        && !name.starts_with('.')
+        && !name.eq_ignore_ascii_case("mod.toml")
+        && !name.to_ascii_lowercase().ends_with(".wasm")
+}
 
 /// The index of the import named `name` in [`IMPORTS`].
 pub fn import_index(name: &str) -> Option<usize> {
@@ -293,8 +370,18 @@ mod tests {
 
     #[test]
     fn exports_are_named_once() {
-        for n in [EXPORT_API_VERSION, EXPORT_INIT, EXPORT_OVERLAY] {
+        for n in [EXPORT_API_VERSION, EXPORT_INIT, EXPORT_OVERLAY, EXPORT_SETTINGS, EXPORT_RESIZE] {
             assert_eq!(EXPORTS.iter().filter(|d| d.name == n).count(), 1, "{n}");
+        }
+        assert!(export(EXPORT_INIT).unwrap().required);
+        assert!(!export(EXPORT_SETTINGS).unwrap().required);
+    }
+
+    #[test]
+    fn file_names() {
+        assert!(valid_file_name("config.toml"));
+        for n in ["", ".hidden", "a/b", "..", "mod.toml", "MOD.TOML", "x.wasm", "a b"] {
+            assert!(!valid_file_name(n), "{n:?}");
         }
     }
 

@@ -9,7 +9,9 @@
 //! entry = "hello.wasm"       # optional, default "<id>.wasm", next to mod.toml
 //!
 //! [permissions]
-//! render = true              # overlays (API 1.0); the other keys of ADR-004 §3.3 are known but not granted yet
+//! render = true              # overlays, display modes, the video mode
+//! files = "own"              # the mod's own files (API 1.1); the other keys of ADR-004 §3.3 are known but not
+//!                            # granted yet
 //!
 //! [limits]                   # optional; clamped to the host's maxima
 //! memory_mib = 16            # linear memory cap
@@ -18,11 +20,13 @@
 
 use toml::{Table, Value};
 
-/// What the host grants a mod (API 1.0: overlays only).
+/// What the host grants a mod.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Permissions {
-    /// `render = true`: the overlay functions.
+    /// `render = true`: the overlay, display and video-mode functions.
     pub render: bool,
+    /// `files = "own"`: the mod's own files.
+    pub files: bool,
 }
 
 /// A mod's budgets.
@@ -119,7 +123,7 @@ pub fn parse(text: &str) -> Result<(Manifest, Vec<String>), String> {
     if let Some(p) = root.get("permissions") {
         let Value::Table(p) = p else { return Err("mod.toml: [permissions] is not a table".into()) };
         for (k, v) in p {
-            // what asks for nothing: false, "none", [] (and "own" files, which needs no grant in API 1.0)
+            // what asks for nothing: false, "none", []
             let nothing = matches!(v, Value::Boolean(false))
                 || matches!(v, Value::String(s) if s == "none")
                 || matches!(v, Value::Array(a) if a.is_empty());
@@ -128,10 +132,10 @@ pub fn parse(text: &str) -> Result<(Manifest, Vec<String>), String> {
                     Value::Boolean(b) => permissions.render = *b,
                     _ => return Err(format!("mod.toml: permissions.render: expected true or false, got {v:?}")),
                 },
-                "files" if matches!(v, Value::String(s) if s == "own") => {}
+                "files" if matches!(v, Value::String(s) if s == "own") => permissions.files = true,
                 "input" | "ui" | "state" | "hooks" | "entities" | "net" | "files" => {
                     if !nothing {
-                        warnings.push(format!("permission {k} = {v:?}: not available in API 1.0, not granted"));
+                        warnings.push(format!("permission {k} = {v:?}: not available in API 1.1, not granted"));
                     }
                 }
                 _ => warnings.push(format!("[permissions] {k}: unknown permission, ignored")),

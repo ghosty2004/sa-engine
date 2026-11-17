@@ -20,8 +20,9 @@ fn same(f: &FuncType, params: &[(&str, Ty)], result: Ty) -> bool {
     f.params().iter().copied().eq(params.iter().map(|p| ty(p.1))) && f.results() == [ty(result)]
 }
 
-/// Checks `wasm` against the interface and the memory cap `memory_bytes`.
-pub fn check(wasm: &[u8], memory_bytes: u64) -> Result<(), String> {
+/// Checks `wasm` against the interface and the memory cap `memory_bytes`. Returns the entry points it exports
+/// (every required one, and the optional ones it has).
+pub fn check(wasm: &[u8], memory_bytes: u64) -> Result<Vec<&'static str>, String> {
     wasmparser::Validator::new().validate_all(wasm).map_err(|e| format!("invalid wasm: {e}"))?;
     let mut types: Vec<Option<FuncType>> = Vec::new();
     let mut funcs: Vec<u32> = Vec::new();
@@ -48,7 +49,13 @@ pub fn check(wasm: &[u8], memory_bytes: u64) -> Result<(), String> {
                     let def = IMPORTS
                         .iter()
                         .find(|d| i.module == IMPORT_MODULE && d.name == i.name)
-                        .ok_or_else(|| format!("import {}.{}: not a host function of API 1.0", i.module, i.name))?;
+                        .ok_or_else(|| format!(
+                            "import {}.{}: not a host function of API {}.{}",
+                            i.module,
+                            i.name,
+                            sa_mod_api::API_MAJOR,
+                            sa_mod_api::API_MINOR
+                        ))?;
                     match types.get(t as usize) {
                         Some(Some(f)) if same(f, def.params, def.result) => {}
                         _ => return Err(format!("import {}.{}: wrong signature", i.module, i.name)),
@@ -85,16 +92,20 @@ pub fn check(wasm: &[u8], memory_bytes: u64) -> Result<(), String> {
     if !exports.iter().any(|(n, k, _)| n == EXPORT_MEMORY && *k == ExternalKind::Memory) {
         return Err(format!("no memory exported as {EXPORT_MEMORY:?}"));
     }
+    let mut found = Vec::new();
     for d in EXPORTS {
         let Some((_, _, i)) = exports.iter().find(|(n, k, _)| n == d.name && *k == ExternalKind::Func) else {
-            return Err(format!("no function exported as {:?}", d.name));
+            if d.required {
+                return Err(format!("no function exported as {:?}", d.name));
+            }
+            continue;
         };
         match funcs.get(*i as usize).and_then(|t| types.get(*t as usize)) {
-            Some(Some(f)) if same(f, d.params, d.result) => {}
+            Some(Some(f)) if same(f, d.params, d.result) => found.push(d.name),
             _ => return Err(format!("export {:?}: wrong signature", d.name)),
         }
     }
-    Ok(())
+    Ok(found)
 }
 
 #[cfg(test)]
@@ -118,7 +129,7 @@ pub(crate) mod tests {
     #[test]
     fn accepts_and_rejects() {
         let ok = wat_mod("", "1", "i32.const 0");
-        assert_eq!(check(&ok, 1 << 20), Ok(()));
+        assert_eq!(check(&ok, 1 << 20), Ok(vec!["sa_api_version", "sa_init", "sa_overlay"]));
         assert!(check(&ok, 1000).unwrap_err().contains("cap"));
         let bad = wat_mod(r#"(import "env" "x" (func))"#, "1", "i32.const 0");
         assert!(check(&bad, 1 << 20).unwrap_err().contains("env.x"));

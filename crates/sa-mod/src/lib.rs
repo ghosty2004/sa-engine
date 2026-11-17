@@ -108,6 +108,75 @@ impl Overlay {
     }
 }
 
+/// The display and the game's video mode (permission `render`; API 1.1).
+pub mod display {
+    use super::{Error, check, ffi};
+
+    /// The desktop: natively the monitor's current mode (offscreen the platform's fixed desktop mode), in the
+    /// browser the canvas's size on the page in device pixels. `(0, 0)` without the `render` permission.
+    pub fn desktop() -> (u32, u32) {
+        // SAFETY: host function calls with plain values
+        let (w, h) = unsafe { (ffi::display_mode_width(-1), ffi::display_mode_height(-1)) };
+        (w.max(0) as u32, h.max(0) as u32)
+    }
+
+    /// The display modes the platform offers, `(width, height)`.
+    pub fn modes() -> Vec<(u32, u32)> {
+        // SAFETY: host function calls with plain values
+        let n = unsafe { ffi::display_mode_count() }.max(0);
+        (0..n)
+            .map(|i| {
+                // SAFETY: as above
+                let (w, h) = unsafe { (ffi::display_mode_width(i), ffi::display_mode_height(i)) };
+                (w.max(0) as u32, h.max(0) as u32)
+            })
+            .collect()
+    }
+
+    /// Requests the game's video mode `width` x `height`, in a window or full screen (natively). In
+    /// [`crate::Mod::settings`] it applies from the first frame; later at the next frame boundary, when the adapter
+    /// lists the size.
+    pub fn request_video_mode(width: u32, height: u32, fullscreen: bool) -> Result<(), Error> {
+        let (w, h) = (width.min(i32::MAX as u32) as i32, height.min(i32::MAX as u32) as i32);
+        // SAFETY: a host function call with plain values
+        check(unsafe { ffi::request_video_mode(w, h, fullscreen as i32) }).map(|_| ())
+    }
+}
+
+/// The mod's own files (permission `files = "own"`; API 1.1): natively in the mod's folder, in the browser kept for
+/// the session. Names are plain file names (`A-Z a-z 0-9 . _ -`), not `mod.toml`, not a `.wasm`.
+pub mod files {
+    use super::{Error, check, ffi, ptr_len};
+
+    /// The file's bytes, `None` when it does not exist.
+    pub fn read(name: &str) -> Result<Option<Vec<u8>>, Error> {
+        let (np, nl) = ptr_len(name.as_bytes());
+        let mut buf = vec![0u8; 4096];
+        loop {
+            let (bp, bl) = (buf.as_mut_ptr() as usize as i32, buf.len() as i32);
+            // SAFETY: a host function call; the host writes at most `bl` bytes at `bp`, inside `buf`
+            let r = unsafe { ffi::file_read(np, nl, bp, bl) };
+            if r == crate::status::NOT_FOUND {
+                return Ok(None);
+            }
+            let size = check(r)? as usize;
+            if size <= buf.len() {
+                buf.truncate(size);
+                return Ok(Some(buf));
+            }
+            buf.resize(size, 0);
+        }
+    }
+
+    /// Writes (replaces) the file.
+    pub fn write(name: &str, data: &[u8]) -> Result<(), Error> {
+        let (np, nl) = ptr_len(name.as_bytes());
+        let (dp, dl) = ptr_len(data);
+        // SAFETY: a host function call; the host reads both ranges through bounds-checked copies
+        check(unsafe { ffi::file_write(np, nl, dp, dl) }).map(|_| ())
+    }
+}
+
 /// A mod: its callbacks, called by the host on the game thread in the load order.
 pub trait Mod: 'static {
     /// Called once after loading. An error refuses the mod (its message goes to the log).
@@ -119,6 +188,16 @@ pub trait Mod: 'static {
     /// overlay calls since the mod was loaded.
     fn overlay(&mut self, frame: u32, overlay: &mut Overlay) {
         let _ = (frame, overlay);
+    }
+
+    /// The settings phase (API 1.1): once at start-up, before the game selects its video mode and creates its
+    /// D3D device ([`display::request_video_mode`] applies from the first frame).
+    fn settings(&mut self) {}
+
+    /// The drawable the game is shown in (the native window's client area, the browser canvas in device pixels)
+    /// changed size (API 1.1).
+    fn resize(&mut self, width: u32, height: u32) {
+        let _ = (width, height);
     }
 }
 
@@ -151,13 +230,25 @@ pub mod rt {
         }
     }
 
-    pub fn sa_overlay<T>(frame: i32) -> i32 {
+    fn with(f: impl FnOnce(&mut dyn Mod)) -> i32 {
         INSTANCE.with_borrow_mut(|i| {
             if let Some(m) = i.as_mut() {
-                m.overlay(frame as u32, &mut Overlay { _private: () });
+                f(m.as_mut());
             }
         });
         0
+    }
+
+    pub fn sa_overlay<T>(frame: i32) -> i32 {
+        with(|m| m.overlay(frame as u32, &mut Overlay { _private: () }))
+    }
+
+    pub fn sa_settings<T>() -> i32 {
+        with(|m| m.settings())
+    }
+
+    pub fn sa_resize<T>(width: i32, height: i32) -> i32 {
+        with(|m| m.resize(width.max(0) as u32, height.max(0) as u32))
     }
 }
 
@@ -194,6 +285,9 @@ mod tests {
         assert_eq!(check(status::DENIED), Err(Error::Denied));
         assert_eq!(__sa_mod_entry::sa_init(), 0);
         assert_eq!(__sa_mod_entry::sa_overlay(0), 0);
+        assert_eq!(__sa_mod_entry::sa_settings(), 0);
+        assert_eq!(__sa_mod_entry::sa_resize(640, 480), 0);
+        assert_eq!(display::desktop(), (0, 0));
         assert_eq!(sa_mod_api::unpack_version(__sa_mod_entry::sa_api_version()), (API_MAJOR, API_MINOR));
     }
 }

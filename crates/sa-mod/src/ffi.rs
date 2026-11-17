@@ -30,7 +30,7 @@ sa_mod_api::for_each_import!(imports);
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __sa_mod_exports {
-    ([$t:ty] $( $(#[$m:meta])* fn $name:ident( $($p:ident : $pt:ident),* ) -> $r:ident; )*) => {
+    ([$t:ty] $( $(#[$m:meta])* [$req:ident] fn $name:ident( $($p:ident : $pt:ident),* ) -> $r:ident; )*) => {
         $(
             $(#[$m])*
             #[unsafe(no_mangle)]

@@ -6,13 +6,14 @@
 //! synchronous (allowed in a worker).
 
 use std::cell::RefCell;
+use std::collections::BTreeMap;
 
 use sa_mod_api::{IMPORTS, Val};
 use wasm_bindgen::prelude::*;
 
 use super::meter;
 use crate::ModSource;
-use crate::api::{CallCtx, dispatch};
+use crate::api::{CallCtx, Mem, dispatch};
 use crate::engine::{CallError, Engine, Instance};
 use crate::manifest::{INIT_FUEL_FACTOR, Limits};
 
@@ -32,6 +33,22 @@ extern "C" {
     /// `saGameMods.read(handle, ptr, len)`: a copy of the mod's memory range, `undefined` when out of bounds.
     #[wasm_bindgen(js_namespace = saGameMods, js_name = read)]
     fn js_read(handle: u32, ptr: u32, len: u32) -> Option<Vec<u8>>;
+    /// `saGameMods.write(handle, ptr, bytes)`: copies `bytes` into the mod's memory; false when out of bounds.
+    #[wasm_bindgen(js_namespace = saGameMods, js_name = write)]
+    fn js_write(handle: u32, ptr: u32, bytes: &[u8]) -> bool;
+}
+
+/// The memory of mod `handle`, through the glue.
+struct JsMem(u32);
+
+impl Mem for JsMem {
+    fn read(&self, ptr: u32, len: u32) -> Option<Vec<u8>> {
+        js_read(self.0, ptr, len)
+    }
+
+    fn write(&mut self, ptr: u32, data: &[u8]) -> bool {
+        js_write(self.0, ptr, data)
+    }
 }
 
 thread_local! {
@@ -59,7 +76,7 @@ pub fn sa_mod_host_import(index: u32, args: Vec<f64>) -> Option<f64> {
     CURRENT.with_borrow_mut(|c| {
         let (handle, ctx) = c.as_mut()?;
         let h = *handle;
-        dispatch(ctx, &|p, n| js_read(h, p, n), index as usize, &vals).ok().map(f64::from)
+        dispatch(ctx, &mut JsMem(h), index as usize, &vals).ok().map(f64::from)
     })
 }
 
@@ -123,13 +140,27 @@ impl Instance for BrowserInstance {
     }
 }
 
-/// A mod folder on the page's server (`mods/NAME/`, relative to the worker).
+thread_local! {
+    /// The files mods wrote this session, by URL (the page keeps no files; a written file shadows the server's).
+    static WRITTEN: RefCell<BTreeMap<String, Vec<u8>>> = const { RefCell::new(BTreeMap::new()) };
+}
+
+/// A mod folder on the page's server (`mods/NAME/`, relative to the worker). Files the mod writes are kept in
+/// memory for the session.
 struct UrlSource(String);
 
 impl ModSource for UrlSource {
     fn read(&self, file: &str) -> Result<Vec<u8>, String> {
         let url = format!("{}{file}", self.0);
+        if let Some(d) = WRITTEN.with_borrow(|w| w.get(&url).cloned()) {
+            return Ok(d);
+        }
         js_fetch(&url).ok_or_else(|| format!("{url}: not found"))
+    }
+
+    fn write(&self, file: &str, data: &[u8]) -> Result<(), String> {
+        WRITTEN.with_borrow_mut(|w| w.insert(format!("{}{file}", self.0), data.to_vec()));
+        Ok(())
     }
 
     fn location(&self) -> String {

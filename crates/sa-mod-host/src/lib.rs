@@ -6,11 +6,12 @@
 //! * [`api`]: the host functions, implemented once for both engines;
 //! * [`engine`]: the engine seam, with the backends wasmtime (native) and the browser's WebAssembly (wasm32) in
 //!   `backend`;
-//! * [`Host`]: loading, the load order, the frame phases (M0: the overlay phase), budgets and disabling: a mod that
-//!   traps or overruns its fuel is disabled for the session and reported; the game and the other mods go on.
+//! * [`Host`]: loading, the load order, the call points (the settings phase before the game's D3D device exists,
+//!   the overlay phase of every frame, the resize event), budgets and disabling: a mod that traps or overruns its
+//!   fuel is disabled for the session and reported; the game and the other mods go on.
 //!
-//! The host never touches game state: what a mod produces in M0 is overlay rectangles for the render layer and log
-//! lines.
+//! The host never touches game state: what a mod produces is overlay rectangles for the render layer, video-mode
+//! requests (which the game applies through the original's own video-mode state), its own files and log lines.
 
 pub mod api;
 mod backend;
@@ -18,10 +19,15 @@ pub mod engine;
 pub mod manifest;
 pub mod module;
 
-use sa_mod_api::{API_MAJOR, API_MINOR, EXPORT_API_VERSION, EXPORT_INIT, EXPORT_OVERLAY, Val, level, unpack_version};
+use std::rc::Rc;
+
+use sa_mod_api::{
+    API_MAJOR, API_MINOR, EXPORT_API_VERSION, EXPORT_INIT, EXPORT_OVERLAY, EXPORT_RESIZE, EXPORT_SETTINGS, Val, level,
+    unpack_version,
+};
 use sa_platform::gpu::OverlayRect;
 
-use crate::api::CallCtx;
+use crate::api::{CallCtx, Display, Files, VideoRequest};
 use crate::engine::{Engine, Instance};
 use crate::manifest::{INIT_FUEL_FACTOR, Manifest};
 
@@ -29,8 +35,10 @@ pub use backend::sources;
 
 /// Where a mod's files come from (a folder natively, the page's server on the web).
 pub trait ModSource {
-    /// The bytes of `file` (`mod.toml`, the entry `.wasm`) in the mod's folder.
+    /// The bytes of `file` (`mod.toml`, the entry `.wasm`, the mod's own files) in the mod's folder.
     fn read(&self, file: &str) -> Result<Vec<u8>, String>;
+    /// Writes (replaces) the mod's own file `file` (`files = "own"`; the name is checked by the host).
+    fn write(&self, file: &str, data: &[u8]) -> Result<(), String>;
     /// The folder, for messages.
     fn location(&self) -> String;
 }
@@ -40,6 +48,10 @@ pub struct LoadedMod {
     /// Its manifest.
     pub manifest: Manifest,
     instance: Box<dyn Instance>,
+    /// The entry points it exports.
+    exports: Vec<&'static str>,
+    /// Its folder (for its own files).
+    source: Rc<dyn ModSource>,
     /// Why it was disabled (`None`: running).
     pub disabled: Option<String>,
     /// Overlay calls so far.
@@ -53,6 +65,9 @@ pub struct Host {
     engine: Box<dyn Engine>,
     mods: Vec<LoadedMod>,
     log: Box<dyn Fn(&str)>,
+    display: Rc<Display>,
+    /// A video mode requested outside the settings phase, not yet taken by the game.
+    video: Option<VideoRequest>,
 }
 
 impl Host {
@@ -63,7 +78,12 @@ impl Host {
 
     /// A host on `engine`.
     pub fn with_engine(engine: Box<dyn Engine>, log: Box<dyn Fn(&str)>) -> Host {
-        Host { engine, mods: Vec::new(), log }
+        Host { engine, mods: Vec::new(), log, display: Rc::default(), video: None }
+    }
+
+    /// The display the platform reports to the mods (`display_mode_*`).
+    pub fn set_display(&mut self, display: Display) {
+        self.display = Rc::new(display);
     }
 
     /// The loaded mods, in load order.
@@ -86,7 +106,8 @@ impl Host {
 
     /// Loads the mod in `src`: manifest, API version, module checks, instantiation, `sa_api_version`, `sa_init`.
     /// An error leaves the host unchanged.
-    pub fn load(&mut self, src: &dyn ModSource) -> Result<(), String> {
+    pub fn load(&mut self, src: Box<dyn ModSource>) -> Result<(), String> {
+        let src: Rc<dyn ModSource> = Rc::from(src);
         let at = src.location();
         let text = src.read("mod.toml")?;
         let text = String::from_utf8(text).map_err(|_| format!("{at}/mod.toml: not UTF-8"))?;
@@ -105,10 +126,11 @@ impl Host {
             ));
         }
         let wasm = src.read(&manifest.entry)?;
-        module::check(&wasm, manifest.limits.memory_bytes).map_err(|e| format!("mod {id}: {}: {e}", manifest.entry))?;
+        let exports =
+            module::check(&wasm, manifest.limits.memory_bytes).map_err(|e| format!("mod {id}: {}: {e}", manifest.entry))?;
         let mut instance =
             self.engine.instantiate(&wasm, &manifest.limits).map_err(|e| format!("mod {id}: {e}"))?;
-        let mut ctx = CallCtx { permissions: manifest.permissions, ..Default::default() };
+        let mut ctx = self.ctx(&manifest, &src);
         let init_fuel = manifest.limits.fuel.saturating_mul(INIT_FUEL_FACTOR);
         let v = instance.call(EXPORT_API_VERSION, &[], init_fuel, &mut ctx).map_err(|e| format!("mod {id}: {e}"))?;
         if unpack_version(v) != manifest.api {
@@ -126,43 +148,110 @@ impl Host {
             Err(e) => return Err(format!("mod {id}: sa_init: {e}")),
         }
         (self.log)(&format!(
-            "mod {id} loaded: {} {} from {at} ({} bytes, {}; render {}, memory cap {} MiB, fuel {} per call)",
+            "mod {id} loaded: {} {} from {at} ({} bytes, {}; render {}, files {}, memory cap {} MiB, fuel {} per call)",
             manifest.name,
             manifest.version,
             wasm.len(),
             self.engine.name(),
             manifest.permissions.render,
+            manifest.permissions.files,
             manifest.limits.memory_bytes >> 20,
             manifest.limits.fuel
         ));
-        self.mods.push(LoadedMod { manifest, instance, disabled: None, frames: 0, micros: 0 });
+        self.mods.push(LoadedMod { manifest, instance, exports, source: src, disabled: None, frames: 0, micros: 0 });
         Ok(())
+    }
+
+    /// A call context for the mod with `manifest` and folder `src`.
+    fn ctx(&self, manifest: &manifest::Manifest, src: &Rc<dyn ModSource>) -> CallCtx {
+        CallCtx {
+            permissions: manifest.permissions,
+            display: self.display.clone(),
+            files: manifest.permissions.files.then(|| Files(src.clone())),
+            ..Default::default()
+        }
+    }
+
+    /// Calls `export` with `args` (built per mod) on every running mod that exports it, in load order; `each` gets
+    /// every successful call's context. A mod that fails is disabled (what it produced in that call is dropped)
+    /// and reported. Returns the last video-mode request.
+    fn call_all(
+        &mut self,
+        export: &'static str,
+        screen: (u32, u32),
+        args: impl Fn(&LoadedMod) -> Vec<Val>,
+        mut each: impl FnMut(&mut CallCtx),
+    ) -> Option<VideoRequest> {
+        let mut video = None;
+        for i in 0..self.mods.len() {
+            let m = &self.mods[i];
+            if m.disabled.is_some() || !m.exports.contains(&export) {
+                continue;
+            }
+            let mut ctx = self.ctx(&m.manifest, &m.source);
+            ctx.screen = screen;
+            ctx.overlay = export == EXPORT_OVERLAY;
+            let a = args(m);
+            let m = &mut self.mods[i];
+            let t = web_time::Instant::now();
+            let r = m.instance.call(export, &a, m.manifest.limits.fuel, &mut ctx);
+            m.micros += t.elapsed().as_micros() as u64;
+            let frame = m.frames;
+            if export == EXPORT_OVERLAY {
+                m.frames += 1;
+            }
+            let id = m.manifest.id.clone();
+            // the mod's own lines first (a panicking Rust mod logs its message before it traps)
+            self.flush_logs(&id, &mut ctx);
+            match r {
+                Ok(_) => {
+                    video = ctx.video.or(video);
+                    each(&mut ctx);
+                }
+                Err(e) => {
+                    let msg = if export == EXPORT_OVERLAY {
+                        format!("{e} in {export} (frame {frame})")
+                    } else {
+                        format!("{e} in {export}")
+                    };
+                    self.mods[i].disabled = Some(msg.clone());
+                    (self.log)(&format!("mod {id} disabled: {msg}; the game continues"));
+                }
+            }
+        }
+        video
+    }
+
+    /// The settings phase (once, before the game selects its video mode and creates its D3D device): calls every
+    /// running mod's `sa_settings`. Returns the video mode requested (the last request in load order).
+    pub fn settings(&mut self) -> Option<VideoRequest> {
+        self.video = None;
+        self.call_all(EXPORT_SETTINGS, (0, 0), |_| Vec::new(), |_| {})
+    }
+
+    /// The resize event: the drawable the game is shown in is now `width` x `height`. A video mode a mod requests
+    /// in response is kept for [`Host::take_video_request`].
+    pub fn resize(&mut self, width: u32, height: u32, screen: (u32, u32)) {
+        let args = [Val::I32(width.min(i32::MAX as u32) as i32), Val::I32(height.min(i32::MAX as u32) as i32)];
+        if let Some(v) = self.call_all(EXPORT_RESIZE, screen, |_| args.to_vec(), |_| {}) {
+            self.video = Some(v);
+        }
+    }
+
+    /// The video mode requested since the last call (outside the settings phase), for the game to apply at the next
+    /// frame boundary.
+    pub fn take_video_request(&mut self) -> Option<VideoRequest> {
+        self.video.take()
     }
 
     /// The overlay phase of a frame: calls every running mod's `sa_overlay` in load order and appends what they
     /// drew to `out`. A mod that fails is disabled (its drawing of this frame is dropped) and reported.
     pub fn overlay(&mut self, screen: (u32, u32), out: &mut Vec<OverlayRect>) {
-        for i in 0..self.mods.len() {
-            let m = &mut self.mods[i];
-            if m.disabled.is_some() {
-                continue;
-            }
-            let mut ctx = CallCtx { permissions: m.manifest.permissions, screen, overlay: true, ..Default::default() };
-            let t = web_time::Instant::now();
-            let r = m.instance.call(EXPORT_OVERLAY, &[Val::I32(m.frames as i32)], m.manifest.limits.fuel, &mut ctx);
-            m.micros += t.elapsed().as_micros() as u64;
-            m.frames += 1;
-            let (id, frame) = (m.manifest.id.clone(), m.frames - 1);
-            // the mod's own lines first (a panicking Rust mod logs its message before it traps)
-            self.flush_logs(&id, &mut ctx);
-            match r {
-                Ok(_) => out.append(&mut ctx.rects),
-                Err(e) => {
-                    let msg = format!("{e} in sa_overlay (frame {frame})");
-                    self.mods[i].disabled = Some(msg.clone());
-                    (self.log)(&format!("mod {id} disabled: {msg}; the game continues"));
-                }
-            }
+        let v = self.call_all(EXPORT_OVERLAY, screen, |m| vec![Val::I32(m.frames as i32)], |ctx| {
+            out.append(&mut ctx.rects)
+        });
+        if v.is_some() {
+            self.video = v;
         }
     }
 
@@ -195,15 +284,18 @@ mod tests {
         fn read(&self, file: &str) -> Result<Vec<u8>, String> {
             self.0.iter().find(|f| f.0 == file).map(|f| f.1.clone()).ok_or(format!("{file}: missing"))
         }
+        fn write(&self, _file: &str, _data: &[u8]) -> Result<(), String> {
+            Err("read-only".into())
+        }
         fn location(&self) -> String {
             "memory".into()
         }
     }
 
-    fn src(id: &str, wasm: Vec<u8>) -> Mem {
+    fn src(id: &str, wasm: Vec<u8>) -> Box<Mem> {
         let toml = format!("[mod]\nid = \"{id}\"\napi_version = \"1.0\"\n[permissions]\nrender = true\n[limits]\nfuel = 100000\n");
         let entry: &'static str = Box::leak(format!("{id}.wasm").into_boxed_str());
-        Mem(vec![("mod.toml", toml.into_bytes()), (entry, wasm)])
+        Box::new(Mem(vec![("mod.toml", toml.into_bytes()), (entry, wasm)]))
     }
 
     fn host() -> (Host, Rc<RefCell<Vec<String>>>) {
@@ -217,12 +309,12 @@ mod tests {
     #[test]
     fn broken_mods_are_disabled_and_the_others_go_on() {
         let (mut h, log) = host();
-        h.load(&src("good", wat_mod("", "1", DRAW))).unwrap();
+        h.load(src("good", wat_mod("", "1", DRAW))).unwrap();
         // traps in its third frame / loops forever from its second
         let trap = format!("local.get 0 i32.const 2 i32.eq (if (then unreachable)) {DRAW}");
-        h.load(&src("trap", wat_mod("", "1", &trap))).unwrap();
+        h.load(src("trap", wat_mod("", "1", &trap))).unwrap();
         let spin = format!("local.get 0 i32.const 1 i32.ge_s (if (then (loop $l (br $l)))) {DRAW}");
-        h.load(&src("spin", wat_mod("", "1", &spin))).unwrap();
+        h.load(src("spin", wat_mod("", "1", &spin))).unwrap();
         let mut counts = Vec::new();
         for _ in 0..4 {
             let mut out = Vec::new();
@@ -242,22 +334,22 @@ mod tests {
         let (mut h, _) = host();
         // newer minor API version
         let mut s = src("new", wat_mod("", "1", DRAW));
-        s.0[0].1 = b"[mod]\nid = \"new\"\napi_version = \"1.1\"\n".to_vec();
-        assert!(h.load(&s).unwrap_err().contains("API 1.1"));
+        s.0[0].1 = b"[mod]\nid = \"new\"\napi_version = \"1.2\"\n".to_vec();
+        assert!(h.load(s).unwrap_err().contains("API 1.2"));
         // memory above the cap (16 MiB default: 300 pages)
-        assert!(h.load(&src("big", wat_mod("", "300", DRAW))).unwrap_err().contains("cap"));
+        assert!(h.load(src("big", wat_mod("", "300", DRAW))).unwrap_err().contains("cap"));
         // growth beyond the cap fails inside the mod (memory.grow returns -1), the mod goes on
         let grow = "i32.const 1000 memory.grow i32.const -1 i32.ne (if (then unreachable)) i32.const 0";
-        h.load(&src("grow", wat_mod("", "1", grow))).unwrap();
+        h.load(src("grow", wat_mod("", "1", grow))).unwrap();
         let mut out = Vec::new();
         h.overlay((640, 480), &mut out);
         assert!(h.mods()[0].disabled.is_none(), "{:?}", h.mods()[0].disabled);
         // duplicate id
-        assert!(h.load(&src("grow", wat_mod("", "1", DRAW))).is_err());
+        assert!(h.load(src("grow", wat_mod("", "1", DRAW))).is_err());
         // no render permission: DENIED, nothing drawn
         let mut s = src("norender", wat_mod("", "1", DRAW));
         s.0[0].1 = b"[mod]\nid = \"norender\"\napi_version = \"1.0\"\n".to_vec();
-        h.load(&s).unwrap();
+        h.load(s).unwrap();
         let mut out = Vec::new();
         h.overlay((640, 480), &mut out);
         assert!(out.is_empty());

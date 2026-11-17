@@ -10,7 +10,7 @@ use sa_mod_api::{EXPORT_MEMORY, EXPORTS, IMPORT_MODULE, IMPORTS, Ty, Val};
 use wasmtime::{Config, Engine as WtEngine, FuncType, Linker, Module, Store, StoreLimits, StoreLimitsBuilder, Trap, ValType};
 
 use crate::ModSource;
-use crate::api::{CallCtx, dispatch};
+use crate::api::{CallCtx, SliceMem, dispatch};
 use crate::engine::{CallError, Engine, Instance};
 use crate::manifest::{INIT_FUEL_FACTOR, Limits};
 
@@ -109,15 +109,12 @@ impl Engine for Wasmtime {
                         };
                     }
                     let mem = caller.get_export(EXPORT_MEMORY).and_then(|e| e.into_memory());
-                    let (data, state): (&[u8], &mut State) = match mem {
-                        Some(m) => {
-                            let (d, s) = m.data_and_store_mut(&mut caller);
-                            (d, s)
-                        }
-                        None => (&[], caller.data_mut()),
+                    let mut empty = [0u8; 0];
+                    let (data, state): (&mut [u8], &mut State) = match mem {
+                        Some(m) => m.data_and_store_mut(&mut caller),
+                        None => (&mut empty[..], caller.data_mut()),
                     };
-                    let read = |p: u32, n: u32| data.get(p as usize..(p as usize).checked_add(n as usize)?).map(<[u8]>::to_vec);
-                    let r = dispatch(&mut state.ctx, &read, index, &args[..params.len().min(8)])
+                    let r = dispatch(&mut state.ctx, &mut SliceMem(data), index, &args[..params.len().min(8)])
                         .map_err(wasmtime::Error::msg)?;
                     results[0] = wasmtime::Val::I32(r);
                     Ok(())
@@ -162,6 +159,15 @@ impl ModSource for DirSource {
     fn read(&self, file: &str) -> Result<Vec<u8>, String> {
         let p = self.0.join(file);
         std::fs::read(&p).map_err(|e| format!("{}: {e}", p.display()))
+    }
+
+    /// Written to a temporary file in the folder, then renamed over the file (a crash leaves the old file).
+    fn write(&self, file: &str, data: &[u8]) -> Result<(), String> {
+        let p = self.0.join(file);
+        let tmp = self.0.join(format!(".{file}.tmp"));
+        std::fs::write(&tmp, data)
+            .and_then(|()| std::fs::rename(&tmp, &p))
+            .map_err(|e| format!("{}: {e}", p.display()))
     }
 
     fn location(&self) -> String {

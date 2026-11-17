@@ -46,4 +46,10 @@ self.saGameMods = {
     if (ptr + len > buf.byteLength) return undefined;
     return new Uint8Array(buf, ptr, len).slice();
   },
+  write(handle, ptr, bytes) {
+    const buf = instances[handle].exports.memory.buffer;
+    if (ptr + bytes.length > buf.byteLength) return false;
+    new Uint8Array(buf, ptr, bytes.length).set(bytes);
+    return true;
+  },
 };
