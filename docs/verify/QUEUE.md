@@ -68,8 +68,8 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-a11 | 31 | AI, UNK-game | 09ead615 | master | 31 | 0 | 0 | 0 | 0 | L2 31 |
 | frontier2-a12 | 6 | AI, RENDER | a6f02e11 | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
 | frontier2-a13 | 2 | AI | 20445ac0 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| frontier2-a14 | 6 | WORLD | b787c74e | int-a10 | 6 | 0 | 0 | 0 | 0 | L2 6 |
-| frontier2-a15 | 2 | AI | d7dbdb6f | int-a10 | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| frontier2-a14 | 6 | WORLD | b787c74e | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| frontier2-a15 | 2 | AI | d7dbdb6f | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | frontier2-a2 | 23 | AI, UNK-game | 40c90c34 | master | 23 | 0 | 0 | 0 | 0 | L2 23 |
 | frontier2-a3 | 5 | AI | 7104be38 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | frontier2-a4 | 2 | AI | 4b0ec921 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
@@ -105,7 +105,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-c14 | 6 | RW | 165c184e | master | 6 | 0 | 0 | 0 | 0 | L2 4, L3-only 2 |
 | frontier2-c15 | 1 | WORLD | 7cfa0894 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | frontier2-c16 | 1 | RENDER | 725610d8 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| frontier2-c17 | 16 | RW | 7f728dd7 | worktree-agent-add579cfa4d6b421b | 16 | 0 | 0 | 0 | 0 | L2 16 |
+| frontier2-c17 | 16 | RW | 942a0021 | int-c9 | 16 | 0 | 0 | 0 | 0 | L2 16 |
 | frontier2-c2 | 35 | AI, MATH, SCRIPT, UNK-game, VEH | 49bdb6d2 | master | 35 | 0 | 0 | 0 | 0 | L2 35 |
 | frontier2-c3 | 11 | AI, SCRIPT, UNK-game | 49bdb6d2 | master | 11 | 0 | 0 | 0 | 0 | L2 11 |
 | frontier2-c4 | 10 | AUDIO, CALLED-ONLY, SCRIPT, UNK-game | d18327f1 | master | 10 | 0 | 0 | 0 | 0 | L2 9, split 1 |
