@@ -114,6 +114,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-c24 | 3 | RENDER | f81a862a | worktree-agent-ad072a85875ed3f8d | 3 | 0 | 0 | 0 | 0 | L2 3 |
 | frontier2-c25 | 3 | RW | 11e0b5d3 | worktree-agent-ad072a85875ed3f8d | 3 | 0 | 0 | 0 | 0 | L2 3 |
 | frontier2-c26 | 1 | RW | 9cea177e | worktree-agent-ad072a85875ed3f8d | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| frontier2-c27 | 1 | RW | 1c501cc1 | worktree-agent-ad072a85875ed3f8d | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | frontier2-c3 | 11 | AI, SCRIPT, UNK-game | 49bdb6d2 | master | 11 | 0 | 0 | 0 | 0 | L2 11 |
 | frontier2-c4 | 10 | AUDIO, CALLED-ONLY, SCRIPT, UNK-game | d18327f1 | master | 10 | 0 | 0 | 0 | 0 | L2 9, split 1 |
 | frontier2-c5 | 22 | AI, ANIM, AUDIO, CALLED-ONLY, MATH, SCRIPT, UNK-game, WORLD | 749ddded | master | 22 | 0 | 0 | 0 | 0 | L2 21, split 1 |
@@ -3423,6 +3424,21 @@ SA_UNVERIFIED=frontier2-c26 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c26 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x810830 | `FUN_00810830` | written | L2 | heap-writes,stack-residue |
+
+## frontier2-c27
+
+1 hooks in sa-rwcore; hazards: heap-writes (1), stack-residue (1); recordings calling them: pause-restart (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-c27 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-c27 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c27 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag frontier2-c27
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x7C8060 | `(missed by ghidra: cat7-call)` | written | L2 | heap-writes,stack-residue |
 
 ## frontier2-c3
 
