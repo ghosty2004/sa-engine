@@ -1038,6 +1038,8 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x40F5E0,sa-world,get_triangle_point,thiscall,,cd:GPtr<sa_world::collision::shared::CCollisionData>;out:GPtr<sa_math::vector::CVector>;idx:i32,,sa_world::collision::data::get_triangle_point,CCollisionData::GetTrianglePoint,
 0x49CF90,sa-world,tag_manager_get_alpha,cdecl,,e:GPtr<u8>,u8,unported,CTagManager::GetAlpha-Entity,sa_pop::misc2::get_alpha_entity
 0x5A7EA0,sa-world,get_texture_dependency,cdecl,,t:i32,i32,unported,CClothes::GetTextureDependency,sa_ped::clothes::get_texture_dependency
+0x5E5ED0,sa-world,add_weapon_model,thiscall,,p:GPtr<u8>;model:i32,,unported,CPed::AddWeaponModel,sa_ped::ped_render::add_weapon_model
+0x609650,sa-world,player_re_apply_move_anims,thiscall,,p:GPtr<u8>,,unported,CPlayerPed::ReApplyMoveAnims,sa_ped::player_ctrl::re_apply_move_anims
 0x6A3580,sa-world,fix_tyre,thiscall,,v:GPtr<u8>;w:u32,,unported,CAutomobile::FixTyre,sa_veh::automobile::fix_tyre
 0x6A35A0,sa-world,fix_door,thiscall,,v:GPtr<u8>;node:i32;d:i32,,unported,CAutomobile::FixDoor,sa_veh::vehicle_part_damage::automobile_fix_door
 0x6A3670,sa-world,fix_panel,thiscall,,v:GPtr<u8>;node:i32;p:u32,,unported,CAutomobile::FixPanel,sa_veh::vehicle_part_damage::automobile_fix_panel
@@ -1766,7 +1768,6 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x56D290,sa-pop,localisation_knock_down_peds,cdecl,,,u8,unported,CLocalisation::KnockDownPeds,sa_hud::hud::localisation_knock_down_peds
 0x588B60,sa-pop,get_y_pos_based_on_health_st0,cdecl,,player:u8;y:f32;offset:i8,f64,unported,CHud::GetYPosBasedOnHealth,
 0x5DE5A0,sa-pop,choose_gang_ped_model,cdecl,,gang:i16,i32,sa_pop::gangs::choose_gang_ped_model,CGangs::ChooseGangPedModel,
-0x5E5ED0,sa-pop,add_weapon_model,thiscall,,p:GPtr<u8>;model:i32,,unported,CPed::AddWeaponModel,sa_ped::ped_render::add_weapon_model
 0x611570,sa-pop,population_update_ped_count,cdecl,,p:GPtr<u8>;b:u8,,sa_pop::population::update_ped_count,CPopulation::UpdatePedCount,
 0x6116C0,sa-pop,pdm_call,cdecl,,,sa_math::x87::X87,sa_pop::population::ped_creation_dist_multiplier,CPopulation::PedCreationDistMultiplier,
 0x612F90,sa-pop,choose_civilian_occupation,cdecl,,male:u8;female:u8;race:i32;exclude:i32;stat:i32;a:u8;b:u8;c:u8;name:GPtr<u8>,i32,sa_pop::population2::choose_civilian_occupation,CPopulation::ChooseCivilianOccupation,

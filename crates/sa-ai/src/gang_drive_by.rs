@@ -35,7 +35,7 @@ use sa_world::world::common::{entity_pos, ped_active_weapon as current_weapon, p
 use crate::bindings::drive_by_start_anim;
 use crate::bindings::vehicle_can_ped_lean_out;
 use crate::bindings::vehicle_set_window_open_flag;
-use sa_pop::bindings::add_weapon_model as ped_add_weapon_model;
+use sa_world::bindings::add_weapon_model as ped_add_weapon_model;
 orig! {
     /// the player's anim choice (0x621960, `ret 4`)
     fn drive_by_player_choose(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x621960 => gang_drive_by_player_choose_anim;

@@ -9,6 +9,7 @@
 use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
+use crate::bindings::player_re_apply_move_anims;
 
 use crate::common::*;
 
@@ -111,8 +112,6 @@ orig! {
     pub fn ped_can_strafe_or_mouse_control(p: GPtr<u8>) -> u8 = thiscall 0x5DF090 => unported;
     /// `CBaseModelInfo::GetModelType` (vtable slot 0x10, AL)
     pub fn model_info_get_model_type(mi: GPtr<u8>) -> u8 = thiscall vslot 0x10 => unported;
-    /// `CPlayerPed::ReApplyMoveAnims` (0x609650)
-    pub fn re_apply_move_anims_call(p: GPtr<u8>) = thiscall 0x609650 => re_apply_move_anims;
     /// `CPad::CycleWeaponRightJustDown` (0x540640)
     pub fn pad_cycle_weapon_right_just_down(pad: GPtr<u8>) -> u8 = thiscall 0x540640 => unported;
     /// `CPad::CycleWeaponLeftJustDown` (0x540610)
@@ -690,7 +689,7 @@ pub fn process_anim_groups(this: GPtr<u8>) {
     };
     if rd::<i32>(this, 0x4D4) != new {
         wr::<i32>(this, 0x4D4, new);
-        re_apply_move_anims_call(this);
+        player_re_apply_move_anims(this);
     }
     let wt = rd::<i32>(this, active_weapon_off(this));
     let sk = (ped_get_weapon_skill_current(this) as u32) as u8;

@@ -9,18 +9,13 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
 use crate::bindings::car_set_panel_damage as set_bumper_damage;
-use crate::common::{g, rd, wr, x, xi};
-use sa_core::bindings::{decompress_into_full_matrix, matrix_assign};
+use crate::common::{g, rd, wr, xi};
 use sa_world::bindings::{
-    automobile_set_panel_damage, damage_get_door_status, dm_set_door_status, matrix_copy_ctor, matrix_dtor,
-    set_door_damage, world_add, world_remove,
+    automobile_set_panel_damage, damage_get_door_status, dm_set_door_status, set_door_damage, world_add, world_remove,
 };
+use sa_world::world::replay_peds::blend_replay_matrix;
 
 orig! {
-    /// `CMatrix::ScaleAll(float)` (0x45AF40, `ret 4`; its loop counter set in the fragment 0x401BA5)
-    fn matrix_scale_all(m: GPtr<u8>, f: u32) = thiscall 0x45AF40 => unported;
-    /// `CMatrix::operator+=(const CMatrix&)` (0x59ADF0)
-    fn matrix_add_assign(m: GPtr<u8>, rhs: GPtr<u8>) -> GPtr<u8> = thiscall 0x59ADF0 => unported;
     /// `ApplyPanelDamageToCar(uint32 panels, CAutomobile*, bool)` (0x59CA10)
     fn apply_panel_damage_to_car_call(panels: u32, car: GPtr<u8>, flag: u32) = cdecl 0x59CA10 => apply_panel_damage_to_car;
 }
@@ -80,18 +75,11 @@ pub fn extract_vehicle_update_data(this: GPtr<u8>, veh: GPtr<u8>, t: u32) {
     if veh.is_null() {
         return;
     }
-    let mut ma = [0u32; 0x48 / 4];
-    let mut mb = [0u32; 0x48 / 4];
-    let a = GPtr::from_raw(ma.as_mut_ptr().cast::<u8>());
-    let b = GPtr::from_raw(mb.as_mut_ptr().cast::<u8>());
-    wr::<u32>(a, 0x40, 0);
-    wr::<u32>(a, 0x44, 0);
-    decompress_into_full_matrix(this.byte_add(4), a);
-    matrix_copy_ctor(b, rd::<GPtr<u8>>(veh, 0x14));
-    matrix_scale_all(b, x(g::<f32>(0x858624).read()).fsub_m(f32::from_bits(t)).to_f32().to_bits());
-    matrix_scale_all(a, t);
-    matrix_add_assign(b, a);
-    matrix_assign(rd::<GPtr<u8>>(veh, 0x14), b);
+    blend_replay_matrix(veh, this.byte_add(4), f32::from_bits(t), || apply_vehicle_update(this, veh));
+}
+
+/// The part of [`extract_vehicle_update_data`] between the matrix blend and the stack matrices' destruction.
+fn apply_vehicle_update(this: GPtr<u8>, veh: GPtr<u8>) {
     wr::<u32>(veh, 0x50, 0);
     wr::<u32>(veh, 0x54, 0);
     wr::<u32>(veh, 0x58, 0);
@@ -157,8 +145,6 @@ pub fn extract_vehicle_update_data(this: GPtr<u8>, veh: GPtr<u8>, t: u32) {
     let pf = u32::from(rd::<u8>(this, 0x2F));
     let p = rd::<u32>(veh, 0x40);
     wr::<u32>(veh, 0x40, (((pf << 29) ^ p) & 0x2000_0000) ^ p);
-    matrix_dtor(b);
-    matrix_dtor(a);
 }
 
 /// Every `#[hook]` of this module.

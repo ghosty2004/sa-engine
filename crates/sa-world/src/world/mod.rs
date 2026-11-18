@@ -22,6 +22,7 @@ pub mod pickups_close_coors;
 pub mod pickup_effects;
 pub mod clear_scan_codes;
 pub mod replay_playback;
+pub mod replay_peds;
 pub mod restart;
 pub mod shopping;
 pub mod statics;

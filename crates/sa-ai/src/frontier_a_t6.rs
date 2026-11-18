@@ -16,7 +16,7 @@ use sa_core::bindings::entity_register_reference;
 use sa_math::fpu::{fcom_any, fcom_ne};
 use sa_core::bindings::{frame_get_ltm, fx_play};
 use sa_world::bindings::{fx_copy_parent_matrix, fx_create_system, fx_set_const_time, fx_set_local_particles, fx_set_offset_pos, fx_system_set_matrix};
-use sa_pop::bindings::add_weapon_model;
+use sa_world::bindings::add_weapon_model;
 use sa_world::bindings::{die_ctor, intel_find_task_by_type};
 use crate::common::{ftol32, g, rd, task_get_type, task_make_abortable, wr, x, xi};
 use sa_core::bindings::{

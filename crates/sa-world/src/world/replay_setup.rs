@@ -11,36 +11,52 @@ use super::common::{g, rd, wr};
 use super::frontier_b3::replay_find_size_of_packet;
 
 /// `CReplay::BufferStatus[8]` (bytes) and `CReplay::Buffers[8]` (100000 bytes each).
-const BUFFER_STATUS: usize = 0x97_FB7C;
-const BUFFERS: usize = 0x97_FB88;
-const BUFFER_SIZE: usize = 100_000;
+pub(crate) const BUFFER_STATUS: usize = 0x97_FB7C;
+pub(crate) const BUFFERS: usize = 0x97_FB88;
+pub(crate) const BUFFER_SIZE: usize = 100_000;
 /// `CReplay::m_VehiclePoolConversion[110]`, `CReplay::m_PedPoolConversion[140]`.
-const VEHICLE_POOL_CONVERSION: usize = 0x97_F680;
-const PED_POOL_CONVERSION: usize = 0x97_F838;
+pub(crate) const VEHICLE_POOL_CONVERSION: usize = 0x97_F680;
+pub(crate) const PED_POOL_CONVERSION: usize = 0x97_F838;
 /// `CPools::ms_pPedPool`, `CPools::ms_pVehiclePool`.
-const PED_POOL: usize = 0xB7_4490;
-const VEHICLE_POOL: usize = 0xB7_4494;
+pub(crate) const PED_POOL: usize = 0xB7_4490;
+pub(crate) const VEHICLE_POOL: usize = 0xB7_4494;
 
 /// The bytes' scan of the replay buffers: every buffer whose status byte is non-zero, every packet from its start up
 /// to the end marker (type 0; the next packet at `FindSizeOfPacket(type)`). `f(packet, type)` returning true stops
 /// the scan (true returned).
 pub(crate) fn scan_replay_packets(mut f: impl FnMut(GPtr<u8>, u8) -> bool) -> bool {
-    for i in 0..8usize {
-        if g::<u8>(BUFFER_STATUS + i).read() == 0 {
+    scan_replay_buffers_from(0, |buf, off, ty| f(buf.byte_add(off as isize), ty))
+}
+
+/// [`scan_replay_packets`] starting at buffer `first` and wrapping around the eight, with `f(buffer, offset, type)`.
+pub(crate) fn scan_replay_buffers_from(first: u32, mut f: impl FnMut(GPtr<u8>, u32, u8) -> bool) -> bool {
+    for i in 0..8u32 {
+        let slot = (first.wrapping_add(i) & 7) as usize;
+        if g::<u8>(BUFFER_STATUS + slot).read() == 0 {
             continue;
         }
-        let buf = GPtr::<u8>::from_addr(BUFFERS + BUFFER_SIZE * i);
-        let mut off = 0isize;
+        let buf = GPtr::<u8>::from_addr(BUFFERS + BUFFER_SIZE * slot);
+        let mut off = 0u32;
         let mut ty = rd::<u8>(buf, 0);
         while ty != 0 {
-            if f(buf.byte_add(off), ty) {
+            if f(buf, off, ty) {
                 return true;
             }
-            off += replay_find_size_of_packet(u32::from(ty)) as isize;
-            ty = rd::<u8>(buf, off);
+            off = off.wrapping_add(replay_find_size_of_packet(u32::from(ty)));
+            ty = rd::<u8>(buf, off as isize);
         }
     }
     false
+}
+
+/// The pool's object at `slot` as the inlined `CPool::GetAt` reads it: null when the slot's flag byte has bit 7 set,
+/// else `objects + slot * stride`.
+pub(crate) fn pool_slot(pool_cell: usize, stride: u32, slot: i32) -> GPtr<u8> {
+    let pool = g::<GPtr<u8>>(pool_cell).read();
+    if rd::<u8>(rd::<GPtr<u8>>(pool, 4), slot as isize) & 0x80 != 0 {
+        return GPtr::NULL;
+    }
+    GPtr::from_addr(rd::<u32>(pool, 0).wrapping_add((slot as u32).wrapping_mul(stride)) as usize)
 }
 
 /// `CReplay::IsThisPedUsedInRecording(int32 index)` (stub 0x45DDE0 → 0x1565580, cdecl, AL): a ped header packet

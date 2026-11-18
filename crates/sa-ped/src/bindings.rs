@@ -214,6 +214,11 @@ orig! {
 }
 
 orig! {
+    /// `CPlayerPed::ReApplyMoveAnims` (0x609650)
+    pub fn player_re_apply_move_anims(p: GPtr<u8>) = thiscall 0x609650 => crate::player_ctrl::re_apply_move_anims;
+}
+
+orig! {
     /// `CPlayerPed::ClearWeaponTarget` (0x609C80)
     pub fn player_clear_weapon_target(p: GPtr<u8>) = thiscall 0x609C80 => crate::player_ped::clear_weapon_target;
 }

@@ -34,6 +34,7 @@ pub const MODULES: &[&[HookReg]] = &[
     world::pickups_close_coors::HOOKS,
     world::pickup_effects::HOOKS,
     world::replay_playback::HOOKS,
+    world::replay_peds::HOOKS,
     world::restart::HOOKS,
     world::shopping::HOOKS,
     world::statics::HOOKS,

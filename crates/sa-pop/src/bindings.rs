@@ -399,11 +399,6 @@ orig! {
 }
 
 orig! {
-    /// `CPed::AddWeaponModel` (0x5E5ED0)
-    pub fn add_weapon_model(p: GPtr<u8>, model: i32) = thiscall 0x5E5ED0 => unported;
-}
-
-orig! {
     /// `CPopCycle::PickGangToCreateMembersOf` (0x60F8D0)
     pub fn pick_gang_to_create_members_of() -> i32 = cdecl 0x60F8D0 => crate::population2::pick_gang_to_create_members_of;
 }

@@ -3039,6 +3039,11 @@ orig! {
 }
 
 orig! {
+    /// `CPed::AddWeaponModel` (0x5E5ED0)
+    pub fn add_weapon_model(p: GPtr<u8>, model: i32) = thiscall 0x5E5ED0 => unported;
+}
+
+orig! {
     /// `CPed::SetCurrentWeapon-Slot` (0x5E61F0)
     pub fn ped_set_current_weapon_slot(ped: GPtr<u8>, slot: i32) = thiscall 0x5E61F0 => unported;
 }
@@ -3376,6 +3381,11 @@ orig! {
 orig! {
     /// `CPlayerPed::CanPlayerStartMission` (0x609590)
     pub fn can_player_start_mission(p: GPtr<u8>) -> u8 = thiscall 0x609590 => unported;
+}
+
+orig! {
+    /// `CPlayerPed::ReApplyMoveAnims` (0x609650)
+    pub fn player_re_apply_move_anims(p: GPtr<u8>) = thiscall 0x609650 => unported;
 }
 
 orig! {
