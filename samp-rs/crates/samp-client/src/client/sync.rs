@@ -2,7 +2,7 @@
 //! packets, 207 / 203), local surfing, the head look and the camera-target reporting.
 
 use sa_samp_api::hud::Hud as _;
-use web_time::Instant;
+use samp_proto::time::Instant;
 
 use sa_samp_api::peds::Peds as _;
 use samp_proto::raknet::Reliability;

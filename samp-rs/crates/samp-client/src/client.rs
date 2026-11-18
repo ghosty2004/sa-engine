@@ -22,7 +22,7 @@ mod spawn;
 mod status;
 mod sync;
 
-use web_time::Instant;
+use samp_proto::time::Instant;
 
 use samp_proto::auth::AuthTable;
 use samp_proto::rpcs::player;

@@ -8,7 +8,7 @@
 use std::collections::HashMap;
 use std::time::Duration;
 
-use web_time::Instant;
+use samp_proto::time::Instant;
 
 use samp_proto::sync::encoding::WeaponByte;
 use samp_proto::sync::vehicle::{PassengerSync, RemoteVehicleSync, UnoccupiedSync, VehicleSync};

@@ -6,7 +6,7 @@
 
 use std::time::Duration;
 
-use web_time::Instant;
+use samp_proto::time::Instant;
 
 /// Arrows are ignored for this long after entering class selection (and Shift waits as long).
 pub const ARROW_GUARD: Duration = Duration::from_millis(2000);

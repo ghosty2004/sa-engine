@@ -217,13 +217,13 @@ pub fn local_time_now() -> LocalTime {
         // SAFETY: plain Win32 query into a valid struct.
         unsafe { GetLocalTime(&mut st) };
         let unix =
-            web_time::SystemTime::now().duration_since(web_time::UNIX_EPOCH).map(|d| d.as_secs() as i64).unwrap_or(0);
+            samp_proto::time::SystemTime::now().duration_since(samp_proto::time::UNIX_EPOCH).map(|d| d.as_secs() as i64).unwrap_or(0);
         LocalTime { unix, hour: st.wHour as u8, minute: st.wMinute as u8, second: st.wSecond as u8 }
     }
     #[cfg(not(windows))]
     {
         let unix =
-            web_time::SystemTime::now().duration_since(web_time::UNIX_EPOCH).map(|d| d.as_secs() as i64).unwrap_or(0);
+            samp_proto::time::SystemTime::now().duration_since(samp_proto::time::UNIX_EPOCH).map(|d| d.as_secs() as i64).unwrap_or(0);
         let day = unix.rem_euclid(86_400);
         LocalTime { unix, hour: (day / 3600) as u8, minute: (day / 60 % 60) as u8, second: (day % 60) as u8 }
     }
@@ -231,8 +231,8 @@ pub fn local_time_now() -> LocalTime {
 
 /// Milliseconds since the UI started (samp uses `GetTickCount`).
 pub fn tick_ms() -> u32 {
-    static T0: std::sync::OnceLock<web_time::Instant> = std::sync::OnceLock::new();
-    T0.get_or_init(web_time::Instant::now).elapsed().as_millis() as u32
+    static T0: std::sync::OnceLock<samp_proto::time::Instant> = std::sync::OnceLock::new();
+    T0.get_or_init(samp_proto::time::Instant::now).elapsed().as_millis() as u32
 }
 
 /// What a C stream opened in text mode writes for `b`: every `\n` becomes `\r\n`.

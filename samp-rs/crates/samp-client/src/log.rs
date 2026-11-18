@@ -4,9 +4,9 @@ use std::fs::{File, OpenOptions};
 use std::io::Write;
 use std::path::Path;
 use std::sync::Mutex;
-use std::time::{SystemTime, UNIX_EPOCH};
+use samp_proto::time::{SystemTime, UNIX_EPOCH};
 
-use web_time::Instant;
+use samp_proto::time::Instant;
 
 struct Logger {
     file: File,

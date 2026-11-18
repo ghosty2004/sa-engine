@@ -586,7 +586,7 @@ fn render_object(runner: &mut Runner, env: &Env, r: &Request, model: i32) -> u32
         crate::adapter::original::stream::request_model(model);
         crate::adapter::original::stream::load_all_now();
         // samp waits without limit (Sleep(1) loop); we stop after 10 s and render nothing.
-        let t0 = web_time::Instant::now();
+        let t0 = samp_proto::time::Instant::now();
         while !crate::adapter::original::stream::model_loaded(model) {
             if t0.elapsed() > std::time::Duration::from_secs(10) {
                 crate::log!("preview: model {model} still not loaded after 10 s");

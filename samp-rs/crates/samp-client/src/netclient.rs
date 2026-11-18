@@ -13,7 +13,7 @@ use std::sync::atomic::{AtomicBool, AtomicU16, Ordering as AtomicOrdering};
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::Duration;
 
-use web_time::Instant;
+use samp_proto::time::Instant;
 
 use sa_net::{DatagramTransport, LinkState};
 use samp_proto::auth::{self, AuthTable};
@@ -130,7 +130,8 @@ pub struct Counters {
 /// One attempt's datagram channel (sa-net: a UDP socket natively, a WebSocket to sa-udp-proxy in the browser).
 #[cfg(not(target_arch = "wasm32"))]
 pub type Transport = Box<dyn DatagramTransport + Send>;
-/// One attempt's datagram channel (a browser WebSocket to sa-udp-proxy; not `Send`, there is no update thread).
+/// One attempt's datagram channel on wasm32 (a browser WebSocket, a mod's socket; not `Send`, there is no update
+/// thread).
 #[cfg(target_arch = "wasm32")]
 pub type Transport = Box<dyn DatagramTransport>;
 
@@ -164,12 +165,12 @@ impl NetConnector for UdpNetConnector {
 
 /// The browser connector: a WebSocket to sa-udp-proxy at `proxy_url`, which resolves `host:port` and relays the
 /// datagrams unchanged (docs/samp/web-proxy.md in sa-engine).
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", feature = "websocket"))]
 pub struct WebSocketNetConnector {
     pub proxy_url: String,
 }
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", feature = "websocket"))]
 impl NetConnector for WebSocketNetConnector {
     fn open(&self, _addr: SocketAddrV4, text: &str) -> std::io::Result<(Transport, Option<SocketAddr>)> {
         Ok((Box::new(sa_net::WebSocketTransport::open(&self.proxy_url, text)?), None))
@@ -302,18 +303,18 @@ impl NetClient {
             accepted_challenge: None,
             serial_seed: None,
         };
-        // In the browser build the core holds a non-`Send` transport and no thread shares it.
+        // On wasm32 the core holds a non-`Send` transport and no thread shares it.
         #[cfg_attr(target_arch = "wasm32", allow(clippy::arc_with_non_send_sync))]
         let core = Arc::new(Mutex::new(core));
         Ok(Self {
             core,
             #[cfg(not(target_arch = "wasm32"))]
             connector: Box::new(UdpNetConnector),
-            // The browser build needs a proxy URL first (`set_connector`); until then connecting fails.
+            // On wasm32 the host sets the transport first (`set_connector`); until then connecting fails.
             #[cfg(target_arch = "wasm32")]
             connector: Box::new(NoConnector),
             worker: None,
-            // No update thread in the browser: `tick` runs the update every frame.
+            // No update thread on wasm32: `tick` runs the update every frame.
             threaded: !cfg!(test) && !cfg!(target_arch = "wasm32"),
             rak_running: false,
         })
@@ -838,7 +839,7 @@ fn rak_wait(d: Duration) {
     let _ = d;
 }
 
-/// The browser build's connector until the host sets one.
+/// The wasm32 connector until the host sets one (the browser's WebSocket, a mod's sockets).
 #[cfg(target_arch = "wasm32")]
 struct NoConnector;
 
@@ -876,7 +877,7 @@ pub fn pseudo_random_hex40() -> String {
     for i in 0..3u8 {
         let mut h = RandomState::new().build_hasher();
         h.write_u8(i);
-        h.write_u128(std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_nanos());
+        h.write_u128(samp_proto::time::SystemTime::now().duration_since(samp_proto::time::UNIX_EPOCH).unwrap_or_default().as_nanos());
         s.push_str(&format!("{:016X}", h.finish()));
     }
     s.truncate(40);

@@ -7,7 +7,7 @@
 //! (docs/ROADMAP.md, "Decisions made autonomously"). Background: docs/phase3/m3-notes.md, parity-notes.md.
 
 use std::collections::BTreeMap;
-use web_time::Instant;
+use samp_proto::time::Instant;
 
 use sa_samp_api::PedRef;
 use sa_samp_api::peds::Peds as _;

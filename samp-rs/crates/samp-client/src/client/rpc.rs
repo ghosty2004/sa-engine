@@ -1,7 +1,7 @@
 //! S→C RPC dispatch: one handler per RPC module (session, UI, remote players, vehicles, world); the player RPCs are
 //! in `rpc_player`.
 
-use web_time::Instant;
+use samp_proto::time::Instant;
 
 use samp_proto::rpcs::{Incoming, remote, session, ui, vehicle, world};
 

@@ -76,7 +76,7 @@ struct State {
 /// until the next sample. Mirrors samp.dll 0x10060D20.
 #[derive(Default)]
 struct RateSampler {
-    last: Option<web_time::Instant>,
+    last: Option<samp_proto::time::Instant>,
     sent: u64,
     received: u64,
     d_sent: u64,
@@ -84,7 +84,7 @@ struct RateSampler {
 }
 
 impl RateSampler {
-    fn sample(&mut self, now: web_time::Instant, sent: u64, received: u64) -> (f32, f32) {
+    fn sample(&mut self, now: samp_proto::time::Instant, sent: u64, received: u64) -> (f32, f32) {
         if self.last.is_none_or(|t| now.duration_since(t).as_millis() > 1000) {
             self.last = Some(now);
             self.d_received = received.wrapping_sub(self.received);

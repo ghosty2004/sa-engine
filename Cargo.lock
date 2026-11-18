@@ -2992,7 +2992,6 @@ dependencies = [
  "samp-proto",
  "samp-saa",
  "samp-ui",
- "web-time",
  "windows-sys 0.61.2",
 ]
 

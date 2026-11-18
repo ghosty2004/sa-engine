@@ -1,4 +1,4 @@
-//! Datagram transports for the SA:MP client (docs/samp/web-proxy.md).
+//! Datagram transports for the SA:MP client and the mods' sockets (docs/samp/web-proxy.md, docs/mods/api.md).
 //!
 //! samp-rs's RakNet layer (`samp-client` `netclient.rs`) talks to the server through one connected,
 //! non-blocking UDP socket per connection attempt. [`DatagramTransport`] is that socket's surface, with the
@@ -6,7 +6,8 @@
 //! RakNet code can run unchanged over:
 //!
 //! * [`UdpTransport`] (native: a real UDP socket),
-//! * `WebSocketTransport` (wasm32: a browser `WebSocket` to `sa-udp-proxy`, one binary frame per datagram),
+//! * `WebSocketTransport` (wasm32, feature `websocket`: a browser `WebSocket` to `sa-udp-proxy`, one binary frame per
+//!   datagram),
 //! * `NativeWsTransport` (host, feature `native-ws`: the same proxy protocol from a native process, for tests).
 //!
 //! A [`Connector`] opens one transport per connection attempt, as RakNet opens a new socket for every
@@ -29,9 +30,9 @@ mod native_ws;
 #[cfg(all(not(target_arch = "wasm32"), feature = "native-ws"))]
 pub use native_ws::{NativeWsConnector, NativeWsTransport};
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", feature = "websocket"))]
 mod web;
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_arch = "wasm32", feature = "websocket"))]
 pub use web::{WebSocketConnector, WebSocketTransport};
 
 /// Where a transport stands.

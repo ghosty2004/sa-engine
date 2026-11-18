@@ -4,7 +4,7 @@
 use sa_samp_api::hud::Hud as _;
 use std::time::Duration;
 
-use web_time::Instant;
+use samp_proto::time::Instant;
 
 use super::Client;
 use super::gta::async_key_any;

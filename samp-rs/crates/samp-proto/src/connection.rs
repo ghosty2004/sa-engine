@@ -10,7 +10,7 @@
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::time::Duration;
 
-use web_time::Instant;
+use crate::time::Instant;
 
 use crate::bitstream::BitWriter;
 use crate::raknet::{AckRange, Datagram, Message, Ordering, Reliability, Split, ack_ranges, id};

@@ -9,7 +9,7 @@
 //! "Patch table row N" is line N of docs/re/data/gta-patches-r4-annotated.csv (header = line 1).
 
 use std::collections::BTreeMap;
-use web_time::Instant;
+use samp_proto::time::Instant;
 
 use samp_proto::rpcs::OutgoingRpc;
 use samp_proto::rpcs::world::{self as rw, ObjectMaterial};

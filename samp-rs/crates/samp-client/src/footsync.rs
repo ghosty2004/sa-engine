@@ -8,7 +8,7 @@
 
 use std::time::Duration;
 
-use web_time::Instant;
+use samp_proto::time::Instant;
 
 use samp_proto::bitstream::BitWriter;
 use samp_proto::sync::SyncPacket;

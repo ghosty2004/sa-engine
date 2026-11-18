@@ -6,7 +6,7 @@ use std::ffi::c_void;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
-use web_time::Instant;
+use samp_proto::time::Instant;
 
 use super::{
     CAMERA_PROCESS, CAMERA_PROCESS_CALL, CONTROL, LAST_TICK_MS, ORIGINAL_CAMERA_PROCESS, ORIGINAL_GAME_PROCESS,

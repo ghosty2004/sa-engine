@@ -17,5 +17,6 @@ mod sbox;
 pub mod session;
 pub mod strcomp;
 pub mod sync;
+pub mod time;
 pub mod types;
 pub mod unconnected;

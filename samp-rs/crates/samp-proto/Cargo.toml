@@ -5,7 +5,9 @@ edition.workspace = true
 license.workspace = true
 description = "Clean-room SA:MP 0.3.7 wire protocol (version-independent core)"
 
+[features]
+# The browser's clock on wasm32 (`time`); without it a wasm32 build runs on the clock its host installs.
+web = ["dep:web-time"]
 
 [dependencies]
-# `Instant` that also works on wasm32 (std's panics there); on native it is std::time::Instant itself.
-web-time = "1.1"
+web-time = { version = "1.1", optional = true }

@@ -365,7 +365,7 @@ mod tests {
     #[test]
     fn captured_sends_match_on_the_wire() {
         let by_id = |id: u8| samples().into_iter().find(|m| m.id() == id).unwrap();
-        let now = web_time::Instant::now();
+        let now = crate::time::Instant::now();
         for (id, rel, channel, bits) in CAPTURED {
             let m = if id == 25 {
                 let wire = hex(CAPTURED_PLAYER_CONNECT);

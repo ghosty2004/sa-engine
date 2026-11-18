@@ -18,7 +18,7 @@ use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 use std::time::Duration;
 
-use web_time::Instant;
+use samp_proto::time::Instant;
 
 use sa_samp_api::PedRef;
 use sa_samp_api::peds::Peds as _;

@@ -1,6 +1,6 @@
 //! Control-channel queries and requests (they only touch plain data), and the RPC 119 sender of the Present pass.
 
-use web_time::Instant;
+use samp_proto::time::Instant;
 
 use samp_proto::raknet::Reliability;
 

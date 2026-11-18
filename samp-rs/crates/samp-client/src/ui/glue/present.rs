@@ -192,7 +192,7 @@ fn gather(st: &mut State) -> Gathered {
 /// The F5 text with the download / upload rates sampled now.
 fn net_stats_text(st: &mut State) -> Vec<u8> {
     let (sent, received) = st.net_bytes;
-    let (down, up) = st.rates.sample(web_time::Instant::now(), sent, received);
+    let (down, up) = st.rates.sample(samp_proto::time::Instant::now(), sent, received);
     let mut base = st.net_stats.clone();
     base.download_kbs = down;
     base.upload_kbs = up;

@@ -13,7 +13,7 @@ use std::ffi::CString;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::Duration;
 
-use web_time::Instant;
+use samp_proto::time::Instant;
 
 use sa_samp_api::peds::Peds as _;
 use sa_samp_api::world::WorldState as _;

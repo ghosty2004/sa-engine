@@ -83,13 +83,13 @@ const CRUMBS: usize = 64;
 static CRUMB_TIME: [std::sync::atomic::AtomicU32; CRUMBS] = [const { std::sync::atomic::AtomicU32::new(0) }; CRUMBS];
 static CRUMB_DATA: [std::sync::atomic::AtomicU64; CRUMBS] = [const { std::sync::atomic::AtomicU64::new(0) }; CRUMBS];
 static CRUMB_NEXT: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
-static EPOCH: std::sync::OnceLock<web_time::Instant> = std::sync::OnceLock::new();
+static EPOCH: std::sync::OnceLock<samp_proto::time::Instant> = std::sync::OnceLock::new();
 
 /// Records a breadcrumb (lock-free, so the exception filter can read the ring whatever lock the crashing
 /// thread held).
 pub fn note(kind: u8, a: u16, b: u32) {
     use std::sync::atomic::Ordering::Relaxed;
-    let ms = EPOCH.get_or_init(web_time::Instant::now).elapsed().as_millis() as u32;
+    let ms = EPOCH.get_or_init(samp_proto::time::Instant::now).elapsed().as_millis() as u32;
     let i = CRUMB_NEXT.fetch_add(1, Relaxed) as usize % CRUMBS;
     CRUMB_TIME[i].store(ms, Relaxed);
     CRUMB_DATA[i].store((u64::from(kind) << 56) | (u64::from(a) << 32) | u64::from(b), Relaxed);

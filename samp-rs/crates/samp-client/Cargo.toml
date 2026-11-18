@@ -9,8 +9,12 @@ description = "In-game SA:MP 0.3.7 client: a DLL injected into gta_sa.exe 1.0 US
 name = "samp_client"
 crate-type = ["cdylib", "rlib"]
 
+[features]
+# The browser's WebSocket connector (`netclient::WebSocketNetConnector`) for wasm32 builds on a web page. Without it a
+# wasm32 build imports nothing from JavaScript and takes its transport and clock from its host (a mod).
+websocket = ["sa-net/websocket", "samp-proto/web"]
+
 [dependencies]
-web-time = "1.1"
 samp-proto = { path = "../samp-proto" }
 samp-saa = { path = "../samp-saa" }
 samp-ui = { path = "../samp-ui" }

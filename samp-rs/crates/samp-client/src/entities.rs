@@ -54,7 +54,7 @@ fn busy_load(_runner: &mut Runner, model: i32) -> bool {
     }
     crate::adapter::original::stream::request_model(model);
     crate::adapter::original::stream::load_all_now();
-    let t0 = web_time::Instant::now();
+    let t0 = samp_proto::time::Instant::now();
     while !crate::adapter::original::stream::model_loaded(model) {
         if t0.elapsed() > std::time::Duration::from_secs(10) {
             crate::log!("entities: model {model} not loaded after 10 s");
@@ -289,7 +289,7 @@ impl Entities {
         let name = intern(&a.name);
         if !runner.run(sop::HAS_ANIMATION_LOADED, &[Arg::Text(lib)]) {
             runner.run(sop::REQUEST_ANIMATION, &[Arg::Text(lib)]);
-            let t0 = web_time::Instant::now();
+            let t0 = samp_proto::time::Instant::now();
             while !runner.run(sop::HAS_ANIMATION_LOADED, &[Arg::Text(lib)]) {
                 if t0.elapsed() > std::time::Duration::from_millis(15) {
                     // Gives up without playing, as the original does when the block is not loaded yet.

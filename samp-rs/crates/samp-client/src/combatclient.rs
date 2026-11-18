@@ -5,7 +5,7 @@
 //! Spec: see `combat.rs`. The local death / respawn sequence lives in `client.rs` (it drives the spawn routine).
 
 use std::sync::atomic::{AtomicU8, Ordering};
-use web_time::Instant;
+use samp_proto::time::Instant;
 
 use sa_samp_api::PedRef;
 use sa_samp_api::peds::Peds as _;

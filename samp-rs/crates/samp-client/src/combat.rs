@@ -8,7 +8,7 @@
 
 use std::time::Duration;
 
-use web_time::Instant;
+use samp_proto::time::Instant;
 
 use samp_proto::sync::player::{AimSync, BulletSync, WeaponSlot, WeaponsUpdate, hit_type};
 use samp_proto::types::Vec3;

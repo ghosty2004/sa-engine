@@ -22,7 +22,7 @@ mod trailers;
 use std::collections::{BTreeMap, HashMap};
 use std::time::Duration;
 
-use web_time::Instant;
+use samp_proto::time::Instant;
 
 use samp_proto::rpcs::OutgoingRpc;
 use samp_proto::rpcs::vehicle::{self as rv, Incoming as V};

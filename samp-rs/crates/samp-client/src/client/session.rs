@@ -2,7 +2,7 @@
 //! RPC 40 reset routine, the connecting scene and the quit / teardown path.
 
 use sa_samp_api::hud::Hud as _;
-use web_time::Instant;
+use samp_proto::time::Instant;
 
 use sa_samp_api::world::WorldState as _;
 

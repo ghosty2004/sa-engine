@@ -234,7 +234,7 @@ mod tests {
     use std::io::{BufRead, BufReader};
     use std::time::Duration;
 
-    use web_time::Instant;
+    use samp_proto::time::Instant;
 
     #[test]
     fn parse_commands() {

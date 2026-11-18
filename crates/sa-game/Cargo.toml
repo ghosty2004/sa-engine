@@ -12,7 +12,7 @@ gamepad = ["native", "sa-platform/gamepad"]
 native = ["sa-platform/native"]
 audio = ["sa-platform/audio"]
 # `--samp` joins SA:MP / open.mp servers with samp-rs's network core (docs/samp/native-plan.md).
-samp = ["dep:samp-client", "dep:samp-proto", "dep:samp-saa", "dep:samp-ui"]
+samp = ["dep:samp-client", "samp-client/websocket", "dep:samp-proto", "dep:samp-saa", "dep:samp-ui"]
 # WebAssembly mods (MOD-2, docs/arch/ADR-004-mods.md): `--mods DIR` natively, `?mods=a,b` on the web page. Off by
 # default: without it no mod code is compiled in (the parity build).
 mods = ["dep:sa-mod-host", "dep:sa-mod-api", "dep:sa-access", "dep:sa-types", "sa-rw-wgpu/overlay", "sa-core/observe"]

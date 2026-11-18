@@ -3,7 +3,7 @@
 use sa_samp_api::hud::Hud as _;
 use std::time::Duration;
 
-use web_time::Instant;
+use samp_proto::time::Instant;
 
 use sa_samp_api::input::Input as _;
 use samp_proto::raknet::Reliability;
