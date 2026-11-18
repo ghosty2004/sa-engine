@@ -7,16 +7,19 @@ use sa_core::abi::HookReg;
 use sa_core::bindings::matrix_mul_vec;
 use sa_core::field::{gf, gr32, ptr_of as vp};
 use sa_core::mem::GPtr;
-use sa_core::hook;
+use sa_core::{hook, orig};
 use sa_math::vector::CVector;
 use sa_math::x87::X87;
 
-use crate::common::{f32_of, rand_at, rd, wr, x, xi};
+use crate::common::{f32_of, g, rand_at, rd, wr, x, xi};
 use crate::mvpd_v1::read_vec;
 
 use crate::bindings::weapon_do_tank_doom_aiming as do_tank_doom_aiming;
 use crate::bindings::weapon_fire_one_instant_hit_round;
-use crate::frontier_b2_veh2::{get_plane_ordnance_position, get_plane_ordnance_rate_of_fire, shake_and_stamp};
+use crate::bindings::get_plane_num_guns;
+use crate::frontier_b2_veh2::{get_plane_ordnance_position, get_plane_ordnance_rate_of_fire, gun_dummy_position, player_driver_pad, shake_and_stamp};
+use sa_core::bindings::{crt_new_821195 as operator_new, fx_play, get_pad};
+use sa_world::bindings::{add_gunshell, add_light, fire_instant_hit, fx_create_system, fx_set_offset_pos, get_modelling_matrix, pad_start_shake};
 use sa_math::fpu::lt;
 use sa_world::bindings::add_projectile;
 use sa_world::bindings::{weapon_ctor, weapon_fire_projectile};
@@ -31,6 +34,10 @@ use sa_world::world::common::entity_pos;
 const TIME_MS: usize = 0xB7_CB84;
 /// `AudioEngine`
 const AUDIO_ENGINE: usize = 0xB6_BC90;
+/// `g_fxMan`
+const FX_MAN: usize = 0xA9_AE80;
+/// "gunflash"
+const S_GUNFLASH: usize = 0x85_A728;
 
 /// `((rand() & 0xFF) - 128)` as the bytes load it (`fild` of the int).
 fn spread(site: u32) -> X87 {
@@ -201,7 +208,6 @@ pub fn fire_heat_seaking_missile(this: GPtr<u8>, target: GPtr<u8>, ty: u32, use_
     shake_and_stamp(this, ty);
 }
 
-/// This module's registrations.
 /// This frame's forward travel as FireUnguidedMissile stores it: `k = max(0, moveSpeed . forward)` (x87; NaN keeps the
 /// dot), `(f32(k * f.x * timeStep), f32(f32(k * f.y) * timeStep), f32(f32(k * f.z) * timeStep))`.
 fn forward_travel(this: GPtr<u8>, f: CVector) -> CVector {
@@ -255,7 +261,189 @@ pub fn fire_unguided_missile(this: GPtr<u8>, ty: u32, use_rate: u32) {
     shake_and_stamp(this, ty);
 }
 
+orig! {
+    /// `CVehicle::GetPlaneGunsRateOfFire()` (0x6D40E0)
+    fn get_plane_guns_rate_of_fire(v: GPtr<u8>) -> i32 = thiscall 0x6D40E0 => crate::vehicle_fire_rates_upgrades::vehicle_get_plane_guns_rate_of_fire;
+    /// `CVehicle::GetPlaneGunsPosition(CVector* out, int32 gunId)` (0x6D4290)
+    fn get_plane_guns_position_call(v: GPtr<u8>, out: GPtr<u8>, gun: i32) -> GPtr<u8> = thiscall 0x6D4290 => get_plane_guns_position;
+    /// `CVehicle::DoPlaneGunFireFX(CWeapon*, CVector& particlePos, CVector& gunshellPos, int32 fxIdx)` (0x6D4AD0)
+    fn do_plane_gun_fire_fx_call(v: GPtr<u8>, weapon: GPtr<u8>, particle: GPtr<u8>, shell: GPtr<u8>, idx: i32) = thiscall 0x6D4AD0 => do_plane_gun_fire_fx;
+}
+
+/// `CVehicle::GetPlaneGunsPosition(CVector* out, int32 gunId)` (0x6D4290, thiscall, `ret 8`, returns `out`).
+///
+/// The vehicle structure's gun dummy when any coordinate is non-zero, else by model (jump table 0x6D44C4 / 0x6D44EC):
+/// 425 0x8D35D4, 447 0x8D35F8, 464 0x8D3634, 476 0x8D3610, 487 0x8D35E0, 497 0x8D35EC, 520 0x8D3628, 548 0x8D3604,
+/// 576 the static 0xC1CC2C, any other model 0. The Rustler (476, the `cmp dx, 0x1DC` of the fragment 0x407A15) then
+/// adds `(gunId - 1) * (0.2, 0, 0)` (0x8D361C): x through the unrounded product, y / z through their f32 stores.
+#[hook(addr = 0x6D4290, conv = thiscall, name = "CVehicle::GetPlaneGunsPosition", this = "CVehicle",
+       expect = "83 EC 18 66 8B 51 22", unverified = "frontier2-b26", route = "L2", hazards = "none")]
+pub fn get_plane_guns_position(this: GPtr<u8>, out: GPtr<u8>, gun: i32) -> GPtr<u8> {
+    let model = rd::<i16>(this, 0x22);
+    let (mut v, set) = gun_dummy_position(this);
+    if !set {
+        let src = match model {
+            425 => 0x8D_35D4,
+            447 => 0x8D_35F8,
+            464 => 0x8D_3634,
+            476 => 0x8D_3610,
+            487 => 0x8D_35E0,
+            497 => 0x8D_35EC,
+            520 => 0x8D_3628,
+            548 => 0x8D_3604,
+            576 => 0xC1_CC2C,
+            _ => 0,
+        };
+        v = if src == 0 { [0; 3] } else { [gr32(src), gr32(src + 4), gr32(src + 8)] };
+    }
+    if model == 476 {
+        let n = xi(gun.wrapping_sub(1));
+        let k = |a: usize| n.fmul_m(gf(a));
+        let fy = f32_of(k(0x8D_3620));
+        let fz = f32_of(k(0x8D_3624));
+        let f = |b: u32| f32::from_bits(b);
+        v = [
+            f32_of(k(0x8D_361C).fadd_m(f(v[0]))).to_bits(),
+            f32_of(x(fy).fadd_m(f(v[1]))).to_bits(),
+            f32_of(x(fz).fadd_m(f(v[2]))).to_bits(),
+        ];
+    }
+    for (i, b) in v.iter().enumerate() {
+        wr::<u32>(out, 4 * i as isize, *b);
+    }
+    out
+}
+
+/// `CVehicle::DoPlaneGunFireFX(CWeapon* weapon, CVector& particlePos, CVector& gunshellPos, int32 fxIdx)` (0x6D4AD0,
+/// thiscall, `ret 0x10`).
+///
+/// Planes (sub-type 4) keep their gun flashes at +0x9D4, helis (3) at +0xA0C; any other vehicle returns at once. The
+/// array (`new FxSystem_c*[GetPlaneNumGuns()]`, zeroed with the count re-read per entry) is made on first use; a
+/// missing entry gets `CreateFxSystem("gunflash", (0, 0, 0), modelling matrix, false)`; an entry then gets
+/// `SetOffsetPos(particlePos)` and `Play()`. Then (also without an array or a system) the shell casing when
+/// `s_bPlaneGunsEjectShellCasings` (0xC1CC19): `weapon.AddGunshell(this, gunshellPos, (0, 0.1), 0.5)`, and
+/// `CPointLights::AddLight(0, gunshellPos, 0, 3.0, 0.5, 0.4, 0, 0, 0, null)`.
+#[hook(addr = 0x6D4AD0, conv = thiscall, name = "CVehicle::DoPlaneGunFireFX", this = "CVehicle",
+       expect = "83 EC 18 56 8B F1", unverified = "frontier2-b26", route = "L2", hazards = "heap-writes",
+       note = "the gun flash fx systems (fx manager pool)")]
+pub fn do_plane_gun_fire_fx(this: GPtr<u8>, weapon: GPtr<u8>, particle: GPtr<u8>, shell: GPtr<u8>, idx: i32) {
+    let slot = match rd::<u32>(this, 0x594) {
+        4 => 0x9D4,
+        3 => 0xA0C,
+        _ => return,
+    };
+    if rd::<GPtr<u8>>(this, slot).is_null() {
+        let n = get_plane_num_guns(this);
+        wr::<GPtr<u8>>(this, slot, operator_new(n.wrapping_shl(2)));
+        let mut i = 0i32;
+        while i < get_plane_num_guns(this) as i32 {
+            wr::<u32>(rd::<GPtr<u8>>(this, slot), 4 * i as isize, 0);
+            i += 1;
+        }
+    }
+    if !rd::<GPtr<u8>>(this, slot).is_null() {
+        let e = |this: GPtr<u8>| rd::<GPtr<u8>>(this, slot).byte_add(4 * idx as isize);
+        if rd::<GPtr<u8>>(e(this), 0).is_null() {
+            let mut zero = CVector::default();
+            let fx = fx_create_system(GPtr::from_addr(FX_MAN), GPtr::from_addr(S_GUNFLASH), vp(&mut zero), get_modelling_matrix(this), 0);
+            wr::<GPtr<u8>>(e(this), 0, fx);
+        }
+        if !rd::<GPtr<u8>>(e(this), 0).is_null() {
+            fx_set_offset_pos(rd::<GPtr<u8>>(e(this), 0), particle);
+            fx_play(rd::<GPtr<u8>>(e(this), 0));
+        }
+    }
+    if g::<u8>(0xC1_CC19).read() != 0 {
+        let mut dir = [0.0f32, f32::from_bits(0x3DCC_CCCD)];
+        add_gunshell(weapon, this, shell, GPtr::from_raw(dir.as_mut_ptr()), 0.5);
+    }
+    let p = read_vec(shell);
+    add_light(0, p.x, p.y, p.z, 0.0, 0.0, 0.0, 3.0, 0.5, f32::from_bits(0x3ECC_CCCD), 0.0, 0, 0, GPtr::NULL);
+}
+
+/// The shell position of a plane gun: `f32(f32(timeStep * moveSpeed) + matrix * pos)` per component.
+fn gun_shell(this: GPtr<u8>, pos: &mut CVector) -> CVector {
+    let ts = gf(0xB7_CB5C);
+    let v = |o: isize| f32_of(x(ts).fmul_m(rd::<f32>(this, o)));
+    let (vx, vy, vz) = (v(0x44), v(0x48), v(0x4C));
+    let mut out = CVector::default();
+    let t = read_vec(matrix_mul_vec(vp(&mut out), rd::<GPtr<u8>>(this, 0x14), vp(pos)));
+    CVector::new(f32_of(x(vx).fadd_m(t.x)), f32_of(x(vy).fadd_m(t.y)), f32_of(x(vz).fadd_m(t.z)))
+}
+
+/// `CVehicle::FirePlaneGuns()` (0x6D4D30, thiscall, plain `ret`).
+///
+/// Nothing without guns or before `m_nGunFiringTime (+0x4D4) + GetPlaneGunsRateOfFire()` (unsigned). By model (jump
+/// table 0x6D505C / 0x6D5070): 425 / 548 one minigun (38), shake frequency 160; 447 / 464 / 487 / 497 one M4 (31),
+/// 92; 476 two M4s, 224, its gun cycle (+0x4A9 bits 0..1) stepped 0 -> 1 -> 2 -> 0; 520 / 576 two miniguns, 128;
+/// any other model returns. A `CWeapon(type, 5000)` (not destroyed) fires `FireInstantHit(this, &shell, &shell)`
+/// from the gun position (`GetPlaneGunsPosition(cycle)`) moved by the matrix and this frame's travel; one gun gets
+/// `DoPlaneGunFireFX(cycle)`, two guns `DoPlaneGunFireFX(2 * cycle)`, then the position re-read with x negated, its
+/// own shot and `DoPlaneGunFireFX(2 * cycle + 1)` (gta-reversed reuses the first position). A remote-controlled
+/// vehicle (status 8) shakes pad 0, else a player driver's pad (0 / 1) shakes (240, frequency, 0). Then
+/// `ReportWeaponEvent(0x95, minigun -> 31 else the type, this)` and the firing time = now.
+#[hook(addr = 0x6D4D30, conv = thiscall, name = "CVehicle::FirePlaneGuns", this = "CVehicle",
+       expect = "83 EC 5C 56 8B F1", unverified = "frontier2-b26", route = "L2", hazards = "heap-writes",
+       note = "FireInstantHit (bullets, damage), the gun flash fx systems")]
+pub fn fire_plane_guns(this: GPtr<u8>) {
+    if get_plane_num_guns(this) == 0 {
+        return;
+    }
+    let rate = get_plane_guns_rate_of_fire(this) as u32;
+    if gr32(TIME_MS) <= rate.wrapping_add(rd::<u32>(this, 0x4D4)) {
+        return;
+    }
+    let (double, freq, mut ty) = match rd::<i16>(this, 0x22) {
+        425 | 548 => (false, 0xA0, 0x26),
+        447 | 464 | 487 | 497 => (false, 0x5C, 0x1F),
+        476 => {
+            let c = rd::<u8>(this, 0x4A9);
+            let mut a = (c.wrapping_add(1) ^ c) & 3 ^ c;
+            wr::<u8>(this, 0x4A9, a);
+            if a & 3 > 2 {
+                a &= 0xFC;
+                wr::<u8>(this, 0x4A9, a);
+            }
+            (true, 0xE0, 0x1F)
+        }
+        520 | 576 => (true, 0x80, 0x26),
+        _ => return,
+    };
+    let mut weapon = [0u32; 7];
+    let w = GPtr::from_raw(weapon.as_mut_ptr()).cast::<u8>();
+    weapon_ctor(w, ty, 5000);
+    let cycle = || i32::from(rd::<u8>(this, 0x4A9) & 3);
+    let mut pos = CVector::default();
+    get_plane_guns_position_call(this, vp(&mut pos), cycle());
+    let mut shell = gun_shell(this, &mut pos);
+    fire_instant_hit(w, this, vp(&mut shell), vp(&mut shell), GPtr::NULL, GPtr::NULL, GPtr::NULL, 0, 0);
+    if double {
+        do_plane_gun_fire_fx_call(this, w, vp(&mut pos), vp(&mut shell), cycle() * 2);
+        let mut r = CVector::default();
+        let r = read_vec(get_plane_guns_position_call(this, vp(&mut r), cycle()));
+        pos = CVector::new(f32_of(x(r.x).fchs()), r.y, r.z);
+        shell = gun_shell(this, &mut pos);
+        fire_instant_hit(w, this, vp(&mut shell), vp(&mut shell), GPtr::NULL, GPtr::NULL, GPtr::NULL, 0, 0);
+        do_plane_gun_fire_fx_call(this, w, vp(&mut pos), vp(&mut shell), cycle() * 2 + 1);
+    } else {
+        do_plane_gun_fire_fx_call(this, w, vp(&mut pos), vp(&mut shell), cycle());
+    }
+    let pad = if rd::<u8>(this, 0x36) & 0xF8 == 0x40 { Some(0) } else { player_driver_pad(this) };
+    if let Some(n) = pad {
+        pad_start_shake(get_pad(n), 0xF0, freq, 0);
+    }
+    if ty == 0x26 {
+        ty = 0x1F;
+    }
+    report_weapon_event(GPtr::from_addr(AUDIO_ENGINE), 0x95, ty, this.addr() as u32);
+    wr::<u32>(this, 0x4D4, gr32(TIME_MS));
+}
+
+/// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_GET_PLANE_GUNS_POSITION,
+    HOOK_DO_PLANE_GUN_FIRE_FX,
+    HOOK_FIRE_PLANE_GUNS,
     HOOK_FIRE_UNGUIDED_MISSILE,
     HOOK_FIRE_FIXED_MACHINE_GUNS,
     HOOK_SCAN_AND_MARK_TARGET_FOR_HEAT_SEEKING_MISSILE,

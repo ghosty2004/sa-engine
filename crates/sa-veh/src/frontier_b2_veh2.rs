@@ -28,11 +28,8 @@ orig! {
        this = "CVehicle", unverified = "frontier2-b9", route = "L2", hazards = "none")]
 pub fn vehicle_get_plane_ordnance_position(this: GPtr<u8>, out: GPtr<u8>, ty: u32) -> GPtr<u8> {
     let model = i32::from(rd::<i16>(this, 0x22));
-    let d = rd::<GPtr<u8>>(crate::common::model_info(model), 0x5C).byte_add(0x9C);
-    let mut v = [rd::<u32>(d, 0), rd::<u32>(d, 4), rd::<u32>(d, 8)];
-    let zero = x(g::<f32>(0x85_8B50).read());
-    let nonzero = |b: u32| x(f32::from_bits(b)).fcom(zero).test_parity(0x44);
-    if !nonzero(v[0]) && !nonzero(v[1]) && !nonzero(v[2]) {
+    let (mut v, set) = gun_dummy_position(this);
+    if !set {
         let src = match model {
             0x1A9 => Some(0x8D_3640),
             0x1BF => Some(0xC1_CC38),
@@ -90,15 +87,33 @@ pub fn vehicle_possibly_drop_free_fall_bomb(this: GPtr<u8>, ty: u32, check: u32)
     shake_and_stamp(this, ty);
 }
 
-/// The ordnance shot's tail: a player driver's pad (player 0 or 1, +0x598) shakes (240, 160, 0); the shot time
-/// (+0x4FC for type 1, else +0x500) = now.
-pub(crate) fn shake_and_stamp(this: GPtr<u8>, ty: u32) {
+/// The vehicle structure's gun dummy (model info +0x5C, +0x9C) as raw bits, and whether any coordinate is non-zero
+/// (each compared with 0.0 through `fcomp [0x858B50]; test ah, 0x44; jp`, so NaN counts as non-zero).
+pub(crate) fn gun_dummy_position(this: GPtr<u8>) -> ([u32; 3], bool) {
+    let d = rd::<GPtr<u8>>(crate::common::model_info(i32::from(rd::<i16>(this, 0x22))), 0x5C).byte_add(0x9C);
+    let v = [rd::<u32>(d, 0), rd::<u32>(d, 4), rd::<u32>(d, 8)];
+    let zero = x(g::<f32>(0x85_8B50).read());
+    let nonzero = |b: u32| x(f32::from_bits(b)).fcom(zero).test_parity(0x44);
+    (v, nonzero(v[0]) || nonzero(v[1]) || nonzero(v[2]))
+}
+
+/// The pad of a player driver (+0x460, `CPed::IsPlayer`): player 0 or 1 by the ped type (+0x598), else none.
+pub(crate) fn player_driver_pad(this: GPtr<u8>) -> Option<i32> {
     let d = rd::<GPtr<u8>>(this, 0x460);
     if !d.is_null() && ped_is_player(d) != 0 {
         let n = rd::<u32>(rd::<GPtr<u8>>(this, 0x460), 0x598);
         if n == 0 || n == 1 {
-            pad_start_shake(get_pad(n as i32), 0xF0, 0xA0, 0);
+            return Some(n as i32);
         }
+    }
+    None
+}
+
+/// The ordnance shot's tail: a player driver's pad (player 0 or 1, +0x598) shakes (240, 160, 0); the shot time
+/// (+0x4FC for type 1, else +0x500) = now.
+pub(crate) fn shake_and_stamp(this: GPtr<u8>, ty: u32) {
+    if let Some(n) = player_driver_pad(this) {
+        pad_start_shake(get_pad(n), 0xF0, 0xA0, 0);
     }
     let now = g::<u32>(0xB7_CB84).read();
     if ty == 1 {

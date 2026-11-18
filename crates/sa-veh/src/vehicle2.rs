@@ -2322,7 +2322,7 @@ orig! {
     /// `CVehicle::SelectPlaneWeapon(bool, eOrdnanceType)` (0x6D4900)
     pub fn select_plane_weapon_o(v: GPtr<u8>, choice: u32, ord: u32) = thiscall 0x6D4900 => select_plane_weapon;
     /// `CVehicle::FirePlaneGuns()` (0x6D4D30)
-    pub fn fire_plane_guns(v: GPtr<u8>) = thiscall 0x6D4D30 => unported;
+    pub fn fire_plane_guns(v: GPtr<u8>) = thiscall 0x6D4D30 => crate::vehicle_guns::fire_plane_guns;
     /// `CVehicle::PossiblyDropFreeFallBombForPlayer(eOrdnanceType, bool)` (0x6E07E0)
     pub fn possibly_drop_free_fall_bomb(v: GPtr<u8>, ord: u32, b: u32) = thiscall 0x6E07E0 => unported;
     /// `CVehicle::FireHeatSeakingMissile(CEntity*, eOrdnanceType, bool)` (0x6E05C0)
