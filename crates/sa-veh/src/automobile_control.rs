@@ -78,7 +78,7 @@ orig! {
     /// `CAutomobile::BoostJumpControl()` (0x6A3A60)
     fn boost_jump_control(v: GPtr<u8>) = thiscall 0x6A3A60 => unported;
     /// `CAutomobile::TowTruckControl()` (0x6A40F0)
-    fn tow_truck_control(v: GPtr<u8>) = thiscall 0x6A40F0 => unported;
+    fn tow_truck_control(v: GPtr<u8>) = thiscall 0x6A40F0 => crate::vehicle_tow_link::tow_truck_control;
     /// `CAutomobile::TankControl()` (0x6AE850)
     fn tank_control(v: GPtr<u8>) = thiscall 0x6AE850 => crate::tank_control::tank_control;
     /// `CVehicle::ProcessBoatControl(tBoatHandlingData*, float*, bool, bool)` (0x6DBCE0)
