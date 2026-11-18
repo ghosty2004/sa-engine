@@ -409,6 +409,11 @@ orig! {
 }
 
 orig! {
+    /// `CSkidmarks::Clear` (0x720590)
+    pub fn skidmarks_clear() = cdecl 0x720590 => crate::mvpa_render1::skidmarks_clear;
+}
+
+orig! {
     /// `CMotionBlurStreaks::RegisterStreak` (0x721DC0)
     pub fn register_streak(id: u32, r: u32, g: u32, b: u32, a: u32, sx: u32, sy: u32, sz: u32, ex: u32, ey: u32, ez: u32) = cdecl 0x721DC0 => crate::motion_blur_streaks::motion_blur_streaks_register_streak;
 }

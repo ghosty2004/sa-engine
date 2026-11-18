@@ -5,6 +5,7 @@
 
 use crate::mem::GPtr;
 use crate::{hook, orig};
+use crate::bindings::skidmarks_clear;
 
 const THE_CAMERA: u32 = 0xB6F028;
 const THE_PATHS: u32 = 0x96F050;
@@ -144,8 +145,6 @@ use crate::bindings::hud_re_initialise;
 orig! {
     /// `CWanted::InitialiseStaticVariables()` (0x561C70)
     fn wanted_initialise_static_variables() = cdecl 0x561C70 => unported;
-    /// `CSkidmarks::Clear()` (0x720590)
-    fn skidmarks_clear() = cdecl 0x720590 => unported;
     /// `CCarCtrl::ReInit()` (0x4213B0)
     fn car_ctrl_re_init() = cdecl 0x4213B0 => unported;
     /// `CPathFind::ReInit()` (0x44E4E0)

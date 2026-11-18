@@ -1324,6 +1324,11 @@ orig! {
 }
 
 orig! {
+    /// `CAERadioTrackManager::GetCurrentRadioStationID` (0x4E83F0)
+    pub fn radio_get_current_radio_station_id_call(this: GPtr<u8>) -> u8 = thiscall 0x4E83F0 => unported;
+}
+
+orig! {
     /// `CAESound` (0x4EF660)
     pub fn sound_dtor(sound: GPtr<u8>) -> u32 = thiscall 0x4EF660 => unported;
 }
@@ -1486,6 +1491,11 @@ orig! {
 orig! {
     /// `CCamera::GetLookDirection` (0x50AE90)
     pub fn camera_get_look_direction(c: GPtr<u8>) -> i32 = thiscall 0x50AE90 => unported;
+}
+
+orig! {
+    /// `CCamera::Restore` (0x50B930)
+    pub fn camera_restore(cam: GPtr<u8>) = thiscall 0x50B930 => unported;
 }
 
 orig! {
@@ -4451,6 +4461,11 @@ orig! {
 orig! {
     /// `RwTexDictionaryFindHashNamedTexture` (0x734E50)
     pub fn rw_tex_dictionary_find_hash_named_texture(dict: GPtr<u8>, hash: u32) -> GPtr<u8> = cdecl 0x734E50 => unported;
+}
+
+orig! {
+    /// `CExplosion::ClearAllExplosions` (0x736840)
+    pub fn explosion_clear_all() = cdecl 0x736840 => unported;
 }
 
 orig! {

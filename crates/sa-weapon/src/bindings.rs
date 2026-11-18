@@ -69,6 +69,11 @@ orig! {
 }
 
 orig! {
+    /// `CExplosion::ClearAllExplosions` (0x736840)
+    pub fn explosion_clear_all() = cdecl 0x736840 => crate::explosion::clear_all_explosions;
+}
+
+orig! {
     /// `CExplosion::AddExplosion` (0x736A50)
     pub fn add_explosion(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, x: f32, y: f32, z: f32, life: u32, sound: u8, shake: f32, visible: u8) -> u8 = cdecl 0x736A50 => crate::explosion::add_explosion;
 }

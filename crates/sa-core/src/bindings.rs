@@ -2354,6 +2354,11 @@ orig! {
 }
 
 orig! {
+    /// `CSkidmarks::Clear` (0x720590)
+    pub fn skidmarks_clear() = cdecl 0x720590 => unported;
+}
+
+orig! {
     /// `CSpecialFX::Init` (0x7268F0)
     pub fn special_fx_init() = cdecl 0x7268F0 => unported;
 }

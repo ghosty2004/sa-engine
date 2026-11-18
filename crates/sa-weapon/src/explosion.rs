@@ -9,6 +9,7 @@
 use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
 use sa_core::{hook, orig};
+use crate::bindings::explosion_clear_all;
 
 use crate::common::*;
 
@@ -38,8 +39,6 @@ orig! {
     pub fn trigger_explosion(pos: GPtr<u8>, radius: u32, vis: u32, victim: GPtr<u8>, creator: GPtr<u8>, b: u32, dmg: u32) = cdecl 0x56B790 => unported;
     /// `CWorld::SetPedsOnFire(float x, y, z, float radius, CEntity*)` (0x565610)
     pub fn set_peds_on_fire(x: u32, y: u32, z: u32, r: f32, e: GPtr<u8>) = cdecl 0x565610 => unported;
-    /// `CExplosion::ClearAllExplosions()` (0x736840)
-    pub fn clear_all_explosions_call() = cdecl 0x736840 => clear_all_explosions;
 }
 
 /// `aExplosions[i]`.
@@ -96,7 +95,7 @@ pub fn clear_all_explosions() {
 /// `CExplosion::Initialise()` (0x736A40): `jmp ClearAllExplosions`.
 #[hook(addr = 0x736A40, conv = cdecl, name = "CExplosion::Initialise", expect = "E9 FB FD FF FF 90")]
 pub fn initialise() {
-    clear_all_explosions_call();
+    explosion_clear_all();
 }
 
 /// `CExplosion::GetExplosionActiveCounter(uint8 id)` (0x736900): byte +0x29.

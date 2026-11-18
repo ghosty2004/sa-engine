@@ -45,7 +45,7 @@ orig! {
     /// `CPlayerInfo::ArrestPlayer()` (0x56E5D0)
     fn player_info_arrest_player(i: GPtr<u8>) = thiscall 0x56E5D0 => unported;
     /// `CWeaponEffects::ClearCrossHairs()` (0x742C80, cdecl)
-    fn weapon_effects_clear_cross_hairs() = cdecl 0x742C80 => unported;
+    pub(crate) fn weapon_effects_clear_cross_hairs() = cdecl 0x742C80 => unported;
     /// `CRestart::FindClosestHospitalRestartPoint(CVector, CVector* out, float* heading)` (0x460850, cdecl)
     fn restart_find_closest_hospital(x: f32, y: f32, z: f32, out: GPtr<u8>, h: GPtr<u8>) = cdecl 0x460850 => unported;
     /// `CRestart::FindClosestPoliceRestartPoint(CVector, CVector* out, float* heading)` (0x460A50, cdecl)

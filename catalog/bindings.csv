@@ -1037,12 +1037,15 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x40F070,sa-world,col_data_remove_collision_volumes,thiscall,,this:GPtr<sa_world::collision::shared::CCollisionData>,,sa_world::collision::data::remove_collision_volumes,CCollisionData::RemoveCollisionVolumes,
 0x40F5E0,sa-world,get_triangle_point,thiscall,,cd:GPtr<sa_world::collision::shared::CCollisionData>;out:GPtr<sa_math::vector::CVector>;idx:i32,,sa_world::collision::data::get_triangle_point,CCollisionData::GetTrianglePoint,
 0x49CF90,sa-world,tag_manager_get_alpha,cdecl,,e:GPtr<u8>,u8,unported,CTagManager::GetAlpha-Entity,sa_pop::misc2::get_alpha_entity
+0x4E83F0,sa-world,radio_get_current_radio_station_id_call,thiscall,,this:GPtr<u8>,u8,unported,CAERadioTrackManager::GetCurrentRadioStationID,sa_audio::port2_a::radio_get_current_radio_station_id
+0x50B930,sa-world,camera_restore,thiscall,,cam:GPtr<u8>,,unported,CCamera::Restore,sa_cam::camctl::restore
 0x5A7EA0,sa-world,get_texture_dependency,cdecl,,t:i32,i32,unported,CClothes::GetTextureDependency,sa_ped::clothes::get_texture_dependency
 0x5E5ED0,sa-world,add_weapon_model,thiscall,,p:GPtr<u8>;model:i32,,unported,CPed::AddWeaponModel,sa_ped::ped_render::add_weapon_model
 0x609650,sa-world,player_re_apply_move_anims,thiscall,,p:GPtr<u8>,,unported,CPlayerPed::ReApplyMoveAnims,sa_ped::player_ctrl::re_apply_move_anims
 0x6A3580,sa-world,fix_tyre,thiscall,,v:GPtr<u8>;w:u32,,unported,CAutomobile::FixTyre,sa_veh::automobile::fix_tyre
 0x6A35A0,sa-world,fix_door,thiscall,,v:GPtr<u8>;node:i32;d:i32,,unported,CAutomobile::FixDoor,sa_veh::vehicle_part_damage::automobile_fix_door
 0x6A3670,sa-world,fix_panel,thiscall,,v:GPtr<u8>;node:i32;p:u32,,unported,CAutomobile::FixPanel,sa_veh::vehicle_part_damage::automobile_fix_panel
+0x736840,sa-world,explosion_clear_all,cdecl,,,,unported,CExplosion::ClearAllExplosions,sa_weapon::explosion::clear_all_explosions
 0x404200,sa-core,rect_restrict,thiscall,,r:GPtr<u8>;o:GPtr<u8>,GPtr<u8>,unported,CRect::Restrict,
 0x4042D0,sa-core,rect_is_point_inside,thiscall,,rect:GPtr<u8>;pos:GPtr<u8>;tolerance:f32,u8,unported,CRect::IsPointInside-Tolerance,
 0x4045B0,sa-core,ipl_store_add_ipls_needed_at_posn,cdecl,,p:GPtr<u8>,,unported,CIplStore::AddIplsNeededAtPosn,
@@ -1511,6 +1514,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x71DCA0,sa-core,occlusion_init,cdecl,,,,unported,COcclusion::Init,
 0x7204C0,sa-core,rubbish_set_visibility,cdecl,,b:u32,,unported,CRubbish::SetVisibility,
 0x7204E0,sa-core,skidmarks_init,cdecl,,,,unported,CSkidmarks::Init,
+0x720590,sa-core,skidmarks_clear,cdecl,,,,unported,CSkidmarks::Clear,sa_render::mvpa_render1::skidmarks_clear
 0x7268F0,sa-core,special_fx_init,cdecl,,,,unported,CSpecialFX::Init,
 0x727260,sa-core,sprite2d_set_recip_near_clip,cdecl,,,,unported,CSprite2d::SetRecipNearClip,
 0x727270,sa-core,sprite2d_set_texture,thiscall,,this:GPtr<u8>;name:GPtr<u8>,,unported,CSprite2d::SetTexture-,
@@ -2286,7 +2290,6 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x50A280,sa-cam,idle_set_target,thiscall,,this:GPtr<u8>;e:GPtr<u8>,,sa_cam::camproc::idle_cam_set_target,CIdleCam::SetTarget,
 0x50AF00,sa-cam,cc_get_arr_pos,thiscall,,this:GPtr<u8>;kind:i32;out:GPtr<i32>,u8,sa_cam::camctl::get_arr_pos_for_vehicle_type,CCamera::GetArrPosForVehicleType,
 0x50AFA0,sa-cam,copy_camera_matrix_to_rw_cam,thiscall,,this:GPtr<u8>;update:u8,,sa_cam::camctl::copy_camera_matrix_to_rw_cam_port,CCamera::CopyCameraMatrixToRWCam,
-0x50B930,sa-cam,camera_restore,thiscall,,cam:GPtr<u8>,,sa_cam::camctl::restore,CCamera::Restore,
 0x50C160,sa-cam,set_zoom_value_follow_ped_script,thiscall,,this:GPtr<u8>;zoom:u16,,sa_cam::camera::set_zoom_value_follow_ped_script,CCamera::SetZoomValueFollowPedScript,
 0x50CEF0,sa-cam,camera_reset_ducking_system,thiscall,,cam:GPtr<u8>;ped:GPtr<u8>,,sa_cam::camfx::reset_ducking_system,CCamera::ResetDuckingSystem,
 0x50CFA0,sa-cam,handle_camera_motion_for_ducking,thiscall,,cam:GPtr<u8>;ped:GPtr<u8>;src:GPtr<u8>;targ:GPtr<u8>;instant:u32,,sa_cam::camfx::handle_camera_motion_for_ducking,CCamera::HandleCameraMotionForDucking,
@@ -2658,7 +2661,6 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x4E6C30,sa-audio,ps_finished_playing_call,cdecl,,,,sa_audio::port2_a::ps_finished_playing_scanner_dialogue,CAEPoliceScannerAudioEntity::FinishedPlayingScannerDialogue,
 0x4E8350,sa-audio,radio_is_radio_on,thiscall,,this:GPtr<u8>,u8,sa_audio::radio::is_radio_on,CAERadioTrackManager::IsRadioOn,
 0x4E8380,sa-audio,get_radio_station_name_key_call,thiscall,,this:GPtr<u8>;id:u32;out:GPtr<u8>,,sa_audio::radio::get_radio_station_name_key,CAERadioTrackManager::GetRadioStationNameKey,
-0x4E83F0,sa-audio,radio_get_current_radio_station_id_call,thiscall,,this:GPtr<u8>,u8,sa_audio::port2_a::radio_get_current_radio_station_id,CAERadioTrackManager::GetCurrentRadioStationID,
 0x4E9570,sa-audio,radio_choose_advert_index,thiscall,,this:GPtr<u8>;station:u32,u32,sa_audio::port2_a::radio_choose_advert_index,CAERadioTrackManager::ChooseAdvertIndex,
 0x4E96C0,sa-audio,add_music_track_index_to_history_call,thiscall,,this:GPtr<u8>;station:u32;index:u32,,sa_audio::radio::add_music_track_index_to_history,CAERadioTrackManager::AddMusicTrackIndexToHistory,
 0x4E9800,sa-audio,radio_is_vehicle_radio_active,cdecl,,,u8,sa_audio::radio::is_vehicle_radio_active,CAERadioTrackManager::IsVehicleRadioActive,
