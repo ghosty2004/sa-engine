@@ -8,6 +8,9 @@ crate::orig! {
     pub fn rand() -> i32 = cdecl 0x821B1E => rand_owned;
     /// `srand(seed)` (0x821B11).
     pub fn srand(seed: u32) = cdecl 0x821B11 => srand_owned;
+    /// `time(time_t*)` (0x824106): the system time in seconds since 1970 (`GetSystemTimeAsFileTime`), also
+    /// stored through a non-null pointer. Phase B serves it from sa-game's CRT table.
+    pub fn time(out: crate::mem::GPtr<u32>) -> u32 = cdecl 0x824106 => unported;
 }
 
 /// The game thread's `_holdrand` in phases B/C. The CRT initialises it to 1 (`_getptd`'s per-thread

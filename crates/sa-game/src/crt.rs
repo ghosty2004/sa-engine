@@ -528,6 +528,18 @@ pub extern "C-unwind" fn strdate(buf: GPtr<u8>) -> GPtr<u8> {
     buf
 }
 
+/// `time(t)` (0x824106): the host's UTC seconds since 1970 (the original's `GetSystemTimeAsFileTime` / 10^7 less
+/// the 1601 epoch), stored through `t` when it is not null.
+pub extern "C-unwind" fn time(t: GPtr<u32>) -> u32 {
+    let secs = web_time::SystemTime::now()
+        .duration_since(web_time::UNIX_EPOCH)
+        .map_or(0, |d| d.as_secs()) as u32;
+    if !t.is_null() {
+        t.write(secs);
+    }
+    secs
+}
+
 /// Days since 1970-01-01 to (year, month, day) in the proleptic Gregorian calendar.
 pub(crate) fn civil_from_days(z: i64) -> (i64, i64, i64) {
     let z = z + 719_468;
@@ -656,6 +668,7 @@ pub fn entries() -> Vec<(u32, &'static str, usize)> {
         (0x0082_1BB5, "CRT sprintf", ent!(raw sprintf)),
         (0x0082_3A30, "CRT fprintf", ent!(raw fprintf)),
         (0x0082_3A8E, "CRT _strdate", ent!(strdate; buf)),
+        (0x0082_4106, "CRT time", ent!(time; t)),
         (0x0083_6FBA, "CRT _strupr", ent!(strupr; s)),
         (0x0082_1D1E, "CRT atexit", ent!(atexit; _f)),
         (0x0082_1F40, "CRT strncpy", ent!(strncpy; d s n)),

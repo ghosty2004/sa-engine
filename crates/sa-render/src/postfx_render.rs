@@ -49,7 +49,7 @@ orig! {
     /// `CPostEffects::NightVision(RwRGBA)` (0x7011c0)
     fn night_vision(col: u32) = cdecl 0x7011c0 => unported;
     /// `CPostEffects::Grain(int strength, bool)` (0x7037c0)
-    fn grain(strength: u32, update: u32) = cdecl 0x7037c0 => unported;
+    fn grain(strength: u32, update: u32) = cdecl 0x7037c0 => crate::posteffects_filters::grain;
     /// `CPostEffects::InfraredVision(RwRGBA, RwRGBA)` (0x703f80)
     fn infrared_vision(c1: u32, c2: u32) = cdecl 0x703f80 => crate::posteffects_filters::infrared_vision;
     /// `CPostEffects::HeatHazeFX(float intensity, bool alwaysOn)` (0x701780; the float as a raw dword)

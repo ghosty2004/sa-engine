@@ -12,6 +12,9 @@ use crate::bindings::{rw_raster_pop_context, rw_raster_push_context, rw_raster_r
 use crate::common::{ftol32, g, jp, x, xi};
 use sa_core::bindings::{rs_camera_begin_update, rw_camera_end_update};
 use sa_world::bindings::find_player_speed;
+use sa_core::bindings::{get_current_time_in_cycles, get_cycles_per_millisecond, rw_raster_lock};
+use sa_core::crt::{rand, srand, time as crt_time};
+use sa_rwcore::bindings::rw_raster_unlock;
 
 orig! {
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
@@ -364,6 +367,67 @@ pub fn set_filter_main_colour(_raster: u32, colour: u32) {
     rw_render_state_set(0xB, 6);
 }
 
+/// `CPostEffects::Grain(int32 strength, bool update)` (0x7037C0). With `update` (its low byte) the grain raster
+/// (0xC402B0) is locked for writing and refilled: `srand(time(NULL) + CTimer ms)`, then `srand(cycles / cycles per
+/// ms)`; each of the 0x10000 texels takes one `rand()` byte in all four channels, and every 100th texel first
+/// reseeds with `srand(time(NULL) + ++reseeds (0xC4031C) + ms)`; unlocked. Then the immediate-mode states, texture
+/// address (2) = wrap, filter (9) = linear; `ux = 1.5` (`W / 640 * 1.5` above 640 wide), `uy = H / W * ux` (the
+/// screen sizes as f32 locals) as the quad's UVs; a full-screen white quad of alpha `strength` with the grain
+/// raster; default UVs; the states restored (tail jump). The original's first `srand` and the reseeds take the
+/// wall clock (`time`), as here.
+#[hook(addr = 0x7037C0, conv = cdecl, name = "CPostEffects::Grain", expect = "8A 44 24 08 83 EC 08 84 C0",
+       unverified = "frontier2-c20", route = "L2", hazards = "heap-writes",
+       note = "reseeds the CRT rand from the wall clock (time()) while refilling the grain texture")]
+pub fn grain(strength: u32, update: u32) {
+    let grain = 0xC4_02B0;
+    if update as u8 != 0 {
+        let mut p = rw_raster_lock(g::<GPtr<u8>>(grain).read(), 0, 1).wrapping_add(2);
+        let ms = gu(TIME_MS);
+        srand(crt_time(GPtr::from_addr(0)).wrapping_add(ms));
+        let c = get_current_time_in_cycles();
+        srand(c / get_cycles_per_millisecond());
+        let mut n = 0u32;
+        for _ in 0..0x10000 {
+            n += 1;
+            if n >= 100 {
+                let reseeds = g::<u32>(0xC4_031C);
+                reseeds.write(reseeds.read().wrapping_add(1));
+                let ms = gu(TIME_MS);
+                n = 0;
+                srand(crt_time(GPtr::from_addr(0)).wrapping_add(reseeds.read()).wrapping_add(ms));
+            }
+            let v = rand() as u8;
+            for o in [1u32, 0, 0xFFFF_FFFF, 0xFFFF_FFFE] {
+                GPtr::<u8>::from_addr(p.wrapping_add(o) as usize).write(v);
+            }
+            p = p.wrapping_add(4);
+        }
+        rw_raster_unlock(g::<GPtr<u8>>(grain).read());
+    }
+    im_render_states_store();
+    rs_set_immediate();
+    rw_render_state_set(2, 1);
+    rw_render_state_set(9, 2);
+    let mut ux = x(gf(0x85_8CE8));
+    if g::<i32>(SCREEN_W).read() > 0x280 {
+        ux = xi(g::<i32>(SCREEN_W).read()).fmul_m(gf(0x85_9520)).fmul_m(gf(0x85_8CE8));
+    }
+    let h = fild_f32(SCREEN_H);
+    let w = fild_f32(SCREEN_W);
+    let uy = x(f32::from_bits(h)).fdiv_m(f32::from_bits(w)).fmul(ux).to_f32().to_bits();
+    let ux = ux.to_f32().to_bits();
+    for (a, v) in [(0xC4_01EC, 0), (0xC4_01F0, 0), (0xC4_020C, 0), (0xC4_0224, 0), (0xC4_0244, uy), (0xC4_0208, ux),
+                   (0xC4_0228, uy), (0xC4_0240, ux)] {
+        g::<u32>(a).write(v);
+    }
+    draw_quad(0, 0, w, h, 0xFF, 0xFF, 0xFF, strength, gu(grain));
+    set_default_uvs();
+    rs_restore();
+}
+
+/// `CTimer::m_snTimeInMilliseconds` (0xB7CB84).
+const TIME_MS: usize = 0xB7_CB84;
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_SET_SPEED_FX_MANUAL_SPEED_CURRENT_FRAME,
     HOOK_SCRIPT_DARKNESS_FILTER_SWITCH,
@@ -374,4 +438,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_POST_FOG,
     HOOK_INFRARED_VISION,
     HOOK_SET_FILTER_MAIN_COLOUR,
+    HOOK_GRAIN,
 ];
