@@ -11,9 +11,24 @@ use super::common::{rd, wr, x, xi};
 use super::interior_room_items::{place_centred, place_object};
 use super::interior_shop_furnishing::rand_scaled;
 
-use crate::bindings::{add_interior_info, get_furniture, get_random_id, place_furniture, set_tiles_status};
+use crate::bindings::{
+    add_goto_pt, add_interior_info, get_furniture, get_random_id, get_tile_status, place_furniture, set_tiles_status,
+};
 
 orig! {
+    /// `Interior_c::PlaceFurnitureInCorner(group, subGroup, id, float z, mode, corner, offset, int32* outCorner,
+    /// int32* outX, int32* outY, int32* outW, int32* outD)` (0x593340)
+    fn place_furniture_in_corner(this: GPtr<u8>, group: i32, sub: i32, id: i32, z: u32, mode: i32, corner: i32, offset: i32, out_corner: GPtr<i32>, out_x: GPtr<i32>, out_y: GPtr<i32>, out_w: GPtr<i32>, out_d: GPtr<i32>) -> GPtr<u8> = thiscall 0x593340 => super::interior_room_items::place_furniture_in_corner;
+    /// `Interior_c::SetCornerTiles(corner, size, status, force)` (0x5917C0)
+    fn set_corner_tiles(this: GPtr<u8>, corner: i32, size: i32, status: i32, force: u32) = thiscall 0x5917C0 => super::interior_corner_tiles::set_corner_tiles;
+    /// `Interior_c::Lounge_AddTV(int32 corner, int32, int32, int32)` (0x597240)
+    fn lounge_add_tv_call(this: GPtr<u8>, corner: i32, a2: i32, a3: i32, a4: i32) -> GPtr<u8> = thiscall 0x597240 => lounge_add_tv;
+    /// `Interior_c::Lounge_AddSofaInfo(int32 side, int32 pos, CEntity*)` (0x5975C0)
+    fn lounge_add_sofa_info_call(this: GPtr<u8>, side: i32, pos: i32, e: i32) = thiscall 0x5975C0 => lounge_add_sofa_info;
+    /// `Interior_c::Lounge_AddChairInfo(int32 side, int32 pos, CEntity*)` (0x5974E0)
+    fn lounge_add_chair_info(this: GPtr<u8>, side: i32, pos: i32, e: i32) = thiscall 0x5974E0 => super::interior_room_items::lounge_add_chair_info;
+    /// `Interior_c::Lounge_AddHifi(int32 side, int32 x, int32 y, int32)` (0x597430)
+    fn lounge_add_hifi(this: GPtr<u8>, side: i32, tx: i32, ty: i32, a4: i32) -> GPtr<u8> = thiscall 0x597430 => super::interior_room_items::lounge_add_hifi;
     /// `Interior_c::FindEmptyTiles(int32 w, int32 d, int32* outX, int32* outY)` (0x591C50)
     fn find_empty_tiles(this: GPtr<u8>, w: i32, d: i32, out_x: GPtr<i32>, out_y: GPtr<i32>) -> u8 = thiscall 0x591C50 => super::interior_furnish_lookup::find_empty_tiles;
     /// `Interior_c::Bedroom_AddTableItem(group, subGroup, dir, x, y, rot)` (0x593F10)
@@ -361,4 +376,233 @@ pub fn furnish_bedroom(this: GPtr<u8>) {
     place_centred(this, get_furniture(man(), 8, 1, -1, wealth(this)));
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_KITCHEN_FURNISH_EDGES, HOOK_FURNISH_BEDROOM];
+/// The TV height of the lounge items.
+const TV_Z: f32 = 0.5;
+
+/// `Interior_c::Lounge_AddTV(int32 corner, int32, int32, int32)` (0x597240, `ret 0x10`; only the corner is
+/// read). Corner 0 / 2 / 1 / 3 (compared in that order on the raw argument): an info of type 0 (dir -1) one tile
+/// in, the TV (2 / 3, stealable) in the corner at 45 degrees from `(corner & 3) * 90`, and a second item (2 / 7 on
+/// a coin flip, else 2 / 9) beside it. Any other corner adds no info and places both items at the original's
+/// stack words: x / the second item's position uninitialised (0 here), the TV's y the raw corner bits.
+#[hook(addr = 0x597240, conv = thiscall, name = "Interior_c::Lounge_AddTV", this = "Interior_c",
+       expect = "83 EC 10 8B 44 24 14",
+       unverified = "frontier2-b35", route = "L2", hazards = "uninit-locals,heap-writes",
+       note = "rand at_site 0x5973D8")]
+pub fn lounge_add_tv(this: GPtr<u8>, corner: i32, _a2: i32, _a3: i32, _a4: i32) -> GPtr<u8> {
+    let r = corner & 3;
+    let size = |o: isize| xi(i32::from(rd::<u8>(info(this), o)));
+    let back = |v: sa_math::x87::X87, k: f32| v.fsub_m(k).to_f32();
+    let (tv, second) = match corner {
+        0 => {
+            let d = size(3);
+            add_interior_info(this, 0, 1.0, back(d, 2.0), u32::MAX, 0);
+            ((F_HALF, back(d, F_HALF)), (1.5, back(d, F_HALF)))
+        }
+        2 => {
+            let w = size(2);
+            let tx = back(w, F_HALF);
+            add_interior_info(this, 0, back(w, 2.0), 1.0, u32::MAX, 0);
+            ((tx, F_HALF), (back(x(tx), 1.0), F_HALF))
+        }
+        1 => {
+            add_interior_info(this, 0, 1.0, 1.0, u32::MAX, 0);
+            ((F_HALF, F_HALF), (F_HALF, 1.5))
+        }
+        3 => {
+            let (w, d) = (size(2), size(3));
+            let ty = d.fsub_m(F_HALF);
+            add_interior_info(this, 0, back(w, 2.0), back(d, 2.0), u32::MAX, 0);
+            ((back(w, F_HALF), ty.to_f32()), (back(w, F_HALF), ty.fsub_m(1.0).to_f32()))
+        }
+        _ => ((0.0, f32::from_bits(corner as u32)), (0.0, 0.0)),
+    };
+    let tv_item = get_furniture(man(), 2, 3, -1, wealth(this));
+    let rz = xi(r).fmul_m(90.0);
+    place_object(this, 1, tv_item, tv.0, tv.1, TV_Z, rz.fadd_m(45.0).to_f32());
+    let sub = if at_site(0x5973D8, rand) < 0x3FFF { 7 } else { 9 };
+    let item = get_furniture(man(), 2, sub, -1, wealth(this));
+    place_object(this, 1, item, second.0, second.1, TV_Z, rz.to_f32())
+}
+
+/// `Interior_c::Lounge_AddSofaInfo(int32 side, int32 pos, CEntity* e)` (0x5975C0, `ret 0xC`): two seat infos
+/// (type 1, dir `(side - 2) & 3`) along the wall of `side` at `p = pos + 0.5` and `f32(p) + 1`, one tile in
+/// from the wall (side 0: y = (D - 1) - 1, side 2: y = 1, side 1: x = 1, side 3: x = (W - 1) - 1).
+#[hook(addr = 0x5975C0, conv = thiscall, name = "Interior_c::Lounge_AddSofaInfo", this = "Interior_c",
+       expect = "8B 44 24 04 53 55 56 57",
+       unverified = "frontier2-b35", route = "L2", hazards = "heap-writes")]
+pub fn lounge_add_sofa_info(this: GPtr<u8>, side: i32, pos: i32, e: i32) {
+    let dir = ((side - 2) & 3) as u32;
+    let p = tile_mid(pos);
+    let p2 = x(p).fadd_m(1.0).to_f32();
+    let inset = |o: isize| xi(i32::from(rd::<u8>(info(this), o)) - 1).fsub_m(1.0).to_f32();
+    let seats: [(f32, f32); 2] = match side {
+        0 => {
+            let y = inset(3);
+            [(p, y), (p2, y)]
+        }
+        2 => [(p, 1.0), (p2, 1.0)],
+        1 => [(1.0, p), (1.0, p2)],
+        3 => {
+            let xw = inset(2);
+            [(xw, p), (xw, p2)]
+        }
+        _ => return,
+    };
+    for (sx, sy) in seats {
+        add_interior_info(this, 1, sx, sy, dir, e as u32);
+    }
+}
+
+/// The lounge's wall look-at infos (type 2) on every free (status 0 / 2) wall tile: the front and back rows for
+/// x in 0..W-1, the side columns for y in 1..D-2.
+fn lounge_wall_infos(this: GPtr<u8>) {
+    let size = |o: isize| i32::from(rd::<u8>(info(this), o));
+    let free = |s: u32| s == 0 || s == 2;
+    let mut tx = 0;
+    while tx < size(2) - 1 {
+        let front = get_tile_status(this, tx, 0);
+        let back = get_tile_status(this, tx, size(3) - 1);
+        if free(front) {
+            add_interior_info(this, 2, xi(tx).to_f32(), 0.0, 2, 0);
+        }
+        if free(back) {
+            let d1 = size(3) - 1;
+            add_interior_info(this, 2, xi(tx).to_f32(), xi(d1).to_f32(), 0, 0);
+        }
+        tx += 1;
+    }
+    let mut ty = 1;
+    while ty < size(3) - 2 {
+        let left = get_tile_status(this, 0, ty);
+        let right = get_tile_status(this, size(2) - 1, ty);
+        if free(left) {
+            add_interior_info(this, 2, 0.0, xi(ty).to_f32(), 1, 0);
+        }
+        if free(right) {
+            let w1 = size(2) - 1;
+            add_interior_info(this, 2, xi(w1).to_f32(), xi(ty).to_f32(), 3, 0);
+        }
+        ty += 1;
+    }
+}
+
+/// The lounge's clutter threshold: >= 75: 0..19, >= 50: 20..49, else 50..99.
+fn lounge_clutter_chance(wl: u8) -> i32 {
+    if wl >= 75 {
+        rand_scaled(0x597B93, 20.0)
+    } else if wl >= 50 {
+        20 - rand_scaled(0x597BBE, -30.0)
+    } else {
+        50 - rand_scaled(0x597BE8, -50.0)
+    }
+}
+
+/// `Interior_c::FurnishLounge()` (0x597740, thiscall, no arguments). The door tiles (2 x 1, status 7, its
+/// neighbours status 2); the TV in a random corner (2 / 2, with `Lounge_AddTV`) and that corner's tiles reserved;
+/// a status-3 ring one tile inside the walls, goto points at its corners, all four corners blocked while the
+/// wall items go in: the style id (+0x791 = random id of 2 / 0), the sofa (2 / 0) with its infos and a table in
+/// front (2 / 4 at depth 2, else 3), two chairs (2 / 1) and a third when the perimeter exceeds 28. The corners
+/// other than the TV's reopen; the hi-fi (2 / 6), a wall unit (2 / 5) and two wall items (8 / 0); three clutter
+/// items (8 / 2 on 2 x 2 tiles, 8 / 5, 8 / 4) by the wealth's chance, the rug (8 / 1) centred, and the wall
+/// look-at infos. With no TV corner the reserved corner is the original's uninitialised stack word (0 here).
+#[hook(addr = 0x597740, conv = thiscall, name = "Interior_c::FurnishLounge", this = "Interior_c",
+       expect = "83 EC 28 53 55 56 57 8B F1",
+       unverified = "frontier2-b35", route = "L2", hazards = "uninit-locals,heap-writes",
+       note = "rand at_site 0x597B93 / 0x597BBE / 0x597BE8, 0x597C12, 0x597CB3, 0x597D54")]
+pub fn furnish_lounge(this: GPtr<u8>) {
+    use sa_core::field::ptr_of as p;
+    let size = |o: isize| i32::from(rd::<u8>(info(this), o));
+    let door = || i32::from(rd::<i8>(info(this), 5));
+    let perimeter = (size(3) + size(2)) * 2;
+    set_tiles_status(this, door() - 1, 0, 2, 1, 7, 0);
+    set_tiles_status(this, door() - 2, 0, 1, 1, 2, 0);
+    set_tiles_status(this, door() + 1, 0, 1, 1, 2, 0);
+
+    let (mut corner, mut cx, mut cy, mut cw, mut cd) = (0i32, 0i32, 0i32, 0i32, 0i32);
+    let mut tv_corner = -1;
+    if !place_furniture_in_corner(this, 2, 2, -1, 0, 1, -1, 0, p(&mut corner).cast(), p(&mut cx).cast(),
+                                  p(&mut cy).cast(), p(&mut cw).cast(), p(&mut cd).cast()).is_null()
+    {
+        lounge_add_tv_call(this, corner, cx, cy, 0);
+        tv_corner = corner;
+    }
+    set_corner_tiles(this, corner, 2, 2, 1);
+
+    let (w2, d2) = (size(2) - 2, size(3) - 2);
+    for tx in 1..=w2 {
+        set_tiles_status(this, tx, d2, 1, 1, 3, 0);
+        set_tiles_status(this, tx, 1, 1, 1, 3, 0);
+    }
+    for ty in 1..=d2 {
+        set_tiles_status(this, 1, ty, 1, 1, 3, 0);
+        set_tiles_status(this, w2, ty, 1, 1, 3, 0);
+    }
+    add_goto_pt(this, 1, 1, 0.0, 0.0);
+    add_goto_pt(this, 1, d2, 0.0, 0.0);
+    add_goto_pt(this, w2, 1, 0.0, 0.0);
+    add_goto_pt(this, w2, d2, 0.0, 0.0);
+    for c in [0, 2, 1, 3] {
+        set_corner_tiles(this, c, 2, 2, 0);
+    }
+
+    let id = get_random_id(man(), 2, 0, wealth(this));
+    wr::<u8>(this, 0x791, id as u8);
+    let null = GPtr::<i32>::NULL;
+    let (mut wall, mut pos) = (0i32, 0i32);
+    let sofa = place_furniture_on_wall(this, 2, 0, i32::from(id as i8), 0, 1, -1, -1, 0, p(&mut wall).cast(),
+                                       p(&mut pos).cast(), null, null, null, null);
+    if sofa != 0 {
+        lounge_add_sofa_info_call(this, wall, pos, sofa);
+        for depth in [2, 3] {
+            if place_furniture_on_wall(this, 2, 4, -1, 0, 1, wall, pos, depth, null, null, null, null, null, null) != 0 {
+                break;
+            }
+        }
+    }
+    for chair in 0..3 {
+        if chair == 2 && perimeter <= 28 {
+            break;
+        }
+        let e = place_furniture_on_wall(this, 2, 1, style(this), 0, 1, -1, -1, 0, p(&mut wall).cast(),
+                                        p(&mut pos).cast(), null, null, null, null);
+        if e != 0 {
+            lounge_add_chair_info(this, wall, pos, e);
+        }
+    }
+    for c in [0, 2, 1, 3] {
+        if c != tv_corner {
+            set_corner_tiles(this, c, 2, 0, 0);
+        }
+    }
+
+    let (mut hx, mut hy) = (0i32, 0i32);
+    if place_furniture_on_wall(this, 2, 6, -1, 0, 1, -1, -1, 0, p(&mut wall).cast(), null, p(&mut hx).cast(),
+                               p(&mut hy).cast(), null, null) != 0
+    {
+        lounge_add_hifi(this, wall, hx, hy, 0);
+    }
+    for (group, sub) in [(2, 5), (8, 0), (8, 0)] {
+        place_furniture_on_wall(this, group, sub, -1, 0, 1, -1, -1, 0, null, null, null, null, null, null);
+    }
+
+    let chance = lounge_clutter_chance(wealth(this) as u8);
+    let (mut a, mut b) = (0i32, 0i32);
+    for (site, k, tiles, sub) in [(0x597C12, 60.0, 2, 2), (0x597CB3, 100.0, 1, 5), (0x597D54, 100.0, 1, 4)] {
+        if rand_scaled(site, k) < chance && find_empty_tiles(this, tiles, tiles, p(&mut a).cast(), p(&mut b).cast()) != 0 {
+            let f = get_furniture(man(), 8, sub, -1, wealth(this));
+            let py = tile_mid(b);
+            place_object(this, 0, f, tile_mid(a), py, CLUTTER_Z, 0.0);
+            set_tiles_status(this, a, b, tiles, tiles, 2, 0);
+        }
+    }
+    place_centred(this, get_furniture(man(), 8, 1, -1, wealth(this)));
+    lounge_wall_infos(this);
+}
+
+pub const HOOKS: &[HookReg] = &[
+    HOOK_KITCHEN_FURNISH_EDGES,
+    HOOK_FURNISH_BEDROOM,
+    HOOK_LOUNGE_ADD_TV,
+    HOOK_LOUNGE_ADD_SOFA_INFO,
+    HOOK_FURNISH_LOUNGE,
+];
