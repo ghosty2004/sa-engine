@@ -74,7 +74,8 @@ pub fn install() -> Summary {
         .chain(crate::rw_standin::entries())
         .chain(crate::d3d9_shader::entries())
         .chain(crate::com::thunks())
-        .chain(crate::vorbisfile::thunks());
+        .chain(crate::vorbisfile::thunks())
+        .chain(crate::libjpeg::entries());
     for (a, name, f) in others {
         if !seen.contains_key(&a) {
             v.push((a, f, name));
