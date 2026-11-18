@@ -3864,3 +3864,53 @@
   helpers, 0x75A960, 0x763F20 / 0x7641C0, 0x7CF600, 0x81F360, 0x74A880 with 0x74CED0); the libjpeg catalogue class.
 - Final writer gate (base 6703b038) on d5e23a2b (the Grain fixes and the regenerated queue): all PASS; only this
   docs line after it.
+## 2026-11-18 — FRONTIER-2 turn 14, lane A: the WEAPON frontier, CShopping prices / shops, PictureTaken (agent, branch worktree-agent-ab7de6efd689d6d3a)
+- Base: lane A turn 13's head 6f0a1e79. Every port from the 1.0 US bytes (gta-reversed and docs/re/specs/WEAPON as reading
+  aids; where they differ the bytes win), every address checked against `inflight.py` first (none registered elsewhere).
+  Batches `frontier2-a26` (WEAPON: 5 hooks) and `frontier2-a27` (WORLD: 5 hooks), plain `#[hook(`; no phase B native.
+  `-j4` builds, one cargo at a time. The replay chain was not touched (its own lane).
+- WEAPON (a26), the whole WEAPON frontier: `CWeapon::TakePhotograph` 0x73C1F0 (the camflash fx, MODE_CAMERA only, the ped /
+  object pools from the last slot down: `sqrt < 125` for both (gta-reversed inverts the object test), the screen's inner
+  80 %, the line from camera + 2 * v (0xB6F9AC)); `DoDoomAiming` 0x73CDC0 (15 vehicle / ped candidates the owner CAN see
+  (gta-reversed skips the visible ones), status 5-7 out, `1.5 * |dz| < d2D`, the nearest below 9000 without a building
+  in the way lifts `end.z`); `DoDriveByAutoAiming` 0x73D720 (unreversed in gta-reversed: DistToLine + 0.15 * the distance
+  to the vehicle, heli / plane `dl / max(5, d)`, ahead only, the best below `tan(GetPlaneGunsAutoAimAngle)` or 2.5
+  retargets the end); `SetUpPelletCol` 0x73C710 (rand / 32767 without the mask, spread 0.2..1 * depth, rand sites
+  0x73C875 / 0x73C898; the building matrix tests |normal.x| (gta-reversed: z) and two non-building cross products run the
+  other way round from gta-reversed); `FireAreaEffect` 0x73E800 (the dead GetAngleBetweenPoints kept, the mouse-cam aim
+  `(T - S) / range`, the 57.295776 / 0.017453216 heading round trip with the player's `-tan` pitch and a normalise, the
+  flamethrower's creeping fire on `rand() & 3 == 2`, rand sites 0x73EB61 / 0x73EB70). `ensure_matrix` of weapon_fire.rs
+  became crate-visible.
+- WORLD (a27): `CPickups::PictureTaken` 0x456A70 (surfaced by TakePhotograph: the nearest visible snapshot pickup within
+  `90 / FindCamFOV() * 20`, visibility tested before the distance, the mirror matrix when the mirror is active; player 0
+  gets + 100 (gta-reversed: 100000), SN_ALL adds 100000 to the player in focus; the pickup distance is one helper with
+  TestForPickupsInBubble; `CCamera::FindCamFOV` 0x50AD20 became a sa-world binding with an X87 result, replacing
+  sa-ped's own declaration); `CShopping::LoadPrices` 0x49B8D0 (the inlined RemoveLoadedPrices, the last matching price
+  modifier wins (gta-reversed: the first), comment lines not counted (gta-reversed counts them)), `LoadShop` 0x49BBE0
+  (the "bought" path leaves CTimer suspended, as the original), `GetKey` 0x49AB30 (`.HOODLUM` stub; the weapon case is a
+  protection computed call, `[0x1560480] - [0x4D9E12] - 1` = 0x743D10) and `IsValidModForVehicle` 0x49B010 (surfaced by
+  LoadShop; `GetNumWheelUpgrades` through `~[0x156053C] ^ [0x665DA4]` = 0x4C8740). LoadPrices became a sa-world binding
+  shared with sa-script; LoadShop's binding targets the port. Divergence ledger: DoDriveByAutoAiming's never-written index
+  (no candidate, threshold above 10000) and LoadShop's 0x20-byte `type` buffer.
+- Not ported (time): CShopping::Buy 0x49BF70 (it adds UpdateStats 0x49BEF0 and the car-mod helper FUN_0049B0E0 with an
+  EDI key argument), Interior_c FurnishBedroom / FurnishLounge / Kitchen_FurnishEdges, CEscalator::Update 0x717D30,
+  CStreaming::DeleteRwObjectsBehindCamera 0x40D7C0. The replay chain was left to its own lane.
+- frontier.py --no-branches: to port 98 -> 91 (WEAPON 5 -> 0, WORLD 11 -> 9; PictureTaken, GetKey and
+  IsValidModForVehicle surfaced and were ported with their callers; STREAM 1 unchanged).
+- Scenarios (frontier.sh, i686 native, SA_ROOT=~/sa-engine, sa-game of 63600b2d; the later commits only replace local
+  copies by sa_core::field::rd3f / gf and change docs): pausemenu 416 / 0 blocked, solicit 4016 / 0, crossing 1216 / 0,
+  crossing-long 4016 / 0, roadblocks 2015 / 1 (lane C: RtDictSchemaStreamReadDict 0x7CF240), melee 2616 / 0, sniper
+  1216 / 0, shootcar 1216 / 0, shootdriver 1216 / 0, quad 1216 / 0, heli 1216 / 0, plane 824 / 392 (lane C: 0x43E0E0),
+  roadblock-script 1016 / 0, roadblock-wanted 2016 / 0, gangwar 2016 / 0, boat 1216 / 0, jetpack 1016 / 0, copsf 2015 / 1
+  (0x7CF240), coplv 2016 / 0, samsite 1615 / 1 (0x7CF240), monster 1215 / 1 (lane B: SetupSuspensionLines 0x6C7FB0), and
+  the new shotgun 1216 / 0 (SetUpPelletCol 41 calls), flamer 1216 / 0 (FireAreaEffect 500), driveby 1216 / 0
+  (DoDriveByAutoAiming 150; counted with frontier2-a14-counts.gdb); no crash, no lane A blocker. No camera scenario: the
+  camera only comes from a mission or a pickup, and poking it into the special slot crashed in FxSystem_c::Kill on the
+  weapon switch (an inconsistent set-up), so TakePhotograph / PictureTaken are not reached natively; no shop, interior or
+  escalator scenario (Buy, the furnishing and CEscalator::Update are still unported).
+- Writer gate (base 6f0a1e79): the first run failed dupes (local copies of rd3f / gf) and clippy (a range pattern), fixed
+  in 65e790fe; the run on 262368cb passed every step except `queue` (out of date after the fix commits), regenerated in
+  980ca563 (`queue.py --check` up to date, the commit lint of 6f0a1e79..HEAD 0 bad).
+- verify-all (lanes 1-3, host sa-oracle / satool rebuilt from this tree, DLL sha256 b52d8140… of 262368cb, same code as
+  the head): `f2a14-u` (SA_UNVERIFIED=frontier2-a26,frontier2-a27) IDENTICAL 13/13, `f2a14-def` (default set) IDENTICAL 13/13;
+  save-load identical except the SAVE-1 stack residue.
