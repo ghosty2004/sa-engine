@@ -57,7 +57,7 @@ orig! {
     /// `CBaseModelInfo::AsAtomicModelInfoPtr()` (vtable +4)
     pub fn mi_as_atomic_model_info_ptr(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x4 => unported;
     /// `CFallingGlassPane::Update()` (0x71AA10)
-    pub fn pane_update(this: GPtr<u8>) = thiscall 0x71AA10 => unported;
+    pub fn pane_update(this: GPtr<u8>) = thiscall 0x71AA10 => pane_update_port;
     /// `CFallingGlassPane::Render()` (0x71B100)
     pub fn pane_render(this: GPtr<u8>) = thiscall 0x71B100 => unported;
     /// `CGlass::RenderHiLightPolys()` (0x71ADA0)
@@ -596,6 +596,55 @@ pub fn dtor_glass_panes() {
 }
 
 /// This module's registrations.
+/// `CFallingGlassPane::Update()` (0x71AA10, thiscall): nothing before its start time (+0x60, unsigned). The position
+/// (+0x30) moves by `time step * velocity` (+0x48; times 0.35 for a car pane, +0x6F), the velocity z falls by `time
+/// step * 0.01` (car pane) or `* 0.02`; right (+0), forward (+0x10) and up (+0x20) each gain `CrossProduct(spin
+/// (+0x54), axis)`. Below its ground z (+0x64; `z >= ground` or NaN keeps it) the pane stops existing (+0x6D = 0),
+/// `AudioEngine.ReportGlassCollisionEvent(0x7F, (x, y, ground))` and, unless a car pane, four `Fx_c::AddGlass` there
+/// (colour 255 255 255 32, size `rand() / 32767 * 0.04 + 0.02`, 1 particle).
+#[hook(addr = 0x71AA10, conv = thiscall, name = "CFallingGlassPane::Update", this = "CFallingGlassPane",
+       expect = "A1 84 CB B7 00 83 EC 20", unverified = "frontier2-c20", route = "L2", hazards = "heap-writes",
+       note = "rand sites 0x71ABB7 / 0x71ABF0 / 0x71AC29 / 0x71AC62")]
+pub fn pane_update_port(this: GPtr<u8>) {
+    if g::<u32>(0xB7_CB84).read() < rd::<u32>(this, 0x60) {
+        return;
+    }
+    let car = rd::<u8>(this, 0x6F) != 0;
+    let ts = g::<f32>(0xB7_CB5C);
+    for o in [0, 4, 8] {
+        let mut v = x(ts.read()).fmul_m(rd::<f32>(this, 0x48 + o));
+        if car {
+            v = v.fmul_m(k(0x3EB3_3333));
+        }
+        wr::<f32>(this, 0x30 + o, v.fadd_m(rd::<f32>(this, 0x30 + o)).to_f32());
+    }
+    let fall = x(ts.read()).fmul_m(if car { k(0x3C23_D70A) } else { k(0x3CA3_D70A) });
+    wr::<f32>(this, 0x50, fall.fsubr_m(rd::<f32>(this, 0x50)).to_f32());
+    let spin = this.byte_add(0x54);
+    for axis in [0, 0x10, 0x20] {
+        let a = this.byte_add(axis);
+        let mut out = [0u32; 3];
+        let r = cross_product(sa_core::field::ptr_of(&mut out), spin, a);
+        for o in [0, 4, 8] {
+            wr::<f32>(a, o, x(rd::<f32>(r, o)).fadd_m(rd::<f32>(a, o)).to_f32());
+        }
+    }
+    if jp(x(rd::<f32>(this, 0x38)), x(rd::<f32>(this, 0x64)), 5) {
+        return;
+    }
+    let mut at = [rd::<u32>(this, 0x30), rd::<u32>(this, 0x34), rd::<u32>(this, 0x64)];
+    wr::<u8>(this, 0x6D, 0);
+    report_glass_collision_event(g(AUDIO_ENGINE), 0x7F, sa_core::field::ptr_of(&mut at).cast());
+    if car {
+        return;
+    }
+    let mut colour = [0xFFu8, 0xFF, 0xFF, 0x20];
+    for site in [0x71_ABBC, 0x71_ABF5, 0x71_AC2E, 0x71_AC67] {
+        let size = xi(rand_at(site)).fmul_m(k(0x3800_0100)).fmul_m(k(0x3D23_D70A)).fadd_m(k(0x3CA3_D70A)).to_f32();
+        crate::fx_add_glass::fx_add_glass(g(0xA9_AE00), sa_core::field::ptr_of(&mut at), sa_core::field::ptr_of(&mut colour), size, 1);
+    }
+}
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_IS_OBJECT_GLASS,
     HOOK_INIT,
@@ -614,4 +663,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_WINDOW_RESPONDS_TO_EXPLOSION,
     HOOK_INIT_GLASS_PANES,
     HOOK_DTOR_GLASS_PANES,
+    HOOK_PANE_UPDATE_PORT,
 ];
