@@ -9,8 +9,9 @@ API 1.0 has: the API version, `init`, the overlay phase (called once per present
 drawing), filled rectangles and text in the 2D overlay, and a log. API 1.1 adds the display and the video mode
 (`render`), the mod's own files (`files = "own"`), the settings phase and the resize event (below). API 1.2 (level 2)
 adds read-only game state (`state = "read"`), game events, key state (`input = "read"`) and before / after hooks on
-game functions (`hooks = [...]`); the reference of every function is `docs/mods/api.md`. Game control, entities,
-network and storage come later (ADR-004 §4, §7).
+game functions (`hooks = [...]`). API 1.3 (level 3) adds game changes, entities, script commands, sounds and hook
+decisions; API 1.4 (level 4) UDP sockets (`net = [...]`), persistent storage (`storage = true`) and the host's clock.
+The reference of every function is `docs/mods/api.md`.
 
 ## Call points
 
@@ -168,6 +169,43 @@ page resize at run time (the image is scaled until the next start).
 
 Without the mod nothing changes: the adapter keeps its fixed table and the game its first-run default, 800x600.
 
+## Sockets and storage: net-ping (level 4)
+
+`examples/mods/net-ping` sends a datagram to a UDP echo server once a second (`sa_mod::net::Socket`, polled in the
+overlay phase), shows the last round trip in the top left corner and counts the replies, keeping the count across
+sessions in its storage (`sa_mod::storage`). Its manifest allows one target:
+
+```toml
+[permissions]
+render = true
+net = ["udp:127.0.0.1:7790"]
+storage = true
+```
+
+```sh
+examples/mods/build.sh      # -> target/mods/net-ping/{mod.toml,net-ping.wasm}
+tools/mods/udp-echo.py &    # the echo server, udp 127.0.0.1:7790
+target/i686-unknown-linux-gnu/release/sa-game --game wine/gta-sa --mods target/mods/net-ping --window
+# browser: the page's datagrams go through sa-udp-proxy
+target/release/sa-udp-proxy 127.0.0.1:7790 --bind 127.0.0.1:7781 &
+tools/web/serve.sh --game wine/gta-sa --mods target/mods     # then ?autostart=1&mods=net-ping&proxy=ws://127.0.0.1:7781
+```
+
+Natively the count lives in `~/.local/share/sa-engine/mods/net-ping/replies` (`$SA_MOD_DATA/net-ping/` when set), in
+the browser in the page's IndexedDB.
+
+## SA:MP as a mod
+
+`mods/samp` builds samp-rs's client core (`samp-rs/crates/samp-client`: the RakNet session and the netgame's
+connection lifecycle) as a mod: its RakNet layer polls the mod's UDP sockets (the `NetConnector` / `DatagramTransport`
+seams of samp-rs), it runs on the host's clock (`samp_proto::time`) and reads its settings from its storage
+(`server`, `name`, `auth_table.txt`). It connects to a local server, follows samp's connection lifecycle and shows
+the session in the overlay; the game side (players, vehicles, the UI) comes in the next step (ADR-004 §7, M5).
+
+```sh
+mods/build.sh               # -> target/mods/samp/{mod.toml,samp.wasm}
+```
+
 ## A mod in Rust
 
 A mod is a `cdylib` crate using the SDK `crates/sa-mod`, built for `wasm32-unknown-unknown`, plus a `mod.toml`.
@@ -252,8 +290,10 @@ node tools/web/headless.mjs --url 'http://localhost:8642/?autostart=1&auto=1&mod
 - It gets values and handles, never game addresses, and cannot read game memory.
 - Every host function returns an `i32`: a result `>= 0`, or `-1` (not permitted by the manifest), `-2` (a bad
   argument: a range outside the mod's memory, text that is not UTF-8, drawing outside the overlay phase, a hook value
-  outside `sa_hook`) or `-3` (not found: no such file, a handle that names no live entity, a function the hook registry
-  does not have).
+  outside `sa_hook`), `-3` (not found: no such file, a handle that names no live entity, a function the hook registry
+  does not have), `-4` (not in this phase), `-5` (failed, the log says why) or `-6` (nothing now: no datagram queued,
+  the frame's send budget used up).
+- Nothing blocks: sockets are polled, storage reads and writes return at once.
 - A call that traps (a panic, `unreachable`, an out-of-bounds access) or runs out of fuel disables the mod for the
   session. Memory beyond the cap cannot be allocated (`memory.grow` fails).
 - A level-1 (visual) or level-2 (read-only) mod does not change the game: deterministic runs give the same game state

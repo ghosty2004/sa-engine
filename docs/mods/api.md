@@ -1,12 +1,13 @@
-# Mod API reference (API 1.3)
+# Mod API reference (API 1.4)
 
 The interface is defined once, in `crates/sa-mod-api/src/lib.rs` (`for_each_import!`, `for_each_export!`); this page
 explains it. The Rust SDK (`crates/sa-mod`) wraps every function; other languages import the functions from module
 `"sa"` (see "Other languages" in `getting-started.md`). Every host function returns an `i32`: a result `>= 0` or a
 status (`-1` DENIED: the manifest does not grant it, `-2` BAD_ARG, `-3` NOT_FOUND, `-4` WRONG_PHASE: not allowed now, e.g.
-inside a hook, `-5` FAILED: the game could not do it, the log says why).
+inside a hook, `-5` FAILED: the game could not do it, the log says why, `-6` AGAIN: nothing now, try again later,
+1.4).
 
-A mod built for an older minor version (`api_version = "1.0"` / `"1.1"` / `"1.2"`), or rebuilt with a newer SDK while
+A mod built for an older minor version (`api_version = "1.0"` ... `"1.3"`), or rebuilt with a newer SDK while
 its manifest keeps the older version, runs unchanged: entry points added later are
 optional and the host skips them.
 
@@ -22,9 +23,11 @@ optional and the host skips them.
 | `entities` | `true` / `false` | create and delete peds, vehicles, objects (1.3) |
 | `scripts` | `true` / `false` | the allowed script commands (1.3) |
 | `audio` | `true` / `false` | game sounds (1.3) |
+| `net` | a list of `"udp:HOST:PORT"` rules, `*` for any host or port | UDP sockets to the targets a rule allows (1.4) |
+| `storage` | `true` / `false` | the mod's persistent key / value storage (1.4) |
 
-`input = "capture"`, `ui` and `net` belong to later levels: 1.3 does not grant them (with a warning in the log). A
-function without its permission returns DENIED; the mod keeps running.
+`input = "capture"` and `ui` belong to later levels: 1.4 does not grant them (with a warning in the log). A function
+without its permission returns DENIED; the mod keeps running.
 
 ## Entry points (exports)
 
@@ -195,3 +198,62 @@ others are FAILED).
 
 Level-3 mods change the game by design; with no mod loaded the `mods` build runs the game as the default build does
 (verify-all IDENTICAL), and the default build has none of this code.
+
+## Level 4: sockets, storage, the clock (1.4)
+
+### The clock
+
+`clock(out_ptr)` (SDK `sa_mod::time::now()`, no permission) writes two little-endian `u64`: the microseconds since the
+host started (monotonic) and the wall clock in microseconds since 1970-01-01 UTC. A mod has no other clock (wasm32
+has none of its own).
+
+### Sockets (`net = ["udp:HOST:PORT", ...]`)
+
+| function | SDK (`sa_mod::net::Socket`) | what |
+|---|---|---|
+| `net_open(target_ptr, target_len)` | `Socket::open(target)` | a connected, non-blocking UDP socket to `HOST:PORT` (`[IPV6]:PORT`); returns its handle |
+| `net_state(h)` | `state()` | 0 connecting, 1 open, 2 closed |
+| `net_send(h, ptr, len)` | `send(datagram)` | one datagram (at most 65507 bytes); its length, AGAIN when the frame's budget is used up |
+| `net_recv(h, ptr, len)` | `recv(buf)` | one received datagram (truncated to the buffer); its length, AGAIN when none is queued |
+| `net_close(h)` | drop | closes it |
+
+The host compares the target text the mod passes with the manifest's rules before anything is resolved: `udp:` then
+a host (a name or an address, compared without case, `[...]` around an IPv6 address) or `*`, then a port or `*`.
+`net = ["udp:127.0.0.1:7790"]` allows one local server, `["udp:*:7777"]` any server on port 7777 (the log warns about
+rules for any host). A target no rule allows is DENIED; a target that does not resolve, or an eighth open socket
+(`net::MAX_SOCKETS`), is FAILED with a log line.
+
+Natively a socket is a real UDP socket (sa-net's `UdpTransport`: bound to an ephemeral port, connected). In the
+browser it is a WebSocket to the page's UDP proxy (`sa-udp-proxy`, the page's `?proxy=ws://...`, default
+`ws://127.0.0.1:7781`), which resolves the target and relays one datagram per binary frame; it starts `connecting`
+and datagrams sent meanwhile are queued (64 at most). The proxy has its own allow list of targets. The page serves the WebSocket only
+between the game's main-loop iterations: a socket opened in `sa_init` waits through the boot, and the proxy closes a
+connection that sends no target within 10 s, so open sockets from a frame phase, and open a new one when one is
+`closed` (`examples/mods/net-ping` does both).
+
+Nothing blocks: poll the sockets once per frame (in `sa_overlay`, or on the `FRAME_BEGIN` event). Each mod may send
+1024 datagrams and 1 MiB per main-loop iteration over all its sockets (`net::MAX_SENDS_PER_FRAME`,
+`net::MAX_SEND_BYTES_PER_FRAME`); further sends return AGAIN until the next iteration. Received datagrams wait in
+the socket (natively the system's buffer, in the browser up to 4096). When the host disables a mod it closes its
+sockets.
+
+### Storage (`storage = true`)
+
+| function | SDK (`sa_mod::storage`) | what |
+|---|---|---|
+| `storage_read(key_ptr, key_len, buf_ptr, buf_len)` | `read(key)` | the value's size (copies what fits), NOT_FOUND |
+| `storage_write(key_ptr, key_len, data_ptr, data_len)` | `write(key, data)` | replaces the value (at most 1 MiB) |
+| `storage_delete(key_ptr, key_len)` | `delete(key)` | OK, NOT_FOUND |
+| `storage_list(buf_ptr, buf_len)` | `keys()` | the keys, sorted, one per line; returns the list's length |
+
+One area per mod id, kept across sessions: natively the folder `sa-engine/mods/ID/` under the user's data directory
+(`$XDG_DATA_HOME`, else `~/.local/share`, else `%APPDATA%`; `$SA_MOD_DATA` replaces the whole root), one file per key,
+written through a temporary file; in the browser the page's IndexedDB database `sa-mod-storage` (keys `ID/KEY`),
+read into memory before the game starts and written back in the background. Keys are 1..=64 bytes of
+`A-Z a-z 0-9 . _ -`, not starting with `.`. A mod keeps at most 1024 keys and 16 MiB (`storage::MAX_KEYS`,
+`storage::MAX_TOTAL`): a write beyond is FAILED. `files = "own"` stays what it was: the files that ship in the mod's
+folder (natively writable, in the browser kept for the session).
+
+### Determinism
+
+Sockets and storage do not touch the game: with no mod loaded (or mods that do not ask for them) nothing changes.

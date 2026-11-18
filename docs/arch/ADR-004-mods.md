@@ -244,6 +244,47 @@ API 1.3 (reference `docs/mods/api.md`). Decisions:
 - **Sounds**: front-end sounds through `CAudioEngine::ReportFrontendAudioEvent`; mission sounds through
   `ADD_ONE_OFF_SOUND` (its unported audio case falls back as sa-samp did).
 
+### 4.1c Level 4 (M4, 2026-11-18): sockets, storage, the clock; samp-rs's core apart from its hosts
+
+API 1.4 (reference `docs/mods/api.md`). Decisions:
+
+- **Sockets are sa-net's transports.** `net_open` / `net_send` / `net_recv` / `net_state` / `net_close` work on
+  connected, non-blocking datagram sockets; the host's `Network` (`sa-mod-host/src/net.rs`) opens them through
+  `sa-net`, the crate samp-rs's RakNet layer already polls: natively `UdpTransport` (a real UDP socket), in the browser
+  `WebSocketTransport` to `sa-udp-proxy` (the page's `?proxy=`, default `ws://127.0.0.1:7781`), one binary frame per
+  datagram. One host implementation of the API, two backends; no new transport code. sa-net's browser transport is
+  now its feature `websocket`, so a wasm32 module without it (a mod) imports nothing from JavaScript.
+- **Permission: allow rules on the target text.** `net = ["udp:HOST:PORT", ...]`, `*` for any host or port, compared
+  (host without case) with the `HOST:PORT` the mod opens, before resolving: the same check natively and in the
+  browser, where the proxy resolves (and keeps its own allow list). A rule for any host is allowed with a warning
+  (SA:MP joins servers the user names); a target no rule allows is DENIED.
+- **Polled, budgeted, closed with the mod.** Nothing blocks and no callback enters a mod: mods poll in a frame phase
+  (AGAIN = `-6`, a new status, when nothing is queued). Per mod: 8 sockets, datagrams up to 65507 bytes, 1024 sends
+  and 1 MiB per main-loop iteration (AGAIN beyond, until the next iteration). A disabled mod's sockets are closed.
+- **Storage is per mod id and persistent** (`storage = true`): `storage_read` / `write` / `delete` / `list` on keys
+  of `A-Z a-z 0-9 . _ -`, at most 1 MiB per value, 1024 keys and 16 MiB per mod. Natively a folder under the user's
+  data directory (`$XDG_DATA_HOME` / `~/.local/share` / `%APPDATA%` + `sa-engine/mods/ID`, `$SA_MOD_DATA` replaces
+  the root), one file per key written through a renamed temporary file; in the browser IndexedDB (`sa-mod-storage`),
+  read into the worker before the game starts (the host's calls are synchronous) and written back in the background.
+  `files = "own"` keeps its meaning (the files shipped in the mod's folder).
+- **A clock.** wasm32 has none, and protocol code needs one: `clock` gives the host's monotonic time and the wall
+  clock in microseconds, without a permission.
+- **samp-rs's core apart from its hosts** (§5). The core is `samp-client`'s platform-independent part (the RakNet
+  session `netclient`, the connection lifecycle, sync builders, class selection, remote players, vehicles, combat,
+  the UI core) with `samp-proto`, `samp-ui` and `samp-saa`; it reaches its platform through seams that already were
+  traits or became one: the transport (`netclient::NetConnector` opening `sa_net::DatagramTransport`s), the clock
+  (`samp_proto::time`: `std::time` natively, the browser's with `samp-proto`'s feature `web`, otherwise the clock a
+  host installs with `set_clock`) and the game (`sa-samp-api`'s `GameAdapter` / `GameHooks`). Its hosts:
+  `original` (the `cfg(windows)` DLL modules of `samp-client`, unchanged), `engine-native` (`sa-game`'s `samp`
+  feature with `crates/sa-samp`; it enables `samp-client`'s feature `websocket` for the browser connector) and
+  **`mod`** (`mods/samp`, `sa-mod-samp`: the mod's sockets as the transport, the host's clock, settings in the mod's
+  storage). `samp-client` without features builds for `wasm32-unknown-unknown` with no JavaScript imports, and
+  `mods/samp` builds into a mod the host accepts (`samp.wasm`, imports from `"sa"` only).
+- What M5 has to add: a `GameAdapter` over the mod API (levels 2-3) so the core's game logic (the `samp_net` client of
+  `sa-game` today, then samp-rs's full client) runs in the mod; the UI drawn through the overlay; joining a 0.3.7 /
+  open.mp server natively and from the browser; then `crates/sa-samp`, `sa-game`'s `samp` feature and its SA:MP glue
+  leave the engine.
+
 ### 4.2 Data mods (added by the user, 2026-11-17)
 
 Code mods (levels 1–4) cannot add content on their own: a new vehicle, ped, weapon or building needs files (models,
@@ -300,7 +341,7 @@ data only, with no `.wasm`):
 | MD | data mods (§4.2): the virtual file system overlay with line-merged definition files, content registration with new model IDs, the mods-only limits table | an example mod adds a new car (own model, textures, handling) that spawns and drives natively and in the browser; the parity build and verify-all unchanged |
 | M2 | level 2: events, read-only state, before/after hooks on registry functions (done 2026-11-18, §4.1a) | an example mini-map / trainer read-only overlay (`examples/mods/trainer-hud`) |
 | M3 | level 3: state write, entities, script commands, audio (done 2026-11-18, §4.1b) | an example gameplay mod (`examples/mods/courier`) |
-| M4 | level 4: network, storage; samp-rs client core split from its hosts | samp-rs builds as a mod |
+| M4 | level 4: network, storage; samp-rs client core split from its hosts (done 2026-11-18, §4.1c) | samp-rs builds as a mod (`mods/samp`); the UDP ping example (`examples/mods/net-ping`) |
 | M5 | **SA:MP as a mod**: joins a 0.3.7-R4 / open.mp server natively and from the browser | the samp-rs e2e suite passes on the mod host; the DLL host still passes |
 | M6 | SDK docs, the `sa-mod` crate, templates, a mod folder and settings UI | an outside developer builds a mod from the docs alone |
 
