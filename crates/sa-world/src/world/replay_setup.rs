@@ -15,11 +15,11 @@ pub(crate) const BUFFER_STATUS: usize = 0x97_FB7C;
 pub(crate) const BUFFERS: usize = 0x97_FB88;
 pub(crate) const BUFFER_SIZE: usize = 100_000;
 /// `CReplay::m_VehiclePoolConversion[110]`, `CReplay::m_PedPoolConversion[140]`.
-pub(crate) const VEHICLE_POOL_CONVERSION: usize = 0x97_F680;
+pub const VEHICLE_POOL_CONVERSION: usize = 0x97_F680;
 pub(crate) const PED_POOL_CONVERSION: usize = 0x97_F838;
 /// `CPools::ms_pPedPool`, `CPools::ms_pVehiclePool`.
 pub(crate) const PED_POOL: usize = 0xB7_4490;
-pub(crate) const VEHICLE_POOL: usize = 0xB7_4494;
+pub const VEHICLE_POOL: usize = 0xB7_4494;
 
 /// The bytes' scan of the replay buffers: every buffer whose status byte is non-zero, every packet from its start up
 /// to the end marker (type 0; the next packet at `FindSizeOfPacket(type)`). `f(packet, type)` returning true stops
@@ -51,7 +51,7 @@ pub(crate) fn scan_replay_buffers_from(first: u32, mut f: impl FnMut(GPtr<u8>, u
 
 /// The pool's object at `slot` as the inlined `CPool::GetAt` reads it: null when the slot's flag byte has bit 7 set,
 /// else `objects + slot * stride`.
-pub(crate) fn pool_slot(pool_cell: usize, stride: u32, slot: i32) -> GPtr<u8> {
+pub fn pool_slot(pool_cell: usize, stride: u32, slot: i32) -> GPtr<u8> {
     let pool = g::<GPtr<u8>>(pool_cell).read();
     if rd::<u8>(rd::<GPtr<u8>>(pool, 4), slot as isize) & 0x80 != 0 {
         return GPtr::NULL;

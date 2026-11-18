@@ -11,9 +11,11 @@ use sa_core::{hook, orig};
 use crate::bindings::car_set_panel_damage as set_bumper_damage;
 use crate::common::{g, rd, wr, xi};
 use sa_world::bindings::{
-    automobile_set_panel_damage, damage_get_door_status, dm_set_door_status, set_door_damage, world_add, world_remove,
+    automobile_set_panel_damage, damage_get_door_status, dm_set_door_status, entity_clean_up_old_reference,
+    entity_register_reference, set_door_damage, world_add, world_remove,
 };
 use sa_world::world::replay_peds::blend_replay_matrix;
+use sa_world::world::replay_setup::{pool_slot, VEHICLE_POOL, VEHICLE_POOL_CONVERSION};
 
 orig! {
     /// `ApplyPanelDamageToCar(uint32 panels, CAutomobile*, bool)` (0x59CA10)
@@ -147,5 +149,38 @@ fn apply_vehicle_update(this: GPtr<u8>, veh: GPtr<u8>) {
     wr::<u32>(veh, 0x40, (((pf << 29) ^ p) & 0x2000_0000) ^ p);
 }
 
+/// `tReplayTrainBlock::ExtractTrainUpdateData(CTrain* train, float interpolation)` (0x45CDB0, thiscall, `ret 8`): the
+/// vehicle update ([`extract_vehicle_update_data`]), then the train's speed dwords +0x5A4 / +0x5A8 / +0x5AC from block
+/// +0x34 / +0x38 / +0x3C and the track byte +0x5C0 from +0x48. A non-zero carriage index (+0x40 previous, +0x44 next;
+/// recording index + 1) relinks the carriage reference (+0x5D0 / +0x5D4) to that vehicle conversion entry's pool slot,
+/// dropping the old reference first and registering the new one when the slot holds a vehicle. The train itself is
+/// not null-checked.
+#[hook(addr = 0x45CDB0, conv = thiscall, name = "tReplayTrainBlock::ExtractTrainUpdateData", expect = "8B 44 24 08 53 56 57",
+       unverified = "frontier2-b32", route = "L2", hazards = "heap-writes")]
+pub fn extract_train_update_data(this: GPtr<u8>, train: GPtr<u8>, t: u32) {
+    extract_vehicle_update_data(this, train, t);
+    wr::<u32>(train, 0x5A4, rd::<u32>(this, 0x34));
+    wr::<u32>(train, 0x5A8, rd::<u32>(this, 0x38));
+    wr::<u32>(train, 0x5AC, rd::<u32>(this, 0x3C));
+    wr::<u8>(train, 0x5C0, rd::<u8>(this, 0x48));
+    for (index_off, slot_off) in [(0x40isize, 0x5D0isize), (0x44, 0x5D4)] {
+        let index = rd::<u32>(this, index_off);
+        if index == 0 {
+            continue;
+        }
+        let slot = train.byte_add(slot_off);
+        let old = rd::<GPtr<u8>>(slot, 0);
+        if !old.is_null() {
+            entity_clean_up_old_reference(old, slot);
+        }
+        let entry = (VEHICLE_POOL_CONVERSION as u32).wrapping_add(index.wrapping_sub(1).wrapping_mul(4));
+        let carriage = pool_slot(VEHICLE_POOL, 0xA18, g::<i32>(entry as usize).read());
+        wr::<GPtr<u8>>(slot, 0, carriage);
+        if !carriage.is_null() {
+            entity_register_reference(carriage, slot);
+        }
+    }
+}
+
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_APPLY_PANEL_DAMAGE_TO_CAR, HOOK_EXTRACT_VEHICLE_UPDATE_DATA];
+pub const HOOKS: &[HookReg] = &[HOOK_APPLY_PANEL_DAMAGE_TO_CAR, HOOK_EXTRACT_VEHICLE_UPDATE_DATA, HOOK_EXTRACT_TRAIN_UPDATE_DATA];
