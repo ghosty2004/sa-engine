@@ -4286,3 +4286,48 @@
   (VM fragment 0x4082C0 to evaluate first); lane A's leftovers Interior_c FurnishBedroom 0x593FC0, FurnishLounge
   0x597740, Kitchen_FurnishEdges 0x596930 and CStreaming::DeleteRwObjectsBehindCamera 0x40D7C0 (600-800 instructions
   each, not started).
+## 2026-11-18 — MOD-2 M2: API 1.2, game state, events, hooks, the trainer HUD (agent, worktree)
+- API 1.2 (`sa-mod-api`, minor; 1.0 / 1.1 mods unchanged): permissions `state = "read"`, `input = "read"`,
+  `hooks = [names]`; state queries `game_state`, `player_info`, `ped_info`, `vehicle_info`, `world_info`, `camera_info`,
+  `ped_list`, `vehicle_list`, `key_down`; `events_subscribe` + export `sa_event`; `hook_subscribe`, `hook_arg_count`,
+  `hook_value` + export `sa_hook`. Records (`sa_mod_api::state`) are fixed LE words with sa-samp-api's types, filled
+  from the adapter's snapshots; sa-mod-api depends on sa-samp-api (own layer in tools/lib/layers.py). Reference:
+  docs/mods/api.md; decisions: ADR-004 §4.1a.
+- Adapter (sa-samp-api / sa-samp): `Peds::wanted_level`, `Peds::peds`, `Vehicles::vehicles` (defaults keep samp-rs's
+  original backend unchanged), `GameState::from_raw / raw`, native `Input::key_held` (CPad::NewKeyState by VK; it read
+  nothing before), `NativeGame::entity_at`; the test fake memory is now `sa_samp::fake` (feature `fake`).
+- Host: `Rc<dyn GameAdapter>` (sa-samp engine backend in the game), events derived at frame boundaries
+  (`events.rs`: game state, spawn / death, vehicle enter / exit, area, keys; reads only for subscribed kinds),
+  hooks through a `HookRegistry` and `Host::hook`, 4096 hook calls per mod and iteration (rest dropped, counted),
+  subscriptions taken from any call, a disabled mod's hooks unwatched.
+- Hooks in the engine: `sa_core::orig::observe` (feature `observe`, enabled by sa-game `mods`): the x86 and wasm32
+  `orig!` dispatch checks the looked-up entry's flag and, when watched, runs `observe::around` (argument words + declared
+  types before, the result after, copies only). Without the feature `watched` is a constant false and `Entry` has no
+  flag. sa-game: `EngineRegistry` (registry names), the observer turns entity pointers (and integer-declared ones)
+  into handles, other pointers into `Pointer`.
+- SDK: `sa_mod::{events, state, hooks}`, `Mod::event / hook`, `Event` (decoded in sa-mod-api). Cargo descriptions of the
+  three mod crates rewritten without process prefixes.
+- `examples/mods/trainer-hud` (79 KB): live player / vehicle / world / camera state, a 100 m mini-map of peds and
+  vehicles, the last events, an after-hook on `CWorld::FindPlayerHeading` and a before-hook on `CPed::ProcessControl`.
+  Native crossing run: events "player 0x1 spawned", "entered vehicle 0x101 (model 492)"; hooked heading = state heading;
+  12143 hook calls, 0 dropped (target/m2/native-crossing-trainer-hud.png). Browser (FEATURES="samp mods", headless
+  Chromium, WebGPU, `?mods=trainer-hud`): the same overlay with hooks firing (ProcessControl 19/step, heading hook =
+  state), 0 blocked (target/m2/web-trainer-hud.png).
+- Determinism: crossing (1200 iterations, `--fixed-step 40`): default build, mods build without mods and mods build
+  with the trainer HUD give identical reports (every function's registry dispatch count, platform calls, 0 blocked)
+  apart from the pacing line.
+- Perf (native offscreen, limiter off, 3000 frames, `--perf`): default 10.28 ms mean / 10.44 median; mods build no mod
+  10.32 / 10.12 (noise); with the trainer HUD 11.56 / 10.97, `mods` phase 0.49 ms (overlay text + mini-map queries +
+  events), `logic` 0.93 -> 1.02 ms (the hooks' ~30 calls per step). Sizes: native i686 mods build 67 MB unstripped
+  (default 47 MB); web sa_game_bg.wasm 34.7 MB (samp + mods).
+- Tests: sa-samp 32 (pool lists, wanted level, entity_at, keys), sa-core observe 1, sa-mod-api 6, sa-mod-host 13
+  (manifest level 2, state queries and permissions, events and hooks reaching a level-2 WAT mod, the per-frame
+  limit, hooks need the manifest), sa-mod 1, trainer-hud 2.
+- Left for M3 / M4 (what SA:MP needs): writes and mid-frame decisions (HookAction::Skip, changed Shot / Damage,
+  PlayerContext swaps around ProcessControl), entity creation, script commands, audio; GameHooks dispatch points
+  inside ports (fire, ped_damage, enter_vehicle_task, ...); network and storage; hook calls cost ~15 us each on
+  Pulley.
+- Verified: writer gate (base b33f7bfe) all PASS on 5380038e apart from `queue` (the frontier2-a26 / a27 rows' writer
+  branch, regenerated in 2e9f7c62); verify-all lanes 1-2 (lane 3 left free: 6 GB available with two other lanes
+  running) IDENTICAL 13/13, tag mod2m2, head 2e9f7c62, host sa-oracle rebuilt from this tree (the default build: the
+  mod code is behind `mods` / `observe`).
