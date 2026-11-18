@@ -516,8 +516,14 @@ orig! {
     pub fn call_flush_channels() = cdecl 0x40E460 => flush_channels;
     /// `CStreaming::RemoveLeastUsedModel(flags)` (0x40CFD0)
     pub fn call_remove_least_used_model(flags: u32) -> bool = cdecl 0x40CFD0 => remove_least_used_model;
-    /// `CStreaming::DeleteRwObjectsBehindCamera(memory)` (0x40D7C0, deferred: always the original)
-    pub fn call_delete_rw_objects_behind_camera(memory: i32) = cdecl 0x40D7C0 => unported;
+    /// `CStreaming::DeleteRwObjectsBehindCamera(memory)` (0x40D7C0)
+    pub fn call_delete_rw_objects_behind_camera(memory: i32) = cdecl 0x40D7C0 => delete_rw_objects_behind_camera;
+    /// `CStreaming::DeleteRwObjectsBehindCameraInSectorList(list, memory)` (0x409940)
+    pub fn call_delete_rw_objects_behind_camera_in_sector_list(list: GPtr<u8>, memory: i32) -> bool = cdecl 0x409940 => delete_rw_objects_behind_camera_in_sector_list;
+    /// `CStreaming::DeleteRwObjectsNotInFrustumInSectorList(list, memory)` (0x4099E0)
+    pub fn call_delete_rw_objects_not_in_frustum_in_sector_list(list: GPtr<u8>, memory: i32) -> bool = cdecl 0x4099E0 => delete_rw_objects_not_in_frustum_in_sector_list;
+    /// `CStreaming::RemoveReferencedTxds(memory)` (0x40D2F0)
+    pub fn call_remove_referenced_txds(memory: i32) -> bool = cdecl 0x40D2F0 => remove_referenced_txds;
     /// `CStreaming::RemoveLoadedZoneModel()` (0x40B340)
     pub fn call_remove_loaded_zone_model() -> bool = cdecl 0x40B340 => remove_loaded_zone_model;
     /// `CStreaming::DeleteLeastUsedEntityRwObject(bool notOnScreen, uint32 flags)` (0x409760)
@@ -2655,13 +2661,7 @@ pub fn add_models_to_request_list(pos: GPtr<f32>, flags_arg: i32) {
     let y0 = sector_min(min_y);
     let x1 = sector_max(max_x);
     let y1 = sector_max(max_y);
-    let sc = g::<u16>(SCAN_CODE);
-    if sc.read() == 0xFFFF {
-        world_clear_scan_codes();
-        sc.write(1);
-    } else {
-        sc.write(sc.read() + 1);
-    }
+    advance_scan_code();
     let near = (rs - 1).wrapping_mul(rs - 1);
     let far = (rs + 2).wrapping_mul(rs + 2);
     let mut cy = y0;
@@ -2760,13 +2760,7 @@ pub fn add_lods_to_request_list(pos: GPtr<f32>, flags_arg: i32) {
     let y0 = cell(min_y).max(0);
     let x1 = cell(max_x).min(0x1D);
     let y1 = cell(max_y).min(0x1D);
-    let sc = g::<u16>(SCAN_CODE);
-    if sc.read() == 0xFFFF {
-        world_clear_scan_codes();
-        sc.write(1);
-    } else {
-        sc.write(sc.read() + 1);
-    }
+    advance_scan_code();
     let mut cy = y0;
     while cy <= y1 {
         let mut cx = x0;
@@ -4368,10 +4362,106 @@ pub fn load() -> bool {
     true
 }
 
+/// `CWorld::AdvanceCurrentScanCode()` as the streaming code inlines it: `ClearScanCodes` and 1 after 0xFFFF.
+fn advance_scan_code() {
+    let sc = g::<u16>(SCAN_CODE);
+    if sc.read() == 0xFFFF {
+        world_clear_scan_codes();
+        sc.write(1);
+    } else {
+        sc.write(sc.read() + 1);
+    }
+}
+
+/// `CTheCamera`'s forward x / y (+0x984 / +0x988), the direction the sector sweeps are ordered by.
+const CAMERA_FORWARD_X: usize = 0xB6F9AC;
+const CAMERA_FORWARD_Y: usize = 0xB6F9B0;
+
+/// The sector bounds of a sweep: `max(v, 0)` and `min(v, 119)` as the bytes clamp them.
+fn at_least_0(v: i32) -> i32 {
+    if v <= 0 { 0 } else { v }
+}
+fn at_most_119(v: i32) -> i32 {
+    if v < 0x77 { v } else { 0x77 }
+}
+
+/// One sweep of `DeleteRwObjectsBehindCamera`: the rows `a = start, start + step, ..` until `end` (none when they
+/// are equal) along x (`along_x`) or y, and in each the cross range `lo..=hi`; per sector the buildings, the
+/// dummies (`GetSector`, clamped) and the repeat sector's objects go through `delete`. True as soon as a call has
+/// freed enough.
+#[allow(clippy::too_many_arguments)]
+fn sweep_sectors(along_x: bool, start: i32, end: i32, step: i32, lo: i32, hi: i32, memory: i32,
+                 delete: fn(GPtr<u8>, i32) -> bool) -> bool {
+    let mut a = start;
+    while a != end {
+        for b in lo..=hi {
+            let (sx, sy) = if along_x { (a, b) } else { (b, a) };
+            let (buildings, dummies) = sector_lists(sx, sy);
+            if delete(buildings, memory) || delete(dummies, memory) || delete(repeat_objects(sx, sy), memory) {
+                return true;
+            }
+        }
+        a = a.wrapping_add(step);
+    }
+    false
+}
+
+/// `CStreaming::DeleteRwObjectsBehindCamera(int32 memory)` (0x40D7C0, cdecl): only while `ms_memoryUsedBytes >=
+/// memory` (signed). Around the camera's sector (+-10 sectors across), along the axis the camera faces most
+/// (`|fwd.y| < |fwd.x|`: x): the sectors behind it from 10 back to 2 back, models deleted behind the camera; then
+/// from 10 ahead back to 2 behind, first those outside the frustum, then any. Facing along y, the third sweep
+/// comes after `RemoveReferencedTxds` and reuses the second's scan code. Each sweep stops the whole function once
+/// enough memory is free; at the end the least used models go until it is.
+#[hook(addr = 0x40D7C0, conv = cdecl, name = "CStreaming::DeleteRwObjectsBehindCamera", expect = "A1 B4 4C 8E 00 8B 4C 24 04",
+       unverified = "frontier2-b36", route = "L2", hazards = "heap-writes")]
+pub fn delete_rw_objects_behind_camera(memory: i32) {
+    let behind: fn(GPtr<u8>, i32) -> bool = call_delete_rw_objects_behind_camera_in_sector_list;
+    let not_in_frustum: fn(GPtr<u8>, i32) -> bool = call_delete_rw_objects_not_in_frustum_in_sector_list;
+    if (MEMORY_USED.get() as i32) < memory {
+        return;
+    }
+    let pos = camera_pos();
+    let sx = sector_of_f32(pos.read());
+    let sy = sector_of_f32(pos.wrapping_index(1).read());
+    let fx = g::<f32>(CAMERA_FORWARD_X).read();
+    let fy = g::<f32>(CAMERA_FORWARD_Y).read();
+    let facing_x = !x(fy).fabs().fcom(x(fx).fabs()).test_parity(5);
+    let (along, across, forward) = if facing_x { (sx, sy, fx) } else { (sy, sx, fy) };
+    let (lo, hi) = (at_least_0(across - 10), at_most_119(across + 10));
+    let ahead = || !x(forward).fcom(x(0.0)).test_any(0x41);
+
+    let (start, end, step) = if ahead() {
+        (at_least_0(along - 10), at_least_0(along - 2), 1)
+    } else {
+        (at_most_119(along + 10), at_most_119(along + 2), -1)
+    };
+    advance_scan_code();
+    if sweep_sectors(facing_x, start, end, step, lo, hi, memory, behind) {
+        return;
+    }
+    let (start, end, step) = if ahead() {
+        (at_most_119(along + 10), at_least_0(along - 2), -1)
+    } else {
+        (at_least_0(along - 10), at_most_119(along + 2), 1)
+    };
+    advance_scan_code();
+    if sweep_sectors(facing_x, start, end, step, lo, hi, memory, not_in_frustum) {
+        return;
+    }
+    if facing_x {
+        advance_scan_code();
+    } else if call_remove_referenced_txds(memory) {
+        return;
+    }
+    if sweep_sectors(facing_x, start, end, step, lo, hi, memory, behind) {
+        return;
+    }
+    while (MEMORY_USED.get() as i32) >= memory && call_remove_least_used_model(0) {}
+}
+
 // Not ported (deferred), always the original through `orig!`:
 // - 0x40D3F0 `CStreaming::AddModelsToRequestList` (297 instructions of camera/frustum x87 maths over
-//   sector rings; needs a byte-level pass with CPU-checked x87),
-// - 0x40D7C0 `CStreaming::DeleteRwObjectsBehindCamera` (738 instructions, same).
+//   sector rings; needs a byte-level pass with CPU-checked x87).
 
 /// Every `#[hook]` of this module, in source order.
 pub const HOOKS: &[HookReg] = &[
@@ -4477,4 +4567,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_READ_INI_FILE,
     HOOK_SAVE,
     HOOK_LOAD,
+    HOOK_DELETE_RW_OBJECTS_BEHIND_CAMERA,
 ];
