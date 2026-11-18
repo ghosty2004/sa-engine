@@ -483,24 +483,6 @@ pub fn set_indices(ib: u32) {
     }
 }
 
-/// The buffers of an instanced-data header (`RwResEntry` + 0x18), as the D3D9 render callbacks bind them inline:
-/// its index buffer (+8) when set and not the cached one, its streams (+0x10, offsets used when +0x30 is set) and its
-/// vertex declaration (+0x34) when not the cached one (which also invalidates the cached FVF).
-pub fn bind_instanced_header(h: GPtr<u8>) {
-    let ib = rd::<u32>(h, 8);
-    if ib != 0 && gu(LAST_IB) != ib {
-        su(LAST_IB, ib);
-        dev_set_indices(device(), rd::<u32>(h, 8));
-    }
-    crate::bindings::set_streams(h.byte_add(0x10), rd::<u32>(h, 0x30));
-    let decl = rd::<u32>(h, 0x34);
-    if gu(LAST_DECL) != decl {
-        su(LAST_DECL, decl);
-        su(LAST_FVF, 0xFFFF_FFFF);
-        dev_set_vertex_declaration(device(), rd::<u32>(h, 0x34));
-    }
-}
-
 /// Unbinds stream 0 and the index buffer before a `*UP` draw.
 fn unbind_for_up() {
     if at(STREAMS, 0).read() != 0 || at(STREAMS, 4).read() != 0 || at(STREAMS, 8).read() != 0 {

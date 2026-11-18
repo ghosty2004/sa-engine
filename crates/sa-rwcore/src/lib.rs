@@ -56,7 +56,6 @@ pub mod d3d9_mesh_instance;
 pub mod d3d9_skin_node;
 pub mod d3d9_skin_blend;
 pub mod d3d9_skin_blend_x87;
-pub mod d3d9_skin_vs;
 pub mod d3d9_im3d_render;
 pub mod imagemod;
 pub mod worldplugin;

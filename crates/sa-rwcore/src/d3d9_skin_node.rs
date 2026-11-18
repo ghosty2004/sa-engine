@@ -96,7 +96,7 @@ orig! {
     /// The re-instancing of the non-blended vertex data (0x7C90D0)
     fn reinstance_call(atomic: GPtr<u8>, header: GPtr<u8>, hierarchy: GPtr<u8>, flags: u32) = cdecl 0x7C90D0 => skin_reinstance;
     /// The vertex-shader render step (0x7C8060; reached only with vertex shaders)
-    fn render_vs(cbs: GPtr<u8>, atomic: GPtr<u8>, geo: GPtr<u8>, skin: GPtr<u8>, hierarchy: GPtr<u8>) = cdecl 0x7C8060 => crate::d3d9_skin_vs::skin_render_vertex_shader;
+    fn render_vs(cbs: GPtr<u8>, atomic: GPtr<u8>, geo: GPtr<u8>, skin: GPtr<u8>, hierarchy: GPtr<u8>) = cdecl 0x7C8060 => unported;
     /// The render step without vertex shaders (0x7C85B0)
     fn render_sw_call(cbs: GPtr<u8>, entry: GPtr<u8>, atomic: GPtr<u8>, flags: u32) = cdecl 0x7C85B0 => skin_render_software;
 
