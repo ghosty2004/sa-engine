@@ -411,7 +411,7 @@ pub fn ov_time_seek(vf: u32, s: f64) -> i32 {
 
 /// `(address, name, native entry)` of the import thunks.
 pub fn thunks() -> Vec<(u32, &'static str, usize)> {
-    use crate::native::cdecl_entry as entry;
+    use crate::platform::registry_entry::cdecl_entry as entry;
     vec![
         entry!(0x0081_8062, "vorbisfile.dll!ov_clear (thunk)", ov_clear; fn(vf: u32) -> i32),
         entry!(0x0081_8068, "vorbisfile.dll!ov_read (thunk)", ov_read; fn(vf: u32, buf: u32, len: u32, big: u32, word: u32, sgn: u32, bs: u32) -> i32),

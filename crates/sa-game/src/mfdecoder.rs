@@ -21,10 +21,7 @@ use symphonia::core::io::MediaSourceStream;
 use symphonia::core::meta::MetadataOptions;
 use symphonia::core::probe::Hint;
 
-sa_core::orig! {
-    /// `CAEStreamingDecoder::~CAEStreamingDecoder()` (0x4F2830)
-    fn streaming_decoder_destructor(this: u32) = thiscall 0x4F2830 => unported;
-}
+use sa_audio::audio_data_stream::streaming_decoder_destructor_call;
 
 /// `CAEMFDecoder` fields.
 const FILENAME: u32 = 0x08;
@@ -225,7 +222,7 @@ fn destructor(this: u32) {
         crate::crt::free(GPtr::from_addr(name.read() as usize));
         name.write(0);
     }
-    streaming_decoder_destructor(this);
+    streaming_decoder_destructor_call(GPtr::from_addr(this as usize));
 }
 
 /// The scalar deleting destructor (vtable slot 6, 0x4E7C50): the destructor, then `operator delete` when bit 0 of
@@ -250,7 +247,7 @@ fn library_mf_startup() -> u32 {
 
 /// `(address, name, native entry)` of the decoder's methods and the library start-up.
 pub fn entries() -> Vec<(u32, &'static str, usize)> {
-    use crate::native::{cdecl_entry, thiscall_entry};
+    use crate::platform::registry_entry::{cdecl_entry, thiscall_entry};
     vec![
         cdecl_entry!(0x0081_95C0, "media library loader start-up (MP3 user tracks through symphonia)", library_startup; fn(flags: u32) -> u32),
         cdecl_entry!(0x0081_9820, "media library MFStartup (MP3 user tracks through symphonia)", library_mf_startup; fn() -> u32),

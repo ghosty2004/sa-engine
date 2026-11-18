@@ -186,7 +186,7 @@ pub fn encode(width: u32, height: u32, rgbx: &[u8], optimize: bool) -> Result<Ve
 
 /// `(address, name, native entry)` of the libjpeg functions.
 pub fn entries() -> Vec<(u32, &'static str, usize)> {
-    use crate::native::cdecl_entry as entry;
+    use crate::platform::registry_entry::cdecl_entry as entry;
     vec![
         entry!(0x005C_D810, "libjpeg jpeg_std_error", jpeg_std_error; fn(err: u32) -> u32),
         entry!(0x005C_F960, "libjpeg jpeg_CreateCompress", jpeg_create_compress; fn(c: u32, version: u32, size: u32) -> ()),

@@ -111,6 +111,7 @@ fn png_set_write_fn(png: u32, io: u32, write_fn: u32, _flush: u32) {
 /// `png_set_IHDR(png_ptr, info_ptr, width, height, bit_depth, color_type, interlace, compression, filter)`
 /// (0x7D1D60): what the encoder supports of libpng's checks (non-zero size, a palette or RGBA image, a bit depth
 /// valid for it, no interlacing, the standard compression and filter methods).
+#[allow(clippy::too_many_arguments)]
 fn png_set_ihdr(png: u32, _info: u32, width: u32, height: u32, depth: u32, color: u32, interlace: u32, compression: u32, filter: u32) {
     let valid = width != 0
         && height != 0
@@ -229,7 +230,7 @@ pub fn encode(width: u32, height: u32, depth: u32, color: u32, rows: &[u8], pale
 
 /// `(address, name, native entry)` of the libpng functions.
 pub fn entries() -> Vec<(u32, &'static str, usize)> {
-    use crate::native::cdecl_entry as entry;
+    use crate::platform::registry_entry::cdecl_entry as entry;
     vec![
         entry!(0x007D_03B0, "libpng png_create_write_struct_2", png_create_write_struct_2; fn(ver: u32, err: u32, err_fn: u32, warn_fn: u32, mem: u32, malloc: u32, free: u32) -> u32),
         entry!(0x007D_2E80, "libpng png_create_info_struct", png_create_info_struct; fn(png: u32) -> u32),
@@ -250,7 +251,10 @@ pub fn entries() -> Vec<(u32, &'static str, usize)> {
 mod tests {
     use super::*;
 
-    fn decode(file: &[u8]) -> (png::OutputInfo, Vec<u8>, Option<Vec<u8>>, Option<Vec<u8>>) {
+    /// The frame info, the pixels, the palette and the tRNS chunk.
+    type Decoded = (png::OutputInfo, Vec<u8>, Option<Vec<u8>>, Option<Vec<u8>>);
+
+    fn decode(file: &[u8]) -> Decoded {
         let mut dec = png::Decoder::new(std::io::Cursor::new(file));
         dec.set_transformations(png::Transformations::IDENTITY);
         let mut dec = dec.read_info().expect("header");

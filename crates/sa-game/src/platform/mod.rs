@@ -16,6 +16,7 @@ macro_rules! eprintln {
 }
 
 pub mod perf_probe;
+pub mod registry_entry;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub mod game_window;

@@ -47,7 +47,7 @@ orig! {
     /// `CAEDataStream::Seek(int32, int32)` (0x4DC250, `ret 8`)
     fn data_stream_seek_call(s: GPtr<u8>, offset: u32, whence: u32) -> u32 = thiscall 0x4DC250 => data_stream_seek;
     /// `CAEStreamingDecoder::~CAEStreamingDecoder()` (0x4F2830)
-    fn streaming_decoder_destructor_call(d: GPtr<u8>) = thiscall 0x4F2830 => streaming_decoder_destructor;
+    pub fn streaming_decoder_destructor_call(d: GPtr<u8>) = thiscall 0x4F2830 => streaming_decoder_destructor;
     /// `CAEVorbisDecoder::~CAEVorbisDecoder()` (0x5023F0)
     fn vorbis_destructor_call(d: GPtr<u8>) = thiscall 0x5023F0 => vorbis_destructor;
     /// KERNEL32 `lstrlenA` (IAT 0x8580DC, by its use here)
