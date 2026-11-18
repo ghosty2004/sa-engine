@@ -44,15 +44,21 @@ sa-access = { path = "../sa-access", optional = true }
 sa-types = { path = "../sa-types", optional = true }
 sa-mod-api = { path = "../sa-mod-api", optional = true }
 wgpu = "29"
+# the PNG encoder behind the libpng entry points of RtPNGImageWrite (libpng.rs) and the status screenshot
 png = "0.18"
 web-time = "1.1"
 # the D3D9 resource objects' map, looked up on every SetTexture / SetStreamSource / SetIndices
 rustc-hash = "2"
 # pure-Rust Vorbis decoder behind the VORBISFILE.DLL replacement (vorbisfile.rs); MIT OR Apache-2.0
 lewton = "0.10"
+# pure-Rust JPEG encoder behind the libjpeg entry points of the gallery photo (libjpeg.rs); (MIT OR Apache-2.0) AND IJG
+jpeg-encoder = "0.7"
+# pure-Rust MP3 decoder behind the user-track decoder CAEMFDecoder (mfdecoder.rs); MPL-2.0
+symphonia = { version = "0.5", default-features = false, features = ["mp3"] }
 
 [dev-dependencies]
 sa-testkit = { path = "../sa-testkit" }
+jpeg-decoder = "0.3"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 libc = "0.2"
