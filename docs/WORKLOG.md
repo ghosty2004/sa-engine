@@ -4527,3 +4527,32 @@
   storage); a policy for user-chosen servers (`net` rules / host settings); then `crates/sa-samp`, sa-game's `samp`
   feature and its SA:MP glue deleted. A crate-level split of samp-client (core crate vs the `cfg(windows)` DLL
   modules) is not done: the seams are features and traits inside samp-client.
+## 2026-11-18 — PURE-1a: what sa-game takes from gta_sa.exe, and ADR-005 (agent, branch worktree-agent-a0a8df3629e753cbd)
+- Scope: measurements and design only, no engine code changed. Results: docs/arch/pure-build-census.md; decision
+  proposed in docs/arch/ADR-005-pure-build.md; ROADMAP row PURE-1 (proposed).
+- Tools (`tools/pure/`): `address_census.py` (hex literals of the image in the sources by section, context and
+  crate), `arena_trace.c` (LD_PRELOAD for the i686 sa-game: page-protects the exe-filled arena and the read-only code
+  ranges, records each byte's first access through the page-fault error code, single-steps with TF; `SA_IMAGE_KEEP`
+  zeroes everything outside a set of ranges instead), `trace_scenarios.sh` (FRONTIER scenarios with the trace),
+  `arena_usage.py` (objects, kinds, static set from rwsets / data-tables / literals, union, per-subsystem owner, code
+  bytes read as data, `--keep` ranges). Binary: the main checkout's release sa-game of 18:54 (built after 8b81a601),
+  copied to target/pure1; no cargo build.
+- Sources: 61,252 image addresses in game crates: hooks 13,940, `orig!` 9,428, generator provenance 6,588, at-site
+  267; data uses 27,695 (11,672 distinct: `.rdata` 3,771 + 536 vtables + 66 IAT cells, `.data` 1,977, `.bss` 5,319).
+  Host pointers passed as game pointers: 4,700-6,500 sites (`GPtr::from_raw` 3,520 + `ptr_of` under its names).
+- Run time (16 scenarios, 27,000 iterations, 100,000-fault page budget): needed `.rdata` 31,430 bytes, `.data`
+  53,844; objects measured 226,744 bytes, static 216,560, union 272,705 (189,423 non-zero), unique to the exe 227,077
+  (156,349 non-zero; the rest is IAT cells, vtables / function tables, pointer tables, regenerated). Whole
+  initialised image 641,024 raw bytes, 455,453 non-zero. Code read as data: 63 `.text` + 3 `.HOODLUM` dwords (switch
+  byte tables in `.text`, protection values).
+- Hold-out: an arena cut to a first-pass union (285,786 bytes) gives identical reports on pausemenu, crossing and
+  shootdriver, but plane / nitro / monster / escalator differ and quad / jetpack / shotgun / roadblocks crash; three
+  hold-out traces find 85 objects (5,012 bytes) outside the union. Hence ADR-005 carries the whole initialised image
+  in the first pure build and trims only with evidence (PURE-2).
+- Trace fidelity: crossing's report is identical with and without the trace; nitro and escalator reports are identical
+  across two untraced runs.
+- Plan (ADR-005 §4): 1b image generator + `sa-image` + `--image exe|builtin|check` (2-3 agent-days), 1c import and
+  call-site tables (0.5), 1d code constants (1-1.5), 1e exe optional (0.5-1) = first pure build 4-6 agent-days; 1f
+  third-party paths (2-3); PURE-2 ownership / trimming (8-12); 64-bit stays STD-3 (2-4 agent-weeks).
+- Cost: ~2.5 h; 16 + 16 + 3 traced runs (22-121 s each), 22 untraced runs; target/pure1 ~0.5 GB (scratch, not
+  committed).
