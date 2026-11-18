@@ -1,4 +1,4 @@
-# The resolution mod's manifest (docs/arch/ADR-004-mods.md section 3.3). examples/mods/build.sh puts it next to
+# The resolution mod's manifest (docs/arch/ADR-004-mods.md section 3.3). mods/build.sh puts it next to
 # resolution.wasm, with config.toml (the mod's settings, which it reads and writes itself).
 [mod]
 id = "resolution"

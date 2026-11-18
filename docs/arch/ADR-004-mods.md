@@ -52,7 +52,8 @@ User decisions (2026-11-17):
 | `sa-mod-api` | the interface definition and its Rust types (shared by host and SDK); no `unsafe`, builds for every target | `sa-types` (since M3; M2: `sa-samp-api`) |
 | `sa-mod-host` | loads and runs mods; one implementation, two engine backends (wasmtime / browser) behind one trait (ADR-003) | `sa-mod-api`, `sa-access` (since M3; M2: `sa-samp`), platform/render layer |
 | `sa-mod` (SDK) | what a mod author links: safe Rust bindings, macros for the entry points, examples | `sa-mod-api` |
-| `examples/mods/*` | reference mods: `resolution`, `msaa`, `fps-overlay`, later `samp` | `sa-mod` |
+| `mods/*` | first-party mods the project uses: `resolution` (M1), `samp` (M4: SA:MP's mod host) | `sa-mod` |
+| `examples/mods/*` | the SDK's example and test mods: `hello`, `trainer-hud`, `courier`, `broken` | `sa-mod` |
 
 `sa-game` gets `--features mods`; without it the host crate is not compiled in.
 

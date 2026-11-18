@@ -8,7 +8,7 @@
 //! ```
 //!
 //! A missing file is written with the defaults. The game applies the mode through its own video-mode selection
-//! (docs/mods/getting-started.md, docs/arch/ADR-004-mods.md §4.1). Build: `examples/mods/build.sh`.
+//! (docs/mods/getting-started.md, docs/arch/ADR-004-mods.md §4.1). Build: `mods/build.sh`.
 
 use sa_mod::{Mod, display, files};
 
@@ -52,7 +52,7 @@ impl Config {
     fn to_text(&self) -> String {
         let res = self.size.map_or("auto".to_string(), |(w, h)| format!("{w}x{h}"));
         format!(
-            "# The resolution mod's settings (examples/mods/resolution).\n\
+            "# The resolution mod's settings (mods/resolution).\n\
              # \"auto\" (the desktop; in the browser the canvas's size in device pixels) or \"WIDTHxHEIGHT\"\n\
              resolution = \"{res}\"\n\
              # natively: full screen instead of a window\n\

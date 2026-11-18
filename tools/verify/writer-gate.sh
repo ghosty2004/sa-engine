@@ -23,7 +23,8 @@
 #   i686     cargo build --release --target i686-pc-windows-gnu -p sa-launcher -p sa-hook (the in-process
 #            DLL, every port's naked entry) + clippy -D warnings of sa-hook for that target
 #   wasm32   cargo build --target wasm32-unknown-unknown -p sa-ports (every port crate) and the mod crates
-#            (sa-mod-api, sa-mod, sa-mod-host, the hello, resolution, trainer-hud and courier example mods; MOD-2)
+#            (sa-mod-api, sa-mod, sa-mod-host, the hello, trainer-hud and courier example mods, the first-party
+#            resolution mod; MOD-2)
 #   hooktest cargo test -p sa-hook --lib (table vs exe and catalogue, callers, patch_refs, keycells, INF-20)
 #   l1test   cargo test --release -p sa-oracle --test l1 (harness self-tests, preserve/route checks)
 #   l1       for every new hook with route = "L1-pure": sa-oracle l1 0xADDR --backend native (the real CPU

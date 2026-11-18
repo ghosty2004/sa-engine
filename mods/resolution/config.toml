@@ -1,4 +1,4 @@
-# The resolution mod's settings (examples/mods/resolution).
+# The resolution mod's settings (mods/resolution).
 # "auto" (the desktop; in the browser the canvas's size in device pixels) or "WIDTHxHEIGHT"
 resolution = "auto"
 # natively: full screen instead of a window

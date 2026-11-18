@@ -137,8 +137,9 @@ running script commands inside a hook is refused (`docs/mods/api.md`, level 3).
 
 ## The resolution mod
 
-`examples/mods/resolution` runs the game at the desktop resolution (in the browser: the canvas's size on the page in
-device pixels) or at a chosen one, in a window or full screen. Its settings are its own `config.toml` (it writes the
+`mods/resolution` (a first-party mod: `mods/` holds the mods the project uses, `examples/mods/` the SDK's examples
+and test mods) runs the game at the desktop resolution (in the browser: the canvas's size on the page in device
+pixels) or at a chosen one, in a window or full screen. Its settings are its own `config.toml` (it writes the
 defaults when the file is missing; natively the file is in the mod's folder, in the browser it is kept for the
 session only, like the game's own settings there):
 
@@ -149,7 +150,7 @@ follow_resize = true    # with "auto": request the window's / canvas's new size 
 ```
 
 ```sh
-examples/mods/build.sh      # -> target/mods/resolution/{mod.toml,resolution.wasm,config.toml}
+mods/build.sh               # -> target/mods/resolution/{mod.toml,resolution.wasm,config.toml}
 target/i686-unknown-linux-gnu/release/sa-game --game wine/gta-sa --mods target/mods/resolution --window
 # browser: tools/web/serve.sh --game wine/gta-sa --mods target/mods, then ?autostart=1&mods=resolution&full=1
 ```

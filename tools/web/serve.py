@@ -5,8 +5,8 @@ Serves web/ (index.html, the worker, web/pkg from tools/web/build.sh) and, with 
 Andreas folder under /game/ (byte ranges, for the worker's synchronous reads) plus /game-index.json (path and size of
 every file). The game files never leave this machine: the server refuses any non-loopback bind address.
 
-With --mods DIR (MOD-2), the mod folders in DIR (each with mod.toml and its .wasm, e.g. from examples/mods/build.sh)
-are served under /mods/ for the page's ?mods=NAME,... (sa-game built with FEATURES=mods).
+With --mods DIR (MOD-2), the mod folders in DIR (each with mod.toml and its .wasm, from mods/build.sh or
+examples/mods/build.sh) are served under /mods/ for the page's ?mods=NAME,... (sa-game built with FEATURES=mods).
 
 With --samp-dir DIR (the files of a SA:MP client install: samp.saa, sampgui.png, mouse.png, ...), those files are
 overlaid on the game folder: listed in /game-index.json and served under /game/ like the game's own files (a file
