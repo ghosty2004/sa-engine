@@ -371,29 +371,29 @@ const K_M0_13: u32 = 0xBE05_1EB8;
 const SEPARATE_BLEND_RATE: usize = 0x8C_CCB4;
 const MODEL_INFO_PTRS: usize = 0xA9_B0C8;
 
-/// The original's frame for [`process_two_player_separate_cars`], addressed by the offset from ESP after the three
-/// register pushes (the bytes' temporary `push edi` shifts their own offsets by 4, folded in here).
-struct Frame([u32; 0x2A]);
+/// An original function's stack frame, addressed by the offset from ESP after its register pushes (temporary
+/// pushes inside the body folded in), so locals passed by address keep the bytes' layout.
+pub(crate) struct Frame<const N: usize>(pub(crate) [u32; N]);
 
-impl Frame {
-    fn p(&mut self, o: usize) -> GPtr<u8> {
+impl<const N: usize> Frame<N> {
+    pub(crate) fn p(&mut self, o: usize) -> GPtr<u8> {
         GPtr::<u32>::from_raw(self.0.as_mut_ptr()).cast::<u8>().byte_add(o as isize)
     }
-    fn f(&self, o: usize) -> f32 {
+    pub(crate) fn f(&self, o: usize) -> f32 {
         f32::from_bits(self.0[o / 4])
     }
-    fn s(&mut self, o: usize, v: f32) {
+    pub(crate) fn s(&mut self, o: usize, v: f32) {
         self.0[o / 4] = v.to_bits();
     }
-    fn u(&mut self, o: usize, v: u32) {
+    pub(crate) fn u(&mut self, o: usize, v: u32) {
         self.0[o / 4] = v;
     }
-    fn copy_from(&mut self, o: usize, src: GPtr<u8>) {
+    pub(crate) fn copy_from(&mut self, o: usize, src: GPtr<u8>) {
         for i in 0..3 {
             self.0[o / 4 + i] = rd::<u32>(src, 4 * i as isize);
         }
     }
-    fn normalise(&mut self, o: usize) {
+    pub(crate) fn normalise(&mut self, o: usize) {
         vector_normalise(self.p(o).cast::<[f32; 3]>());
     }
 }

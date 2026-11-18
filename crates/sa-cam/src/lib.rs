@@ -56,6 +56,7 @@ pub mod m16;
 pub mod splines;
 pub mod twoplayer;
 pub mod twoplayer_shared;
+pub mod twoplayer_shooting;
 
 pub mod camera_process;
 pub mod generated;
