@@ -4746,7 +4746,7 @@
   png crate, the file passed to `_rtPNGWriteData`; errors become no-ops instead of a longjmp), `d3dx_math.rs` (the
   five D3DX helpers of the vertex-shader path, in d3d9_shader's entry table), `mfdecoder.rs` (the media library
   start-up succeeds; `CAEMFDecoder`'s Initialise / FillBuffer / lengths / SetCursor / GetSampleRate / destructors over
-  symphonia's MP3 decoder). `native.rs` now owns the cdecl / thiscall entry wrappers (vorbisfile's moved there).
+  symphonia's MP3 decoder). The cdecl / thiscall entry wrappers live in `platform/registry_entry.rs` (vorbisfile's moved there).
 - Glue ports (game code the paths need): `JPegPlugin` empty_output_buffer 0x5D0400 (sa-render), `_rtPNGWriteData`
   0x7CF980 (sa-rwcore `rt_png.rs`), `CAEMFDecoder` constructor 0x4E7770 and `GetStreamID` 0x4E77B0 (sa-audio); state
   implemented, L2 runs to do.
@@ -4768,3 +4768,6 @@
 - verify-all (phase A) at ceb51635, lanes 1-3, host sa-oracle and the hook DLL rebuilt from this tree (DLL sha256
   46d04a06…): IDENTICAL 13/13 (tag pure1f-ceb51635).
 - Cost: ~4.5 h; builds: host tests, i686 sa-game, sa-oracle, the hook DLL; 20 scenario runs (base and new).
+- Writer gate (base e31b4bb6) first run: queue, bindings (0x4F2830 declared twice), cfg (the wrappers' cfgs in
+  native.rs), clippy (png_set_IHDR's arguments) and hooktest (0x5D0400's hook name) failed; fixed in 0280f670..8fe68598
+  (no phase A behaviour change: the hook's name string and visibility only), then rerun on the final head.
