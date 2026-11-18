@@ -457,7 +457,7 @@ orig! {
     /// `CPPTriPlantBuffer::Flush()` (0x5DB0C0)
     fn tri_plant_buffer_flush_o(this: GPtr<u8>) = thiscall 0x5DB0C0 => crate::mvpd_r3::tri_plant_buffer_flush;
     /// `RwIm2DRenderIndexedPrimitive` (`RwEngineInstance` slot 0x34)
-    fn im2d_render_indexed(prim: u32, verts: GPtr<u8>, nv: i32, idx: GPtr<u8>, ni: i32) -> i32 = cdecl table 0xC97B24 0x34 => unported;
+    pub(crate) fn im2d_render_indexed(prim: u32, verts: GPtr<u8>, nv: i32, idx: GPtr<u8>, ni: i32) -> i32 = cdecl table 0xC97B24 0x34 => unported;
 }
 
 /// `CPPTriPlantBuffer::Flush()` (0x5DB0C0, thiscall): with plants stored (+0), the model table by pipe

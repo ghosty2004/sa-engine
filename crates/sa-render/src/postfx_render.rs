@@ -35,7 +35,7 @@ orig! {
     /// `RwRenderStateSet(state, value)` (`RwGlobals` +0x20)
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xc97b24 0x20 => unported;
     /// `CPostEffects::Fog()` (0x704150)
-    fn post_fog() = cdecl 0x704150 => unported;
+    fn post_fog() = cdecl 0x704150 => crate::posteffects_filters::post_fog;
     /// `CPostEffects::ColourFilter(RwRGBA pass1, RwRGBA pass2)` (0x703650)
     fn colour_filter(pass1: u32, pass2: u32) = cdecl 0x703650 => crate::mvpd_r3::colour_filter;
     /// `CPostEffects::DarknessFilter(int alpha)` (0x702f00)
@@ -51,7 +51,7 @@ orig! {
     /// `CPostEffects::Grain(int strength, bool)` (0x7037c0)
     fn grain(strength: u32, update: u32) = cdecl 0x7037c0 => unported;
     /// `CPostEffects::InfraredVision(RwRGBA, RwRGBA)` (0x703f80)
-    fn infrared_vision(c1: u32, c2: u32) = cdecl 0x703f80 => unported;
+    fn infrared_vision(c1: u32, c2: u32) = cdecl 0x703f80 => crate::posteffects_filters::infrared_vision;
     /// `CPostEffects::HeatHazeFX(float intensity, bool alwaysOn)` (0x701780; the float as a raw dword)
     fn heat_haze_fx(intensity: u32, always: u32) = cdecl 0x701780 => unported;
     /// `CPostEffects::UnderWaterRipple(RwRGBA, float xo, float yo, int strength, float speed, float freq)`
