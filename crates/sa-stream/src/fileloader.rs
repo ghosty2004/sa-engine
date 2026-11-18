@@ -182,8 +182,6 @@ pub mod call {
         pub fn add_mirror_attribute_zone(c: GPtr<u8>, a: f32, b: f32, c2: f32, d: f32, e: f32, f2: f32, flags: u32, g: f32, h: f32, i: f32, j: f32) = cdecl 0x72DC10 => unported;
         /// CCullZones::AddCullZone (0x72DF70)
         pub fn add_cull_zone(c: GPtr<u8>, a: f32, b: f32, c2: f32, d: f32, e: f32, f2: f32, flags: u32, flags2: u32) = cdecl 0x72DF70 => unported;
-        /// CPathFind stub (0x44D2E0, `ret`-only in 1.0 US)
-        pub fn path_find_stub_44d2e0(p: GPtr<u8>) = thiscall 0x44D2E0 => unported;
     }
 }
 use call::*;
@@ -255,6 +253,132 @@ pub fn load_path_header(line: GPtr<u8>, out_type: GPtr<u8>) -> i32 {
     let mut name = [0u8; 84];
     sscanf_n(line, s(0x868C4C), &[out_type, lp(&mut id), GPtr::from_raw(name.as_mut_ptr())]);
     id
+}
+
+// ------------------------------------------------------------------------------- path nodes ---
+
+orig! {
+    /// `CPathFind::StoreNodeInfoPed` (0x44D2D0, thiscall, `ret 0x30`: empty, 12 stack words)
+    fn store_node_info_ped(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32,
+        a9: u32, a10: u32, a11: u32) = thiscall 0x44D2D0 => crate::generated::generated_leaves::g_fun_0044d2d0_44d2d0;
+    /// `CPathFind::StoreDetachedNodeInfoPed` (0x44D2E0, thiscall, `ret 0x38`: empty, 14 stack words)
+    fn store_detached_node_info_ped(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32,
+        a8: u32, a9: u32, a10: u32, a11: u32, a12: u32, a13: u32) = thiscall 0x44D2E0 => unported;
+    /// `CPathFind::StoreNodeInfoCar` (0x44D2C0, thiscall, `ret 0x44`: empty, 17 stack words)
+    fn store_node_info_car(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32,
+        a9: u32, a10: u32, a11: u32, a12: u32, a13: u32, a14: u32, a15: u32, a16: u32)
+        = thiscall 0x44D2C0 => crate::misc::store_node_info_car;
+    /// `CPathFind::StoreDetachedNodeInfoCar` (0x44D2F0, thiscall, `ret 0x44`: empty, 17 stack words)
+    fn store_detached_node_info_car(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32,
+        a8: u32, a9: u32, a10: u32, a11: u32, a12: u32, a13: u32, a14: u32, a15: u32, a16: u32)
+        = thiscall 0x44D2F0 => crate::misc::store_detached_node_info_car;
+}
+
+/// `ThePaths` (0x96F050), `this` of the four node stores.
+const THE_PATHS: u32 = 0x96_F050;
+
+/// `_ftol` (0x821B40) of an f32: EDX:EAX.
+fn ftol_f(v: f32) -> u64 {
+    X87::from_f32(v).ftol()
+}
+
+/// A coordinate as the detached stores get it: `_ftol`, the low word sign-extended (`movsx`), `fild`, `fstp`
+/// dword (exact).
+fn coord16(v: f32) -> u32 {
+    (ftol_f(v) as u16 as i16 as f32).to_bits()
+}
+
+/// The spawn rate as the stores get it: `_ftol(rate * 15.0)` (the product kept extended), EDX:EAX.
+fn spawn_rate(rate: f32) -> u64 {
+    X87::from_f32(rate).fmul_m(f(0x4170_0000)).ftol() // 15.0 at 0x858B48
+}
+
+/// A flag bit as pushed: `(v >> k) & 0xFFFFFF01` (the upper bytes kept).
+fn bit(v: u32, k: u32) -> u32 {
+    (v >> k) & 0xFFFF_FF01
+}
+
+/// `CFileLoader::LoadPedPathNode(const char* line, int32 objModelIndex, int32 pathEntryIndex)` (0x5B41F0, cdecl).
+/// `sscanf(line, "%d %d %d %f %f %f %f %d %d %d %d %f %d")` (format 0x868C58, pushed by the protection fragment
+/// 0x4022CD: `rol([0x1560744], [0x156F5DE])`, evaluated on the image) into locals, the last two defaulting to 1.0
+/// and 0 (written after the pointers are pushed, before the call); then, with `objModelIndex == -1`,
+/// `ThePaths.StoreDetachedNodeInfoPed(entry, type, next, (int16)x, (int16)y, (int16)z, width, cross != 0, flags &
+/// 0xFFFFFF01, (flags >> 2) & .., _ftol(rate * 15), (flags >> 11) & .., last, 0)`, else
+/// `ThePaths.StoreNodeInfoPed(model, entry, type, next, _ftol(x), _ftol(y), _ftol(z), width, cross != 0, _ftol(rate *
+/// 15), last != 0, 0)`. Both stores are empty in 1.0 US. The `!= 0` bytes carry EDX's upper bytes (the high dword of
+/// the preceding `_ftol`); the second store's `last != 0` carries ECX's, left by `sscanf` in the original (not
+/// reproduced: 0 here, unread by the empty callee).
+#[hook(addr = 0x5B41F0, conv = cdecl, name = "CFileLoader::LoadPedPathNode", expect = "83 EC 34 53 56",
+       unverified = "frontier2-a24", route = "L2", hazards = "none", note = "IDE/IPL path sections; empty callees")]
+pub fn load_ped_path_node(line: GPtr<u8>, model: i32, entry: i32) {
+    let mut v = [0u32; 13];
+    v[11] = 0x3F80_0000;
+    v[12] = 0;
+    let [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12] = &mut v;
+    sscanf_n(
+        line,
+        s(0x868C58),
+        &[lp(a0), lp(a1), lp(a2), lp(a3), lp(a4), lp(a5), lp(a6), lp(a7), lp(a8), lp(a9), lp(a10), lp(a11), lp(a12)],
+    );
+    let [ty, next, cross, x, y, z, width, _, _, _, flags, rate, last] = v;
+    let fl = f32::from_bits;
+    if model == -1 {
+        let r = spawn_rate(fl(rate));
+        let cross_b = (r >> 32) as u32 & 0xFFFF_FF00 | u32::from(cross != 0);
+        let (fz, fy, fx) = (coord16(fl(z)), coord16(fl(y)), coord16(fl(x)));
+        store_detached_node_info_ped(
+            THE_PATHS, entry as u32, ty, next, fx, fy, fz, width, cross_b, bit(flags, 0), bit(flags, 2), r as u32,
+            bit(flags, 11), last, 0,
+        );
+    } else {
+        let r = spawn_rate(fl(rate));
+        let rz = ftol_f(fl(z));
+        let cross_b = (r >> 32) as u32 & 0xFFFF_FF00 | u32::from(cross != 0);
+        let (iy, ix) = (ftol_f(fl(y)) as u32, ftol_f(fl(x)) as u32);
+        store_node_info_ped(
+            THE_PATHS, model as u32, entry as u32, ty, next, ix, iy, rz as u32, width, cross_b, r as u32,
+            u32::from(last != 0), 0,
+        );
+    }
+}
+
+/// `CFileLoader::LoadCarPathNode(const char* line, int32 objModelIndex, int32 pathEntryIndex, bool a4)` (0x5B4380,
+/// cdecl). `sscanf(line, "%d %d %d %f %f %f %f %d %d %d %d %f %d")` (0x868C58) into locals, the last two defaulting
+/// to 1.0 and 0; then, with `objModelIndex == -1`, `ThePaths.StoreDetachedNodeInfoCar(entry, type, next, (int16)x,
+/// (int16)y, (int16)z, width, lanesIn, lanesOut, flags & 0xFFFFFF01, (flags >> 2) & .., speed, (flags >> 1) & .., a4,
+/// _ftol(rate * 15), 0, last)`, else `ThePaths.StoreNodeInfoCar(model, entry, type, next, _ftol(x), _ftol(y),
+/// _ftol(z), width, lanesIn, lanesOut, flags & .., (flags >> 2) & .., speed, (flags >> 1) & .., a4, _ftol(rate * 15),
+/// last)`. Both stores are empty in 1.0 US (`ret 0x44`). `a4` is the caller's whole argument dword.
+#[hook(addr = 0x5B4380, conv = cdecl, name = "CFileLoader::LoadCarPathNode", expect = "83 EC 34 56 8D",
+       unverified = "frontier2-a24", route = "L2", hazards = "none", note = "IDE/IPL path sections; empty callees")]
+pub fn load_car_path_node(line: GPtr<u8>, model: i32, entry: i32, a4: u32) {
+    let mut v = [0u32; 13];
+    v[11] = 0x3F80_0000;
+    v[12] = 0;
+    let [a0, a1, a2, a3, a4_, a5, a6, a7, a8, a9, a10, a11, a12] = &mut v;
+    sscanf_n(
+        line,
+        s(0x868C58),
+        &[lp(a0), lp(a1), lp(a2), lp(a3), lp(a4_), lp(a5), lp(a6), lp(a7), lp(a8), lp(a9), lp(a10), lp(a11), lp(a12)],
+    );
+    let [ty, next, _, x, y, z, width, lanes_in, lanes_out, speed, flags, rate, last] = v;
+    let fl = f32::from_bits;
+    let r = spawn_rate(fl(rate)) as u32;
+    if model == -1 {
+        let (fz, fy, fx) = (coord16(fl(z)), coord16(fl(y)), coord16(fl(x)));
+        store_detached_node_info_car(
+            THE_PATHS, entry as u32, ty, next, fx, fy, fz, width, lanes_in, lanes_out, bit(flags, 0), bit(flags, 2),
+            speed, bit(flags, 1), a4, r, 0, last,
+        );
+    } else {
+        let iz = ftol_f(fl(z)) as u32;
+        let iy = ftol_f(fl(y)) as u32;
+        let ix = ftol_f(fl(x)) as u32;
+        store_node_info_car(
+            THE_PATHS, model as u32, entry as u32, ty, next, ix, iy, iz, width, lanes_in, lanes_out, bit(flags, 0),
+            bit(flags, 2), speed, bit(flags, 1), a4, r, last,
+        );
+    }
 }
 
 /// `CFileLoader::LoadGarage` (0x5B4530): `"%f %f %f %f %f %f %f %f %d %d %s"`, 11 fields required.
@@ -2141,10 +2265,10 @@ orig! {
     fn load_vehicle_object_call(line: GPtr<u8>) -> i32 = cdecl 0x5B6F30 => load_vehicle_object;
     fn load_ped_object_call(line: GPtr<u8>) -> i32 = cdecl 0x5B7420 => load_ped_object;
     fn load_path_header_call(line: GPtr<u8>, ty: GPtr<u8>) -> i32 = cdecl 0x5B41C0 => load_path_header;
-    /// CFileLoader::LoadPedPathNode (0x5B41F0, deferred: its callee is a `ret 0x44` stub)
-    fn load_ped_path_node(line: GPtr<u8>, id: i32, idx: i32) = cdecl 0x5B41F0 => unported;
-    /// CFileLoader::LoadCarPathNode (0x5B4380, deferred: as above)
-    fn load_car_path_node(line: GPtr<u8>, id: i32, idx: i32, water: u8) = cdecl 0x5B4380 => unported;
+    /// CFileLoader::LoadPedPathNode (0x5B41F0)
+    fn load_ped_path_node_call(line: GPtr<u8>, id: i32, idx: i32) = cdecl 0x5B41F0 => load_ped_path_node;
+    /// CFileLoader::LoadCarPathNode (0x5B4380)
+    fn load_car_path_node_call(line: GPtr<u8>, id: i32, idx: i32, water: u32) = cdecl 0x5B4380 => load_car_path_node;
     fn load_2d_effect_call(line: GPtr<u8>) = cdecl 0x5B7670 => load_2d_effect;
     fn load_txd_parent_call(line: GPtr<u8>) = cdecl 0x5B75E0 => load_txd_parent;
     fn load_zone_call(line: GPtr<u8>) = cdecl 0x5B4AB0 => load_zone;
@@ -2203,9 +2327,9 @@ fn path_line(line: GPtr<u8>, idx: &mut i32, ty: &mut i32, id: &mut i32) {
         return;
     }
     match *ty {
-        0 => load_ped_path_node(line, *id, *idx),
-        1 => load_car_path_node(line, *id, *idx, 0),
-        2 => load_car_path_node(line, *id, *idx, 1),
+        0 => load_ped_path_node_call(line, *id, *idx),
+        1 => load_car_path_node_call(line, *id, *idx, 0),
+        2 => load_car_path_node_call(line, *id, *idx, 1),
         _ => {}
     }
     *idx += 1;
@@ -2480,6 +2604,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_LOAD_LINE_FILE,
     HOOK_LOAD_LINE_BUFFER,
     HOOK_LOAD_PATH_HEADER,
+    HOOK_LOAD_PED_PATH_NODE,
+    HOOK_LOAD_CAR_PATH_NODE,
     HOOK_LOAD_GARAGE,
     HOOK_LOAD_OCCLUSION_VOLUME,
     HOOK_LOAD_AUDIO_ZONE,

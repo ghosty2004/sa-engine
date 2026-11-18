@@ -112,10 +112,12 @@ pub fn dummy_object_ctor(this: GPtr<u8>) -> GPtr<u8> {
 
 /// `CPathFind::StoreNodeInfoCar` (0x44D2C0, thiscall, 17 stack words; proposed name): empty
 /// (`ret 0x44`). Not hookable (3 bytes).
-pub fn store_node_info_car(_this: GPtr<u8>, _args: [u32; 17]) {}
+#[allow(clippy::too_many_arguments)]
+pub fn store_node_info_car(_this: u32, _a0: u32, _a1: u32, _a2: u32, _a3: u32, _a4: u32, _a5: u32, _a6: u32, _a7: u32, _a8: u32, _a9: u32, _a10: u32, _a11: u32, _a12: u32, _a13: u32, _a14: u32, _a15: u32, _a16: u32) {}
 
 /// `CPathFind::StoreDetachedNodeInfoCar` (0x44D2F0; proposed name): empty (`ret 0x44`). Not hookable.
-pub fn store_detached_node_info_car(_this: GPtr<u8>, _args: [u32; 17]) {}
+#[allow(clippy::too_many_arguments)]
+pub fn store_detached_node_info_car(_this: u32, _a0: u32, _a1: u32, _a2: u32, _a3: u32, _a4: u32, _a5: u32, _a6: u32, _a7: u32, _a8: u32, _a9: u32, _a10: u32, _a11: u32, _a12: u32, _a13: u32, _a14: u32, _a15: u32, _a16: u32) {}
 
 /// Every `#[hook]` of this module, in source order.
 pub const HOOKS: &[sa_core::abi::HookReg] = &[
