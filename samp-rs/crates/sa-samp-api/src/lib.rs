@@ -123,6 +123,12 @@ pub trait GameAdapter:
     /// Game time in milliseconds (`CTimer::m_snTimeInMilliseconds` 0xB7CB84).
     fn game_time_ms(&self) -> u32;
 
+    /// Sets the game time in milliseconds (`CTimer::m_snTimeInMilliseconds` 0xB7CB84).
+    fn set_game_time_ms(&mut self, ms: u32) -> GameResult<()> {
+        let _ = ms;
+        Err(GameError::Unsupported("GameAdapter::set_game_time_ms"))
+    }
+
     /// Only the clipped time step (`CTimer::ms_fTimeStep` 0xB7CB5C), for sites that read just that one.
     fn time_step_clipped(&self) -> f32 {
         self.time_step().clipped

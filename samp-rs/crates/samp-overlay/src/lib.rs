@@ -119,6 +119,8 @@ pub struct QuadUi {
     projector: Option<Projector>,
     /// Images the next flush deletes (the atlas was rebuilt).
     stale: Vec<u32>,
+    /// Atlases built ahead of use ([`QuadUi::prepare`]).
+    prepared: Vec<FontAtlas>,
     /// Sprite textdraw texts and whether the canvas had their texture.
     sprites: std::collections::HashMap<Vec<u8>, bool>,
 }
@@ -167,6 +169,7 @@ impl QuadUi {
     pub fn set_font(&mut self, ttf: Vec<u8>) {
         if font::parses(&ttf) {
             self.font_file = Some(ttf);
+            self.prepared.clear();
             self.drop_atlas();
         }
     }
@@ -175,7 +178,23 @@ impl QuadUi {
     pub fn set_symbol_fonts(&mut self, weapon: Option<Vec<u8>>, aux: Option<Vec<u8>>) {
         self.weapon_file = weapon.filter(|t| font::parses(t));
         self.aux_file = aux.filter(|t| font::parses(t));
+        self.prepared.clear();
         self.drop_atlas();
+    }
+
+    /// Builds the atlases for video widths `widths` (default `/fontsize`) now, so that the frame that first needs
+    /// one only takes it: rasterising the fonts is the UI's most expensive step (call it where the host allows the
+    /// most work, e.g. a mod's initialisation).
+    pub fn prepare(&mut self, widths: &[i32]) {
+        for &w in widths {
+            let heights = font::heights(w, 0);
+            if self.prepared.iter().any(|a| a.heights() == heights) {
+                continue;
+            }
+            let faces =
+                Faces { ui: self.font_file.as_deref(), weapon: self.weapon_file.as_deref(), aux: self.aux_file.as_deref() };
+            self.prepared.push(FontAtlas::build(faces, heights));
+        }
     }
 
     /// How world points reach the screen (nametags, labels); without one they are not drawn.
@@ -212,9 +231,17 @@ impl QuadUi {
             return false;
         }
         self.drop_atlas();
-        let faces =
-            Faces { ui: self.font_file.as_deref(), weapon: self.weapon_file.as_deref(), aux: self.aux_file.as_deref() };
-        self.atlas = Some(FontAtlas::build(faces, heights));
+        self.atlas = Some(match self.prepared.iter().position(|a| a.heights() == heights) {
+            Some(i) => self.prepared.swap_remove(i),
+            None => {
+                let faces = Faces {
+                    ui: self.font_file.as_deref(),
+                    weapon: self.weapon_file.as_deref(),
+                    aux: self.aux_file.as_deref(),
+                };
+                FontAtlas::build(faces, heights)
+            }
+        });
         true
     }
 

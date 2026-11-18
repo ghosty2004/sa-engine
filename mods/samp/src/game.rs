@@ -75,6 +75,10 @@ impl GameAdapter for ModGame {
         state::world().map_or(0, |w| w.time_ms)
     }
 
+    fn set_game_time_ms(&mut self, ms: u32) -> GameResult<()> {
+        sa_mod::world::set_game_time(ms).map_err(failed("set_game_time"))
+    }
+
     fn request_quit(&mut self) {}
 
     fn ui(&mut self) -> Option<&mut dyn sa_samp_api::ui::UiBackend> {
@@ -525,10 +529,7 @@ impl WorldState for ModGame {
         state::world().map_or(0.0, |w| w.gravity)
     }
     fn set_gravity(&mut self, g: f32) -> GameResult<()> {
-        if self.gravity().to_bits() == g.to_bits() {
-            return Ok(());
-        }
-        Err(GameError::Unsupported("WorldState::set_gravity"))
+        world::set_gravity(g).map_err(failed("set_gravity"))
     }
     fn area(&self) -> AreaCode {
         AreaCode(self.area_raw() as u8)

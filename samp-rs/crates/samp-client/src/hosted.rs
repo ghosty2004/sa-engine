@@ -73,6 +73,8 @@ pub struct HostedClient {
     car_rotation: Option<samp_proto::types::Quat>,
     /// samp's netgame state and connect timer (`Connecting to` 3 s after `Started`).
     netgame: NetGame,
+    /// The game clock runs (RPC 30 TogglePlayerClock; samp starts with it off).
+    clock_on: bool,
     /// The local player uses the mobile phone (special action 11 until 0 / 13).
     phone: bool,
     /// samp's class selection (arrows, Shift; RPC 128 / 129).
@@ -126,6 +128,7 @@ impl HostedClient {
             last_car_sync: None,
             car_rotation: None,
             netgame: NetGame::new(0),
+            clock_on: false,
             phone: false,
             class_sel: ClassSelection::new(now),
             server_text: (config.host, config.port),
@@ -414,6 +417,7 @@ impl HostedClient {
             }
             P::TogglePlayerClock(c) => {
                 use sa_samp_api::config::RuntimeToggle;
+                self.clock_on = c.enable != 0;
                 report(self, "set_toggle", game.set_toggle(RuntimeToggle::GameClock(c.enable != 0)));
                 self.note(format!("TogglePlayerClock {}", c.enable));
             }
@@ -452,6 +456,15 @@ impl HostedClient {
                     report(self, "stop_anims", game.stop_anims(me));
                 }
             }
+            // RPC 60: the game time follows the server's while the clock is off
+            P::SendGameTimeUpdate(t) if !self.clock_on => {
+                report(self, "set_game_time_ms", game.set_game_time_ms((t.time as u32) & 0x3FFF_FFFF));
+            }
+            P::SendGameTimeUpdate(_) => {}
+            // teams only cancel same-team damage, which this client does not simulate yet
+            P::SetPlayerTeam(t) => self.note(format!("SetPlayerTeam {} {}", t.player_id, t.team)),
+            // the UI's player colours take RPC 72 (chat, nametags, scoreboard)
+            P::SetPlayerColor(_) => {}
             other => self.note(format!("player rpc {} (not applied natively yet)", other.id())),
         }
     }

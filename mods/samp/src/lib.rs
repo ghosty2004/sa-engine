@@ -243,14 +243,19 @@ impl Mod for Samp {
     fn init(&mut self) -> Result<(), String> {
         samp_proto::time::set_clock(host_time);
         assets::install(&mut self.game.ui);
+        // the fonts are rasterised here, where the host allows the most work (the game's default video mode and
+        // the desktop's)
+        self.game.ui.prepare(&[800, sa_mod::display::desktop().0 as i32]);
         // the reference scene is the UI alone, over the unchanged single-player world
         if setting("ui_scene").is_some_and(|v| v == "ref") {
             self.stage = Stage::Scene(Box::new(Scene { ui: UiHost::new(None), frames: 0, label: None }));
             events::subscribe(&[event_kind::FRAME_BEGIN]);
             return Ok(());
         }
-        // What samp.dll switches off in the game; RPC 30 TogglePlayerClock turns the clock back on.
+        // What samp.dll switches off in the game (its start-up skips the logos, the intro movie and the main menu);
+        // RPC 30 TogglePlayerClock turns the clock back on.
         for o in [
+            GameOption::StartScreens,
             GameOption::TypedCheats,
             GameOption::Clock,
             GameOption::AmbientPeds,
