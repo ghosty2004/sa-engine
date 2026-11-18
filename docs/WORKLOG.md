@@ -4222,3 +4222,9 @@
 - Open (lane C): 0x7C8060 (explain the objects divergence first; the port is in 1c501cc1), the MatFX renders 0x812D40 /
   0x813A10 / 0x814460 (with 0x8149E0 and 0x814270), CPostEffects::Radiosity 0x702080; the image / raster helpers and
   the other RW rows moved to another lane.
+- Final verify-all, default set (DLL of cc4bdcf3, sha256 384b1dc9…; the docs commits after it change no code):
+  `lanec13-default` IDENTICAL on 12 of 13; save-load's rust run went off track from frame 201 (timer, rand,
+  randcalls, pad; it ran 2300 frames in 5 s and then hit a Wine page fault inside the graphics driver) against the
+  cached all-original reference that `lanec13-c2426f` had just matched IDENTICAL; re-run alone as `lanec13-defaultb`:
+  IDENTICAL (save files identical except the SAVE-1 residue). So both sets are IDENTICAL 13/13 on the final DLL.
+  Writer gate (base cd865caa) all 16 steps PASS on cc4bdcf3; only docs commits after it.
