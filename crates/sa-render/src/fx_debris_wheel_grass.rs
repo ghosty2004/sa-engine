@@ -243,6 +243,99 @@ fn wheel_bits(veh: GPtr<u8>, p: [f32; 3], bright: f32, rgb: [u32; 3], site: u32)
     }
 }
 
+/// `Fx_c::AddWheelSpray(CVehicle*, CVector pos, bool spinning, bool inWater, float brightness)` (0x49FB30,
+/// thiscall, `ret 0x1C`, `this` unused). The camera distance tests of [`wheel_bits`] (no driver test). Nothing
+/// when `|move speed|` (`sqrt((x² + y²) + z²)`) is at most 0x858C58 and the wheel does not spin. `F` = 1 when
+/// spinning, else `min(2 |move|, 1)`. An `FxPrtMult_c(1, 1, 1, 0.05, 0, 1, 0)` gets alpha `(F + 1) * (inWater ?
+/// 0x858CC4 : 0x858FCC)`, size `(F + 1) * 0x858CC4` and life 0.08. With `A = f32((F + 1) * 0x85862C)` and `B =
+/// f32(0x858CA4 - A)`, velocity = `move * ((rand * k) * ((A + 0x858CA4) - B) + B)` (x87, unrounded factor);
+/// `n = max(_ftol(|move * time step|), 1)` particles along the last frame's path, particle `i` at `pos - move * f32(1
+/// / n) * i * time step` (z + 0x858C84), velocity z plus `(rand * k + 1) * F`, into the spray system 0xA9AE04 (time
+/// 0, rotation -1, `brightness`, 0.6).
+#[hook(addr = 0x49FB30, conv = thiscall, name = "Fx_c::AddWheelSpray", this = "Fx_c",
+       expect = "81 EC 8C 00 00 00 6A 00", unverified = "frontier2-c22", route = "L2",
+       hazards = "heap-writes", recs = "car-drive",
+       note = "rand() at 0x49FD25 / 0x49FEA5")]
+#[allow(clippy::too_many_arguments)]
+pub fn fx_add_wheel_spray(_this: GPtr<u8>, veh: GPtr<u8>, px: f32, py: f32, pz: f32, spin: u8, water: u8, bright: f32) {
+    let pv = find_player_vehicle(-1, 0);
+    let cam = camera_pos();
+    let dx = x(cam.wrapping_index(0).read()).fsub_m(px);
+    let dy = x(cam.wrapping_index(1).read()).fsub_m(py);
+    let dz = x(cam.wrapping_index(2).read()).fsub_m(pz);
+    let d2 = dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx));
+    if d2.fcom(x(gf(0x85A6E8))).test_parity(0x41) {
+        return;
+    }
+    let tick = |mask: u8| {
+        let id = veh.byte_add(0x22).read();
+        id.wrapping_add(g::<u32>(0xB7CB4C).read() as u8) & mask != 0
+    };
+    if !d2.fcom(x(gf(0x85A700))).test_any(0x41) {
+        if tick(3) {
+            return;
+        }
+    } else {
+        let far = !d2.fcom(x(gf(0x859A44))).test_any(0x41);
+        if (far || pv.is_null()) && tick(1) {
+            return;
+        }
+    }
+    let mv = |o: isize| veh.byte_add(0x44 + o).cast::<f32>().read();
+    let speed = || x(mv(0)).fmul_m(mv(0)).fadd(x(mv(4)).fmul_m(mv(4))).fadd(x(mv(8)).fmul_m(mv(8))).fsqrt();
+    if speed().fabs().fcom(x(gf(0x858C58))).test_any(0x41) && spin == 0 {
+        return;
+    }
+    let mut mult = [0u32; 8];
+    let mp: GPtr<u8> = GPtr::from_raw(mult.as_mut_ptr()).cast();
+    fx_prt_mult_ctor(mp, 1.0, 1.0, 1.0, f32::from_bits(0x3D4C_CCCD), 0.0, 1.0, 0.0);
+    let f = if spin != 0 {
+        1.0
+    } else {
+        let s2 = speed().fdouble();
+        if s2.fcom(x(gf(0x858624))).test_any(0x41) { s2.to_f32() } else { 1.0 }
+    };
+    let mf = |o: isize, v: f32| mp.byte_add(o).cast::<f32>().write(v);
+    let f1 = || x(f).fadd_m(gf(0x858624));
+    mf(0xC, f1().fmul_m(gf(if water != 0 { 0x858CC4 } else { 0x858FCC })).to_f32());
+    mf(0x18, f32::from_bits(0x3DA3_D70A));
+    mf(0x10, f1().fmul_m(gf(0x858CC4)).to_f32());
+    let a = f1().fmul_m(gf(0x85862C)).to_f32();
+    let b = x(gf(0x858CA4)).fsub_m(a).to_f32();
+    let k = gf(0x858C7C);
+    let s = xi(rand_at(0x49_FD2A)).fmul_m(k).fmul(x(a).fadd_m(gf(0x858CA4)).fsub_m(b)).fadd_m(b);
+    let vel = [s.fmul_m(mv(0)).to_f32(), s.fmul_m(mv(4)).to_f32(), s.fmul_m(mv(8)).to_f32()];
+    let ts = gf(0xB7CB5C);
+    let step = |o: isize| x(ts).fmul_m(mv(o));
+    let (sx, sy, sz) = (step(0), step(4), step(8));
+    let n = ftol32(sz.fmul(sz).fadd(sy.fmul(sy)).fadd(sx.fmul(sx)).fsqrt()).max(1);
+    let inv = xi(n).fdivr_m(gf(0x858624)).to_f32();
+    for i in 0..n {
+        let ox = x(inv).fmul_m(mv(0));
+        let oy = x(inv).fmul_m(mv(4));
+        let oz = x(inv).fmul_m(mv(8)).to_f32();
+        let fi = xi(i).to_f32();
+        let ox = x(ox.fmul_m(fi).to_f32()).fmul_m(ts).to_f32();
+        let oy = oy.fmul_m(fi).fmul_m(ts).to_f32();
+        let oz = x(oz).fmul_m(fi).fmul_m(ts).to_f32();
+        let pzs = x(pz).fsub_m(oz).to_f32();
+        let mut pos = [x(px).fsub_m(ox).to_f32(), x(py).fsub_m(oy).to_f32(), x(pzs).fadd_m(gf(0x858C84)).to_f32()];
+        let r = rand_at(0x49_FEAA);
+        let mut v = [vel[0], vel[1], xi(r).fmul_m(k).fadd_m(gf(0x858624)).fmul_m(f).fadd_m(vel[2]).to_f32()];
+        fx_add_particle(
+            g::<GPtr<u8>>(0xA9AE04).read(),
+            GPtr::from_raw(pos.as_mut_ptr()).cast(),
+            GPtr::from_raw(v.as_mut_ptr()).cast(),
+            0.0f32.to_bits(),
+            mp,
+            (-1.0f32).to_bits(),
+            bright,
+            f32::from_bits(0x3F19_999A),
+            0,
+        );
+    }
+}
+
 /// `Fx_c::AddWheelGravel(CVehicle*, CVector pos, bool spinning, float brightness)` (0x4A0170, thiscall, `ret 0x18`;
 /// FRONTIER-2 batch `frontier2-5`, user-hit driving): [`fx_add_wheel_grass`]'s code with the colour (0.25, 0.25, 0.25).
 #[hook(addr = 0x4A0170, conv = thiscall, name = "Fx_c::AddWheelGravel", this = "Fx_c",
@@ -416,6 +509,7 @@ pub fn stunt_jump_pool_get_at(pool: GPtr<u8>, i: i32) -> GPtr<u8> {
 pub const HOOKS: &[HookReg] = &[
     HOOK_FX_ADD_DEBRIS,
     HOOK_FX_ADD_WHEEL_GRASS,
+    HOOK_FX_ADD_WHEEL_SPRAY,
     HOOK_FX_ADD_WHEEL_GRAVEL,
     HOOK_FX_ADD_WHEEL_MUD,
     HOOK_FX_ADD_WHEEL_SAND,
