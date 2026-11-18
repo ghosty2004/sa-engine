@@ -79,6 +79,33 @@ impl std::fmt::Debug for Game {
     }
 }
 
+/// What a mod queued for the game's 2D phase.
+#[derive(Clone, Debug, PartialEq)]
+pub enum Game2d {
+    /// `game_text`.
+    Text(sa_types::text::FontText, Vec<u8>),
+    /// `game_sprite`: a texture of [`sa_access::load_texture`], `[left, top, right, bottom]`, `0xRRGGBBAA`.
+    Sprite {
+        /// The texture.
+        texture: u32,
+        /// The rectangle.
+        rect: [f32; 4],
+        /// The tint.
+        rgba: u32,
+    },
+}
+
+impl Game2d {
+    /// Draws it into the game's frame ([`sa_access::print_text`], [`sa_access::draw_sprite`]); only while the game
+    /// draws its 2D phase.
+    pub fn draw(&self) {
+        match self {
+            Game2d::Text(style, text) => sa_access::print_text(style, text),
+            Game2d::Sprite { texture, rect, rgba } => sa_access::draw_sprite(*texture, *rect, *rgba),
+        }
+    }
+}
+
 /// The game functions mods can hook: the engine's hook registry.
 pub trait HookRegistry {
     /// The function named `name` (as the registry names it), as an id the host passes back in
@@ -158,8 +185,8 @@ pub struct CallCtx {
     pub clip: Option<[f32; 4]>,
     /// The mod's overlay images.
     pub images: Images,
-    /// The strings in the game's font this call queued (`game_text`).
-    pub game_texts: Vec<(sa_types::text::FontText, Vec<u8>)>,
+    /// The game's 2D drawing this call queued (`game_text`, `game_sprite`).
+    pub game_2d: Vec<Game2d>,
     /// Log lines of this call: (level, text).
     pub logs: Vec<(i32, String)>,
     /// The video mode the call requested (the last request).
@@ -450,7 +477,7 @@ pub fn dispatch(ctx: &mut CallCtx, mem: &mut dyn Mem, index: usize, args: &[Val]
             drawn
         }
         Call::game_text { style_ptr, text_ptr, text_len } => {
-            if !ctx.overlay || ctx.game_texts.len() >= sa_mod_api::text::MAX_PER_FRAME || style_ptr < 0 || text_ptr < 0 {
+            if !ctx.overlay || ctx.game_2d.len() >= sa_mod_api::text::MAX_PER_FRAME || style_ptr < 0 || text_ptr < 0 {
                 return Ok(status::BAD_ARG);
             }
             if !(0..=sa_mod_api::text::MAX_TEXT as i32).contains(&text_len) {
@@ -462,7 +489,64 @@ pub fn dispatch(ctx: &mut CallCtx, mem: &mut dyn Mem, index: usize, args: &[Val]
                 std::array::from_fn(|i| u32::from_le_bytes(raw[i * 4..i * 4 + 4].try_into().expect("4 bytes")));
             let Some(style) = sa_mod_api::text::decode(&w) else { return Ok(status::BAD_ARG) };
             let Some(bytes) = mem.read(text_ptr as u32, text_len as u32) else { return Ok(status::BAD_ARG) };
-            ctx.game_texts.push((style, bytes));
+            ctx.game_2d.push(Game2d::Text(style, bytes));
+            status::OK
+        }
+        Call::world_to_screen { x, y, z, out_ptr } => {
+            if game.is_none() || ![x, y, z].iter().all(|v| v.is_finite()) || out_ptr < 0 {
+                return Ok(status::BAD_ARG);
+            }
+            match sa_access::world_to_screen(Vec3::new(x, y, z)) {
+                Some((sx, sy, depth)) => {
+                    let bytes: Vec<u8> = [sx, sy, depth].iter().flat_map(|f| f.to_le_bytes()).collect();
+                    if !mem.write(out_ptr as u32, &bytes) {
+                        return Ok(status::BAD_ARG);
+                    }
+                    1
+                }
+                None => 0,
+            }
+        }
+        Call::game_texture { dict_ptr, dict_len, file_ptr, file_len, name_ptr, name_len } => {
+            if game.is_none() {
+                return Ok(status::BAD_ARG);
+            }
+            if ctx.hook_phase != 0 {
+                return Ok(status::WRONG_PHASE);
+            }
+            let (Some(dict), Some(file), Some(name)) =
+                (text(mem, dict_ptr, dict_len), text(mem, file_ptr, file_len), text(mem, name_ptr, name_len))
+            else {
+                return Ok(status::BAD_ARG);
+            };
+            if dict.is_empty() || name.is_empty() || file.split(['/', '\\']).any(|c| c == "..") || file.contains(':') {
+                return Ok(status::BAD_ARG);
+            }
+            let file = (!file.is_empty()).then(|| file.replace('/', "\\"));
+            let t = crate::images::GameTexture { dict, file, name, found: None };
+            let known = ctx.images.textures().iter().any(|x| x.dict == t.dict && x.file == t.file && x.name == t.name);
+            if !known && ctx.images.textures().len() >= sa_mod_api::text::MAX_TEXTURES {
+                return Ok(status::FAILED);
+            }
+            let h = ctx.images.texture(t);
+            match ctx.images.textures()[h].found {
+                None => status::AGAIN,
+                Some(None) => status::NOT_FOUND,
+                Some(Some(_)) => h as i32,
+            }
+        }
+        Call::game_sprite { texture, x, y, w, h, rgba } => {
+            if !ctx.overlay || ctx.game_2d.len() >= sa_mod_api::text::MAX_PER_FRAME {
+                return Ok(status::BAD_ARG);
+            }
+            if ![x, y, w, h].iter().all(|v| v.is_finite()) {
+                return Ok(status::BAD_ARG);
+            }
+            let found = usize::try_from(texture).ok().and_then(|i| ctx.images.textures().get(i)).and_then(|t| t.found);
+            let Some(Some(t)) = found else {
+                return Ok(status::NOT_FOUND);
+            };
+            ctx.game_2d.push(Game2d::Sprite { texture: t, rect: [x, y, x + w, y + h], rgba: rgba as u32 });
             status::OK
         }
         Call::overlay_clip { x, y, w, h } => {

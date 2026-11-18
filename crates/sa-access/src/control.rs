@@ -130,3 +130,72 @@ pub fn print_text(t: &sa_types::text::FontText, text: &[u8]) {
     font_print_string(t.x, t.y, GPtr::from_raw(buf.as_mut_ptr()));
     font_set_edge(0);
 }
+
+/// `CSprite::CalcScreenCoors` of world point `p` with both visibility checks: the screen position in pixels and the
+/// depth in front of the camera, `None` off screen or behind the camera.
+pub fn world_to_screen(p: sa_types::Vec3) -> Option<(f32, f32, f32)> {
+    let mut inp = [p.x, p.y, p.z];
+    let mut out = [0.0f32; 3];
+    let (mut w, mut h) = (0.0f32, 0.0f32);
+    let ok = sa_core::bindings::calc_screen_coors(
+        GPtr::from_raw(inp.as_mut_ptr()),
+        GPtr::from_raw(out.as_mut_ptr()),
+        GPtr::from_raw(&mut w),
+        GPtr::from_raw(&mut h),
+        1,
+        1,
+    );
+    (ok != 0).then_some((out[0], out[1], out[2]))
+}
+
+/// A NUL-terminated copy of `s`.
+fn c_str(s: &[u8]) -> Vec<u8> {
+    let mut v: Vec<u8> = s.iter().copied().take_while(|&b| b != 0).collect();
+    v.push(0);
+    v
+}
+
+/// The texture `name` of the game's texture dictionary `dict` (an `RwTexture*`, as `CSprite2d::SetTexture` finds it
+/// with the dictionary current). Without a dictionary of that name, `file` (a path in the game folder) is loaded into
+/// a new one, which stays loaded. `None` when the file or the texture is not there.
+pub fn load_texture(dict: &[u8], file: Option<&[u8]>, name: &[u8]) -> Option<u32> {
+    use sa_core::bindings::*;
+    let mut slot_name = c_str(dict);
+    let mut slot = find_txd_slot(GPtr::from_raw(slot_name.as_mut_ptr()));
+    if slot == -1 {
+        let mut path = c_str(file?);
+        // `LoadTxd` retries forever on a missing file, as the original does: look first
+        let mut mode = c_str(b"rb");
+        let f = open_file(GPtr::from_raw(path.as_mut_ptr()), GPtr::from_raw(mode.as_mut_ptr()));
+        if f.is_null() {
+            return None;
+        }
+        file_close(f);
+        slot = add_txd_slot(GPtr::from_raw(slot_name.as_mut_ptr()));
+        load_txd(slot, GPtr::from_raw(path.as_mut_ptr()));
+        txd_add_ref(slot);
+    }
+    let mut sprite: u32 = 0;
+    let mut tex = c_str(name);
+    push_current_txd();
+    set_current_txd(slot);
+    sprite2d_set_texture(GPtr::from_raw(&mut sprite).cast(), GPtr::from_raw(tex.as_mut_ptr()));
+    pop_current_txd();
+    (sprite != 0).then_some(sprite)
+}
+
+/// `CSprite2d::Draw` of `texture` ([`load_texture`]) into `rect` (`[left, top, right, bottom]`, pixels) tinted with
+/// `rgba` (`0xRRGGBBAA`), bilinear. Only valid while the game draws its 2D phase.
+pub fn draw_sprite(texture: u32, rect: [f32; 4], rgba: u32) {
+    use sa_core::bindings::*;
+    sa_core::input::rw_render_state_set(RW_TEXTURE_FILTER, RW_FILTER_LINEAR);
+    let mut sprite = texture;
+    // `CRect` as the game passes it: left, bottom, right, top
+    let mut r = [rect[0], rect[3], rect[2], rect[1]];
+    let mut c = rgba.swap_bytes();
+    sprite2d_draw(GPtr::from_raw(&mut sprite).cast(), GPtr::from_raw(r.as_mut_ptr()), GPtr::from_raw(&mut c).cast());
+}
+
+/// `rwRENDERSTATETEXTUREFILTER`, `rwFILTERLINEAR`.
+const RW_TEXTURE_FILTER: i32 = 9;
+const RW_FILTER_LINEAR: u32 = 2;

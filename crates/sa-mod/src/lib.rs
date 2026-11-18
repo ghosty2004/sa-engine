@@ -147,6 +147,14 @@ impl Overlay {
         check(unsafe { ffi::game_text(words.as_ptr() as usize as i32, t, n) }).map(|_| ())
     }
 
+    /// Draws `texture` into `rect` (`[x, y, w, h]`) tinted with `colour`, as the game draws its sprites, in the next
+    /// frame's 2D phase (API 1.6).
+    pub fn game_sprite(&mut self, texture: GameTexture, rect: [f32; 4], colour: Rgba) -> Result<(), Error> {
+        let [x, y, w, h] = rect;
+        // SAFETY: a host function call with plain values
+        check(unsafe { ffi::game_sprite(texture.0, x, y, w, h, colour.0 as i32) }).map(|_| ())
+    }
+
     /// Cuts the following drawing of this overlay phase to a rectangle (`None`: no clip; API 1.6).
     pub fn clip(&mut self, rect: Option<[f32; 4]>) -> Result<(), Error> {
         let [x, y, w, h] = rect.unwrap_or([0.0, 0.0, -1.0, -1.0]);
@@ -173,6 +181,22 @@ impl Quad {
         let [u0, v0, u1, v1] = self.uv;
         let f = [x, y, w, h, u0, v0, u1, v1].map(f32::to_bits);
         [f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7], self.colour.0]
+    }
+}
+
+/// A texture of the game's texture dictionaries (API 1.6), drawn with [`Overlay::game_sprite`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct GameTexture(i32);
+
+impl GameTexture {
+    /// The texture `name` of the game's dictionary `dict`; without a dictionary of that name, the game folder's
+    /// `file` (`None`: none) is loaded into a new one. `NotFound` when the file or the texture is not there.
+    pub fn find(dict: &str, file: Option<&str>, name: &str) -> Result<GameTexture, Error> {
+        let (d, dn) = ptr_len(dict.as_bytes());
+        let (f, fl) = ptr_len(file.unwrap_or("").as_bytes());
+        let (n, nl) = ptr_len(name.as_bytes());
+        // SAFETY: a host function call; the host reads the names through bounds-checked copies
+        check(unsafe { ffi::game_texture(d, dn, f, fl, n, nl) }).map(GameTexture)
     }
 }
 
@@ -504,6 +528,15 @@ pub mod state {
     pub fn key_down(vk: u8) -> bool {
         // SAFETY: a host function call with a plain value
         unsafe { ffi::key_down(i32::from(vk)) == 1 }
+    }
+
+    /// Where world point `p` is on the screen with the game's camera: screen x and y in pixels and the depth in
+    /// front of the camera, `None` off screen or behind the camera (API 1.6).
+    pub fn world_to_screen(p: Vec3) -> Option<(f32, f32, f32)> {
+        let mut out = [0f32; 3];
+        // SAFETY: the host writes 12 bytes at `out`
+        let r = unsafe { ffi::world_to_screen(p.x, p.y, p.z, out.as_mut_ptr() as usize as i32) };
+        (r == 1).then_some((out[0], out[1], out[2]))
     }
 
     /// Whether the pause menu is up (API 1.5).

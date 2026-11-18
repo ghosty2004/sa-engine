@@ -456,7 +456,8 @@ pub mod image {
     pub const MAX_QUADS_PER_CALL: usize = 16_384;
 }
 
-/// Text in the game's font (API 1.6, `game_text`): the [`sa_types::text::FontText`] record as words.
+/// The game's 2D drawing (API 1.6): text in its font (`game_text`, the [`sa_types::text::FontText`] record as
+/// words) and its textures (`game_texture`, `game_sprite`).
 pub mod text {
     use sa_types::text::FontText;
 
@@ -466,8 +467,10 @@ pub mod text {
     pub const WORDS: usize = 15;
     /// The longest string, in bytes.
     pub const MAX_TEXT: usize = 400;
-    /// Strings one mod may queue per frame.
+    /// Strings and sprites one mod may queue per frame.
     pub const MAX_PER_FRAME: usize = 256;
+    /// Game textures one mod may hold (`game_texture`).
+    pub const MAX_TEXTURES: usize = 256;
 
     /// `t` as words.
     pub fn encode(t: &FontText) -> [u32; WORDS] {
@@ -788,6 +791,22 @@ macro_rules! for_each_import {
             /// text (under the overlay). Returns 0, `BAD_ARG` (outside the overlay phase, a bad record, over
             /// [`text::MAX_PER_FRAME`] strings this frame).
             [Render] fn game_text(style_ptr: i32, text_ptr: i32, text_len: i32) -> i32;
+            /// (1.6) Where world point (`x`, `y`, `z`) is on the screen with the game's camera
+            /// (`CSprite::CalcScreenCoors`): writes three `f32` (screen x and y in pixels, the depth in front of the
+            /// camera) at `out_ptr` and returns 1, or 0 when it is off screen or behind the camera.
+            [State] fn world_to_screen(x: f32, y: f32, z: f32, out_ptr: i32) -> i32;
+            /// (1.6) The texture `name` of the game's texture dictionary `dict` (UTF-8, `(ptr, len)` each); without a
+            /// dictionary of that name, the game folder's file `file` (a relative path, `\` or `/`; empty: none) is
+            /// loaded into a new one, which stays loaded. The game looks it up in its next 2D phase: until then the
+            /// call returns `AGAIN`, afterwards a handle for `game_sprite` (the same for the same texture) or
+            /// `NOT_FOUND` (no such file or texture). `FAILED`: the mod asked for [`text::MAX_TEXTURES`] textures;
+            /// `WRONG_PHASE`: inside a hook.
+            [Render] fn game_texture(dict_ptr: i32, dict_len: i32, file_ptr: i32, file_len: i32, name_ptr: i32, name_len: i32) -> i32;
+            /// (1.6) Draws game texture `texture` (`game_texture`) into the rectangle (`x`, `y`, `w`, `h`) tinted with
+            /// `rgba` (`0xRRGGBBAA`), as the game draws its 2D sprites (`CSprite2d::Draw`, bilinear), in the next
+            /// frame's 2D phase in order with `game_text` (under the overlay). Returns 0, `NOT_FOUND`, `BAD_ARG`
+            /// (outside the overlay phase, over [`text::MAX_PER_FRAME`] this frame).
+            [Render] fn game_sprite(texture: i32, x: f32, y: f32, w: f32, h: f32, rgba: i32) -> i32;
         }
     };
 }

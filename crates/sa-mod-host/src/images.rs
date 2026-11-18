@@ -18,6 +18,21 @@ pub struct Images {
     bytes: usize,
     added: Vec<OverlayImage>,
     removed: Vec<u32>,
+    /// The game textures the mod asked for (`game_texture`), by handle; the game keeps them loaded.
+    textures: Vec<GameTexture>,
+}
+
+/// A game texture a mod asked for: where it is, and whether the game's 2D phase found it yet.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct GameTexture {
+    /// The texture dictionary's name.
+    pub dict: String,
+    /// The game folder's file loaded into a new dictionary of that name when there is none (`\` separators).
+    pub file: Option<String>,
+    /// The texture's name.
+    pub name: String,
+    /// `None` until the game's 2D phase looked; then the texture, or `Some(None)` when there is none.
+    pub found: Option<Option<u32>>,
 }
 
 /// Why an image was not created.
@@ -103,6 +118,38 @@ impl Images {
         for h in 0..self.slots.len() {
             self.destroy(h as i32);
         }
+    }
+
+    /// The game textures the mod asked for, by handle.
+    pub fn textures(&self) -> &[GameTexture] {
+        &self.textures
+    }
+
+    /// The handle of the texture `t` names (a new one for a texture not asked for before).
+    pub fn texture(&mut self, t: GameTexture) -> usize {
+        match self.textures.iter().position(|x| x.dict == t.dict && x.file == t.file && x.name == t.name) {
+            Some(i) => i,
+            None => {
+                self.textures.push(t);
+                self.textures.len() - 1
+            }
+        }
+    }
+
+    /// Looks up the textures not looked up yet with `find` (in the game's 2D phase, where loading a dictionary is
+    /// safe); true when there were any.
+    pub fn find_textures(&mut self, mut find: impl FnMut(&GameTexture) -> Option<u32>) -> bool {
+        let mut any = false;
+        for t in self.textures.iter_mut().filter(|t| t.found.is_none()) {
+            t.found = Some(find(t));
+            any = true;
+        }
+        any
+    }
+
+    /// Whether a texture waits for the game's 2D phase.
+    pub fn textures_pending(&self) -> bool {
+        self.textures.iter().any(|t| t.found.is_none())
     }
 
     /// Moves the changes since the last call to the renderer's lists.

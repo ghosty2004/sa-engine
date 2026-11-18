@@ -141,21 +141,22 @@ fn decide(game: &GameAccess, o: &mut Observed<'_>, d: HookDecision) {
     }
 }
 
-/// `Game::Render2dStuff`: the mods' strings in the game's font are printed after it, into the buffer the frame's
-/// `DrawFonts` draws with the HUD's text.
+/// `Game::Render2dStuff`: the mods' game-font strings and game sprites are drawn after it (the strings into the
+/// buffer the frame's `DrawFonts` draws with the HUD's text).
 const RENDER_2D_STUFF: u32 = 0x53E230;
 
 thread_local! {
-    /// Whether `Render2dStuff` is watched for the mods' strings (from the first string on).
+    /// Whether `Render2dStuff` is watched for the mods' 2D drawing (from the first queued item on).
     static TEXT_POINT: Cell<bool> = const { Cell::new(false) };
 }
 
-/// Prints the strings the mods queued in their last overlay phase.
-fn print_game_texts() {
+/// The mods' part of the game's 2D phase ([`Host::draw_2d`]).
+fn draw_game_2d() {
     HOST.with(|h| {
-        let Ok(h) = h.try_borrow() else { return };
-        for (style, text) in h.as_ref().map_or(&[][..], Host::game_texts) {
-            sa_access::print_text(style, text);
+        if let Ok(mut h) = h.try_borrow_mut()
+            && let Some(h) = h.as_mut()
+        {
+            h.draw_2d();
         }
     });
 }
@@ -163,7 +164,7 @@ fn print_game_texts() {
 /// The observer of the hooked functions: hands the call to the mods hooked there and applies their decisions.
 fn observed(o: &mut Observed<'_>) {
     if o.entry.addr == RENDER_2D_STUFF && matches!(o.phase, Phase::After) {
-        print_game_texts();
+        draw_game_2d();
     }
     let Some(game) = GAME.with_borrow(Clone::clone) else { return };
     // a hooked function that runs while the game is being changed for a mod is not reported
@@ -420,7 +421,7 @@ pub fn overlay(d: &mut WgpuDevice) {
             h.overlay((size.width, size.height), frame);
             d.draw_overlay(frame);
         });
-        if !h.game_texts().is_empty() && !TEXT_POINT.get() {
+        if h.wants_2d() && !TEXT_POINT.get() {
             TEXT_POINT.set(true);
             EngineRegistry.watch(RENDER_2D_STUFF, true);
         }

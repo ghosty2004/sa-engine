@@ -141,8 +141,8 @@ pub struct Host {
     storages: Option<Rc<dyn StorageProvider>>,
     /// The servers the user approved, and the question on screen.
     approvals: Rc<std::cell::RefCell<approval::Approvals>>,
-    /// The strings in the game's font the mods queued in the last overlay phase, in load order.
-    game_texts: Vec<(sa_types::text::FontText, Vec<u8>)>,
+    /// The game's 2D drawing the mods queued in the last overlay phase, in load order.
+    game_2d: Vec<api::Game2d>,
 }
 
 impl Host {
@@ -169,7 +169,7 @@ impl Host {
             network: None,
             storages: None,
             approvals: Rc::default(),
-            game_texts: Vec::new(),
+            game_2d: Vec::new(),
         }
     }
 
@@ -499,9 +499,9 @@ impl Host {
         let mut texts = Vec::new();
         let v = self.call_all(EXPORT_OVERLAY, screen, |m| vec![Val::I32(m.frames as i32)], |ctx| {
             out.quads.append(&mut ctx.quads);
-            texts.append(&mut ctx.game_texts);
+            texts.append(&mut ctx.game_2d);
         });
-        self.game_texts = texts;
+        self.game_2d = texts;
         for m in &mut self.mods {
             m.images.take_changes(&mut out.added, &mut out.removed);
         }
@@ -511,10 +511,28 @@ impl Host {
         }
     }
 
-    /// The strings in the game's font the mods queued in the last overlay phase (`game_text`), for the game's next
-    /// 2D phase ([`sa_access::print_text`]).
-    pub fn game_texts(&self) -> &[(sa_types::text::FontText, Vec<u8>)] {
-        &self.game_texts
+    /// The game's 2D drawing the mods queued in the last overlay phase (`game_text`, `game_sprite`), for the game's
+    /// next 2D phase ([`api::Game2d::draw`]).
+    pub fn game_2d(&self) -> &[api::Game2d] {
+        &self.game_2d
+    }
+
+    /// Whether the game's 2D phase has work for the mods: drawing, or textures to look up.
+    pub fn wants_2d(&self) -> bool {
+        !self.game_2d.is_empty() || self.mods.iter().any(|m| m.images.textures_pending())
+    }
+
+    /// The game's 2D phase: looks up the textures the mods asked for ([`sa_access::load_texture`]), then draws what
+    /// they queued.
+    pub fn draw_2d(&mut self) {
+        for m in &mut self.mods {
+            m.images.find_textures(|t| {
+                sa_access::load_texture(t.dict.as_bytes(), t.file.as_deref().map(str::as_bytes), t.name.as_bytes())
+            });
+        }
+        for d in &self.game_2d {
+            d.draw();
+        }
     }
 
     /// A platform input event ([`sa_mod_api::input`]) for the mods with `input = "capture"`, in load order, before
