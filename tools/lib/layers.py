@@ -7,7 +7,7 @@ The order is the one the code has (measured 2026-11-14): `sa-pop` sits below `sa
 
 LAYERS = [
     # leaves: no engine dependency
-    ['sa-macros', 'sa-math', 'sa-platform', 'sa-oracle-format', 'sa-types', 'sa-net',
+    ['sa-macros', 'sa-math', 'sa-image', 'sa-platform', 'sa-oracle-format', 'sa-types', 'sa-net',
      'sa-launcher', 'sa-udp-proxy'],
     # interfaces in the game's value types: the mod API's definition, the SA:MP game adapter's traits
     ['sa-mod-api', 'sa-samp-api'],
