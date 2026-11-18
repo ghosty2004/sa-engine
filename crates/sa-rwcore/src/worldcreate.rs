@@ -196,7 +196,15 @@ pub fn rp_world_create(bbox: GPtr<u8>) -> GPtr<u8> {
     if !world_unlock_call(w).is_null() {
         return w;
     }
-    // Failure: unlink and free the world's link.
+    world_destroy(w);
+    GPtr::NULL
+}
+
+/// The body `RpWorldDestroy` (0x74F610) and `RpWorldCreate`'s failure path share: the world's link is unlinked from
+/// the WORLDMODULE list and freed, every leaf's mesh destroyed (sector-stack walk; the original's 64-entry frame
+/// array), the material list deinitialised, the sectors deinstanced (flag bit 0 of `world+3`) or destroyed, the
+/// world's plugin destructors run and the world freed.
+fn world_destroy(w: GPtr<u8>) {
     let head = a32(module(WORLD_MODULE).byte_add(4));
     let mut e = rd::<u32>(module(WORLD_MODULE), 4);
     while e != head {
@@ -247,7 +255,15 @@ pub fn rp_world_create(bbox: GPtr<u8>) -> GPtr<u8> {
     }
     plugin_deinit_object(p8(WORLD_REGISTRY), w);
     rw_free(w);
-    GPtr::NULL
+}
+
+/// `RpWorldDestroy(RpWorld*)` (0x74F610, cdecl): [`world_destroy`]; returns 1.
+#[hook(addr = 0x74F610, conv = cdecl, name = "RpWorldDestroy", expect = "A1 24 7B C9 00 8B 0D 4C 25 C9 00",
+       unverified = "frontier2-a20", route = "L2", hazards = "heap-writes",
+       note = "CGame::ShutdownRenderWare (game exit)")]
+pub fn rp_world_destroy(w: GPtr<u8>) -> u32 {
+    world_destroy(w);
+    1
 }
 
 /// Linear search of `arr[0..count)` (u16 index and count, as the bytes compare 16-bit halves); when
@@ -504,6 +520,7 @@ pub fn rp_world_obj_light_sync(light: GPtr<u8>) -> GPtr<u8> {
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_RP_WORLD_CREATE,
+    HOOK_RP_WORLD_DESTROY,
     HOOK_RP_WORLD_UNLOCK,
     HOOK_RP_MESH_OPTIMISE,
     HOOK_RP_WORLD_ADD_CAMERA,
