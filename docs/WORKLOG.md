@@ -4680,3 +4680,6 @@
   backend's code is at 72ea67c0), the browser join (the auth table into the page's IndexedDB storage; tools/web/serve.py
   still has its --samp-dir / --samp-auth options), the samp-rs e2e suite on the mod host, intermediate commit c202a426
   does not build sa-samp (removed in the next commit).
+- Verified: verify-all lanes 1-3 IDENTICAL 13/13 (tag mod2m5, host sa-oracle rebuilt from this tree); writer gate
+  (base 72ea67c0) all PASS on the final head; samp-rs workspace tests, clippy (host, i686 Windows samp-client) and
+  the samp_client.dll release build (i686-pc-windows-gnu) pass.
