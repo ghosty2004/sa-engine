@@ -34,7 +34,7 @@ pub const EXPORT_MEMORY: &str = "memory";
 /// The API's major version.
 pub const API_MAJOR: u16 = 1;
 /// The API's minor version.
-pub const API_MINOR: u16 = 3;
+pub const API_MINOR: u16 = 4;
 
 /// `major << 16 | minor`, the value of the `sa_api_version` export.
 pub const fn pack_version(major: u16, minor: u16) -> i32 {
@@ -70,6 +70,9 @@ pub mod status {
     /// The game could not do it (a model that does not load, a pool that is full, game code that is not ported
     /// yet); the host's log says why.
     pub const FAILED: i32 = -5;
+    /// Nothing now, try again later: no datagram is queued (`net_recv`), or the frame's send budget is used up
+    /// (`net_send`).
+    pub const AGAIN: i32 = -6;
 }
 
 /// Log levels of the `log` import.
@@ -136,6 +139,10 @@ pub enum Permission {
     Scripts,
     /// `audio = true`: game sounds (API 1.3).
     Audio,
+    /// `net = ["udp:HOST:PORT", ...]`: UDP sockets to the servers the rules allow (API 1.4).
+    Net,
+    /// `storage = true`: the mod's persistent key / value storage (API 1.4).
+    Storage,
 }
 
 /// Game events (API 1.2): what a mod receives in `sa_event(kind, a, b)` after subscribing with
@@ -381,6 +388,43 @@ pub mod script {
     }
 }
 
+/// Network sockets (API 1.4, `net = [...]`): connected, non-blocking UDP sockets, natively real ones, in the browser
+/// relayed through a WebSocket to the page's UDP proxy (one datagram per binary frame).
+pub mod net {
+    /// `net_state`: opening (the browser's WebSocket to the proxy); datagrams sent now are queued.
+    pub const CONNECTING: i32 = 0;
+    /// `net_state`: datagrams flow.
+    pub const OPEN: i32 = 1;
+    /// `net_state`: closed or refused (the log says why); sends fail, received datagrams can still be read.
+    pub const CLOSED: i32 = 2;
+    /// Sockets one mod may hold open at once.
+    pub const MAX_SOCKETS: usize = 8;
+    /// The largest datagram `net_send` sends (the largest UDP payload over IPv4).
+    pub const MAX_DATAGRAM: usize = 65_507;
+    /// Datagrams one mod may send per main-loop iteration, over all its sockets.
+    pub const MAX_SENDS_PER_FRAME: u32 = 1024;
+    /// Bytes one mod may send per main-loop iteration, over all its sockets.
+    pub const MAX_SEND_BYTES_PER_FRAME: usize = 1 << 20;
+}
+
+/// The persistent key / value storage (API 1.4, `storage = true`): one area per mod id, natively a folder under
+/// the user's data directory, in the browser the page's IndexedDB.
+pub mod storage {
+    /// The largest value.
+    pub const MAX_VALUE: usize = 1 << 20;
+    /// The most keys one mod keeps.
+    pub const MAX_KEYS: usize = 1024;
+    /// The most bytes (values together) one mod keeps.
+    pub const MAX_TOTAL: usize = 16 << 20;
+
+    /// True for a key the storage functions accept: 1..=64 bytes of `A-Z a-z 0-9 . _ -`, not starting with `.`.
+    pub fn valid_key(key: &str) -> bool {
+        (1..=64).contains(&key.len())
+            && key.bytes().all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'_' | b'-'))
+            && !key.starts_with('.')
+    }
+}
+
 /// One host function (an import of the mod).
 #[derive(Debug)]
 pub struct ImportDef {
@@ -553,6 +597,40 @@ macro_rules! for_each_import {
             [Audio] fn play_frontend_sound(event: i32, speed: f32) -> i32;
             /// (1.3) Plays mission sound `sound` (`ADD_ONE_OFF_SOUND`) at (`x`, `y`, `z`).
             [Audio] fn play_sound(sound: i32, x: f32, y: f32, z: f32) -> i32;
+            /// (1.4) Writes two `u64` (little-endian, 16 bytes) at `out_ptr`: the microseconds since the host
+            /// started (monotonic) and the wall clock as microseconds since 1970-01-01 UTC. Returns 0.
+            [None] fn clock(out_ptr: i32) -> i32;
+            /// (1.4) Opens a connected, non-blocking UDP socket to `target` (UTF-8, `target_len` bytes at
+            /// `target_ptr`: `HOST:PORT`, `[IPV6]:PORT`), which a rule of the manifest's `net` list must allow.
+            /// Returns the socket's handle (`0 .. net::MAX_SOCKETS`), `DENIED` (no rule allows the target),
+            /// `BAD_ARG` (not `HOST:PORT`), `FAILED` (it does not resolve, the mod holds `net::MAX_SOCKETS`
+            /// sockets; the log says why). In the browser the socket starts `net::CONNECTING`.
+            [Net] fn net_open(target_ptr: i32, target_len: i32) -> i32;
+            /// (1.4) The state of socket `handle`: `net::CONNECTING`, `net::OPEN`, `net::CLOSED`; `NOT_FOUND`
+            /// for a handle the mod does not hold.
+            [Net] fn net_state(handle: i32) -> i32;
+            /// (1.4) Sends one datagram (`data_len` bytes at `data_ptr`, at most `net::MAX_DATAGRAM`) without
+            /// blocking. Returns its length, `AGAIN` (the frame's send budget is used up), `FAILED` (the socket
+            /// is closed or the send failed), `NOT_FOUND`.
+            [Net] fn net_send(handle: i32, data_ptr: i32, data_len: i32) -> i32;
+            /// (1.4) Takes one received datagram into the buffer (`buf_ptr`, `buf_len`; truncated to the
+            /// buffer, as UDP does) without blocking. Returns its length, `AGAIN` (none queued), `NOT_FOUND`.
+            [Net] fn net_recv(handle: i32, buf_ptr: i32, buf_len: i32) -> i32;
+            /// (1.4) Closes socket `handle` (the host closes every socket of a mod it disables). Returns 0 or
+            /// `NOT_FOUND`.
+            [Net] fn net_close(handle: i32) -> i32;
+            /// (1.4) Reads the value of `key` (UTF-8, `key_len` bytes at `key_ptr`, [`storage::valid_key`]) into
+            /// the buffer: copies `min(size, buf_len)` bytes and returns the value's size, or `NOT_FOUND`.
+            [Storage] fn storage_read(key_ptr: i32, key_len: i32, buf_ptr: i32, buf_len: i32) -> i32;
+            /// (1.4) Writes (replaces) the value of `key` (at most `storage::MAX_VALUE` bytes). Returns 0,
+            /// `FAILED` (over `storage::MAX_KEYS` / `storage::MAX_TOTAL`, or the storage could not write; the
+            /// log says why).
+            [Storage] fn storage_write(key_ptr: i32, key_len: i32, data_ptr: i32, data_len: i32) -> i32;
+            /// (1.4) Deletes `key`. Returns 0 or `NOT_FOUND`.
+            [Storage] fn storage_delete(key_ptr: i32, key_len: i32) -> i32;
+            /// (1.4) Writes the mod's keys, sorted, each followed by `\n`, into the buffer (as many bytes as
+            /// fit) and returns the length of the whole list.
+            [Storage] fn storage_list(buf_ptr: i32, buf_len: i32) -> i32;
         }
     };
 }
@@ -808,5 +886,16 @@ mod tests {
         let ops: Vec<u16> = script::COMMANDS.iter().map(|c| c.0).collect();
         assert!(ops.windows(2).all(|w| w[0] < w[1]), "sorted, no duplicates");
         assert!(script::COMMANDS.iter().all(|c| c.2.len() <= script::MAX_ARGS && c.2.chars().all(|k| "ifpvPo".contains(k))));
+    }
+
+    #[test]
+    fn level_four() {
+        assert_eq!(IMPORTS[import_index("net_open").unwrap()].permission, Permission::Net);
+        assert_eq!(IMPORTS[import_index("storage_list").unwrap()].permission, Permission::Storage);
+        assert_eq!(IMPORTS[import_index("clock").unwrap()].permission, Permission::None);
+        assert!(storage::valid_key("server.cfg") && storage::valid_key("a-b_c.1"));
+        for k in ["", ".x", "a/b", "a b", &"k".repeat(65)] {
+            assert!(!storage::valid_key(k), "{k:?}");
+        }
     }
 }

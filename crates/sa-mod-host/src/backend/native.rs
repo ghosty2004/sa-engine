@@ -2,9 +2,12 @@
 //! build), where Cranelift has no backend, it compiles to Pulley bytecode that wasmtime's interpreter runs. Budgets:
 //! wasmtime fuel per call, the memory cap through the store's resource limiter. Signal-based traps are off (the
 //! game owns the process's signal handlers; bounds are checked explicitly) and memories are not reserved up front
-//! (the i686 address space is shared with the game's arena).
+//! (the i686 address space is shared with the game's arena). Sockets are real UDP sockets; storage is a folder
+//! per mod under the user's data directory.
 
-use std::path::PathBuf;
+use std::io;
+use std::path::{Path, PathBuf};
+use std::rc::Rc;
 
 use sa_mod_api::{EXPORT_MEMORY, EXPORTS, IMPORT_MODULE, IMPORTS, Ty, Val};
 use wasmtime::{Config, Engine as WtEngine, FuncType, Linker, Module, Store, StoreLimits, StoreLimitsBuilder, Trap, ValType};
@@ -13,6 +16,8 @@ use crate::ModSource;
 use crate::api::{CallCtx, SliceMem, dispatch};
 use crate::engine::{CallError, Engine, Instance};
 use crate::manifest::{INIT_FUEL_FACTOR, Limits};
+use crate::net::{DatagramTransport, Network};
+use crate::storage::{Storage, StorageProvider};
 
 /// wasmtime.
 pub struct Wasmtime {
@@ -161,18 +166,109 @@ impl ModSource for DirSource {
         std::fs::read(&p).map_err(|e| format!("{}: {e}", p.display()))
     }
 
-    /// Written to a temporary file in the folder, then renamed over the file (a crash leaves the old file).
     fn write(&self, file: &str, data: &[u8]) -> Result<(), String> {
-        let p = self.0.join(file);
-        let tmp = self.0.join(format!(".{file}.tmp"));
-        std::fs::write(&tmp, data)
-            .and_then(|()| std::fs::rename(&tmp, &p))
-            .map_err(|e| format!("{}: {e}", p.display()))
+        write_replacing(&self.0, file, data)
     }
 
     fn location(&self) -> String {
         self.0.display().to_string()
     }
+}
+
+/// Writes `dir/file` through a temporary file in `dir` renamed over it (a crash leaves the old file).
+fn write_replacing(dir: &Path, file: &str, data: &[u8]) -> Result<(), String> {
+    let p = dir.join(file);
+    let tmp = dir.join(format!(".{file}.tmp"));
+    std::fs::write(&tmp, data).and_then(|()| std::fs::rename(&tmp, &p)).map_err(|e| format!("{}: {e}", p.display()))
+}
+
+/// Real UDP sockets (sa-net's, as SA:MP's client opens them).
+struct Udp;
+
+impl Network for Udp {
+    fn open(&self, target: &str) -> io::Result<Box<dyn DatagramTransport>> {
+        use sa_net::Connector;
+        Ok(Box::new(sa_net::UdpConnector.connect(target)?))
+    }
+
+    fn describe(&self) -> String {
+        "UDP".into()
+    }
+}
+
+/// The platform's network: UDP sockets (`_proxy`, the browser's relay, does not apply natively).
+pub fn network(_proxy: Option<&str>) -> Rc<dyn Network> {
+    Rc::new(Udp)
+}
+
+/// The storage areas under one folder: one sub-folder per mod id, one file per key.
+struct DirStorages(PathBuf);
+
+impl StorageProvider for DirStorages {
+    fn open(&self, id: &str) -> Result<Rc<dyn Storage>, String> {
+        let dir = self.0.join(id);
+        std::fs::create_dir_all(&dir).map_err(|e| format!("{}: {e}", dir.display()))?;
+        Ok(Rc::new(DirStorage(dir)))
+    }
+}
+
+struct DirStorage(PathBuf);
+
+impl Storage for DirStorage {
+    fn read(&self, key: &str) -> Result<Option<Vec<u8>>, String> {
+        let p = self.0.join(key);
+        match std::fs::read(&p) {
+            Ok(d) => Ok(Some(d)),
+            Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(None),
+            Err(e) => Err(format!("{}: {e}", p.display())),
+        }
+    }
+
+    fn write(&self, key: &str, data: &[u8]) -> Result<(), String> {
+        write_replacing(&self.0, key, data)
+    }
+
+    fn delete(&self, key: &str) -> Result<bool, String> {
+        let p = self.0.join(key);
+        match std::fs::remove_file(&p) {
+            Ok(()) => Ok(true),
+            Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(false),
+            Err(e) => Err(format!("{}: {e}", p.display())),
+        }
+    }
+
+    fn list(&self) -> Result<Vec<(String, usize)>, String> {
+        let rd = std::fs::read_dir(&self.0).map_err(|e| format!("{}: {e}", self.0.display()))?;
+        let mut keys: Vec<(String, usize)> = rd
+            .flatten()
+            .filter_map(|e| {
+                let name = e.file_name().into_string().ok()?;
+                let size = e.metadata().ok().filter(|m| m.is_file())?.len() as usize;
+                sa_mod_api::storage::valid_key(&name).then_some((name, size))
+            })
+            .collect();
+        keys.sort();
+        Ok(keys)
+    }
+
+    fn location(&self) -> String {
+        self.0.display().to_string()
+    }
+}
+
+/// The mods' storage under `root`, by default `$SA_MOD_DATA`, else the user's data directory
+/// (`$XDG_DATA_HOME`, `~/.local/share`, `%APPDATA%`) + `sa-engine/mods`.
+pub fn storage(root: Option<&str>) -> Result<Rc<dyn StorageProvider>, String> {
+    let var = |k: &str| std::env::var_os(k).filter(|v| !v.is_empty()).map(PathBuf::from);
+    let root = match root {
+        Some(r) => PathBuf::from(r),
+        None => var("SA_MOD_DATA")
+            .or_else(|| var("XDG_DATA_HOME").map(|d| d.join("sa-engine/mods")))
+            .or_else(|| var("HOME").map(|d| d.join(".local/share/sa-engine/mods")))
+            .or_else(|| var("APPDATA").map(|d| d.join("sa-engine").join("mods")))
+            .ok_or("mod storage: no data directory (set SA_MOD_DATA)")?,
+    };
+    Ok(Rc::new(DirStorages(root)))
 }
 
 /// The mods of `--mods DIR`: DIR itself when it holds a `mod.toml`, else every sub-folder that holds one, in name

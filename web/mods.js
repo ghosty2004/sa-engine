@@ -7,7 +7,64 @@ import * as sa from './pkg/sa_game.js';
 
 const instances = [];
 
+// The mods' storage (`storage = true`): every value of the IndexedDB database `sa-mod-storage` (object store `kv`,
+// keys `MOD_ID/KEY`), copied here before the game runs (`loadStorage`); the host reads this copy synchronously and
+// every change is written back in the background.
+const stored = new Map();
+let db = null;
+
+function idb(mode, f) {
+  if (!db) return;
+  const tx = db.transaction('kv', mode);
+  f(tx.objectStore('kv'));
+  tx.onerror = () => console.warn(`mod storage: ${tx.error}`);
+}
+
 self.saGameMods = {
+  async loadStorage() {
+    if (typeof indexedDB === 'undefined') return console.warn('mod storage: no IndexedDB; kept for the session only');
+    try {
+      db = await new Promise((res, rej) => {
+        const open = indexedDB.open('sa-mod-storage', 1);
+        open.onupgradeneeded = () => open.result.createObjectStore('kv');
+        open.onsuccess = () => res(open.result);
+        open.onerror = () => rej(open.error);
+      });
+      await new Promise((res, rej) => {
+        const req = db.transaction('kv').objectStore('kv').openCursor();
+        req.onsuccess = () => {
+          const c = req.result;
+          if (!c) return res();
+          stored.set(c.key, new Uint8Array(c.value));
+          c.continue();
+        };
+        req.onerror = () => rej(req.error);
+      });
+      console.log(`mod storage: ${stored.size} values from IndexedDB`);
+    } catch (e) {
+      db = null;
+      console.warn(`mod storage: IndexedDB unavailable (${e}); kept for the session only`);
+    }
+  },
+  storageGet(id, key) {
+    return stored.get(`${id}/${key}`);
+  },
+  storagePut(id, key, bytes) {
+    const value = bytes.slice();
+    stored.set(`${id}/${key}`, value);
+    idb('readwrite', (kv) => kv.put(value, `${id}/${key}`));
+  },
+  storageDelete(id, key) {
+    const had = stored.delete(`${id}/${key}`);
+    if (had) idb('readwrite', (kv) => kv.delete(`${id}/${key}`));
+    return had;
+  },
+  storageList(id) {
+    const prefix = `${id}/`;
+    let out = '';
+    for (const [k, v] of stored) if (k.startsWith(prefix)) out += `${k.slice(prefix.length)}\t${v.length}\n`;
+    return out;
+  },
   // a mod file from the page's server (synchronous: the game thread waits), undefined when missing
   fetch(url) {
     const xhr = new XMLHttpRequest();

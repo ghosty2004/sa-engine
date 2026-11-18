@@ -44,6 +44,8 @@ pub enum Error {
     WrongPhase,
     /// The game could not do it; the log says why (`status::FAILED`).
     Failed,
+    /// Nothing now, try again later (`status::AGAIN`).
+    Again,
     /// Another negative status.
     Other(i32),
 }
@@ -56,6 +58,7 @@ fn check(r: i32) -> Result<i32, Error> {
         status::NOT_FOUND => Err(Error::NotFound),
         status::WRONG_PHASE => Err(Error::WrongPhase),
         status::FAILED => Err(Error::Failed),
+        status::AGAIN => Err(Error::Again),
         r => Err(Error::Other(r)),
     }
 }
@@ -159,26 +162,13 @@ pub mod display {
 /// The mod's own files (permission `files = "own"`; API 1.1): natively in the mod's folder, in the browser kept for
 /// the session. Names are plain file names (`A-Z a-z 0-9 . _ -`), not `mod.toml`, not a `.wasm`.
 pub mod files {
-    use super::{Error, check, ffi, ptr_len};
+    use super::{Error, check, ffi, ptr_len, read_sized};
 
     /// The file's bytes, `None` when it does not exist.
     pub fn read(name: &str) -> Result<Option<Vec<u8>>, Error> {
         let (np, nl) = ptr_len(name.as_bytes());
-        let mut buf = vec![0u8; 4096];
-        loop {
-            let (bp, bl) = (buf.as_mut_ptr() as usize as i32, buf.len() as i32);
-            // SAFETY: a host function call; the host writes at most `bl` bytes at `bp`, inside `buf`
-            let r = unsafe { ffi::file_read(np, nl, bp, bl) };
-            if r == crate::status::NOT_FOUND {
-                return Ok(None);
-            }
-            let size = check(r)? as usize;
-            if size <= buf.len() {
-                buf.truncate(size);
-                return Ok(Some(buf));
-            }
-            buf.resize(size, 0);
-        }
+        // SAFETY: a host function call; the host writes at most `bl` bytes at `bp`, inside the buffer
+        read_sized(|bp, bl| unsafe { ffi::file_read(np, nl, bp, bl) })
     }
 
     /// Writes (replaces) the file.
@@ -187,6 +177,152 @@ pub mod files {
         let (dp, dl) = ptr_len(data);
         // SAFETY: a host function call; the host reads both ranges through bounds-checked copies
         check(unsafe { ffi::file_write(np, nl, dp, dl) }).map(|_| ())
+    }
+}
+
+/// Reads a value of unknown size into a growing buffer: `call(ptr, len)` copies at most `len` bytes and returns the
+/// whole size; `None` for `NOT_FOUND`.
+fn read_sized(mut call: impl FnMut(i32, i32) -> i32) -> Result<Option<Vec<u8>>, Error> {
+    let mut buf = vec![0u8; 4096];
+    loop {
+        let (bp, bl) = (buf.as_mut_ptr() as usize as i32, buf.len() as i32);
+        let r = call(bp, bl);
+        if r == status::NOT_FOUND {
+            return Ok(None);
+        }
+        let size = check(r)? as usize;
+        if size <= buf.len() {
+            buf.truncate(size);
+            return Ok(Some(buf));
+        }
+        buf.resize(size, 0);
+    }
+}
+
+/// The host's clock (API 1.4).
+pub mod time {
+    use super::ffi;
+
+    /// What the clock reads.
+    #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+    pub struct Now {
+        /// Microseconds since the host started (monotonic).
+        pub monotonic_us: u64,
+        /// Microseconds since 1970-01-01 UTC (the wall clock).
+        pub unix_us: u64,
+    }
+
+    /// Now.
+    pub fn now() -> Now {
+        let mut out = [0u8; 16];
+        // SAFETY: a host function call; the host writes 16 bytes at `out`
+        unsafe { ffi::clock(out.as_mut_ptr() as usize as i32) };
+        let word = |i: usize| u64::from_le_bytes(out[i..i + 8].try_into().unwrap_or_default());
+        Now { monotonic_us: word(0), unix_us: word(8) }
+    }
+}
+
+/// UDP sockets (permission `net = ["udp:HOST:PORT", ...]`; API 1.4): connected and non-blocking; natively real UDP
+/// sockets, in the browser relayed by the page's UDP proxy. Poll them every frame ([`Mod::overlay`] or a
+/// `FRAME_BEGIN` event).
+pub mod net {
+    use super::{Error, check, ffi, ptr_len};
+    pub use sa_mod_api::net::{MAX_DATAGRAM, MAX_SOCKETS};
+
+    /// Where a socket stands.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum State {
+        /// Opening (in the browser: the WebSocket to the proxy); datagrams sent now are queued.
+        Connecting,
+        /// Datagrams flow.
+        Open,
+        /// Closed or refused (the log says why).
+        Closed,
+    }
+
+    /// A UDP socket connected to one target; closed when dropped.
+    #[derive(Debug)]
+    pub struct Socket(i32);
+
+    impl Socket {
+        /// Opens a socket to `target` (`HOST:PORT`), which a rule of the manifest's `net` list must allow.
+        pub fn open(target: &str) -> Result<Socket, Error> {
+            let (p, n) = ptr_len(target.as_bytes());
+            // SAFETY: a host function call; the host reads `target` through a bounds-checked copy
+            check(unsafe { ffi::net_open(p, n) }).map(Socket)
+        }
+
+        /// Its state.
+        pub fn state(&self) -> State {
+            // SAFETY: a host function call with a plain value
+            match unsafe { ffi::net_state(self.0) } {
+                sa_mod_api::net::CONNECTING => State::Connecting,
+                sa_mod_api::net::OPEN => State::Open,
+                _ => State::Closed,
+            }
+        }
+
+        /// Sends one datagram; [`Error::Again`] when the frame's send budget is used up.
+        pub fn send(&self, datagram: &[u8]) -> Result<usize, Error> {
+            let (p, n) = ptr_len(datagram);
+            // SAFETY: a host function call; the host reads the datagram through a bounds-checked copy
+            check(unsafe { ffi::net_send(self.0, p, n) }).map(|n| n as usize)
+        }
+
+        /// Takes one received datagram into `buf` (truncated to it); [`Error::Again`] when none is queued.
+        pub fn recv(&self, buf: &mut [u8]) -> Result<usize, Error> {
+            let (p, n) = (buf.as_mut_ptr() as usize as i32, buf.len() as i32);
+            // SAFETY: a host function call; the host writes at most `n` bytes at `p`, inside `buf`
+            check(unsafe { ffi::net_recv(self.0, p, n) }).map(|n| n as usize)
+        }
+    }
+
+    impl Drop for Socket {
+        fn drop(&mut self) {
+            // SAFETY: a host function call with a plain value
+            unsafe { ffi::net_close(self.0) };
+        }
+    }
+}
+
+/// The mod's persistent key / value storage (permission `storage = true`; API 1.4): natively a folder under the
+/// user's data directory, in the browser the page's IndexedDB. Keys are `A-Z a-z 0-9 . _ -` (1..=64 bytes, not
+/// starting with `.`).
+pub mod storage {
+    use super::{Error, check, ffi, ptr_len, read_sized};
+    pub use sa_mod_api::storage::{MAX_KEYS, MAX_TOTAL, MAX_VALUE, valid_key};
+
+    /// The value of `key`, `None` when there is none.
+    pub fn read(key: &str) -> Result<Option<Vec<u8>>, Error> {
+        let (kp, kl) = ptr_len(key.as_bytes());
+        // SAFETY: a host function call; the host writes at most `bl` bytes at `bp`, inside the buffer
+        read_sized(|bp, bl| unsafe { ffi::storage_read(kp, kl, bp, bl) })
+    }
+
+    /// Writes (replaces) the value of `key`.
+    pub fn write(key: &str, data: &[u8]) -> Result<(), Error> {
+        let (kp, kl) = ptr_len(key.as_bytes());
+        let (dp, dl) = ptr_len(data);
+        // SAFETY: a host function call; the host reads both ranges through bounds-checked copies
+        check(unsafe { ffi::storage_write(kp, kl, dp, dl) }).map(|_| ())
+    }
+
+    /// Deletes `key`; false when there was none.
+    pub fn delete(key: &str) -> Result<bool, Error> {
+        let (kp, kl) = ptr_len(key.as_bytes());
+        // SAFETY: a host function call; the host reads `key` through a bounds-checked copy
+        match check(unsafe { ffi::storage_delete(kp, kl) }) {
+            Ok(_) => Ok(true),
+            Err(Error::NotFound) => Ok(false),
+            Err(e) => Err(e),
+        }
+    }
+
+    /// The mod's keys, sorted.
+    pub fn keys() -> Result<Vec<String>, Error> {
+        // SAFETY: a host function call; the host writes at most `bl` bytes at `bp`, inside the buffer
+        let list = read_sized(|bp, bl| unsafe { ffi::storage_list(bp, bl) })?.unwrap_or_default();
+        Ok(String::from_utf8_lossy(&list).lines().map(str::to_string).collect())
     }
 }
 

@@ -193,6 +193,11 @@ pub fn install(spec: &str) -> Result<(), String> {
     GAME.with_borrow_mut(|g| *g = Some(game));
     host.set_registry(Registry(Rc::new(EngineRegistry)));
     observe::set_handler(observed);
+    host.set_network(sa_mod_host::platform_network(crate::env::var_os("SA_MODS_PROXY").as_deref()));
+    match sa_mod_host::platform_storage(None) {
+        Ok(s) => host.set_storage(s),
+        Err(e) => println!("sa-game: mods: {e}; mods that ask for storage are not loaded"),
+    }
     let sources = sa_mod_host::sources(spec)?;
     if sources.is_empty() {
         println!("sa-game: mods: none found in {spec}");

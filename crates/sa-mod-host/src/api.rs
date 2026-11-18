@@ -8,14 +8,17 @@ use std::rc::Rc;
 use sa_access::View;
 use sa_mod_api::state::{CameraInfo, PedInfo, PlayerInfo, VehicleInfo, Words, WorldInfo, to_bytes};
 use sa_mod_api::{
-    Call, IMPORTS, MAX_FILE, Permission, VIDEO_MODE_MAX, VIDEO_MODE_MIN, Val, event, hook, script, status, valid_file_name,
+    Call, IMPORTS, MAX_FILE, Permission, VIDEO_MODE_MAX, VIDEO_MODE_MIN, Val, event, hook, net, script, status, storage,
+    valid_file_name,
 };
 use sa_platform::gpu::OverlayRect;
 use sa_types::script::{Opcode, ScriptArg, ScriptLocals};
 use sa_types::{EntityRef, GameError, GameResult, ModelId, ObjectRef, PedRef, Vec3, VehicleRef, WeaponType};
 
 use crate::ModSource;
-use crate::manifest::Permissions;
+use crate::manifest::{NetRule, Permissions, split_target};
+use crate::net::{LinkState, Net, Sockets};
+use crate::storage::Store;
 
 /// The longest text a host function reads, in bytes.
 pub const MAX_TEXT: usize = 4096;
@@ -177,6 +180,16 @@ pub struct CallCtx {
     pub deferred: Vec<Call>,
     /// The entities the mod created and has not deleted.
     pub owned: Vec<EntityRef>,
+    /// When the host started (`clock`'s monotonic time; `None`: zero).
+    pub epoch: Option<web_time::Instant>,
+    /// The network the mod's sockets go to (`None`: none).
+    pub network: Option<Net>,
+    /// The targets the manifest lets the mod open sockets to.
+    pub net_rules: Rc<[NetRule]>,
+    /// The mod's open sockets.
+    pub sockets: Sockets,
+    /// The mod's storage area (`None`: no storage).
+    pub storage: Option<Store>,
 }
 
 impl CallCtx {
@@ -194,6 +207,14 @@ impl CallCtx {
             Permission::Entities => self.permissions.entities,
             Permission::Scripts => self.permissions.scripts,
             Permission::Audio => self.permissions.audio,
+            Permission::Net => self.permissions.net,
+            Permission::Storage => self.permissions.storage,
+        }
+    }
+
+    fn log_error(&mut self, text: String) {
+        if self.logs.len() < MAX_LOG_LINES {
+            self.logs.push((sa_mod_api::level::ERROR, text));
         }
     }
 
@@ -301,6 +322,9 @@ pub fn dispatch(ctx: &mut CallCtx, mem: &mut dyn Mem, index: usize, args: &[Val]
         return Ok(apply(&mut g.0.borrow_mut(), call, &mut ctx.logs));
     }
     if let Some(r) = entities_and_scripts(ctx, mem, call) {
+        return Ok(r);
+    }
+    if let Some(r) = services(ctx, mem, call) {
         return Ok(r);
     }
     let game_rc = ctx.game.clone();
@@ -515,6 +539,185 @@ pub fn dispatch(ctx: &mut CallCtx, mem: &mut dyn Mem, index: usize, args: &[Val]
         }
         c => unreachable!("{c:?} is served before"),
     })
+}
+
+/// The clock, the sockets and the storage: `None` for any other call.
+fn services(ctx: &mut CallCtx, mem: &mut dyn Mem, call: Call) -> Option<i32> {
+    Some(match call {
+        Call::clock { out_ptr } => {
+            let monotonic = ctx.epoch.map_or(0, |e| e.elapsed().as_micros() as u64);
+            let wall = web_time::SystemTime::now()
+                .duration_since(web_time::UNIX_EPOCH)
+                .map_or(0, |d| d.as_micros() as u64);
+            let mut out = [0u8; 16];
+            out[..8].copy_from_slice(&monotonic.to_le_bytes());
+            out[8..].copy_from_slice(&wall.to_le_bytes());
+            if out_ptr < 0 || !mem.write(out_ptr as u32, &out) {
+                return Some(status::BAD_ARG);
+            }
+            status::OK
+        }
+        Call::net_open { target_ptr, target_len } => {
+            let Some(target) = text(mem, target_ptr, target_len) else { return Some(status::BAD_ARG) };
+            let Some((host, port)) = split_target(&target) else { return Some(status::BAD_ARG) };
+            if !ctx.net_rules.iter().any(|r| r.allows(host, port)) {
+                return Some(status::DENIED);
+            }
+            if !ctx.sockets.has_room() {
+                ctx.log_error(format!("net_open {target}: the mod holds {} sockets already", net::MAX_SOCKETS));
+                return Some(status::FAILED);
+            }
+            let Some(n) = ctx.network.clone() else {
+                ctx.log_error(format!("net_open {target}: no network in this host"));
+                return Some(status::FAILED);
+            };
+            match n.0.open(&target) {
+                Ok(socket) => ctx.sockets.add(socket).map_or(status::FAILED, |h| h as i32),
+                Err(e) => {
+                    ctx.log_error(format!("net_open {target}: {e}"));
+                    status::FAILED
+                }
+            }
+        }
+        Call::net_state { handle } => match ctx.sockets.get(handle).map(|s| s.state()) {
+            None => status::NOT_FOUND,
+            Some(LinkState::Connecting) => net::CONNECTING,
+            Some(LinkState::Open) => net::OPEN,
+            Some(LinkState::Closed(_)) => net::CLOSED,
+        },
+        Call::net_send { handle, data_ptr, data_len } => {
+            if data_ptr < 0 || data_len < 0 || data_len as usize > net::MAX_DATAGRAM {
+                return Some(status::BAD_ARG);
+            }
+            let Some(data) = mem.read(data_ptr as u32, data_len as u32) else { return Some(status::BAD_ARG) };
+            if ctx.sockets.get(handle).is_none() {
+                return Some(status::NOT_FOUND);
+            }
+            if !ctx.sockets.charge(data.len()) {
+                return Some(status::AGAIN);
+            }
+            let socket = ctx.sockets.get(handle)?;
+            match socket.send(&data) {
+                Ok(n) => n as i32,
+                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => status::AGAIN,
+                Err(e) => {
+                    ctx.log_error(format!("net_send: {e}"));
+                    status::FAILED
+                }
+            }
+        }
+        Call::net_recv { handle, buf_ptr, buf_len } => {
+            if buf_ptr < 0 || buf_len < 0 {
+                return Some(status::BAD_ARG);
+            }
+            let Some(socket) = ctx.sockets.get(handle) else { return Some(status::NOT_FOUND) };
+            let mut buf = vec![0u8; (buf_len as usize).min(net::MAX_DATAGRAM)];
+            match socket.recv(&mut buf) {
+                Ok(n) => {
+                    if !mem.write(buf_ptr as u32, &buf[..n]) {
+                        return Some(status::BAD_ARG);
+                    }
+                    n as i32
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => status::AGAIN,
+                Err(e) => {
+                    ctx.log_error(format!("net_recv: {e}"));
+                    status::FAILED
+                }
+            }
+        }
+        Call::net_close { handle } => {
+            if ctx.sockets.close(handle) {
+                status::OK
+            } else {
+                status::NOT_FOUND
+            }
+        }
+        Call::storage_read { key_ptr, key_len, buf_ptr, buf_len } => {
+            let Some(key) = storage_key(mem, key_ptr, key_len) else { return Some(status::BAD_ARG) };
+            if buf_ptr < 0 || buf_len < 0 {
+                return Some(status::BAD_ARG);
+            }
+            let Some(Store(st)) = ctx.storage.clone() else { return Some(status::DENIED) };
+            match st.read(&key) {
+                Ok(Some(data)) => {
+                    let n = data.len().min(buf_len as usize);
+                    if !mem.write(buf_ptr as u32, &data[..n]) {
+                        return Some(status::BAD_ARG);
+                    }
+                    data.len().min(i32::MAX as usize) as i32
+                }
+                Ok(None) => status::NOT_FOUND,
+                Err(e) => {
+                    ctx.log_error(format!("storage_read {key}: {e}"));
+                    status::FAILED
+                }
+            }
+        }
+        Call::storage_write { key_ptr, key_len, data_ptr, data_len } => {
+            let Some(key) = storage_key(mem, key_ptr, key_len) else { return Some(status::BAD_ARG) };
+            if data_ptr < 0 || data_len < 0 || data_len as usize > storage::MAX_VALUE {
+                return Some(status::BAD_ARG);
+            }
+            let Some(data) = mem.read(data_ptr as u32, data_len as u32) else { return Some(status::BAD_ARG) };
+            let Some(Store(st)) = ctx.storage.clone() else { return Some(status::DENIED) };
+            let r = st.list().and_then(|keys| {
+                let others: Vec<_> = keys.iter().filter(|k| k.0 != key).collect();
+                let total: usize = others.iter().map(|k| k.1).sum::<usize>() + data.len();
+                if others.len() >= storage::MAX_KEYS {
+                    return Err(format!("the mod keeps {} keys already", storage::MAX_KEYS));
+                }
+                if total > storage::MAX_TOTAL {
+                    return Err(format!("{total} bytes in all, over the mod's {} bytes", storage::MAX_TOTAL));
+                }
+                st.write(&key, &data)
+            });
+            match r {
+                Ok(()) => status::OK,
+                Err(e) => {
+                    ctx.log_error(format!("storage_write {key}: {e}"));
+                    status::FAILED
+                }
+            }
+        }
+        Call::storage_delete { key_ptr, key_len } => {
+            let Some(key) = storage_key(mem, key_ptr, key_len) else { return Some(status::BAD_ARG) };
+            let Some(Store(st)) = ctx.storage.clone() else { return Some(status::DENIED) };
+            match st.delete(&key) {
+                Ok(true) => status::OK,
+                Ok(false) => status::NOT_FOUND,
+                Err(e) => {
+                    ctx.log_error(format!("storage_delete {key}: {e}"));
+                    status::FAILED
+                }
+            }
+        }
+        Call::storage_list { buf_ptr, buf_len } => {
+            if buf_ptr < 0 || buf_len < 0 {
+                return Some(status::BAD_ARG);
+            }
+            let Some(Store(st)) = ctx.storage.clone() else { return Some(status::DENIED) };
+            let keys = match st.list() {
+                Ok(k) => k,
+                Err(e) => {
+                    ctx.log_error(format!("storage_list: {e}"));
+                    return Some(status::FAILED);
+                }
+            };
+            let list: String = keys.iter().map(|k| format!("{}\n", k.0)).collect();
+            let n = list.len().min(buf_len as usize);
+            if !mem.write(buf_ptr as u32, &list.as_bytes()[..n]) {
+                return Some(status::BAD_ARG);
+            }
+            list.len().min(i32::MAX as usize) as i32
+        }
+        _ => return None,
+    })
+}
+
+/// Reads a key the storage functions accept.
+fn storage_key(mem: &dyn Mem, ptr: i32, len: i32) -> Option<String> {
+    text(mem, ptr, len).filter(|k| storage::valid_key(k))
 }
 
 /// The calls that create or delete entities or run a script command: `None` for any other call.

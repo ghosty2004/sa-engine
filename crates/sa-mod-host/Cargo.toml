@@ -1,7 +1,7 @@
 [package]
 name = "sa-mod-host"
 version = "0.1.0"
-description = "The mod host: mod.toml manifests and permissions, module checks, the API implementation (2D overlay, display and video mode, own files, game state and changes, entities, script commands and sounds through the engine's access layer sa-access, events, hooks on registry functions with decisions), call budgets (fuel, memory cap), and one engine trait with two backends: wasmtime natively (Pulley on i686), the browser's WebAssembly on wasm32 (web/mods.js glue, fuel metering by instrumentation). Linked into sa-game only with its feature `mods`"
+description = "The mod host: mod.toml manifests and permissions, module checks, the API implementation (2D overlay, display and video mode, own files, game state and changes, entities, script commands and sounds through the engine's access layer sa-access, events, hooks on registry functions with decisions, UDP sockets through sa-net, persistent per-mod storage, a clock), call budgets (fuel, memory cap), and one engine trait with two backends: wasmtime natively (Pulley on i686), the browser's WebAssembly on wasm32 (web/mods.js glue, fuel metering by instrumentation). Linked into sa-game only with its feature `mods`"
 edition.workspace = true
 license.workspace = true
 publish.workspace = true
@@ -18,6 +18,8 @@ toml = { version = "1.1", default-features = false, features = ["std", "parse", 
 # the host's 8x8 overlay font (MIT)
 font8x8 = { version = "0.3", default-features = false }
 web-time = "1.1"
+# the mods' sockets: UDP natively, WebSockets to the page's UDP proxy in the browser
+sa-net = { path = "../sa-net" }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 # Cranelift natively on x86_64; on i686 (no Cranelift backend) Cranelift compiles to Pulley bytecode, which wasmtime's
@@ -25,6 +27,7 @@ web-time = "1.1"
 wasmtime = { version = "=50.0.0", default-features = false, features = ["runtime", "cranelift", "std"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
+sa-net = { path = "../sa-net", features = ["websocket"] }
 wasm-encoder = { version = "0.261", default-features = false, features = ["std", "wasmparser"] }
 wasm-bindgen = "=0.2.130"
 

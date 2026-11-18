@@ -4,12 +4,13 @@
 //! * [`manifest`]: `mod.toml` (identity, `api_version`, permissions, limits);
 //! * [`module`]: the checks every module passes (the interface of `sa-mod-api`, the memory cap);
 //! * [`api`]: the host functions, implemented once for both engines;
+//! * [`net`], [`storage`]: the mods' sockets and persistent storage, with a backend per platform;
 //! * [`engine`]: the engine seam, with the backends wasmtime (native) and the browser's WebAssembly (wasm32) in
 //!   `backend`;
 //! * [`Host`]: loading, the load order, the call points (the settings phase before the game's D3D device exists,
 //!   the overlay phase of every frame, the resize event, the game events at frame boundaries, the hooks on registry
 //!   functions), budgets and disabling: a mod that traps or overruns its fuel is disabled for the session and
-//!   reported; the game and the other mods go on.
+//!   reported (its sockets closed); the game and the other mods go on.
 //!
 //! A mod reads and changes the game through the engine's access layer `sa-access` ([`api::Game`]), with the
 //! permissions its manifest grants, and only between the game's frames: a change asked for inside a hook waits for
@@ -23,6 +24,8 @@ pub mod engine;
 pub mod events;
 pub mod manifest;
 pub mod module;
+pub mod net;
+pub mod storage;
 
 use std::rc::Rc;
 
@@ -36,9 +39,11 @@ use sa_types::EntityRef;
 
 use crate::api::{CallCtx, Display, Files, Game, HookCall, HookDecision, Registry, VideoRequest};
 use crate::engine::{Engine, Instance};
-use crate::manifest::{INIT_FUEL_FACTOR, Manifest};
+use crate::manifest::{INIT_FUEL_FACTOR, Manifest, NetRule};
+use crate::net::{Net, Network, Sockets};
+use crate::storage::{StorageProvider, Store};
 
-pub use backend::sources;
+pub use backend::{network as platform_network, sources, storage as platform_storage};
 
 /// Where a mod's files come from (a folder natively, the page's server on the web).
 pub trait ModSource {
@@ -57,10 +62,9 @@ pub struct LoadedMod {
     instance: Box<dyn Instance>,
     /// The entry points it exports.
     exports: Vec<&'static str>,
-    /// Its folder (for its own files).
-    source: Rc<dyn ModSource>,
-    /// The functions it may hook.
-    hook_names: Rc<[String]>,
+    env: ModEnv,
+    /// Its open sockets.
+    sockets: Sockets,
     /// Why it was disabled (`None`: running).
     pub disabled: Option<String>,
     /// Overlay calls so far.
@@ -84,6 +88,25 @@ pub struct LoadedMod {
     deferred: Vec<sa_mod_api::Call>,
 }
 
+/// What a mod's calls may reach besides the game.
+struct ModEnv {
+    /// Its folder (for its own files).
+    source: Rc<dyn ModSource>,
+    /// The functions it may hook.
+    hook_names: Rc<[String]>,
+    /// The targets it may open sockets to.
+    net_rules: Rc<[NetRule]>,
+    /// Its storage area (`storage = true`).
+    storage: Option<Store>,
+}
+
+/// A `net` rule as the manifest writes it.
+fn net_rule_text(r: &NetRule) -> String {
+    let host = r.host.as_deref().unwrap_or("*");
+    let host = if host.contains(':') { format!("[{host}]") } else { host.to_string() };
+    format!("udp:{host}:{}", r.port.map_or("*".to_string(), |p| p.to_string()))
+}
+
 /// The mod host.
 pub struct Host {
     engine: Box<dyn Engine>,
@@ -102,6 +125,12 @@ pub struct Host {
     controllable: Vec<u32>,
     /// Entities of disabled mods, deleted at the next frame boundary.
     orphans: Vec<EntityRef>,
+    /// The start of the host (`clock`).
+    epoch: web_time::Instant,
+    /// Where the mods' sockets go.
+    network: Option<Net>,
+    /// Where the mods' storage areas are.
+    storages: Option<Rc<dyn StorageProvider>>,
 }
 
 impl Host {
@@ -124,7 +153,20 @@ impl Host {
             frame: 0,
             controllable: Vec::new(),
             orphans: Vec::new(),
+            epoch: web_time::Instant::now(),
+            network: None,
+            storages: None,
         }
+    }
+
+    /// The network the mods' sockets go to (`platform_network`); without one `net_open` fails.
+    pub fn set_network(&mut self, network: Rc<dyn Network>) {
+        self.network = Some(Net(network));
+    }
+
+    /// Where the mods' storage areas are (`platform_storage`); without it a mod asking for storage is not loaded.
+    pub fn set_storage(&mut self, storages: Rc<dyn StorageProvider>) {
+        self.storages = Some(storages);
     }
 
     /// The display the platform reports to the mods (`display_mode_*`).
@@ -186,8 +228,19 @@ impl Host {
             module::check(&wasm, manifest.limits.memory_bytes).map_err(|e| format!("mod {id}: {}: {e}", manifest.entry))?;
         let mut instance =
             self.engine.instantiate(&wasm, &manifest.limits).map_err(|e| format!("mod {id}: {e}"))?;
-        let hook_names: Rc<[String]> = manifest.hooks.clone().into();
-        let mut ctx = self.ctx(&manifest, &src, &hook_names, 0);
+        let storage = if manifest.permissions.storage {
+            let Some(st) = &self.storages else { return Err(format!("mod {id}: no storage in this host")) };
+            Some(Store(st.open(&id).map_err(|e| format!("mod {id}: storage: {e}"))?))
+        } else {
+            None
+        };
+        let env = ModEnv {
+            source: src,
+            hook_names: manifest.hooks.clone().into(),
+            net_rules: manifest.net.clone().into(),
+            storage,
+        };
+        let mut ctx = self.ctx(&manifest, &env, 0);
         let init_fuel = manifest.limits.fuel.saturating_mul(INIT_FUEL_FACTOR);
         let v = instance.call(EXPORT_API_VERSION, &[], init_fuel, &mut ctx).map_err(|e| format!("mod {id}: {e}"))?;
         // a mod rebuilt with a newer SDK may keep the older minor version its manifest asks for
@@ -208,7 +261,7 @@ impl Host {
         let p = manifest.permissions;
         (self.log)(&format!(
             "mod {id} loaded: {} {} from {at} ({} bytes, {}; render {}, files {}, state {}, input {}, hooks {:?}, \
-             entities {}, scripts {}, audio {}, memory cap {} MiB, fuel {} per call)",
+             entities {}, scripts {}, audio {}, net {:?}, storage {}, memory cap {} MiB, fuel {} per call)",
             manifest.name,
             manifest.version,
             wasm.len(),
@@ -221,6 +274,8 @@ impl Host {
             p.entities,
             p.scripts,
             p.audio,
+            manifest.net.iter().map(net_rule_text).collect::<Vec<_>>(),
+            env.storage.as_ref().map_or("none".to_string(), |s| s.0.location()),
             manifest.limits.memory_bytes >> 20,
             manifest.limits.fuel
         ));
@@ -228,8 +283,8 @@ impl Host {
             manifest,
             instance,
             exports,
-            source: src,
-            hook_names,
+            env,
+            sockets: std::mem::take(&mut ctx.sockets),
             disabled: None,
             frames: 0,
             micros: 0,
@@ -247,16 +302,20 @@ impl Host {
         Ok(())
     }
 
-    /// A call context for the mod with `manifest`, folder `src`, `hooks` hooks so far.
-    fn ctx(&self, manifest: &Manifest, src: &Rc<dyn ModSource>, hook_names: &Rc<[String]>, hooks: usize) -> CallCtx {
+    /// A call context for the mod with `manifest` and `env`, `hooks` hooks so far.
+    fn ctx(&self, manifest: &Manifest, env: &ModEnv, hooks: usize) -> CallCtx {
         CallCtx {
             permissions: manifest.permissions,
             display: self.display.clone(),
-            files: manifest.permissions.files.then(|| Files(src.clone())),
+            files: manifest.permissions.files.then(|| Files(env.source.clone())),
             game: self.game.clone(),
             registry: self.registry.clone(),
-            hook_names: hook_names.clone(),
+            hook_names: env.hook_names.clone(),
             hook_base: hooks,
+            epoch: Some(self.epoch),
+            network: if manifest.permissions.net { self.network.clone() } else { None },
+            net_rules: env.net_rules.clone(),
+            storage: env.storage.clone(),
             ..Default::default()
         }
     }
@@ -283,6 +342,7 @@ impl Host {
         let id = self.mods[i].manifest.id.clone();
         self.mods[i].disabled = Some(why.clone());
         self.mods[i].deferred.clear();
+        self.mods[i].sockets = Sockets::default();
         let owned = std::mem::take(&mut self.mods[i].owned);
         let n = owned.len();
         self.orphans.extend(owned);
@@ -314,16 +374,18 @@ impl Host {
         if m.disabled.is_some() || !m.exports.contains(&export) {
             return None;
         }
-        let mut ctx = self.ctx(&m.manifest, &m.source, &m.hook_names, m.hooks.len());
+        let mut ctx = self.ctx(&m.manifest, &m.env, m.hooks.len());
         ctx.screen = screen;
         ctx.overlay = export == EXPORT_OVERLAY;
         prep(&mut ctx);
         let m = &mut self.mods[i];
         ctx.owned = std::mem::take(&mut m.owned);
+        ctx.sockets = std::mem::take(&mut m.sockets);
         let t = web_time::Instant::now();
         let r = m.instance.call(export, args, m.manifest.limits.fuel, &mut ctx);
         m.micros += t.elapsed().as_micros() as u64;
         m.owned = std::mem::take(&mut ctx.owned);
+        m.sockets = std::mem::take(&mut ctx.sockets);
         m.deferred.append(&mut ctx.deferred);
         let frame = m.frames;
         if export == EXPORT_OVERLAY {
@@ -430,6 +492,7 @@ impl Host {
         self.frame = self.frame.wrapping_add(1);
         for m in &mut self.mods {
             m.hook_calls_frame = 0;
+            m.sockets.new_frame();
         }
         self.apply_deferred();
         let wanted = self.wanted_events();
@@ -705,6 +768,114 @@ mod tests {
         h.hook(7, hook::AFTER, &call);
         assert_eq!(h.mods()[0].hook_dropped, 1);
         assert!(h.summary().contains("hook calls (1 dropped)"), "{}", h.summary());
+    }
+
+    /// A level-4 mod: opens a socket to `target` and sends "ping" in `sa_init`; every overlay call logs a received
+    /// datagram (`AGAIN` logs nothing). Its storage: `sa_init` writes `count` = "1", reads it back and logs the key
+    /// list; a write above the value size limit is BAD_ARG.
+    fn level_four_mod(target: &str) -> Vec<u8> {
+        wat::parse_str(format!(
+            r#"(module
+              (import "sa" "log" (func $log (param i32 i32 i32) (result i32)))
+              (import "sa" "net_open" (func $open (param i32 i32) (result i32)))
+              (import "sa" "net_send" (func $send (param i32 i32 i32) (result i32)))
+              (import "sa" "net_recv" (func $recv (param i32 i32 i32) (result i32)))
+              (import "sa" "storage_write" (func $put (param i32 i32 i32 i32) (result i32)))
+              (import "sa" "storage_read" (func $get (param i32 i32 i32 i32) (result i32)))
+              (import "sa" "storage_list" (func $list (param i32 i32) (result i32)))
+              (import "sa" "clock" (func $clock (param i32) (result i32)))
+              (memory (export "memory") 1)
+              (global $sock (mut i32) (i32.const -1))
+              (data (i32.const 16) "ping")
+              (data (i32.const 32) "count1")
+              (data (i32.const 64) "{target}")
+              (func (export "sa_api_version") (result i32) i32.const 0x10004)
+              (func (export "sa_init") (result i32) (local $n i32)
+                i32.const 64 i32.const {len} call $open global.set $sock
+                global.get $sock i32.const 0 i32.lt_s (if (then unreachable))
+                global.get $sock i32.const 16 i32.const 4 call $send i32.const 4 i32.ne (if (then unreachable))
+                i32.const 32 i32.const 5 i32.const 37 i32.const 1 call $put (if (then unreachable))
+                i32.const 32 i32.const 5 i32.const 512 i32.const 16 call $get i32.const 1 i32.ne (if (then unreachable))
+                i32.const 0 i32.const 512 i32.const 1 call $log drop
+                i32.const 512 i32.const 64 call $list local.set $n
+                i32.const 0 i32.const 512 local.get $n call $log drop
+                ;; 2 MiB is over the per-value limit
+                i32.const 32 i32.const 5 i32.const 0 i32.const 0x200000 call $put i32.const -2 i32.ne (if (then unreachable))
+                i32.const 1024 call $clock drop
+                i32.const 0)
+              (func (export "sa_overlay") (param i32) (result i32) (local $n i32)
+                global.get $sock i32.const 256 i32.const 64 call $recv local.set $n
+                local.get $n i32.const 0 i32.gt_s
+                (if (then i32.const 0 i32.const 256 local.get $n call $log drop))
+                i32.const 0))"#,
+            len = target.len()
+        ))
+        .unwrap()
+    }
+
+    #[test]
+    fn sockets_and_storage_reach_a_level_four_mod() {
+        use std::net::UdpSocket;
+        let echo = UdpSocket::bind("127.0.0.1:0").unwrap();
+        let target = echo.local_addr().unwrap().to_string();
+        let (mut h, log) = host();
+        h.set_network(platform_network(None));
+        struct Mem1(Rc<storage::MemoryStorage>);
+        impl StorageProvider for Mem1 {
+            fn open(&self, _id: &str) -> Result<Rc<dyn storage::Storage>, String> {
+                Ok(self.0.clone())
+            }
+        }
+        let st = Rc::new(storage::MemoryStorage::default());
+        h.set_storage(Rc::new(Mem1(st.clone())));
+        let toml = format!(
+            "[mod]\nid = \"four\"\napi_version = \"1.4\"\n[permissions]\nnet = [\"udp:{target}\"]\nstorage = true\n"
+        );
+        h.load(Box::new(Mem(vec![("mod.toml", toml.into_bytes()), ("four.wasm", level_four_mod(&target))]))).unwrap();
+        assert_eq!(storage::Storage::read(&*st, "count").unwrap(), Some(b"1".to_vec()));
+        assert!(log.borrow().iter().any(|l| l == "mod four: 1"), "{:?}", log.borrow());
+        assert!(log.borrow().iter().any(|l| l == "mod four: count"), "{:?}", log.borrow());
+        // the echo server answers the ping
+        let mut buf = [0u8; 16];
+        echo.set_read_timeout(Some(std::time::Duration::from_secs(2))).unwrap();
+        let (n, peer) = echo.recv_from(&mut buf).unwrap();
+        assert_eq!(&buf[..n], b"ping");
+        echo.send_to(b"pong", peer).unwrap();
+        let start = std::time::Instant::now();
+        while !log.borrow().iter().any(|l| l == "mod four: pong") {
+            assert!(start.elapsed().as_secs() < 2, "{:?}", log.borrow());
+            h.frame_begin();
+            h.overlay((640, 480), &mut Vec::new());
+        }
+        assert_eq!(h.mods()[0].sockets.open(), 1);
+        // disabling closes its sockets
+        h.disable(0, "test".into());
+        assert_eq!(h.mods()[0].sockets.open(), 0);
+    }
+
+    #[test]
+    fn sockets_need_the_manifest() {
+        let (mut h, _) = host();
+        h.set_network(platform_network(None));
+        h.set_storage(Rc::new(DenyAll));
+        struct DenyAll;
+        impl StorageProvider for DenyAll {
+            fn open(&self, _id: &str) -> Result<Rc<dyn storage::Storage>, String> {
+                Err("no".into())
+            }
+        }
+        // the rule names another port: net_open is DENIED and the mod traps in sa_init
+        let toml = "[mod]\nid = \"four\"\napi_version = \"1.4\"\n[permissions]\nnet = [\"udp:127.0.0.1:1\"]\n";
+        let e = h
+            .load(Box::new(Mem(vec![("mod.toml", toml.as_bytes().to_vec()), ("four.wasm", level_four_mod("127.0.0.1:2"))])))
+            .unwrap_err();
+        assert!(e.contains("sa_init"), "{e}");
+        // storage asked for, the host cannot open it: not loaded
+        let toml = "[mod]\nid = \"four\"\napi_version = \"1.4\"\n[permissions]\nstorage = true\n";
+        let e = h
+            .load(Box::new(Mem(vec![("mod.toml", toml.as_bytes().to_vec()), ("four.wasm", level_four_mod("127.0.0.1:2"))])))
+            .unwrap_err();
+        assert!(e.contains("storage"), "{e}");
     }
 
     #[test]

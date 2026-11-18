@@ -242,6 +242,8 @@ async function start(files) {
   // ?mods=a,b: the WebAssembly mods mods/a/, mods/b/ of the server (tools/web/serve.sh --mods DIR; build with
   // FEATURES=mods; docs/mods/getting-started.md)
   if (params.get('mods')) env.SA_MODS = params.get('mods');
+  // the UDP proxy the mods' sockets go through (?proxy=ws://..., sa-udp-proxy; default ws://127.0.0.1:7781)
+  if (params.get('mods') && params.get('proxy')) env.SA_MODS_PROXY = params.get('proxy');
   // SA:MP: ?samp=HOST:PORT&proxy=ws://127.0.0.1:7781&name=NAME joins that server through sa-udp-proxy
   // (docs/samp/web-proxy.md); the auth table (third-party data) comes from the local server (serve.sh --samp-auth FILE)
   const samp = params.get('samp');

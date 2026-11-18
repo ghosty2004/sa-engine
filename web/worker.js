@@ -486,6 +486,8 @@ self.onmessage = async (ev) => {
         if (!stackPointer()) console.warn('the module does not export __stack_pointer: blocked iterations leak their stack');
         for (const [k, v] of Object.entries(m.env || {})) sa.set_env(k, String(v));
         if (m.startInWorld) sa.set_start_in_world();
+        // the mods' persistent storage, read before the game runs: the host's storage calls are synchronous
+        if (m.env?.SA_MODS) await self.saGameMods.loadStorage();
         if (m.audio?.sab) {
           const data = new Int16Array(m.audio.sab, 32);
           ring = { hdr: new Int32Array(m.audio.sab, 0, 8), data, cap: data.length / 2 };

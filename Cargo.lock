@@ -2673,6 +2673,7 @@ dependencies = [
  "font8x8",
  "sa-access",
  "sa-mod-api",
+ "sa-net",
  "sa-platform",
  "sa-types",
  "toml",

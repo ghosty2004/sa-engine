@@ -18,7 +18,11 @@
 //!                            # decisions on the controllable ones (API 1.3)
 //! entities = true            # create / delete peds, vehicles, objects (API 1.3)
 //! scripts = true             # the allowed script commands (API 1.3)
-//! audio = true               # game sounds (API 1.3); `ui` and `net` are known but not granted yet
+//! audio = true               # game sounds (API 1.3)
+//! net = ["udp:127.0.0.1:7777", "udp:*:7777"]
+//!                            # UDP sockets to these targets (API 1.4): `udp:HOST:PORT`, `*` for any host or
+//!                            # port; the host compares the target text the mod opens, before resolving it
+//! storage = true             # the mod's persistent key / value storage (API 1.4); `ui` is known but not granted
 //!
 //! [limits]                   # optional; clamped to the host's maxima
 //! memory_mib = 16            # linear memory cap
@@ -48,6 +52,54 @@ pub struct Permissions {
     pub scripts: bool,
     /// `audio = true`: game sounds.
     pub audio: bool,
+    /// `net = [...]` names at least one rule ([`Manifest::net`]).
+    pub net: bool,
+    /// `storage = true`: the mod's persistent key / value storage.
+    pub storage: bool,
+}
+
+/// One rule of `net = [...]`: `udp:HOST:PORT`, `*` for any host or any port.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct NetRule {
+    /// The host as the mod names it (compared without case), `None`: any.
+    pub host: Option<String>,
+    /// The port, `None`: any.
+    pub port: Option<u16>,
+}
+
+impl NetRule {
+    /// Parses `udp:HOST:PORT`.
+    pub fn parse(rule: &str) -> Result<NetRule, String> {
+        let bad = || format!("permissions.net: {rule:?}: expected \"udp:HOST:PORT\" (\"*\" for any host or port)");
+        let rest = rule.strip_prefix("udp:").ok_or_else(bad)?;
+        let (host, port) = rest.rsplit_once(':').ok_or_else(bad)?;
+        let host = host.strip_prefix('[').and_then(|h| h.strip_suffix(']')).unwrap_or(host);
+        if host.is_empty() {
+            return Err(bad());
+        }
+        let port = match port {
+            "*" => None,
+            p => Some(p.parse::<u16>().ok().filter(|&p| p != 0).ok_or_else(bad)?),
+        };
+        Ok(NetRule { host: (host != "*").then(|| host.to_ascii_lowercase()), port })
+    }
+
+    /// Whether the rule allows `host`:`port`.
+    pub fn allows(&self, host: &str, port: u16) -> bool {
+        self.host.as_deref().is_none_or(|h| h.eq_ignore_ascii_case(host)) && self.port.is_none_or(|p| p == port)
+    }
+}
+
+/// `HOST:PORT` or `[IPV6]:PORT` as (host, port); `None` for anything else.
+pub fn split_target(target: &str) -> Option<(&str, u16)> {
+    let (host, port) = target.rsplit_once(':')?;
+    let host = match host.strip_prefix('[') {
+        Some(h) => h.strip_suffix(']')?,
+        None if host.contains(':') => return None,
+        None => host,
+    };
+    let port = port.parse::<u16>().ok().filter(|&p| p != 0)?;
+    (!host.is_empty() && !host.contains(['/', '"', '\\', ' '])).then_some((host, port))
 }
 
 /// A mod's budgets.
@@ -93,6 +145,8 @@ pub struct Manifest {
     pub permissions: Permissions,
     /// The game functions it may hook (`hooks = [...]`), by their names in the hook registry.
     pub hooks: Vec<String>,
+    /// The targets it may open sockets to (`net = [...]`).
+    pub net: Vec<NetRule>,
     /// Its budgets.
     pub limits: Limits,
 }
@@ -144,6 +198,7 @@ pub fn parse(text: &str) -> Result<(Manifest, Vec<String>), String> {
     }
     let mut permissions = Permissions::default();
     let mut hooks = Vec::new();
+    let mut net = Vec::new();
     if let Some(p) = root.get("permissions") {
         let Value::Table(p) = p else { return Err("mod.toml: [permissions] is not a table".into()) };
         for (k, v) in p {
@@ -170,7 +225,7 @@ pub fn parse(text: &str) -> Result<(Manifest, Vec<String>), String> {
                         }
                         ("input", "capture") => {
                             *granted = true;
-                            warnings.push(format!("permission {k} = {level:?}: only \"read\" is available in API 1.3"));
+                            warnings.push(format!("permission {k} = {level:?}: only \"read\" is available in API 1.4"));
                         }
                         _ => {
                             return Err(format!(
@@ -192,17 +247,34 @@ pub fn parse(text: &str) -> Result<(Manifest, Vec<String>), String> {
                     }
                     permissions.hooks = !hooks.is_empty();
                 }
-                "entities" | "scripts" | "audio" => match v {
+                "net" => {
+                    let Value::Array(rules) = v else {
+                        return Err(format!("mod.toml: permissions.net: expected a list of \"udp:HOST:PORT\", got {v:?}"));
+                    };
+                    for r in rules {
+                        let Value::String(r) = r else {
+                            return Err(format!("mod.toml: permissions.net: expected \"udp:HOST:PORT\", got {r:?}"));
+                        };
+                        let rule = NetRule::parse(r).map_err(|e| format!("mod.toml: {e}"))?;
+                        if rule.host.is_none() {
+                            warnings.push(format!("permission net {r:?}: any host"));
+                        }
+                        net.push(rule);
+                    }
+                    permissions.net = !net.is_empty();
+                }
+                "entities" | "scripts" | "audio" | "storage" => match v {
                     Value::Boolean(b) => match k.as_str() {
                         "entities" => permissions.entities = *b,
                         "scripts" => permissions.scripts = *b,
+                        "storage" => permissions.storage = *b,
                         _ => permissions.audio = *b,
                     },
                     _ => return Err(format!("mod.toml: permissions.{k}: expected true or false, got {v:?}")),
                 },
-                "state" | "input" | "ui" | "net" | "files" => {
+                "state" | "input" | "ui" | "files" => {
                     if !nothing {
-                        warnings.push(format!("permission {k} = {v:?}: not available in API 1.3, not granted"));
+                        warnings.push(format!("permission {k} = {v:?}: not available in API 1.4, not granted"));
                     }
                 }
                 _ => warnings.push(format!("[permissions] {k}: unknown permission, ignored")),
@@ -244,6 +316,7 @@ pub fn parse(text: &str) -> Result<(Manifest, Vec<String>), String> {
             entry,
             permissions,
             hooks,
+            net,
             limits,
         },
         warnings,
@@ -258,7 +331,7 @@ mod tests {
     fn parses_the_example() {
         let (m, w) = parse(
             "[mod]\nid = \"hello\"\nname = \"Hello\"\nversion = \"0.1.0\"\napi_version = \"1.0\"\n\
-             [permissions]\nrender = true\ninput = \"none\"\nnet = [\"1.2.3.4:7777\"]\n[limits]\nmemory_mib = 512\n",
+             [permissions]\nrender = true\ninput = \"none\"\nui = true\n[limits]\nmemory_mib = 512\n",
         )
         .unwrap();
         assert_eq!(m.id, "hello");
@@ -297,6 +370,26 @@ mod tests {
         assert!(w.is_empty(), "{w:?}");
         assert!(parse("[mod]\nid = \"t\"\napi_version = \"1.3\"\n[permissions]\nentities = \"yes\"\n").is_err());
         assert!(parse("[mod]\nid = \"t\"\napi_version = \"1.3\"\n[permissions]\ninput = \"write\"\n").is_err());
+    }
+
+    #[test]
+    fn level_four_permissions() {
+        let (m, w) = parse(
+            "[mod]\nid = \"t\"\napi_version = \"1.4\"\n\
+             [permissions]\nnet = [\"udp:127.0.0.1:7777\", \"udp:*:8000\", \"udp:[::1]:*\"]\nstorage = true\n",
+        )
+        .unwrap();
+        assert!(m.permissions.net && m.permissions.storage);
+        assert_eq!(w.len(), 1, "{w:?}");
+        let allows = |t: &str| split_target(t).is_some_and(|(h, p)| m.net.iter().any(|r| r.allows(h, p)));
+        assert!(allows("127.0.0.1:7777") && allows("example.org:8000") && allows("[::1]:9"));
+        assert!(!allows("127.0.0.1:7778") && !allows("localhost:7777") && !allows("::1:9"));
+        for bad in ["127.0.0.1:7777", "tcp:a:1", "udp:a", "udp::1", "udp:a:0", "udp:a:x"] {
+            let t = format!("[mod]\nid = \"t\"\napi_version = \"1.4\"\n[permissions]\nnet = [\"{bad}\"]\n");
+            assert!(parse(&t).is_err(), "{bad}");
+        }
+        assert_eq!(split_target("a.b:7777"), Some(("a.b", 7777)));
+        assert_eq!(split_target("a.b"), None);
     }
 
     #[test]

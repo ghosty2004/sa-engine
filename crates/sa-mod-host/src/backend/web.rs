@@ -3,10 +3,14 @@
 //! passes ([`sa_mod_api::IMPORTS`] order), and every import calls back into [`sa_mod_host_import`], which runs the
 //! shared [`dispatch`]. Fuel: the module is instrumented at load time ([`super::meter`]); the glue sets the counter
 //! before each call and reports an overrun. The memory cap is the instrumented memory's maximum. Instantiation is
-//! synchronous (allowed in a worker).
+//! synchronous (allowed in a worker). Sockets are WebSockets to the page's UDP proxy (sa-net's, one binary frame
+//! per datagram); storage is the glue's copy of the page's IndexedDB, loaded before the game starts and written
+//! back in the background.
 
 use std::cell::RefCell;
 use std::collections::BTreeMap;
+use std::io;
+use std::rc::Rc;
 
 use sa_mod_api::{IMPORTS, Val};
 use wasm_bindgen::prelude::*;
@@ -16,6 +20,8 @@ use crate::ModSource;
 use crate::api::{CallCtx, Mem, dispatch};
 use crate::engine::{CallError, Engine, Instance};
 use crate::manifest::{INIT_FUEL_FACTOR, Limits};
+use crate::net::{DatagramTransport, Network};
+use crate::storage::{Storage, StorageProvider};
 
 #[wasm_bindgen]
 extern "C" {
@@ -36,6 +42,18 @@ extern "C" {
     /// `saGameMods.write(handle, ptr, bytes)`: copies `bytes` into the mod's memory; false when out of bounds.
     #[wasm_bindgen(js_namespace = saGameMods, js_name = write)]
     fn js_write(handle: u32, ptr: u32, bytes: &[u8]) -> bool;
+    /// `saGameMods.storageGet(id, key)`: the stored value, `undefined` when there is none.
+    #[wasm_bindgen(js_namespace = saGameMods, js_name = storageGet)]
+    fn js_storage_get(id: &str, key: &str) -> Option<Vec<u8>>;
+    /// `saGameMods.storagePut(id, key, bytes)`: stores the value (written back to IndexedDB in the background).
+    #[wasm_bindgen(js_namespace = saGameMods, js_name = storagePut, catch)]
+    fn js_storage_put(id: &str, key: &str, bytes: &[u8]) -> Result<(), JsValue>;
+    /// `saGameMods.storageDelete(id, key)`: false when there was no value.
+    #[wasm_bindgen(js_namespace = saGameMods, js_name = storageDelete)]
+    fn js_storage_delete(id: &str, key: &str) -> bool;
+    /// `saGameMods.storageList(id)`: `key\tsize\n` per key.
+    #[wasm_bindgen(js_namespace = saGameMods, js_name = storageList)]
+    fn js_storage_list(id: &str) -> String;
 }
 
 /// The memory of mod `handle`, through the glue.
@@ -180,4 +198,73 @@ pub fn sources(spec: &str) -> Result<Vec<Box<dyn ModSource>>, String> {
             Ok(Box::new(UrlSource(format!("mods/{name}/"))) as Box<dyn ModSource>)
         })
         .collect()
+}
+
+/// WebSockets to the page's UDP proxy.
+struct Proxied(sa_net::WebSocketConnector);
+
+impl Network for Proxied {
+    fn open(&self, target: &str) -> io::Result<Box<dyn DatagramTransport>> {
+        use sa_net::Connector;
+        Ok(Box::new(self.0.connect(target)?))
+    }
+
+    fn describe(&self) -> String {
+        format!("UDP through {}", self.0.proxy_url)
+    }
+}
+
+/// The UDP proxy the mods' datagrams go through when the page names none (`tools/web/samp-demo.sh`'s default).
+const DEFAULT_PROXY: &str = "ws://127.0.0.1:7781";
+
+/// The platform's network: WebSockets to the UDP proxy at `proxy` (the page's `?proxy=`).
+pub fn network(proxy: Option<&str>) -> Rc<dyn Network> {
+    let proxy_url = proxy.filter(|p| !p.is_empty()).unwrap_or(DEFAULT_PROXY).to_string();
+    Rc::new(Proxied(sa_net::WebSocketConnector { proxy_url }))
+}
+
+/// The page's storage: the glue's copy of IndexedDB.
+struct PageStorages;
+
+impl StorageProvider for PageStorages {
+    fn open(&self, id: &str) -> Result<Rc<dyn Storage>, String> {
+        Ok(Rc::new(PageStorage(id.to_string())))
+    }
+}
+
+struct PageStorage(String);
+
+impl Storage for PageStorage {
+    fn read(&self, key: &str) -> Result<Option<Vec<u8>>, String> {
+        Ok(js_storage_get(&self.0, key))
+    }
+
+    fn write(&self, key: &str, data: &[u8]) -> Result<(), String> {
+        js_storage_put(&self.0, key, data).map_err(|e| format!("{e:?}"))
+    }
+
+    fn delete(&self, key: &str) -> Result<bool, String> {
+        Ok(js_storage_delete(&self.0, key))
+    }
+
+    fn list(&self) -> Result<Vec<(String, usize)>, String> {
+        let mut keys: Vec<(String, usize)> = js_storage_list(&self.0)
+            .lines()
+            .filter_map(|l| {
+                let (k, n) = l.split_once('\t')?;
+                Some((k.to_string(), n.parse().ok()?))
+            })
+            .collect();
+        keys.sort();
+        Ok(keys)
+    }
+
+    fn location(&self) -> String {
+        format!("IndexedDB sa-mod-storage/{}", self.0)
+    }
+}
+
+/// The mods' storage in the page's IndexedDB (`_root`, a native folder, does not apply).
+pub fn storage(_root: Option<&str>) -> Result<Rc<dyn StorageProvider>, String> {
+    Ok(Rc::new(PageStorages))
 }
