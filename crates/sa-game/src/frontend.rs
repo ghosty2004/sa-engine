@@ -41,13 +41,20 @@ pub fn to_client(x: i32, y: i32, size: (u32, u32), client: (u32, u32)) -> (i32, 
 }
 
 /// The menus (front end, or the pause menu over the game: `FrontEndMenuManager.m_bMenuActive` with gGameState
-/// IDLE), or the SA:MP UI showing its cursor (dialogs, scoreboard, class-selection panel): the game / the UI draws its
-/// own cursor at the `WM_MOUSEMOVE` position, so the backend does not capture the pointer and sends absolute
+/// IDLE), or a mod showing the platform's cursor: the game / the mod draws its own cursor at the `WM_MOUSEMOVE` position, so the backend does not capture the pointer and sends absolute
 /// positions and clicks. Elsewhere the game owns the pointer (DirectInput exclusive mode: captured, relative motion).
 pub fn in_menu() -> bool {
     crate::winmain::game_state() != crate::winmain::STATE_IDLE
         || sa_core::game::MENU_ACTIVE.get().get()
-        || crate::samp::ui_cursor_visible()
+        || cursor_shown()
+}
+
+/// Whether a mod shows the platform's cursor (`input_capture`).
+pub fn cursor_shown() -> bool {
+    #[cfg(feature = "mods")]
+    return crate::mods::cursor_visible();
+    #[cfg(not(feature = "mods"))]
+    false
 }
 
 /// Frames presented so far (every `Present`): an iteration that presents ran a game frame.

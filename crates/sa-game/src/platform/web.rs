@@ -196,19 +196,6 @@ impl wgpu::rwh::HasDisplayHandle for WebDisplay {
     }
 }
 
-/// The page's SA:MP options (`?samp=HOST:PORT&proxy=ws://...&name=NAME`, passed as `SA_SAMP`, `SA_SAMP_PROXY`,
-/// `SA_SAMP_NAME`; the auth table's text as `SA_SAMP_AUTH`).
-fn samp_options() -> crate::app::SampOptions {
-    crate::app::SampOptions {
-        server: crate::env::var_os("SA_SAMP").filter(|s| !s.is_empty()),
-        name: crate::env::var_os("SA_SAMP_NAME").unwrap_or_else(|| "WebCJ".into()),
-        auth: None,
-        proxy: crate::env::var_os("SA_SAMP_PROXY"),
-        ui_demo: crate::env::var_os("SA_SAMP_UI_DEMO").is_some(),
-        game: std::path::PathBuf::new(),
-    }
-}
-
 /// The platform setup and the boot (WinMain up to its main loop), from the registered game folder.
 #[wasm_bindgen]
 pub fn boot() -> Result<(), JsValue> {
@@ -229,7 +216,6 @@ pub fn boot() -> Result<(), JsValue> {
         crate::arena::Image::Builtin,
         &format!("your game folder ({} files)", crate::platform::webfs::count()),
         "browser memory (not kept)",
-        &samp_options(),
         // the page's `?mods=a,b`: mods/a/, mods/b/ on its server (feature `mods`)
         crate::env::var_os("SA_MODS").filter(|s| !s.is_empty()).as_deref(),
     )
@@ -404,11 +390,10 @@ pub fn game_state() -> u32 {
     crate::winmain::game_state()
 }
 
-/// Whether the SA:MP UI shows its cursor (dialogs, scoreboard, textdraw selection, class-selection panel): the page
-/// then sends absolute pointer positions and clicks as in the menus instead of locking the pointer.
+/// Whether a mod shows the platform's cursor (`input_capture`: a mod's own UI): the page then sends absolute pointer positions and clicks as in the menus instead of locking the pointer.
 #[wasm_bindgen]
 pub fn ui_cursor() -> bool {
-    crate::samp::ui_cursor_visible()
+    crate::frontend::cursor_shown()
 }
 
 /// Whether the front-end menu is active over the game (the pause menu: `FrontEndMenuManager.m_bMenuActive`, gGameState

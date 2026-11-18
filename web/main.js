@@ -1,7 +1,7 @@
 // The page (WEB-1): picks the game folder, starts the worker that runs the game, forwards keyboard and mouse input.
 // URL query: ?inworld=0 (play the intro), ?backend=gl|webgpu, ?auto=1 (scripted Enter / SA_GAME_WALK, for unattended runs), any SA_* name
 // (SA_GAME_STUB, SA_GAME_WALK, SA_GAME_SCRIPT_SKIP, ...) is passed to the game as a development variable.
-// ?samp=HOST:PORT[&proxy=ws://127.0.0.1:7781][&name=NAME]: join a SA:MP / open.mp server through sa-udp-proxy (build with FEATURES=samp).
+// SA:MP is a mod: ?mods=samp[&proxy=ws://127.0.0.1:7781] (build with FEATURES=mods; docs/samp/README.md).
 // ?mods=NAME,...: load these WebAssembly mods from the server's mods/ (build with FEATURES=mods).
 // ?cache_mb=N: the game worker's in-memory block cache (default 256 MiB); the persistent cache (web/loader.js) is
 // separate. ?io_stacks=1 logs the wasm stack of each read that waited in the world. ?download=1 starts the background download of the whole folder into the persistent cache.
@@ -244,21 +244,6 @@ async function start(files) {
   if (params.get('mods')) env.SA_MODS = params.get('mods');
   // the UDP proxy the mods' sockets go through (?proxy=ws://..., sa-udp-proxy; default ws://127.0.0.1:7781)
   if (params.get('mods') && params.get('proxy')) env.SA_MODS_PROXY = params.get('proxy');
-  // SA:MP: ?samp=HOST:PORT&proxy=ws://127.0.0.1:7781&name=NAME joins that server through sa-udp-proxy
-  // (docs/samp/web-proxy.md); the auth table (third-party data) comes from the local server (serve.sh --samp-auth FILE)
-  const samp = params.get('samp');
-  if (samp) {
-    env.SA_SAMP = samp;
-    env.SA_SAMP_PROXY = params.get('proxy') ?? 'ws://127.0.0.1:7781';
-    env.SA_SAMP_NAME = params.get('name') ?? 'WebCJ';
-    try {
-      const r = await fetch(params.get('auth') ?? 'samp-auth.txt');
-      if (r.ok) env.SA_SAMP_AUTH = await r.text();
-      else log(`SA:MP auth table: HTTP ${r.status} (start the server with --samp-auth FILE)`, 'error');
-    } catch (e) {
-      log(`SA:MP auth table: ${e}`, 'error');
-    }
-  }
   const audioOut = await initAudio();
   const off = canvas.transferControlToOffscreen();
   const transfer = loaderPort ? [off, loaderPort] : [off];

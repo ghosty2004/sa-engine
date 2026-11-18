@@ -12,7 +12,7 @@ TAG    ?= local
 LANES  ?= 1,2,3
 
 .DEFAULT_GOAL := help
-.PHONY: help build build-samp run run-world run-samp web web-samp serve check test clippy verify frontier dupes structure bindings queue catalog progress
+.PHONY: help build build-mods run run-world run-samp web web-mods serve check test clippy verify frontier dupes structure bindings queue catalog progress
 
 help: ## List the targets
 	@awk 'BEGIN {FS = ":.*## "} /^[a-z0-9-]+:.*## / {printf "  \033[1m%-12s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -20,8 +20,8 @@ help: ## List the targets
 build: ## Native sa-game (32-bit Linux, release)
 	cargo build --release --target $(TARGET) -p sa-game
 
-build-samp: ## Native sa-game with the SA:MP client
-	cargo build --release --target $(TARGET) -p sa-game --features samp
+build-mods: ## Native sa-game with WebAssembly mods (SA:MP is the samp mod: docs/samp/README.md)
+	cargo build --release --target $(TARGET) -p sa-game --features mods
 
 run: build ## Run natively in a window (GAME=/path/to/gta-sa, ARGS=...)
 	$(RUN_ENV) $(BIN) --game $(GAME) --window $(ARGS)
@@ -29,14 +29,15 @@ run: build ## Run natively in a window (GAME=/path/to/gta-sa, ARGS=...)
 run-world: build ## Run natively, starting at Grove Street (skips the intro; exploration)
 	$(RUN_ENV) SA_GAME_SCRIPT_SKIP=1 $(BIN) --game $(GAME) --window --start-in-world --system-heap $(ARGS)
 
-run-samp: build-samp ## Join a SA:MP server natively (SERVER=host:port NAME=nick)
-	$(RUN_ENV) $(BIN) --game $(GAME) --window --samp $(SERVER) --name $(or $(NAME),Player) $(ARGS)
+run-samp: build-mods ## SA:MP as a mod, natively (the mod's connect screen picks the server)
+	mods/build.sh
+	$(RUN_ENV) $(BIN) --game $(GAME) --window --start-in-world --mods target/mods/resolution,target/mods/samp $(ARGS)
 
 web: ## Browser build (wasm32) into web/pkg
 	tools/web/build.sh
 
-web-samp: ## Browser build with the SA:MP client
-	FEATURES=samp tools/web/build.sh
+web-mods: ## Browser build with WebAssembly mods (SA:MP: ?mods=samp)
+	FEATURES=mods tools/web/build.sh
 
 serve: ## Serve the browser build on localhost:8642 (GAME=/path/to/gta-sa)
 	tools/web/serve.sh --game $(GAME)

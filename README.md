@@ -71,9 +71,9 @@ make run GAME=/path/to/gta-sa     # windowed, real keyboard and mouse
 make web                          # wasm32 build into web/pkg
 tools/web/serve.sh --game /path/to/gta-sa        # then open http://localhost:8642/?autostart=1
 
-# browser + SA:MP (private open.mp server, relay and web server, all on 127.0.0.1)
-make web-samp
-SAMP_DIR=re/samp/client tools/web/samp-demo.sh   # prints the URL to open
+# SA:MP is a mod (docs/samp/README.md): natively `make run-samp`; in the browser
+make web-mods && mods/build.sh
+tools/web/serve.sh --game /path/to/gta-sa --mods target/mods   # ?mods=samp&proxy=ws://127.0.0.1:7781 (sa-udp-proxy)
 ```
 
 `make help` lists every target.

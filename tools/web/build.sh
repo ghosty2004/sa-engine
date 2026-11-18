@@ -8,7 +8,6 @@
 #
 #   tools/web/build.sh            release build (PROFILE=dev for a debug build)
 #   FEATURES=mods tools/web/build.sh   with WebAssembly mods (?mods=NAME,..., MOD-2; docs/mods/getting-started.md)
-#   FEATURES=samp tools/web/build.sh   with the SA:MP client (joins through sa-udp-proxy, docs/samp/web-proxy.md)
 #
 # Needs: rustup target wasm32-unknown-unknown, wasm-bindgen-cli 0.2.130 (on PATH or in target/tools/bin:
 # `cargo binstall --root target/tools wasm-bindgen-cli@0.2.130`).

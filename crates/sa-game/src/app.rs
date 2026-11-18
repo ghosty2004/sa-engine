@@ -27,16 +27,6 @@ pub struct Args {
     pub report: Option<PathBuf>,
     /// the user documents folder: `None` = a fresh temporary folder for this run (removed at exit)
     pub documents: Option<PathBuf>,
-    /// `--samp HOST[:PORT]`: join a SA:MP / open.mp server (`samp.rs`; the network client needs feature `samp`)
-    pub samp: Option<String>,
-    /// `--name NAME`: the SA:MP nickname
-    pub name: String,
-    /// `--samp-auth FILE`: the auth table (default: `SAMP_AUTH_TABLE`)
-    pub samp_auth: Option<PathBuf>,
-    /// wasm32: the sa-udp-proxy WebSocket URL the client reaches the server through
-    pub samp_proxy: Option<String>,
-    /// `--samp-ui-demo`: the engine-drawn SA:MP UI with sample content (`samp_ui_demo.rs`)
-    pub samp_ui_demo: bool,
     /// `--mods DIR`: WebAssembly mods (feature `mods`, `crate::mods`)
     pub mods: Option<String>,
     /// `--image exe|builtin|check`: where the arena's initial contents come from
@@ -92,53 +82,6 @@ impl Report {
     }
 }
 
-/// The SA:MP options of a run (`--samp ...` natively, the page's `?samp=...` in the browser).
-#[derive(Clone, Debug, Default)]
-pub struct SampOptions {
-    /// `HOST[:PORT]` of the server to join
-    pub server: Option<String>,
-    pub name: String,
-    pub auth: Option<PathBuf>,
-    /// wasm32: the sa-udp-proxy WebSocket URL
-    pub proxy: Option<String>,
-    pub ui_demo: bool,
-    /// the game folder, where SA:MP's own UI files are looked up (`samp_assets`; empty in the browser)
-    pub game: PathBuf,
-}
-
-impl Args {
-    pub fn samp_options(&self) -> SampOptions {
-        SampOptions {
-            server: self.samp.clone(),
-            name: self.name.clone(),
-            auth: self.samp_auth.clone(),
-            proxy: self.samp_proxy.clone(),
-            ui_demo: self.samp_ui_demo,
-            game: self.game.clone(),
-        }
-    }
-}
-
-/// Installs the SA:MP host (before the boot, as samp.dll is loaded before WinMain runs) and returns its target.
-pub(crate) fn install_samp(o: &SampOptions) -> Result<Option<crate::samp::Target>, String> {
-    let target = match &o.server {
-        Some(s) => {
-            let mut t = crate::samp::parse_target(s, &o.name)?;
-            t.proxy = o.proxy.clone();
-            crate::samp::install(&t, o.auth.as_deref(), &o.game)?;
-            Some(t)
-        }
-        None => None,
-    };
-    if o.ui_demo {
-        #[cfg(feature = "samp")]
-        crate::samp_ui_demo::install(&o.game)?;
-        #[cfg(not(feature = "samp"))]
-        return Err("--samp-ui-demo draws samp-rs's UI: build with --features samp".into());
-    }
-    Ok(target)
-}
-
 /// Loads the mods (before the boot, so they see its first frames).
 #[allow(clippy::needless_return)]
 fn install_mods(spec: Option<&str>) -> Result<(), String> {
@@ -160,9 +103,6 @@ pub struct Session {
     pub(crate) stopped: bool,
     /// `gGameState` at the start of the current iteration
     pub(crate) iter_state: u32,
-    /// the SA:MP server joined (`--samp`)
-    pub(crate) samp: Option<crate::samp::Target>,
-    pub(crate) samp_ui_demo: bool,
 }
 
 
@@ -174,7 +114,6 @@ pub fn boot_with(
     image: arena::Image,
     game_label: &str,
     docs_label: &str,
-    samp: &SampOptions,
     mods: Option<&str>,
 ) -> Result<Session, String> {
     if !game.exists("models/gta3.img") {
@@ -200,7 +139,6 @@ pub fn boot_with(
         undelivered: Default::default(),
         calls: Default::default(),
     });
-    let samp_target = install_samp(samp)?;
     install_mods(mods)?;
 
     println!("sa-game: game folder {game_label} (read-only), user documents {docs_label}");
@@ -265,8 +203,6 @@ pub fn boot_with(
         repeats: 0,
         stopped: false,
         iter_state: 0,
-        samp: samp_target,
-        samp_ui_demo: samp.ui_demo,
     })
 }
 
@@ -394,14 +330,13 @@ pub(crate) fn merge_input(base: &InputState, extra: &InputState) -> InputState {
 impl Session {
     /// One main-loop iteration with `input` (its events are queued as window messages, its state is the
     /// DirectInput state). Returns false when the loop has stopped.
-    pub fn iterate(&mut self, mut input: InputState) -> bool {
+    pub fn iterate(&mut self, #[cfg_attr(not(feature = "mods"), allow(unused_mut))] mut input: InputState) -> bool {
         if self.stopped || winmain::aborted() {
             self.stopped = true;
             return false;
         }
-        #[cfg(feature = "samp")]
-        crate::samp_ui_demo::take_input(&mut input);
-        crate::samp_input::filter(&mut input);
+        #[cfg(feature = "mods")]
+        crate::mods::filter_input(&mut input);
         // a video mode a mod requested since the last iteration (MOD-2)
         #[cfg(feature = "mods")]
         crate::mods::frame_boundary();
@@ -525,13 +460,6 @@ impl Session {
             for (m, n) in &undelivered {
                 let _ = writeln!(md, "- message {m:#06x}: {n}");
             }
-        }
-        if let Some(t) = &self.samp {
-            crate::samp::report(&mut md, t);
-        }
-        #[cfg(feature = "samp")]
-        if self.samp_ui_demo {
-            crate::samp_ui_demo::report(&mut md);
         }
         let count = |p: &str| rep.rows.iter().filter(|r| r.3.starts_with(p)).count();
         let (ok, blocked, orig, crashed) =

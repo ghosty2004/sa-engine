@@ -45,17 +45,6 @@ pub mod mods;
 pub mod native;
 pub mod perf;
 pub mod rw_standin;
-pub mod samp;
-pub mod samp_assets;
-#[cfg(feature = "samp")]
-pub mod samp_net;
-#[cfg(feature = "samp")]
-pub mod samp_saa;
-pub mod samp_input;
-#[cfg(feature = "samp")]
-pub mod samp_ui_demo;
-#[cfg(feature = "samp")]
-pub mod samp_ui_scene;
 pub mod sha256;
 pub mod vorbisfile;
 pub mod winmain;

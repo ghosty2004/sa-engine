@@ -10,7 +10,7 @@ LAYERS = [
     ['sa-macros', 'sa-math', 'sa-image', 'sa-platform', 'sa-oracle-format', 'sa-types', 'sa-net',
      'sa-launcher', 'sa-udp-proxy'],
     # interfaces in the game's value types: the mod API's definition, the SA:MP game adapter's traits
-    ['sa-mod-api', 'sa-samp-api'],
+    ['sa-mod-api'],
     # sa-mod: the mod SDK (MOD-2), linked by mods, not by the game
     ['sa-core', 'sa-mod'],
     # sa-access: the game's state read and changed from outside the ports (mod host, SA:MP adapter)
@@ -20,7 +20,7 @@ LAYERS = [
     ['sa-ped', 'sa-veh', 'sa-cam', 'sa-ai', 'sa-weapon', 'sa-render'],
     ['sa-script', 'sa-hud', 'sa-audio'],
     # the SA:MP glue, the registry of every port
-    ['sa-samp', 'sa-ports', 'sa-mod-host'],
+    ['sa-ports', 'sa-mod-host'],
     ['sa-rw-wgpu', 'sa-hook'],
     ['sa-game', 'sa-oracle'],
 ]

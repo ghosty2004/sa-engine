@@ -48,8 +48,8 @@ impl GameFs for ReadOnly {
 }
 
 /// A file layer in front of the mounted trees, at the point where the original's file opens reach kernel32
-/// (`CreateFileA`, which samp.dll hooks to serve samp.saa entries from memory): given the path the game opens,
-/// the replacement bytes or `None` for the disk. Only samp mode registers one (`sa_samp_api::files`).
+/// (`CreateFileA`): given the path the game opens, the replacement bytes or `None` for the disk (a host above the
+/// game, e.g. the data mods' file overlay, registers one).
 pub type Redirect = fn(&str) -> Option<std::sync::Arc<Vec<u8>>>;
 
 static REDIRECT: std::sync::RwLock<Option<Redirect>> = std::sync::RwLock::new(None);

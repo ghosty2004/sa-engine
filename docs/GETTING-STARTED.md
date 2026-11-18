@@ -140,7 +140,7 @@ cargo build --release --target i686-pc-windows-gnu -p sa-hook -p sa-launcher
 
 # phase B: the native game
 cargo build --release --target i686-unknown-linux-gnu -p sa-game
-#   with the SA:MP client linked in:  … -p sa-game --features samp      (integration branch, §9)
+#   with WebAssembly mods (SA:MP is the samp mod, docs/samp/README.md):  … -p sa-game --features mods
 
 # oracle tools (host)
 cargo build --release -p sa-oracle-format -p sa-oracle    # satool, sa-oracle
@@ -190,7 +190,7 @@ Useful options (all documented in [arch/platform.md](arch/platform.md) §13–§
 | `SA_GAME_STUB=ADDR=RET/N,…` | exploration only: make an unported function return a constant |
 | `SA_GAME_SCRIPT_SKIP=1` | skip unported script opcodes — not 1:1 |
 | `SA_GAME_AUDIO=cpal` | real audio output natively |
-| `--samp HOST:PORT --name N` (+ `SA_SAMP_DIR`) | SA:MP client (built with `--features samp`) |
+| `--mods DIR[,DIR...]` | WebAssembly mods, e.g. `target/mods/resolution,target/mods/samp` (built with `--features mods`; SA:MP: docs/samp/README.md) |
 
 The **blocker list** in the report is the main development loop of phase B: run a scenario, port what it lists,
 repeat.
@@ -207,10 +207,9 @@ tools/web/build.sh && tools/web/serve.sh --game wine/gta-sa      # localhost onl
 ### 5.4 SA:MP in the browser
 
 ```sh
-FEATURES=samp tools/web/build.sh
-SAMP_DIR=re/samp/client tools/web/samp-demo.sh     # private open.mp + sa-udp-proxy + web server, all on 127.0.0.1
-                                                   # (SAMP_DIR support: SAMP-FX branch; without it the SA:MP loading screen/skin fall back to GTA's)
-# prints the URL, e.g. http://127.0.0.1:8644/?autostart=1&backend=gl&samp=127.0.0.1:7813&proxy=ws://127.0.0.1:7781&name=WebCJ
+FEATURES=mods tools/web/build.sh && mods/build.sh
+tools/web/serve.sh --mods target/mods               # plus sa-udp-proxy for the mods' sockets
+# then ?mods=resolution,samp&proxy=ws://127.0.0.1:7781 (SA:MP as a mod: docs/samp/README.md)
 ```
 
 The proxy (`sa-udp-proxy`) relays WebSocket ↔ UDP; by default it only allows the one server it was started for.

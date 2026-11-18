@@ -78,8 +78,10 @@ pub fn draw_status(dev: &mut dyn D3d9Device, outcomes: &[boot::Outcome], t: f32,
 /// Runs the frame steps once without forking (they are known not to fault) and returns their
 /// outcomes.
 pub fn frame(input: &InputState) -> Vec<boot::Outcome> {
+    #[cfg_attr(not(feature = "mods"), allow(unused_mut))]
     let mut input = input.clone();
-    crate::samp_input::filter(&mut input);
+    #[cfg(feature = "mods")]
+    crate::mods::filter_input(&mut input);
     let input = &input;
     bind::with("input", |p| {
         let t = p.time.time_get_time();

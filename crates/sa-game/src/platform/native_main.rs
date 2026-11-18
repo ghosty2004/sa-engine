@@ -22,11 +22,6 @@ pub fn parse_args() -> Result<Args, String> {
         screenshot: None,
         report: None,
         documents: None,
-        samp: None,
-        name: "Player".into(),
-        samp_auth: None,
-        samp_proxy: None,
-        samp_ui_demo: false,
         mods: None,
         image: None,
     };
@@ -51,16 +46,12 @@ pub fn parse_args() -> Result<Args, String> {
             "--documents" => a.documents = Some(PathBuf::from(val()?)),
             "--persistent-documents" => a.documents = Some(documents_dir()),
             "--start-in-world" => native::set_start_in_world(),
-            "--samp" => a.samp = Some(val()?),
-            "--name" => a.name = val()?,
-            "--samp-auth" => a.samp_auth = Some(PathBuf::from(val()?)),
-            "--samp-ui-demo" => a.samp_ui_demo = true,
             "--mods" => a.mods = Some(val()?),
             "--image" => a.image = Some(crate::arena::ImageKind::parse(&val()?)?),
             "--fixed-step" => det::set_fixed_step(val()?.parse().map_err(|e| format!("--fixed-step: {e}"))?),
             "-h" | "--help" => {
                 println!(
-                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--start-in-world] [--fixed-step MS] [--frame-times FILE] [--perf FILE] [--samp HOST[:PORT] [--name NAME] [--samp-auth FILE] | --samp-ui-demo] [--mods DIR] [--image exe|builtin|check] [--window [--exit-after SECONDS] [--auto-input] | --screenshot OUT.png]\n\
+                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--start-in-world] [--fixed-step MS] [--frame-times FILE] [--perf FILE] [--mods DIR[,DIR...]] [--image exe|builtin|check] [--window [--exit-after SECONDS] [--auto-input] | --screenshot OUT.png]\n\
                      The user documents folder (settings, saves) is a fresh temporary folder per run unless\n\
                      --documents DIR or --persistent-documents ($XDG_DATA_HOME/sa-engine/documents) is given.\n\
                      --window runs the game in a native window with the window's keyboard and mouse; --auto-input adds\n\
@@ -70,10 +61,8 @@ pub fn parse_args() -> Result<Args, String> {
                      The game heap comes from the deterministic mode's fixed-address region at 0x18000000 (one heap\n\
                      layout everywhere, in the original's address range); --system-heap uses the C library's allocator\n\
                      instead (its addresses read as huge floats where the game reads stale pointers: not 1:1).\n\
-                     --samp joins a SA:MP / open.mp server through the native game adapter (build with --features samp;\n\
-                     without it a stand-in client only samples the adapter). The auth table comes from --samp-auth or SAMP_AUTH_TABLE.\n\
-                     --samp-ui-demo draws the engine-drawn SA:MP UI (chat, dialogs, nametags, labels, textdraws) with sample content.\n\
-                     --mods DIR loads the WebAssembly mods in DIR (a mod folder with mod.toml, or a folder of them; build with\n\
+                     --mods DIR[,DIR...] loads the WebAssembly mods in each DIR, in that order (a mod folder with mod.toml, or a\n\
+                     folder of them; build with\n\
                      --features mods; docs/mods/getting-started.md).\n\
                      --image: where the arena's initial data comes from: exe (the data sections of DIR/gta_sa.exe, 1.0 US),\n\
                      builtin (the built-in image, no exe read) or check (the built-in image, compared byte for byte with\n\
@@ -84,12 +73,6 @@ pub fn parse_args() -> Result<Args, String> {
                 std::process::exit(0);
             }
             _ => return Err(format!("unknown option {k}")),
-        }
-    }
-    if let Some(s) = &a.samp {
-        crate::samp::parse_target(s, &a.name)?;
-        if a.samp_ui_demo {
-            return Err("--samp-ui-demo and --samp are exclusive".into());
         }
     }
     if a.game.as_os_str().is_empty() {
@@ -141,7 +124,6 @@ pub fn boot(args: &Args) -> Result<Session, String> {
         image,
         &args.game.display().to_string(),
         &docs.display().to_string(),
-        &args.samp_options(),
         args.mods.as_deref(),
     )
 }
