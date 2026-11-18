@@ -790,7 +790,7 @@ pub fn rw_image_read_masked_image(name: GPtr<u8>, mask_name: GPtr<u8>) -> GPtr<u
 /// `fistp dword` with RC = chop (the inline `fnstcw; or ah, 0xC; fldcw; fistp` sequences) of a value
 /// just stored as f32 and reloaded: truncation toward zero; NaN and values outside the i32 range give
 /// the integer indefinite 0x80000000.
-fn fistp_chop_f32(v: f32) -> i32 {
+pub(crate) fn fistp_chop_f32(v: f32) -> i32 {
     let d = v as f64;
     if v.is_nan() || !(-2_147_483_648.0..2_147_483_648.0).contains(&d) {
         i32::MIN
