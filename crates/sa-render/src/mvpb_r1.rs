@@ -656,11 +656,11 @@ pub fn update_in_tunnelness() {
         }
         let pp = GPtr::from_raw(p.as_mut_ptr()).cast::<u8>();
         let qq = GPtr::from_raw(q.as_mut_ptr()).cast::<u8>();
-        let d1 = collision_dist_to_line(pp, qq, g(0xC81430)) as f32;
+        let d1 = collision_dist_to_line(pp, qq, g(0xC81430)).to_f32();
         if X87::from_f32(k100).fcom(X87::from_f32(d1)).test_parity(0x05) {
             dist = d1;
         }
-        let d2 = collision_dist_to_line(pp, qq, g(0xC81424)) as f32;
+        let d2 = collision_dist_to_line(pp, qq, g(0xC81424)).to_f32();
         if X87::from_f32(dist).fcom(X87::from_f32(d2)).test_parity(0x05) {
             dist = d2;
         }

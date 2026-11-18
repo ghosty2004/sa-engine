@@ -1913,7 +1913,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x416400,sa-world,collision_remove_triangle_planes,cdecl,,cd:GPtr<sa_world::collision::shared::CCollisionData>,,sa_world::collision::data::remove_triangle_planes_col_data,CCollision::RemoveTrianglePlanes-colData,
 0x4165B0,sa-world,test_sphere_triangle,cdecl,,sphere:GPtr<u8>;verts:GPtr<u8>;tri:GPtr<u8>;plane:GPtr<u8>,u8,sa_world::collision::mvpe_coll1::test_sphere_triangle,CCollision::TestSphereTriangle,
 0x417470,sa-world,test_line_sphere,cdecl,,line:GPtr<f32>;sphere:GPtr<f32>,u8,sa_world::collision::prim::test_line_sphere,CCollision::TestLineSphere,
-0x417610,sa-world,dist_to_line,cdecl,,a:GPtr<u8>;b:GPtr<u8>;p:GPtr<u8>,f64,unported,CCollision::DistToLine,
+0x417610,sa-world,dist_to_line,cdecl,,a:GPtr<u8>;b:GPtr<u8>;p:GPtr<u8>,sa_math::x87::X87,unported,CCollision::DistToLine,
 0x417730,sa-world,coll_test_line_of_sight,cdecl,,l:GPtr<u8>;m:GPtr<u8>;col:GPtr<u8>;see_through:u32;shoot_through:u32,u8,unported,CCollision::TestLineOfSight,
 0x417F20,sa-world,sphere_cast_vs_sphere,cdecl,,a:GPtr<f32>;b:GPtr<f32>;s:GPtr<f32>,u8,sa_world::collision::prim::sphere_cast_vs_sphere,CCollision::SphereCastVsSphere,
 0x418580,sa-world,calculate_triangle_planes,cdecl,,cm:GPtr<sa_world::collision::shared::CColModel>,,sa_world::collision::data::calculate_triangle_planes_col_model,CCollision::CalculateTrianglePlanes-CColModelPtr,

@@ -475,7 +475,7 @@ pub fn find_ped_to_attack(this: GPtr<u8>) -> GPtr<u8> {
         }
         let mut p = vec3(ent_pos(ped));
         p[2] = 0.0;
-        let dl = X87::from_f64_exact(dist_to_line(GPtr::<f32>::cast::<u8>(lp(&mut o).cast()), GPtr::<f32>::cast::<u8>(lp(&mut e).cast()), GPtr::<f32>::cast::<u8>(lp(&mut p).cast())));
+        let dl = dist_to_line(GPtr::<f32>::cast::<u8>(lp(&mut o).cast()), GPtr::<f32>::cast::<u8>(lp(&mut e).cast()), GPtr::<f32>::cast::<u8>(lp(&mut p).cast()));
         let dx = x(p[0]).fsub_m(o[0]);
         let dy = x(p[1]).fsub_m(o[1]);
         let pd = dy.fmul(dy).fadd(dx.fmul(dx)).fsqrt();

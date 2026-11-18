@@ -230,7 +230,7 @@ pub fn heli_test_sniper_collision(start: GPtr<u8>, end: GPtr<u8>) -> u8 {
         let pp: GPtr<u8> = GPtr::from_raw(p.as_mut_ptr()).cast();
         matrix_mul_vec(pp, rd(h, 0x14), GPtr::from_raw(off.as_mut_ptr()).cast());
         let d = dist_to_line(start, end, pp);
-        if sa_math::x87::X87::from_f64_exact(d).fcom(x(g::<f32>(0x85_8C98).read())).test_parity(5) {
+        if d.fcom(x(g::<f32>(0x85_8C98).read())).test_parity(5) {
             continue;
         }
         let r = i32::from(rand_at(0x6C_6953) < 0x3FFF);

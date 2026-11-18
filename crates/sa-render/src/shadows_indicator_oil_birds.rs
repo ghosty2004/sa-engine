@@ -65,11 +65,11 @@ pub fn shadows_gun_shot_sets_oil_on_fire(start: GPtr<f32>, end: GPtr<f32>) {
             continue;
         }
         let mut p = [rd::<f32>(sh, 0), rd::<f32>(sh, 4), scale(rd::<f32>(sh, 8))];
-        let d = X87::from_f64_exact(dist_to_line(
+        let d = dist_to_line(
             GPtr::from_raw(s.as_mut_ptr()).cast(),
             GPtr::from_raw(e.as_mut_ptr()).cast(),
             GPtr::from_raw(p.as_mut_ptr()).cast(),
-        ));
+        );
         if !d.fcom(X87::from_f32(best)).test_parity(5) {
             best = d.to_f32();
             found = i as i32;

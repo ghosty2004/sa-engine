@@ -354,7 +354,7 @@ pub fn evaluate_target_for_heat_seeking_missile(target: GPtr<u8>, origin: GPtr<f
         x(ez).fadd_m(origin.wrapping_index(2).read()).to_f32(),
     ];
     let mut tpos = rv_bits(pos_ptr(target), 0);
-    let l = st0(dist_to_line(origin.cast(), lp(&mut end).cast(), lp(&mut tpos).cast())).to_f32();
+    let l = dist_to_line(origin.cast(), lp(&mut end).cast(), lp(&mut tpos).cast()).to_f32();
     let mut f = Fpu::new();
     f.fld(d);
     f.fsqrt();

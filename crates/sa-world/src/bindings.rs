@@ -250,7 +250,7 @@ orig! {
 
 orig! {
     /// `CCollision::DistToLine` (0x417610)
-    pub fn dist_to_line(a: GPtr<u8>, b: GPtr<u8>, p: GPtr<u8>) -> f64 = cdecl 0x417610 => unported;
+    pub fn dist_to_line(a: GPtr<u8>, b: GPtr<u8>, p: GPtr<u8>) -> sa_math::x87::X87 = reg("args = stack stack stack") 0x417610 => unported;
 }
 
 orig! {

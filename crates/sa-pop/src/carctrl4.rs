@@ -1893,7 +1893,7 @@ pub fn find_links_to_go_with_these_nodes(veh: GPtr<u8>) {
                 if l != rd::<u32>(veh, 0x394) && !path_nodes(area_of(l)).is_null() {
                     let mut a = node_pos(path_node(c));
                     let mut b = node_pos(path_node(l));
-                    let d = X87::from_f64_exact(dist_to_line(GPtr::<f32>::cast::<u8>(lp(&mut a)), GPtr::<f32>::cast::<u8>(lp(&mut b)), GPtr::<f32>::cast::<u8>(entity_pos(veh))));
+                    let d = dist_to_line(GPtr::<f32>::cast::<u8>(lp(&mut a)), GPtr::<f32>::cast::<u8>(lp(&mut b)), GPtr::<f32>::cast::<u8>(entity_pos(veh)));
                     if lt_k(d, best_dist) {
                         best_dist = d.to_f32();
                         best = i;
@@ -2127,7 +2127,7 @@ pub fn find_nodes_this_car_is_nearest_to(veh: GPtr<u8>, out_node: GPtr<u32>, out
                         b[2] = x(b[2]).fmul_m(three).to_f32();
                         vp[2] = x(vp[2]).fmul_m(three).to_f32();
                         let dl =
-                            X87::from_f64_exact(dist_to_line(GPtr::<f32>::cast::<u8>(lp(&mut a)), GPtr::<f32>::cast::<u8>(lp(&mut b)), GPtr::<f32>::cast::<u8>(lp(&mut vp)))).to_f32();
+                            dist_to_line(GPtr::<f32>::cast::<u8>(lp(&mut a)), GPtr::<f32>::cast::<u8>(lp(&mut b)), GPtr::<f32>::cast::<u8>(lp(&mut vp))).to_f32();
                         let mut dir = [
                             c8(ln, 8).fsub(c8(n, 8)).to_f32(),
                             c8(ln, 0xA).fsub(c8(n, 0xA)).to_f32(),
