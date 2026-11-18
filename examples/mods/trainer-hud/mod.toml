@@ -1,0 +1,14 @@
+# The trainer HUD's manifest (docs/arch/ADR-004-mods.md section 3.3). examples/mods/build.sh puts it next to
+# trainer-hud.wasm.
+[mod]
+id = "trainer-hud"
+name = "Trainer HUD (read-only)"
+version = "0.1.0"
+api_version = "1.2"
+entry = "trainer-hud.wasm"
+
+[permissions]
+render = true
+state = "read"
+input = "read"
+hooks = ["CWorld::FindPlayerHeading", "CPed::ProcessControl"]

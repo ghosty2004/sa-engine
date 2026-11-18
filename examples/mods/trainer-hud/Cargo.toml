@@ -1,0 +1,13 @@
+[package]
+name = "sa-mod-trainer-hud"
+version = "0.1.0"
+description = "Example mod: a read-only trainer overlay with live player, vehicle, world and camera state, a mini-map of the peds and vehicles around the player, the game events and two hooks (docs/mods/getting-started.md)"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+sa-mod = { path = "../../../crates/sa-mod" }
