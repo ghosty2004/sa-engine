@@ -74,36 +74,15 @@ Evidence runs: `?audiotap=1` and `node tools/web/headless.mjs --audio ...` write
 `OUT/audio-rms.tsv` (derived from your game files: never commit them). `SA_GAME_DSOUND_TRACE=1` logs `Play` and
 `SetFrequency` calls and the playing buffers every 3 s.
 
-## SA:MP (WEB-SAMP)
+## SA:MP
 
-The browser build joins SA:MP 0.3.7 / open.mp servers with samp-rs's network core (`crates/sa-game/src/samp_net.rs`,
-feature `samp`). A page cannot open UDP, so the client's datagrams go over a WebSocket to `sa-udp-proxy`
-(`crates/sa-udp-proxy`, docs/samp/web-proxy.md), which relays them unchanged to the server; natively the same client
-uses plain UDP. RakNet runs inside the main-loop iteration (no update thread, no blocking waits).
-
-```sh
-FEATURES=samp tools/web/build.sh        # the wasm32 build with the SA:MP client
-tools/web/samp-demo.sh                  # private open.mp copy (udp 127.0.0.1:7813) + sa-udp-proxy (ws://127.0.0.1:7781)
-                                        # + this page on http://127.0.0.1:8644/, all loopback only; prints the URL
-```
-
-URL options: `?samp=HOST:PORT` (the server, as the proxy reaches it), `&proxy=ws://127.0.0.1:7781` (default),
-`&name=WebCJ` (default). The auth table (third-party data, never committed) is served to this machine only by
-`serve.sh --samp-auth FILE` as `/samp-auth.txt` and passed to the game as `SA_SAMP_AUTH`. The client serial's seed is
-new per page load. By hand: `sa-udp-proxy 127.0.0.1:7813 --bind 127.0.0.1:7781`, then
-`tools/web/serve.sh --port 8644 --game DIR --samp-auth FILE`.
-
-Status (2026-11-12, WEB-SAMP): headless Chromium on WebGL2 (`--gpu native`) joins the private open.mp copy through
-the proxy as WebCJ, picks class 0 and spawns in Grove Street 18 s after the page opened; the server's chat lines and
-game text show through the engine-drawn SA:MP UI, and while a real W key is held the server's `[cov] where` position
-follows CJ (on-foot sync, y -1686.6 to -1642.3 until he reaches a wall). Blocked iterations on the unported FX getter
-`info_vget_value` (0x4A56E0) occur while walking (22 in 40 s, a few white frames); the run continues.
-
-Status (2026-11-12, WEB-3): with SAMP-START's start-up sequence the page goes straight from the loading screen to
-samp's connecting scene and class selection (no logos, intro or main menu); Shift spawns (`--walk 'h:1'` headless).
-With the FxInfo getters, the event destructors and the WORLD interior batches picked, CJ spawns, walks into his house
-(the interior, z 1014, reported by the server) with 0 blocked iterations, and a server chat line shows once (the
-second `all: ...` line is `sampcov.pwn`'s own `SendClientMessageToAll`).
+SA:MP runs as the samp mod (docs/samp/README.md, "Running SA:MP"): the build with mods (`FEATURES=mods
+tools/web/build.sh`), the mod folders served with `serve.sh --mods target/mods`, the page opened with
+`?mods=samp&proxy=ws://127.0.0.1:7781`. A page cannot open UDP, so the mod's sockets are WebSockets to `sa-udp-proxy`
+(`crates/sa-udp-proxy`, docs/samp/web-proxy.md), which relays the datagrams unchanged to the server
+(`sa-udp-proxy HOST:PORT --bind 127.0.0.1:7781`). The page's storage starts empty: the mod reads its settings and the
+auth table (third-party data, never committed) from files of the same name in its served folder, and the game asks
+before the mod reaches a server. The headless join test: `WEB=1 tools/e2e/samp/mod-join.sh`.
 
 ## Files
 
