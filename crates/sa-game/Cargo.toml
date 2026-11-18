@@ -15,7 +15,7 @@ audio = ["sa-platform/audio"]
 samp = ["dep:samp-client", "dep:samp-proto", "dep:samp-saa", "dep:samp-ui"]
 # WebAssembly mods (MOD-2, docs/arch/ADR-004-mods.md): `--mods DIR` natively, `?mods=a,b` on the web page. Off by
 # default: without it no mod code is compiled in (the parity build).
-mods = ["dep:sa-mod-host", "sa-rw-wgpu/overlay"]
+mods = ["dep:sa-mod-host", "dep:sa-mod-api", "sa-rw-wgpu/overlay", "sa-core/observe"]
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -43,6 +43,7 @@ sa-rw-wgpu = { path = "../sa-rw-wgpu" }
 sa-samp = { path = "../sa-samp" }
 sa-samp-api = { path = "../sa-samp-api" }
 sa-mod-host = { path = "../sa-mod-host", optional = true }
+sa-mod-api = { path = "../sa-mod-api", optional = true }
 wgpu = "29"
 png = "0.18"
 web-time = "1.1"

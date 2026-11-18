@@ -1,12 +1,18 @@
-//! The mod host in the game (feature `mods`, MOD-2, docs/arch/ADR-004-mods.md): the mods of `--mods DIR` (natively)
-//! or the page's `?mods=a,b` (web) are loaded before the boot, and called at the game's fixed points:
+//! The mod host in the game (feature `mods`, docs/arch/ADR-004-mods.md): the mods of `--mods DIR` (natively) or the
+//! page's `?mods=a,b` (web) are loaded before the boot, and called at the game's fixed points:
 //!
 //! * the settings phase ([`settings`]): once in the boot, after `RsEventHandler(rsINITIALIZE)` has read the
 //!   settings file (`CMenuManager::LoadSettings`) and before `RsEventHandler(rsRWINITIALIZE)` selects the video mode
 //!   (`psSelectDevice`) and creates the D3D device;
+//! * the frame begin ([`frame_boundary`]), at the start of every main-loop iteration: the game events;
 //! * the overlay phase ([`overlay`]), at every `IDirect3DDevice9::Present` after the game's own drawing; what the
 //!   mods draw goes to the render layer's 2D overlay (`WgpuDevice::draw_overlay`), outside the game's D3D9 state;
-//! * the resize event ([`resize`]), from the window / canvas backends.
+//!   then the frame-end event;
+//! * the resize event ([`resize`]), from the window / canvas backends;
+//! * the hooks: a call `orig!` dispatches through the address registry to a function a mod hooked is reported by
+//!   `sa_core::orig::observe` ([`observed`]); its arguments and result reach the mods as values and handles.
+//!
+//! The mods read the game through `sa-samp`'s game adapter over the engine's memory, the same reads samp-rs makes.
 //!
 //! **Video modes (ADR-004 §4.1).** A mod's requested video mode is applied through the original's own state, so
 //! the game sees what it would see had the player chosen it: the adapter (`IDirect3D9`, [`crate::display`]) lists
@@ -21,11 +27,17 @@
 //! adapter lists the size.
 
 use std::cell::{Cell, RefCell};
+use std::rc::Rc;
 
 use sa_core::mem::GPtr;
+use sa_core::orig::observe::{self, Observed, Phase, Raw};
+use sa_core::orig::registry;
+use sa_mod_api::hook;
 use sa_mod_host::Host;
-use sa_mod_host::api::{Display, VideoRequest};
+use sa_mod_host::api::{Display, Game, HookCall, HookRegistry, Registry, VideoRequest};
 use sa_rw_wgpu::d3d9::WgpuDevice;
+use sa_samp::{EngineView, NativeGame};
+use sa_samp_api::EntityRef;
 
 use crate::display;
 
@@ -37,6 +49,68 @@ thread_local! {
     /// The request of the settings phase and, for a size the original's list leaves out, the listed mode the menu
     /// shows instead ([`after_select`]).
     static SELECTED: Cell<Option<(VideoRequest, i32, Option<i32>)>> = const { Cell::new(None) };
+    /// The game adapter the mods read through (also turns hooked values into handles).
+    static GAME: RefCell<Option<Rc<NativeGame<EngineView>>>> = const { RefCell::new(None) };
+}
+
+/// The functions mods can hook: the entries of the address registry, by their names.
+struct EngineRegistry;
+
+impl HookRegistry for EngineRegistry {
+    fn resolve(&self, name: &str) -> Option<u32> {
+        registry::table().iter().find(|e| e.name == name).map(|e| e.addr)
+    }
+
+    fn watch(&self, target: u32, on: bool) {
+        let t = registry::table();
+        if let Ok(i) = t.binary_search_by_key(&target, |e| e.addr) {
+            observe::watch(&t[i], on);
+        }
+    }
+}
+
+/// A hooked value as the mods see it: a pooled entity as its handle, any other pointer hidden.
+fn mod_value(game: &NativeGame<EngineView>, raw: Raw) -> hook::Value {
+    let entity = |e: EntityRef| match e {
+        EntityRef::Ped(p) => hook::Value::Ped(p),
+        EntityRef::Vehicle(v) => hook::Value::Vehicle(v),
+        EntityRef::Object(o) => hook::Value::Object(o),
+        _ => hook::Value::Pointer,
+    };
+    match raw {
+        Raw::Float(f) => hook::Value::Float(f as f32),
+        // ports declare some object pointers as integers (`this: u32`)
+        Raw::Int(v) => u32::try_from(v)
+            .ok()
+            .and_then(|a| game.entity_at(a))
+            .map_or(hook::Value::Int(v as i32), entity),
+        Raw::Address(a) => game.entity_at(a).map_or(hook::Value::Pointer, entity),
+        Raw::Other => hook::Value::Pointer,
+    }
+}
+
+/// The observer of the hooked registry functions: hands the call to the mods hooked there.
+fn observed(o: &Observed<'_>) {
+    let call = GAME.with_borrow(|g| {
+        let g = g.as_ref()?;
+        Some(HookCall {
+            args: (0..o.arg_count().min(hook::MAX_ARGS)).filter_map(|i| o.arg(i)).map(|r| mod_value(g, r)).collect(),
+            result: o.result().map(|r| mod_value(g, r)),
+        })
+    });
+    let Some(call) = call else { return };
+    let phase = match o.phase {
+        Phase::Before => hook::BEFORE,
+        Phase::After => hook::AFTER,
+    };
+    // a hooked function that runs while a mod is being called (none should: mods only read) is not reported
+    HOST.with(|h| {
+        if let Ok(mut h) = h.try_borrow_mut()
+            && let Some(h) = h.as_mut()
+        {
+            h.hook(o.entry.addr, phase, &call);
+        }
+    });
 }
 
 /// `FrontEndMenuManager.m_nPrefsVideoMode`, `m_nDisplayVideoMode`.
@@ -62,6 +136,11 @@ fn mod_display(d: &display::Display) -> Display {
 pub fn install(spec: &str) -> Result<(), String> {
     let mut host = Host::new(Box::new(|s| println!("sa-game: {s}")));
     host.set_display(mod_display(&display::reported()));
+    let game = Rc::new(sa_samp::engine());
+    host.set_game(Game(game.clone()));
+    GAME.with_borrow_mut(|g| *g = Some(game));
+    host.set_registry(Registry(Rc::new(EngineRegistry)));
+    observe::set_handler(observed);
     let sources = sa_mod_host::sources(spec)?;
     if sources.is_empty() {
         println!("sa-game: mods: none found in {spec}");
@@ -152,7 +231,14 @@ pub fn after_select() {
 /// A video mode requested after the settings phase, applied at the start of a main-loop iteration as the menu's
 /// resolution change, when the adapter lists the size (the RW mode list is built once, when RW opens).
 pub fn frame_boundary() {
-    let Some(req) = with_host(|h| h.take_video_request()).flatten() else { return };
+    let Some(req) = with_host(|h| {
+        let _perf = crate::perf::scope(crate::perf::MODS);
+        h.frame_begin();
+        h.take_video_request()
+    })
+    .flatten() else {
+        return;
+    };
     if !crate::d3d9::with_device(|_| ()).is_some() {
         return;
     }
@@ -204,6 +290,7 @@ pub fn overlay(d: &mut WgpuDevice) {
             h.overlay((size.width, size.height), rects);
             d.draw_overlay(rects);
         });
+        h.frame_end();
     });
 }
 
