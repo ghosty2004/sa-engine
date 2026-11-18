@@ -69,7 +69,7 @@ orig! {
     /// `FUN_00449a50(CStoredCar*, int32)` (0x449A50)
     fn hideout_store_cars(gp: GPtr<u8>, stored: GPtr<u8>, max: i32) = thiscall 0x449A50 => unported;
     /// `FUN_00448330(CStoredCar*)` (0x448330)
-    fn hideout_prepare(gp: GPtr<u8>, stored: GPtr<u8>) = thiscall 0x448330 => unported;
+    fn hideout_prepare(gp: GPtr<u8>, stored: GPtr<u8>) = thiscall 0x448330 => garage_place_stored_cars;
     /// `thunk_FUN_01561490(CStoredCar*)` (0x4485C0)
     fn hideout_restore(gp: GPtr<u8>, stored: GPtr<u8>) -> u8 = thiscall 0x4485C0 => unported;
     /// `thunk_FUN_0156d8d0(CStoredCar*)` (0x448550)
@@ -1051,4 +1051,53 @@ fn small_hideout_closed(gp: GPtr<u8>) {
     }
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_GARAGE_UPDATE];
+/// `FUN_00448330(CStoredCar* cars)` (0x448330, thiscall `CGarage*`, `ret 4`): lays a safe house's stored cars (at most
+/// three, up to the first with model 0) out in a row along the garage's first axis. Centre `c` = base + (0, 0, 0.5) +
+/// `dirA * widthA / 2` + `dirB * widthB / 2` (the bytes' roundings: each half-axis product is stored, the x sum of
+/// the A half stays extended, the z terms are `width * 0 * 0.5`); `d` = normalised `(dirA, 0)`, step `k = d * 4`,
+/// car `i` at `(c - k) + i * k`, its packed forward `(i8(ftol(d.y * 100)), i8(ftol(-d.x * 100)), 0)` (+0x3C..+0x3E).
+#[hook(addr = 0x448330, conv = thiscall, name = "FUN_00448330", this = "CGarage",
+       expect = "83 EC 2C D9 41 04 8B 01", unverified = "frontier2-a19", route = "L2", hazards = "heap-writes",
+       note = "CGarage: safe house garages restoring their stored cars (CGarage::Update)")]
+pub fn garage_place_stored_cars(gp: GPtr<u8>, cars: GPtr<u8>) {
+    use sa_core::bindings::vector_normalise;
+    use sa_math::fpu::ftol32;
+    let f = |o: isize| rd::<f32>(gp, o);
+    let (wa, wb) = (f(0x20), f(0x24));
+    let half_ax = x(x(f(0xC)).fmul_m(wa).to_f32()).fmul_m(0.5).to_f32();
+    let half_ay = x(f(0x10)).fmul_m(wa).fmul_m(0.5).to_f32();
+    let px = x(half_ax).fadd_m(f(0));
+    let py = x(half_ay).fadd_m(f(4)).to_f32();
+    let pz = x(wa).fmul_m(0.0).fmul_m(0.5).fadd_m(x(f(8)).fadd_m(0.5).to_f32()).to_f32();
+    let half_bx = x(x(wb).fmul_m(f(0x14)).to_f32()).fmul_m(0.5).to_f32();
+    let half_by = x(f(0x18)).fmul_m(wb).fmul_m(0.5).to_f32();
+    let half_bz = x(wb).fmul_m(0.0).fmul_m(0.5).to_f32();
+    let c = [x(half_bx).fadd(px).to_f32(), x(half_by).fadd_m(py).to_f32(), x(half_bz).fadd_m(pz).to_f32()];
+    let mut d = [f(0xC), f(0x10), 0.0f32];
+    vector_normalise(GPtr::from_raw(&mut d));
+    let fwd = [d[1], x(d[0]).fchs().to_f32()];
+    let k = d.map(|v| x(v).fmul_m(4.0).to_f32());
+    let s = [0, 1, 2].map(|j| x(c[j]).fsub_m(k[j]).to_f32());
+    if rd::<i16>(cars, 0x12) == 0 {
+        return;
+    }
+    let mut i = 0;
+    loop {
+        if i >= 3 {
+            return;
+        }
+        let car = cars.byte_add(i as isize * 0x40);
+        for j in 0..3 {
+            wr::<f32>(car, 4 * j as isize, xi(i).fmul_m(k[j]).fadd_m(s[j]).to_f32());
+        }
+        wr::<u8>(car, 0x3C, ftol32(x(fwd[0]).fmul_m(100.0)) as u8);
+        wr::<u8>(car, 0x3D, ftol32(x(fwd[1]).fmul_m(100.0)) as u8);
+        wr::<u8>(car, 0x3E, 0);
+        i += 1;
+        if rd::<i16>(cars.byte_add(i as isize * 0x40), 0x12) == 0 {
+            return;
+        }
+    }
+}
+
+pub const HOOKS: &[HookReg] = &[HOOK_GARAGE_UPDATE, HOOK_GARAGE_PLACE_STORED_CARS];
