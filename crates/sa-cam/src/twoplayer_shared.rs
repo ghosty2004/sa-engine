@@ -7,6 +7,7 @@ use sa_core::mem::GPtr;
 
 use crate::common::{Fpu, g, k, rd, wr};
 use crate::followped::{ci_pow, fpatan};
+use sa_world::world::garage_update::now;
 use crate::twoplayer::{PLAYER0_PED, PLAYER1_PED, CUR_CAM_COL_VARS, pos_of, process_line_of_sight, vector_normalise};
 
 sa_core::orig! {
@@ -18,7 +19,6 @@ sa_core::orig! {
 
 /// `CGameLogic::n2PlayerPedInFocus` (0 / 1: that player alone, 2: both).
 const PED_IN_FOCUS: usize = 0x8A5E50;
-const TIME_MS: usize = 0xB7CB84;
 const TIME_STEP: usize = 0xB7CB5C;
 const LAST_TIME_CAMERA_OK: usize = 0xB6EC24;
 const LAST_TIME_CAMERA_COLLIDED: usize = 0xB6EC28;
@@ -49,10 +49,6 @@ const K_0_0125: u32 = 0x3C4C_CCCD;
 const K_1_OVER_14: u32 = 0x3D92_4925;
 const ALPHA_SHARED: u32 = 0xBF06_0A92;
 const FOV_SHARED: u32 = 0x428C_0000;
-
-fn now() -> u32 {
-    g::<u32>(TIME_MS).read()
-}
 
 /// One player in focus: his vehicle through `Process_FollowCar_SA` (the target entity switched to it for
 /// the call, then player 0's ped), else his ped through `Process_FollowPed_SA` (player 1's ped as the
