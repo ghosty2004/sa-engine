@@ -49,6 +49,16 @@ pub struct WindowTarget {
 
 static WINDOW: Mutex<Option<WindowTarget>> = Mutex::new(None);
 
+/// The largest texture side the seam device supports: the window's (or canvas's) GPU device's limit, else that of
+/// the device `CreateDevice` made, else the limit a headless seam device is created with. `IDirect3D9::GetDeviceCaps`
+/// runs before `CreateDevice`.
+pub fn max_texture_size() -> u32 {
+    let window = WINDOW.lock().unwrap_or_else(|e| e.into_inner()).as_ref().map(|t| t.device.limits().max_texture_dimension_2d);
+    window
+        .or_else(|| with_device(|d| d.caps().max_texture_width))
+        .unwrap_or_else(|| wgpu::Limits::default().max_texture_dimension_2d)
+}
+
 /// Installs the window's swap chain (before the boot creates the device).
 pub fn set_window(t: WindowTarget) {
     *WINDOW.lock().unwrap_or_else(|e| e.into_inner()) = Some(t);

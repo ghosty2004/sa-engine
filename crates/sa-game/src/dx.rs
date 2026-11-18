@@ -108,9 +108,9 @@ fn modes_for(format: u32) -> Vec<(u32, u32, u32)> {
 
 /// `D3DCAPS9` (0x130 bytes) of the native device, as `(offset, value)`: a hardware T&L device
 /// without programmable shaders (the wgpu seam runs fixed function only, platform.md §4.1), DXT,
-/// 2048² textures, anisotropy 16, 8 lights, 8 stages / 4 simultaneous textures (the seam honours
-/// stages 0–1). Not measured.
-pub const CAPS9: [(usize, u32); 34] = [
+/// anisotropy 16, 8 lights, 8 stages / 4 simultaneous textures (the seam honours stages 0–1). Not measured.
+/// The texture size limit is the GPU device's ([`write_caps9`]).
+pub const CAPS9: [(usize, u32); 32] = [
     (0x00, 1),            // DeviceType HAL
     (0x08, 0x0002_0000),  // Caps: READ_SCANLINE
     (0x0C, 0x6002_0000),  // Caps2: FULLSCREENGAMMA | CANAUTOGENMIPMAP | DYNAMICTEXTURES
@@ -127,8 +127,6 @@ pub const CAPS9: [(usize, u32); 34] = [
     (0x3C, 0x0001_EC45),  // TextureCaps
     (0x40, 0x0703_0700),  // TextureFilterCaps
     (0x4C, 0x3F),         // TextureAddressCaps
-    (0x58, 2048),         // MaxTextureWidth
-    (0x5C, 2048),         // MaxTextureHeight
     (0x64, 8192),         // MaxTextureRepeat
     (0x68, 2048),         // MaxTextureAspectRatio
     (0x6C, 16),           // MaxAnisotropy
@@ -151,11 +149,17 @@ pub const CAPS9: [(usize, u32); 34] = [
 pub const CAPS9_MORE: [(usize, u32); 4] = [(0xBC, 16), (0xC0, 0xFF), (0xF0, 1), (0xB0, 0x4280_0000)];
 
 /// Writes the native `D3DCAPS9` to `out` (0x130 bytes).
+///
+/// MaxTextureWidth / MaxTextureHeight are the GPU device's limit: RenderWare clamps a raster to them, and the
+/// post-effect front buffer is the screen rounded up to powers of two (4096 x 2048 for 2455 x 1512). A smaller
+/// reported limit gives it a texture narrower than the screen, so the screen copy into it fails and every post
+/// effect that samples it draws black.
 pub fn write_caps9(out: GPtr<u8>) {
     for i in 0..0x130 / 4 {
         out.cast::<u32>().wrapping_index(i).write(0);
     }
-    for (o, v) in CAPS9.iter().chain(CAPS9_MORE.iter()) {
+    let max = crate::d3d9::max_texture_size();
+    for (o, v) in CAPS9.iter().chain(CAPS9_MORE.iter()).chain([(0x58, max), (0x5C, max)].iter()) {
         out.byte_add(*o as isize).cast::<u32>().write(*v);
     }
     crate::d3d9_shader::patch_caps9(out);
