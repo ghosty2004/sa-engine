@@ -1,8 +1,5 @@
-//! FRONTIER-2 turn 14, lane A (batch `frontier2-a26`): the auto-aim helpers of the instant-hit shots,
-//! `CWeapon::DoDoomAiming` (on-foot NPC / doom aiming) and `CWeapon::DoDriveByAutoAiming` (drive-by). Ported from the
-//! 1.0 US bytes (`docs/re/specs/WEAPON/CWeapon.md` / `CWeapon.deviations.md` as reading aids; gta-reversed has
-//! DoDoomAiming with an inverted visibility test and only a `plugin::Call` for the drive-by). Unverified
-//! (docs/verify/HOWTO.md).
+//! The auto-aim of the instant-hit shots: `CWeapon::DoDoomAiming` (NPCs on foot) and `CWeapon::DoDriveByAutoAiming`
+//! (drive-bys and vehicle guns).
 
 use sa_core::abi::HookReg;
 use sa_core::field::{rd, rd3f};

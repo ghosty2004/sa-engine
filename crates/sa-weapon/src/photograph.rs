@@ -1,6 +1,4 @@
-//! FRONTIER-2 turn 14, lane A (batch `frontier2-a26`): `CWeapon::TakePhotograph`, the camera weapon's shot. Ported
-//! from the 1.0 US bytes (`docs/re/specs/WEAPON/CWeapon.deviations.md` and gta-reversed `Weapon.cpp` as reading aids;
-//! the bytes win). Unverified (docs/verify/HOWTO.md).
+//! `CWeapon::TakePhotograph`: the camera weapon's shot, which marks the peds and objects in frame as photographed.
 
 use sa_core::abi::HookReg;
 use sa_core::field::rd;

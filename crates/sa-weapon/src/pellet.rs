@@ -1,6 +1,4 @@
-//! FRONTIER-2 turn 14, lane A (batch `frontier2-a26`): `CWeapon::SetUpPelletCol`, the shotgun pellet test model.
-//! Ported from the 1.0 US bytes (`docs/re/specs/WEAPON/CWeapon.deviations.md` and gta-reversed `Weapon.cpp` as
-//! reading aids; the bytes win). Unverified (docs/verify/HOWTO.md).
+//! `CWeapon::SetUpPelletCol`: the shotgun's pellet lines as a collision model, placed at the hit.
 
 use sa_core::abi::HookReg;
 use sa_core::field::{rd, rd3f, wr};
