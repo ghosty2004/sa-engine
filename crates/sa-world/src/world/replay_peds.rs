@@ -24,7 +24,7 @@ orig! {
     /// `CMatrix::ScaleAll(float)` (0x45AF40)
     fn matrix_scale_all(m: GPtr<u8>, s: f32) = thiscall 0x45AF40 => sa_core::cmatrix::scale_all;
     /// `CMatrix::operator+=(const CMatrix&)` (0x59ADF0)
-    fn matrix_add_assign(m: GPtr<u8>, rhs: GPtr<u8>) -> GPtr<u8> = thiscall 0x59ADF0 => sa_core::matrix_more::add_assign;
+    pub(crate) fn matrix_add_assign(m: GPtr<u8>, rhs: GPtr<u8>) -> GPtr<u8> = thiscall 0x59ADF0 => sa_core::matrix_more::add_assign;
     /// `CAnimBlendAssociation::SetBlend(float amount, float delta)` (0x4CEBA0)
     fn assoc_set_blend(a: GPtr<u8>, amount: u32, delta: u32) = thiscall 0x4CEBA0 => sa_anim::assoc::set_blend;
     /// `RpAnimBlendClumpRemoveAssociations(RpClump*, uint32 mask)` (0x4D6820)
@@ -234,12 +234,12 @@ fn apply_ped_update(ped: GPtr<u8>, packet: GPtr<u8>) {
     world_add(ped);
 }
 
-fn model_loaded(model: i32) -> bool {
+pub(crate) fn model_loaded(model: i32) -> bool {
     g::<u8>((MODEL_LOAD_STATE as isize + model as isize * 20) as usize).read() == 1
 }
 
 /// The ped pool slot a recording's ped byte maps to (`m_PedPoolConversion`).
-fn ped_conversion(pool_byte: u8) -> i32 {
+pub(crate) fn ped_conversion(pool_byte: u8) -> i32 {
     g::<i32>(PED_POOL_CONVERSION + 4 * usize::from(pool_byte)).read()
 }
 

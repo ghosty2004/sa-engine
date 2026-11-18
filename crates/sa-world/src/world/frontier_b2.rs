@@ -38,9 +38,9 @@ use sa_stream::bindings::ped_is_player;
 
 orig! {
     /// `CReplay::PlayBackThisFrameInterpolation(CAddressInReplayBuffer&, float, uint32*)` (0x45F380, AL)
-    fn replay_play_back_this_frame_interpolation(buf: GPtr<u8>, interp: f32, out: u32) -> u8 = cdecl 0x45F380 => unported;
+    fn replay_play_back_this_frame_interpolation(buf: GPtr<u8>, interp: f32, out: GPtr<u32>) -> u8 = cdecl 0x45F380 => crate::world::replay_frame::play_back_this_frame_interpolation;
     /// `CReplay::ProcessLookAroundCam()` (0x45D760)
-    fn replay_process_look_around_cam() = cdecl 0x45D760 => unported;
+    fn replay_process_look_around_cam() = cdecl 0x45D760 => crate::world::replay_frame::process_look_around_cam;
     /// `CReplay::StreamAllNecessaryCarsAndPeds()` (0x45D4B0)
     fn replay_stream_all_necessary_cars_and_peds() = cdecl 0x45D4B0 => crate::world::frontier_b3::replay_stream_all_necessary_cars_and_peds;
     /// `CPlayerPed::PickWeaponAllowedFor2Player()` (0x609800)
@@ -184,7 +184,7 @@ pub fn replay_go_to_next_block() {
 #[hook(addr = 0x4604A0, conv = cdecl, name = "CReplay::PlayBackThisFrame", expect = "E9 AB 1B 10 01",
        unverified = "frontier2-b5", route = "L2", hazards = "heap-writes")]
 pub fn replay_play_back_this_frame() {
-    if replay_play_back_this_frame_interpolation(GPtr::from_addr(0x97_FB64), 1.0, 0) != 0 {
+    if replay_play_back_this_frame_interpolation(GPtr::from_addr(0x97_FB64), 1.0, GPtr::NULL) != 0 {
         audio_set_effects_master_volume(audio_engine(), u32::from(g::<u8>(0xBA_6797).read()));
         audio_set_music_master_volume(audio_engine(), u32::from(g::<u8>(0xBA_6798).read()));
     } else {
