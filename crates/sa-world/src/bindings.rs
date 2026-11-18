@@ -2159,6 +2159,11 @@ orig! {
 }
 
 orig! {
+    /// `SurfaceInfos_c::IsGlass` (0x55E790)
+    pub fn surface_is_glass(si: GPtr<u8>, id: u32) -> u32 = thiscall 0x55E790 => unported;
+}
+
+orig! {
     /// `SurfaceInfos_c::GetRoughness` (0x55E810)
     pub fn get_roughness(si: GPtr<u8>, id: u32) -> u32 = thiscall 0x55E810 => unported;
 }

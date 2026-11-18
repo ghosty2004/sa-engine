@@ -59,6 +59,7 @@ pub use sa_core::bindings::rp_hanim_hierarchy_get_matrix_array;
 pub use sa_core::bindings::rp_hanim_id_get_index;
 pub use sa_core::bindings::rw_v3d_transform_points;
 pub use sa_world::bindings::stats_increment_stat;
+pub use sa_world::bindings::surface_is_glass;
 pub use sa_core::bindings::tm_get_active_task as task_manager_get_active_task;
 pub use sa_core::bindings::vector_magnitude;
 pub use sa_core::bindings::vector_normalise as normalise;
@@ -115,8 +116,6 @@ orig! {
     pub fn event_whizzed_by_ctor(ev: GPtr<u8>, e: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>, silenced: u32) -> GPtr<u8> = thiscall 0x4B1FD0 => unported;
     /// `CEventGunShotWhizzedBy::~CEventGunShotWhizzedBy()` (0x4B2070, thiscall)
     pub fn event_whizzed_by_dtor(ev: GPtr<u8>) = thiscall 0x4B2070 => unported;
-    /// `SurfaceInfos_c::IsGlass(uint32)` (0x55E790, thiscall on `g_surfaceInfos` 0xB79538; the caller tests AL)
-    pub fn surface_is_glass(si: GPtr<u8>, id: u32) -> u32 = thiscall 0x55E790 => unported;
     /// `CWeapon::DoBulletImpact(CEntity* owner, CEntity* victim, const CVector* start, const CVector* end, const CColPoint*, int32)` (0x73B550, thiscall)
     pub fn do_bullet_impact(this: GPtr<u8>, owner: GPtr<u8>, victim: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>, cp: GPtr<u8>, inc: i32) = thiscall 0x73B550 => crate::weapon_impact::do_bullet_impact;
     /// `CWeapon::FireM16_1stPerson(CPed*)` (0x741C00, thiscall)

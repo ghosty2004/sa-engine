@@ -11,6 +11,9 @@ use sa_core::crt::rand_at;
 use sa_math::fpu::xi;
 use sa_math::x87::X87;
 use sa_world::bindings::find_ground_z_for_3d_coord;
+use sa_world::bindings::{calculate_triangle_planes, entity_get_col_model, multiply3x3, surface_is_glass};
+use sa_core::field::ptr_of;
+use crate::glass_break_physically::generate_panes_for_window as call_generate_panes_for_window;
 
 sa_core::globals! {
     list GLOBALS;
@@ -576,6 +579,145 @@ pub fn window_responds_to_explosion(e: GPtr<u8>, px: f32, py: f32, pz: f32) {
     );
 }
 
+/// `g_surfaceInfos` (SurfaceInfos_c).
+const SURFACE_INFOS: usize = 0xB79538;
+/// `CColTriangle` (8 bytes: three u16 vertex indices, the surface byte +6), compressed vertex (three int16,
+/// 1/128 units), compressed plane normal (int16, 1/4096 units; planes are 10 bytes).
+const K_VERTEX: f32 = 0.0078125;
+const K_NORMAL: f32 = 0.000_244_140_63;
+
+/// The x87 dot product the windscreen code inlines: `(a.x b.x + a.z b.z) + a.y b.y`, unrounded.
+fn dot_x87(a: &[f32; 3], b: &[f32; 3]) -> X87 {
+    x(a[0]).fmul_m(b[0]).fadd(x(a[2]).fmul_m(b[2])).fadd(x(a[1]).fmul_m(b[1]))
+}
+
+/// `CGlass::CarWindscreenShatters(CVehicle*, bool)` (0x71C2B0, cdecl; the flag is pushed but never read).
+///
+/// From the bytes (gta-reversed differs: its right vector is `up x n`, the pane pair is the first two glass
+/// triangles in a row, the corner search, centre and sound differ). Nothing without a col model's data, with fewer
+/// than two triangles, or without two glass triangles (the first and the next one found later; surface
+/// `IsGlass`), or without planes after `CalculateTrianglePlanes`. `n` = the first glass triangle's plane normal
+/// turned by the vehicle matrix (`Multiply3x3`); fwd = `Normalise(right x n)`, right = `Normalise(n x up)`. The six
+/// vertices of the two triangles in world space; per vertex the fwd / right dots (x87, rounded when stored; the
+/// first fwd dot stays unrounded on the stack). Corner = the first vertex with the smallest `right + fwd` (from
+/// vertex 1, against `f32(right0 + fwd0)`), max fwd / max right over all six; extents = max - corner. The glass
+/// collision sound (event 0x7E) at the vehicle's position, then `GeneratePanesForWindow(2, corner, fwd * extF,
+/// right * extR, move speed, corner + fwd * extF / 2 + right * extR / 2 (x87 order of the bytes), 0.1, false,
+/// false, 2, true)`.
+#[hook(addr = 0x71C2B0, conv = cdecl, name = "CGlass::CarWindscreenShatters", expect = "81 EC BC 00 00 00",
+       unverified = "frontier2-c22", route = "L2", hazards = "heap-writes",
+       note = "GeneratePanesForWindow draws rand()")]
+pub fn car_windscreen_shatters(v: GPtr<u8>, _explode: u32) {
+    let cm = entity_get_col_model(v);
+    let cd: GPtr<u8> = rd(cm, 0x2C);
+    if cd.is_null() || rd::<i16>(cd, 4) < 2 {
+        return;
+    }
+    let (mut first, mut first_idx, mut second) = (0usize, -1i32, 0usize);
+    let mut i = 0i32;
+    while i < i32::from(rd::<i16>(cd, 4)) {
+        let tris: GPtr<u8> = rd(cd, 0x18);
+        let surface = u32::from(rd::<u8>(tris, i as isize * 8 + 6));
+        if surface_is_glass(g(SURFACE_INFOS), surface) as u8 != 0 {
+            if first != 0 {
+                second = rd::<GPtr<u8>>(cd, 0x18).addr().wrapping_add(i as usize * 8);
+                break;
+            }
+            first = rd::<GPtr<u8>>(cd, 0x18).addr().wrapping_add(i as usize * 8);
+            first_idx = i;
+        }
+        i += 1;
+    }
+    if second == 0 {
+        return;
+    }
+    calculate_triangle_planes(cm.cast());
+    let planes: GPtr<u8> = rd(cd, 0x1C);
+    if planes.is_null() {
+        return;
+    }
+    let plane = planes.byte_add(i32::from(first_idx as i16) as isize * 10);
+    let mut n = [0.0f32; 3];
+    for (c, o) in n.iter_mut().zip([0isize, 2, 4]) {
+        *c = f32::from(rd::<i16>(plane, o)) * K_NORMAL;
+    }
+    let mat: GPtr<u8> = rd(v, 0x14);
+    let mut tmp = [0.0f32; 3];
+    let mut wn = [0.0f32; 3];
+    let r = multiply3x3(ptr_of(&mut tmp), mat, ptr_of(&mut n));
+    wn.copy_from_slice(&[rd::<f32>(r, 0), rd::<f32>(r, 4), rd::<f32>(r, 8)]);
+    let mut fwd = [0.0f32; 3];
+    let r = cross_product(ptr_of(&mut tmp), mat, ptr_of(&mut wn));
+    fwd.copy_from_slice(&[rd::<f32>(r, 0), rd::<f32>(r, 4), rd::<f32>(r, 8)]);
+    vector_normalise(GPtr::from_raw(&mut fwd));
+    let mut right = [0.0f32; 3];
+    let r = cross_product(ptr_of(&mut tmp), ptr_of(&mut wn), mat.byte_add(0x20));
+    right.copy_from_slice(&[rd::<f32>(r, 0), rd::<f32>(r, 4), rd::<f32>(r, 8)]);
+    vector_normalise(GPtr::from_raw(&mut right));
+    let mut vs = [[0.0f32; 3]; 6];
+    for (t, tri) in [first, second].into_iter().enumerate() {
+        let tri = GPtr::<u8>::from_addr(tri);
+        for k in 0..3 {
+            let verts: GPtr<u8> = rd(cd, 0x14);
+            let vi = rd::<u16>(tri, k as isize * 2) as isize;
+            for (c, o) in vs[t * 3 + k].iter_mut().zip([0isize, 2, 4]) {
+                *c = f32::from(rd::<i16>(verts, vi * 6 + o)) * K_VERTEX;
+            }
+        }
+    }
+    for vv in vs.iter_mut() {
+        let r = matrix_mul_vec(ptr_of(&mut tmp), mat, ptr_of(vv));
+        vv.copy_from_slice(&[rd::<f32>(r, 0), rd::<f32>(r, 4), rd::<f32>(r, 8)]);
+    }
+    let fd0 = dot_x87(&fwd, &vs[0]);
+    let mut fd = [fd0.to_f32(); 6];
+    let mut rdot = [0.0f32; 6];
+    for i in 0..6 {
+        if i > 0 {
+            fd[i] = dot_x87(&fwd, &vs[i]).to_f32();
+        }
+        rdot[i] = dot_x87(&right, &vs[i]).to_f32();
+    }
+    let mut min_sum = x(rdot[0]).fadd(fd0).to_f32();
+    let mut max_fwd = fd[0];
+    let mut max_right = rdot[0];
+    let mut corner = 0usize;
+    for i in 1..6 {
+        let s = x(rdot[i]).fadd_m(fd[i]);
+        if !jp(s, x(min_sum), 5) {
+            min_sum = s.to_f32();
+            corner = i;
+        }
+        if !jne(x(fd[i]), x(max_fwd), 0x41) {
+            max_fwd = fd[i];
+        }
+        if !jp(x(max_right), x(rdot[i]), 5) {
+            max_right = rdot[i];
+        }
+    }
+    let ext_f = x(max_fwd).fsub_m(fd[corner]).to_f32();
+    let ext_r = x(max_right).fsub_m(rdot[corner]).to_f32();
+    let pos = if mat.is_null() { v.byte_add(4) } else { mat.byte_add(0x30) };
+    report_glass_collision_event(g(AUDIO_ENGINE), 0x7E, pos.cast());
+    let p = vs[corner];
+    let h = x(ext_r).fmul_m(0.5);
+    let rxh = x(right[0]).fmul(h);
+    let ryh = x(right[1]).fmul(h).to_f32();
+    let rzh = x(right[2]).fmul(h).to_f32();
+    let hf = x(ext_f).fmul_m(0.5);
+    let fxhf = x(fwd[0]).fmul(hf);
+    let fyhf = x(fwd[1]).fmul(hf).to_f32();
+    let fzhf = x(fwd[2]).fmul(hf).to_f32();
+    let cx = fxhf.fadd_m(p[0]).fadd(rxh).to_f32();
+    let cy = x(x(fyhf).fadd_m(p[1]).to_f32()).fadd_m(ryh).to_f32();
+    let cz = x(x(fzhf).fadd_m(p[2]).to_f32()).fadd_m(rzh).to_f32();
+    let re = |c: usize| x(right[c]).fmul_m(ext_r).to_f32();
+    let fe = |c: usize| x(fwd[c]).fmul_m(ext_f).to_f32();
+    let speed = |o: isize| rd::<f32>(v, 0x44 + o);
+    call_generate_panes_for_window(2, p[0], p[1], p[2], fe(0), fe(1), fe(2), re(0), re(1), re(2), speed(0), speed(4), speed(8),
+                                   cx, cy, cz, 0.1, 0, 0, 2, 1);
+}
+
 pub use sa_core::bindings::atexit;
 pub use sa_core::bindings::eh_vector_ctor;
 pub use sa_core::bindings::eh_vector_dtor;
@@ -762,6 +904,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_WINDOW_RESPONDS_TO_SOFT_COLLISION,
     HOOK_FIND_WINDOW_SECTOR_LIST,
     HOOK_WINDOW_RESPONDS_TO_EXPLOSION,
+    HOOK_CAR_WINDSCREEN_SHATTERS,
     HOOK_INIT_GLASS_PANES,
     HOOK_DTOR_GLASS_PANES,
     HOOK_PANE_UPDATE_PORT,

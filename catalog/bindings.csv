@@ -2285,6 +2285,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x55E650,sa-world,get_friction_effect,thiscall,,infos:GPtr<u8>;surface:u32,u32,unported,SurfaceInfos_c::GetFrictionEffect,
 0x55E6F0,sa-world,surface_is_sand,thiscall,,s:GPtr<u8>;surf:u32,u8,unported,SurfaceInfos_c::IsSand,
 0x55E710,sa-world,surface_is_water,thiscall,,s:GPtr<u8>;surf:u32,u8,unported,SurfaceInfos_c::IsWater,
+0x55E790,sa-world,surface_is_glass,thiscall,,si:GPtr<u8>;id:u32,u32,unported,SurfaceInfos_c::IsGlass,
 0x55E730,sa-world,is_shallow_water,thiscall,,s:GPtr<u8>;surface:u32,u8,unported,SurfaceInfos_c::IsShallowWater,
 0x55E770,sa-world,is_steep_slope,thiscall,,s:GPtr<u8>;surface:u32,u8,unported,SurfaceInfos_c::IsSteepSlope,
 0x55E810,sa-world,get_roughness,thiscall,,si:GPtr<u8>;id:u32,u32,unported,SurfaceInfos_c::GetRoughness,
