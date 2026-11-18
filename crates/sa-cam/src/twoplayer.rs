@@ -290,9 +290,8 @@ const K_0_75: u32 = 0x3F40_0000;
 const K_0_45: u32 = 0x3EE6_6666;
 const TIME_STEP: usize = 0xB7_CB5C;
 
-/// `CCam::Process_Cam_TwoPlayer_Separate_Cars_TopDown()` (0x513BE0, thiscall, no arguments; FRONTIER-2 turn 13 lane
-/// B, batch `frontier2-b29`), from the 1.0 US bytes (gta-reversed's version differs: it divides the time step by 200
-/// and builds the up vector from the source). FOV 80. `e_i` = player i's ped's +0x58C vehicle, else the ped
+/// `CCam::Process_Cam_TwoPlayer_Separate_Cars_TopDown()` (0x513BE0, thiscall, no arguments; unlike
+/// gta-reversed, the time step is multiplied by 0.005 and up does not come from the source). FOV 80. `e_i` = player i's ped's +0x58C vehicle, else the ped
 /// (`FindPlayerEntity` inlined, no in-vehicle flag test). `c = (p1 + p0) * 0.5` (x stored as f32, y and z kept on the
 /// x87 stack, z's sum rounded first), `d = |p0 - p1|` (`(z^2 + y^2) + x^2`). The height target m: both players in a
 /// vehicle 1.0, one 0.75, none 0.45; `diff = m - h` (+0xD8), `s = f32(timeStep * 0.005)`: `h = m` when `|diff| < s`,
@@ -404,9 +403,8 @@ fn col_max_z(e: GPtr<u8>) -> f32 {
     rd::<f32>(rd::<GPtr<u8>>(mi, 0x14), 0x14)
 }
 
-/// `CCam::Process_Cam_TwoPlayer_Separate_Cars()` (0x513510, thiscall, no arguments; FRONTIER-2 turn 13 lane B, batch
-/// `frontier2-b29`), transcribed from the 1.0 US bytes with docs/re/specs/CAM/CCam.md as reading aid (gta-reversed
-/// has a stub). FOV 80; V1 / V2 = the two players' peds' +0x58C vehicles (no null checks). `D = normalise(pos V2 - pos
+/// `CCam::Process_Cam_TwoPlayer_Separate_Cars()` (0x513510, thiscall, no arguments), with the
+/// original's frame and x87 stack kept so every intermediate rounds as the bytes do. FOV 80; V1 / V2 = the two players' peds' +0x58C vehicles (no null checks). `D = normalise(pos V2 - pos
 /// V1)`; the points behind each car `A = pos V1 - 6D` and `B = pos V2 + 6D` (z first raised by the col model's max z
 /// + 1); `E1 = normalise(pos V2 - A)`, `E2 = normalise(pos V1 - B)`; `N = normalise(normalise(A.y - B.y, B.x - A.x,
 /// 0) with z = -0.1)`. With `ang = blend (+0x114) * pi`, `sA = f32(sin ang)`, `w = f32((cos ang + 1) * 0.5)` and

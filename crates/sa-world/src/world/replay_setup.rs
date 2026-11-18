@@ -1,7 +1,5 @@
-//! FRONTIER-2 turn 13, lane B (batch `frontier2-b30`): the replay playback set-up's leaves (`CReplay` buffer scans and
-//! the pool conversion tables that `CReplay::TriggerPlayback` 0x4600F0 calls). Ported from the 1.0 US bytes (several
-//! bodies live in `.HOODLUM`, reached through their 5-byte stubs); gta-reversed as a reading aid only (the bytes win).
-//! Unverified (docs/verify/HOWTO.md).
+//! The replay playback set-up's leaves: the `CReplay` buffer scans and the pool conversion tables that
+//! `CReplay::TriggerPlayback` calls. Several bodies live in `.HOODLUM`, reached through their 5-byte stubs.
 
 use sa_core::abi::HookReg;
 use sa_core::hook;

@@ -733,8 +733,7 @@ fn editor_wrap(p: GPtr<u8>) {
 }
 
 /// `CCam::Process_Editor(const CVector&, float, float, float)` (0x50F3F0, thiscall `ret 0x10`, no argument read;
-/// FRONTIER-2 turn 13 lane B, batch `frontier2-b29`), from the 1.0 US bytes (gta-reversed as reading aid: its clamps
-/// and wrap bounds differ). On m_bResetStatics (+0xA): source = (796, -937, 40), the target entity (+0x21C)
+/// gta-reversed's clamps and wrap bounds differ from the bytes). On m_bResetStatics (+0xA): source = (796, -937, 40), the target entity (+0x21C)
 /// released. Near clip 0.3, FOV 70. Pad 1's left stick: `alpha += y * (pi/180) * 0.02`, `beta += x * 0.02618 *
 /// (1/19)`. The target = the target entity's position, else the source. alpha above 1.5620698 snaps to it; below
 /// -1.5620698 it snaps to that and the look-at step is only clamped; otherwise square / cross (+0x1C / +0x20) add /
