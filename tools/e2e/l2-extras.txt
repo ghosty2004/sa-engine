@@ -7137,3 +7137,7 @@ CStats::BuildStatLine@0xC1AED8:0x480:RW
 # (0 mismatches): .data/.bss as a declared write range (VERIFIER-11's form; D bytes are compared as window writes)
 0x5D9660@0x8A4000:0x3FA000:D
 0x5984C0@0x8A4000:0x3FA000:D
+# The vertex-shader skin render 0x7C8060: the last vertex shader set and the vertex-shader cache (count, entries,
+# light table, current descriptor) its mesh shader callbacks fill.
+0x7C8060@0x8E2448:4:RW
+0x7C8060@0xC926F8:0x2560:RW

@@ -75,7 +75,6 @@ use crate::bindings::rw_d3d9_get_caps;
 use sa_core::bindings::rw_tex_dictionary_add_texture;
 use sa_core::bindings::rw_tex_dictionary_find_named_texture;
 use sa_core::bindings::rw_tex_dictionary_get_current;
-use crate::bindings::set_streams as d3d9_set_streams;
 use crate::bindings::vertex_alpha_enable as d3d9_vertex_alpha_enable;
 use crate::bindings::atomic_set_pipeline_call;
 use crate::bindings::destroy_effects_call;
@@ -105,10 +104,6 @@ orig! {
     fn sector_set_usage_flags(s: GPtr<u8>, flags: u32) = cdecl 0x7588E0 => unported;
     /// A stored instance callback `(object, header, reinstance)`
     fn call_instance_cb(f: u32, object: GPtr<u8>, header: GPtr<u8>, reinstance: u32) -> u32 = cdecl dyn => unported;
-    /// `IDirect3DDevice9::SetIndices(ib)` (vtable +0x1A0)
-    fn device_set_indices(dev: GPtr<u8>, ib: u32) -> i32 = stdcall vslot 0x1A0 => unported;
-    /// `IDirect3DDevice9::SetVertexDeclaration(decl)` (vtable +0x15C)
-    fn device_set_vertex_declaration(dev: GPtr<u8>, decl: u32) -> i32 = stdcall vslot 0x15C => unported;
     /// MatFX D3D9 effect renderers: no-lighting (0x812C90), default (0x812AC0), dual (0x812D40), env
     /// (0x813A10), bump / bump-env (0x814460)
     fn matfx_render_black(header: GPtr<u8>, inst: GPtr<u8>) = cdecl 0x812C90 => unported;
@@ -654,18 +649,7 @@ pub fn rp_matfx_d3d9_atomic_render_callback(header: GPtr<u8>, object: GPtr<u8>, 
         rw_d3d9_set_texture_stage_state(0, 6, 3);
     }
     let h = header.byte_add(0x18);
-    let ib = rd::<u32>(h, 8);
-    if ib != 0 && g::<u32>(0x8E2450).read() != ib {
-        g::<u32>(0x8E2450).write(ib);
-        device_set_indices(p8(g::<u32>(0xC97C28).read()), rd::<u32>(h, 8));
-    }
-    d3d9_set_streams(h.byte_add(0x10), rd::<u32>(h, 0x30));
-    let decl = rd::<u32>(h, 0x34);
-    if g::<u32>(0x8E2444).read() != decl {
-        g::<u32>(0x8E2444).write(decl);
-        g::<u32>(0x8E2440).write(0xFFFF_FFFF);
-        device_set_vertex_declaration(p8(g::<u32>(0xC97C28).read()), rd::<u32>(h, 0x34));
-    }
+    crate::d3d9dev::bind_instanced_header(h);
     let mut n = rd::<u32>(h, 4);
     if n == 0 {
         return;
