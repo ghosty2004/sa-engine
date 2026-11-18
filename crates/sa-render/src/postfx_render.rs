@@ -62,7 +62,7 @@ orig! {
     /// CRT `sprintf(buf, fmt, int)` (0x821bb5)
     fn sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, v: u32) -> i32 = cdecl 0x821bb5 => unported;
     /// `JPegCompressScreenToFile(RwCamera*, const char*)` (0x5d0820)
-    fn jpeg_compress_screen_to_file(cam: GPtr<u8>, name: GPtr<u8>) = cdecl 0x5d0820 => unported;
+    fn jpeg_compress_screen_to_file(cam: GPtr<u8>, name: GPtr<u8>) = cdecl 0x5d0820 => crate::jpeg_plugin::jpeg_compress_screen_to_file;
 }
 
 /// `CPostEffects` flags (bytes).

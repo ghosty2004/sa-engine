@@ -163,6 +163,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::frontier_b3::HOOKS,
     // FRONTIER-2 lane C turn 11
     crate::fx_add_glass::HOOKS,
+    crate::jpeg_plugin::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
