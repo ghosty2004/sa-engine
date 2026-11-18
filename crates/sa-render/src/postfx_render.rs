@@ -41,7 +41,7 @@ orig! {
     /// `CPostEffects::DarknessFilter(int alpha)` (0x702f00)
     fn darkness_filter(alpha: u32) = cdecl 0x702f00 => unported;
     /// `CPostEffects::Radiosity(int limit, int filterPasses, int renderPasses, int intensity)` (0x702080)
-    fn radiosity(limit: u32, filter: u32, render: u32, intensity: u32) = cdecl 0x702080 => unported;
+    fn radiosity(limit: u32, filter: u32, render: u32, intensity: u32) = cdecl 0x702080 => crate::postfx_radiosity::post_radiosity;
     /// `CPostEffects::SetSpeedFXManualSpeedCurrentFrame(float)` (0x700be0; the float as a raw dword)
     fn set_speed_fx_manual(v: u32) = cdecl 0x700be0 => unported;
     /// `CPostEffects::SpeedFX(float)` (0x7030a0; the float as a raw dword)

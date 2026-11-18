@@ -102,6 +102,7 @@ pub mod effect_2d_stream;
 pub mod building_dn;
 pub mod birds_render;
 pub mod postfx_render;
+pub mod postfx_radiosity;
 pub mod shadows_render;
 pub mod sprite_render;
 pub mod vector_compare;

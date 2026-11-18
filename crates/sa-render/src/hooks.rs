@@ -109,6 +109,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::building_dn::HOOKS,
     crate::birds_render::HOOKS,
     crate::postfx_render::HOOKS,
+    crate::postfx_radiosity::HOOKS,
     crate::shadows_render::HOOKS,
     crate::plant_loc_tris::HOOKS,
     crate::fx_interp_integral::HOOKS,
