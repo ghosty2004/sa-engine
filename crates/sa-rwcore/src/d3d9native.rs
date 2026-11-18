@@ -42,8 +42,6 @@ orig! {
     fn entry_destroy(e: GPtr<u8>) = cdecl 0x4C9990 => unported;
     /// `RpWorldSectorGetWorld(sector)` (0x74F4E0)
     fn world_sector_get_world(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x74F4E0 => unported;
-    /// `_rpD3D9NativeDataWorldSectorStreamRead(stream, sector)` (0x7641C0)
-    fn native_data_world_sector_stream_read(s: GPtr<u8>, sector: GPtr<u8>) -> GPtr<u8> = cdecl 0x7641C0 => unported;
 }
 
 /// The size `GetSize` reports for a native resource entry: the declaration element count from
@@ -113,7 +111,14 @@ pub fn native_data_geometry_stream_write(stream: GPtr<u8>, geometry: GPtr<u8>) -
     if rd::<u32>(geometry, 8) & 0x100_0000 == 0 {
         return stream;
     }
-    let entry = p8(rd::<u32>(geometry, 0x58));
+    write_native_entry(stream, geometry.byte_add(0x58), geometry.byte_add(0x20), true)
+}
+
+/// The native resource entry at `*slot` into a STRUCT chunk, its mesh materials written as indices of
+/// `mat_list` (restored only on success). `lock_fail_stops`: a vertex buffer that does not lock fails the
+/// write instead of being skipped.
+fn write_native_entry(stream: GPtr<u8>, slot: GPtr<u8>, mat_list: GPtr<u8>, lock_fail_stops: bool) -> GPtr<u8> {
+    let entry = p8(rd::<u32>(slot, 0));
     let h = entry.byte_add(0x18);
     let mut count: u32 = 0;
     let mut elements = [0u8; 0xA0];
@@ -132,7 +137,6 @@ pub fn native_data_geometry_stream_write(stream: GPtr<u8>, geometry: GPtr<u8>) -
             size = size.wrapping_add(rd::<u32>(h, 0x3C).wrapping_mul(rd::<u32>(h, 0x18 + k * 0x10)));
         }
     }
-    let mat_list = geometry.byte_add(0x20);
     let n = rd::<u32>(h, 4);
     for i in 0..n {
         let m = h.byte_add(0x48 + (i as isize) * 0x24);
@@ -144,11 +148,11 @@ pub fn native_data_geometry_stream_write(stream: GPtr<u8>, geometry: GPtr<u8>) -
     if stream_write(stream, p8(PLATFORM_ID), 4).is_null() {
         return GPtr::NULL;
     }
-    let entry = p8(rd::<u32>(geometry, 0x58));
+    let entry = p8(rd::<u32>(slot, 0));
     if stream_write(stream, entry.byte_add(8), 4).is_null() {
         return GPtr::NULL;
     }
-    let entry = p8(rd::<u32>(geometry, 0x58));
+    let entry = p8(rd::<u32>(slot, 0));
     if stream_write(stream, entry.byte_add(0x18), rd::<u32>(entry, 8)).is_null() {
         return GPtr::NULL;
     }
@@ -187,7 +191,10 @@ pub fn native_data_geometry_stream_write(stream: GPtr<u8>, geometry: GPtr<u8>) -
                 0x800,
             ) != 0
             {
-                return GPtr::NULL;
+                if lock_fail_stops {
+                    return GPtr::NULL;
+                }
+                continue;
             }
             let w = stream_write(stream, p8(data), rd::<u32>(s, 8).wrapping_mul(rd::<u32>(h, 0x3C)));
             buffer_unlock(p8(rd::<u32>(s, 0)));
@@ -202,6 +209,19 @@ pub fn native_data_geometry_stream_write(stream: GPtr<u8>, geometry: GPtr<u8>) -
         wr::<u32>(m, 0, material_list_get(mat_list, rd::<u32>(m, 0) as i32).addr() as u32);
     }
     stream
+}
+
+/// `_rpD3D9NativeDataWorldSectorStreamWrite(stream, sector)` (0x763F20): the sector's resource entry
+/// (+0x34) with the world's material list, unless the world is not rpWORLDNATIVE.
+#[hook(addr = 0x763F20, conv = cdecl, name = "_rpD3D9NativeDataWorldSectorStreamWrite", expect = "81 EC B0 00 00 00 53 55",
+       unverified = "frontier2-c30", route = "split", hazards = "heap-writes",
+       note = "stream writes (file effects); rewrites the mesh material pointers in place")]
+pub fn native_data_world_sector_stream_write(stream: GPtr<u8>, sector: GPtr<u8>) -> GPtr<u8> {
+    let world = world_sector_get_world(sector);
+    if rd::<u32>(world, 8) & 0x100_0000 == 0 {
+        return stream;
+    }
+    write_native_entry(stream, sector.byte_add(0x34), world.byte_add(0x10), false)
 }
 
 /// `_rpD3D9NativeDataGeometryStreamRead(stream, geometry)` (0x763A80). `RwStreamFindChunk(STRUCT)`, then
@@ -225,6 +245,12 @@ pub fn native_data_geometry_stream_write(stream: GPtr<u8>, geometry: GPtr<u8>) -
        unverified = "rw5-native-1", route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "stream reads (file effects); creates D3D buffers and a resource entry")]
 pub fn native_data_geometry_stream_read(stream: GPtr<u8>, geometry: GPtr<u8>) -> GPtr<u8> {
+    read_native_entry(stream, geometry, geometry.byte_add(0x58), geometry.byte_add(0x20), || rd::<i32>(geometry, 0x18) > 1)
+}
+
+/// A native resource entry from a STRUCT chunk into `*slot` (owner `owner`), its mesh material indices
+/// resolved through `mat_list`. Vertex buffers are dynamic when `dynamic()` says so, else managed.
+fn read_native_entry(stream: GPtr<u8>, owner: GPtr<u8>, slot: GPtr<u8>, mat_list: GPtr<u8>, dynamic: impl Fn() -> bool) -> GPtr<u8> {
     let mut len: u32 = 0;
     let mut version: u32 = 0;
     if stream_find_chunk(stream, 1, GPtr::from_raw(&mut len), GPtr::from_raw(&mut version)) as u32 == 0 {
@@ -244,12 +270,11 @@ pub fn native_data_geometry_stream_read(stream: GPtr<u8>, geometry: GPtr<u8>) ->
     if stream_read(stream, GPtr::from_raw(&mut size).cast(), 4) != 4 {
         return GPtr::NULL;
     }
-    let slot = geometry.byte_add(0x58);
     let entry = rw_malloc(size.wrapping_add(0x18), 0x3050D);
     wr::<u32>(slot, 0, entry.addr() as u32);
     wr::<u32>(entry, 0, 0);
     wr::<u32>(p8(rd::<u32>(slot, 0)), 4, 0);
-    wr::<u32>(p8(rd::<u32>(slot, 0)), 0xC, geometry.addr() as u32);
+    wr::<u32>(p8(rd::<u32>(slot, 0)), 0xC, owner.addr() as u32);
     wr::<u32>(p8(rd::<u32>(slot, 0)), 8, size);
     wr::<u32>(p8(rd::<u32>(slot, 0)), 0x10, slot.addr() as u32);
     wr::<u32>(p8(rd::<u32>(slot, 0)), 0x14, ENTRY_DESTROY);
@@ -306,7 +331,7 @@ pub fn native_data_geometry_stream_read(stream: GPtr<u8>, geometry: GPtr<u8>) ->
         num_vb += 1;
         let stride = rd::<u32>(s, 8);
         let bytes = rd::<u32>(h, 0x3C).wrapping_mul(stride);
-        let ok = if rd::<i32>(geometry, 0x18) > 1 {
+        let ok = if dynamic() {
             wr::<u8>(s, 0xE, 0);
             dynamic_vertex_buffer_create(bytes, s.cast())
         } else {
@@ -357,13 +382,22 @@ pub fn native_data_geometry_stream_read(stream: GPtr<u8>, geometry: GPtr<u8>) ->
             }
         }
     }
-    let mat_list = geometry.byte_add(0x20);
     let n = rd::<u32>(h, 4);
     for i in 0..n {
         let m = h.byte_add(0x48 + (i as isize) * 0x24);
         wr::<u32>(m, 0, material_list_get(mat_list, rd::<u32>(m, 0) as i32).addr() as u32);
     }
-    geometry
+    owner
+}
+
+/// `_rpD3D9NativeDataWorldSectorStreamRead(stream, sector)` (0x7641C0): the sector's resource entry
+/// (+0x34) with managed vertex buffers and the world's material list.
+#[hook(addr = 0x7641C0, conv = cdecl, name = "_rpD3D9NativeDataWorldSectorStreamRead", expect = "81 EC D0 00 00 00 53 55",
+       unverified = "frontier2-c30", route = "split", hazards = "heap-writes",
+       note = "stream reads (file effects); creates D3D buffers and a resource entry")]
+pub fn native_data_world_sector_stream_read(stream: GPtr<u8>, sector: GPtr<u8>) -> GPtr<u8> {
+    let world = world_sector_get_world(sector);
+    read_native_entry(stream, sector, sector.byte_add(0x34), world.byte_add(0x10), || false)
 }
 
 /// `cb_NATIVEDATAPLUGIN_RpGeometry_StreamRead(stream, length, geometry, offset, size)` (0x750E20):
@@ -397,6 +431,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_NATIVE_DATA_GEOMETRY_STREAM_READ,
     HOOK_NATIVE_DATA_PLUGIN_GEOMETRY_STREAM_READ,
     HOOK_NATIVE_DATA_PLUGIN_WORLD_SECTOR_STREAM_READ,
+    HOOK_NATIVE_DATA_WORLD_SECTOR_STREAM_WRITE,
+    HOOK_NATIVE_DATA_WORLD_SECTOR_STREAM_READ,
 ];
 
 /// Globals owned by this module.
