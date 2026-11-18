@@ -3,7 +3,7 @@
 #![allow(clippy::unreadable_literal)]
 
 use sa_core::abi::HookReg;
-use sa_core::field::copy3;
+use sa_core::field::{copy3, gf as k};
 use sa_core::mem::GPtr;
 use sa_core::pools::call::vehicle_new_at;
 use sa_core::{hook, orig};
@@ -441,10 +441,6 @@ const MOUSE_X: usize = 0xB7_3424;
 const MOUSE_Y: usize = 0xB7_3428;
 /// `Scene.m_pRwCamera`.
 const SCENE_CAMERA: usize = 0xC1_703C;
-
-fn k(at: usize) -> f32 {
-    g::<f32>(at).read()
-}
 
 /// `|v| > 0.01` as the original tests it (the sign flipped unless `v >= 0`).
 fn moved(v: f32) -> bool {

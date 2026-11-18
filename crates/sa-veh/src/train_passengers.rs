@@ -15,6 +15,7 @@ use sa_world::bindings::{
     vector_add_assign, vector_magnitude_sqr, vector_sub, vector_sub_assign,
 };
 use sa_world::world::common::entity_pos;
+use sa_world::world::cworld::in_vehicle;
 
 orig! {
     /// `CTask::GetTaskType()` (vtable +0x10)
@@ -29,10 +30,6 @@ const ENTER_CAR_AS_DRIVER: i32 = 0x2BC;
 const ENTER_CAR_AS_PASSENGER: i32 = 0x2BD;
 const STAY_IN_TRAIN: i32 = 0x2C3;
 
-/// Whether the ped is in a vehicle (+0x46C bit 8).
-fn in_vehicle(ped: GPtr<u8>) -> bool {
-    rd::<u32>(ped, 0x46C) & 0x100 != 0
-}
 /// The ped flag +0x478 bit 18.
 fn flag_478_bit18(ped: GPtr<u8>) -> bool {
     rd::<u32>(ped, 0x478) & 0x4_0000 != 0
