@@ -24,6 +24,28 @@ macro_rules! cdecl_entry {
 }
 pub(crate) use cdecl_entry;
 
+/// As [`cdecl_entry`] for a thiscall method (`this` first); C on hosts without thiscall (tests).
+macro_rules! thiscall_entry {
+    ($addr:expr, $name:literal, $f:path; fn($($a:ident : $t:ty),*) -> $r:ty) => {{
+        #[cfg(target_arch = "x86")]
+        #[allow(clippy::unused_unit)]
+        extern "thiscall-unwind" fn w($($a: $t),*) -> $r {
+            $f($($a),*)
+        }
+        #[cfg(not(target_arch = "x86"))]
+        #[allow(clippy::unused_unit)]
+        extern "C-unwind" fn w($($a: $t),*) -> $r {
+            $f($($a),*)
+        }
+        #[cfg(target_arch = "wasm32")]
+        let e = sa_core::wabi_wrap!(w; $($a)*);
+        #[cfg(not(target_arch = "wasm32"))]
+        let e = w as *const () as usize;
+        ($addr, $name, e)
+    }};
+}
+pub(crate) use thiscall_entry;
+
 /// What [`install`] registered.
 pub struct Summary {
     pub ports: usize,
@@ -76,7 +98,8 @@ pub fn install() -> Summary {
         .chain(crate::com::thunks())
         .chain(crate::vorbisfile::thunks())
         .chain(crate::libjpeg::entries())
-        .chain(crate::libpng::entries());
+        .chain(crate::libpng::entries())
+        .chain(crate::mfdecoder::entries());
     for (a, name, f) in others {
         if !seen.contains_key(&a) {
             v.push((a, f, name));

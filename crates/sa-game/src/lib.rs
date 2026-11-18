@@ -43,6 +43,7 @@ pub mod frontend;
 pub mod imports;
 pub mod libjpeg;
 pub mod libpng;
+pub mod mfdecoder;
 #[cfg(feature = "mods")]
 pub mod mods;
 pub mod native;

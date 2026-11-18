@@ -145,6 +145,24 @@ pub(crate) fn fopen(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> {
     });
     GPtr::from_addr(h.unwrap_or(0) as usize)
 }
+/// The whole file at a game path, through the same file layer as `fopen`; `None` when it cannot be opened.
+pub(crate) fn read_whole_file(path: &str) -> Option<Vec<u8>> {
+    with("read_whole_file", |p| {
+        let Platform { files, vfs, .. } = p;
+        let h = files.fopen(vfs, path, "rb")?;
+        let mut data = Vec::new();
+        let mut chunk = vec![0u8; 1 << 16];
+        loop {
+            let got = files.read(h, &mut chunk);
+            if got == 0 {
+                break;
+            }
+            data.extend_from_slice(&chunk[..got]);
+        }
+        files.close(vfs, h);
+        Some(data)
+    })
+}
 pub(crate) fn fread(buf: GPtr<u8>, size: u32, n: u32, f: GPtr<u8>) -> u32 {
     let total = size.saturating_mul(n) as usize;
     let mut tmp = vec![0u8; total];

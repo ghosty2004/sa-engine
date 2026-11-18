@@ -564,15 +564,6 @@ extern "C-unwind" fn srand(seed: u32) {
     sa_core::crt::srand_owned(seed)
 }
 
-/// The statically linked Media Foundation loader's startup (0x8195C0, cdecl, one argument): it
-/// loads the platform DLL by name and resolves its entry points. Phase B has no Media Foundation:
-/// the result is the original's failure value when the DLL cannot be loaded (0xFFFFF7D3, the
-/// `esi` it returns after `LoadLibraryA` fails), so `CAEMFDecoder::InitLibrary` reports no
-/// MF support (user tracks in MF formats unavailable).
-extern "C-unwind" fn mf_library_startup(_flags: u32) -> u32 {
-    0xFFFF_F7D3
-}
-
 /// The registry entry of a replacement: the function itself on x86 (its ABI is the original's), its type-erased
 /// entry on wasm32 ([`sa_core::wabi`]).
 macro_rules! ent {
@@ -685,11 +676,6 @@ pub fn entries() -> Vec<(u32, &'static str, usize)> {
         (0x0082_6330, "CRT strlen", ent!(strlen; s)),
         (0x0083_5AC7, "CRT _strnicmp", ent!(strnicmp; a b n)),
         (0x0083_6C58, "CRT _strlwr", ent!(strlwr; s)),
-        (
-            0x0081_95C0,
-            "MF library startup (statically linked loader; no Media Foundation natively)",
-            ent!(mf_library_startup; _flags),
-        ),
     ];
     v.extend(base_entries());
     v
