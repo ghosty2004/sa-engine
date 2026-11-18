@@ -68,11 +68,11 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-a11 | 31 | AI, UNK-game | 09ead615 | master | 31 | 0 | 0 | 0 | 0 | L2 31 |
 | frontier2-a12 | 6 | AI, RENDER | a6f02e11 | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
 | frontier2-a13 | 2 | AI | 20445ac0 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| frontier2-a14 | 6 | WORLD | ee8975f6 | worktree-agent-a25fa2bbd9d4f79b5 | 6 | 0 | 0 | 0 | 0 | L2 6 |
-| frontier2-a15 | 2 | AI | cf8ade5b | worktree-agent-a25fa2bbd9d4f79b5 | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| frontier2-a16 | 3 | POP | 6c236b56 | worktree-agent-a25fa2bbd9d4f79b5 | 1 | 0 | 0 | 2 | 0 | split 3 |
-| frontier2-a17 | 1 | HUD | 15257751 | worktree-agent-a6afbf8f5fa20dfce | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| frontier2-a18 | 3 | RENDER, SCRIPT | b94ffdc4 | worktree-agent-a6afbf8f5fa20dfce | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| frontier2-a14 | 6 | WORLD | b787c74e | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| frontier2-a15 | 2 | AI | d7dbdb6f | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| frontier2-a16 | 3 | POP | e9567a38 | master | 1 | 0 | 0 | 2 | 0 | split 3 |
+| frontier2-a17 | 1 | HUD | 2007f8a8 | int-a11 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| frontier2-a18 | 3 | RENDER, SCRIPT | 816dc72d | int-a11 | 3 | 0 | 0 | 0 | 0 | L2 3 |
 | frontier2-a2 | 23 | AI, UNK-game | 40c90c34 | master | 23 | 0 | 0 | 0 | 0 | L2 23 |
 | frontier2-a3 | 5 | AI | 7104be38 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | frontier2-a4 | 2 | AI | 4b0ec921 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
@@ -93,6 +93,8 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-b18 | 3 | CAM | b822823d | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
 | frontier2-b19 | 1 | WEAPON | e1c8801f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | frontier2-b2 | 23 | RW | 2f47ba34 | master | 23 | 0 | 0 | 0 | 0 | L2 23 |
+| frontier2-b20 | 3 | CAM, UNK-game | f693428f | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| frontier2-b21 | 5 | VEH | cb231692 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | frontier2-b3 | 7 | VEH | 221f09a0 | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
 | frontier2-b4 | 5 | RW, SAVE | 2f47ba34 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | frontier2-b5 | 25 | MATH, POP, VEH, WORLD | 1caf613f | master | 25 | 0 | 0 | 0 | 0 | L2 22, split 3 |
@@ -108,6 +110,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-c14 | 6 | RW | 165c184e | master | 6 | 0 | 0 | 0 | 0 | L2 4, L3-only 2 |
 | frontier2-c15 | 1 | WORLD | 7cfa0894 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | frontier2-c16 | 1 | RENDER | 725610d8 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| frontier2-c17 | 16 | RW | 942a0021 | master | 16 | 0 | 0 | 0 | 0 | L2 16 |
 | frontier2-c2 | 35 | AI, MATH, SCRIPT, UNK-game, VEH | 49bdb6d2 | master | 35 | 0 | 0 | 0 | 0 | L2 35 |
 | frontier2-c3 | 11 | AI, SCRIPT, UNK-game | 49bdb6d2 | master | 11 | 0 | 0 | 0 | 0 | L2 11 |
 | frontier2-c4 | 10 | AUDIO, CALLED-ONLY, SCRIPT, UNK-game | d18327f1 | master | 10 | 0 | 0 | 0 | 0 | L2 9, split 1 |
@@ -2903,6 +2906,42 @@ SA_UNVERIFIED=frontier2-b2 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b2 $S
 | 0x80E9B0 | `_rwFileNameIsAbsolute` | written | L2 | none |
 | 0x816290 | `FUN_00816290` | written | L2 | none |
 
+## frontier2-b20
+
+3 hooks in sa-cam; hazards: x87-transcendental (2); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-b20 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-b20 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b20 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-b20
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x50E090 | `FUN_0050e090` | written | L2 | none |
+| 0x51A740 | `CCam::Process_DW_HeliChaseCam` | written | L2 | x87-transcendental |
+| 0x51B850 | `CCam::Process_DW_BirdyCam` | written | L2 | x87-transcendental |
+
+## frontier2-b21
+
+5 hooks in sa-veh; hazards: heap-writes (2); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-b21 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-b21 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b21 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-b21
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6A1ED0 | `CAutomobile::AddMovingCollisionSpeed` | written | L2 | none |
+| 0x6A45C0 | `CAutomobile::DoHoverSuspensionRatios` | written | L2 | none |
+| 0x6B3BB0 | `CAutomobile::BlowUpCarCutSceneNoExtras` | written | L2 | heap-writes |
+| 0x6BEB20 | `CBike::BurstTyre` | written | L2 | none |
+| 0x6F6370 | `CTrain::OpenDoor` | written | L2 | heap-writes |
+
 ## frontier2-b3
 
 7 hooks in sa-veh; hazards: heap-writes (4), stack-residue (1), x87-transcendental (1); recordings calling them: no coverage data.
@@ -3261,6 +3300,36 @@ SA_UNVERIFIED=frontier2-c16 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c16 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x71B620 | `CGlass::GeneratePanesForWindow` | written | L2 | heap-writes |
+
+## frontier2-c17
+
+16 hooks in sa-rwcore; hazards: heap-writes (9); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-c17 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-c17 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c17 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-c17
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x7CBC20 | `cb_UVANIMPLUGIN_RpMaterial_StreamRead` | written | L2 | heap-writes |
+| 0x7CBD80 | `FUN_007cbd80` | written | L2 | heap-writes |
+| 0x7CBE00 | `FUN_007cbe00` | written | L2 | heap-writes |
+| 0x7CBF70 | `_rpUVAnimCustomDataStreamRead` | written | L2 | heap-writes |
+| 0x7CC0C0 | `RpUVAnimDestroy` | written | L2 | heap-writes |
+| 0x7CC560 | `RpUVAnimParamKeyFrameApply` | written | L2 | none |
+| 0x7CC600 | `RpUVAnimParamKeyFrameInterpolate` | written | L2 | none |
+| 0x7CC870 | `RpUVAnimKeyFrameStreamRead` | written | L2 | heap-writes |
+| 0x7CCA40 | `RpUVAnimLinearKeyFrameInterpolate` | written | L2 | none |
+| 0x7CCDE0 | `RtAnimGetInterpolatorInfo` | written | L2 | none |
+| 0x7CD220 | `RtAnimAnimationStreamRead` | written | L2 | heap-writes |
+| 0x7CD4F0 | `RtAnimAnimationGetNumNodes` | written | L2 | none |
+| 0x7CD8D0 | `RtAnimInterpolatorAddAnimTime` | written | L2 | none |
+| 0x7CED90 | `RtDictSchemaCreateDict` | written | L2 | heap-writes |
+| 0x7CEFE0 | `RtDictFindNamedEntry` | written | L2 | none |
+| 0x7CF240 | `RtDictSchemaStreamReadDict` | written | L2 | heap-writes |
 
 ## frontier2-c2
 
