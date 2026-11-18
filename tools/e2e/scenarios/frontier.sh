@@ -72,6 +72,10 @@
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-b10-counts.gdb --args" counts the turn 10 lane B ports' calls
 # (monster: SetupSuspensionLines 1, ProcessSuspension 282; tanker: TankerCheat 1, UpdateTrailerLink 1996,
 # UpdateTractorLink 1498; tank: TankControl 998).
+# monster  (1200)  on foot at Grove Street, the monster truck cheat AGBDLCID (a CMonsterTruck in front of CJ: its
+#                  constructor's SetupSuspensionLines 0x6C7FB0), `f` to get in, driven with turns:
+#                  CMonsterTruck::ProcessSuspension 0x6C83A0 every step, CCollision::ProcessColModels' A-disk path
+#                  (the truck's wheel disks) (FRONTIER-2 turn 10 lane B, turn 13 lane A)
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-a5-counts.gdb --args" counts the road block / gang war / jet pack
 # calls.
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-counts.gdb --args" counts the FRONTIER-2 ports' calls
@@ -223,6 +227,12 @@ samsite)
     keys=; i=150; for c in r o c k e t m a n; do keys="$keys${keys:+,}$c:$i:$((i + 2))"; i=$((i + 6)); done
     export SA_GAME_KEYS="$keys,space:300:700,w:500:900,a:900:960"
     run "${3:-1600}" --start-in-world ;;
+monster)
+    # a cheat vehicle in front of CJ at Grove Street, `f` to get in, then driven (w) with a left and a right turn
+    export SA_GAME_SCRIPT_SKIP=1
+    keys=; i=150; for k in a g b d l c i d; do keys="$keys${keys:+,}$k:$i:$((i + 2))"; i=$((i + 6)); done
+    export SA_GAME_KEYS="$keys,f:260:263,w:400:1150,a:600:660,d:800:860"
+    run "${3:-1200}" --start-in-world ;;
 *)
     echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra OUTDIR [FRAMES]" >&2
     exit 2 ;;
