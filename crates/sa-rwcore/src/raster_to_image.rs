@@ -11,6 +11,7 @@ use sa_core::{hook, native, orig};
 use crate::common::{g, p8, rd, wr};
 use crate::image2::{call_converter, error_set_code};
 use crate::raster::D3D9_RASTER_EXT_OFFSET;
+use crate::palquant::{rw_pal_quant_add_image, rw_pal_quant_init, rw_pal_quant_match_image, rw_pal_quant_resolve_palette, rw_pal_quant_term};
 
 /// E_RW_INVRASTERDEPTH.
 const E_RW_INVALID_DEPTH: u32 = 0x8000_000C;
@@ -253,6 +254,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_A8_TO_RGBA,
     HOOK_A4L4_TO_RGBA,
     HOOK_D3D9_RASTER_SET_IMAGE_32,
+    HOOK_D3D9_RASTER_SET_IMAGE_PAL,
 ];
 
 /// Every `#[native]` of this module.
@@ -360,4 +362,106 @@ pub fn d3d9_raster_set_image_32(r: GPtr<u8>, img: GPtr<u8>) {
         _ => true,
     };
     set_raster_alpha(r, ext, alpha);
+}
+
+/// Luminance of an RGBA colour, `(30 r + 59 g + 11 b) / 100`.
+fn luminance(p: GPtr<u8>) -> u32 {
+    (u32::from(rd::<u8>(p, 1)) * 0x3B + u32::from(rd::<u8>(p, 2)) * 0xB + u32::from(rd::<u8>(p, 0)) * 0x1E) / 100
+}
+
+/// One byte of an 8-bit non-palettised raster (by the D3D format) from an RGBA colour.
+fn byte_pixel(d3d_format: u32, p: GPtr<u8>) -> u8 {
+    let c = |k: isize| rd::<u8>(p, k);
+    match d3d_format {
+        0x1B => c(0) & 0xE0 | (c(1) & 0xE0) >> 3 | c(2) >> 6,
+        0x34 => (luminance(p) >> 4) as u8 | c(3) & 0xF0,
+        0x1C => c(3),
+        _ => (luminance(p) * u32::from(c(3)) / 0xFF) as u8,
+    }
+}
+
+/// Visits every byte of an 8-bit raster with the image pixel feeding it (`src_step` bytes apart).
+fn for_each_raster_byte(r: GPtr<u8>, img: GPtr<u8>, src_step: isize, mut f: impl FnMut(GPtr<u8>) -> u8) {
+    let mut y = 0i32;
+    while y < rd::<i32>(r, 0x10) {
+        let mut dst = p8(rd::<i32>(r, 0x18).wrapping_mul(y).wrapping_add(rd::<i32>(r, 4)) as u32);
+        let mut src = p8(rd::<i32>(img, 0x10).wrapping_mul(y).wrapping_add(rd::<i32>(img, 0x14)) as u32);
+        let mut x = 0i32;
+        while x < rd::<i32>(r, 0xC) {
+            wr::<u8>(dst, 0, f(src));
+            dst = dst.byte_add(1);
+            src = src.byte_add(src_step);
+            x += 1;
+        }
+        y += 1;
+    }
+}
+
+/// `_rwD3D9RasterSetImageMipmaps(raster, image)` (0x800C80): an image into a locked 4/8-bit raster. An
+/// 8-bit non-palettised (LUM8-class) raster gets one byte per pixel by its D3D format (R3G3B2, A4L4, A8,
+/// else luminance times alpha), through the image palette for 4/8-bit images. A palettised raster takes
+/// a 4/8-bit image's indices and (unless the raster's palette is shared) its palette; a 32-bit image is
+/// quantised to the raster's depth first (an opaque result clears the raster's alpha flag).
+#[hook(addr = 0x800C80, conv = cdecl, name = "FUN_00800c80", expect = "B8 0C 41 00 00 E8 E6 13",
+       unverified = "frontier2-c34", route = "L2", hazards = "heap-writes,uninit-locals",
+       note = "a 4-bit image's indices above 15 read the never-written part of the 256-entry stack table (port: zeros); the quantiser is a zeroed local in the port")]
+pub fn d3d9_raster_set_image_pal(r: GPtr<u8>, img: GPtr<u8>) {
+    let ext = r.byte_add(g::<i32>(D3D9_RASTER_EXT_OFFSET).read() as isize);
+    let image_depth = rd::<u32>(img, 0xC);
+    let indexed = image_depth == 4 || image_depth == 8;
+    if rd::<u8>(r, 0x23) & 0xF == 4 {
+        let fmt = rd::<u32>(ext, 0x18);
+        if indexed {
+            let mut lut = [0u8; 0x100];
+            let pal = p8(rd::<u32>(img, 0x18));
+            for (i, e) in lut.iter_mut().enumerate().take(1 << image_depth) {
+                *e = byte_pixel(fmt, pal.byte_add(i as isize * 4));
+            }
+            for_each_raster_byte(r, img, 1, |s| lut[usize::from(rd::<u8>(s, 0))]);
+        } else {
+            for_each_raster_byte(r, img, 4, |s| byte_pixel(fmt, s));
+        }
+        return;
+    }
+    if indexed {
+        let stride = rd::<i32>(r, 0x18);
+        if rd::<i32>(img, 0x10) == stride && rd::<i32>(r, 0xC) == stride {
+            let n = rd::<i32>(r, 0x10).wrapping_mul(rd::<i32>(r, 0xC)) as u32;
+            crate::image2::rep_movs(p8(rd::<u32>(r, 4)), p8(rd::<u32>(img, 0x14)), n);
+        } else {
+            let mut y = 0i32;
+            while y < rd::<i32>(r, 0x10) {
+                let src = rd::<i32>(img, 0x10).wrapping_mul(y).wrapping_add(rd::<i32>(img, 0x14));
+                let dst = rd::<i32>(r, 0x18).wrapping_mul(y).wrapping_add(rd::<i32>(r, 4));
+                crate::image2::rep_movs(p8(dst as u32), p8(src as u32), rd::<u32>(r, 0xC));
+                y += 1;
+            }
+        }
+        let pal = p8(rd::<u32>(r, 8));
+        if rd::<u8>(ext, 0xB) == 0 && !pal.is_null() {
+            crate::image2::rep_movs(pal, p8(rd::<u32>(img, 0x18)), (1u32 << (image_depth & 0x1F)) << 2);
+        }
+        return;
+    }
+    let depth = rd::<u32>(r, 0x14);
+    let q_img = crate::bindings::rw_image_create(rd::<i32>(img, 4), rd::<i32>(img, 8), depth as i32);
+    if q_img.is_null() {
+        return;
+    }
+    crate::bindings::image_allocate_pixels(q_img);
+    let mut pq = [0u8; 0x4008];
+    let q = GPtr::<u8>::from_raw(pq.as_mut_ptr());
+    if rw_pal_quant_init(q) == 0 {
+        return;
+    }
+    rw_pal_quant_add_image(q, img, 1.0);
+    rw_pal_quant_resolve_palette(p8(rd::<u32>(q_img, 0x18)), 1 << (depth & 0x1F), q);
+    rw_pal_quant_match_image(p8(rd::<u32>(q_img, 0x14)), rd::<i32>(q_img, 0x10), rd::<u32>(q_img, 0xC), 0, q, img);
+    rw_pal_quant_term(q);
+    if rd::<u8>(ext, 8) != 0 && crate::frontier_c::d3d9_image_find_format(q_img) & 0xF00 == 0x600 {
+        wr::<u8>(r, 0x23, rd::<u8>(r, 0x23) & 0xFE | 6);
+        wr::<u8>(ext, 8, 0);
+    }
+    d3d9_raster_set_image_pal(r, q_img);
+    crate::bindings::image_destroy(q_img);
 }

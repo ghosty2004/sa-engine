@@ -45,6 +45,7 @@ use crate::bindings::rw_texture_create;
 use crate::bindings::rw_texture_set_name;
 use crate::bindings::rw_image_create;
 use crate::bindings::rw_image_find_raster_format;
+use crate::palquant::{rw_pal_quant_add_image, rw_pal_quant_init, rw_pal_quant_match_image, rw_pal_quant_resolve_palette, rw_pal_quant_term};
 use crate::image::rw_image_resample as rw_image_resample_call;
 use sa_core::common::rw_image_set_from_raster;
 orig! {
@@ -56,17 +57,10 @@ orig! {
     fn rw_strncpy(dst: GPtr<u8>, src: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl table 0xC97B24 0xFC => unported;
     /// `G->stringFuncs.rwstrlen(s)` (G+0x120)
     fn rw_strlen(s: GPtr<u8>) -> u32 = cdecl table 0xC97B24 0x120 => unported;
-    /// `_rwTextureReadAutoMipmap(name, mask)` (0x7F4AE0)
-    fn texture_read_auto_mipmap(name: GPtr<u8>, mask: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F4AE0 => unported;
     /// The texture module's mipmap name callback (M+0x30)
     fn call_mipmap_name_cb(f: u32, name: GPtr<u8>, mask: GPtr<u8>, level: u32, format: u32) -> u32 = cdecl dyn => unported;
-    /// `_rwTextureImageReadAndMask(name, mask, type, &w, &h, &depth, &format)` (0x7F4690)
-    fn texture_image_read_and_mask(name: GPtr<u8>, mask: GPtr<u8>, ty: u32, w: GPtr<i32>, h: GPtr<i32>, depth: GPtr<i32>, format: GPtr<u32>) -> GPtr<u8> = cdecl 0x7F4690 => unported;
     /// `RwImageGammaCorrect(image)` (0x803E30)
     fn rw_image_gamma_correct(img: GPtr<u8>) -> GPtr<u8> = cdecl 0x803E30 => crate::image::rw_image_gamma_correct;
-    /// `FUN_007f44c0(palette, 0, images, count, bits)`: builds one palette shared by `count` images,
-    /// possibly replacing them (0x7F44C0)
-    fn images_make_shared_palette(pal: GPtr<u8>, unused: u32, images: GPtr<u32>, count: i32, bits: u32) -> u32 = cdecl 0x7F44C0 => unported;
     /// `FUN_007ff450(image, raster)`: a 32-bit image from the raster pixels (0x7FF450)
     fn d3d9_image_get_raster32(img: GPtr<u8>, r: GPtr<u8>) = cdecl 0x7FF450 => crate::raster_to_image::d3d9_image_get_raster32;
     /// `FUN_00800810(d3dFormat)`: the RGBA -> pixel converter for a D3D format (0x800810)
@@ -74,7 +68,7 @@ orig! {
     /// A converter returned by 0x800810: `u16 conv(const RwRGBA*)`
     pub(crate) fn call_converter(f: u32, rgba: GPtr<u8>) -> u32 = cdecl dyn => unported;
     /// `FUN_00800c80(raster, image)`: 4/8-bit raster from an image (0x800C80)
-    fn raster_set_image_pal(r: GPtr<u8>, img: GPtr<u8>) -> u32 = cdecl 0x800C80 => unported;
+    fn raster_set_image_pal(r: GPtr<u8>, img: GPtr<u8>) = cdecl 0x800C80 => crate::raster_to_image::d3d9_raster_set_image_pal;
     /// `FUN_00801390(raster, image)`: 24/32-bit raster from an image (0x801390)
     fn raster_set_image_32(r: GPtr<u8>, img: GPtr<u8>) = cdecl 0x801390 => crate::raster_to_image::d3d9_raster_set_image_32;
     /// `FUN_00803790(dst, src)`: image copy for equal depths (0x803790)
@@ -127,7 +121,7 @@ pub(crate) fn error_set_code(code: u32) {
 }
 
 /// `rep movsd` of `n >> 2` dwords then `rep movsb` of `n & 3` bytes, forwards.
-fn rep_movs(dst: GPtr<u8>, src: GPtr<u8>, n: u32) {
+pub(crate) fn rep_movs(dst: GPtr<u8>, src: GPtr<u8>, n: u32) {
     let words = (n >> 2) as isize;
     for i in 0..words {
         wr::<u32>(dst, i * 4, rd::<u32>(src, i * 4));
@@ -180,11 +174,7 @@ pub fn rw_texture_default_read_callback(name: GPtr<u8>, mask: GPtr<u8>) -> GPtr<
     let nb: GPtr<u8> = GPtr::from_raw(&mut name_buf).cast();
     let mb: GPtr<u8> = GPtr::from_raw(&mut mask_buf).cast();
     let pb: GPtr<u8> = GPtr::from_raw(&mut pal_buf).cast();
-    strncpy_checked(nb, name, 0x100);
-    wr::<u8>(mb, 0, 0);
-    if !mask.is_null() && rd::<u8>(mask, 0) != 0 {
-        strncpy_checked(mb, mask, 0x100);
-    }
+    copy_name_and_mask(nb, mb, name, mask);
     let cb = rd::<u32>(module(TEXTURE_MODULE), 0x30);
     if cb != 0 {
         call_mipmap_name_cb(cb, nb, mb, 0, 4);
@@ -224,6 +214,31 @@ pub fn rw_texture_default_read_callback(name: GPtr<u8>, mask: GPtr<u8>) -> GPtr<
         return GPtr::NULL;
     }
     rw_image_destroy(p8(image));
+    let t = new_named_texture(raster, name);
+    if t.is_null() {
+        return GPtr::NULL;
+    }
+    if mask.is_null() {
+        rw_texture_set_mask_name(t, p8(0xC97904));
+        return t;
+    }
+    strncpy_checked(t.byte_add(0x30), mask, 0x20);
+    t
+}
+
+/// `name` and (when non-NULL and non-empty) `mask` into the 256-byte read buffers; the mask buffer is ""
+/// otherwise.
+fn copy_name_and_mask(nb: GPtr<u8>, mb: GPtr<u8>, name: GPtr<u8>, mask: GPtr<u8>) {
+    strncpy_checked(nb, name, 0x100);
+    wr::<u8>(mb, 0, 0);
+    if !mask.is_null() && rd::<u8>(mask, 0) != 0 {
+        strncpy_checked(mb, mask, 0x100);
+    }
+}
+
+/// The inline `RwTextureCreate(raster)` of the texture read callbacks, named `name` (NULL, with the
+/// raster destroyed, when the texture free list is exhausted).
+fn new_named_texture(raster: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> {
     let t = rw_memory_alloc(p8(rd::<u32>(module(TEXTURE_MODULE), 8)), 0x30006);
     if t.is_null() {
         rw_raster_destroy(raster);
@@ -239,11 +254,6 @@ pub fn rw_texture_default_read_callback(name: GPtr<u8>, mask: GPtr<u8>) -> GPtr<
     wr::<u8>(t, 0x50, 1);
     plugin_init_object(p8(TEXTURE_REGISTRY), t);
     strncpy_checked(t.byte_add(0x10), name, 0x20);
-    if mask.is_null() {
-        rw_texture_set_mask_name(t, p8(0xC97904));
-        return t;
-    }
-    strncpy_checked(t.byte_add(0x30), mask, 0x20);
     t
 }
 
@@ -1238,6 +1248,321 @@ pub fn matfx_bump_map_create_raster(base: GPtr<u8>, bump: GPtr<u8>) -> GPtr<u8> 
     tex
 }
 
+/// `_rwImageFindFileTypeCB(path, data)` (0x803340): `path` with each registered image format's lower-case,
+/// then upper-case extension appended until such a file exists; that extension goes to `*data` and the
+/// search stops (0). Returns `path` (go on) when none exists.
+#[hook(addr = 0x803340, conv = cdecl, name = "(missed by ghidra: data-code-immediate)", expect = "A1 24 7B C9 00 53 8B 5C",
+       unverified = "frontier2-c34", route = "L2", hazards = "heap-writes",
+       note = "probes the file system (rwfexist)")]
+pub fn image_find_file_type_cb(path: GPtr<u8>, data: GPtr<u32>) -> GPtr<u8> {
+    let end = path.byte_add(rw_strlen(path) as isize);
+    let mut format = p8(rd::<u32>(module(IMAGE_MODULE), 0x21C));
+    while !format.is_null() {
+        for ext in [format, format.byte_add(0x14)] {
+            rw_strcpy(end, ext);
+            if rw_fexist(path) != 0 {
+                data.write(a32(ext));
+                return GPtr::NULL;
+            }
+        }
+        format = p8(rd::<u32>(format, 0x30));
+    }
+    path
+}
+
+/// `_rwImageFindFileType(name)` (0x803310): the extension of the first registered image format whose
+/// file exists along the image path, or NULL.
+#[hook(addr = 0x803310, conv = cdecl, name = "FUN_00803310", expect = "51 8B 4C 24 08 8D 44 24",
+       unverified = "frontier2-c34", route = "L2", hazards = "heap-writes",
+       note = "probes the file system (rwfexist)")]
+pub fn image_find_file_type(name: GPtr<u8>) -> GPtr<u8> {
+    let mut ext = 0u32;
+    image_find_file_and_call(name, 0x14, 0x80_3340, GPtr::from_raw(&mut ext).cast());
+    p8(ext)
+}
+
+/// `name` into a 256-byte read buffer with its image file extension appended when one exists.
+fn copy_with_extension(buf: GPtr<u8>, name: GPtr<u8>) {
+    strncpy_checked(buf, name, 0x100);
+    let ext = image_find_file_type(name);
+    if !ext.is_null() {
+        rw_strcat(buf, ext);
+    }
+}
+
+/// `_rwTextureImageReadMipmaps(palette, keep, images, count, bits)` (0x7F44C0): one palette of `1 << bits`
+/// colours for `count` images, each image then replaced by its `bits`-deep palettised copy (the
+/// originals destroyed except `keep`). Images that already share one palette keep their pixels and give
+/// it out. Returns 0 when the quantiser or an image cannot be created.
+#[hook(addr = 0x7F44C0, conv = cdecl, name = "FUN_007f44c0", expect = "B8 10 40 00 00 E8 A6 DB",
+       unverified = "frontier2-c34", route = "L2", hazards = "heap-writes",
+       note = "the quantiser is a zeroed local in the port; the original's (0x4008 bytes of stack) is only read past its last split box")]
+pub fn images_make_shared_palette(pal: GPtr<u8>, keep: u32, images: GPtr<u32>, count: i32, bits: u32) -> u32 {
+    let image = |i: i32| p8(rd::<u32>(images.cast(), i as isize * 4));
+    let first = image(0);
+    let shared = p8(rd::<u32>(first, 0x18));
+    if !shared.is_null() {
+        let mut k = 1i32;
+        while k < count {
+            let other = p8(rd::<u32>(image(k), 0x18));
+            if shared.is_null() || other.is_null() {
+                k = 0x40;
+                break;
+            }
+            let n = 1i32 << (bits & 0x1F);
+            let mut i = 0i32;
+            while i < n {
+                if rd::<u32>(shared, i as isize * 4) != rd::<u32>(other, i as isize * 4) {
+                    k = 0x40;
+                    break;
+                }
+                i += 1;
+            }
+            k += 1;
+        }
+        if k == count {
+            let bytes = (1u32 << (rd::<u32>(first, 0xC) & 0x1F)) << 2;
+            rep_movs(pal, shared, bytes);
+            return 1;
+        }
+    }
+    let mut pq = [0u8; 0x4008];
+    let q = GPtr::<u8>::from_raw(pq.as_mut_ptr());
+    if rw_pal_quant_init(q) == 0 {
+        return 0;
+    }
+    for i in 0..count.max(0) {
+        rw_pal_quant_add_image(q, image(i), 1.0);
+    }
+    rw_pal_quant_resolve_palette(pal, 1 << (bits & 0x1F), q);
+    for i in 0..count.max(0) {
+        let src = image(i);
+        let dst = rw_image_create(rd::<i32>(src, 4), rd::<i32>(src, 8), bits as i32);
+        if dst.is_null() {
+            return 0;
+        }
+        rw_image_allocate_pixels(dst);
+        rw_pal_quant_match_image(p8(rd::<u32>(dst, 0x14)), rd::<i32>(dst, 0x10), rd::<u32>(dst, 0xC), 0, q, src);
+        wr::<u32>(dst, 0x18, a32(pal));
+        wr::<u32>(images.cast(), i as isize * 4, a32(dst));
+        if a32(src) != keep {
+            rw_image_destroy(src);
+        }
+    }
+    rw_pal_quant_term(q);
+    1
+}
+
+/// `_rwTextureImageReadAndMask(name, mask, type, &w, &h, &depth, &format)` (0x7F4690): the masked image
+/// (file extensions found along the image path), its raster format found when `*w` or `*h` is 0, and
+/// the image resampled to `*w` x `*h` (32-bit); a 4/8-bit source comes back palettised again with a
+/// palette of its own.
+#[hook(addr = 0x7F4690, conv = cdecl, name = "FUN_007f4690", expect = "B8 10 46 00 00 E8 D6 D9",
+       unverified = "frontier2-c34", route = "split", hazards = "heap-writes",
+       note = "reads the image files; the quantiser is a zeroed local in the port")]
+pub fn texture_image_read_and_mask(
+    name: GPtr<u8>,
+    mask: GPtr<u8>,
+    ty: u32,
+    w: GPtr<i32>,
+    h: GPtr<i32>,
+    depth: GPtr<i32>,
+    format: GPtr<u32>,
+) -> GPtr<u8> {
+    let mut name_buf = [0u8; 0x100];
+    let mut mask_buf = [0u8; 0x100];
+    let nb = GPtr::<u8>::from_raw(name_buf.as_mut_ptr());
+    let mb = GPtr::<u8>::from_raw(mask_buf.as_mut_ptr());
+    copy_with_extension(nb, name);
+    wr::<u8>(mb, 0, 0);
+    if !mask.is_null() && rd::<u8>(mask, 0) != 0 {
+        copy_with_extension(mb, mask);
+    }
+    let img = rw_image_read_masked_image(nb, mb);
+    if img.is_null() {
+        return GPtr::NULL;
+    }
+    if (w.read() == 0 || h.read() == 0)
+        && rw_image_find_raster_format(img, ty, w.cast(), h.cast(), depth.cast(), format).is_null()
+    {
+        rw_image_destroy(img);
+        error_set_code(rw_error1(0x8000_0009));
+        return GPtr::NULL;
+    }
+    if rd::<i32>(img, 4) == w.read() && rd::<i32>(img, 8) == h.read() {
+        return img;
+    }
+    let source_depth = rd::<i32>(img, 0xC);
+    let mut src = img;
+    if source_depth != 0x20 {
+        let wide = rw_image_create(rd::<i32>(img, 4), rd::<i32>(img, 8), 0x20);
+        if wide.is_null() {
+            rw_image_destroy(img);
+            return GPtr::NULL;
+        }
+        if rw_image_allocate_pixels(wide).is_null() {
+            rw_image_destroy(wide);
+            rw_image_destroy(img);
+            return GPtr::NULL;
+        }
+        crate::image::rw_image_copy_port(wide, img);
+        rw_image_destroy(img);
+        src = wide;
+    }
+    let sized = rw_image_create(w.read(), h.read(), 0x20);
+    if sized.is_null() {
+        rw_image_destroy(src);
+        return GPtr::NULL;
+    }
+    if rw_image_allocate_pixels(sized).is_null() {
+        rw_image_destroy(sized);
+        rw_image_destroy(src);
+        return GPtr::NULL;
+    }
+    rw_image_resample_call(sized, src);
+    rw_image_destroy(src);
+    let colours = match source_depth {
+        4 => 0x10,
+        8 => 0x100,
+        _ => return sized,
+    };
+    let mut palette = [0u32; 0x100];
+    let mut pq = [0u8; 0x4008];
+    let q = GPtr::<u8>::from_raw(pq.as_mut_ptr());
+    if rw_pal_quant_init(q) == 0 {
+        return sized;
+    }
+    rw_pal_quant_add_image(q, sized, 1.0);
+    let pp = GPtr::<u32>::from_raw(palette.as_mut_ptr()).cast::<u8>();
+    rw_pal_quant_resolve_palette(pp, colours, q);
+    let out = rw_image_create(rd::<i32>(sized, 4), rd::<i32>(sized, 8), source_depth);
+    if out.is_null() {
+        return sized;
+    }
+    rw_image_allocate_pixels(out);
+    rw_pal_quant_match_image(p8(rd::<u32>(out, 0x14)), rd::<i32>(out, 0x10), rd::<u32>(out, 0xC), 0, q, sized);
+    for i in 0..colours as isize {
+        wr::<u32>(p8(rd::<u32>(out, 0x18)), i * 4, palette[i as usize]);
+    }
+    rw_image_destroy(sized);
+    rw_pal_quant_term(q);
+    out
+}
+
+/// `_rwTextureReadAutoMipmap(name, mask)` (0x7F4AE0), the texture read callback with mipmapping on: the
+/// image (and with mipmaps but no automatic generation every level's own image, the mipmap name
+/// callback telling each level's name) into a raster of the found format; palettised rasters share one
+/// palette over all levels. The texture is built inline and named like the default read callback's.
+#[hook(addr = 0x7F4AE0, conv = cdecl, name = "FUN_007f4ae0", expect = "81 EC 68 06 00 00 8B 0D",
+       unverified = "frontier2-c34", route = "split", hazards = "heap-writes",
+       note = "reads the image files")]
+pub fn texture_read_auto_mipmap(name: GPtr<u8>, mask: GPtr<u8>) -> GPtr<u8> {
+    let mut name_buf = [0u8; 0x100];
+    let mut mask_buf = [0u8; 0x100];
+    let mut pal_buf = [0u8; 0x400];
+    let mut images = [0u32; 0x10];
+    let nb = GPtr::<u8>::from_raw(name_buf.as_mut_ptr());
+    let mb = GPtr::<u8>::from_raw(mask_buf.as_mut_ptr());
+    copy_name_and_mask(nb, mb, name, mask);
+    let m = || module(TEXTURE_MODULE);
+    let ty = if rd::<u32>(m(), 0x1C) == 0 {
+        4
+    } else if rd::<u32>(m(), 0x20) == 0 {
+        0x8004
+    } else {
+        0x9004
+    };
+    let cb = rd::<u32>(m(), 0x30);
+    if cb != 0 {
+        call_mipmap_name_cb(cb, nb, mb, 0, ty);
+    }
+    let (mut w, mut h, mut depth, mut format) = (0i32, 0i32, 0i32, 0u32);
+    let read = |w: &mut i32, h: &mut i32, depth: &mut i32, format: &mut u32| {
+        texture_image_read_and_mask(nb, mb, ty, GPtr::from_raw(w), GPtr::from_raw(h), GPtr::from_raw(depth), GPtr::from_raw(format))
+    };
+    let img = read(&mut w, &mut h, &mut depth, &mut format);
+    if img.is_null() {
+        return GPtr::NULL;
+    }
+    images[0] = a32(img);
+    let raster = rw_raster_create(w, h, depth, format);
+    if raster.is_null() {
+        rw_image_destroy(img);
+        return GPtr::NULL;
+    }
+    if format & 0x8000 != 0 && format & 0x1000 == 0 {
+        let levels = crate::raster::rw_raster_get_num_levels(raster);
+        let mut level = 1i32;
+        while level < levels {
+            copy_name_and_mask(nb, mb, name, mask);
+            let cb = rd::<u32>(m(), 0x30);
+            if cb != 0 {
+                call_mipmap_name_cb(cb, nb, mb, level as u32, ty);
+            }
+            rw_raster_lock(raster, level as u32, 5);
+            w = rd::<i32>(raster, 0xC);
+            h = rd::<i32>(raster, 0x10);
+            depth = rd::<i32>(raster, 0x14);
+            format = u32::from(rd::<u8>(raster, 0x23)) << 8 | u32::from(rd::<u8>(raster, 0x20));
+            rw_raster_unlock(raster);
+            let lvl = read(&mut w, &mut h, &mut depth, &mut format);
+            images[level as usize] = a32(lvl);
+            if lvl.is_null() {
+                while level > 0 {
+                    level -= 1;
+                    rw_image_destroy(p8(images[level as usize]));
+                }
+                rw_raster_destroy(raster);
+                return GPtr::NULL;
+            }
+            level += 1;
+        }
+        let cf = rd::<u8>(raster, 0x23);
+        if cf & 0x60 == 0 {
+            for i in 0..levels.max(0) {
+                rw_image_gamma_correct(p8(images[i as usize]));
+            }
+        } else {
+            let bits = if cf & 0x40 == 0 { 8 } else { 4 };
+            let pb = GPtr::<u8>::from_raw(pal_buf.as_mut_ptr());
+            images_make_shared_palette(pb, 0, GPtr::from_raw(images.as_mut_ptr()), levels, bits);
+            rw_image_gamma_correct(p8(images[0]));
+        }
+        let mut i = 0i32;
+        while i < levels {
+            if rw_raster_lock(raster, i as u32, 5) != 0 {
+                if rw_raster_set_from_image(raster, p8(images[i as usize])).is_null() {
+                    while i < levels {
+                        rw_image_destroy(p8(images[i as usize]));
+                        i += 1;
+                    }
+                    rw_raster_destroy(raster);
+                    return GPtr::NULL;
+                }
+                rw_raster_unlock(raster);
+            }
+            rw_image_destroy(p8(images[i as usize]));
+            i += 1;
+        }
+    } else {
+        if format & 0x8000 == 0 {
+            rw_image_gamma_correct(img);
+        }
+        if rw_raster_set_from_image(raster, img).is_null() {
+            rw_raster_destroy(raster);
+            rw_image_destroy(img);
+            return GPtr::NULL;
+        }
+        rw_image_destroy(img);
+    }
+    let t = new_named_texture(raster, name);
+    if t.is_null() {
+        return GPtr::NULL;
+    }
+    strncpy_checked(t.byte_add(0x30), if mask.is_null() { p8(0xC9_7904) } else { mask }, 0x20);
+    t
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_MATFX_BUMP_MAP_CREATE_RASTER,
@@ -1254,6 +1579,11 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_IMAGE_RESAMPLE_ACCUMULATE,
     HOOK_D3D9_DECOMPRESS_DXT1,
     HOOK_RW_D3D9_DDS_TEXTURE_READ,
+    HOOK_IMAGE_FIND_FILE_TYPE_CB,
+    HOOK_IMAGE_FIND_FILE_TYPE,
+    HOOK_IMAGES_MAKE_SHARED_PALETTE,
+    HOOK_TEXTURE_IMAGE_READ_AND_MASK,
+    HOOK_TEXTURE_READ_AUTO_MIPMAP,
 ];
 
 /// Globals owned by this module.
