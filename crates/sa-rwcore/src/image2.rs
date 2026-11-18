@@ -68,15 +68,15 @@ orig! {
     /// possibly replacing them (0x7F44C0)
     fn images_make_shared_palette(pal: GPtr<u8>, unused: u32, images: GPtr<u32>, count: i32, bits: u32) -> u32 = cdecl 0x7F44C0 => unported;
     /// `FUN_007ff450(image, raster)`: a 32-bit image from the raster pixels (0x7FF450)
-    fn d3d9_image_get_raster32(img: GPtr<u8>, r: GPtr<u8>) -> u32 = cdecl 0x7FF450 => unported;
+    fn d3d9_image_get_raster32(img: GPtr<u8>, r: GPtr<u8>) = cdecl 0x7FF450 => crate::raster_to_image::d3d9_image_get_raster32;
     /// `FUN_00800810(d3dFormat)`: the RGBA -> pixel converter for a D3D format (0x800810)
     fn get_rgba_to_pixel_converter(fmt: u32) -> u32 = cdecl 0x800810 => unported;
     /// A converter returned by 0x800810: `u16 conv(const RwRGBA*)`
-    fn call_converter(f: u32, rgba: GPtr<u8>) -> u32 = cdecl dyn => unported;
+    pub(crate) fn call_converter(f: u32, rgba: GPtr<u8>) -> u32 = cdecl dyn => unported;
     /// `FUN_00800c80(raster, image)`: 4/8-bit raster from an image (0x800C80)
     fn raster_set_image_pal(r: GPtr<u8>, img: GPtr<u8>) -> u32 = cdecl 0x800C80 => unported;
     /// `FUN_00801390(raster, image)`: 24/32-bit raster from an image (0x801390)
-    fn raster_set_image_32(r: GPtr<u8>, img: GPtr<u8>) -> u32 = cdecl 0x801390 => unported;
+    fn raster_set_image_32(r: GPtr<u8>, img: GPtr<u8>) = cdecl 0x801390 => crate::raster_to_image::d3d9_raster_set_image_32;
     /// `FUN_00803790(dst, src)`: image copy for equal depths (0x803790)
     fn image_copy_same_depth(dst: GPtr<u8>, src: GPtr<u8>) -> u32 = cdecl 0x803790 => unported;
     /// `FUN_00803840(dst, src)`: image copy with depth conversion (0x803840)
@@ -117,7 +117,7 @@ orig! {
 }
 
 /// `RwErrorSet({1, code})` with a code already returned by `_rwerror`.
-fn error_set_code(code: u32) {
+pub(crate) fn error_set_code(code: u32) {
     let mut e = RwError {
         plugin_id: 1,
         error_code: 0,

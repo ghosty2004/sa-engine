@@ -87,6 +87,7 @@ pub const MODULES: &[&[HookReg]] = &[
     // FRONTIER-2 turn 2, lane B
     crate::frontier_b2::HOOKS,
     crate::frontier_c::HOOKS,
+    crate::raster_to_image::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -161,6 +162,7 @@ pub const NATIVE_MODULES: &[&[sa_core::abi::NativeReg]] = &[
     crate::d3d9sys::NATIVES,
     crate::d3d9rast::NATIVES,
     crate::raster_copy::NATIVES,
+    crate::raster_to_image::NATIVES,
 ];
 
 pub const COUNT: usize = ALL.len();
