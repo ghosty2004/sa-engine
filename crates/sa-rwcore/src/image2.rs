@@ -97,7 +97,7 @@ orig! {
     fn rw_image_apply_mask_call(img: GPtr<u8>, mask: GPtr<u8>) -> GPtr<u8> = cdecl 0x802AF0 => rw_image_apply_mask;
     /// `FUN_0080ca20(src, x0, x1, yfixed, acc)`: accumulates one source row of the 16.16 column span
     /// `[x0, x1]` into four floats (0x80CA20)
-    fn resample_accumulate(src: GPtr<u8>, x0: i32, x1: i32, y: i32, acc: GPtr<f32>) -> u32 = cdecl 0x80CA20 => unported;
+    fn resample_accumulate(src: GPtr<u8>, x0: i32, x1: i32, y: i32, acc: GPtr<f32>) -> u32 = cdecl 0x80CA20 => image_resample_accumulate;
     /// `_rwerror(code, a, b)` (0x8088D0, three arguments)
     fn rw_error3(code: u32, a: u32, b: u32) -> u32 = cdecl 0x8088D0 => unported;
     /// `RwImageGetPath()` (0x802F60)
@@ -920,6 +920,77 @@ pub fn rw_image_resample(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> {
     }
     dst
 }
+
+/// 1/255 (0x859A3C).
+const F_INV_255: u32 = 0x3B80_8081;
+
+/// One 16.16 column span `[x0, x1]` of the 32-bit `src` row `y >> 16` box-filtered into the four floats at
+/// `acc` (0x80CA20, cdecl, returns `acc`): each channel byte scaled by 1/255; a span within one column is that
+/// pixel times the span width, otherwise the first column weighted by its covered part, the whole columns
+/// added unweighted and the last column weighted by `x1 - its start`; finally every float divided by the span
+/// width (`k = 1 / width`, as an f32). x87 under PC=24: r / g of the middle and last columns stay register
+/// values, b / a are stored first, as the bytes order them.
+#[hook(addr = 0x80CA20, conv = cdecl, name = "FUN_0080ca20", expect = "83 EC 10 8B 4C 24 20 8B 54 24 1C",
+       unverified = "frontier2-c28", route = "L2", hazards = "heap-writes",
+       note = "keeps temporaries in its own argument slots (x0, x1, acc); the caller is RwImageResample")]
+pub fn image_resample_accumulate(src: GPtr<u8>, x0: i32, x1: i32, y: i32, acc: GPtr<f32>) -> u32 {
+    let inv = f32::from_bits(F_INV_65536);
+    let k255 = f32::from_bits(F_INV_255);
+    let row = rd::<i32>(src, 0x10).wrapping_mul(y >> 16) as u32;
+    let mut px = row.wrapping_add(((x0 >> 16) as u32).wrapping_mul(4)).wrapping_add(rd::<u32>(src, 0x14));
+    let ch = |p: u32, i: isize| X87::from_i32(i32::from(rd::<u8>(p8(p), i))).fmul_m(k255);
+    let at = |i: isize| acc.byte_add(i * 4);
+    let span = X87::from_i32(x1.wrapping_sub(x0)).fmul_m(inv);
+    let span32 = span.to_f32();
+    let last = x1 >> 16;
+    if x0 >> 16 == last {
+        for i in 0..4 {
+            at(i).write(ch(px, i).to_f32());
+        }
+        at(0).write(span.fmul_m(at(0).read()).to_f32());
+        for i in 1..4 {
+            at(i).write(X87::from_f32(at(i).read()).fmul(span).to_f32());
+        }
+    } else {
+        let mut col = (x0 as u32 & 0xFFFF_0000).wrapping_add(0x1_0000) as i32;
+        for i in 0..4 {
+            at(i).write(ch(px, i).to_f32());
+        }
+        px = px.wrapping_add(4);
+        let w = X87::from_i32(col.wrapping_sub(x0)).fmul_m(inv);
+        at(0).write(w.fmul_m(at(0).read()).to_f32());
+        for i in 1..4 {
+            at(i).write(X87::from_f32(at(i).read()).fmul(w).to_f32());
+        }
+        while col >> 16 != last {
+            col = col.wrapping_add(0x1_0000);
+            let (c0, c1) = (ch(px, 0), ch(px, 1));
+            let (c2, c3) = (ch(px, 2).to_f32(), ch(px, 3).to_f32());
+            px = px.wrapping_add(4);
+            at(0).write(c0.fadd_m(at(0).read()).to_f32());
+            at(1).write(X87::from_f32(at(1).read()).fadd(c1).to_f32());
+            at(2).write(X87::from_f32(at(2).read()).fadd_m(c2).to_f32());
+            at(3).write(X87::from_f32(at(3).read()).fadd_m(c3).to_f32());
+        }
+        let (c0, c1) = (ch(px, 0), ch(px, 1));
+        let (c2, c3) = (ch(px, 2).to_f32(), ch(px, 3).to_f32());
+        let w = X87::from_i32(x1.wrapping_sub(col)).fmul_m(inv).to_f32();
+        let c0w = c0.fmul_m(w).to_f32();
+        let c1w = c1.fmul_m(w);
+        let c2w = X87::from_f32(c2).fmul_m(w);
+        let c3w = X87::from_f32(c3).fmul_m(w).to_f32();
+        at(0).write(X87::from_f32(c0w).fadd_m(at(0).read()).to_f32());
+        at(1).write(X87::from_f32(at(1).read()).fadd(c1w).to_f32());
+        at(2).write(X87::from_f32(at(2).read()).fadd(c2w).to_f32());
+        at(3).write(X87::from_f32(at(3).read()).fadd_m(c3w).to_f32());
+    }
+    let k = X87::from_f32(f32::from_bits(F_ONE)).fdiv_m(span32);
+    at(0).write(k.fmul_m(at(0).read()).to_f32());
+    for i in 1..4 {
+        at(i).write(X87::from_f32(at(i).read()).fmul(k).to_f32());
+    }
+    acc.addr() as u32
+}
 /// `_rwD3D9DecompressDXT1(width, height, dst, src)` (0x81E720): decodes DXT1 blocks (8 bytes each,
 /// `width / 4` per block row and `height / 4` block rows, both signed divisions truncating toward
 /// zero) into 32-bit pixels at `dst` (row pitch `width * 4` bytes; colours stored as the bytes R, G, B,
@@ -1180,6 +1251,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_RW_IMAGE_READ,
     HOOK_RW_IMAGE_READ_MASKED_IMAGE,
     HOOK_RW_IMAGE_RESAMPLE,
+    HOOK_IMAGE_RESAMPLE_ACCUMULATE,
     HOOK_D3D9_DECOMPRESS_DXT1,
     HOOK_RW_D3D9_DDS_TEXTURE_READ,
 ];
