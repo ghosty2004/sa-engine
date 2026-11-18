@@ -3914,3 +3914,62 @@
 - verify-all (lanes 1-3, host sa-oracle / satool rebuilt from this tree, DLL sha256 b52d8140… of 262368cb, same code as
   the head): `f2a14-u` (SA_UNVERIFIED=frontier2-a26,frontier2-a27) IDENTICAL 13/13, `f2a14-def` (default set) IDENTICAL 13/13;
   save-load identical except the SAVE-1 stack residue.
+
+## 2026-11-18 — FRONTIER-2 turn 12 lane C: the libjpeg class, TriggerTankFire, CarWindscreenShatters, AddWheelSpray, RW image / MatFX helpers, batches c22 / c23 (agent, branch worktree-agent-a21c8971e8e39097d)
+- Base: lane C turn 11 head 30a9949b. Every port address checked against `tools/gen/inflight.py` / `frontier.py`
+  first (no RW / RENDER address registered elsewhere; 0x4A0FA0 is only declared, `=> unported`, on lane B's branch).
+- libjpeg 6b catalogue class (main-session decision): a `('libjpeg-6b', 0x5C26B0, 0x5D0260, r'JPEGMEM')` THIRD_PARTY
+  entry in tools/catalog/classify_unknowns.py and a full `run_all.sh` (worktree with `re` / `.venv` symlinked to the
+  main checkout, catalog/raw copied, `SA_GHIDRA_PROJ` = the main checkout's analysed project, read only): 204 rows
+  become `excluded:thirdparty:libjpeg-6b`, subsystem X-libjpeg-6b (from UNK-game; 9 from X-mis-split), state
+  excluded. The block includes IJG's jmemnobs back end 0x5CF800-0x5CF830 (rewritten to call CMemoryMgr, reached only
+  from jmemmgr; RE-SPEC-UNK had proposed those four as game glue): patterns.py dropped its generated hooks of 0x5CF800
+  / 0x5CF820 and their state went implemented -> excluded (`progress.py set`, then `merge`). 0x5D0260 (the
+  init_destination of JPegCompressScreenToBuffer) lies outside and keeps its generated port; 0x5D0280 / 0x5D02D0
+  likewise. The seven libjpeg entry points the JPEG plugin ports call left the frontier.
+- Batch frontier2-c22 (RENDER, 3 hooks), from the 1.0 US bytes:
+  - Fx_c::TriggerTankFire 0x4A0FA0 (`fx.rs`, lane B's `tank` scenario blocker): TriggerWaterSplash's camera range
+    test, a g_fxMan matrix from CreateMatFromVec, the `tank_fire` system with that parent, CopyParentMatrix,
+    PlayAndKill, the matrix returned.
+  - CGlass::CarWindscreenShatters 0x71C2B0 (`glass.rs`; cdecl, the pushed bool unread). gta-reversed differs: right
+    = `n x up` (not `up x n`), the second glass triangle is the next one found (not necessarily adjacent), the glass
+    sound 0x7E, the corner / extent / centre x87 order (the first fwd dot stays unrounded on the stack). IsGlass
+    0x55E790 got one sa-world binding (sa-weapon's local declaration removed).
+  - Fx_c::AddWheelSpray 0x49FB30 (`fx_debris_wheel_grass.rs`, next to the other wheel effects): rand() at
+    0x49FD25 / 0x49FEA5 through `rand_at` with their return sites.
+- Batch frontier2-c23 (RW, 6 hooks):
+  - `_rwImageFindFileAndCall` 0x8030C0, its scratch buffer 0x803210 and RwImageRead's callback 0x8032D0 (`image2.rs`;
+    the callback was a stored pointer, so it would have blocked natively behind 0x8030C0). skin.rs's dword+byte copy
+    became `common::copy_bytes`.
+  - RwImageCopy 0x803950 (`image.rs`; the unsupported depth pairs fault on a null image in the original, kept).
+  - `_rwD3D9ImageFindFormat` 0x7FFFF0 (`frontier_c.rs`; the binding targets it).
+  - The default MatFX D3D9 mesh render 0x812AC0 (`matfx.rs`; its draw tail is 0x812C90's port).
+- Not done (looked at): CPostEffects::Radiosity 0x702080 (3.7 KB, four-times unrolled quad loops, left for a whole
+  turn); the water and remaining RW rows (time).
+- No new scenario: a windscreen shatter needs a car crash scripted into the native run; not done this turn.
+- Fixes during the turn: the c23 hooks first carried RW names; sa-hook's table test wants the catalogue's name
+  (b3b13863, queue regenerated 3406fd5e). Comments of my additions follow the new no-process-metadata rule
+  (9380e7b0, comment-only).
+- Gates: writer gate (base 30a9949b) all PASS on 3406fd5e (a first run on 619ca132 failed only hooktest, the names
+  above); re-run on the final head: see the last line.
+- Scenarios (frontier.sh, i686 native sa-game of b3b13863, SA_ROOT=~/sa-engine; target/lc12/scen): postfx 1016 / 0
+  blocked, pausemenu 416 / 0, solicit 4016 / 0, crossing 1216 / 0, crossing-long 4016 / 0, roadblocks 2016 / 0, melee
+  2616 / 0, sniper / shootcar / shootdriver 1216 / 0, quad / heli / plane / boat 1216 / 0, roadblock-script 1016 / 0,
+  gangwar 2016 / 0, jetpack 1016 / 0, roadblock-wanted 2015 / 1 (CObject::Explode 0x5A1340, lane A's); no crash;
+  unchanged from turn 11. (lane B's `tank` scenario is on its branch; TriggerTankFire was its blocker.)
+- frontier.py --no-branches: "to port" 118 -> 105 (RW 25 -> 21: 0x8030C0, 0x803950, 0x7FFFF0, 0x812AC0; RENDER 6 -> 5
+  incl. the partial: 0x71C2B0, 0x49FB30; the 7 libjpeg rows gone); 0x803210 / 0x8032D0 were revealed and ported in the
+  same batch; 0x4A0FA0 is a frontier row only on lane B's branch.
+- verify-all (lanes 6-7, host sa-oracle rebuilt; lanes shared by flock with lanes A / B): `lanec12-c2223`
+  (SA_UNVERIFIED=frontier2-c22,frontier2-c23, DLL of 619ca132) IDENTICAL 13/13; on the final code's DLL (3406fd5e,
+  sha256 36697cb8…; later commits are comment / docs only) `lanec12-c2223f` and `lanec12-default` IDENTICAL on 12 of 13,
+  menus-hud DIVERGED at frame 201 (timer, rand, randcalls, pad) in both: the c2223f all-original `plain` run finished in
+  15 s instead of ~46 s and port-l2.sh's INF-19 cache stored that bad reference under the DLL's key, which default then
+  reused. The cache entry (target/l2cache/plain-ddc71b3898ca8303-5700.*) was moved to target/lc12/bad-plain and
+  menus-hud re-run: `lanec12-c2223g` (batches, fresh plain 50 s) and `lanec12-defaultg` (default, reusing the fresh
+  reference) IDENTICAL. So both sets are IDENTICAL 13/13 on the final DLL.
+- Open (lane C): RENDER Radiosity 0x702080 (3.7 KB, unrolled), the water triangle layer 0x6E8780,
+  SplitWaterTriangleAlongYLine 0x6EE5A0, AddWaterLevelQuad 0x6E7EF0 (peek model of the 1 / 3-vertex overflow); RW
+  0x7F44C0 / 0x7F4690 / 0x7F4AE0 / 0x7FF450 / 0x800C80 / 0x801390 / 0x80CA20, MatFX 0x810830 / 0x812D40 / 0x813A10 /
+  0x814460, skin 0x7C8060 / 0x7C9DA0 / 0x7CA410 / 0x7CA850, 0x75A960, 0x763F20 / 0x7641C0, 0x7CF600, 0x81F360, 0x74A880
+  with 0x74CED0. A windscreen-shatter scenario (a scripted crash) is still to write.
