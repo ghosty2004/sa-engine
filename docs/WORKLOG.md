@@ -4331,3 +4331,50 @@
   branch, regenerated in 2e9f7c62); verify-all lanes 1-2 (lane 3 left free: 6 GB available with two other lanes
   running) IDENTICAL 13/13, tag mod2m2, head 2e9f7c62, host sa-oracle rebuilt from this tree (the default build: the
   mod code is behind `mods` / `observe`).
+## 2026-11-18 — FRONTIER-2 turn 14 lane C: the cause of 0x7C8060's objects divergence, the skin render re-landed, the atomic / geometry / material stream writers, batches c27 / c28 (agent, branch worktree-agent-a89efb17b15128b8f)
+- Base: lane C turn 13 head 35e7929a. The port addresses were checked against `frontier.py --no-branches` first
+  (none registered on another branch). Turn 13's target/lc13 aids were gone (that worktree's target/ had been
+  cleaned), so the disassembly was re-read with tools/verify/sadis.py.
+- 0x7C8060 (the vertex-shader skin render), cause: the port from 1c501cc1 re-applied, then `port-l2.sh 0x7C8060` on
+  inf4-rec (runs plain / l2 / rust, `L2_FROM=560`, only this hook on Rust, everything else original): rust DIVERGED at
+  frame 595 in objects as in verify-all, and L2 had 200 mismatches in 400 cases, the first at 0x8E2448
+  (`_rwD3D9LastVertexShaderUsed`: another shader pointer) with Rust-only writes to new vertex-shader cache entries
+  (0xC92720..). So the Rust run picked other vertex shaders, i.e. its descriptor differed. Recounting the stack at
+  0x7C80D5: after the begin call's three pushes (not popped), the render-state, LTM, world-matrix and composed-transform
+  pushes ESP is entry - 0x6C, so `lea eax, [esp + 0x34]` is entry - 0x38, the descriptor: the constants callback
+  (cbs +4) takes the descriptor as its fourth argument and fills its light counts. The port passed a residue word at
+  - 0x40 instead, so its shaders had no lights. Not stack residue read by
+  later original code. Fixed (the descriptor passed; only the descriptor and the dispatch start as residue, `peek =
+  0x38`; the cache bytes start as the original sets them) and re-landed in batch frontier2-c27 (7cfbcb7e). Re-run
+  `lc14-vs2`: L2 400 cases 0 mismatches (the undeclared writes, by both runs, are the shader cache and the last vertex
+  shader, now declared in tools/e2e/l2-extras.txt), rust trace IDENTICAL over 5200 frames.
+- Batch frontier2-c28 (RW, 6 hooks, from the 1.0 US bytes):
+  - FUN_0080ca20 0x80CA20 (`image2.rs`), RwImageResample's column span: bytes scaled by 1/255, the first / middle /
+    last column weights, the final 1 / width; x87 under PC=24 in the bytes' order (r / g of the middle and last
+    columns stay register values).
+  - The clump-writer chain (`core5.rs`): `_rpClumpAtomicStreamWrite` 0x74A880, `RpGeometryStreamWrite` 0x74CED0,
+    `_rpMaterialListStreamWrite` 0x74E4B0, `RpMaterialStreamWrite` 0x74E050, and `RwStreamWriteReal` 0x7ED3D0
+    (`stream.rs`). Porting 0x74A880 alone would have revealed 0x74CED0 and, behind it, 0x74E4B0 / 0x74E050 / 0x7ED3D0;
+    the whole chain is ported, so no new row. Residue written to the stream (the atomic's frame / geometry index with
+    empty lists, the material struct's unused word) through `peek`; ledger entry.
+- Looked at, not ported: 0x7F44C0 (the shared-palette builder) reaches the five RwPalQuant functions (0x80C470 /
+  0x80AA80 / 0x80AF60 / 0x80BF20 / 0x80C520, none ported), so porting it would add five rows; 0x763F20 (D3D9 world
+  sector native stream write: vertex declaration / buffer locks), time.
+- convcheck (master's tools/verify/convcheck.py run on this tree): 9 FAIL, the same nine base declarations as turn 13,
+  none on this turn's declarations.
+- Scenarios (frontier.sh, i686 native sa-game of the final code, SA_ROOT=~/sa-engine; target/lc14/scen): postfx 1016 / 0
+  blocked, pausemenu 416 / 0, solicit 4016 / 0, crossing 1216 / 0, crossing-long 4016 / 0, roadblocks 2016 / 0, melee
+  2616 / 0, sniper / shootcar / shootdriver 1216 / 0, quad / heli / plane / boat 1216 / 0, roadblock-script 1016 / 0,
+  gangwar 2016 / 0, jetpack 1016 / 0, roadblock-wanted 2015 / 1 (CObject::Explode 0x5A1340, lane A's); no crash;
+  unchanged from turn 13.
+- frontier.py --no-branches: "to port" 98 -> 95 (RW 17 -> 14: 0x7C8060, 0x80CA20, 0x74A880; no new rows).
+- Gates: writer gate (base 35e7929a) all 16 steps PASS on 97cc423c (hooks: 7 new, all unverified, batches frontier2-c27 /
+  frontier2-c28); only docs commits after it.
+- verify-all (lanes 6-7, host sa-oracle and satool rebuilt): a first `lanec14-c2428` attempt ran against a host
+  sa-oracle built before the c28 hooks existed (port-l2 refused every recording: "no spec entry"); stopped, sa-oracle
+  rebuilt, re-run. `lanec14-c2428` (SA_UNVERIFIED=frontier2-c24..c28, DLL of 97cc423c, sha256 62ac9893…) IDENTICAL
+  13/13 (save-load: save files identical except the SAVE-1 residue). Default set: see the last line.
+- Open (lane C): the MatFX renders 0x812D40 / 0x813A10 / 0x814460 (with 0x8149E0 and 0x814270), the image / raster rows
+  0x7F44C0 (with the RwPalQuant functions), 0x7F4690, 0x7F4AE0, 0x7FF450, 0x800C80, 0x801390, 0x75A960, 0x763F20 /
+  0x7641C0, 0x7CF600 (RtPNGImageWrite, libpng through bindings), 0x81F360 (RwD3D9RasterStreamReadDDS), CPostEffects::
+  Radiosity 0x702080.
