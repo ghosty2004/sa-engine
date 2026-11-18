@@ -3515,7 +3515,7 @@
 ## 2026-11-18 — FRONTIER-2 turn 10, lane B: the monster truck suspension, tow links, vehicle guns and missiles, TankControl (agent, branch worktree-agent-acdc10ccd3cf0e0a3)
 - Base: lane B turn 9's head e87dcae2. `tools/gen/inflight.py` checked first: no other branch registers any address
   ported here.
-- Batch `frontier2-b22` (VEH, 6 hooks), from the 1.0 US bytes with docs/re/specs/VEH as reading aid:
+- Batch `frontier2-b22` (VEH, 5 hooks), from the 1.0 US bytes with docs/re/specs/VEH as reading aid:
   - CMonsterTruck::SetupSuspensionLines 0x6C7FB0 / ProcessSuspension 0x6C83A0 (`monster_truck.rs`): the four col disks
     through CColDisk::Set (the generated port), the ride height in x87 order; the spring / contact speed / damping
     passes and the push on a vehicle under a wheel (z without the 0.25 factor; the damage component's upper 16 bits
@@ -3544,10 +3544,26 @@
 - Divergence ledger (original UB): GetNearestCarPassengerDoor's never-written door 8 slot and TankControl's no-node
   muzzle read 0 in the ports.
 - New frontier.sh scenarios: monster (AGBDLCID), tanker (AMOMHRER: the Petro with its trailer), tank (AIWPRTON, turret
-  turned and fired), hydra (JUMPJET, fire held).
+  turned and fired); `frontier2-b10-counts.gdb` counts monster SetupSuspensionLines 1 / ProcessSuspension 282, tanker
+  TankerCheat 1 / UpdateTrailerLink 1996 / UpdateTractorLink 1498, tank TankControl 998. A hydra scenario (JUMPJET) was
+  tried and dropped: it reaches none of these ports (the Hydra fires through GetPlaneWeaponFiringStatus' own
+  AddProjectile). GetNearestCarPassengerDoor has no scenario (a ped walking to a passenger door).
 - frontier.py --no-branches: to port 122 -> 115 (VEH 19 -> 10, CAM 6); revealed: CWeapon::DoTankDoomAiming 0x73D1E0
   (WEAPON, called by TankControl and FireFixedMachineGuns) and FxManager_c::TriggerTankFire 0x4A0FA0 (RENDER).
-- Verification, scenarios and the writer gate: below.
+- Scenarios (i686 native sa-game of 187ad5b2, SA_ROOT=~/sa-engine; frames / blocked): pausemenu 400 / 0, solicit
+  4000 / 0, crossing 1200 / 0, crossing-long 4000 / 0, melee 2600 / 0, sniper / shootcar / shootdriver / quad / heli /
+  boat / cinema 1200 / 0, roadblock-script 1000 / 0, gangwar 2000 / 0, jetpack 1000 / 0, tanker 1200 / 0, roadblocks
+  2000 / 1 (lane C's 0x7CF240), roadblock-wanted 2000 / 1 (0x5A1340, in flight elsewhere), plane 1200 / 392 (lane C's
+  0x43E0E0), monster 1200 / 89 (CCollision::ProcessColModels' unported disk path 0x4185C0, COLL partial: the monster
+  truck's disks), tank 1200 / 1 (CWeapon::DoTankDoomAiming 0x73D1E0, WEAPON, the cannon shot); no crash, 0 blocked
+  on lane B (VEH / CAM).
+- verify-all (lanes 4-5, fresh release sa-oracle, DLL of 187ad5b2 = the final code): `lb10-u`
+  (SA_UNVERIFIED=frontier2-b22,frontier2-b23) IDENTICAL 13/13; default set `lb10-def`: recorded below. An earlier
+  `lb10-u1` (b22 + 0x73DF00) was stopped after 2/13 PASS when the code moved on.
+- Writer gate (base e87dcae2): on 40b96b37 all 16 steps PASS, none skipped (note: frontier2-b23 spans VEH and WORLD,
+  for TankerCheat); rerun on the final head: recorded below.
+- Resources: CARGO_BUILD_JOBS=4 / JOBS=4, one cargo build at a time; the main session's integration verify shared
+  lanes 4-5.
 - Open (lane B): CAM Process_WheelCam 0x512110, Process_Editor 0x50F3F0, the two-player cams 0x513510 / 0x513BE0 /
   0x519810 / 0x525E50; VEH DoNitroEffect 0x6A3BD0, TowTruckControl 0x6A40F0, ProcessHarvester 0x6A9680,
   RcbanditCheckHitWheels 0x6B45E0, AddReplacementUpgrade 0x6D3830 (its entry continues through the VM fragment
