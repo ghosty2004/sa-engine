@@ -154,6 +154,11 @@ orig! {
 }
 
 orig! {
+    /// `CCarEnterExit::GetNearestCarPassengerDoor` (0x650BB0)
+    pub fn get_nearest_car_passenger_door(ped: GPtr<u8>, v: GPtr<u8>, out: GPtr<u8>, door: GPtr<u8>, a: u32, b: u32, c: u32) -> u8 = cdecl 0x650BB0 => crate::car_door_positions::get_nearest_car_passenger_door;
+}
+
+orig! {
     /// `CAutomobile::ResetSuspension` (0x6A2AE0)
     pub fn automobile_reset_suspension(car: GPtr<u8>) = thiscall 0x6A2AE0 => crate::automobile::reset_suspension;
 }
@@ -581,6 +586,11 @@ orig! {
 orig! {
     /// `CWeapon::DoTankDoomAiming` (0x73D1E0)
     pub fn weapon_do_tank_doom_aiming(v: GPtr<u8>, owner: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) = cdecl 0x73D1E0 => unported;
+}
+
+orig! {
+    /// `CVehicle::FireFixedMachineGuns` (0x73DF00)
+    pub fn fire_fixed_machine_guns(v: GPtr<u8>) = thiscall 0x73DF00 => crate::vehicle_guns::fire_fixed_machine_guns;
 }
 
 orig! {

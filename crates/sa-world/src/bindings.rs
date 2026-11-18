@@ -749,6 +749,11 @@ orig! {
 }
 
 orig! {
+    /// `thunk_FUN_015658a0` (0x45AFB0)
+    pub fn physical_45afb0(p: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x45AFB0 => unported;
+}
+
+orig! {
     /// `tReplayVehicleBlock::MakeVehicleUpdateData` (0x45B730)
     pub fn make_vehicle_update_data(b: GPtr<u8>, v: GPtr<u8>, i: i32) = thiscall 0x45B730 => unported;
 }
@@ -1041,6 +1046,11 @@ orig! {
 orig! {
     /// `FxSystem_c::SetLocalParticles` (0x4AA910)
     pub fn fx_set_local_particles(f: GPtr<u8>, b: u32) = thiscall 0x4AA910 => unported;
+}
+
+orig! {
+    /// `FxPrtMult_c` (0x4AB270)
+    pub fn fx_prt_mult_default_ctor(p: u32) -> u32 = thiscall 0x4AB270 => unported;
 }
 
 orig! {
@@ -4486,6 +4496,11 @@ orig! {
 orig! {
     /// `CProjectileInfo::RemoveAllProjectiles` (0x7399B0)
     pub fn remove_all_projectiles() = cdecl 0x7399B0 => unported;
+}
+
+orig! {
+    /// `CWeapon::AddGunshell` (0x73A3E0)
+    pub fn add_gunshell(w: GPtr<u8>, e: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<f32>, size: f32) = thiscall 0x73A3E0 => unported;
 }
 
 orig! {
