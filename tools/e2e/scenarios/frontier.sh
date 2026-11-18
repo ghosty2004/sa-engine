@@ -121,6 +121,7 @@
 # Env: SA_ROOT (checkout holding wine/gta-sa; default ~/sa-engine), SA_GAME (binary; default this checkout's
 # i686-unknown-linux-gnu release build), WRAP (a command prefix, e.g. WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier-counts.gdb --args"
 # to count the ports' calls), plus any SA_GAME_* (SA_GAME_PRESENT_GAME=1 + PRESENT_DIR for frames).
+# SA_GAME_IMAGE=exe|builtin|check passes `--image`.
 set -eu
 HERE=$(cd "$(dirname "$0")/../../.." && pwd)
 NAME=$1; OUT=$2
@@ -131,6 +132,7 @@ export GLIBC_TUNABLES=glibc.malloc.mmap_max=0
 run() { # run FRAMES [args]
     n=$1; shift
     if [ -n "${PRESENT_DIR:-}" ]; then set -- "$@" --present-dir "$PRESENT_DIR"; fi
+    if [ -n "${SA_GAME_IMAGE:-}" ]; then set -- "$@" --image "$SA_GAME_IMAGE"; fi
     # shellcheck disable=SC2086
     exec systemd-run --user --scope -q -p MemoryMax=6G setarch i686 -R ${WRAP:-} "$B" --game "$GAME" --fixed-step 40 \
         --frames "$n" --report "$OUT/report.md" "$@" > "$OUT/stdout.txt" 2> "$OUT/stderr.txt"

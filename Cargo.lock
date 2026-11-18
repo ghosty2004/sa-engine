@@ -2520,6 +2520,7 @@ dependencies = [
  "sa-cam",
  "sa-core",
  "sa-hud",
+ "sa-image",
  "sa-input",
  "sa-mod-api",
  "sa-mod-host",
@@ -2534,6 +2535,7 @@ dependencies = [
  "sa-samp-api",
  "sa-script",
  "sa-stream",
+ "sa-testkit",
  "sa-types",
  "sa-veh",
  "sa-weapon",
@@ -2595,6 +2597,10 @@ dependencies = [
  "sa-weapon",
  "sa-world",
 ]
+
+[[package]]
+name = "sa-image"
+version = "0.1.0"
 
 [[package]]
 name = "sa-input"

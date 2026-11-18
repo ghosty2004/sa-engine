@@ -22,6 +22,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 sa-core = { path = "../sa-core" }
+sa-image = { path = "../sa-image" }
 sa-input = { path = "../sa-input" }
 sa-stream = { path = "../sa-stream" }
 sa-ports = { path = "../sa-ports" }
@@ -59,6 +60,9 @@ samp-client = { path = "../../samp-rs/crates/samp-client", optional = true }
 samp-proto = { path = "../../samp-rs/crates/samp-proto", optional = true }
 samp-saa = { path = "../../samp-rs/crates/samp-saa", optional = true }
 samp-ui = { path = "../../samp-rs/crates/samp-ui", optional = true }
+
+[dev-dependencies]
+sa-testkit = { path = "../sa-testkit" }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 libc = "0.2"

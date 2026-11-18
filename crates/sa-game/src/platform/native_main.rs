@@ -28,6 +28,7 @@ pub fn parse_args() -> Result<Args, String> {
         samp_proxy: None,
         samp_ui_demo: false,
         mods: None,
+        image: None,
     };
     let mut system_heap = false;
     // `SA_GAME_PERF=FILE` is `--perf FILE`
@@ -55,10 +56,11 @@ pub fn parse_args() -> Result<Args, String> {
             "--samp-auth" => a.samp_auth = Some(PathBuf::from(val()?)),
             "--samp-ui-demo" => a.samp_ui_demo = true,
             "--mods" => a.mods = Some(val()?),
+            "--image" => a.image = Some(crate::arena::ImageKind::parse(&val()?)?),
             "--fixed-step" => det::set_fixed_step(val()?.parse().map_err(|e| format!("--fixed-step: {e}"))?),
             "-h" | "--help" => {
                 println!(
-                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--start-in-world] [--fixed-step MS] [--frame-times FILE] [--perf FILE] [--samp HOST[:PORT] [--name NAME] [--samp-auth FILE] | --samp-ui-demo] [--mods DIR] [--window [--exit-after SECONDS] [--auto-input] | --screenshot OUT.png]\n\
+                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--start-in-world] [--fixed-step MS] [--frame-times FILE] [--perf FILE] [--samp HOST[:PORT] [--name NAME] [--samp-auth FILE] | --samp-ui-demo] [--mods DIR] [--image exe|builtin|check] [--window [--exit-after SECONDS] [--auto-input] | --screenshot OUT.png]\n\
                      The user documents folder (settings, saves) is a fresh temporary folder per run unless\n\
                      --documents DIR or --persistent-documents ($XDG_DATA_HOME/sa-engine/documents) is given.\n\
                      --window runs the game in a native window with the window's keyboard and mouse; --auto-input adds\n\
@@ -73,6 +75,9 @@ pub fn parse_args() -> Result<Args, String> {
                      --samp-ui-demo draws the engine-drawn SA:MP UI (chat, dialogs, nametags, labels, textdraws) with sample content.\n\
                      --mods DIR loads the WebAssembly mods in DIR (a mod folder with mod.toml, or a folder of them; build with\n\
                      --features mods; docs/mods/getting-started.md).\n\
+                     --image: where the arena's initial data comes from: exe (the data sections of DIR/gta_sa.exe, 1.0 US),\n\
+                     builtin (the built-in image, no exe read) or check (the built-in image, compared byte for byte with\n\
+                     DIR/gta_sa.exe first). Default: exe.\n\
                      --perf FILE (or SA_GAME_PERF=FILE): per-frame phase times and counters of every in-game frame to FILE\n\
                      (CSV) and a summary table at exit (docs/perf/measure.md)."
                 );
@@ -126,13 +131,13 @@ pub fn boot(args: &Args) -> Result<Session, String> {
     std::fs::create_dir_all(&docs).map_err(|e| format!("{}: {e}", docs.display()))?;
     let docs_fs = NativeFs::new(&docs).map_err(|e| e.to_string())?;
     let exe_path = args.game.join("gta_sa.exe");
-    let exe = std::fs::read(&exe_path).map_err(|e| {
-        format!("{}: {e} (phase B reads the data sections of your own 1.0 US exe at start-up)", exe_path.display())
+    let image = args.image.unwrap_or(crate::arena::ImageKind::Exe).image(|| {
+        std::fs::read(&exe_path).map_err(|e| format!("{}: {e} (--image builtin runs without it)", exe_path.display()))
     })?;
     boot_with(
         Box::new(game),
         Box::new(docs_fs),
-        exe,
+        image,
         &args.game.display().to_string(),
         &docs.display().to_string(),
         &args.samp_options(),

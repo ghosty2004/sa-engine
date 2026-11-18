@@ -230,7 +230,7 @@ pub fn boot() -> Result<(), JsValue> {
     let s = crate::app::boot_with(
         Box::new(game),
         Box::new(MemFs::default()),
-        exe,
+        crate::arena::Image::Exe(exe),
         &format!("your game folder ({} files)", crate::platform::webfs::count()),
         "browser memory (not kept)",
         &samp_options(),

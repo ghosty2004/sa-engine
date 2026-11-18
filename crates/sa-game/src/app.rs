@@ -39,6 +39,8 @@ pub struct Args {
     pub samp_ui_demo: bool,
     /// `--mods DIR`: WebAssembly mods (feature `mods`, `crate::mods`)
     pub mods: Option<String>,
+    /// `--image exe|builtin|check`: where the arena's initial contents come from
+    pub image: Option<arena::ImageKind>,
 }
 
 /// The current main-loop iteration (the numbering of `SA_GAME_KEYS` / `SA_GAME_TELEPORT`), for exploration output.
@@ -165,11 +167,11 @@ pub struct Session {
 
 
 /// The platform setup and the boot on any target: `game` is the install (read-only), `docs` the user documents
-/// folder, `exe` the bytes of the install's gta_sa.exe (its data sections fill the arena).
+/// folder, `image` what fills the arena.
 pub fn boot_with(
     game: Box<dyn GameFs>,
     docs_fs: Box<dyn GameFs>,
-    exe: Vec<u8>,
+    image: arena::Image,
     game_label: &str,
     docs_label: &str,
     samp: &SampOptions,
@@ -178,7 +180,7 @@ pub fn boot_with(
     if !game.exists("models/gta3.img") {
         return Err(format!("{game_label} does not look like a GTA San Andreas folder (no models/gta3.img)"));
     }
-    let arena_info = arena::map_image(exe, &format!("{game_label}/gta_sa.exe"))?;
+    let arena_info = arena::map_image(image, &format!("{game_label}/gta_sa.exe"))?;
     com::map()?;
     dx::map()?;
     d3d9::map()?;
@@ -217,9 +219,9 @@ pub fn boot_with(
     }
     let (nglob, bad) = native::check_globals();
     println!(
-        "sa-game: {nglob} globals! declarations alias the arena; {} differ from the exe image's initial value{}",
+        "sa-game: {nglob} globals! declarations alias the arena; {} differ from the image's initial value{}",
         bad.len(),
-        if bad.is_empty() { "" } else { " (the exe's value is used):" }
+        if bad.is_empty() { "" } else { " (the image's value is used):" }
     );
     for b in &bad {
         println!("  {b}");
