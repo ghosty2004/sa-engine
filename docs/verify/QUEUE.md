@@ -3365,11 +3365,11 @@ SA_UNVERIFIED=frontier2-c23 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c23 
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x7FFFF0 | `_rwD3D9ImageFindFormat` | written | L2 | stack-residue |
-| 0x8030C0 | `_rwImageFindFileAndCall` | written | L2 | heap-writes |
-| 0x803210 | `_rwImageGrowScratchBuffer` | written | L2 | heap-writes |
-| 0x8032D0 | `_rwImageReadFileCB` | written | L2 | heap-writes |
-| 0x803950 | `RwImageCopy` | written | L2 | heap-writes |
+| 0x7FFFF0 | `FUN_007ffff0` | written | L2 | stack-residue |
+| 0x8030C0 | `FUN_008030c0` | written | L2 | heap-writes |
+| 0x803210 | `FUN_00803210` | written | L2 | heap-writes |
+| 0x8032D0 | `(missed by ghidra: data-code-immediate)` | written | L2 | heap-writes |
+| 0x803950 | `FUN_00803950` | written | L2 | heap-writes |
 | 0x812AC0 | `FUN_00812ac0` | written | L2 | none |
 
 ## frontier2-c3
