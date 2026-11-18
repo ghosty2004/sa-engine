@@ -2,8 +2,8 @@
 
 The phase B game (`crates/sa-game`) built for `wasm32-unknown-unknown` and run in a Web Worker: the same boot,
 main loop and ports as the native `sa-game --window`, drawing through wgpu (WebGPU, else WebGL2) into an
-`OffscreenCanvas`. Nothing of the game is shipped: it reads **your own** GTA San Andreas 1.0 US folder (its
-`gta_sa.exe` is checked by SHA-256, as natively).
+`OffscreenCanvas`. No game asset is shipped: it reads **your own** GTA San Andreas 1.0 US folder. The exe's
+initial data is built into the module (`crates/sa-image`), so the page neither needs nor copies `gta_sa.exe`.
 
 ## Run it
 
@@ -13,7 +13,7 @@ tools/web/serve.sh                      # http://localhost:8642/ (loopback only)
 ```
 
 Open <http://localhost:8642/>, press **Choose your GTA San Andreas folder** and pick the folder that contains
-`gta_sa.exe`. The browser reads the files locally (they are never uploaded). Then press Enter through the logos
+`models/gta3.img`. The browser reads the files locally (they are never uploaded). Then press Enter through the logos
 and the menu (Start Game / New Game); "start in the world" skips the intro mission. Click the picture to capture
 the mouse; W A S D walk, as in the game's default controls.
 

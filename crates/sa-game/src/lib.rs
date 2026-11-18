@@ -2,7 +2,7 @@
 //!
 //! Runs natively on Linux without Wine and without executing any original code (a 32-bit
 //! process, `--target i686-unknown-linux-gnu`): it reads the user's install through sa-platform,
-//! maps the legacy address arena with the data sections of the user's own gta_sa.exe ([`arena`]),
+//! maps the legacy address arena with the initial data of gta_sa.exe (built in, or the user's exe; [`arena`]),
 //! installs `orig!`'s address registry of every Rust port ([`native`]), binds the ported code's
 //! Win32/CRT/DirectInput declarations to sa-platform ([`bind`]) and runs the ported entry points
 //! of the original `WinMain` in order ([`boot`]), then a number of main-loop iterations. Every

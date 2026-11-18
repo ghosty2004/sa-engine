@@ -230,8 +230,8 @@ def main():
     if a.bind not in ("127.0.0.1", "::1", "localhost"):
         sys.exit("serve.py: binds to the loopback address only (the game files must not leave this machine)")
     if a.game:
-        if not os.path.isfile(os.path.join(a.game, "gta_sa.exe")):
-            sys.exit(f"serve.py: {a.game} has no gta_sa.exe")
+        if not os.path.isfile(os.path.join(a.game, "models", "gta3.img")):
+            sys.exit(f"serve.py: {a.game} has no models/gta3.img (not a GTA San Andreas folder)")
         Handler.game = os.path.abspath(a.game)
         Handler.index = json.dumps(game_index(Handler.game)).encode()
     if a.samp_dir:

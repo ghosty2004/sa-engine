@@ -322,7 +322,7 @@ let storeError = null;
 
 // ---------------------------------------------------------------- start-up list ---
 // The blocks the game reads before it is in the world: the list the game's worker recorded on an earlier load
-// (meta "startup"), else gta_sa.exe, every file under data/ and text/ and the directories of the IMG archives.
+// (meta "startup"), else every file under data/ and text/ and the directories of the IMG archives.
 async function startupList() {
   const known = await store?.getMeta('startup').catch(() => null);
   if (known) {
@@ -340,7 +340,7 @@ async function startupList() {
   };
   for (let id = 0; id < files.length; id++) {
     const p = files[id].path.toLowerCase();
-    if (p === 'gta_sa.exe' || ((p.startsWith('data/') || p.startsWith('text/')) && files[id].size <= 4 << 20)) whole(id);
+    if ((p.startsWith('data/') || p.startsWith('text/')) && files[id].size <= 4 << 20) whole(id);
   }
   // IMG directories (VER2: "VER2", entry count, 32-byte entries): the header block first, then the rest
   await Promise.all(files.map(async (f, id) => {

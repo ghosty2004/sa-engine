@@ -266,15 +266,20 @@ async function start(files) {
   canvas.focus();
 }
 
+// the game's files: the engine carries the exe's data itself, so gta_sa.exe is neither read nor copied
+function gameFiles(list) {
+  return list.filter((f) => f.path.toLowerCase() !== 'gta_sa.exe');
+}
+
 // a folder picked in the page: paths relative to the chosen folder
 $('pick').addEventListener('change', (e) => {
-  const list = [...e.target.files].map((f) => ({
+  const list = gameFiles([...e.target.files].map((f) => ({
     path: f.webkitRelativePath.split('/').slice(1).join('/'),
     size: f.size,
     file: f,
-  }));
-  if (!list.some((f) => f.path.toLowerCase() === 'gta_sa.exe')) {
-    log('that folder has no gta_sa.exe (choose the GTA San Andreas folder itself)', 'error');
+  })));
+  if (!list.some((f) => f.path.toLowerCase() === 'models/gta3.img')) {
+    log('that folder has no models/gta3.img (choose the GTA San Andreas folder itself)', 'error');
     return;
   }
   start(list);
@@ -284,7 +289,7 @@ $('pick').addEventListener('change', (e) => {
 async function served() {
   const r = await fetch('game-index.json');
   const idx = await r.json();
-  return idx.map((f) => ({ path: f.path, size: f.size, mtime: f.mtime, url: 'game/' + f.path.split('/').map(encodeURIComponent).join('/') }));
+  return gameFiles(idx.map((f) => ({ path: f.path, size: f.size, mtime: f.mtime, url: 'game/' + f.path.split('/').map(encodeURIComponent).join('/') })));
 }
 fetch('game-index.json').then((r) => r.ok ? r.json() : []).then((idx) => {
   if (idx.length) {

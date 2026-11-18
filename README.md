@@ -29,8 +29,9 @@ The same engine runs:
   [`samp-rs/`](samp-rs/) (the browser connects through a small WebSocket ↔ UDP relay, `sa-udp-proxy`).
 
 > [!NOTE]
-> No game data is included. sa-engine reads **your own** GTA San Andreas installation; `gta_sa.exe` 1.0 US is
-> checked by SHA-256. This project is not affiliated with or endorsed by Rockstar Games or Take-Two Interactive.
+> No game assets are included. sa-engine reads **your own** GTA San Andreas installation (`models/`, `data/`,
+> `audio/`, ...); the initial data of `gta_sa.exe` 1.0 US is built in (`crates/sa-image`), so the exe itself is
+> optional (given, it is checked by SHA-256). This project is not affiliated with or endorsed by Rockstar Games or Take-Two Interactive.
 
 ## Contents
 

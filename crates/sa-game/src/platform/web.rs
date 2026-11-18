@@ -212,11 +212,7 @@ fn samp_options() -> crate::app::SampOptions {
 /// The platform setup and the boot (WinMain up to its main loop), from the registered game folder.
 #[wasm_bindgen]
 pub fn boot() -> Result<(), JsValue> {
-    use sa_platform::fs::GameFs;
     let game = crate::platform::webfs::WebFs;
-    let exe = game
-        .read("gta_sa.exe")
-        .map_err(|e| JsValue::from_str(&format!("gta_sa.exe: {e} (choose your GTA San Andreas folder)")))?;
     crate::boot::NO_PROBE.store(true, std::sync::atomic::Ordering::SeqCst);
     crate::app::QUIET_FRAMES.store(true, std::sync::atomic::Ordering::SeqCst);
     if crate::env::var_os("SA_WEB_SAMPLE").is_some() {
@@ -230,7 +226,7 @@ pub fn boot() -> Result<(), JsValue> {
     let s = crate::app::boot_with(
         Box::new(game),
         Box::new(MemFs::default()),
-        crate::arena::Image::Exe(exe),
+        crate::arena::Image::Builtin,
         &format!("your game folder ({} files)", crate::platform::webfs::count()),
         "browser memory (not kept)",
         &samp_options(),

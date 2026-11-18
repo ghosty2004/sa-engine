@@ -1,7 +1,7 @@
 # STD-1/STD-2: the native platform layer (phase B) and `sa-game`
 
 Phase B (PLAN §2, F10) runs the ported engine as a Linux executable without Wine and without
-executing any original code (it reads the data sections of the user's gta_sa.exe, section 6). This document describes the platform layer that makes that possible (`sa-platform`),
+executing any original code and without gta_sa.exe (the arena's initial data is built in, section 6). This document describes the platform layer that makes that possible (`sa-platform`),
 the render-device seam (`sa_platform::gpu` + `sa_rw_wgpu::d3d9`), the `sa-game` skeleton that
 boots the ported code natively, and the ordered list of what is still missing on the boot → main
 menu → walking path (`docs/arch/platform-mvp-gaps.csv`).
@@ -225,12 +225,18 @@ through `WgpuDevice`).
 
 Ported code reaches game state by its 1.0 US address (`GPtr::from_addr`, `g::<T>(addr)`,
 `rdata(addr)` strings, vtable addresses stored in objects, `globals!`). sa-game runs as a 32-bit
-process and maps 0x858000–0xCB1000 with `MAP_FIXED_NOREPLACE`, filled at start-up from the data
-sections of `<game dir>/gta_sa.exe` (SHA-256 `a559aa77…cbd26` checked; read only, never copied
-into the repository): `.rdata` (then made read-only, as the loader does), `.data` and its
-zero-filled `.bss` extent, `_TEXT_HA`, `_rwdseg`, `.rsrc`. No code section is mapped. The IAT
-cells get trap addresses (section 1). This replaced STD-1's zeroed arena and its 18 string-literal
-patches.
+process and maps 0x858000–0xCB1000 with `MAP_FIXED_NOREPLACE`, filled at start-up with the initial
+contents of the exe's data sections: `.rdata` (then made read-only, as the loader does), `.data` and
+its zero-filled `.bss` extent, `_TEXT_HA`, `_rwdseg`, `.rsrc`. Where they come from is the image
+source (ADR-005, `--image`): `builtin` is the `sa-image` crate (generated from the exe by
+`tools/gen/image_rs.py`, committed by user decision, the repository stays private), `exe` reads
+`<game dir>/gta_sa.exe` (SHA-256 `a559aa77…cbd26` checked), `check` fills from `sa-image` after
+comparing it byte for byte with the exe. Without `--image` sa-game uses `exe` when the game folder
+has gta_sa.exe and `builtin` otherwise; the web build always uses `builtin` and never reads the exe.
+The IAT cells get trap addresses (section 1) from `sa-image`'s import table, and `orig!`'s `site`
+form resolves through its call-site table. No code section is mapped in `builtin` / `check`: the
+code bytes the ports read as data (switch byte tables, no-CD protection values) are constants in
+the ports; `exe` still maps game `.text` and `.HOODLUM` read-only as a fallback.
 
 `globals!` storage aliases the arena: in a 32-bit phase B process `Global::ptr()` returns the
 original address once sa-game has registered the arena (`sa_core::orig::registry::set_arena`), so
@@ -240,7 +246,10 @@ other targets, globals keep their Rust statics.
 `CControllerConfigManager::InitDefaultControlConfiguration` reads the GO_FORWARD key through the
 no-CD chunk `stc; mov ebx, [0x15608DC]; adc ebx, [0x5DF174]` (a `.HOODLUM` dword plus `.text`
 bytes). Both are static (the only reference to 0x15608DC is this read), the sum is 0x3FB (`rsUP`);
-phase B uses that constant (`PROT_GO_FORWARD`), phase A still reads the bytes.
+phase B uses that constant (`PROT_GO_FORWARD`), phase A still reads the bytes. The other code reads
+of this kind are constants in both phases (sa-pop `MISSION_WITHOUT_TARGET`, sa-ai
+`DEATH_ANIM_WEAPON_CLASS`, sa-audio's jump-table index tables and protection values, sa-veh
+`REMOVE_CAR_SIT_ANIM_FLAGS`), each with a unit test against the exe bytes.
 
 A SIGSEGV/SIGBUS handler names the step and the section of the faulting address.
 
@@ -342,7 +351,9 @@ Decided by the main session on STD-2's questions (2026-11-11, implemented by STD
    into `globals!` declarations (whose initial values are already checked against the image,
    1,119 so far) and engine-owned tables, after which the arena is filled from those
    declarations instead of the exe, and the `site` import resolution uses recorded call-site →
-   import tables; then the exe read is removed before F10 is attempted.
+   import tables; then the exe read is removed before F10 is attempted. **Superseded by ADR-005
+   (2026-11-18):** the whole initialised image is built in (`sa-image`), the import and call-site
+   tables are generated, and the exe is optional (section 6).
 2. **`#[native(addr, conv, name)]`** (sa-macros) emits only the phase B registry entry
    (`sa_core::abi::NativeReg`), listed per crate (`hooks::NATIVES`, or `hooks::NATIVE_MODULES` for
    crates with several module lists) and collected by `sa_ports::natives()`. `unhookable.rs` is
@@ -2081,7 +2092,7 @@ Design:
   are deleted at start, so a changed file is fetched again. Nothing leaves the device.
 - **Prefetch**: before the boot the worker waits for the start-up list: the blocks an earlier load of the same index
   read before it was in the world (the worker records them and the loader keeps them as metadata), else a first
-  guess (gta_sa.exe, `data/` and `text/` files up to 4 MiB, the IMG directories). The page shows the cache state and
+  guess (`data/` and `text/` files up to 4 MiB, the IMG directories). The page shows the cache state and
   a "Download everything" button (`?download=1`) for a full offline cache.
 
 **Threads or messages (decision).** Message passing, no shared memory needed: it works on a stable toolchain, on any

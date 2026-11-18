@@ -77,7 +77,7 @@ pub fn parse_args() -> Result<Args, String> {
                      --features mods; docs/mods/getting-started.md).\n\
                      --image: where the arena's initial data comes from: exe (the data sections of DIR/gta_sa.exe, 1.0 US),\n\
                      builtin (the built-in image, no exe read) or check (the built-in image, compared byte for byte with\n\
-                     DIR/gta_sa.exe first). Default: exe.\n\
+                     DIR/gta_sa.exe first). Default: exe when DIR has gta_sa.exe, else builtin.\n\
                      --perf FILE (or SA_GAME_PERF=FILE): per-frame phase times and counters of every in-game frame to FILE\n\
                      (CSV) and a summary table at exit (docs/perf/measure.md)."
                 );
@@ -131,7 +131,8 @@ pub fn boot(args: &Args) -> Result<Session, String> {
     std::fs::create_dir_all(&docs).map_err(|e| format!("{}: {e}", docs.display()))?;
     let docs_fs = NativeFs::new(&docs).map_err(|e| e.to_string())?;
     let exe_path = args.game.join("gta_sa.exe");
-    let image = args.image.unwrap_or(crate::arena::ImageKind::Exe).image(|| {
+    let default = if exe_path.is_file() { crate::arena::ImageKind::Exe } else { crate::arena::ImageKind::Builtin };
+    let image = args.image.unwrap_or(default).image(|| {
         std::fs::read(&exe_path).map_err(|e| format!("{}: {e} (--image builtin runs without it)", exe_path.display()))
     })?;
     boot_with(
