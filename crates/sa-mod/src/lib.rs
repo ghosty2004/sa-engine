@@ -694,6 +694,14 @@ pub mod world {
     pub fn set_weather(weather: u8) -> Result<(), Error> {
         done(unsafe { ffi::set_weather(i32::from(weather)) })
     }
+    /// Sets the gravity (the game's per-step value, 0.008 in the original; API 1.6).
+    pub fn set_gravity(g: f32) -> Result<(), Error> {
+        done(unsafe { ffi::set_gravity(g) })
+    }
+    /// Sets the game's millisecond timer (0..=0x3FFFFFFF; API 1.6).
+    pub fn set_game_time(ms: u32) -> Result<(), Error> {
+        done(unsafe { ffi::set_game_time(ms as i32) })
+    }
     /// Moves `vehicle` to `pos`.
     pub fn set_vehicle_position(vehicle: VehicleRef, pos: Vec3) -> Result<(), Error> {
         done(unsafe { ffi::set_vehicle_position(vehicle.0 as i32, pos.x, pos.y, pos.z) })

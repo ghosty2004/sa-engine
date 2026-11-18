@@ -1076,6 +1076,8 @@ fn is_change(call: &Call) -> bool {
             | Call::set_wanted_level { .. }
             | Call::set_clock { .. }
             | Call::set_weather { .. }
+            | Call::set_gravity { .. }
+            | Call::set_game_time { .. }
             | Call::set_vehicle_position { .. }
             | Call::set_vehicle_heading { .. }
             | Call::set_vehicle_health { .. }
@@ -1135,6 +1137,18 @@ pub fn apply(g: &mut GameAccess, call: Call, logs: &mut Vec<(i32, String)>) -> i
         Call::set_weather { weather } => {
             let Some(w) = byte(weather, 22) else { return status::BAD_ARG };
             guarded(logs, "set_weather", || g.set_weather(w))
+        }
+        Call::set_gravity { g: gravity } => {
+            if !(gravity.is_finite() && gravity > 0.0 && gravity <= 1.0) {
+                return status::BAD_ARG;
+            }
+            guarded(logs, "set_gravity", || g.set_gravity(gravity))
+        }
+        Call::set_game_time { ms } => {
+            if !(0..=0x3FFF_FFFF).contains(&ms) {
+                return status::BAD_ARG;
+            }
+            guarded(logs, "set_game_time", || g.set_game_time(ms as u32))
         }
         Call::set_vehicle_position { handle, x, y, z } => guarded(logs, "set_vehicle_position", || g.set_vehicle_position(veh(handle), Vec3::new(x, y, z))),
         Call::set_vehicle_heading { handle, degrees } => guarded(logs, "set_vehicle_heading", || g.set_vehicle_heading(veh(handle), degrees)),

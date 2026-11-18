@@ -97,6 +97,7 @@ impl<V: View> Game<V> {
             GameOption::IdleCamera => F::IdleCamera,
             GameOption::HelpMessages => F::HelpMessages,
             GameOption::ZoneNames => F::ZoneNames,
+            GameOption::StartScreens => F::StartScreens,
         };
         set(feature, on);
     }

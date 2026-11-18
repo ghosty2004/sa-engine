@@ -287,11 +287,14 @@ pub enum GameOption {
     HelpMessages,
     /// Zone names on entering an area.
     ZoneNames,
+    /// The start screens (logos, intro movie, main menu): off, the game loads straight into a new game. Read when
+    /// the game starts, so only a mod's `sa_init` or `sa_settings` changes it in time.
+    StartScreens,
 }
 
 impl GameOption {
     /// Every option, in declaration order.
-    pub const ALL: [GameOption; 13] = [
+    pub const ALL: [GameOption; 14] = [
         GameOption::TypedCheats,
         GameOption::Clock,
         GameOption::AmbientPeds,
@@ -305,5 +308,6 @@ impl GameOption {
         GameOption::IdleCamera,
         GameOption::HelpMessages,
         GameOption::ZoneNames,
+        GameOption::StartScreens,
     ];
 }
