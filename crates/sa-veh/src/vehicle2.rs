@@ -2328,7 +2328,7 @@ orig! {
     /// `CVehicle::FireHeatSeakingMissile(CEntity*, eOrdnanceType, bool)` (0x6E05C0)
     pub fn fire_heat_seaking_missile(v: GPtr<u8>, target: GPtr<u8>, ord: u32, b: u32) = thiscall 0x6E05C0 => crate::vehicle_guns::fire_heat_seaking_missile;
     /// `CVehicle::FireUnguidedMissile(eOrdnanceType, bool)` (0x6D5110)
-    pub fn fire_unguided_missile(v: GPtr<u8>, ord: u32, b: u32) = thiscall 0x6D5110 => unported;
+    pub fn fire_unguided_missile(v: GPtr<u8>, ord: u32, b: u32) = thiscall 0x6D5110 => crate::vehicle_guns::fire_unguided_missile;
 }
 
 /// `CVehicle::ProcessWeapons()` (0x6E3950): the player's plane (type 4) without gun FX clears the cross

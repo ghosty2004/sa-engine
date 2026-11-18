@@ -99,13 +99,12 @@ pub use sa_world::bindings::progress_panel_damage;
 pub use crate::bindings::target_weapon_range_multiplier as target_weapon_range_multiplier_call;
 pub use sa_world::bindings::test_line_triangle;
 pub use sa_world::bindings::find_player_ped;
+pub use crate::bindings::weapon_fire_projectile as fire_projectile_call;
 orig! {
     /// `CTask::GetTaskType()` (vtable slot 0x10, thiscall)
     pub fn task_get_type(task: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CWeapon::TakePhotograph(CEntity* owner, CVector* point)` (0x73C1F0, thiscall)
     pub fn take_photograph(this: GPtr<u8>, owner: GPtr<u8>, point: GPtr<u8>) -> u8 = thiscall 0x73C1F0 => unported;
-    /// `CWeapon::FireProjectile(CEntity*, CVector* origin, CEntity* targetEnt, CVector* target, float force)` (0x741360, thiscall)
-    pub fn fire_projectile_call(this: GPtr<u8>, firer: GPtr<u8>, origin: GPtr<u8>, target_ent: GPtr<u8>, target: GPtr<u8>, force: f32) -> u8 = thiscall 0x741360 => unported;
     /// `CWeapon::FireSniper(CPed*, CEntity* targetEnt, CVector* target)` (0x73AAC0, thiscall)
     pub fn fire_sniper_call(this: GPtr<u8>, firer: GPtr<u8>, target_ent: GPtr<u8>, target: GPtr<u8>) -> u8 = thiscall 0x73AAC0 => fire_sniper;
     /// `CWeapon::FireAreaEffect(CEntity*, CVector* origin, CEntity* targetEnt, CVector* target)` (0x73E800, thiscall)

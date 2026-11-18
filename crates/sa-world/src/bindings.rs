@@ -4489,6 +4489,11 @@ orig! {
 }
 
 orig! {
+    /// `CWeapon::FireProjectile` (0x741360)
+    pub fn weapon_fire_projectile(w: GPtr<u8>, firer: GPtr<u8>, origin: GPtr<u8>, target_ent: GPtr<u8>, target: GPtr<u8>, force: f32) -> u8 = thiscall 0x741360 => unported;
+}
+
+orig! {
     /// `CWeaponEffects::IsLockedOn` (0x742BD0)
     pub fn weapon_effects_is_locked_on(n: i32) -> u8 = cdecl 0x742BD0 => unported;
 }

@@ -2730,6 +2730,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x73B1C0,sa-world,weapon_is_type_melee,thiscall,,w:GPtr<u8>,u8,unported,CWeapon::IsTypeMelee,
 0x73B240,sa-world,can_be_used_for_2_player,cdecl,,ty:i32,u8,unported,CWeapon::CanBeUsedFor2Player-Static,sa_weapon::weapon::can_be_used_for_2_player
 0x73B380,sa-world,target_weapon_range_multiplier,cdecl,,victim:GPtr<u8>;owner:GPtr<u8>,sa_math::x87::X87,unported,CWeapon::TargetWeaponRangeMultiplier,sa_weapon::weapon::target_weapon_range_multiplier
+0x741360,sa-world,weapon_fire_projectile,thiscall,,w:GPtr<u8>;firer:GPtr<u8>;origin:GPtr<u8>;target_ent:GPtr<u8>;target:GPtr<u8>;force:f32,u8,unported,CWeapon::FireProjectile,sa_weapon::fire_projectile::fire_projectile
 0x73B430,sa-world,weapon_ctor,thiscall,,w:GPtr<u8>;ty:u32;ammo:u32,GPtr<u8>,unported,CWeapon::Constructor,
 0x73DB40,sa-world,weapon_update,thiscall,,w:GPtr<u8>;owner:GPtr<u8>,,unported,CWeapon::Update,
 0x73E240,sa-world,weapon_find_nearest_target_entity_with_screen_coors,cdecl,,sx:f32;sy:f32;range:f32;px:f32;py:f32;pz:f32;ox:GPtr<f32>;oy:GPtr<f32>,GPtr<u8>,unported,CWeapon::FindNearestTargetEntityWithScreenCoors,sa_weapon::frontier_b2::weapon_find_nearest_target_entity_with_screen_coors

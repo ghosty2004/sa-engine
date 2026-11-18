@@ -114,6 +114,11 @@ orig! {
 }
 
 orig! {
+    /// `CWeapon::FireProjectile` (0x741360)
+    pub fn weapon_fire_projectile(w: GPtr<u8>, firer: GPtr<u8>, origin: GPtr<u8>, target_ent: GPtr<u8>, target: GPtr<u8>, force: f32) -> u8 = thiscall 0x741360 => crate::fire_projectile::fire_projectile;
+}
+
+orig! {
     /// `CWeaponInfo::GetWeaponInfo-original` (0x743C60)
     pub fn get_weapon_info(wt: i32, skill: u8) -> GPtr<u8> = cdecl 0x743C60 => crate::weapon_info::get_weapon_info;
 }

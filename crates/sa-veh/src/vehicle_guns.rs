@@ -19,6 +19,7 @@ use crate::bindings::weapon_fire_one_instant_hit_round;
 use crate::frontier_b2_veh2::{get_plane_ordnance_position, get_plane_ordnance_rate_of_fire, shake_and_stamp};
 use sa_math::fpu::lt;
 use sa_world::bindings::add_projectile;
+use sa_world::bindings::{weapon_ctor, weapon_fire_projectile};
 use sa_core::bindings::world_get_is_line_of_sight_clear;
 use sa_pop::bindings::clear_cross_hair_immediately;
 use sa_world::bindings::pick_target_for_heat_seeking_missile;
@@ -201,7 +202,61 @@ pub fn fire_heat_seaking_missile(this: GPtr<u8>, target: GPtr<u8>, ty: u32, use_
 }
 
 /// This module's registrations.
+/// This frame's forward travel as FireUnguidedMissile stores it: `k = max(0, moveSpeed . forward)` (x87; NaN keeps the
+/// dot), `(f32(k * f.x * timeStep), f32(f32(k * f.y) * timeStep), f32(f32(k * f.z) * timeStep))`.
+fn forward_travel(this: GPtr<u8>, f: CVector) -> CVector {
+    let dot = || x(rd::<f32>(this, 0x4C)).fmul_m(f.z).fadd(x(rd::<f32>(this, 0x48)).fmul_m(f.y)).fadd(x(f.x).fmul_m(rd::<f32>(this, 0x44)));
+    let k = if lt(dot(), x(0.0)) { x(0.0) } else { dot() };
+    let ts = gf(0xB7_CB5C);
+    let kfy = f32_of(k.fmul_m(f.y));
+    let kfz = f32_of(k.fmul_m(f.z));
+    CVector::new(f32_of(k.fmul_m(f.x).fmul_m(ts)), f32_of(x(kfy).fmul_m(ts)), f32_of(x(kfz).fmul_m(ts)))
+}
+
+/// One rocket of FireUnguidedMissile: `shell = matrix * pos + travel` (f32 per component) into the ordnance
+/// position's slot, then `weapon.FireProjectile(this, &shell, null, null, 0.0)`.
+fn fire_rocket(this: GPtr<u8>, weapon: GPtr<u8>, pos: &mut CVector) {
+    let m = rd::<GPtr<u8>>(this, 0x14);
+    let v = forward_travel(this, read_vec(m.byte_add(0x10)));
+    let mut out = CVector::default();
+    let t = read_vec(matrix_mul_vec(vp(&mut out), m, vp(pos)));
+    *pos = CVector::new(f32_of(x(v.x).fadd_m(t.x)), f32_of(x(v.y).fadd_m(t.y)), f32_of(x(v.z).fadd_m(t.z)));
+    weapon_fire_projectile(weapon, this, vp(pos), GPtr::NULL, GPtr::NULL, 0.0);
+}
+
+/// `CVehicle::FireUnguidedMissile(eOrdnanceType type, bool useRateLimit)` (0x6D5110, thiscall, `ret 8`).
+///
+/// With the rate limit, nothing until the type's rate of fire has passed since its last shot (+0x4FC for type 1, else
+/// +0x500; unsigned). Only the Hunter (425), Hydra (520) and Tornado (576): a `CWeapon(WEAPON_ROCKET, 5000)` fires
+/// a rocket from the ordnance position and one from its x mirror (the position recomputed), each moved by the matrix
+/// and this frame's forward travel ([`forward_travel`], computed for each). Then the pad shake and the shot time as
+/// for the free-fall bomb. The weapon is not destroyed (the bytes call no destructor).
+#[hook(addr = 0x6D5110, conv = thiscall, name = "CVehicle::FireUnguidedMissile", this = "CVehicle",
+       expect = "83 EC 4C 53 8B 5C 24 54", unverified = "frontier2-b25", route = "L2", hazards = "heap-writes",
+       note = "FireProjectile (projectile pool)")]
+pub fn fire_unguided_missile(this: GPtr<u8>, ty: u32, use_rate: u32) {
+    let last = if ty == 1 { rd::<u32>(this, 0x4FC) } else { rd::<u32>(this, 0x500) };
+    if use_rate as u8 != 0 && gr32(TIME_MS) <= (get_plane_ordnance_rate_of_fire(this, ty) as u32).wrapping_add(last) {
+        return;
+    }
+    if !matches!(rd::<i16>(this, 0x22), 425 | 520 | 576) {
+        return;
+    }
+    let mut weapon = [0u32; 7];
+    let w = GPtr::from_raw(weapon.as_mut_ptr()).cast::<u8>();
+    weapon_ctor(w, 0x23, 5000);
+    let mut pos = CVector::default();
+    get_plane_ordnance_position(this, vp(&mut pos), ty);
+    fire_rocket(this, w, &mut pos);
+    let mut p2 = CVector::default();
+    let r = read_vec(get_plane_ordnance_position(this, vp(&mut p2), ty));
+    pos = CVector::new(f32_of(x(r.x).fchs()), r.y, r.z);
+    fire_rocket(this, w, &mut pos);
+    shake_and_stamp(this, ty);
+}
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_FIRE_UNGUIDED_MISSILE,
     HOOK_FIRE_FIXED_MACHINE_GUNS,
     HOOK_SCAN_AND_MARK_TARGET_FOR_HEAT_SEEKING_MISSILE,
     HOOK_FIRE_HEAT_SEAKING_MISSILE,
