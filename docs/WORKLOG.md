@@ -3974,3 +3974,61 @@
   0x814460, skin 0x7C8060 / 0x7C9DA0 / 0x7CA410 / 0x7CA850, 0x75A960, 0x763F20 / 0x7641C0, 0x7CF600, 0x81F360, 0x74A880
   with 0x74CED0. A windscreen-shatter scenario (a scripted crash) is still to write.
 - Final writer gate (base 30a9949b) on 1d4e4463 (the head before this line): all 16 steps PASS; only this docs line after it.
+## 2026-11-18 — FRONTIER-2 turn 15, lane A: the SpeedFX bug (UV slot and the front buffer's size), CShopping::Buy, CEscalator::Update (agent, branch worktree-agent-a184fe195bdd6cb32)
+- Base: lane A turn 14's head 97bb48c3. Ports from the 1.0 US bytes (gta-reversed as a reading aid), every address checked
+  against `inflight.py` first (none registered elsewhere). Batches `frontier2-a28` (WORLD: CShopping, 3 hooks) and
+  `frontier2-a29` (WORLD: CEscalator::Update), plain `#[hook(`; no phase B native. `-j4` builds, one cargo at a time.
+- User-hit bug, SpeedFX drawn as a light-blue rectangle over the bottom-right quarter. Two causes, both reproduced
+  offscreen with the speed blur forced (`CPostEffects::m_bSpeedFXTestMode` 0xC402C7 poked on, or
+  `m_fSpeedFXManualSpeedCurrentFrame` 0xC402C8 = 1.0 every frame, on the quad):
+  1. Game logic, not resolution-specific (also at the default 800x600): `CPostEffects::SpeedFX` 0x7030A0 pops EBP
+     before its shake block, so that block's `[esp+0x44]` is the shake slot (B + 0x38). The port (batch
+     std15-render-1) took it for the jitter slot (B + 0x34): it scaled the shake by the jitter and stored both
+     `rand()` results into the jitter, so the per-pass UV steps became `rand() * 0.0025 * u1` (gdb: UVs 29.1 / -28.4
+     / 21.9). With clamped addressing the quad sampled the front buffer's edges: the bottom-right quarter the texel
+     (0, 0) (the sky), the rest the empty raster beyond the copied screen. Fixed in 328b1c5a. Oracle: port-l2 of
+     0x7030A0 on driving.sarec reaches only speeds < 0.39 (no passes), so a copy of it with the harness poke
+     `pokes=500:0xc402c7:0x1` in its header (every in-car frame at speed 1.0, 5 passes, shake 3) was replayed under
+     Wine: 763 / 763 cases 0 mismatches, rust trace == plain on all 4338 frames, randcalls identical (sfx-fix3; the
+     RW / D3D9 driver writes declared in l2-extras as for CPostEffects::Render). Gamescope screenshots of that replay
+     (original vs the Rust SpeedFX, frames 1927 / 1950 on the BMX) show the same radial blur.
+  2. Platform, resolution-specific: the native `D3DCAPS9` claimed MaxTextureWidth / Height 2048. RenderWare clamps
+     the front buffer (the screen rounded up to powers of two, 4096 x 2048 for 2455 x 1512) to 2048 x 2048, the
+     StretchRect of the screen into it is refused (rectangle outside the texture), and every post effect sampling it
+     blends black: at 2455 x 1512 the whole frame at ~60 % brightness (mean 63.5 vs 106), a third with the blur
+     (31.6). sa-game now reports the seam device's limit (window / canvas device, else wgpu's default 8192),
+     797be2d3. Up to 2048 x 2048 front buffers (screens up to 2048 x 2048, e.g. 1920 x 1080) were not affected.
+  Before / after (tools/e2e/scenarios/speedfx.sh, new, 5dd3d6f5: brightness-normalised quarter differences between
+  consecutive frames across the blur's onset, limit 8): master 800x600 FAIL 18.2 (the quarter), master + resolution
+  mod 2455x1512 FAIL 14.0 (black front buffer); master + both fixes 800x600 PASS 4.4, 1920x1080 PASS 4.4,
+  2455x1512 PASS 5.0 (mean 106.2 / 84.5 as at 800x600); this branch 800x600 PASS 4.4. The other users of the raster
+  (ColourFilter, heat haze, radiosity, night / infrared vision) only needed the raster's real size.
+- WORLD (a28): `CShopping::Buy` 0x49BF70 (inlined FindItem / GetItemIndex, the stored clothes for the worn texture,
+  the car-mod budget before the upgrade (gta-reversed: after), meals before the food budget, armour from the
+  player's maximum), `UpdateStats` 0x49BEF0 (.HOODLUM 0x156B6F0), the car-mod part 0x49B0E0 (`reg("args = edi")`;
+  tyres fixed 0, 2, 1, 3; gta-reversed 0, 1, 2, 3). FixTyre / FixDoor / FixPanel and GetTextureDependency became
+  sa-world bindings with sa-veh / sa-ped twins. No shop scenario (a purchase needs the shop scripts' menus).
+- WORLD (a29): `CEscalator::Update` 0x717D30 (step creation by camera distance and free object slots, the position
+  fraction by `_ftol`, the x offset of each step kept extended, y / z rounded first, speed 0.016, switch-off beyond
+  radius + 23). New scenario `escalator` (Verona Mall, four escalators, 2820 Update calls in 800 iterations).
+- Not done (time): Interior_c FurnishBedroom 0x593FC0 / FurnishLounge 0x597740 / Kitchen_FurnishEdges 0x596930,
+  CStreaming::DeleteRwObjectsBehindCamera 0x40D7C0.
+- frontier.py --no-branches: to port 91 -> 89 (WORLD 9 -> 7; UpdateStats and 0x49B0E0 surfaced with Buy and were ported).
+- Scenarios (frontier.sh, i686 native, SA_ROOT=~/sa-engine, sa-game of 65f7331a; frames / blocked): pausemenu 416 / 0,
+  solicit 4016 / 0, crossing 1216 / 0, crossing-long 4016 / 0, roadblocks 2015 / 1 (lane C: RtDictSchemaStreamReadDict
+  0x7CF240), melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0, shootdriver 1216 / 0, quad 1216 / 0, heli 1216 / 0,
+  plane 824 / 392 (lane C: 0x43E0E0), roadblock-script 1016 / 0, roadblock-wanted 2016 / 0, gangwar 2016 / 0, boat
+  1216 / 0, jetpack 1016 / 0, copsf 2015 / 1 (0x7CF240), coplv 2016 / 0, samsite 1615 / 1 (0x7CF240), monster 1215 / 1
+  (lane B: SetupSuspensionLines 0x6C7FB0), shotgun 1216 / 0, flamer 1216 / 0, driveby 1216 / 0, escalator 816 / 0; no
+  crash, no lane A blocker.
+- Writer gate (base 97bb48c3, head dd28d068): hooks, queue, bindings, conv, state, dupes, cfg, gen, layers, commits,
+  clippy, i686, i686clip, wasm32, l1 PASS; hooktest was skipped by the gate for disk (18 GB free while other agents
+  built) and run alone afterwards: 59 / 59 passed; l1test (Wine) run alone after verify-all: 18 passed, 1 ignored.
+- verify-all (lanes 1-3, host sa-oracle / satool rebuilt from this tree, DLL sha256 5c4a30bf… of 65f7331a, the same
+  bytes as the gate's rebuild at dd28d068): `f2a15-u` + `f2a15-u2`
+  (SA_UNVERIFIED=frontier2-a28,frontier2-a29,std15-render-1; ten recordings of the first run were skipped by its
+  20 GB disk check and rerun as f2a15-u2) IDENTICAL 13/13, `f2a15-def` (default set) IDENTICAL 13/13; save-load
+  identical except the SAVE-1 stack residue.
+- Noted, not touched: every port-l2 run of this tree logs `hook 0x609ef0 CPlayerPed::Busted: FAILED: branch at
+  0x609f31 into the patched range`, so port-l2's "no crash / install failure" line fails on single-hook runs; the
+  traces are unaffected.
