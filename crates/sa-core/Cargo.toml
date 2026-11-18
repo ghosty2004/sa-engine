@@ -16,6 +16,9 @@ sa-macros = { path = "../sa-macros" }
 # (build.rs sets `cfg(sa_phase_a)`); with the feature on any other target the crate still uses
 # Rust-owned memory, so host tests stay valid under workspace feature unification.
 in-process = []
+# Phases B/C: calls dispatched through the address registry can be observed before and after (`orig::observe`;
+# the mod host's hooks). Without it the dispatch has no observation check.
+observe = []
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ["cfg(sa_phase_a)"] }

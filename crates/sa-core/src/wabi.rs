@@ -76,19 +76,29 @@ impl Args {
 
     /// Appends `v`'s bytes, rounded up to whole words.
     pub fn push<T>(&mut self, v: T) {
+        let v = ManuallyDrop::new(v);
+        self.push_ref::<T>(&v);
+    }
+
+    /// Appends a copy of `v`'s bytes, rounded up to whole words.
+    pub fn push_ref<T>(&mut self, v: &T) {
         let n = size_of::<T>();
         let w = n.div_ceil(4);
         assert!(self.len + w <= ARG_WORDS, "wabi: too many argument words");
-        let v = ManuallyDrop::new(v);
         // SAFETY: `n` bytes of `v` into the zeroed word buffer, which has room (checked).
         unsafe {
             core::ptr::copy_nonoverlapping(
-                (&raw const v).cast::<u8>(),
+                (v as *const T).cast::<u8>(),
                 self.words.as_mut_ptr().add(self.len).cast::<u8>(),
                 n,
             );
         }
         self.len += w;
+    }
+
+    /// The words pushed so far.
+    pub fn words(&self) -> &[u32] {
+        &self.words[..self.len]
     }
 
     pub fn as_ptr(&self) -> *const u32 {
@@ -143,7 +153,12 @@ fn float_kind<T>() -> Float {
 /// Writes a callee's return value into `out`.
 pub fn put_ret<R>(r: R, out: &mut Ret) {
     let r = ManuallyDrop::new(r);
-    let p = (&raw const r).cast::<R>();
+    put_ret_ref::<R>(&r, out);
+}
+
+/// Writes a copy of the return value `r` into `out`.
+pub fn put_ret_ref<R>(r: &R, out: &mut Ret) {
+    let p = r as *const R;
     // SAFETY: each arm reads `R` as the type its name says it is.
     unsafe {
         match float_kind::<R>() {

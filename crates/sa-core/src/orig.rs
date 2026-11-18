@@ -205,6 +205,185 @@ pub fn fallback_entry(_cell: &AtomicU32, _name: &str) -> usize {
     0
 }
 
+/// Phases B/C: before / after observation of calls dispatched through the [`registry`] (the mod host's hooks on
+/// registry functions). Observation never changes a call: the observer sees copies of the argument words and of
+/// the result. Compiled in only with the feature `observe`; without it [`watched`](observe::watched) is a constant
+/// `false` and `orig!`'s dispatch is what it was. A port that calls a ported function directly (not through the
+/// registry) is not observed.
+#[cfg(not(sa_phase_a))]
+pub mod observe {
+    use core::sync::atomic::{AtomicUsize, Ordering};
+
+    use super::registry::Entry;
+    use crate::wabi::{Args, Ret};
+
+    /// When the observer is called.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum Phase {
+        /// Before the call (the arguments).
+        Before,
+        /// After the call returned (the arguments and the result).
+        After,
+    }
+
+    /// An argument or result as its declared type gives it.
+    #[derive(Clone, Copy, Debug, PartialEq)]
+    pub enum Raw {
+        /// An integer type (sign-extended).
+        Int(i64),
+        /// A float type.
+        Float(f64),
+        /// A pointer type (`GPtr`, raw pointer, reference): the address.
+        Address(u32),
+        /// Anything else (a struct passed by value).
+        Other,
+    }
+
+    /// One observed call.
+    pub struct Observed<'a> {
+        /// The registry entry of the callee.
+        pub entry: &'static Entry,
+        /// Before or after.
+        pub phase: Phase,
+        args: &'a Args,
+        params: &'a [(&'static str, usize)],
+        result: Option<(&'a Ret, &'static str, usize)>,
+    }
+
+    impl Observed<'_> {
+        /// The number of declared arguments.
+        pub fn arg_count(&self) -> usize {
+            self.params.len()
+        }
+
+        /// Argument `i`.
+        pub fn arg(&self, i: usize) -> Option<Raw> {
+            let (ty, _) = *self.params.get(i)?;
+            let at: usize = self.params[..i].iter().map(|p| p.1.div_ceil(4)).sum();
+            let words = self.args.words();
+            let w = |k: usize| words.get(at + k).copied().unwrap_or(0);
+            Some(classify(ty, || f64::from(f32::from_bits(w(0))), || f64::from_bits(u64::from(w(0)) | u64::from(w(1)) << 32), w(0), w(1)))
+        }
+
+        /// The result (after the call, of a function that returns a value).
+        pub fn result(&self) -> Option<Raw> {
+            let (ret, ty, _) = self.result?;
+            let b = &ret.bytes;
+            let w = |k: usize| u32::from_le_bytes([b[4 * k], b[4 * k + 1], b[4 * k + 2], b[4 * k + 3]]);
+            Some(classify(ty, || ret.st0, || ret.st0, w(0), w(1)))
+        }
+    }
+
+    fn classify(ty: &str, f32v: impl Fn() -> f64, f64v: impl Fn() -> f64, lo: u32, hi: u32) -> Raw {
+        let int = |bits: u32| {
+            let v = u64::from(lo) | u64::from(hi) << 32;
+            let shift = 64 - bits;
+            Raw::Int(((v << shift) as i64) >> shift)
+        };
+        let uint = |bits: u32| Raw::Int(((u64::from(lo) | u64::from(hi) << 32) & (u64::MAX >> (64 - bits))) as i64);
+        match ty {
+            "f32" => Raw::Float(f32v()),
+            "f64" => Raw::Float(f64v()),
+            "i8" => int(8),
+            "i16" => int(16),
+            "i32" | "isize" => int(32),
+            "i64" => int(64),
+            "bool" | "u8" => uint(8),
+            "u16" => uint(16),
+            "u32" | "usize" | "char" => uint(32),
+            "u64" => uint(64),
+            _ if ty.starts_with('*') || ty.starts_with('&') || ty.contains("GPtr<") => Raw::Address(lo),
+            _ if ty.ends_with("x87::X87") => Raw::Float(f32v()),
+            _ => Raw::Other,
+        }
+    }
+
+    static HANDLER: AtomicUsize = AtomicUsize::new(0);
+
+    /// Sets the observer (the mod host). It runs on the game thread inside the observed call.
+    pub fn set_handler(f: fn(&Observed<'_>)) {
+        HANDLER.store(f as usize, Ordering::Release);
+    }
+
+    /// Whether calls through `e` are observed.
+    #[inline(always)]
+    pub fn watched(e: &Entry) -> bool {
+        #[cfg(feature = "observe")]
+        {
+            e.watch.load(Ordering::Relaxed)
+        }
+        #[cfg(not(feature = "observe"))]
+        {
+            let _ = e;
+            false
+        }
+    }
+
+    /// Turns observation of calls through `e` on or off (a no-op without the feature `observe`).
+    pub fn watch(e: &Entry, on: bool) {
+        #[cfg(feature = "observe")]
+        e.watch.store(on, Ordering::Relaxed);
+        #[cfg(not(feature = "observe"))]
+        let _ = (e, on);
+    }
+
+    fn notify(o: &Observed<'_>) {
+        let h = HANDLER.load(Ordering::Acquire);
+        if h != 0 {
+            // SAFETY: `HANDLER` holds 0 or a `fn(&Observed)` stored by `set_handler`.
+            let f = unsafe { core::mem::transmute::<usize, fn(&Observed<'_>)>(h) };
+            f(o);
+        }
+    }
+
+    /// Runs `call` (the dispatch to `e`'s native entry) between the observer's before and after calls.
+    /// `args` holds the arguments' words, `params` their declared types and sizes.
+    #[inline(never)]
+    pub fn around<R>(e: &'static Entry, args: &Args, params: &[(&'static str, usize)], call: impl FnOnce() -> R) -> R {
+        notify(&Observed { entry: e, phase: Phase::Before, args, params, result: None });
+        let r = call();
+        let mut ret = Ret::new();
+        let size = core::mem::size_of::<R>();
+        if size <= crate::wabi::RET_BYTES {
+            crate::wabi::put_ret_ref(&r, &mut ret);
+        }
+        let result = (size > 0 && size <= crate::wabi::RET_BYTES).then_some((&ret, core::any::type_name::<R>(), size));
+        notify(&Observed { entry: e, phase: Phase::After, args, params, result });
+        r
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn classifies_by_declared_type() {
+            let mut a = Args::new();
+            a.push_ref(&-3i16);
+            a.push_ref(&2.5f32);
+            a.push_ref(&crate::mem::GPtr::<u8>::from_addr(0x1234));
+            a.push_ref(&1.25f64);
+            a.push_ref(&200u8);
+            let p = [
+                ("i16", 2),
+                ("f32", 4),
+                (core::any::type_name::<crate::mem::GPtr<u8>>(), core::mem::size_of::<crate::mem::GPtr<u8>>()),
+                ("f64", 8),
+                ("u8", 1),
+            ];
+            static E: Entry = Entry::new(0x401000, 1, "f");
+            let o = Observed { entry: &E, phase: Phase::Before, args: &a, params: &p, result: None };
+            assert_eq!(o.arg_count(), 5);
+            assert_eq!(o.arg(0), Some(Raw::Int(-3)));
+            assert_eq!(o.arg(1), Some(Raw::Float(2.5)));
+            assert_eq!(o.arg(2), Some(Raw::Address(0x1234)));
+            assert_eq!(o.arg(3), Some(Raw::Float(1.25)));
+            assert_eq!(o.arg(4), Some(Raw::Int(200)));
+            assert_eq!(o.arg(5), None);
+        }
+    }
+}
+
 /// Phases B/C: the address-keyed registry of native implementations (decision 3 of
 /// docs/arch/platform.md §8).
 ///
@@ -232,6 +411,9 @@ pub mod registry {
         pub name: &'static str,
         /// Calls dispatched through the registry.
         pub calls: AtomicU32,
+        /// Calls through the registry are reported to the observer ([`super::observe`]).
+        #[cfg(feature = "observe")]
+        pub(super) watch: AtomicBool,
     }
 
     impl Entry {
@@ -241,6 +423,8 @@ pub mod registry {
                 entry,
                 name,
                 calls: AtomicU32::new(0),
+                #[cfg(feature = "observe")]
+                watch: AtomicBool::new(false),
             }
         }
     }
@@ -1098,6 +1282,15 @@ macro_rules! __orig_reg_dispatch {
 macro_rules! __orig_dispatch {
     ($conv:ident, $callee:ident, ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {
         if let Some(e) = $crate::orig::registry::lookup($callee) {
+            if $crate::orig::observe::watched(e) {
+                #[allow(unused_mut)]
+                let mut __sa_args = $crate::wabi::Args::new();
+                $(__sa_args.push_ref(&$a);)*
+                let __sa_params = [$((::core::any::type_name::<$t>(), ::core::mem::size_of::<$t>())),*];
+                return $crate::orig::observe::around(e, &__sa_args, &__sa_params, move || {
+                    $crate::__orig_dispatch_call!($conv, e.entry, ($($a: $t),*) $(-> $r)?);
+                });
+            }
             $crate::__orig_dispatch_call!($conv, e.entry, ($($a: $t),*) $(-> $r)?);
         }
     };
@@ -1140,6 +1333,12 @@ macro_rules! __orig_dispatch {
             #[allow(unused_mut)]
             let mut __sa_args = $crate::wabi::Args::new();
             $(__sa_args.push::<$t>($a);)*
+            if $crate::orig::observe::watched(e) {
+                let __sa_params = [$((::core::any::type_name::<$t>(), ::core::mem::size_of::<$t>())),*];
+                return $crate::orig::observe::around(e, &__sa_args, &__sa_params, || {
+                    $crate::wabi::call(e.entry, $callee, &__sa_args)
+                });
+            }
             return $crate::wabi::call(e.entry, $callee, &__sa_args);
         }
     };
