@@ -808,8 +808,6 @@ macro_rules! for_each_import {
             /// frame's 2D phase in order with `game_text` (under the overlay). Returns 0, `NOT_FOUND`, `BAD_ARG`
             /// (outside the overlay phase, over [`text::MAX_PER_FRAME`] this frame).
             [Render] fn game_sprite(texture: i32, x: f32, y: f32, w: f32, h: f32, rgba: i32) -> i32;
-            /// (1.6) Sets the gravity (the game's per-step value, 0.008 in the original; 0 < `g` <= 1).
-            [Write] fn set_gravity(g: f32) -> i32;
             /// (1.6) Sets the game's millisecond timer (`CTimer::m_snTimeInMilliseconds`, 0..=0x3FFFFFFF): the time
             /// the game's timed events count in.
             [Write] fn set_game_time(ms: i32) -> i32;

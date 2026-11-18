@@ -529,7 +529,10 @@ impl WorldState for ModGame {
         state::world().map_or(0.0, |w| w.gravity)
     }
     fn set_gravity(&mut self, g: f32) -> GameResult<()> {
-        world::set_gravity(g).map_err(failed("set_gravity"))
+        if self.gravity().to_bits() == g.to_bits() {
+            return Ok(());
+        }
+        Err(GameError::Unsupported("WorldState::set_gravity"))
     }
     fn area(&self) -> AreaCode {
         AreaCode(self.area_raw() as u8)

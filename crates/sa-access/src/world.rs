@@ -80,12 +80,6 @@ impl<V: View> Game<V> {
         (rd(addr::WEATHER_FORCED), rd(addr::WEATHER_NEW), rd(addr::WEATHER_OLD))
     }
 
-    /// Sets the gravity (`GAME_GRAVITY`, per step; the original's 0.008).
-    pub fn set_gravity(&mut self, g: f32) -> GameResult<()> {
-        self.view.write(addr::GAME_GRAVITY, &g.to_le_bytes());
-        Ok(())
-    }
-
     /// Sets the game's millisecond timer (`CTimer::m_snTimeInMilliseconds`), the time the game's timed events and
     /// its clock (while it runs) count in.
     pub fn set_game_time(&mut self, ms: u32) -> GameResult<()> {

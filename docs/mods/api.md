@@ -1,4 +1,4 @@
-# Mod API reference (API 1.5)
+# Mod API reference (API 1.6)
 
 The interface is defined once, in `crates/sa-mod-api/src/lib.rs` (`for_each_import!`, `for_each_export!`); this page
 explains it. The Rust SDK (`crates/sa-mod`) wraps every function; other languages import the functions from module
@@ -7,7 +7,7 @@ status (`-1` DENIED: the manifest does not grant it, `-2` BAD_ARG, `-3` NOT_FOUN
 inside a hook, `-5` FAILED: the game could not do it, the log says why, `-6` AGAIN: nothing now, try again later,
 1.4).
 
-A mod built for an older minor version (`api_version = "1.0"` ... `"1.4"`), or rebuilt with a newer SDK while
+A mod built for an older minor version (`api_version = "1.0"` ... `"1.5"`), or rebuilt with a newer SDK while
 its manifest keeps the older version, runs unchanged: entry points added later are
 optional and the host skips them.
 
@@ -15,9 +15,9 @@ optional and the host skips them.
 
 | key | values | grants |
 |---|---|---|
-| `render` | `true` / `false` | overlay drawing, display modes, the video mode |
+| `render` | `true` / `false` | overlay drawing (rectangles, text, images, 1.6: the game's font and textures), display modes, the video mode |
 | `files` | `"none"` / `"own"` | the mod's own files (1.1) |
-| `state` | `"none"` / `"read"` / `"write"` | game state queries, game events except frames and keys (1.2); `"write"`: also changes of the state (1.3) |
+| `state` | `"none"` / `"read"` / `"write"` | game state queries (1.6: `world_to_screen`), game events except frames and keys (1.2); `"write"`: also changes of the state (1.3) |
 | `input` | `"none"` / `"read"` / `"capture"` | `key_down`, key events (1.2), `pad_state` (1.5); `"capture"`: also the input events before the game and `input_capture` (1.5) |
 | `hooks` | a list of function names | before / after hooks on these functions (1.2); with `state = "write"`, decisions on the controllable ones (1.3) |
 | `entities` | `true` / `false` | create and delete peds, vehicles, objects (1.3) |
@@ -277,7 +277,7 @@ What a multiplayer client needs to drive the local player and show its own UI, e
 |---|---|---|
 | `set_ped_model(h, model)` | `set_ped_model` | the player ped `h` gets ped model `model` (loaded first; `SET_PLAYER_MODEL`); FAILED for another ped or a model that is not a ped's |
 | `set_hud_visible(on)` | `set_hud_visible` | the HUD and the radar on or off (the menu's HUD flag and the radar flag) |
-| `set_game_option(option, on)` | `set_option` | one of the game's own features ([`GameOption`], numbered in declaration order): typed cheats, the clock, ambient peds, random traffic, car generators, ambient planes, cutscenes, the replay buffer, plants, the sun and moon, the idle camera, help boxes, zone names. The ports skip exactly the original call that feature names; the host turns every option a mod switched off back on when it disables the mod |
+| `set_game_option(option, on)` | `set_option` | one of the game's own features ([`GameOption`], numbered in declaration order): typed cheats, the clock, ambient peds, random traffic, car generators, ambient planes, cutscenes, the replay buffer, plants, the sun and moon, the idle camera, help boxes, zone names, (1.6) the start screens (logos, intro movie, main menu; read when the game starts, so set it in `sa_init` or `sa_settings`). The ports skip exactly the original call that feature names; the host turns every option a mod switched off back on when it disables the mod |
 | `big_message(ptr, len, time_ms, style)` | `big_message` | the game's big message (`CMessages::AddBigMessage`, styles 0..=6); not inside a hook |
 
 `set_ped_model` and `set_hud_visible` are changes like those of level 3 (queued inside a hook). Options switch at once.
@@ -309,3 +309,53 @@ releases what a disabled mod held.
 
 Nothing of level 5 runs without a mod that asks for it; the option switches are all on by default (the original),
 so the default build, the mods build without mods and verify-all are unchanged.
+
+## Level 6: images, the game's 2D drawing, projection (1.6)
+
+What a mod needs to draw a full user interface over the game: its own images (fonts rendered into an atlas, skins,
+icons) as textured quads, and the game's own font and textures where it should look like the game.
+
+### Overlay images (`render = true`)
+
+| function | SDK (`sa_mod`) | what |
+|---|---|---|
+| `image_create(w, h, flags, ptr, len)` | `Image::new(w, h, smooth, rgba)` | an RGBA8 image (`len` = `w * h * 4`, rows from the top, straight alpha); `image::SMOOTH`: linear filtering over a box-filtered mip chain when a quad scales it, else the nearest texel. Valid in every phase; drawable from the next overlay phase on |
+| `image_destroy(h)` | drop | deletes it |
+| `overlay_quads(h, ptr, count)` | `Overlay::quads(Some(&image), &[Quad])` | quads of image `h` (`image::NONE`, -1: plain colour), 9 words each: `x`, `y`, `w`, `h`, `u0`, `v0`, `u1`, `v1` (`f32`), `rgba` (tints the image); returns how many were inside the clip rectangle |
+| `overlay_clip(x, y, w, h)` | `Overlay::clip(Some([x, y, w, h]))` | cuts the rest of this overlay phase's drawing (rectangles, text, quads) to a rectangle; a negative `w` or `h` (SDK `None`) removes it. Every phase starts without one |
+
+Budget per mod (`sa_mod_api::image`): 64 images, 32 MiB of pixels together, sides up to 4096, 16384 quads per
+call, 65536 quads (rectangles, text runs, quads) per frame. Over the budget `image_create` is FAILED with a log line.
+A disabled mod's images are deleted. Natively and in the browser the overlay is the same wgpu pass over the game's
+image, before the present; the game's own drawing is not touched.
+
+### The game's 2D drawing (`render = true`)
+
+Drawn in the game's next frame right after `Game::Render2dStuff` (with the HUD, under the overlay), in the order the
+mods queued them in their overlay phase (at most 256 per mod and frame):
+
+| function | SDK | what |
+|---|---|---|
+| `game_text(style_ptr, text_ptr, text_len)` | `Overlay::game_text(&FontText, text)` | a string in the game's font: the `CFont` state of `sa_types::text::FontText` (position, scale, colour, orientation, wrap, centre size, background box and colour, proportional, drop colour, edge or shadow, font style; 15 words, `sa_mod_api::text::encode`), the text in the game font's code page with its `~x~` codes, up to 400 bytes |
+| `game_texture(dict, file, name)` (three `(ptr, len)` pairs) | `GameTexture::find(dict, file, name)` | texture `name` of the game's texture dictionary `dict`; without a dictionary of that name, the game folder's `file` (e.g. `models\txd\LD_SPAC.txd`) is loaded into a new one, which stays loaded. The game looks it up in its next 2D phase: AGAIN until then, afterwards a handle (the same for the same texture) or NOT_FOUND; at most 256 per mod; WRONG_PHASE in a hook |
+| `game_sprite(texture, x, y, w, h, rgba)` | `Overlay::game_sprite(texture, [x, y, w, h], colour)` | `CSprite2d::Draw` of such a texture, bilinear, tinted |
+
+### World settings (`state = "write"`)
+
+`set_game_time(ms)` (`world::set_game_time`): the game's millisecond timer (`CTimer::m_snTimeInMilliseconds`,
+0..=0x3FFFFFFF), the time its timed events count in; a change like those of level 3 (queued inside a hook).
+
+### Projection (`state = "read"`)
+
+`world_to_screen(x, y, z, out_ptr)` (SDK `state::world_to_screen(p)`): where a world point is on the screen with the
+game's camera (`CSprite::CalcScreenCoors` with both visibility checks): writes the screen x and y in pixels and the
+depth in front of the camera (three `f32`) and returns 1, or 0 off screen or behind the camera.
+
+### Script commands
+
+1.6 adds `IS_LINE_OF_SIGHT_CLEAR` (06BD: from, to, buildings, vehicles, peds, objects, dummies), a world query.
+
+### Determinism
+
+Nothing of level 6 runs without a mod that asks for it; the game's 2D phase is observed (`Render2dStuff` watched)
+only from the first queued string, sprite or texture lookup on.
