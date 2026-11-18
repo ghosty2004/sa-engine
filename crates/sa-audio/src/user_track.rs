@@ -7,6 +7,7 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
+use crate::audio_data_stream::streaming_decoder_ctor;
 use crate::bindings::{data_stream_ctor, data_stream_destructor_call, data_stream_initialise, vorbis_decoder_ctor};
 use crate::common::{g, rd, wr};
 use sa_core::bindings::{
@@ -16,7 +17,7 @@ use sa_core::bindings::{
 
 orig! {
     /// `CAEMFDecoder::CAEMFDecoder(const char* path, int32 track)` (0x4E7770, `ret 8`)
-    fn mf_decoder_ctor(this: GPtr<u8>, path: GPtr<u8>, track: u32) -> u32 = thiscall 0x4E7770 => unported;
+    fn mf_decoder_ctor(this: GPtr<u8>, path: GPtr<u8>, track: u32) -> u32 = thiscall 0x4E7770 => mf_decoder_constructor;
     /// `CAEWMADecoder::CAEWMADecoder(CAEDataStream*)` (0x502720)
     fn wma_decoder_ctor(this: GPtr<u8>, stream: GPtr<u8>) -> u32 = thiscall 0x502720 => unported;
     /// `CAEWaveDecoder::CAEWaveDecoder(CAEDataStream*)` (0x503250)
@@ -126,5 +127,32 @@ pub fn load_user_track(this: u32, track: u32) -> u32 {
     dec
 }
 
+/// `CAEMFDecoder`'s vtable.
+const MF_DECODER_VTABLE: u32 = 0x85_F370;
+
+/// `CAEMFDecoder::CAEMFDecoder(char* path, int32 track)` (0x4E7770, thiscall, `ret 8`): the `CAEStreamingDecoder`
+/// base without a data stream, the path (+8, owned: freed by the destructor), the vtable, not initialised (+0xC), the
+/// library handles +0x10 / +0x14 cleared, the track id (+0xB4). Returns `this`.
+#[hook(addr = 0x4E7770, conv = thiscall, name = "CAEMFDecoder::Constructor", expect = "56 6A 00 8B F1 E8",
+       unverified = "pure1f-1", route = "L2", hazards = "heap-writes")]
+pub fn mf_decoder_constructor(this: GPtr<u8>, path: GPtr<u8>, track: u32) -> u32 {
+    streaming_decoder_ctor(this, GPtr::NULL);
+    wr::<u32>(this, 8, path.addr() as u32);
+    wr::<u32>(this, 0, MF_DECODER_VTABLE);
+    wr::<u8>(this, 0xC, 0);
+    wr::<u32>(this, 0x10, 0);
+    wr::<u32>(this, 0x14, 0);
+    wr::<u32>(this, 0xB4, track);
+    this.addr() as u32
+}
+
+/// `CAEMFDecoder::GetStreamID()` (0x4E77B0, thiscall): the track id (+0xB4).
+#[hook(addr = 0x4E77B0, conv = thiscall, name = "CAEMFDecoder::GetStreamID", expect = "8B 81 B4 00 00 00 C3",
+       unverified = "pure1f-1", route = "L2", hazards = "none")]
+pub fn mf_decoder_get_stream_id(this: GPtr<u8>) -> u32 {
+    rd::<u32>(this, 0xB4)
+}
+
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_GET_TRACK_PATH, HOOK_LOAD_USER_TRACK];
+pub const HOOKS: &[HookReg] =
+    &[HOOK_GET_TRACK_PATH, HOOK_LOAD_USER_TRACK, HOOK_MF_DECODER_CONSTRUCTOR, HOOK_MF_DECODER_GET_STREAM_ID];

@@ -37,7 +37,7 @@ orig! {
     /// KERNEL32 `CloseHandle` (IAT 0x858078)
     fn close_handle(h: u32) -> i32 = stdcall cell 0x858078 => unported;
     /// `CAEStreamingDecoder::CAEStreamingDecoder(CAEDataStream*)` (0x4F2810, `ret 4`)
-    fn streaming_decoder_ctor(d: GPtr<u8>, stream: GPtr<u8>) -> GPtr<u8> = thiscall 0x4F2810 => streaming_decoder_constructor;
+    pub(crate) fn streaming_decoder_ctor(d: GPtr<u8>, stream: GPtr<u8>) -> GPtr<u8> = thiscall 0x4F2810 => streaming_decoder_constructor;
     /// `CAEVorbisDecoder::GetStreamLengthMs()` (vtable +8)
     fn v_get_stream_length_ms(d: GPtr<u8>) -> i32 = thiscall vslot 0x8 => unported;
     /// `CAEStreamTransformer::TransformBuffer(void*, uint32, uint32)` (0x4F17D0, `ret 0xC`)
