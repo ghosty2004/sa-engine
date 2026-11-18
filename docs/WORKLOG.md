@@ -3973,3 +3973,4 @@
   0x7F44C0 / 0x7F4690 / 0x7F4AE0 / 0x7FF450 / 0x800C80 / 0x801390 / 0x80CA20, MatFX 0x810830 / 0x812D40 / 0x813A10 /
   0x814460, skin 0x7C8060 / 0x7C9DA0 / 0x7CA410 / 0x7CA850, 0x75A960, 0x763F20 / 0x7641C0, 0x7CF600, 0x81F360, 0x74A880
   with 0x74CED0. A windscreen-shatter scenario (a scripted crash) is still to write.
+- Final writer gate (base 30a9949b) on 1d4e4463 (the head before this line): all 16 steps PASS; only this docs line after it.
