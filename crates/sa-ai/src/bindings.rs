@@ -974,6 +974,11 @@ orig! {
 }
 
 orig! {
+    /// `CTaskSimpleGangDriveBy::Destructor` (0x6218C0)
+    pub fn gang_drive_by_dtor(t: GPtr<u8>) = thiscall 0x6218C0 => crate::frontier_c_dtors::gang_drive_by_dtor;
+}
+
+orig! {
     /// `CTaskComplexKillPedGroupOnFoot::Constructor` (0x622240)
     pub fn kill_ped_group_on_foot_ctor(t: GPtr<u8>, gid: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x622240 => unported;
 }
@@ -996,6 +1001,11 @@ orig! {
 orig! {
     /// `FUN_00627b20` (0x627B20)
     pub fn drive_by_start_anim(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x627B20 => crate::frontier_a::gang_drive_by_start_anim;
+}
+
+orig! {
+    /// `FUN_00627cc0` (0x627CC0)
+    pub fn gang_drive_by_fire(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x627CC0 => crate::gang_drive_by::gang_drive_by_fire;
 }
 
 orig! {
@@ -1681,11 +1691,6 @@ orig! {
 orig! {
     /// `CVehicle::SetHasslePosId` (0x6D3B30)
     pub fn vehicle_set_hassle_pos_id(v: GPtr<u8>, id: i32, b: u32) = thiscall 0x6D3B30 => unported;
-}
-
-orig! {
-    /// `CVehicle::CanPedLeanOut` (0x6D5CF0)
-    pub fn vehicle_can_ped_lean_out(v: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6D5CF0 => unported;
 }
 
 orig! {

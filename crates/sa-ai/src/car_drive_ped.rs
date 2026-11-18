@@ -18,7 +18,7 @@ use sa_core::bindings::general_random_int_in_range;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::compute_target_door_to_exit as car_enter_exit_compute_target_door_to_exit;
 use crate::bindings::car_drive_start_bopping;
-use crate::bindings::vehicle_can_ped_lean_out;
+use sa_world::bindings::vehicle_can_ped_lean_out;
 use crate::bindings::vehicle_set_window_open_flag;
 orig! {
     /// `CVehicle::ClearWindowOpenFlag(uint8)` (0x6D30B0, `ret 4`)

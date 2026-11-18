@@ -33,7 +33,8 @@ use sa_world::collision::sphere_cast::ensure_matrix;
 use sa_world::world::common::{entity_pos, ped_active_weapon as current_weapon, placeable_heading};
 
 use crate::bindings::drive_by_start_anim;
-use crate::bindings::vehicle_can_ped_lean_out;
+use sa_world::bindings::vehicle_can_ped_lean_out;
+use crate::bindings::gang_drive_by_fire as drive_by_fire;
 use crate::bindings::vehicle_set_window_open_flag;
 use sa_world::bindings::add_weapon_model as ped_add_weapon_model;
 orig! {
@@ -43,8 +44,6 @@ orig! {
     fn drive_by_ai_choose(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x627600 => gang_drive_by_ai_choose_anim;
     /// the line-of-sight test (0x621B10, `ret 8`)
     fn drive_by_los_clear(t: GPtr<u8>, ped: GPtr<u8>, pos: GPtr<u8>) -> u32 = thiscall 0x621B10 => gang_drive_by_los_clear;
-    /// the shot (0x627CC0, `ret 4`)
-    fn drive_by_fire(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x627CC0 => gang_drive_by_fire;
     /// the gun pointing (0x628350, `ret 4`)
     fn drive_by_point_gun(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x628350 => gang_drive_by_point_gun;
 }

@@ -6,6 +6,7 @@
 
 use sa_core::abi::HookReg;
 use crate::bindings::vector3_fill_n;
+use crate::bindings::gang_drive_by_dtor;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
@@ -59,8 +60,6 @@ orig! {
     fn pgi_get_task(i: GPtr<u8>, ped: GPtr<u8>, pairs: GPtr<u8>) -> GPtr<u8> = thiscall 0x5F7660 => crate::group_task_pairs::pgi_get_task;
     /// `CTaskAllocatorAttack::AllocateTasks(CPedGroupIntelligence*)` (0x69C3F0, `ret 4`)
     fn allocator_attack_allocate_tasks(t: GPtr<u8>, intel: GPtr<u8>) = thiscall 0x69C3F0 => crate::frontier_a::allocator_attack_allocate_tasks;
-    /// `CTaskSimpleGangDriveBy::Destructor` (0x6218C0)
-    fn gang_drive_by_dtor(t: GPtr<u8>) = thiscall 0x6218C0 => crate::frontier_c_dtors::gang_drive_by_dtor;
     /// task virtual +0x10 (`GetTaskType`)
     fn v_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
 }

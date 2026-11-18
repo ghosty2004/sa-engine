@@ -2106,7 +2106,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x6D3080,sa-ai,vehicle_set_window_open_flag,thiscall,,v:GPtr<u8>;door:u32,,unported,CVehicle::SetWindowOpenFlag,
 0x6D3AE0,sa-ai,veh_spare_hassle_pos,thiscall,,v:GPtr<u8>,i32,unported,CVehicle::GetSpareHasslePosId,
 0x6D3B30,sa-ai,vehicle_set_hassle_pos_id,thiscall,,v:GPtr<u8>;id:i32;b:u32,,unported,CVehicle::SetHasslePosId,
-0x6D5CF0,sa-ai,vehicle_can_ped_lean_out,thiscall,,v:GPtr<u8>;ped:GPtr<u8>,u8,unported,CVehicle::CanPedLeanOut,
+0x6D5CF0,sa-world,vehicle_can_ped_lean_out,thiscall,,v:GPtr<u8>;ped:GPtr<u8>,u8,unported,CVehicle::CanPedLeanOut,
 0x6E3C80,sa-ai,veh_anim_group_compute_critical_blend_time,thiscall,,g:GPtr<u8>;anim:u32,f64,unported,CVehicleAnimGroup::ComputeCriticalBlendTime,
 0x6F9F60,sa-ai,scripted_2d_effects_get_index,cdecl,,effect:GPtr<u8>,i32,sa_ai::attractor_registry::scripted_2d_effects_get_index,CScripted2dEffects::GetIndex,
 0x742300,sa-ai,weapon_fire,thiscall,,w:GPtr<u8>;owner:GPtr<u8>;origin:GPtr<u8>;muzzle:GPtr<u8>;target:GPtr<u8>;tpos:GPtr<u8>;alt:GPtr<u8>,u32,unported,CWeapon::Fire,
@@ -2326,6 +2326,8 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x4A9F70,sa-render,frustum_info_ctor,thiscall,,this:GPtr<u8>,GPtr<u8>,unported,FxSphere_c,
 0x4AA030,sa-render,frustum_is_collision,thiscall,,this:GPtr<u8>;s:GPtr<u8>,u32,sa_render::mvpa_render3::fx_frustum_is_collision,FxFrustumInfo_c::IsCollision,
 0x4AB270,sa-world,fx_prt_mult_default_ctor,thiscall,,p:u32,u32,unported,FxPrtMult_c,sa_render::generated::generated_setters::g_fx_prt_mult_c_4ab270
+0x6218C0,sa-world,gang_drive_by_dtor,thiscall,,t:GPtr<u8>,,unported,CTaskSimpleGangDriveBy::Destructor,sa_ai::frontier_c_dtors::gang_drive_by_dtor
+0x627CC0,sa-world,gang_drive_by_fire,thiscall,,t:GPtr<u8>;ped:GPtr<u8>,,unported,FUN_00627cc0,sa_ai::gang_drive_by::gang_drive_by_fire
 0x54EEF0,sa-render,transform_points,cdecl,,out:GPtr<u8>;n:u32;m:GPtr<u8>;inp:GPtr<u8>,,sa_render::mvpb_r1::transform_points,TransformPoints,
 0x553260,sa-render,render_one_non_road,cdecl,,e:GPtr<u8>,,sa_render::renderer::render_one_non_road,CRenderer::RenderOneNonRoad,
 0x5A3F20,sa-render,proc_object_process_triangle_added,thiscall,,this:GPtr<u8>;t:GPtr<u8>,u8,unported,ProcObjectMan_c::ProcessTriangleAdded,

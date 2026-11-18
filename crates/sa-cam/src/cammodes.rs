@@ -64,7 +64,7 @@ pub use sa_world::bindings::get_water_level;
 pub use sa_world::bindings::get_water_level_no_waves;
 orig! {
     /// `CCamera::AvoidTheGeometry(const CVector* from, const CVector* target, CVector* out, float fov)` (0x514030)
-    pub fn avoid_the_geometry(cam: GPtr<u8>, from: GPtr<u8>, target: GPtr<u8>, out: GPtr<u8>, fov: u32) = thiscall 0x514030 => unported;
+    pub fn avoid_the_geometry(cam: GPtr<u8>, from: GPtr<u8>, target: GPtr<u8>, out: GPtr<u8>, fov: u32) = thiscall 0x514030 => crate::avoidgeom::avoid_the_geometry;
 }
 
 /// A local 3-dword vector and its game pointer.

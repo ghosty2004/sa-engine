@@ -3584,8 +3584,18 @@ orig! {
 }
 
 orig! {
+    /// `CTaskSimpleGangDriveBy::Destructor` (0x6218C0)
+    pub fn gang_drive_by_dtor(t: GPtr<u8>) = thiscall 0x6218C0 => unported;
+}
+
+orig! {
     /// `CTaskComplexDestroyCar::Constructor` (0x621C00)
     pub fn destroy_car_ctor(t: GPtr<u8>, veh: GPtr<u8>, a: u32, b: u32, c: u32) -> GPtr<u8> = thiscall 0x621C00 => unported;
+}
+
+orig! {
+    /// `FUN_00627cc0` (0x627CC0)
+    pub fn gang_drive_by_fire(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x627CC0 => unported;
 }
 
 orig! {
@@ -4191,6 +4201,11 @@ orig! {
 orig! {
     /// `CVehicle::CanBeDriven` (0x6D5400)
     pub fn vehicle_can_be_driven(v: GPtr<u8>) -> u8 = thiscall 0x6D5400 => unported;
+}
+
+orig! {
+    /// `CVehicle::CanPedLeanOut` (0x6D5CF0)
+    pub fn vehicle_can_ped_lean_out(v: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6D5CF0 => unported;
 }
 
 orig! {
