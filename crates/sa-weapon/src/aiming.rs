@@ -178,7 +178,7 @@ pub fn do_drive_by_auto_aiming(owner: GPtr<u8>, veh: GPtr<u8>, start: GPtr<u8>, 
         {
             continue;
         }
-        let dl = X87::from_f64_exact(dist_to_line(start, end, entity_pos(c)));
+        let dl = dist_to_line(start, end, entity_pos(c));
         let cpos = || rd3f(entity_pos(list[k]));
         let score = match rd::<u32>(veh, 0x594) {
             3 | 4 => {
