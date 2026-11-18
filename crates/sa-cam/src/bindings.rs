@@ -150,7 +150,7 @@ orig! {
 
 orig! {
     /// `CCam::Process_WheelCam` (0x512110)
-    pub fn cam_process_wheel_cam(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32) -> u8 = thiscall 0x512110 => unported;
+    pub fn cam_process_wheel_cam(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32) -> u8 = thiscall 0x512110 => crate::cammodes::process_wheel_cam;
 }
 
 orig! {

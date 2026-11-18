@@ -80,6 +80,11 @@ impl V3 {
 }
 
 use sa_core::field::copy3;
+use sa_core::bindings::matrix_mul_vec;
+use sa_world::bindings::{get_vehicle_appearance, placeable_get_matrix, process_line_of_sight, vector_mul_scalar, vector_scale};
+use sa_world::collision::sphere_cast::ensure_matrix;
+use sa_world::world::common::f32_of;
+use sa_core::field::gf;
 
 /// The inlined "right vector of the target": `R = cross(M(t)->forward, (0,0,1))` (the matrix allocated and
 /// updated from the placement first when missing), `R.z = 0`, `R.Normalise()`.
@@ -399,12 +404,50 @@ fn attached_point(v: GPtr<u8>, off: usize) {
     wr::<f32>(v, 8, x(rd::<f32>(p, 8)).fadd_m(rd::<f32>(v, 8)).to_f32());
 }
 
+/// The underwater blur of the attached / wheel cameras: `wl = 0`; when `GetWaterLevel(source, &wl, true, null)` finds
+/// a level and `wl - 0.3 > source.z`, the blur colour is the timecycle water colour (`_ftol2` each), scaled by
+/// `10 / |c|` when `|c| = sqrt((b*b + g*g) + r*r) > 10`, alpha 20 (0x8CC7A4), type 2.
+fn underwater_blur(src: GPtr<u8>) {
+    let mut wl: u32 = 0;
+    let wlp = GPtr::<u32>::from_raw(&mut wl).cast::<u8>();
+    let (sx, sy, sz) = (rd::<u32>(src, 0), rd::<u32>(src, 4), rd::<u32>(src, 8));
+    if get_water_level(f32::from_bits(sx), f32::from_bits(sy), f32::from_bits(sz), wlp, 1, GPtr::NULL) != 0
+        && !x(f32::from_bits(wlp.cast::<u32>().read()))
+            .fsub_m(k(K_0_3))
+            .fcom(x(rd::<f32>(src, 8)))
+            .test_any(0x41)
+    {
+        let (cr, cg, cb) = (
+            g::<f32>(WATER_R).read(),
+            g::<f32>(WATER_G).read(),
+            g::<f32>(WATER_B).read(),
+        );
+        let m = x(cb)
+            .fmul_m(cb)
+            .fadd(x(cg).fmul_m(cg))
+            .fadd(x(cr).fmul_m(cr))
+            .fsqrt();
+        let cap = g::<f32>(UW_COLOUR_CAP).read();
+        let blue = if !m.fcom(x(cap)).test_any(0x41) {
+            let s = m.fdivr_m(cap);
+            g::<i32>(CAMERA_BLUR_RED).write(ftol32(x(g::<f32>(WATER_R).read()).fmul(s)));
+            g::<i32>(CAMERA_BLUR_GREEN).write(ftol32(x(g::<f32>(WATER_G).read()).fmul(s)));
+            ftol32(x(g::<f32>(WATER_B).read()).fmul(s))
+        } else {
+            g::<i32>(CAMERA_BLUR_RED).write(ftol32(x(g::<f32>(WATER_R).read())));
+            g::<i32>(CAMERA_BLUR_GREEN).write(ftol32(x(g::<f32>(WATER_G).read())));
+            ftol32(x(g::<f32>(WATER_B).read()))
+        };
+        g::<u32>(CAMERA_MOTION_BLUR).write(g::<u32>(UW_ALPHA).read());
+        g::<i32>(CAMERA_BLUR_BLUE).write(blue);
+        g::<u32>(CAMERA_BLUR_TYPE).write(2);
+    }
+}
+
 /// `CCam::Process_AttachedCam()` (0x512B10, thiscall): FOV = 70.0; `ang = (f32)(angle * 0.017453292)`;
 /// source = attached point of the offset; front = attached point of the look-at minus source (looking at a
 /// vector) or `pos(TheCamera target) - source`, normalised; `R = front x (0,0,1)`, normalised;
-/// `U = R x front`, normalised. Under water (`GetWaterLevel` with waves, `wl - 0.3 > source.z`) the blur
-/// colour is the timecycle water colour (`_ftol2` each), scaled by `10 / |c|` when `|c| = sqrt((b*b + g*g)
-/// + r*r) > 10`, alpha 20 (0x8CC7A4), type 2. Then `up = U*(f32)cos(ang) + R*sin(ang)` (x: the R term
+/// `U = R x front`, normalised; [`underwater_blur`]. Then `up = U*(f32)cos(ang) + R*sin(ang)` (x: the R term
 /// unrounded on the stack; y / z through f32) and `CWorld::pIgnoreEntity = NULL`.
 #[hook(addr = 0x512B10, conv = thiscall, name = "CCam::Process_AttachedCam", expect = "83 EC 38 53 8B D9", this = "CCam")]
 pub fn process_attached_cam(this: GPtr<u8>) {
@@ -442,40 +485,7 @@ pub fn process_attached_cam(this: GPtr<u8>) {
     copy3(u.p(), o);
     vector_normalise(GPtr::<u8>::cast::<[f32;3]>(u.p()));
 
-    let mut wl: u32 = 0;
-    let wlp = GPtr::<u32>::from_raw(&mut wl).cast::<u8>();
-    let (sx, sy, sz) = (rd::<u32>(src, 0), rd::<u32>(src, 4), rd::<u32>(src, 8));
-    if get_water_level(f32::from_bits(sx), f32::from_bits(sy), f32::from_bits(sz), wlp, 1, GPtr::NULL) != 0
-        && !x(f32::from_bits(wlp.cast::<u32>().read()))
-            .fsub_m(k(K_0_3))
-            .fcom(x(rd::<f32>(src, 8)))
-            .test_any(0x41)
-    {
-        let (cr, cg, cb) = (
-            g::<f32>(WATER_R).read(),
-            g::<f32>(WATER_G).read(),
-            g::<f32>(WATER_B).read(),
-        );
-        let m = x(cb)
-            .fmul_m(cb)
-            .fadd(x(cg).fmul_m(cg))
-            .fadd(x(cr).fmul_m(cr))
-            .fsqrt();
-        let cap = g::<f32>(UW_COLOUR_CAP).read();
-        let blue = if !m.fcom(x(cap)).test_any(0x41) {
-            let s = m.fdivr_m(cap);
-            g::<i32>(CAMERA_BLUR_RED).write(ftol32(x(g::<f32>(WATER_R).read()).fmul(s)));
-            g::<i32>(CAMERA_BLUR_GREEN).write(ftol32(x(g::<f32>(WATER_G).read()).fmul(s)));
-            ftol32(x(g::<f32>(WATER_B).read()).fmul(s))
-        } else {
-            g::<i32>(CAMERA_BLUR_RED).write(ftol32(x(g::<f32>(WATER_R).read())));
-            g::<i32>(CAMERA_BLUR_GREEN).write(ftol32(x(g::<f32>(WATER_G).read())));
-            ftol32(x(g::<f32>(WATER_B).read()))
-        };
-        g::<u32>(CAMERA_MOTION_BLUR).write(g::<u32>(UW_ALPHA).read());
-        g::<i32>(CAMERA_BLUR_BLUE).write(blue);
-        g::<u32>(CAMERA_BLUR_TYPE).write(2);
-    }
+    underwater_blur(src);
 
     let sa = x(ang).fsin();
     let rxs = x(r.f(0)).fmul(sa);
@@ -492,8 +502,193 @@ pub fn process_attached_cam(this: GPtr<u8>) {
     IGNORE_ENTITY.set(GPtr::NULL);
 }
 
+/// `R = normalise(front x (0,0,1))`, `U = normalise(R x front)` (both through the stack temporary).
+fn right_up_of(front: GPtr<u8>, r: &mut V3, u: &mut V3) {
+    let mut tmp = V3([0; 3]);
+    let mut z_up = V3([0, 0, 0x3F80_0000]);
+    copy3(r.p(), cross_product(tmp.p(), front, z_up.p()));
+    vector_normalise(GPtr::<u8>::cast::<[f32; 3]>(r.p()));
+    copy3(u.p(), cross_product(tmp.p(), r.p(), front));
+    vector_normalise(GPtr::<u8>::cast::<[f32; 3]>(u.p()));
+}
+
+/// `v.c = f32(f32(k * a.c) + v.c)` for z, `f32(k * a.c + v.c)` for x / y (the products loaded together, z stored
+/// first): the `fld; fmul` x3, `fstp` z, `fxch` pattern of the wheel camera.
+fn add_scaled(v: GPtr<u8>, a: GPtr<u8>, k_: f32) {
+    let px = x(k_).fmul_m(rd::<f32>(a, 0));
+    let py = x(k_).fmul_m(rd::<f32>(a, 4));
+    let pz = f32_of(x(k_).fmul_m(rd::<f32>(a, 8)));
+    wr::<f32>(v, 0, f32_of(px.fadd_m(rd::<f32>(v, 0))));
+    wr::<f32>(v, 4, f32_of(py.fadd_m(rd::<f32>(v, 4))));
+    wr::<f32>(v, 8, f32_of(x(pz).fadd_m(rd::<f32>(v, 8))));
+}
+
+/// `CCam::Process_WheelCam(const CVector&, float, float, float)` (0x512110, thiscall, `ret 0x10`, AL; no argument
+/// is read). `e` = m_pCamTargetEntity (+0x21C, re-read at each use); FOV 70.
+/// - A ped: `source = Multiply3x3(M(e), (-0.3, -0.5, 0.1)) + pos(e)`, `front = (1, 0, 0)`. Otherwise `off =
+///   (colModel.min.x - 0.33, -2.3, 0.3)`, `source = M(e) * off`, `front = M(e).forward`.
+/// - A heli / plane appearance (3 / 5): R / U = the matrix's right / up, `source = M(e) * (-1.55, -2.3, 0.3)`.
+/// - A boat (+0x590 5): R / U from front; with a driver, `P` = its bone 5 + this frame's travel (x through the
+///   unrounded product, y / z kept on the x87 stack) + R * -0.5 + forward * -0.8 (z + 0.3); model 0x1AE adds R * 0.2
+///   and `-0.2 * (forward * -1.0)` (z + 1.0 * -0.3); `source = P`. Without a driver `source.z += 0.3 + 0.3`.
+/// - A bike (+0x590 9): `front = normalise(m_vecUp x M.right)`, `off.x += 0.33 - 0.2`, `source = pos(e) + right *
+///   off.x + front * off.y + m_vecUp * off.z` (U stays (0, 0, 1)).
+/// - Otherwise (a train, +0x590 6, turns front round when `front . moveSpeed < 0`): R / U from front.
+/// - [`underwater_blur`]; the roll `a = cos((TimeMs & 0x1FFFF) * 4.7936901e-05) * 0.4`, `up = U * cos(a) + R *
+///   sin(a)` (x and y through f32 stores, z's R term unrounded), up and front normalised; `pIgnoreEntity = e` around
+///   `ProcessLineOfSight(source, pos(e), .., buildings, objects, camera-ignore)`; 1 when clear.
+#[hook(addr = 0x512110, conv = thiscall, name = "CCam::Process_WheelCam", expect = "81 EC 80 00 00 00 53", this = "CCam",
+       unverified = "frontier2-b27", route = "L2", hazards = "none")]
+pub fn process_wheel_cam(this: GPtr<u8>, _target: GPtr<u8>, _orientation: u32, _speed: u32, _speed_wanted: u32) -> u8 {
+    let ent = || rd::<GPtr<u8>>(this, 0x21C);
+    let src = this.byte_add(0x19C);
+    let front = this.byte_add(0x190);
+    let up = this.byte_add(0x1B4);
+    wr::<u32>(this, 0xB4, 0x428C_0000);
+    let mut tmp = V3([0; 3]);
+    let mut off = V3([0; 3]);
+    let mut r = V3([0; 3]);
+    let mut u = V3([0; 3]);
+    let ty = |e: GPtr<u8>| rd::<u8>(e, 0x36) & 7;
+    if ty(ent()) == 3 {
+        let mut o = V3([0xBE99_999A, 0xBF00_0000, 0x3DCC_CCCD]);
+        let m = ensure_matrix(ent());
+        copy3(src, multiply_3x3(tmp.p(), m, o.p()));
+        let p = pos_of(ent());
+        wr::<f32>(src, 0, f32_of(x(rd::<f32>(src, 0)).fadd_m(rd::<f32>(p, 0))));
+        wr::<f32>(src, 4, f32_of(x(rd::<f32>(p, 4)).fadd_m(rd::<f32>(src, 4))));
+        wr::<f32>(src, 8, f32_of(x(rd::<f32>(p, 8)).fadd_m(rd::<f32>(src, 8))));
+        wr::<u32>(front, 0, 0x3F80_0000);
+        wr::<u32>(front, 4, 0);
+        wr::<u32>(front, 8, 0);
+    } else {
+        let cm = get_col_model(ent());
+        off.0 = [f32_of(x(rd::<f32>(cm, 0)).fsub_m(gf(0x8C_C7DC))).to_bits(), 0xC013_3333, 0x3E99_999A];
+        let m = ensure_matrix(ent());
+        copy3(src, matrix_mul_vec(tmp.p(), m, off.p()));
+        copy3(front, ensure_matrix(ent()).byte_add(0x10));
+    }
+    let e = ent();
+    let air = ty(e) == 2 && {
+        let a = get_vehicle_appearance(e);
+        a == 3 || get_vehicle_appearance(ent()) == 5
+    };
+    if air {
+        copy3(r.p(), ensure_matrix(ent()));
+        copy3(u.p(), ensure_matrix(ent()).byte_add(0x20));
+        off.0[0] = 0xBFC6_6666;
+        let m = ensure_matrix(ent());
+        copy3(src, matrix_mul_vec(tmp.p(), m, off.p()));
+    } else if ty(ent()) == 2 && rd::<u32>(ent(), 0x590) == 5 {
+        right_up_of(front, &mut r, &mut u);
+        let mut pp = V3([0; 3]);
+        let driver = rd::<GPtr<u8>>(ent(), 0x460);
+        if driver.is_null() {
+            let z = x(gf(0x8C_CC68)).fadd(x(gf(0x8C_CC68))).fadd_m(rd::<f32>(src, 8));
+            wr::<f32>(src, 8, f32_of(z));
+        } else {
+            ped_get_bone_position(driver, pp.p(), 5, 1);
+            let b = ent();
+            let ts = TIME_STEP.get();
+            let tx = x(ts).fmul_m(rd::<f32>(b, 0x44));
+            let ty_ = x(ts).fmul_m(rd::<f32>(b, 0x48));
+            let tz = f32_of(x(ts).fmul_m(rd::<f32>(b, 0x4C)));
+            let px = f32_of(tx.fadd_m(pp.f(0)));
+            let py = ty_.fadd_m(pp.f(1));
+            let pz = x(tz).fadd_m(pp.f(2));
+            let half = gf(0x8C_CC60);
+            let rz = f32_of(x(r.f(2)).fmul_m(half));
+            let px = f32_of(x(r.f(0)).fmul_m(half).fadd_m(px));
+            let py = f32_of(x(r.f(1)).fmul_m(half).fadd(py));
+            let pz = f32_of(x(rz).fadd(pz));
+            pp.0 = [px.to_bits(), py.to_bits(), pz.to_bits()];
+            let fwd = placeable_get_matrix(b).byte_add(0x10);
+            let k8 = gf(0x8C_CC64);
+            let fz = f32_of(x(k8).fmul_m(rd::<f32>(fwd, 8)));
+            let px = f32_of(x(k8).fmul_m(rd::<f32>(fwd, 0)).fadd_m(pp.f(0)));
+            let py = f32_of(x(k8).fmul_m(rd::<f32>(fwd, 4)).fadd_m(pp.f(1)));
+            let pz = f32_of(x(fz).fadd_m(pp.f(2)).fadd_m(gf(0x8C_CC68)));
+            pp.0 = [px.to_bits(), py.to_bits(), pz.to_bits()];
+            if rd::<i16>(b, 0x22) == 0x1AE {
+                let k2 = gf(0x8C_CC6C);
+                let rz = f32_of(x(r.f(2)).fmul_m(k2));
+                let px = f32_of(x(r.f(0)).fmul_m(k2).fadd_m(pp.f(0)));
+                let py = f32_of(x(r.f(1)).fmul_m(k2).fadd_m(pp.f(1)));
+                let pz = f32_of(x(rz).fadd_m(pp.f(2)));
+                let fwd = placeable_get_matrix(b).byte_add(0x10);
+                let mut t1 = V3([0; 3]);
+                let mut t2 = V3([0; 3]);
+                let t = vector_mul_scalar(t1.p(), fwd, gf(0x8C_CCA4));
+                let t = vector_scale(t2.p(), gf(0x8C_CC70), t);
+                let px = f32_of(x(px).fadd_m(rd::<f32>(t, 0)));
+                let py = f32_of(x(py).fadd_m(rd::<f32>(t, 4)));
+                let pz = f32_of(x(pz).fadd_m(rd::<f32>(t, 8)).fadd(x(gf(0x8C_CCA0)).fmul_m(gf(0x8C_CC74))));
+                pp.0 = [px.to_bits(), py.to_bits(), pz.to_bits()];
+            }
+            copy3(src, pp.p());
+        }
+    } else if ty(ent()) == 2 && rd::<u32>(ent(), 0x590) == 9 {
+        let b = ent();
+        copy3(r.p(), ensure_matrix(b));
+        u.0 = [0, 0, 0x3F80_0000];
+        copy3(front, cross_product(tmp.p(), up, r.p()));
+        vector_normalise(front.cast::<[f32; 3]>());
+        let ox = f32_of(x(gf(0x8C_C7DC)).fsub_m(gf(0x8C_C7E0)).fadd_m(off.f(0)));
+        off.0[0] = ox.to_bits();
+        let b = ent();
+        copy3(src, pos_of(b));
+        let m = ensure_matrix(b);
+        add_scaled(src, m, off.f(0));
+        add_scaled(src, front, off.f(1));
+        add_scaled(src, up, off.f(2));
+    } else {
+        let b = ent();
+        if ty(b) == 2 && rd::<u32>(b, 0x590) == 6 {
+            let d = x(rd::<f32>(front, 8))
+                .fmul_m(rd::<f32>(b, 0x4C))
+                .fadd(x(rd::<f32>(front, 4)).fmul_m(rd::<f32>(b, 0x48)))
+                .fadd(x(rd::<f32>(b, 0x44)).fmul_m(rd::<f32>(front, 0)));
+            if !d.fcom(x(k(0))).test_parity(5) {
+                for o in [0, 4, 8] {
+                    wr::<f32>(front, o, f32_of(x(rd::<f32>(front, o)).fchs()));
+                }
+            }
+        }
+        right_up_of(front, &mut r, &mut u);
+    }
+    underwater_blur(src);
+    let t = TIME_MS.get() & 0x1_FFFF;
+    let a = X87::from_i32(t as i32).fmul_m(k(0x3849_0FDB)).fcos().fmul_m(k(0x3ECC_CCCD));
+    let s_ = a.fsin();
+    let rxs = f32_of(x(r.f(0)).fmul(s_));
+    let rys = f32_of(x(r.f(1)).fmul(s_));
+    let rzs = s_.fmul_m(r.f(2));
+    let c = a.fcos();
+    let uxc = x(u.f(0)).fmul(c);
+    let uyc = f32_of(x(u.f(1)).fmul(c));
+    let uzc = f32_of(x(u.f(2)).fmul(c));
+    wr::<f32>(up, 0, f32_of(uxc.fadd_m(rxs)));
+    wr::<f32>(up, 4, f32_of(x(uyc).fadd_m(rys)));
+    wr::<f32>(up, 8, f32_of(x(uzc).fadd(rzs)));
+    vector_normalise(up.cast::<[f32; 3]>());
+    vector_normalise(front.cast::<[f32; 3]>());
+    IGNORE_ENTITY.set(ent());
+    let mut hit_ent: u32 = 0;
+    let mut cp = [0u32; 11];
+    let hit = process_line_of_sight(
+        src,
+        pos_of(ent()),
+        GPtr::<u32>::from_raw(cp.as_mut_ptr()).cast(),
+        GPtr::<u32>::from_raw(&mut hit_ent).cast(),
+        1, 0, 0, 1, 0, 0, 1, 0,
+    );
+    IGNORE_ENTITY.set(GPtr::NULL);
+    u8::from(hit == 0)
+}
+
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_PROCESS_WHEEL_CAM,
     HOOK_PROCESS_PEDS_DEAD_BABY,
     HOOK_PROCESS_SPECIAL_FIXED_FOR_SYPHON,
     HOOK_PROCESS_ATTACHED_CAM,

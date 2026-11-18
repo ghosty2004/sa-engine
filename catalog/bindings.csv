@@ -493,7 +493,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x50E490,sa-cam,cam_init,thiscall,,this:GPtr<u8>,,sa_cam::cam::cam_init,CCam::Init,
 0x50E6D0,sa-cam,idle_cam_init_call,thiscall,,this:GPtr<u8>,,sa_cam::idlecam::idle_cam_init,CIdleCam::Init,
 0x50EAE0,sa-cam,get_look_at_position_on_target,thiscall,,this:GPtr<u8>;e:GPtr<u8>;out:GPtr<u8>,,sa_cam::idlecam::get_look_at_position_on_target,CIdleCam::GetLookAtPositionOnTarget,
-0x512110,sa-cam,cam_process_wheel_cam,thiscall,,c:GPtr<u8>;t:GPtr<u8>;o:u32;sv:u32;svw:u32,u8,unported,CCam::Process_WheelCam,
+0x512110,sa-cam,cam_process_wheel_cam,thiscall,,c:GPtr<u8>;t:GPtr<u8>;o:u32;sv:u32;svw:u32,u8,sa_cam::cammodes::process_wheel_cam,CCam::Process_WheelCam,
 0x5150E0,sa-cam,calculate_derived_values,thiscall,,this:GPtr<u8>;a:u8;b:u8,,sa_cam::camctl::calculate_derived_values_port,CCamera::CalculateDerivedValues,
 0x515200,sa-cam,cc_start_transition,thiscall,,this:GPtr<u8>;mode:u32,,unported,CCamera::StartTransition,
 0x516440,sa-cam,process_vector_track_linear,thiscall,,this:GPtr<u8>,,unported,CCamera::ProcessVectorTrackLinear-wo-ratio,
