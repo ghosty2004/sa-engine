@@ -2,7 +2,7 @@
 # FRONTIER-1 scenarios: native sa-game runs (deterministic, --fixed-step 40, offscreen) that reach the blockers the
 # user hit. Each must end with an empty blocker list in OUT/report.md and no crash.
 #
-#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra OUTDIR [FRAMES]
+#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra|hunter OUTDIR [FRAMES]
 #
 # pausemenu (400)  Esc, down x3, Enter (pause-menu item 4: Stats), down, Enter, Enter: the Stats pages draw
 #                  (was a SIGSEGV at iteration ~171: CStats::GetStatValue's X87 result dispatched as cdecl)
@@ -69,6 +69,8 @@
 #                  in, driven: CVehicle::UpdateTrailerLink 0x6DFC50 / UpdateTractorLink 0x6E0050 (FRONTIER-2 turn 10)
 # tank     (1200)  on foot at Grove Street, the Rhino cheat AIWPRTON, `f` to get in, driven with the turret turned
 #                  (mouse) and fired (left button): CAutomobile::TankControl 0x6AE850
+# hunter   (1200)  the heli run firing (left button held, ctrl tapped) once airborne: the Hunter's guns and rockets
+#                  (CVehicle::FireUnguidedMissile 0x6D5110, FRONTIER-2 turn 11 lane B)
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-b10-counts.gdb --args" counts the turn 10 lane B ports' calls
 # (monster: SetupSuspensionLines 1, ProcessSuspension 282; tanker: TankerCheat 1, UpdateTrailerLink 1996,
 # UpdateTractorLink 1498; tank: TankControl 998).
@@ -181,11 +183,16 @@ quad)
     keys=; i=150; for c in a k j j y g l c; do keys="$keys${keys:+,}$c:$i:$((i + 2))"; i=$((i + 6)); done
     export SA_GAME_KEYS="$keys,f:260:263,w:400:900,a:600:640,d:750:790"
     run "${3:-1200}" --start-in-world ;;
-heli)
+heli|hunter)
     # the Hunter cheat OHDUDE (CCheat::VehicleCheat, model info type 3: a CHeli in front of CJ), `f` to get in, w held
-    # (the rotor spins up and the heli lifts), then a left and a right turn
+    # (the rotor spins up and the heli lifts), then a left and a right turn; hunter: also firing (the left button
+    # held, ctrl tapped) once airborne
     export SA_GAME_SCRIPT_SKIP=1
     keys=; i=150; for c in o h d u d e; do keys="$keys${keys:+,}$c:$i:$((i + 2))"; i=$((i + 6)); done
+    if [ "$NAME" = hunter ]; then
+        i=620; while [ $i -le 1100 ]; do keys="$keys,ctrl:$i:$((i + 4))"; i=$((i + 40)); done
+        export SA_GAME_LMB="${SA_GAME_LMB:-600:1100}"
+    fi
     export SA_GAME_KEYS="$keys,f:260:263,w:400:1150,a:700:760,d:850:910"
     run "${3:-1200}" --start-in-world ;;
 plane)
@@ -234,6 +241,6 @@ monster)
     export SA_GAME_KEYS="$keys,f:260:263,w:400:1150,a:600:660,d:800:860"
     run "${3:-1200}" --start-in-world ;;
 *)
-    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra OUTDIR [FRAMES]" >&2
+    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra|hunter OUTDIR [FRAMES]" >&2
     exit 2 ;;
 esac
