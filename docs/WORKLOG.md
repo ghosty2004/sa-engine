@@ -3862,3 +3862,5 @@
   CWaterLevel::AddWaterLevelQuad 0x6E7EF0 (the peek model of the 1 / 3-vertex overflow); all RW rows (MatFX 0x810830 /
   0x812AC0 / 0x812D40 / 0x813A10 / 0x814460, skin 0x7C8060 / 0x7C9DA0 / 0x7CA410 / 0x7CA850, the image / raster
   helpers, 0x75A960, 0x763F20 / 0x7641C0, 0x7CF600, 0x81F360, 0x74A880 with 0x74CED0); the libjpeg catalogue class.
+- Final writer gate (base 6703b038) on d5e23a2b (the Grain fixes and the regenerated queue): all PASS; only this
+  docs line after it.
