@@ -83,7 +83,7 @@ use crate::world::common::entity_type as ent_type;
 
 /// The inlined `CEntity::UpdateRwMatrix` (0x446F90) followed by `CEntity::UpdateRwFrame` (0x532B00): with an
 /// RW object, its frame matrix (`rw+4 -> +0x10`) from the entity matrix (+0x14) or the simple transform (+4).
-fn update_rw_matrix_and_frame(e: GPtr<u8>) {
+pub(crate) fn update_rw_matrix_and_frame(e: GPtr<u8>) {
     let rw = rd::<GPtr<u8>>(e, 0x18);
     if !rw.is_null() {
         let m = rd::<GPtr<u8>>(rw, 4).byte_add(0x10);

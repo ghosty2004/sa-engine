@@ -10,28 +10,18 @@ use sa_math::fpu::{fbits, lt};
 
 use super::common::{cam_pos, entity_pos, f32_of, ftol32, g, rd, wr, x, xi};
 
-use crate::bindings::{placeable_allocate_matrix, register_corona, store_static_shadow};
-use sa_stream::bindings::simple_transform_update_matrix;
+use super::entity::get_matrix;
+use crate::bindings::{register_corona, store_static_shadow};
 
 /// `CTimer::m_snTimeInMilliseconds`
 const TIME_MS: usize = 0xB7_CB84;
 /// `gpShadowExplosionTex`
 const SHADOW_EXPLOSION_TEX: usize = 0xC4_03F4;
 
-/// `CPlaceable::GetMatrix()` as the original inlines it: the matrix, allocated and filled from the placement when
-/// missing.
-fn get_matrix(e: GPtr<u8>) -> GPtr<u8> {
-    if rd::<GPtr<u8>>(e, 0x14).is_null() {
-        placeable_allocate_matrix(e);
-        simple_transform_update_matrix(e.byte_add(4), rd::<GPtr<u8>>(e, 0x14));
-    }
-    rd::<GPtr<u8>>(e, 0x14)
-}
-
 /// The inlined `SetRotateZOnly` the three effects end with: `a = (time & mask) * k` (the `jge` that adds 2^32 to a
 /// negative value is never taken), `c = f32(fcos a)`, `s = f32(fsin a)`; the matrix becomes a rotation about z:
 /// right = (c, s, 0), forward = (-s, c, 0), up = (0, 0, 1), each field written through its own inlined
-/// `GetMatrix()`. The position is kept.
+/// `GetMatrix()` (the port of 0x411990). The position is kept.
 fn spin_about_z(e: GPtr<u8>, mask: u32, k: f32) {
     let t = (g::<u32>(TIME_MS).read() & mask) as i32;
     let a = xi(t).fmul_m(k);
