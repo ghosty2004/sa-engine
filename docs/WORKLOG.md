@@ -3570,3 +3570,53 @@
   RcbanditCheckHitWheels 0x6B45E0, AddReplacementUpgrade 0x6D3830 (its entry continues through the VM fragment
   0x408121: vm_eval.py), FirePlaneGuns 0x6D4D30, FireUnguidedMissile 0x6D5110, BladeColSectorList 0x6DAF00 (entry
   fragment 0x401589), AddWaterSplashParticles 0x6DDF60, CTrain::AddNearbyPedAsRandomPassenger 0x6F8170.
+
+## 2026-11-18 — FRONTIER-2 turn 12, lane A: pickup glows, wind socks, object placement, escalators, the RW shutdown (agent, branch worktree-agent-a3c807c58818e1a2b)
+- Base: lane A turn 11's head 4906c6ce. Every port from the 1.0 US bytes (gta-reversed read as an aid; where it differs
+  the bytes win), every address checked against `inflight.py` and the other branches first (none registered elsewhere;
+  lane B's 0x73D1E0 not touched). Batches `frontier2-a19` (WORLD, 11 hooks), `frontier2-a20` (CORE: ShutdownRenderWare
+  + CancelBuffering), `frontier2-a21` (RENDER: CVisibilityPlugins::Shutdown, CPostEffects::Close), `frontier2-a22` (RW:
+  RpWorldDestroy), plain `#[hook(`; no phase B native. `-j4` builds, one cargo at a time.
+- WORLD (a19): CPickups::DoCollectableEffects 0x455E20 / DoMineEffects 0x4560E0 (one `glow` helper: a static shadow
+  and a torus corona shaded by `ftol(((fsin(((time + entity) & mask) * k) + 1) * 0.5 * (r - d)) * (1 / r) * max)`; the
+  mine corona's range is 60 in the bytes, 40 in gta-reversed), both ending with the inlined SetRotateZOnly that
+  DoMoneyEffects 0x454E80 is (now one `spin_about_z`; the pickup file's own GetMatrix copy replaced by
+  CPlaceable::GetMatrix's port, dupes-allow.txt updated); CEntity::BuildWindSockMatrix 0x532DB0 (the bytes negate both
+  wind sums; mvpd_w1's inlined UpdateRwMatrix/UpdateRwFrame helper made crate-visible); CWorld::RepositionOneObject
+  0x569850 (a post's single box gives (centre x, centre y, min z), a post without collision data is left alone, a
+  missed line gives z = -min.z, the buoy's unused vertical line); CEntryExit::WarpGangWithPlayer 0x43F1F0 (teleport
+  points from the player's position, one offset index across all members, three tries each, a failed third try or no
+  offset left ends the whole warp); the safe house stored car layout FUN_00448330 (up to three cars in a row from the
+  garage centre); CEscalator::AddThisOne 0x717970 (the start's lowered z stays extended in the first plane distance;
+  RegisterReference also on a null entity); Interior_c::Office_PlaceDesk 0x5993E0 (the chair id sign-extended into AX
+  over EAX's previous value; arguments 4 and 5 never read); CReplay::RestoreStuffFromMem 0x45ECD0 (also zeroes the
+  stored player info's +4 / +8 / +0xC / +0x184, not in gta-reversed).
+- CORE / RENDER / RW (a20..a22): CGame::ShutdownRenderWare 0x53BB80 with the callees it surfaced:
+  D3DResourceSystem::CancelBuffering 0x730900, CVisibilityPlugins::Shutdown 0x732EB0, CPostEffects::Close 0x7010C0 and
+  RpWorldDestroy 0x74F610 (in flight nowhere; its body is the teardown RpWorldCreate's failure path already had inline,
+  now one `world_destroy` helper in worldcreate.rs). DestroyDebugFont 0x734620 was already a lone-ret native.
+  CLoadingScreen::Shutdown 0x58FF10 became a sa-core binding shared with WinMain.
+- Not done: CReplay::TriggerPlayback 0x4600F0 (its .HOODLUM body 0x156D320 has three protection fragments; the first
+  computed call evaluates with vm_eval.py to 0x4E83F0 from the image, the others are not evaluated yet),
+  LoadPedPathNode / LoadCarPathNode (a protection jump to 0x4022CD inside the sscanf call), CEscalator::Update 0x717D30
+  (602 instructions), CShopping (3), the Interior furnishing (FurnishBedroom / FurnishLounge / Kitchen_FurnishEdges),
+  InteriorGroup UpdateOfficePeds / SetupHousePeds, CReplay PlayBackThisFrameInterpolation / ProcessLookAroundCam,
+  WEAPON (5), DeleteRwObjectsBehindCamera, and ProcessColModels' A-disk path 0x4185C0: lane B's `monster` scenario
+  reaches it 89 times, so it is reachable after all (the monster truck's col disks); gta-reversed's reversal is ~150
+  lines over ProcessSphereSphere / SphereBox / SphereTriangle / ProcessDiscCollision (0x413960, ported), with the live
+  disk z overwritten by the caller's touch distances; not started this turn (time).
+- frontier.py --no-branches: to port 113 -> 103 (WORLD 21 -> 13, CORE 1 -> 0; no new rows: RpWorldDestroy and the three
+  shutdown callees were ported with their caller).
+- Scenarios (frontier.sh, i686 native, SA_ROOT=~/sa-engine, sa-game of this code): pausemenu 416 / 0 blocked, solicit
+  4016 / 0, crossing 1216 / 0, crossing-long 4016 / 0, roadblocks 2015 / 1 (lane C: RtDictSchemaStreamReadDict
+  0x7CF240), melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0, shootdriver 1216 / 0, quad 1216 / 0, heli 1216 / 0,
+  plane 824 / 392 (lane C: 0x43E0E0), roadblock-script 1016 / 0, roadblock-wanted 2016 / 0, boat 1216 / 0, gangwar
+  2016 / 0, jetpack 1016 / 0, copsf 2015 / 1 (0x7CF240), coplv 2016 / 0, samsite 1615 / 1 (0x7CF240); no crash, no lane A
+  blocker. No new scenario: none of these ports blocked a scenario (collectables, mines, wind socks, escalators, safe
+  houses, offices, replays and game exit are not on the existing routes); `monster` (lane B's branch) not run here.
+- Writer gate (base 4906c6ce): all 17 steps PASS on ef448f7f (14 new hooks, all unverified, batches frontier2-a19..a22;
+  a first run failed clippy (a same-type cast in CancelBuffering) and dupes (the pole shadow group's allow-list line still
+  named the pickup spin's removed get_matrix copy), both fixed in ef448f7f).
+- verify-all (lanes 1-3, host sa-oracle / satool rebuilt from this tree, DLL sha256 975cccdc… of ef448f7f): `f2a12-u`
+  (SA_UNVERIFIED=frontier2-a19,frontier2-a20,frontier2-a21,frontier2-a22) IDENTICAL 13/13, `f2a12-def` (default set)
+  IDENTICAL 13/13; save-load identical except the SAVE-1 stack residue.
