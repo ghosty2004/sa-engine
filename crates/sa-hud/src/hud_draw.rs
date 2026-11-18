@@ -1285,7 +1285,7 @@ fn help_flags(quick: u8, permanent: u8) {
 pub fn set_help_message(text: GPtr<u8>, quick: u8, permanent: u8, brief: u8) {
     use crate::hud::{HELP_MESSAGE, HELP_MESSAGE_TO_PRINT, LAST_HELP_MESSAGE};
     // samp mode: no single-player help boxes (samp makes this entry a `ret`).
-    if sa_core::samp::disabled(sa_core::samp::feature::HELP_MESSAGES) {
+    if !sa_core::options::enabled(sa_core::options::Feature::HelpMessages) {
         return;
     }
     if help_blocked(CUTSCENE_RUNNING) {

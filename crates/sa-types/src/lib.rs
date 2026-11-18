@@ -3,6 +3,7 @@
 
 pub mod camera;
 pub mod error;
+pub mod input;
 pub mod ped;
 pub mod script;
 pub mod vehicle;

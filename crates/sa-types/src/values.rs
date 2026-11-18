@@ -256,3 +256,54 @@ pub struct TimeStep {
     pub non_clipped: f32,
 }
 
+
+/// A feature of the game a host may switch off (the original's own features; all on by default). The mod API's
+/// option numbers are the declaration order ([`GameOption::ALL`]).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum GameOption {
+    /// Typed cheat codes.
+    TypedCheats,
+    /// The game clock runs and the HUD shows it.
+    Clock,
+    /// Ambient peds.
+    AmbientPeds,
+    /// Random traffic.
+    RandomTraffic,
+    /// Parked-car generators.
+    CarGenerators,
+    /// Ambient planes.
+    AmbientPlanes,
+    /// Cutscenes.
+    Cutscenes,
+    /// The replay buffer.
+    Replay,
+    /// Plants and grass.
+    Plants,
+    /// The sun and moon coronas.
+    SunAndMoon,
+    /// The idle camera.
+    IdleCamera,
+    /// Help boxes.
+    HelpMessages,
+    /// Zone names on entering an area.
+    ZoneNames,
+}
+
+impl GameOption {
+    /// Every option, in declaration order.
+    pub const ALL: [GameOption; 13] = [
+        GameOption::TypedCheats,
+        GameOption::Clock,
+        GameOption::AmbientPeds,
+        GameOption::RandomTraffic,
+        GameOption::CarGenerators,
+        GameOption::AmbientPlanes,
+        GameOption::Cutscenes,
+        GameOption::Replay,
+        GameOption::Plants,
+        GameOption::SunAndMoon,
+        GameOption::IdleCamera,
+        GameOption::HelpMessages,
+        GameOption::ZoneNames,
+    ];
+}

@@ -36,6 +36,8 @@ use sa_core::orig::registry;
 use sa_mod_api::hook;
 use sa_mod_host::Host;
 use sa_mod_host::api::{Display, Game, GameAccess, HookCall, HookDecision, HookRegistry, Registry, VideoRequest};
+use sa_platform::input::{InputEvent, InputState, MouseButton};
+use sa_platform::win32::key_info;
 use sa_rw_wgpu::d3d9::WgpuDevice;
 use sa_types::{EntityRef, ObjectRef, PedRef, VehicleRef};
 
@@ -324,6 +326,55 @@ pub fn frame_boundary() {
     sa_hud::menu_mgr::post_effects_screen_mode_init();
     display::apply_window(req.width, req.height, req.fullscreen);
     println!("sa-game: mods: video mode {}x{} (RW mode {idx}) applied", req.width, req.height);
+}
+
+/// The mod API's form of a platform input event (`sa_mod_api::input`), `None` for one mods do not get.
+fn input_event(e: &InputEvent) -> Option<(i32, i32, i32)> {
+    use sa_mod_api::input as k;
+    let button = |b: &MouseButton| match b {
+        MouseButton::Left => Some(0),
+        MouseButton::Right => Some(1),
+        MouseButton::Middle => Some(2),
+        MouseButton::X1 | MouseButton::X2 => None,
+    };
+    Some(match e {
+        InputEvent::KeyDown { key, repeat } => (k::KEY_DOWN, i32::from(key_info(*key)?.vk), i32::from(*repeat)),
+        InputEvent::KeyUp { key } => (k::KEY_UP, i32::from(key_info(*key)?.vk), 0),
+        InputEvent::Char(c) => (k::CHAR, u32::from(*c) as i32, 0),
+        InputEvent::MouseDown(b) => (k::MOUSE_BUTTON, button(b)?, 1),
+        InputEvent::MouseUp(b) => (k::MOUSE_BUTTON, button(b)?, 0),
+        InputEvent::MouseMove { x, y } => (k::MOUSE_MOVE, *x, *y),
+        InputEvent::Wheel(lines) => (k::WHEEL, (lines * 120.0).round() as i32, 0),
+        InputEvent::Focus(f) => (k::FOCUS, i32::from(*f), 0),
+        InputEvent::Resized { .. } | InputEvent::Close => return None,
+    })
+}
+
+/// Runs this iteration's input through the capturing mods: what one consumes never reaches the game, and while
+/// they take the keyboard (or the mouse) the held keys (the mouse state) are hidden from the game too.
+pub fn filter_input(input: &mut InputState) {
+    let Some((keyboard, mouse)) = with_host(|h| {
+        input.events.retain(|e| input_event(e).is_none_or(|(kind, a, b)| !h.input(kind, a, b)));
+        let c = h.capture();
+        (c.0, c.1)
+    }) else {
+        return;
+    };
+    if keyboard {
+        input.held.clear();
+        input.pressed.clear();
+    }
+    if keyboard || mouse {
+        input.mouse_held.clear();
+        input.mouse_delta = (0.0, 0.0);
+        input.wheel = 0.0;
+    }
+}
+
+/// Whether a mod shows the platform's cursor (`input_capture`): the platform then sends absolute pointer positions
+/// and clicks, as in the menus.
+pub fn cursor_visible() -> bool {
+    with_host(|h| h.capture().2).unwrap_or(false)
 }
 
 /// The resize event: the window's client area / the canvas is now `width` x `height` pixels.

@@ -6,16 +6,17 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use sa_access::View;
-use sa_mod_api::state::{CameraInfo, PedInfo, PlayerInfo, VehicleInfo, Words, WorldInfo, to_bytes};
+use sa_mod_api::state::{CameraInfo, MatrixInfo, PadInfo, PedInfo, PlayerInfo, VehicleInfo, Words, WorldInfo, to_bytes};
 use sa_mod_api::{
     Call, IMPORTS, MAX_FILE, Permission, VIDEO_MODE_MAX, VIDEO_MODE_MIN, Val, event, hook, net, script, status, storage,
     valid_file_name,
 };
 use sa_platform::gpu::OverlayRect;
 use sa_types::script::{Opcode, ScriptArg, ScriptLocals};
-use sa_types::{EntityRef, GameError, GameResult, ModelId, ObjectRef, PedRef, Vec3, VehicleRef, WeaponType};
+use sa_types::{EntityRef, GameError, GameOption, GameResult, ModelId, ObjectRef, PedRef, Vec3, VehicleRef, WeaponType};
 
 use crate::ModSource;
+use crate::approval::Approvals;
 use crate::manifest::{NetRule, Permissions, split_target};
 use crate::net::{LinkState, Net, Sockets};
 use crate::storage::Store;
@@ -190,6 +191,18 @@ pub struct CallCtx {
     pub sockets: Sockets,
     /// The mod's storage area (`None`: no storage).
     pub storage: Option<Store>,
+    /// What the mod takes from the game (`input_capture`): keyboard, mouse, the platform's cursor.
+    pub capture: (bool, bool, bool),
+    /// The game options the mod switched off (turned back on when the host disables it).
+    pub options_off: Vec<GameOption>,
+    /// The value the mod's entry point returned.
+    pub result: i32,
+    /// The mod's id and name.
+    pub mod_id: (String, String),
+    /// `net = ["udp:user-approved"]`: targets the user approves are allowed.
+    pub user_approved: bool,
+    /// The user's answers (the host's).
+    pub approvals: Option<Rc<RefCell<Approvals>>>,
 }
 
 impl CallCtx {
@@ -209,6 +222,7 @@ impl CallCtx {
             Permission::Audio => self.permissions.audio,
             Permission::Net => self.permissions.net,
             Permission::Storage => self.permissions.storage,
+            Permission::Capture => self.permissions.capture,
         }
     }
 
@@ -458,6 +472,51 @@ pub fn dispatch(ctx: &mut CallCtx, mem: &mut dyn Mem, index: usize, args: &[Val]
             let vehicles = game.map(|g| g.vehicles()).unwrap_or_default();
             write_handles(mem, buf_ptr, buf_len, vehicles.into_iter().map(|v| v.0))
         }
+        Call::menu_active {} => game.is_some_and(|g| g.menu_active()) as i32,
+        Call::pad_state { buf_ptr, buf_len } => {
+            let Some(g) = game else { return Ok(status::NOT_FOUND) };
+            write_record(mem, buf_ptr, buf_len, &PadInfo::from(&g.pad().0))
+        }
+        Call::ped_matrix { handle, buf_ptr, buf_len } => {
+            let Some(s) = game.and_then(|g| g.ped_snapshot(PedRef(handle as u32)).ok()) else {
+                return Ok(status::NOT_FOUND);
+            };
+            write_record(mem, buf_ptr, buf_len, &MatrixInfo::from(&s.matrix))
+        }
+        Call::vehicle_matrix { handle, buf_ptr, buf_len } => {
+            let Some(s) = game.and_then(|g| g.vehicle_snapshot(VehicleRef(handle as u32)).ok()) else {
+                return Ok(status::NOT_FOUND);
+            };
+            write_record(mem, buf_ptr, buf_len, &MatrixInfo::from(&s.matrix))
+        }
+        Call::set_game_option { option, on } => {
+            let Some(o) = sa_mod_api::option::from_number(option) else { return Ok(status::BAD_ARG) };
+            drop(game_ref);
+            let Some(g) = game_rc else { return Ok(status::WRONG_PHASE) };
+            g.0.borrow_mut().set_option(o, on != 0);
+            ctx.options_off.retain(|x| *x != o);
+            if on == 0 {
+                ctx.options_off.push(o);
+            }
+            return Ok(status::OK);
+        }
+        Call::input_capture { keyboard, mouse, cursor } => {
+            ctx.capture = (keyboard != 0, mouse != 0, cursor != 0);
+            status::OK
+        }
+        Call::big_message { text_ptr, text_len, time_ms, style } => {
+            let Some(s) = text(mem, text_ptr, text_len) else { return Ok(status::BAD_ARG) };
+            if ctx.in_hook() {
+                return Ok(status::WRONG_PHASE);
+            }
+            if !(0..=6).contains(&style) || time_ms < 0 {
+                return Ok(status::BAD_ARG);
+            }
+            drop(game_ref);
+            let Some(g) = game_rc else { return Ok(status::WRONG_PHASE) };
+            let r = guarded(&mut ctx.logs, "big_message", || g.0.borrow_mut().big_message(&s, time_ms as u32, style as u16));
+            return Ok(r.map_or_else(|s| s, |()| status::OK));
+        }
         Call::key_down { vk } => match u16::try_from(vk) {
             Ok(vk) if vk <= 0xFF => game.is_some_and(|g| g.key_held(vk)) as i32,
             _ => status::BAD_ARG,
@@ -561,7 +620,12 @@ fn services(ctx: &mut CallCtx, mem: &mut dyn Mem, call: Call) -> Option<i32> {
             let Some(target) = text(mem, target_ptr, target_len) else { return Some(status::BAD_ARG) };
             let Some((host, port)) = split_target(&target) else { return Some(status::BAD_ARG) };
             if !ctx.net_rules.iter().any(|r| r.allows(host, port)) {
-                return Some(status::DENIED);
+                let asked = ctx.approvals.as_ref().filter(|_| ctx.user_approved);
+                match asked.map(|a| a.borrow_mut().check(&ctx.mod_id.0, &ctx.mod_id.1, &target)) {
+                    Some(Some(true)) => {}
+                    Some(None) => return Some(status::AGAIN),
+                    Some(Some(false)) | None => return Some(status::DENIED),
+                }
             }
             if !ctx.sockets.has_room() {
                 ctx.log_error(format!("net_open {target}: the mod holds {} sockets already", net::MAX_SOCKETS));
@@ -750,6 +814,14 @@ fn entities_and_scripts(ctx: &mut CallCtx, mem: &mut dyn Mem, call: Call) -> Opt
             }
             let Some(raw) = mem.read(args_ptr as u32, 4 * args_len as u32) else { return Some(status::BAD_ARG) };
             let words: Vec<i32> = raw.as_chunks::<4>().0.iter().map(|w| i32::from_le_bytes(*w)).collect();
+            let mut texts = Vec::new();
+            for (k, &w) in params.chars().zip(&words) {
+                if k == 's' {
+                    let Some(t) = c_string(mem, w, script::MAX_TEXT) else { return Some(status::BAD_ARG) };
+                    texts.push(t);
+                }
+            }
+            let mut texts = texts.iter();
             let Some(g) = game else { return Some(status::WRONG_PHASE) };
             let mut g = g.0.borrow_mut();
             let mut args = Vec::with_capacity(params.len());
@@ -767,6 +839,7 @@ fn entities_and_scripts(ctx: &mut CallCtx, mem: &mut dyn Mem, call: Call) -> Opt
                 }
                 args.push(match k {
                     'f' => ScriptArg::Float(f32::from_bits(w as u32)),
+                    's' => ScriptArg::Text(texts.next().map_or(&[][..], |t| t.as_slice())),
                     'P' if w != 0 => return Some(status::BAD_ARG),
                     'o' => {
                         outputs += 1;
@@ -791,6 +864,20 @@ fn entities_and_scripts(ctx: &mut CallCtx, mem: &mut dyn Mem, call: Call) -> Opt
         }
         _ => return None,
     })
+}
+
+/// The NUL-terminated string of at most `max` bytes at `ptr` in the mod's memory (without the NUL).
+fn c_string(mem: &dyn Mem, ptr: i32, max: usize) -> Option<Vec<u8>> {
+    let ptr = u32::try_from(ptr).ok()?;
+    let mut out = Vec::new();
+    for i in 0..=max as u32 {
+        let b = mem.read(ptr.checked_add(i)?, 1)?[0];
+        if b == 0 {
+            return Some(out);
+        }
+        out.push(b);
+    }
+    None
 }
 
 /// The entity a hook value names, if it names one.
@@ -822,6 +909,8 @@ fn is_change(call: &Call) -> bool {
             | Call::set_vehicle_colours { .. }
             | Call::play_frontend_sound { .. }
             | Call::play_sound { .. }
+            | Call::set_ped_model { .. }
+            | Call::set_hud_visible { .. }
     )
 }
 
@@ -886,6 +975,11 @@ pub fn apply(g: &mut GameAccess, call: Call, logs: &mut Vec<(i32, String)>) -> i
             guarded(logs, "play_frontend_sound", || g.frontend_sound(e, speed))
         }
         Call::play_sound { sound, x, y, z } => guarded(logs, "play_sound", || g.one_off_sound(Vec3::new(x, y, z), sound)),
+        Call::set_ped_model { handle, model } => guarded(logs, "set_ped_model", || g.set_ped_model(ped(handle), ModelId(model))),
+        Call::set_hud_visible { on } => {
+            g.set_hud_visible(on != 0);
+            Ok(())
+        }
         _ => return status::BAD_ARG,
     };
     r.map_or_else(|s| s, |()| status::OK)

@@ -271,9 +271,17 @@ pub fn storage(root: Option<&str>) -> Result<Rc<dyn StorageProvider>, String> {
     Ok(Rc::new(DirStorages(root)))
 }
 
-/// The mods of `--mods DIR`: DIR itself when it holds a `mod.toml`, else every sub-folder that holds one, in name
-/// order (the load order).
+/// The mods of `--mods DIR[,DIR...]`, in that order (the load order): each DIR itself when it holds a `mod.toml`,
+/// else every sub-folder of it that holds one, in name order.
 pub fn sources(spec: &str) -> Result<Vec<Box<dyn ModSource>>, String> {
+    let mut all = Vec::new();
+    for dir in spec.split(',').filter(|d| !d.is_empty()) {
+        all.extend(folder_sources(dir)?);
+    }
+    Ok(all)
+}
+
+fn folder_sources(spec: &str) -> Result<Vec<Box<dyn ModSource>>, String> {
     let dir = PathBuf::from(spec);
     if dir.join("mod.toml").is_file() {
         return Ok(vec![Box::new(DirSource(dir))]);

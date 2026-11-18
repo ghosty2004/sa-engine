@@ -28,6 +28,7 @@
 
 pub mod addr;
 mod audio;
+mod control;
 mod entities;
 #[cfg(any(test, feature = "fake"))]
 pub mod fake;
@@ -43,6 +44,8 @@ pub struct Game<V: View> {
     /// The memory.
     pub view: V,
     pub(crate) threads: script::Threads,
+    /// The text of the big message on screen (`CMessages` keeps a pointer to it).
+    pub(crate) big_message: Box<[u8; control::BIG_MESSAGE_MAX + 1]>,
 }
 
 /// The game in this process (sa-game's engine).
@@ -58,7 +61,7 @@ impl<V: View> Game<V> {
 
     /// The game over `view`, its script commands run through `exec` (tests).
     pub fn with_executor(view: V, exec: script::CommandExecutor) -> Self {
-        Self { view, threads: script::Threads::new(exec) }
+        Self { view, threads: script::Threads::new(exec), big_message: Box::new([0; control::BIG_MESSAGE_MAX + 1]) }
     }
 
     /// The same game through a boxed view (one type for every view, e.g. the engine's and a test's).
@@ -66,7 +69,7 @@ impl<V: View> Game<V> {
     where
         V: 'static,
     {
-        Game { view: Box::new(self.view), threads: self.threads }
+        Game { view: Box::new(self.view), threads: self.threads, big_message: self.big_message }
     }
 
     /// The address of the live entity `e`, or `InvalidHandle`.

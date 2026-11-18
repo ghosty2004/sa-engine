@@ -1,4 +1,4 @@
-# Mod API reference (API 1.4)
+# Mod API reference (API 1.5)
 
 The interface is defined once, in `crates/sa-mod-api/src/lib.rs` (`for_each_import!`, `for_each_export!`); this page
 explains it. The Rust SDK (`crates/sa-mod`) wraps every function; other languages import the functions from module
@@ -7,7 +7,7 @@ status (`-1` DENIED: the manifest does not grant it, `-2` BAD_ARG, `-3` NOT_FOUN
 inside a hook, `-5` FAILED: the game could not do it, the log says why, `-6` AGAIN: nothing now, try again later,
 1.4).
 
-A mod built for an older minor version (`api_version = "1.0"` ... `"1.3"`), or rebuilt with a newer SDK while
+A mod built for an older minor version (`api_version = "1.0"` ... `"1.4"`), or rebuilt with a newer SDK while
 its manifest keeps the older version, runs unchanged: entry points added later are
 optional and the host skips them.
 
@@ -18,7 +18,7 @@ optional and the host skips them.
 | `render` | `true` / `false` | overlay drawing, display modes, the video mode |
 | `files` | `"none"` / `"own"` | the mod's own files (1.1) |
 | `state` | `"none"` / `"read"` / `"write"` | game state queries, game events except frames and keys (1.2); `"write"`: also changes of the state (1.3) |
-| `input` | `"none"` / `"read"` | `key_down`, key events (1.2) |
+| `input` | `"none"` / `"read"` / `"capture"` | `key_down`, key events (1.2), `pad_state` (1.5); `"capture"`: also the input events before the game and `input_capture` (1.5) |
 | `hooks` | a list of function names | before / after hooks on these functions (1.2); with `state = "write"`, decisions on the controllable ones (1.3) |
 | `entities` | `true` / `false` | create and delete peds, vehicles, objects (1.3) |
 | `scripts` | `true` / `false` | the allowed script commands (1.3) |
@@ -26,8 +26,7 @@ optional and the host skips them.
 | `net` | a list of `"udp:HOST:PORT"` rules, `*` for any host or port | UDP sockets to the targets a rule allows (1.4) |
 | `storage` | `true` / `false` | the mod's persistent key / value storage (1.4) |
 
-`input = "capture"` and `ui` belong to later levels: 1.4 does not grant them (with a warning in the log). A function
-without its permission returns DENIED; the mod keeps running.
+`ui` belongs to a later level. A function without its permission returns DENIED; the mod keeps running.
 
 ## Entry points (exports)
 
@@ -40,6 +39,7 @@ without its permission returns DENIED; the mod keeps running.
 | `sa_resize(w, h) -> i32` | `Mod::resize` | 1.1 | the window / canvas changed size |
 | `sa_event(kind, a, b) -> i32` | `Mod::event` | 1.2 | a subscribed game event |
 | `sa_hook(hook, phase) -> i32` | `Mod::hook` | 1.2 | a hooked game function runs |
+| `sa_input(kind, a, b) -> i32` | `Mod::input` | 1.5 | a platform input event, before the game (`input = "capture"`); 1 consumes it |
 
 ## Level 1: overlay, display, files (1.0, 1.1)
 
@@ -257,3 +257,55 @@ folder (natively writable, in the browser kept for the session).
 ### Determinism
 
 Sockets and storage do not touch the game: with no mod loaded (or mods that do not ask for them) nothing changes.
+
+## Level 5: the player's view, input capture, game options (1.5)
+
+What a multiplayer client needs to drive the local player and show its own UI, expressed in the game's terms.
+
+### Reads
+
+| function | permission | SDK | what |
+|---|---|---|---|
+| `menu_active()` | `state` | `state::menu_active()` | 1 while the pause menu is up |
+| `pad_state(buf, len)` | `input` | `state::pad()` | the local player's controller state this frame (`PadInfo`: sticks -128..=128, buttons 0 / 255, the walk key) |
+| `ped_matrix(h, buf, len)` | `state` | `state::ped_matrix(p)` | a ped's transform (`MatrixInfo`: right, forward, up, position) |
+| `vehicle_matrix(h, buf, len)` | `state` | `state::vehicle_matrix(v)` | a vehicle's transform |
+
+### Changes (`state = "write"`)
+
+| function | SDK (`sa_mod::game`) | what |
+|---|---|---|
+| `set_ped_model(h, model)` | `set_ped_model` | the player ped `h` gets ped model `model` (loaded first; `SET_PLAYER_MODEL`); FAILED for another ped or a model that is not a ped's |
+| `set_hud_visible(on)` | `set_hud_visible` | the HUD and the radar on or off (the menu's HUD flag and the radar flag) |
+| `set_game_option(option, on)` | `set_option` | one of the game's own features ([`GameOption`], numbered in declaration order): typed cheats, the clock, ambient peds, random traffic, car generators, ambient planes, cutscenes, the replay buffer, plants, the sun and moon, the idle camera, help boxes, zone names. The ports skip exactly the original call that feature names; the host turns every option a mod switched off back on when it disables the mod |
+| `big_message(ptr, len, time_ms, style)` | `big_message` | the game's big message (`CMessages::AddBigMessage`, styles 0..=6); not inside a hook |
+
+`set_ped_model` and `set_hud_visible` are changes like those of level 3 (queued inside a hook). Options switch at once.
+
+### Script commands
+
+Text arguments (`s`): the argument word is the address of a NUL-terminated string in the mod's memory (at most 63
+bytes); the SDK's `script::Arg::Text(&[u8])` does that. 1.5 adds the commands a client needs for the player, tasks,
+animations, streaming and the world: `CLEAR_PRINTS`, `ADD_HOSPITAL_RESTART`, `SET_CURRENT_CHAR_WEAPON`,
+`SWITCH_ROADS_OFF`, `REQUEST_MODEL`, `WARP_CHAR_FROM_CAR_TO_COORD`, `WARP_CHAR_INTO_CAR`, `LOAD_ALL_MODELS_NOW`,
+`WARP_CHAR_INTO_CAR_AS_PASSENGER`, `SET_CHAR_SUFFERS_CRITICAL_HITS`, `REMOVE_ALL_CHAR_WEAPONS`,
+`FREEZE_CHAR_POSITION`, `REQUEST_COLLISION`, `REQUEST_ANIMATION`, `HAS_ANIMATION_LOADED`, `SET_PLAYER_DRUNKENNESS`,
+`TASK_HANDS_UP`, `TASK_ENTER_CAR_AS_PASSENGER`, `TASK_LEAVE_CAR`, `SWITCH_RANDOM_TRAINS`,
+`TASK_PLAY_ANIM_NON_INTERRUPTABLE`, `SET_CHAR_AREA_VISIBLE`, `SET_CHAR_DROPS_WEAPONS_WHEN_DEAD`, `DISPLAY_ZONE_NAMES`
+(the list with signatures: `sa_mod_api::script::COMMANDS`).
+
+### Input capture (`input = "capture"`)
+
+Every platform input event reaches the capturing mods first, in load order, as `sa_input(kind, a, b)`
+(`sa_mod_api::input`; SDK `Mod::input(Input)`): key down (Windows virtual-key code, auto-repeat) and up, a typed
+character (Unicode), mouse movement (pixels), a mouse button, the wheel (1/120 notches), focus. A mod that returns 1
+consumes the event: the game and later mods do not see it. `input_capture(keyboard, mouse, cursor)` (SDK
+`input::capture`) takes the keyboard (the game sees no key and no held key: typing does not move the player) and the
+mouse from the game until the mod says otherwise, and shows the platform's cursor (natively the window's; in the
+browser the page releases the pointer lock and sends absolute positions and clicks, as in the menus). The host
+releases what a disabled mod held.
+
+### Determinism
+
+Nothing of level 5 runs without a mod that asks for it; the option switches are all on by default (the original),
+so the default build, the mods build without mods and verify-all are unchanged.

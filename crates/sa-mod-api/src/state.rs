@@ -6,7 +6,8 @@
 use sa_types::camera::CameraState;
 use sa_types::ped::PedSnapshot;
 use sa_types::vehicle::VehicleSnapshot;
-use sa_types::{AreaCode, GameState, ModelId, PedRef, TimeStep, Vec3, VehicleRef, WeaponType};
+use sa_types::input::PadState;
+use sa_types::{AreaCode, GameState, Matrix, ModelId, PedRef, TimeStep, Vec3, VehicleRef, WeaponType};
 
 /// A value that travels as a fixed number of 32-bit words.
 pub trait Words: Sized {
@@ -43,6 +44,7 @@ scalar_words! {
     f32: |v| v.to_bits(), |w| f32::from_bits(w);
     u8: |v| u32::from(v), |w| w as u8;
     u16: |v| u32::from(v), |w| w as u16;
+    i16: |v| v as i32 as u32, |w| w as i32 as i16;
     bool: |v| u32::from(v), |w| w != 0;
     PedRef: |v| v.0, |w| PedRef(w);
     VehicleRef: |v| v.0, |w| VehicleRef(w);
@@ -239,6 +241,130 @@ impl From<&VehicleSnapshot> for VehicleInfo {
             colour2: s.colours[1],
             siren: s.siren,
             area: s.area,
+        }
+    }
+}
+
+record! {
+    /// A transform (`ped_matrix`, `vehicle_matrix`, 1.5): the entity's axes and position.
+    pub struct MatrixInfo {
+        /// Right axis.
+        pub right: Vec3,
+        /// Forward axis.
+        pub forward: Vec3,
+        /// Up axis.
+        pub up: Vec3,
+        /// Position.
+        pub pos: Vec3,
+    }
+}
+
+record! {
+    /// The local player's pad (`pad_state`, 1.5): the game's controller state this frame, raw values (sticks
+    /// -128..=128, buttons 0 or 255).
+    pub struct PadInfo {
+        /// Left stick x.
+        pub left_x: i16,
+        /// Left stick y.
+        pub left_y: i16,
+        /// Right stick x.
+        pub right_x: i16,
+        /// Right stick y.
+        pub right_y: i16,
+        /// L1.
+        pub left_shoulder1: i16,
+        /// L2.
+        pub left_shoulder2: i16,
+        /// R1.
+        pub right_shoulder1: i16,
+        /// R2.
+        pub right_shoulder2: i16,
+        /// D-pad up.
+        pub dpad_up: i16,
+        /// D-pad down.
+        pub dpad_down: i16,
+        /// D-pad left.
+        pub dpad_left: i16,
+        /// D-pad right.
+        pub dpad_right: i16,
+        /// Start.
+        pub start: i16,
+        /// Select.
+        pub select: i16,
+        /// Square.
+        pub square: i16,
+        /// Triangle.
+        pub triangle: i16,
+        /// Cross.
+        pub cross: i16,
+        /// Circle.
+        pub circle: i16,
+        /// Left stick pressed.
+        pub shock_left: i16,
+        /// Right stick pressed.
+        pub shock_right: i16,
+        /// The chat indicator.
+        pub chat_indicated: i16,
+        /// The walk key.
+        pub ped_walk: i16,
+    }
+}
+
+impl From<&Matrix> for MatrixInfo {
+    fn from(m: &Matrix) -> MatrixInfo {
+        MatrixInfo { right: m.right, forward: m.forward, up: m.up, pos: m.pos }
+    }
+}
+
+impl From<MatrixInfo> for Matrix {
+    fn from(m: MatrixInfo) -> Matrix {
+        Matrix { right: m.right, forward: m.forward, up: m.up, pos: m.pos }
+    }
+}
+
+impl From<&PadState> for PadInfo {
+    fn from(p: &PadState) -> PadInfo {
+        PadInfo {
+            left_x: p.left_x,
+            left_y: p.left_y,
+            right_x: p.right_x,
+            right_y: p.right_y,
+            left_shoulder1: p.shoulders[0],
+            left_shoulder2: p.shoulders[1],
+            right_shoulder1: p.shoulders[2],
+            right_shoulder2: p.shoulders[3],
+            dpad_up: p.dpad[0],
+            dpad_down: p.dpad[1],
+            dpad_left: p.dpad[2],
+            dpad_right: p.dpad[3],
+            start: p.start_select[0],
+            select: p.start_select[1],
+            square: p.face[0],
+            triangle: p.face[1],
+            cross: p.face[2],
+            circle: p.face[3],
+            shock_left: p.shock[0],
+            shock_right: p.shock[1],
+            chat_indicated: p.chat_indicated,
+            ped_walk: p.ped_walk,
+        }
+    }
+}
+
+impl From<PadInfo> for PadState {
+    fn from(p: PadInfo) -> PadState {
+        PadState {
+            left_x: p.left_x,
+            left_y: p.left_y,
+            right_x: p.right_x,
+            right_y: p.right_y,
+            shoulders: [p.left_shoulder1, p.left_shoulder2, p.right_shoulder1, p.right_shoulder2],
+            dpad: [p.dpad_up, p.dpad_down, p.dpad_left, p.dpad_right],
+            start_select: [p.start, p.select],
+            face: [p.square, p.triangle, p.cross, p.circle],
+            shock: [p.shock_left, p.shock_right],
+            chat_indicated: p.chat_indicated,
+            ped_walk: p.ped_walk,
         }
     }
 }

@@ -34,7 +34,7 @@ pub const EXPORT_MEMORY: &str = "memory";
 /// The API's major version.
 pub const API_MAJOR: u16 = 1;
 /// The API's minor version.
-pub const API_MINOR: u16 = 4;
+pub const API_MINOR: u16 = 5;
 
 /// `major << 16 | minor`, the value of the `sa_api_version` export.
 pub const fn pack_version(major: u16, minor: u16) -> i32 {
@@ -143,6 +143,9 @@ pub enum Permission {
     Net,
     /// `storage = true`: the mod's persistent key / value storage (API 1.4).
     Storage,
+    /// `input = "capture"`: the platform's input events before the game sees them, and taking the keyboard and
+    /// the mouse from the game (API 1.5).
+    Capture,
 }
 
 /// Game events (API 1.2): what a mod receives in `sa_event(kind, a, b)` after subscribing with
@@ -340,14 +343,18 @@ pub mod hook {
 pub mod script {
     /// The most arguments of one command.
     pub const MAX_ARGS: usize = 16;
+    /// The longest text argument, in bytes (without its NUL).
+    pub const MAX_TEXT: usize = 63;
 
     /// The commands a mod may run, with their parameters, one letter each: `i` an integer, `f` a float, `p` a ped
-    /// handle, `v` a vehicle handle, `P` a player (0, the local player), `o` an output. Gameplay commands whose
-    /// handlers the engine has ported and that act on the player, the world, the camera, the HUD or an entity named
+    /// handle, `v` a vehicle handle, `P` a player (0, the local player), `o` an output, `s` a text (1.5: the word is
+    /// the address in the mod's memory of a NUL-terminated string of at most [`MAX_TEXT`] bytes). Gameplay commands
+    /// whose handlers the engine has ported and that act on the player, the world, the camera, the HUD or an entity named
     /// by its handle; the host checks every handle before the command runs (the game's handlers trust them).
     /// Entity creation and deletion are not here: they are `create_*` / `destroy_*`, which keep track of what a mod
     /// owns.
     pub const COMMANDS: &[(u16, &str, &str)] = &[
+        (0x00BE, "CLEAR_PRINTS", ""),
         (0x00C0, "SET_TIME_OF_DAY", "ii"),
         (0x00DF, "IS_CHAR_IN_ANY_CAR", "p"),
         (0x00EC, "LOCATE_CHAR_ANY_MEANS_2D", "pffffi"),
@@ -357,29 +364,52 @@ pub mod script {
         (0x0119, "IS_CAR_DEAD", "v"),
         (0x015F, "SET_FIXED_CAMERA_POSITION", "ffffff"),
         (0x0160, "POINT_CAMERA_AT_POINT", "fffi"),
+        (0x016C, "ADD_HOSPITAL_RESTART", "ffffi"),
         (0x01B4, "SET_PLAYER_CONTROL", "Pi"),
         (0x01B6, "FORCE_WEATHER_NOW", "i"),
         (0x01B7, "RELEASE_WEATHER", ""),
+        (0x01B9, "SET_CURRENT_CHAR_WEAPON", "pi"),
+        (0x01E8, "SWITCH_ROADS_OFF", "ffffff"),
         (0x01EB, "SET_CAR_DENSITY_MULTIPLIER", "f"),
         (0x01F0, "SET_MAX_WANTED_LEVEL", "i"),
         (0x020A, "LOCK_CAR_DOORS", "vi"),
         (0x0223, "SET_CHAR_HEALTH", "pi"),
         (0x0224, "SET_CAR_HEALTH", "vi"),
         (0x0229, "CHANGE_CAR_COLOUR", "vii"),
+        (0x0247, "REQUEST_MODEL", "i"),
         (0x02A3, "SWITCH_WIDESCREEN", "i"),
         (0x02AB, "SET_CHAR_PROOFS", "piiiii"),
         (0x02AC, "SET_CAR_PROOFS", "viiiii"),
         (0x02EB, "RESTORE_CAMERA_JUMPCUT", ""),
         (0x0330, "SET_PLAYER_NEVER_GETS_TIRED", "Pi"),
+        (0x0362, "WARP_CHAR_FROM_CAR_TO_COORD", "pfff"),
+        (0x036A, "WARP_CHAR_INTO_CAR", "pv"),
         (0x0373, "SET_CAMERA_BEHIND_PLAYER", ""),
+        (0x038B, "LOAD_ALL_MODELS_NOW", ""),
         (0x0397, "SWITCH_CAR_SIREN", "vi"),
         (0x03C0, "STORE_CAR_CHAR_IS_IN_NO_SAVE", "po"),
         (0x03DE, "SET_PED_DENSITY_MULTIPLIER", "f"),
+        (0x0430, "WARP_CHAR_INTO_CAR_AS_PASSENGER", "pvi"),
+        (0x0446, "SET_CHAR_SUFFERS_CRITICAL_HITS", "pi"),
+        (0x048F, "REMOVE_ALL_CHAR_WEAPONS", "p"),
         (0x04BB, "SET_AREA_VISIBLE", "i"),
+        (0x04D7, "FREEZE_CHAR_POSITION", "pi"),
+        (0x04E4, "REQUEST_COLLISION", "ff"),
+        (0x04ED, "REQUEST_ANIMATION", "s"),
+        (0x04EE, "HAS_ANIMATION_LOADED", "s"),
+        (0x052C, "SET_PLAYER_DRUNKENNESS", "Pi"),
         (0x0581, "DISPLAY_RADAR", "i"),
+        (0x05C4, "TASK_HANDS_UP", "pi"),
+        (0x05CA, "TASK_ENTER_CAR_AS_PASSENGER", "pvii"),
         (0x05CB, "TASK_ENTER_CAR_AS_DRIVER", "pvi"),
+        (0x05CD, "TASK_LEAVE_CAR", "pv"),
         (0x0687, "CLEAR_CHAR_TASKS", "p"),
+        (0x06D7, "SWITCH_RANDOM_TRAINS", "i"),
+        (0x0812, "TASK_PLAY_ANIM_NON_INTERRUPTABLE", "pssfiiiii"),
         (0x0826, "DISPLAY_HUD", "i"),
+        (0x0860, "SET_CHAR_AREA_VISIBLE", "pi"),
+        (0x087E, "SET_CHAR_DROPS_WEAPONS_WHEN_DEAD", "pi"),
+        (0x09BA, "DISPLAY_ZONE_NAMES", "i"),
     ];
 
     /// The parameters of `opcode` ([`COMMANDS`]), if a mod may run it.
@@ -631,6 +661,30 @@ macro_rules! for_each_import {
             /// (1.4) Writes the mod's keys, sorted, each followed by `\n`, into the buffer (as many bytes as
             /// fit) and returns the length of the whole list.
             [Storage] fn storage_list(buf_ptr: i32, buf_len: i32) -> i32;
+            /// (1.5) 1 while the pause menu is up, else 0.
+            [State] fn menu_active() -> i32;
+            /// (1.5) Writes the local player's pad ([`state::PadInfo`]: the game's controller state, sticks and
+            /// buttons as the game reads them this frame) to the buffer, as `player_info`.
+            [Input] fn pad_state(buf_ptr: i32, buf_len: i32) -> i32;
+            /// (1.5) Writes ped `handle`'s transform ([`state::MatrixInfo`]) to the buffer, as `ped_info`.
+            [State] fn ped_matrix(handle: i32, buf_ptr: i32, buf_len: i32) -> i32;
+            /// (1.5) Writes vehicle `handle`'s transform ([`state::MatrixInfo`]) to the buffer, as `vehicle_info`.
+            [State] fn vehicle_matrix(handle: i32, buf_ptr: i32, buf_len: i32) -> i32;
+            /// (1.5) Gives the player ped `handle` the ped model `model` (loaded first). `FAILED` for a ped that is no
+            /// player's or a model that is not a ped's.
+            [Write] fn set_ped_model(handle: i32, model: i32) -> i32;
+            /// (1.5) Shows (1) or hides (0) the HUD and the radar.
+            [Write] fn set_hud_visible(on: i32) -> i32;
+            /// (1.5) Switches one of the game's own features ([`option`]) on (1) or off (0). The host turns every
+            /// option back on when it disables the mod.
+            [Write] fn set_game_option(option: i32, on: i32) -> i32;
+            /// (1.5) Shows `text` (UTF-8, `text_len` bytes; the game's font draws Latin-1, anything else as `?`) as the
+            /// game's big message in style `style` (0..=6) for `time_ms`.
+            [Write] fn big_message(text_ptr: i32, text_len: i32, time_ms: i32, style: i32) -> i32;
+            /// (1.5) What the mod takes from the game until it says otherwise: `keyboard` (the game sees no keys
+            /// and no held key), `mouse` (no mouse movement or buttons) and `cursor` (the platform shows its
+            /// pointer: natively the window's, in the browser the page releases the pointer lock). Returns 0.
+            [Capture] fn input_capture(keyboard: i32, mouse: i32, cursor: i32) -> i32;
         }
     };
 }
@@ -667,6 +721,10 @@ macro_rules! for_each_export {
             /// Called in the middle of the game's frame: the state functions read the state as it is at that
             /// moment. Returns 0.
             [Optional] fn sa_hook(hook: i32, phase: i32) -> i32;
+            /// (1.5) A platform input event ([`input`]: its kind and values), before the game sees it, for mods
+            /// with `input = "capture"`, in load order. Returns 1 to consume it (the game and later mods do not
+            /// see it), else 0.
+            [Optional] fn sa_input(kind: i32, a: i32, b: i32) -> i32;
         }
     };
 }
@@ -783,6 +841,43 @@ pub const EXPORT_RESIZE: &str = "sa_resize";
 pub const EXPORT_EVENT: &str = "sa_event";
 /// The name of the `sa_hook` export (1.2).
 pub const EXPORT_HOOK: &str = "sa_hook";
+/// The name of the `sa_input` export (1.5).
+pub const EXPORT_INPUT: &str = "sa_input";
+
+/// The game's own features a mod may switch off (`set_game_option`, API 1.5): the numbers are
+/// [`sa_types::GameOption::ALL`]'s order.
+pub mod option {
+    use sa_types::GameOption;
+
+    /// The option numbered `n`.
+    pub fn from_number(n: i32) -> Option<GameOption> {
+        usize::try_from(n).ok().and_then(|i| GameOption::ALL.get(i).copied())
+    }
+
+    /// The number of `o`.
+    pub fn number(o: GameOption) -> i32 {
+        GameOption::ALL.iter().position(|x| *x == o).map_or(-1, |i| i as i32)
+    }
+}
+
+/// Platform input events (`sa_input`, API 1.5). Keys are Windows virtual-key codes on every platform, positions
+/// pixels of the game's drawable from the top left.
+pub mod input {
+    /// A key went down: `a` the key, `b` 1 for an auto-repeat.
+    pub const KEY_DOWN: i32 = 0;
+    /// A key went up: `a` the key.
+    pub const KEY_UP: i32 = 1;
+    /// A character was typed: `a` its Unicode scalar value.
+    pub const CHAR: i32 = 2;
+    /// The mouse moved: `a`, `b` its position.
+    pub const MOUSE_MOVE: i32 = 3;
+    /// A mouse button: `a` the button (0 left, 1 right, 2 middle), `b` 1 down, 0 up.
+    pub const MOUSE_BUTTON: i32 = 4;
+    /// The wheel turned: `a` the distance in 1/120 notches, positive away from the user.
+    pub const WHEEL: i32 = 5;
+    /// The window gained (`a` 1) or lost (0) the focus.
+    pub const FOCUS: i32 = 6;
+}
 
 /// `request_video_mode`'s accepted sizes (inclusive).
 pub const VIDEO_MODE_MIN: (i32, i32) = (320, 240);
@@ -885,7 +980,7 @@ mod tests {
         assert_eq!(script::params(0x00A5), None);
         let ops: Vec<u16> = script::COMMANDS.iter().map(|c| c.0).collect();
         assert!(ops.windows(2).all(|w| w[0] < w[1]), "sorted, no duplicates");
-        assert!(script::COMMANDS.iter().all(|c| c.2.len() <= script::MAX_ARGS && c.2.chars().all(|k| "ifpvPo".contains(k))));
+        assert!(script::COMMANDS.iter().all(|c| c.2.len() <= script::MAX_ARGS && c.2.chars().all(|k| "ifpvPos".contains(k))));
     }
 
     #[test]

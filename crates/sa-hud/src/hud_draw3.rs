@@ -423,9 +423,9 @@ pub fn draw_player_info() {
         font_set_drop_color(rgba(0, 0, 0, 0xFF));
         let minutes = i32::from(b(CLOCK_MINUTES));
         let hours = i32::from(b(CLOCK_HOURS));
-        // samp's clock-off patch zeroes the format: the clock prints as an empty string.
+        // With the clock off the format is empty: the clock prints as an empty string.
         let mut no_fmt = [0u8; 12];
-        let fmt = if sa_core::samp::toggled(sa_core::samp::toggle::NO_GAME_CLOCK) {
+        let fmt = if !sa_core::options::enabled(sa_core::options::Feature::Clock) {
             local(&mut no_fmt)
         } else {
             g(STR_CLOCK_FMT)

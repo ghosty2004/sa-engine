@@ -56,7 +56,12 @@ pub struct Permissions {
     pub net: bool,
     /// `storage = true`: the mod's persistent key / value storage.
     pub storage: bool,
+    /// `input = "capture"`: input events before the game, keyboard and mouse taken from the game (with `input`).
+    pub capture: bool,
 }
+
+/// The `net` rule for the servers the user approves ([`crate::approval`]).
+pub const USER_APPROVED: &str = "udp:user-approved";
 
 /// One rule of `net = [...]`: `udp:HOST:PORT`, `*` for any host or any port.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -147,6 +152,8 @@ pub struct Manifest {
     pub hooks: Vec<String>,
     /// The targets it may open sockets to (`net = [...]`).
     pub net: Vec<NetRule>,
+    /// `net = ["udp:user-approved"]`: also any target the user approves for it ([`crate::approval`]).
+    pub net_user_approved: bool,
     /// Its budgets.
     pub limits: Limits,
 }
@@ -199,6 +206,10 @@ pub fn parse(text: &str) -> Result<(Manifest, Vec<String>), String> {
     let mut permissions = Permissions::default();
     let mut hooks = Vec::new();
     let mut net = Vec::new();
+    let mut net_user_approved = false;
+    if id == crate::approval::AREA {
+        return Err(format!("mod.toml: [mod] id {id:?} is the host's"));
+    }
     if let Some(p) = root.get("permissions") {
         let Value::Table(p) = p else { return Err("mod.toml: [permissions] is not a table".into()) };
         for (k, v) in p {
@@ -225,7 +236,7 @@ pub fn parse(text: &str) -> Result<(Manifest, Vec<String>), String> {
                         }
                         ("input", "capture") => {
                             *granted = true;
-                            warnings.push(format!("permission {k} = {level:?}: only \"read\" is available in API 1.4"));
+                            permissions.capture = true;
                         }
                         _ => {
                             return Err(format!(
@@ -255,13 +266,17 @@ pub fn parse(text: &str) -> Result<(Manifest, Vec<String>), String> {
                         let Value::String(r) = r else {
                             return Err(format!("mod.toml: permissions.net: expected \"udp:HOST:PORT\", got {r:?}"));
                         };
+                        if r == USER_APPROVED {
+                            net_user_approved = true;
+                            continue;
+                        }
                         let rule = NetRule::parse(r).map_err(|e| format!("mod.toml: {e}"))?;
                         if rule.host.is_none() {
                             warnings.push(format!("permission net {r:?}: any host"));
                         }
                         net.push(rule);
                     }
-                    permissions.net = !net.is_empty();
+                    permissions.net = !net.is_empty() || net_user_approved;
                 }
                 "entities" | "scripts" | "audio" | "storage" => match v {
                     Value::Boolean(b) => match k.as_str() {
@@ -317,6 +332,7 @@ pub fn parse(text: &str) -> Result<(Manifest, Vec<String>), String> {
             permissions,
             hooks,
             net,
+            net_user_approved,
             limits,
         },
         warnings,
@@ -349,9 +365,9 @@ mod tests {
              [permissions]\nstate = \"read\"\ninput = \"capture\"\nhooks = [\"CPed::Render\"]\n",
         )
         .unwrap();
-        assert!(m.permissions.state && m.permissions.input && m.permissions.hooks);
+        assert!(m.permissions.state && m.permissions.input && m.permissions.capture && m.permissions.hooks);
         assert_eq!(m.hooks, ["CPed::Render"]);
-        assert_eq!(w.len(), 1, "{w:?}");
+        assert!(w.is_empty(), "{w:?}");
         let (m, _) = parse("[mod]\nid = \"t\"\napi_version = \"1.2\"\n[permissions]\nstate = \"none\"\nhooks = []\n").unwrap();
         assert_eq!(m.permissions, Permissions::default());
         assert!(parse("[mod]\nid = \"t\"\napi_version = \"1.2\"\n[permissions]\nstate = true\n").is_err());

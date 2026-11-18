@@ -19,6 +19,7 @@
 //! ([`api::HookRegistry`]) and hands back what the hooks decided ([`api::HookDecision`]).
 
 pub mod api;
+pub mod approval;
 mod backend;
 pub mod engine;
 pub mod events;
@@ -30,7 +31,7 @@ pub mod storage;
 use std::rc::Rc;
 
 use sa_mod_api::{
-    API_MAJOR, API_MINOR, EXPORT_API_VERSION, EXPORT_EVENT, EXPORT_HOOK, EXPORT_INIT, EXPORT_OVERLAY, EXPORT_RESIZE,
+    API_MAJOR, API_MINOR, EXPORT_API_VERSION, EXPORT_EVENT, EXPORT_HOOK, EXPORT_INIT, EXPORT_INPUT, EXPORT_OVERLAY, EXPORT_RESIZE,
     EXPORT_SETTINGS, Val, event, hook, level, unpack_version,
 };
 use sa_platform::gpu::OverlayRect;
@@ -86,6 +87,10 @@ pub struct LoadedMod {
     pub owned: Vec<EntityRef>,
     /// Changes it asked for inside hooks, for the next frame boundary.
     deferred: Vec<sa_mod_api::Call>,
+    /// What it takes from the game (`input_capture`): keyboard, mouse, the platform's cursor.
+    pub capture: (bool, bool, bool),
+    /// The game options it switched off.
+    options_off: Vec<sa_types::GameOption>,
 }
 
 /// What a mod's calls may reach besides the game.
@@ -131,6 +136,8 @@ pub struct Host {
     network: Option<Net>,
     /// Where the mods' storage areas are.
     storages: Option<Rc<dyn StorageProvider>>,
+    /// The servers the user approved, and the question on screen.
+    approvals: Rc<std::cell::RefCell<approval::Approvals>>,
 }
 
 impl Host {
@@ -156,6 +163,7 @@ impl Host {
             epoch: web_time::Instant::now(),
             network: None,
             storages: None,
+            approvals: Rc::default(),
         }
     }
 
@@ -166,6 +174,10 @@ impl Host {
 
     /// Where the mods' storage areas are (`platform_storage`); without it a mod asking for storage is not loaded.
     pub fn set_storage(&mut self, storages: Rc<dyn StorageProvider>) {
+        match storages.open(approval::AREA) {
+            Ok(s) => *self.approvals.borrow_mut() = approval::Approvals::new(Some(s)),
+            Err(e) => (self.log)(&format!("mods: approved servers are kept for this session only: {e}")),
+        }
         self.storages = Some(storages);
     }
 
@@ -296,6 +308,8 @@ impl Host {
             hook_calls_frame: 0,
             owned: std::mem::take(&mut ctx.owned),
             deferred: std::mem::take(&mut ctx.deferred),
+            capture: ctx.capture,
+            options_off: std::mem::take(&mut ctx.options_off),
         });
         let i = self.mods.len() - 1;
         self.take_subscriptions(i, &mut ctx);
@@ -316,6 +330,9 @@ impl Host {
             network: if manifest.permissions.net { self.network.clone() } else { None },
             net_rules: env.net_rules.clone(),
             storage: env.storage.clone(),
+            mod_id: (manifest.id.clone(), manifest.name.clone()),
+            user_approved: manifest.net_user_approved,
+            approvals: Some(self.approvals.clone()),
             ..Default::default()
         }
     }
@@ -343,6 +360,13 @@ impl Host {
         self.mods[i].disabled = Some(why.clone());
         self.mods[i].deferred.clear();
         self.mods[i].sockets = Sockets::default();
+        self.mods[i].capture = (false, false, false);
+        let off = std::mem::take(&mut self.mods[i].options_off);
+        if let Some(g) = &self.game {
+            for o in off {
+                g.0.borrow_mut().set_option(o, true);
+            }
+        }
         let owned = std::mem::take(&mut self.mods[i].owned);
         let n = owned.len();
         self.orphans.extend(owned);
@@ -381,11 +405,15 @@ impl Host {
         let m = &mut self.mods[i];
         ctx.owned = std::mem::take(&mut m.owned);
         ctx.sockets = std::mem::take(&mut m.sockets);
+        ctx.capture = m.capture;
+        ctx.options_off = std::mem::take(&mut m.options_off);
         let t = web_time::Instant::now();
         let r = m.instance.call(export, args, m.manifest.limits.fuel, &mut ctx);
         m.micros += t.elapsed().as_micros() as u64;
         m.owned = std::mem::take(&mut ctx.owned);
         m.sockets = std::mem::take(&mut ctx.sockets);
+        m.capture = ctx.capture;
+        m.options_off = std::mem::take(&mut ctx.options_off);
         m.deferred.append(&mut ctx.deferred);
         let frame = m.frames;
         if export == EXPORT_OVERLAY {
@@ -395,7 +423,8 @@ impl Host {
         // the mod's own lines first (a panicking Rust mod logs its message before it traps)
         self.flush_logs(&id, &mut ctx);
         match r {
-            Ok(_) => {
+            Ok(v) => {
+                ctx.result = v;
                 self.take_subscriptions(i, &mut ctx);
                 Some(ctx)
             }
@@ -459,9 +488,76 @@ impl Host {
         let v = self.call_all(EXPORT_OVERLAY, screen, |m| vec![Val::I32(m.frames as i32)], |ctx| {
             out.append(&mut ctx.rects)
         });
+        self.approval_prompt(screen, out);
         if v.is_some() {
             self.video = v;
         }
+    }
+
+    /// A platform input event ([`sa_mod_api::input`]) for the mods with `input = "capture"`, in load order, before
+    /// the game sees it. Returns true when a mod consumed it.
+    pub fn input(&mut self, kind: i32, a: i32, b: i32) -> bool {
+        if self.approvals.borrow().pending.is_some() {
+            self.approval_input(kind, a);
+            return true;
+        }
+        let args = [Val::I32(kind), Val::I32(a), Val::I32(b)];
+        for i in 0..self.mods.len() {
+            if !self.mods[i].manifest.permissions.capture {
+                continue;
+            }
+            if self.call_mod(i, EXPORT_INPUT, &args, (0, 0), |_| {}).is_some_and(|c| c.result == 1) {
+                return true;
+            }
+        }
+        false
+    }
+
+    /// The open approval question takes the keys: Y or Enter allow, N or Esc deny.
+    fn approval_input(&mut self, kind: i32, a: i32) {
+        if kind != sa_mod_api::input::KEY_DOWN {
+            return;
+        }
+        let allow = match a {
+            0x59 | 0x0D => true,
+            0x4E | 0x1B => false,
+            _ => return,
+        };
+        if let Some(q) = self.approvals.borrow_mut().answer(allow) {
+            (self.log)(&format!(
+                "mods: the user {} mod {} to reach {}",
+                if allow { "allowed" } else { "denied" },
+                q.id,
+                q.target
+            ));
+        }
+    }
+
+    /// Draws the open approval question over the mods' overlay.
+    fn approval_prompt(&self, screen: (u32, u32), out: &mut Vec<OverlayRect>) {
+        let Some(q) = self.approvals.borrow().pending.clone() else { return };
+        let lines = [
+            format!("{} wants to connect to {}", q.name, q.target),
+            "Allow it? Y / Enter: allow, N / Esc: deny (remembered)".to_string(),
+        ];
+        let size = 12.0;
+        let w = lines.iter().map(|l| l.chars().count()).max().unwrap_or(0) as f32 * size + 32.0;
+        let (x, y) = ((screen.0 as f32 - w).max(0.0) / 2.0, screen.1 as f32 / 3.0);
+        out.push(OverlayRect { x, y, w, h: 2.0 * size + 40.0, rgba: 0x0A0A_14E6 });
+        for (i, l) in lines.iter().enumerate() {
+            api::text_rects(x + 16.0, y + 14.0 + i as f32 * (size + 6.0), size, 0xFFFF_FFFF, l, out);
+        }
+    }
+
+    /// What the running mods (and an open approval question) take from the game together: keyboard, mouse, the
+    /// platform's cursor.
+    pub fn capture(&self) -> (bool, bool, bool) {
+        if self.approvals.borrow().pending.is_some() {
+            return (true, true, false);
+        }
+        self.mods.iter().filter(|m| m.disabled.is_none()).fold((false, false, false), |c, m| {
+            (c.0 || m.capture.0, c.1 || m.capture.1, c.2 || m.capture.2)
+        })
     }
 
     /// The events the running mods subscribed to, together.
@@ -657,8 +753,8 @@ mod tests {
         let (mut h, _) = host();
         // newer minor API version
         let mut s = src("new", wat_mod("", "1", DRAW));
-        s.0[0].1 = b"[mod]\nid = \"new\"\napi_version = \"1.4\"\n".to_vec();
-        assert!(h.load(s).unwrap_err().contains("API 1.4"));
+        s.0[0].1 = b"[mod]\nid = \"new\"\napi_version = \"1.6\"\n".to_vec();
+        assert!(h.load(s).unwrap_err().contains("API 1.6"));
         // memory above the cap (16 MiB default: 300 pages)
         assert!(h.load(src("big", wat_mod("", "300", DRAW))).unwrap_err().contains("cap"));
         // growth beyond the cap fails inside the mod (memory.grow returns -1), the mod goes on

@@ -1327,7 +1327,7 @@ fn main_block(this: GPtr<u8>, b: GPtr<u8>, ped: GPtr<u8>, f: &mut Fpu) {
         };
     if idle {
         // samp mode NOPs only this call.
-        if !sa_core::samp::disabled(sa_core::samp::feature::IDLE_CAMERA) {
+        if sa_core::options::enabled(sa_core::options::Feature::IdleCamera) {
             idle_cam_process(g::<u8>(G_IDLE_CAM));
         }
     } else {

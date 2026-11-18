@@ -214,7 +214,7 @@ impl Network for Proxied {
     }
 }
 
-/// The UDP proxy the mods' datagrams go through when the page names none (`tools/web/samp-demo.sh`'s default).
+/// The UDP proxy the mods' datagrams go through when the page names none (sa-udp-proxy's default).
 const DEFAULT_PROXY: &str = "ws://127.0.0.1:7781";
 
 /// The platform's network: WebSockets to the UDP proxy at `proxy` (the page's `?proxy=`).

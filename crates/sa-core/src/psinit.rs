@@ -194,8 +194,8 @@ pub fn ps_initialize() -> i32 {
     call::file_mgr_initialise();
     call::set_save_directory(call::init_user_directories());
     call::initialise_language();
-    // 0x747483 `mov [gGameState],esi`: samp NOPs it and writes 5 (FRONTEND_LOADING) itself at attach.
-    if crate::samp::toggled(crate::samp::toggle::SAMP_STARTUP) {
+    // 0x747483 `mov [gGameState],esi`: without the start screens the game begins at 5 (FRONTEND_LOADING).
+    if !crate::options::enabled(crate::options::Feature::StartScreens) {
         crate::video::GAME_STATE.set(5);
     } else {
         crate::video::GAME_STATE.set(0);

@@ -25,7 +25,7 @@ use std::cell::RefCell;
 pub use sa_mod_api::event::Event;
 pub use sa_mod_api::hook::Value;
 pub use sa_mod_api::sa_types::{GameState, ObjectRef, PedRef, Vec3, VehicleRef};
-pub use sa_mod_api::state::{CameraInfo, PedInfo, PlayerInfo, VehicleInfo, WorldInfo};
+pub use sa_mod_api::state::{CameraInfo, MatrixInfo, PadInfo, PedInfo, PlayerInfo, VehicleInfo, WorldInfo};
 pub use sa_mod_api::{API_MAJOR, API_MINOR, event as event_kind, level, status};
 
 #[doc(hidden)]
@@ -420,6 +420,30 @@ pub mod state {
         // SAFETY: a host function call with a plain value
         unsafe { ffi::key_down(i32::from(vk)) == 1 }
     }
+
+    /// Whether the pause menu is up (API 1.5).
+    pub fn menu_active() -> bool {
+        // SAFETY: a host function call without arguments
+        unsafe { ffi::menu_active() == 1 }
+    }
+
+    /// The local player's pad this frame (permission `input = "read"`; API 1.5).
+    pub fn pad() -> Option<PadInfo> {
+        // SAFETY: as in `player`
+        record(|p, n| unsafe { ffi::pad_state(p, n) })
+    }
+
+    /// A ped's transform (API 1.5); `None` when the handle names no live ped.
+    pub fn ped_matrix(ped: PedRef) -> Option<MatrixInfo> {
+        // SAFETY: as in `player`
+        record(|p, n| unsafe { ffi::ped_matrix(ped.0 as i32, p, n) })
+    }
+
+    /// A vehicle's transform (API 1.5); `None` when the handle names no live vehicle.
+    pub fn vehicle_matrix(vehicle: VehicleRef) -> Option<MatrixInfo> {
+        // SAFETY: as in `player`
+        record(|p, n| unsafe { ffi::vehicle_matrix(vehicle.0 as i32, p, n) })
+    }
 }
 
 /// Before / after hooks on game functions (API 1.2, permission `hooks = [...]`): subscribe in [`Mod::init`],
@@ -609,7 +633,7 @@ pub mod script {
 
     /// One argument of [`run`].
     #[derive(Clone, Copy, Debug, PartialEq)]
-    pub enum Arg {
+    pub enum Arg<'a> {
         /// An integer (`i`, and `P`: the player, 0).
         Int(i32),
         /// A float (`f`).
@@ -620,6 +644,8 @@ pub mod script {
         Vehicle(VehicleRef),
         /// An output (`o`).
         Out,
+        /// A text (`s`, API 1.5; at most `sa_mod_api::script::MAX_TEXT` bytes, no NUL).
+        Text(&'a [u8]),
     }
 
     /// What a command returned.
@@ -632,7 +658,15 @@ pub mod script {
     }
 
     /// Runs script command `opcode` with `args` (one per parameter of its `COMMANDS` entry). Not inside a hook.
-    pub fn run(opcode: u16, args: &[Arg]) -> Result<Outcome, Error> {
+    pub fn run(opcode: u16, args: &[Arg<'_>]) -> Result<Outcome, Error> {
+        let texts: Vec<Vec<u8>> = args
+            .iter()
+            .filter_map(|a| match a {
+                Arg::Text(t) => Some(t.iter().copied().chain([0]).collect()),
+                _ => None,
+            })
+            .collect();
+        let mut text = texts.iter();
         let words: Vec<i32> = args
             .iter()
             .map(|a| match *a {
@@ -641,6 +675,7 @@ pub mod script {
                 Arg::Ped(p) => p.0 as i32,
                 Arg::Vehicle(v) => v.0 as i32,
                 Arg::Out => 0,
+                Arg::Text(_) => text.next().map_or(0, |t| t.as_ptr() as usize as i32),
             })
             .collect();
         let mut outputs = vec![0u32; args.iter().filter(|a| **a == Arg::Out).count()];
@@ -649,6 +684,104 @@ pub mod script {
         // SAFETY: the host reads the argument words and writes one word per output through bounds-checked copies
         let r = check(unsafe { ffi::script_command(i32::from(opcode), args_ptr, words.len() as i32, out_ptr) })?;
         Ok(Outcome { condition: r != 0, outputs })
+    }
+}
+
+/// The player's view of the game (API 1.5): the HUD, on-screen messages, the player's model and the game's own
+/// features (permission `state = "write"`).
+pub mod game {
+    use super::*;
+    pub use sa_mod_api::sa_types::GameOption;
+
+    // SAFETY (every function below): a host function call with plain values or a buffer of the mod's own.
+
+    /// Gives the player ped `ped` the ped model `model` (loaded first).
+    pub fn set_ped_model(ped: PedRef, model: i32) -> Result<(), Error> {
+        check(unsafe { ffi::set_ped_model(ped.0 as i32, model) }).map(drop)
+    }
+
+    /// Shows or hides the HUD and the radar.
+    pub fn set_hud_visible(on: bool) -> Result<(), Error> {
+        check(unsafe { ffi::set_hud_visible(i32::from(on)) }).map(drop)
+    }
+
+    /// Switches one of the game's own features on or off (the host turns it back on when it disables the mod).
+    pub fn set_option(option: GameOption, on: bool) -> Result<(), Error> {
+        check(unsafe { ffi::set_game_option(sa_mod_api::option::number(option), i32::from(on)) }).map(drop)
+    }
+
+    /// Shows `text` as the game's big message in `style` (0..=6) for `time_ms`.
+    pub fn big_message(text: &str, time_ms: u32, style: u8) -> Result<(), Error> {
+        check(unsafe {
+            ffi::big_message(text.as_ptr() as usize as i32, text.len() as i32, time_ms as i32, i32::from(style))
+        })
+        .map(drop)
+    }
+}
+
+/// Platform input before the game sees it (permission `input = "capture"`; API 1.5): events in [`Mod::input`],
+/// and taking the keyboard and the mouse from the game.
+pub mod input {
+    use super::*;
+    use sa_mod_api::input as k;
+
+    /// A platform input event (keys are Windows virtual-key codes).
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum Input {
+        /// A key went down.
+        KeyDown {
+            /// The key.
+            vk: u16,
+            /// An auto-repeat.
+            repeat: bool,
+        },
+        /// A key went up.
+        KeyUp {
+            /// The key.
+            vk: u16,
+        },
+        /// A character was typed.
+        Char(char),
+        /// The mouse moved.
+        MouseMove {
+            /// Pixels from the left.
+            x: i32,
+            /// Pixels from the top.
+            y: i32,
+        },
+        /// A mouse button went down or up.
+        MouseButton {
+            /// 0 left, 1 right, 2 middle.
+            button: u8,
+            /// Down, else up.
+            down: bool,
+        },
+        /// The wheel turned, in 1/120 notches.
+        Wheel(i32),
+        /// The window gained or lost the focus.
+        Focus(bool),
+    }
+
+    impl Input {
+        /// Decodes `sa_input`'s values.
+        pub fn decode(kind: i32, a: i32, b: i32) -> Option<Input> {
+            Some(match kind {
+                k::KEY_DOWN => Input::KeyDown { vk: u16::try_from(a).ok()?, repeat: b != 0 },
+                k::KEY_UP => Input::KeyUp { vk: u16::try_from(a).ok()? },
+                k::CHAR => Input::Char(char::from_u32(a as u32)?),
+                k::MOUSE_MOVE => Input::MouseMove { x: a, y: b },
+                k::MOUSE_BUTTON => Input::MouseButton { button: u8::try_from(a).ok()?, down: b != 0 },
+                k::WHEEL => Input::Wheel(a),
+                k::FOCUS => Input::Focus(a != 0),
+                _ => return None,
+            })
+        }
+    }
+
+    /// Takes the keyboard (the game sees no keys), the mouse, and shows the platform's cursor, until changed.
+    pub fn capture(keyboard: bool, mouse: bool, cursor: bool) -> Result<(), Error> {
+        // SAFETY: a host function call with plain values
+        check(unsafe { ffi::input_capture(i32::from(keyboard), i32::from(mouse), i32::from(cursor)) }).map(drop)
     }
 }
 
@@ -700,6 +833,13 @@ pub trait Mod: 'static {
     /// A hooked game function runs ([`hooks::subscribe`]; API 1.2). Called in the middle of the game's frame.
     fn hook(&mut self, hook: hooks::HookId, phase: hooks::Phase, call: &hooks::Call) {
         let _ = (hook, phase, call);
+    }
+
+    /// A platform input event before the game sees it (permission `input = "capture"`; API 1.5). Returns true
+    /// to consume it.
+    fn input(&mut self, event: input::Input) -> bool {
+        let _ = event;
+        false
     }
 }
 
@@ -758,6 +898,13 @@ pub mod rt {
             Some(e) => with(|m| m.event(e)),
             None => 0,
         }
+    }
+
+    pub fn sa_input<T>(kind: i32, a: i32, b: i32) -> i32 {
+        let Some(e) = input::Input::decode(kind, a, b) else { return 0 };
+        let mut consumed = false;
+        with(|m| consumed = m.input(e));
+        i32::from(consumed)
     }
 
     pub fn sa_hook<T>(hook: i32, phase: i32) -> i32 {

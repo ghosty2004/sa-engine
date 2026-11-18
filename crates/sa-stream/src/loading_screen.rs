@@ -236,8 +236,8 @@ pub fn render_splash() {
     c.byte_add(1).write(0);
     c.byte_add(2).write(0);
     c.byte_add(3).write(if fade_in { 255u8.wrapping_sub(FADE_ALPHA.get()) } else { FADE_ALPHA.get() });
-    // 0x590099: samp NOPs this call (no black fade over its splash; docs/samp/startup.md).
-    if !sa_core::samp::toggled(sa_core::samp::toggle::SAMP_STARTUP) {
+    // 0x590099: without the start screens, no black fade over the splash.
+    if sa_core::options::enabled(sa_core::options::Feature::StartScreens) {
         sprite_draw_rect(r.cast::<u8>(), c);
     }
 }
