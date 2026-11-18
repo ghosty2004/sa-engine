@@ -41,6 +41,7 @@ pub mod dx;
 pub mod frontend;
 pub mod imports;
 pub mod libjpeg;
+pub mod libpng;
 #[cfg(feature = "mods")]
 pub mod mods;
 pub mod native;
