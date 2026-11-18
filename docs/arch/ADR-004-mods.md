@@ -307,6 +307,28 @@ API 1.5 (reference `docs/mods/api.md` level 5). Decisions:
   `samp_client::hosted` (the engine client moved out of sa-game, plus remote players) on its game adapter over the
   mod API; the adapter answers `Unsupported` for what the API does not offer, as any backend lacking a feature.
 - Multiplayer starts with `--mods target/mods/resolution,target/mods/samp` (single player without the samp mod).
+- **A mod's UI is images and quads (API 1.6).** The overlay draws quads of mod images (RGBA8, per-mod budget: 64
+  images, 32 MiB, sides up to 4096; `SMOOTH`: linear over a box-filtered mip chain), plain-colour quads and a clip
+  rectangle, natively and in the browser through the same wgpu pass before the present. Text is the mod's own
+  business (a glyph atlas is an image); the game's own look comes from two generic calls drawn in the game's 2D phase
+  (after `Game::Render2dStuff`, with the HUD, under the overlay): `game_text` (a `CFont` state and a string) and
+  `game_sprite` of a `game_texture` (a texture of the game's dictionaries, a dictionary loaded from the game folder
+  when missing; looked up in that phase, where loading is safe, so the call answers AGAIN first). `world_to_screen`
+  is the game's own projection. No SA:MP type crosses the API.
+- **samp-rs draws the same UI on every backend.** The engine overlay's code that left with crates/sa-samp (glyph
+  atlas with pre-outlined glyphs and the symbol fonts, D3DX `DrawText` layout, draw list, skin) is
+  `samp-rs/crates/samp-overlay`: `QuadUi` implements `UiBackend` on a `Canvas` of images, quads, game text and game
+  sprites; the samp mod's canvas is the mod API. Measured against the 72ea67c0 engine overlay with the reference
+  scene (`samp_client::ui::scene`, the mod's `ui_scene = ref`; 800x600, same game data and UI files): 98-99.7 % of
+  the pixels within 8 levels per step, the UI elements identical; the rest is the world (sun corona, lighting) and
+  the 3D label's anchor (the scene places it from the camera's front vector, the old demo from its matrix).
+- **SA:MP's UI files are the user's**, copied into the mod's folder (`files = "own"`: `sampgui.png`, `mouse.png`,
+  `gtaweap3.ttf`, `sampaux3.ttf`, optionally `arialbd.ttf`); settings a page's empty storage lacks (the server,
+  `auto_connect`, the auth table) are read from files of the same name there too, so the browser needs no page
+  option and `serve.py` no SA:MP option.
+- **The start screens are a game option** (`StartScreens`, 1.6): the samp mod turns them off in `sa_init` like
+  samp.dll's start-up; `--start-in-world` (skipping main.scm's intro mission) stays a run option, as samp.dll ships
+  its own main.scm.
 
 ### 4.2 Data mods (added by the user, 2026-11-17)
 

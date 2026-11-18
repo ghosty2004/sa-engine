@@ -4771,3 +4771,38 @@
 - Writer gate (base e31b4bb6) first run: queue, bindings (0x4F2830 declared twice), cfg (the wrappers' cfgs in
   native.rs), clippy (png_set_IHDR's arguments) and hooktest (0x5D0400's hook name) failed; fixed in 0280f670..8fe68598
   (no phase A behaviour change: the hook's name string and visibility only), then rerun on the final head.
+## 2026-11-19 — MOD-2 M5 (part 2): SA:MP's UI through the overlay, the browser join, the goal scenario (agent, worktree)
+- API 1.6 (docs/mods/api.md level 6, ADR-004 §4.1d): overlay images (`image_create` / `image_destroy`, 64 per mod,
+  32 MiB, `SMOOTH` = linear over a box-filtered mip chain), `overlay_quads`, `overlay_clip` (one textured wgpu
+  pipeline, a white texel for plain colour; `sa_platform::gpu::OverlayFrame`); the game's own 2D drawing after
+  `Game::Render2dStuff` (`game_text` with a `CFont` state, `game_texture` looked up in that phase and answering AGAIN
+  until then, `game_sprite`); `world_to_screen` (`CSprite::CalcScreenCoors`); `IS_LINE_OF_SIGHT_CLEAR`;
+  `set_game_time`; the `StartScreens` game option. `set_gravity` was tried and dropped: GAME_GRAVITY is .rdata, mapped
+  read-only natively (the write faulted).
+- samp-rs: `crates/samp-overlay` holds the former engine overlay's atlas, `DrawText` layout and draw list (from
+  72ea67c0's crates/sa-samp, with Liberation Sans moved from assets/fonts) behind `UiBackend` on a `Canvas`;
+  `samp_client::ui::scene` is the reference scene (from sa-game's former UI demo); `hosted` draws nametags (no NPCs,
+  distance, head, line of sight, health / armour from on-foot sync, AFK), applies RPC 60, leaves 72 to the UI and
+  notes 69. The samp mod: its canvas over the mod API, SA:MP's UI files from its folder (`files = "own"`), settings
+  falling back to files of its folder (the browser's empty storage), fonts rasterised in `sa_init` (the browser's
+  metered overlay call ran out of fuel building the atlas), start screens off, `ui_scene = ref`.
+- UI parity with the old engine UI (acceptance criterion from the user): 72ea67c0 rebuilt (`--samp-ui-demo`,
+  `SA_SAMP_UI_SCENE=ref`, SA_SAMP_DIR = the SA:MP files) and the mod's `ui_scene = ref`, both 800x600 offscreen with
+  the same stubs: per step 98.1-99.7 % of the pixels within 8 levels (scene and chat input 91 %: the first frames'
+  world), the UI elements identical in the diff images; the remaining differences are the world (sun corona, lighting)
+  and the 3D label's anchor 11 px higher (the scene places it from the camera's front vector, the old demo from its
+  matrix's second row). Evidence: target/m5-evidence/ui-compare/ (old | new | diff x4 per step, summary.txt).
+- Native join (`tools/e2e/samp/mod-join.sh`, BOT=1, EXTRA_CMDS textdraw + dialog, Tab): chat with the server's lines,
+  the textdraw and its sprite, the dialog, the scoreboard (3 players), BotPlayer's nametag with health bar; goal.txt
+  all PASS (connected, spawned, the server's commands acknowledged, walk 37.8 m, samp-bot streamed in and removed on quit).
+  The scripted walk now faces north (it had walked into the safe house's save marker: the save menu hid the UI).
+  Evidence: target/m5-evidence/native-join/.
+- Browser join (`WEB=1`: headless Chromium, swiftshader, sa-udp-proxy, the mod folder with its settings and the auth
+  table served by serve.sh; serve.py's `--samp-dir` / `--samp-auth` removed): connected, class selection panel,
+  spawned, the server's commands applied, chat, textdraw, dialog, walk seen by the server. The server copy waits 60 s
+  for a silent client (software rendering held a frame ~10 s while streaming the spawn area; with the default 10 s the
+  server dropped the client); `--gpu native` hangs at device creation on this machine. Evidence:
+  target/m5-evidence/browser-join/.
+- Not done: samp-rs's DLL e2e suite (its feature scenarios drive the DLL's control channel) on the mod host beyond the
+  goal scenario; the DLL host's Wine suite was not run (its game copy needs SA:MP's files; the samp_client.dll release
+  build, clippy for i686-pc-windows-gnu and the samp-rs workspace tests, 660, pass); planes' landing-gear value; gravity.

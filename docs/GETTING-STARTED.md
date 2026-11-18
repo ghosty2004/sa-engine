@@ -111,7 +111,7 @@ re/snapshots/…                   Ghidra snapshot
 re/gta-reversed/                 gta-reversed, pinned at 20d8d2a (reading aid)
 re/samp/client/                  your SA:MP 0.3.7-R4 client files (samp.dll, samp.saa, sampgui.png, …)
 re/samp/server/                  an open.mp 1.6.7 server copy for local tests
-re/samp/auth_table.txt           SA:MP's 256-entry auth-key table (tools/e2e/samp/*, tools/web/samp-demo.sh; AUTH_TABLE overrides)
+re/samp/auth_table.txt           SA:MP's 256-entry auth-key table (tools/e2e/samp/*; AUTH_TABLE overrides)
 re/samp/gta-patches-r4-annotated.csv  samp.dll's patch list (docs/samp/samp_usage.py; also read from samp-rs/docs/re/data/)
 wine/prefix/                     the Wine prefix (DXVK installed)
 wine/gta-sa/                     the game copy: gta_sa.exe 1.0 US + data (incl. the install's vorbisFile.dll)
@@ -146,7 +146,7 @@ cargo build --release --target i686-unknown-linux-gnu -p sa-game
 cargo build --release -p sa-oracle-format -p sa-oracle    # satool, sa-oracle
 
 # browser (integration branch, §9)
-tools/web/build.sh                          # FEATURES=samp tools/web/build.sh for SA:MP
+tools/web/build.sh                          # FEATURES=mods tools/web/build.sh for mods (SA:MP: the samp mod)
 ```
 
 Use `-j8` and, on a shared machine, a memory cap: `systemd-run --user --scope -p MemoryMax=8G cargo …`.
@@ -408,7 +408,7 @@ These are binding (from the project owner, see [CLAUDE.md](../CLAUDE.md) and ROA
 | L1 test hangs in Wine at 0 % CPU | a stuck `ref.exe`; stop and rerun |
 | an i686 build error about X87 returns in `orig!` | `orig!` ST0 results must be declared `f64` (register-convention `orig!` may return `X87`) |
 | browser page stuck on black / "create_surface failed" | no WebGPU/WebGL2 in that browser profile; try `&backend=gl`, or enable WebGPU (Chromium: `--enable-unsafe-webgpu --enable-features=Vulkan`) |
-| browser: SA:MP loading screen/skin missing | the page can't reach the SA:MP files: start the server with `--samp-dir`/`SAMP_DIR=re/samp/client` |
+| browser / native: SA:MP UI with flat controls | the samp mod finds no `sampgui.png` / `mouse.png`: copy SA:MP's UI files into its folder (`target/mods/samp/`, docs/samp/README.md) |
 | replays diverge only sometimes | a `rand()` call without `at_site`, or an uninitialised read; see `docs/re/determinism.md` |
 
 ---
