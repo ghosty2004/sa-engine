@@ -24,8 +24,9 @@ use sa_world::bindings::{
 use sa_world::world::common::{entity_pos, placeable_heading};
 use sa_core::bindings::{
     frame_for_all_children, frame_for_all_objects, quat_get, rp_clump_add_atomic, rp_clump_for_all_atomics,
-    rp_geometry_for_all_materials, rw_frame_add_child, rw_matrix_update,
+    rp_atomic_set_frame, rp_geometry_for_all_materials, rw_frame_add_child, rw_frame_destroy, rw_matrix_update,
 };
+use sa_stream::modelinfo::clump::set_frame_hierarchy_id;
 use sa_stream::bindings::{get_frame_from_id, model_info_add_ref, ped_is_player, set_atomic_render_callback};
 use sa_stream::modelinfo::vehicle::call::set_atomic_flag;
 use sa_world::bindings::{get_pad_from_player, physical_apply_move_force_5429f0, physical_apply_turn_force, vector_scale};
@@ -45,6 +46,122 @@ orig! {
     fn atomic_passthrough_4c88f0(a: GPtr<u8>, b: u32) -> GPtr<u8> = cdecl 0x4C88F0 => unported;
     /// `CCustomCarPlateMgr::SetupClumpAfterVehicleUpgrade(RpClump*, RpMaterial*, uint8)` (0x6FDFE0)
     fn setup_clump_after_vehicle_upgrade(c: GPtr<u8>, plate: u32, ty: u32) -> GPtr<u8> = cdecl 0x6FDFE0 => unported;
+    /// `CBaseModelInfo::AsDamageAtomicModelInfoPtr()` (vtable +0x8)
+    fn v_as_damage_atomic_model_info(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x8 => unported;
+    /// `CVehicle::CreateReplacementAtomic(CBaseModelInfo*, RwFrame*, int32 id, bool damaged, bool wheel)` (0x6D3700)
+    fn create_replacement_atomic_call(v: GPtr<u8>, mi: GPtr<u8>, frame: GPtr<u8>, id: u32, damaged: u32, wheel: u32) -> GPtr<u8> = thiscall 0x6D3700 => vehicle_create_replacement_atomic;
+}
+
+/// The tail both upgrade atomic constructors share: the render callback by `HasAlphaMaterialCB` (0x4C77C0 over the
+/// geometry +0x18, the flag kept in the low byte of the caller's model-info argument slot: 0x733F80 and flag 0x40
+/// with alpha, else 0x733240), `FUN_004c88f0(atomic, 0)`.
+fn upgrade_atomic_rendering(atomic: GPtr<u8>, mi: GPtr<u8>, flag_alpha: bool) {
+    let mut slot = [addr32(mi) & !0xFF];
+    let sp = GPtr::from_raw(slot.as_mut_ptr()).cast::<u8>();
+    rp_geometry_for_all_materials(rd(atomic, 0x18), 0x4C_77C0, sp);
+    if rd::<u8>(sp, 0) != 0 {
+        set_atomic_render_callback(atomic, 0x73_3F80);
+        if flag_alpha {
+            set_atomic_flag(atomic, 0x40);
+        }
+    } else {
+        set_atomic_render_callback(atomic, 0x73_3240);
+    }
+    atomic_passthrough_4c88f0(atomic, 0);
+}
+
+/// `CVehicle::CreateReplacementAtomic(CBaseModelInfo* mi, RwFrame* frame, int32 id, bool damaged, bool wheel)` (0x6D3700,
+/// thiscall, `ret 0x14`): with `damaged` the flag 0xA9B0B0 is set for the instance; `CreateInstance` (vtable +0x2C),
+/// the model referenced, the atomic added to the clump (+0x18). With `wheel` its own frame gets an identity modelling
+/// matrix (flags |= 0x20003, the pad dwords untouched, then `RwMatrixUpdate`), hierarchy id 0 and becomes a child of
+/// `frame`; otherwise the atomic moves to `frame` and its own frame is destroyed. Atomic id `id & ~3`, flag 2
+/// (damaged) or 1, the render callback by alpha (no 0x40 flag), `FUN_004c88f0(atomic, 0)`; 0xA9B0B0 cleared. Returns
+/// the atomic.
+#[hook(addr = 0x6D3700, conv = thiscall, name = "CVehicle::CreateReplacementAtomic", expect = "8A 44 24 10 53 55",
+       this = "CVehicle", unverified = "frontier2-b28", route = "L2", hazards = "heap-writes,stack-residue",
+       note = "the alpha flag lives in the low byte of the caller's model-info argument slot")]
+pub fn vehicle_create_replacement_atomic(this: GPtr<u8>, mi: GPtr<u8>, frame: GPtr<u8>, id: u32, damaged: u32, wheel: u32) -> GPtr<u8> {
+    let damaged = damaged as u8 != 0;
+    if damaged {
+        g::<u8>(0xA9_B0B0).write(1);
+    }
+    let atomic = v_create_instance(mi);
+    model_info_add_ref(mi.cast());
+    let own = rd::<GPtr<u8>>(atomic, 4);
+    rp_clump_add_atomic(rd(this, 0x18), atomic);
+    if wheel as u8 != 0 {
+        let m = own.byte_add(0x10);
+        for (o, v) in [(0x28, 0x3F80_0000u32), (0x14, 0x3F80_0000), (0, 0x3F80_0000)] {
+            wr::<u32>(m, o, v);
+        }
+        let flags = rd::<u32>(m, 0xC) | 0x20003;
+        for o in [0x10, 8, 4, 0x24, 0x20, 0x18, 0x38, 0x34, 0x30] {
+            wr::<u32>(m, o, 0);
+        }
+        wr::<u32>(m, 0xC, flags);
+        rw_matrix_update(m);
+        set_frame_hierarchy_id(own, 0);
+        rw_frame_add_child(frame, own);
+    } else {
+        rp_atomic_set_frame(atomic, frame);
+        rw_frame_destroy(own);
+    }
+    set_atomic_id(atomic, id & !3);
+    set_atomic_flag(atomic, if damaged { 2 } else { 1 });
+    upgrade_atomic_rendering(atomic, mi, false);
+    g::<u8>(0xA9_B0B0).write(0);
+    atomic
+}
+
+/// `CVehicle::AddReplacementUpgrade(int32 modelIndex, int32 nodeId)` (0x6D3830, thiscall, `ret 8`; the fragment
+/// 0x408121 pushes `RemoveObjectsCB` 0x6D33B0 = `[0x15608C0] + [0x41FA94] + 1`).
+///
+/// The node's frame (`GetFrameFromId`) loses its objects and children (`RemoveObjectsCB` 0x6D33B0 / 0x6D3420, which
+/// leave the removed atomic's id in the local); the model's instance (`CreateInstance`) is referenced, added to the
+/// clump and moved to that frame (its own frame destroyed); atomic id `removed & ~3`, flag 1, the render callback by
+/// alpha (no 0x40 flag), `FUN_004c88f0`; 0xA9B0B0 cleared. Node 19 with handling flag 0x2000 (+0x384 +0xCC) also gets
+/// the mirrored wheel (`CreateReplacementAtomic(mi, frame, removed, false, true)`, its x position = the frame's * -2.0,
+/// `RwMatrixUpdate`); nodes 12 / 13 `SetupClumpAfterVehicleUpgrade`. A damage atomic model (vtable +8) adds the
+/// damaged version (`CreateReplacementAtomic(.., true, false)`) and, with a frame, hides it
+/// (`SetVehicleAtomicVisibilityCB` 0x6D2690 / 0x6D26D0, 1).
+#[hook(addr = 0x6D3830, conv = thiscall, name = "CVehicle::AddReplacementUpgrade", expect = "83 EC 0C 8B 44 24 14",
+       this = "CVehicle", unverified = "frontier2-b28", route = "L2", hazards = "heap-writes,stack-residue",
+       note = "the alpha flag lives in the low byte of the caller's modelIndex argument slot")]
+pub fn vehicle_add_replacement_upgrade(this: GPtr<u8>, model: i32, node: u32) {
+    let frame = get_frame_from_id(rd(this, 0x18), node as i32);
+    let mut removed = 0u32;
+    let rp = addr32(GPtr::from_raw(&mut removed as *mut u32).cast::<u8>());
+    frame_for_all_objects(frame, 0x6D_33B0, rp);
+    frame_for_all_children(frame, 0x6D_3420, rp);
+    let mi = model_info(model);
+    let atomic = v_create_instance(mi);
+    model_info_add_ref(mi.cast());
+    let own = rd::<GPtr<u8>>(atomic, 4);
+    rp_clump_add_atomic(rd(this, 0x18), atomic);
+    rp_atomic_set_frame(atomic, frame);
+    rw_frame_destroy(own);
+    set_atomic_id(atomic, removed & !3);
+    set_atomic_flag(atomic, 1);
+    upgrade_atomic_rendering(atomic, GPtr::from_addr(model as u32 as usize), false);
+    g::<u8>(0xA9_B0B0).write(0);
+    if node == 0x13 {
+        if rd::<u32>(rd::<GPtr<u8>>(this, 0x384), 0xCC) & 0x2000 != 0 {
+            let a = create_replacement_atomic_call(this, mi, frame, removed, 0, 1);
+            let m = rd::<GPtr<u8>>(a, 4).byte_add(0x10);
+            wr::<f32>(m, 0x30, x(rd::<f32>(frame, 0x40)).fmul_m(f32::from_bits(0xC000_0000)).to_f32());
+            rw_matrix_update(m);
+        }
+    } else if node == 0xC || node == 0xD {
+        let vmi = model_info(i32::from(rd::<i16>(this, 0x22)));
+        setup_clump_after_vehicle_upgrade(rd(this, 0x18), rd(vmi, 0x24), u32::from(rd::<u8>(vmi, 0x31)));
+    }
+    if !v_as_damage_atomic_model_info(mi).is_null() {
+        create_replacement_atomic_call(this, mi, frame, removed, 1, 0);
+        if !frame.is_null() {
+            frame_for_all_objects(frame, 0x6D_2690, 1);
+            frame_for_all_children(frame, 0x6D_26D0, 1);
+        }
+    }
 }
 
 /// `CVehicle::CreateUpgradeAtomic(CBaseModelInfo*, const UpgradePosnDesc*, RwFrame* parent, bool damaged)` (0x6D3510,
@@ -76,16 +193,7 @@ pub fn vehicle_create_upgrade_atomic(this: GPtr<u8>, mi: GPtr<u8>, desc: GPtr<u8
     set_atomic_id(atomic, if damaged as u8 != 0 { 2 } else { 1 });
     set_atomic_flag(atomic, 0x800);
     set_atomic_flag(atomic, 0x400);
-    let mut slot = [addr32(mi) & !0xFF];
-    let sp = GPtr::from_raw(slot.as_mut_ptr()).cast::<u8>();
-    rp_geometry_for_all_materials(rd(atomic, 0x18), 0x4C_77C0, sp);
-    if rd::<u8>(sp, 0) != 0 {
-        set_atomic_render_callback(atomic, 0x73_3F80);
-        set_atomic_flag(atomic, 0x40);
-    } else {
-        set_atomic_render_callback(atomic, 0x73_3240);
-    }
-    atomic_passthrough_4c88f0(atomic, 0);
+    upgrade_atomic_rendering(atomic, mi, true);
     g::<u8>(0xA9_B0B0).write(0);
     atomic
 }
@@ -360,6 +468,8 @@ pub fn trailer_set_tow_link(this: GPtr<u8>, tractor: GPtr<u8>, place: u32) -> u8
 
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_VEHICLE_CREATE_REPLACEMENT_ATOMIC,
+    HOOK_VEHICLE_ADD_REPLACEMENT_UPGRADE,
     HOOK_AUTOMOBILE_SET_TOW_LINK,
     HOOK_TRAILER_SET_TOW_LINK,
     HOOK_TRAIN_REMOVE_RANDOM_PASSENGER,

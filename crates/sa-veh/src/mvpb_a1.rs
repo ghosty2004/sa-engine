@@ -34,7 +34,7 @@ use crate::bindings::vehicle_remove_passenger as remove_passenger;
 use sa_world::bindings::physical_apply_turn_force as apply_turn_force;
 orig! {
     /// `CVehicle::AddReplacementUpgrade(int32 model, int32 node)` (0x6D3830)
-    fn add_replacement_upgrade(v: GPtr<u8>, model: i32, node: u32) = thiscall 0x6D3830 => unported;
+    fn add_replacement_upgrade(v: GPtr<u8>, model: i32, node: u32) = thiscall 0x6D3830 => crate::frontier_b2_veh::vehicle_add_replacement_upgrade;
     /// `CVehicle::AddUpgrade(int32 model, int32 node)` (0x6DFA20)
     fn add_upgrade(v: GPtr<u8>, model: i32, node: u32) = thiscall 0x6DFA20 => unported;
     /// `CVehicle::SetVehicleUpgradeFlags(int32, int32, int32&)` (0x6D30E0)
