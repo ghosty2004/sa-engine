@@ -4032,3 +4032,56 @@
 - Noted, not touched: every port-l2 run of this tree logs `hook 0x609ef0 CPlayerPed::Busted: FAILED: branch at
   0x609f31 into the patched range`, so port-l2's "no crash / install failure" line fails on single-hook runs; the
   traces are unaffected.
+## 2026-11-18 — FRONTIER-2 turn 13, lane B: the editor / two-player cams, the replay set-up's leaves (agent, branch worktree-agent-a1681553f334e19c6)
+- Base: lane B turn 12's head 03b3643d. `tools/gen/inflight.py` checked first: no other branch registers any address
+  ported here (CReplay::RestoreStuffFromMem 0x45ECD0 is lane A's, on worktree-agent-a3c807c58818e1a2b; left alone).
+- Batch `frontier2-b29` (CAM, 3 hooks), from the 1.0 US bytes (docs/re/specs/CAM/CCam.md / gta-reversed as reading aids):
+  - CCam::Process_Cam_TwoPlayer_Separate_Cars_TopDown 0x513BE0 (`twoplayer.rs`): the height target 1.0 / 0.75 / 0.45
+    approached by `f32(timeStep * 0.005)` (gta-reversed: `/ 200`), `R = max(d + 10, 30) * h`, the 0.4 rad tilt read
+    from .data 0x8CCCB8; up = (0, cos, sin) (gta-reversed builds it from the source).
+  - CCam::Process_Cam_TwoPlayer_Separate_Cars 0x513510 (`twoplayer.rs`): transcribed instruction by instruction with
+    the original's frame (offsets folded across its temporary `push edi`) and the x87 stack (`Fpu`): the points 6 m
+    behind each car, the blend angle's sin / cos, the source / front interpolation, up from two cross products, the
+    focus switch (-0.13) and the blend step `timeStep * 0.04` (.data 0x8CCCB4).
+  - CCam::Process_Editor 0x50F3F0 (`cammodes.rs`): reset, pad 1's stick angles, the alpha clamp +-1.5620698, the look-at
+    step 0xB6FFE4 (+-70), the -450 floor, the RightShoulder2 teleport (vslot 14, or the focus ped's position), the x / y
+    wrap loops on `v * 0.02 + 60` against 115 / 5 (gta-reversed wraps 5..115 directly), the explosion shadow and the
+    three debug `sprintf` lines into a stack buffer (doubles from the x87 values).
+  - The camproc declarations of 0x50F3F0 / 0x513510 / 0x513BE0 target the ports.
+- Batch `frontier2-b30` (WORLD, plus the RENDER leaf CSpecialFX::ReplayStarted; 8 hooks, `world/replay_setup.rs`): the
+  leaves of CReplay::TriggerPlayback 0x4600F0, bottom-up: IsThisPedUsedInRecording 0x45DDE0 (.HOODLUM 0x1565580),
+  IsThisVehicleUsedInRecording 0x45DE40 (jump table 0x45DEC4 / 0x45DED0: types 1, 2, 15..18 and the ped update's
+  vehicle byte - 1), FindFirstFocusCoordinate 0x45D6C0 (.HOODLUM 0x156F180), InitialisePedPoolConversionTable 0x45EF20
+  (.HOODLUM 0x156B3A0) / InitialiseVehiclePoolConversionTable 0x45EFA0 (the vehicle search ends only at c == 110,
+  unbounded after a store; the ped one at c >= 140 in both places), InitialisePoolConversionTables 0x45F370 (peds
+  first; gta-reversed: vehicles first), EmptyPedsAndVehiclePools_NoDestructors 0x45D390 (last slot first, shadows
+  returned) and CSpecialFX::ReplayStarted 0x721D30. One buffer walk helper (`scan_replay_packets`), now also used by
+  frontier_b3's StreamAllNecessaryCarsAndPeds; frontier_b3's FindSizeOfPacket declaration is shared (pub(crate)).
+- Not done: TriggerPlayback 0x4600F0 itself (its remaining unported callees: StoreStuffInMem 0x45F180, CreatePlayerPed
+  0x45D540 with DealWithNewPedPacket 0x45CEA0 / ProcessPedUpdate 0x45CA70, plus lane A's RestoreStuffFromMem 0x45ECD0
+  on master after integration), PlayBackThisFrameInterpolation 0x45F380, ProcessLookAroundCam 0x45D760; so no `replay`
+  scenario yet (it would block on lane B's own 0x4600F0). The two-player cams 0x519810 (3136 bytes) / 0x525E50
+  (2416 bytes; its loop calls the VM fragment 0x4082C0, to evaluate with vm_eval.py) and
+  CTrain::AddNearbyPedAsRandomPassenger 0x6F8170 were not started.
+- convcheck (lane A's tools/verify/convcheck.py, run by hand from worktree-agent-a6afbf8f5fa20dfce, not committed): 9
+  FAIL rows, all pre-existing declarations fixed on lane A's branch; none for an address declared or ported here.
+- frontier.py --no-branches: to port 104 -> 101 (CAM 5 -> 2: 0x50F3F0, 0x513510, 0x513BE0 done); no new rows (the b30
+  leaves are callees of the still unported TriggerPlayback, so off the frontier until it is ported).
+- Scenarios (i686 native sa-game of 4e949d75, the final code bar doc comments, SA_ROOT=~/sa-engine; steps / blocked): pausemenu 416 / 0,
+  solicit 4016 / 0, crossing 1216 / 0, crossing-long 4016 / 0, melee 2616 / 0, sniper / shootcar / shootdriver / quad /
+  heli / boat / cinema / tanker / nitro 1216 / 0, roadblock-script 1016 / 0, gangwar 2016 / 0, jetpack 1016 / 0,
+  roadblocks 2015 / 1 (lane C's 0x7CF240), roadblock-wanted 2015 / 1 (CObject::Explode 0x5A1340, lane A), plane 824 / 392
+  (lane C's 0x43E0E0), monster 1127 / 89 (ProcessColModels' disk path, lane A turn 13), tank 1215 / 1 (lane C's
+  0x4A0FA0), hunter 999 / 217 (lane A's 0x73D720); no crash, 0 blocked on lane B. None of the ports is reached by a
+  native scenario (two-player / editor cam modes, replay set-up).
+- verify-all (lanes 4-5, fresh release sa-oracle + satool, DLL sha256 3476b692… of fb871fbc = the final code): `lb13-u2`
+  (SA_UNVERIFIED=frontier2-b29,frontier2-b30) IDENTICAL 13/13; default set `lb13-def` (same DLL) IDENTICAL 13/13; save-load
+  identical except the SAVE-1 stack residue. An earlier `lb13-u` (DLL of 4e949d75) was stopped after 10/13 PASS: the gate's
+  i686 step rebuilt the DLL mid-run after the doc-comment cleanup (1ebd347e / fb871fbc, comments only).
+- Writer gate (base 03b3643d): on fb871fbc (the last code commit; only the roadmap and this worklog follow) all 17 steps
+  PASS, none skipped (note: frontier2-b30 spans WORLD and RENDER for CSpecialFX::ReplayStarted). The ports' doc comments
+  carry no process metadata (main-session rule of this turn).
+- Resources: CARGO_BUILD_JOBS=4 / JOBS=4, one cargo build at a time; wine lanes 4-5.
+- Open (lane B): CReplay::TriggerPlayback 0x4600F0 (then StoreStuffInMem, CreatePlayerPed / DealWithNewPedPacket /
+  ProcessPedUpdate), PlayBackThisFrameInterpolation 0x45F380, ProcessLookAroundCam 0x45D760 and a `replay` scenario;
+  CAM 0x519810 / 0x525E50; CTrain::AddNearbyPedAsRandomPassenger 0x6F8170.
