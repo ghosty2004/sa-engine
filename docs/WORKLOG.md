@@ -4435,3 +4435,60 @@
   contexts (Shot / Damage / PlayerContext) as mod-API shapes over the decisions; net and storage (M4); samp-rs's
   engine host moved onto sa-access / the mod API, then sa-samp, the `samp` feature and sa-samp-api's engine backend
   deleted (M5).
+## 2026-11-18 — FRONTIER-2 turn 16, lane B: the two-player cameras, the interior furnishing, DeleteRwObjectsBehindCamera (agent, branch worktree-agent-a8f4c2b5abe823c9e)
+- Base: lane B turn 15's head 8d7a8a2f (gate base 9fea817f). `tools/gen/inflight.py` checked first: no other branch
+  registers any address ported here.
+- Batch `frontier2-b34` (CAM, 2 hooks, plain `#[hook(`):
+  - CCam::Process_Cam_TwoPlayer 0x525E50 (`twoplayer_shared.rs`): the focus buttons (pad 0: 0 <-> 2, pad 1: 1 <-> 2),
+    one player followed through FollowCar / FollowPed, the shared camera's 21-heading search through 0x5132D0 /
+    0x513220, the heading step clamped to 0.1, the drift by the summed velocity heading and both aim sticks (each
+    nudge tried; a blocked one zeroes the beta speed when it turns the same way: the spec had the condition
+    inverted), the 0.8^ts blend, WRN2_2P and the up vector, transcribed on the x87 stack. The "VM fragment"
+    0x4082C0 is CVector::Magnitude, an ordinary .text function already bound in sa-core.
+  - CCam::Process_Cam_TwoPlayer_InCarAndShooting 0x519810 (`twoplayer_shooting.rs`): the follow-car FOV, the
+    shooter's screen cursor (pulled to the nearest target, the excess beyond +-0.9, the re-centre), the orbit
+    distances (col model / heli raise), the travel-slope pitch, AvoidTheGeometry, the excess rotation and the
+    drive-by shot (stack CTaskSimpleGangDriveBy: weapon info at +0x30 and the quadrant byte at +0x14, not +0x34 /
+    +0x18 as the spec says). The two-player `Frame` is now generic, shared with Process_Cam_TwoPlayer_Separate_Cars.
+- Batch `frontier2-b35` (WORLD, 5 hooks): Interior_c::Kitchen_FurnishEdges 0x596930, FurnishBedroom 0x593FC0,
+  FurnishLounge 0x597740 and the two helpers it needs, Lounge_AddTV 0x597240 / Lounge_AddSofaInfo 0x5975C0
+  (`interior_room_furnish.rs`). Bytes vs spec: FurnishLounge places two chairs and a third above a perimeter of 28
+  (the spec lists one plus the conditional); the bedroom's bedside cases share two coordinate locals (the default
+  case reuses them); Lounge_AddTV dispatches on the raw corner. Uninitialised stack words are 0 (ledger). rand
+  sites attributed by return address (0x596D90, 0x596E2F, 0x596E60, 0x596E9A, 0x596EDB / 0x596F06 / 0x596F30,
+  0x596F8D, 0x596FB4; 0x5942B0, 0x5943CE / 0x5943F7, 0x594431, 0x5944D2, 0x59456F, 0x59460C, 0x5946A9; 0x5973D8;
+  0x597B93 / 0x597BBE / 0x597BE8, 0x597C12, 0x597CB3, 0x597D54); GetRandomNumberInRange through its port; no srand.
+- Batch `frontier2-b36` (STREAM, 1 hook): CStreaming::DeleteRwObjectsBehindCamera 0x40D7C0 (sa-stream): the three
+  sweeps along the axis the camera faces most, RemoveReferencedTxds before the third on the y axis (no scan code
+  advance there, as gta-reversed notes), GetSector's clamp and the repeat sector's & 15; MakeSpaceFor's
+  declaration now targets the port.
+- No duplicated code: one `rand_scaled` / 1/32768 for the interior modules (four copies merged), FurnishKitchen's
+  centred table is `place_centred` (shared with the bedroom / lounge rugs), the inlined scan code advance in
+  sa-stream is one helper (two old copies replaced), sa-cam's time read imports sa-world's. Bindings: the drive-by
+  shot 0x627CC0 / destructor 0x6218C0 bound in sa-world with sa-ai twins (local declarations removed),
+  CVehicle::CanPedLeanOut moved to sa-world; AvoidTheGeometry's sa-cam declaration targets its port. bindings
+  --check, convcheck (0 FAIL) and dupes (0 new; the interior box read joins the allow-listed same-offset group) clean.
+- frontier.py --no-branches: to port 55 -> 49 (CAM 0x519810 / 0x525E50, WORLD 0x593FC0 / 0x597740 / 0x596930,
+  STREAM 0x40D7C0); no new rows. With branches 30 -> 24. Non-RW/RENDER rows left unregistered: only the libjpeg
+  UNK-game rows 0x5CD810 / 0x5C26B0 / 0x5C2730 / 0x5C7590 / 0x5CF960 / 0x5CFA30 / 0x5CFAC0 (lane C's third-party
+  class, callees of JPegCompressScreen).
+- New scenarios (frontier.sh, frontier2-b35-counts.gdb): `interior` (CJ inside the VGSHS2 burglary house,
+  interior 15, area poked; the shell, gen_int2 model 14700, carries IDE 2dfx interior effects: Interior_c::Init 4,
+  FurnishBedroom 2, FurnishLounge 1, FurnishKitchen 1, Kitchen_FurnishEdges 1, Lounge_AddTV 1, AddSofaInfo 1) and
+  `streammem` (the cinema drive with ms_memoryAvailable poked to 8 MB: DeleteRwObjectsBehindCamera 1801 calls);
+  both 1216 steps, 0 blocked, no crash. No native scenario drives the two-player cameras.
+- Scenarios (frontier.sh, i686 native sa-game of the final code, SA_ROOT=~/sa-engine; steps / blocked): pausemenu 416 /
+  0, solicit 4016 / 0, crossing 1216 / 0, crossing-long 4016 / 0, roadblocks 2016 / 0, melee 2616 / 0, sniper /
+  shootcar / shootdriver / quad / heli / plane / boat / cinema / monster / tanker / nitro 1216 / 0, roadblock-script
+  1016 / 0, roadblock-wanted 2016 / 0, gangwar 2016 / 0, jetpack 1016 / 0, copsf / coplv 2016 / 0, samsite 1616 / 0,
+  postfx 1016 / 0, replay 2416 / 0, interior / streammem 1216 / 0, tank 1215 / 1 (0x4A0FA0, lane C), hunter 999 / 217
+  (DoDriveByAutoAiming 0x73D720, lane A); no crash, 0 blocked on lane B.
+- Writer gate (base 9fea817f) on 571cecc5 (the last code / catalog commit; only the roadmap and this worklog follow):
+  all 18 steps PASS, none skipped.
+- verify-all (lanes 4-5, fresh release sa-oracle + satool, DLL sha256 98397217... = the final code): `lb16-u`
+  (SA_UNVERIFIED=frontier2-b29..frontier2-b36,frontier2-c13) IDENTICAL 13/13; default set `lb16-def` (same DLL)
+  IDENTICAL 13/13; save-load identical except the SAVE-1 stack residue.
+- Resources: CARGO_BUILD_JOBS=4 / JOBS=4, one cargo build at a time; wine lanes 4-5; target/ under 5 GB.
+- Open (lane B): nothing outside RW / RENDER. The remaining non-RW/RENDER frontier rows are registered on other
+  branches (CShopping 0x49B8D0 / 0x49BBE0 / 0x49BF70, WEAPON 0x73C1F0 / 0x73C710 / 0x73CDC0 / 0x73D720 / 0x73E800,
+  CEscalator::Update 0x717D30) or the libjpeg class; the two-player cameras have no native scenario.
