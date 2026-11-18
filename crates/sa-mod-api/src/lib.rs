@@ -404,6 +404,7 @@ pub mod script {
         (0x05CB, "TASK_ENTER_CAR_AS_DRIVER", "pvi"),
         (0x05CD, "TASK_LEAVE_CAR", "pv"),
         (0x0687, "CLEAR_CHAR_TASKS", "p"),
+        (0x06BD, "IS_LINE_OF_SIGHT_CLEAR", "ffffffiiiii"),
         (0x06D7, "SWITCH_RANDOM_TRAINS", "i"),
         (0x0812, "TASK_PLAY_ANIM_NON_INTERRUPTABLE", "pssfiiiii"),
         (0x0826, "DISPLAY_HUD", "i"),
