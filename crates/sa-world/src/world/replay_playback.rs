@@ -30,6 +30,7 @@ use crate::bindings::audio_retune_radio;
 use sa_core::bindings::audio_set_effects_master_volume;
 use sa_core::bindings::audio_set_music_master_volume;
 use crate::bindings::get_level_from_position;
+use crate::bindings::set_game_clock;
 use crate::bindings::mark_everything_as_new;
 use sa_core::bindings::camera_process_fade;
 use sa_core::bindings::camera_set_fade_colour;
@@ -40,7 +41,9 @@ use sa_core::bindings::camera_fade;
 use sa_core::bindings::streaming_load_scene as load_scene;
 orig! {
     /// `CReplay::RestoreStuffFromMem()` (0x45ECD0)
-    fn restore_stuff_from_mem() = cdecl 0x45ECD0 => unported;
+    fn restore_stuff_from_mem() = cdecl 0x45ECD0 => replay_restore_stuff_from_mem;
+    /// `CPlayerPedData::DeAllocateData()` (0x56F890)
+    fn player_ped_data_deallocate(d: GPtr<u8>) = thiscall 0x56F890 => unported;
     /// `CFireManager::CreateAllFxSystems()` (0x539D50)
     fn fire_manager_create_all_fx_systems(m: GPtr<u8>) = thiscall 0x539D50 => unported;
 }
@@ -98,4 +101,72 @@ pub fn enable_replays() {
     g::<u8>(0x8A6160).write(1);
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_FINISH_PLAYBACK, HOOK_ENABLE_REPLAYS];
+/// `CReplay::RestoreStuffFromMem()` (0x45ECD0, cdecl). Every pool ped (stride 0x7C4) and vehicle (0xA18) made for the
+/// replay (`bUsedForReplay`: ped +0x478 bit 21, vehicle +0x42F bit 3) is removed from the world and deleted (a ped's
+/// player data deallocated first), every other one added back; the pool's size is re-read after each. `TheCamera` is
+/// copied back from `pStoredCam` (0x35E dwords), which is freed and cleared; `CWorld::Players[0] = stored player info`
+/// (0xA430B0, through its `operator=`), after which the stored copy's +4 / +8 / +0xC / +0x184 are zeroed (the bytes;
+/// gta-reversed has none of it); the eleven timer values; `SetGameClock(hours, ++minutes, 0)`; the weather types and
+/// interpolation, `CGame::currArea` (a byte, zero-extended) and the nine population counters.
+#[hook(addr = 0x45ECD0, conv = cdecl, name = "CReplay::RestoreStuffFromMem", expect = "A1 90 44 B7 00 8B 48 08",
+       unverified = "frontier2-a19", route = "L2", hazards = "heap-writes",
+       note = "leaving a replay (FinishPlayback)")]
+pub fn replay_restore_stuff_from_mem() {
+    use super::pickups::{entity_vdelete, world_remove};
+    use sa_core::bindings::{crt_free_8214bd, world_add};
+    use sa_core::field::rd;
+    for (pool_cell, stride, replay) in [(0xB7_4490usize, 0x7C4usize, true), (0xB7_4494, 0xA18, false)] {
+        let mut i = 0;
+        while i < rd::<i32>(g::<GPtr<u8>>(pool_cell).read(), 8) {
+            let pool = g::<GPtr<u8>>(pool_cell).read();
+            let e = rd::<GPtr<u8>>(pool, 0).byte_add((i as usize * stride) as isize);
+            if rd::<i8>(rd::<GPtr<u8>>(pool, 4), i as isize) >= 0 && !e.is_null() {
+                let used = if replay { rd::<u32>(e, 0x478) & 0x20_0000 != 0 } else { rd::<u8>(e, 0x42F) & 8 != 0 };
+                if used {
+                    if replay && !rd::<GPtr<u8>>(e, 0x480).is_null() {
+                        player_ped_data_deallocate(rd::<GPtr<u8>>(e, 0x480));
+                    }
+                    world_remove(e);
+                    entity_vdelete(e, 1);
+                } else {
+                    world_add(e);
+                }
+            }
+            i += 1;
+        }
+    }
+    let stored = g::<GPtr<u32>>(0x97_FAF8).read();
+    for k in 0..0x35E {
+        g::<u32>(THE_CAMERA + 4 * k).write(stored.wrapping_index(k as i32).read());
+    }
+    crt_free_8214bd(stored.cast());
+    g::<u32>(0x97_FAF8).write(0);
+    super::frontier_c::player_info_assign(GPtr::from_addr(0xB7_CD98), GPtr::from_addr(0xA4_30B0));
+    for (dst, src) in [
+        (0xB7_CB84usize, 0x97_FB60usize), (0xB7_CB78, 0x97_FB58), (0xB7_CB80, 0x97_FB5C), (0xB7_CB74, 0x97_FB54),
+        (0xB7_CB7C, 0x97_FB48), (0xB7_CB5C, 0x97_FB38), (0xB7_CB6C, 0x97_FB4C), (0xB7_CB64, 0x97_FB3C),
+        (0xB7_CB70, 0x97_FB50), (0xB7_CB4C, 0x97_FB44), (0xB7_CB58, 0x97_FB34),
+    ] {
+        g::<u32>(dst).write(g::<u32>(src).read());
+    }
+    let minutes = g::<u8>(0x97_FAEE).read().wrapping_add(1);
+    let hours = g::<u8>(0x97_FAEF).read();
+    for z in [0xA4_30B4usize, 0xA4_30B8, 0xA4_30BC, 0xA4_3234] {
+        g::<u32>(z).write(0);
+    }
+    g::<u8>(0x97_FAEE).write(minutes);
+    set_game_clock(u32::from(hours), u32::from(minutes), 0);
+    g::<u16>(0xC8_1320).write(g::<u16>(0x97_FAEC).read());
+    g::<u16>(0xC8_131C).write(g::<u16>(0x97_FAE8).read());
+    g::<u32>(0xC8_130C).write(g::<u32>(0x97_FAE4).read());
+    g::<u32>(0xB7_2914).write(u32::from(g::<u8>(0x97_FAB8).read()));
+    for (dst, src) in [
+        (0xC0_EC70usize, 0x97_FAB4usize), (0xC0_EC6C, 0x97_FAB0), (0xC0_EC68, 0x97_FAAC), (0xC0_EC64, 0x97_FAA8),
+        (0xC0_EC34, 0x97_FA78), (0xC0_EC30, 0x97_FA74), (0xC0_EC2C, 0x97_FA70), (0xC0_EC28, 0x97_FA6C),
+        (0xC0_EC24, 0x97_FA68),
+    ] {
+        g::<u32>(dst).write(g::<u32>(src).read());
+    }
+}
+
+pub const HOOKS: &[HookReg] = &[HOOK_FINISH_PLAYBACK, HOOK_ENABLE_REPLAYS, HOOK_REPLAY_RESTORE_STUFF_FROM_MEM];
