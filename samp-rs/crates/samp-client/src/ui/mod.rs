@@ -15,6 +15,7 @@ pub mod host;
 pub mod core;
 pub mod inputlock;
 pub mod render;
+pub mod scene;
 pub mod session;
 
 #[cfg(windows)]

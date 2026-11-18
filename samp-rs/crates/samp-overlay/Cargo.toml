@@ -1,0 +1,11 @@
+[package]
+name = "samp-overlay"
+version = "0.1.0"
+description = "samp-rs's UI drawn as textured quads (glyph atlas, DrawText layout, skin) for games with a 2D image overlay"
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+ab_glyph = "0.2"
+sa-samp-api = { path = "../sa-samp-api" }
+samp-ui = { path = "../samp-ui" }
