@@ -29,24 +29,6 @@ pub struct ModGame {
     pub ui: samp_overlay::QuadUi,
 }
 
-/// World point `p` on a `size` screen with the game's camera (its horizontal field of view; the vertical one
-/// follows from the aspect ratio) and its depth in front of the camera, `None` behind the camera.
-pub fn project(p: Vec3, size: (i32, i32)) -> Option<(f32, f32, f32)> {
-    let c = state::camera()?;
-    let right = cross(c.front, c.up);
-    let d = Vec3::new(p.x - c.pos.x, p.y - c.pos.y, p.z - c.pos.z);
-    let dot = |a: Vec3, b: Vec3| a.x * b.x + a.y * b.y + a.z * b.z;
-    let z = dot(d, c.front);
-    if z <= 0.1 {
-        return None;
-    }
-    let half = (c.fov.to_radians() / 2.0).tan();
-    let aspect = if c.aspect_ratio > 0.0 { c.aspect_ratio } else { size.0 as f32 / size.1.max(1) as f32 };
-    let (w, h) = (size.0 as f32, size.1 as f32);
-    let x = w / 2.0 * (1.0 + dot(d, right) / (z * half));
-    let y = h / 2.0 * (1.0 - dot(d, c.up) / (z * half / aspect));
-    Some((x, y, z))
-}
 
 /// A mod API error as the adapter's.
 fn failed(what: &'static str) -> impl Fn(Error) -> GameError {
@@ -125,8 +107,7 @@ impl Camera for ModGame {
         }
     }
     fn world_to_screen(&self, p: Vec3) -> Option<(Point2, f32)> {
-        use sa_samp_api::ui::UiBackend as _;
-        let (x, y, depth) = project(p, self.ui.video_size())?;
+        let (x, y, depth) = state::world_to_screen(p)?;
         Some((Point2 { x, y }, depth))
     }
     fn sphere_visible(&self, _center: Vec3, _radius: f32) -> bool { false }

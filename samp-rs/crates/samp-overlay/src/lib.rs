@@ -6,7 +6,8 @@
 //! calls [`QuadUi::flush`] once per frame to turn them into the canvas's quads.
 //!
 //! Text textdraws go to the game's font where the canvas offers it ([`Canvas::game_text`]), else the UI font stands
-//! in at the textdraw's letter size; sprite and model-preview textdraws are not drawn.
+//! in at the textdraw's letter size. Sprite textdraws are the canvas's game textures ([`Canvas::game_sprite`]);
+//! model previews take the text path.
 
 pub mod draw;
 pub mod font;
@@ -44,6 +45,13 @@ pub trait Canvas {
     /// stands in.
     fn game_text(&mut self, font: &TextdrawFont, text: &[u8]) -> bool {
         let _ = (font, text);
+        false
+    }
+    /// Draws a sprite textdraw's game texture (`text` is `txd:name`, [`samp_ui::textdraw::sprite_source`]) into
+    /// `rect` (`[left, top, right, bottom]`) tinted with `colour` (`CRGBA`); false when the canvas has no such
+    /// texture (the textdraw then takes the text path, as samp does).
+    fn game_sprite(&mut self, text: &[u8], rect: [f32; 4], colour: u32) -> bool {
+        let _ = (text, rect, colour);
         false
     }
 }
@@ -84,9 +92,9 @@ enum Upload {
     Failed,
 }
 
-/// A world point's place on a screen of the given size, for nametags and labels: `(x, y)` in pixels, `None` behind
-/// the camera.
-pub type Projector = Box<dyn Fn([f32; 3], (i32, i32)) -> Option<(f32, f32)>>;
+/// A world point's place on the screen with the game's camera, for nametags and labels: `(x, y)` in pixels, `None`
+/// off screen or behind the camera.
+pub type Projector = Box<dyn Fn([f32; 3]) -> Option<(f32, f32)>>;
 
 /// samp's UI backend over a [`Canvas`].
 #[derive(Default)]
@@ -111,6 +119,8 @@ pub struct QuadUi {
     projector: Option<Projector>,
     /// Images the next flush deletes (the atlas was rebuilt).
     stale: Vec<u32>,
+    /// Sprite textdraw texts and whether the canvas had their texture.
+    sprites: std::collections::HashMap<Vec<u8>, bool>,
 }
 
 impl std::fmt::Debug for QuadUi {
@@ -256,6 +266,10 @@ impl QuadUi {
                     Some(id) => batch.push(Some(id), skin_quad(src, *dst, *colour)),
                     None => batch.rect(*dst, *colour),
                 },
+                Cmd::Sprite { text, rect, colour } => {
+                    let ok = batch.canvas.game_sprite(text, *rect, *colour);
+                    self.sprites.insert(text.clone(), ok);
+                }
                 Cmd::GameFont { font, text } => {
                     if batch.canvas.game_text(font, text) {
                         continue;
@@ -565,7 +579,7 @@ impl UiBackend for QuadUi {
     fn bars_end(&mut self) {}
 
     fn project(&self, p: [f32; 3]) -> [f32; 3] {
-        match self.projector.as_ref().and_then(|f| f(p, self.screen)) {
+        match self.projector.as_ref().and_then(|f| f(p)) {
             Some((x, y)) => [x, y, 0.5],
             None => [0.0, 0.0, 2.0],
         }
@@ -587,19 +601,19 @@ impl UiBackend for QuadUi {
         self.list.cmds.push(Cmd::GameFont { font: *f, text: text.to_vec() });
     }
 
-    fn textdraw_sprite(
-        &mut self,
-        _id: u16,
-        _style: u8,
-        _text: &[u8],
-        _serial: u64,
-        _rect: [f32; 4],
-        _colour: u32,
-    ) -> bool {
-        false
+    /// The texture is the canvas's, known at the flush: a textdraw is drawn as a sprite until the canvas reported
+    /// that it has no such texture.
+    fn textdraw_sprite(&mut self, _id: u16, style: u8, text: &[u8], _serial: u64, rect: [f32; 4], colour: u32) -> bool {
+        if style != samp_ui::textdraw::FONT_SPRITE || self.sprites.get(text) == Some(&false) {
+            return false;
+        }
+        self.list.cmds.push(Cmd::Sprite { text: text.to_vec(), rect, colour });
+        true
     }
 
-    fn textdraw_sync(&mut self, _live: &[(u16, &[u8])]) {}
+    fn textdraw_sync(&mut self, live: &[(u16, &[u8])]) {
+        self.sprites.retain(|t, _| live.iter().any(|(_, l)| *l == t.as_slice()));
+    }
 
     fn set_input_state(&mut self, keyboard: bool, mouse: bool, cursor: bool) {
         self.input = (keyboard, mouse, cursor);

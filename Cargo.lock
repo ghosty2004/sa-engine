@@ -2793,6 +2793,7 @@ dependencies = [
  "samp-client",
  "samp-overlay",
  "samp-proto",
+ "samp-ui",
 ]
 
 [[package]]

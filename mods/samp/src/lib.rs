@@ -5,7 +5,8 @@
 //!
 //! Once the game runs its world the mod shows its connect screen ([`connect::Screen`]): the server, the nickname and
 //! the favourite servers. The manifest asks for the servers the user approves (`net = ["udp:user-approved"]`): the
-//! first connection to a server makes the host ask the user, and the mod waits for the answer. Its storage holds:
+//! first connection to a server makes the host ask the user, and the mod waits for the answer. Its storage holds (a
+//! file of the same name in the mod's folder stands in for a missing key: a page's storage starts empty):
 //!
 //! * `server`, `name`, `favourites`: the connect screen's fields and favourites;
 //! * `auth_table.txt`: the servers' auth table (third-party data the user provides; without it the server refuses
@@ -45,9 +46,13 @@ fn host_time() -> HostTime {
     HostTime { monotonic: Duration::from_micros(now.monotonic_us), wall: Duration::from_micros(now.unix_us) }
 }
 
-/// A setting from the mod's storage.
+/// A setting from the mod's storage, else from the file of that name in the mod's folder (how a page hands them
+/// over: its storage starts empty).
 fn setting(key: &str) -> Option<String> {
-    let v = storage::read(key).ok().flatten()?;
+    let v = match storage::read(key).ok().flatten() {
+        Some(v) => v,
+        None => sa_mod::files::read(key).ok().flatten()?,
+    };
     String::from_utf8(v).ok().map(|s| s.trim().to_string()).filter(|s| !s.is_empty())
 }
 
@@ -63,11 +68,12 @@ fn serial_seed() -> String {
     s
 }
 
+/// The servers' auth table ([`setting`] `auth_table.txt`).
 fn auth_table() -> Result<AuthTable, String> {
     match setting("auth_table.txt") {
         Some(t) => AuthTable::parse(&t).map_err(|e| format!("auth_table.txt: {e:?}")),
         None => {
-            sa_mod::log(sa_mod::level::WARN, "samp: no auth_table.txt in the mod's storage: joins fail at auth");
+            sa_mod::log(sa_mod::level::WARN, "samp: no auth_table.txt in the mod's storage or folder: joins fail at auth");
             AuthTable::parse("").map_err(|e| format!("{e:?}"))
         }
     }
@@ -154,8 +160,8 @@ struct Samp {
 impl Default for Samp {
     fn default() -> Samp {
         let mut game = game::ModGame::default();
-        game.ui.set_projector(Box::new(|p, size| {
-            game::project(Vec3::new(p[0], p[1], p[2]), size).map(|(x, y, _)| (x, y))
+        game.ui.set_projector(Box::new(|p| {
+            state::world_to_screen(Vec3::new(p[0], p[1], p[2])).map(|(x, y, _)| (x, y))
         }));
         Samp {
             stage: Stage::Screen,
@@ -236,6 +242,13 @@ fn window_event(e: Input) -> WindowEvent {
 impl Mod for Samp {
     fn init(&mut self) -> Result<(), String> {
         samp_proto::time::set_clock(host_time);
+        assets::install(&mut self.game.ui);
+        // the reference scene is the UI alone, over the unchanged single-player world
+        if setting("ui_scene").is_some_and(|v| v == "ref") {
+            self.stage = Stage::Scene(Box::new(Scene { ui: UiHost::new(None), frames: 0, label: None }));
+            events::subscribe(&[event_kind::FRAME_BEGIN]);
+            return Ok(());
+        }
         // What samp.dll switches off in the game; RPC 30 TogglePlayerClock turns the clock back on.
         for o in [
             GameOption::TypedCheats,
@@ -254,10 +267,7 @@ impl Mod for Samp {
         ] {
             set_option(o, false).map_err(|e| format!("game option {o:?}: {e:?}"))?;
         }
-        assets::install(&mut self.game.ui);
-        if setting("ui_scene").is_some_and(|v| v == "ref") {
-            self.stage = Stage::Scene(Box::new(Scene { ui: UiHost::new(None), frames: 0, label: None }));
-        } else if setting("auto_connect").is_some_and(|v| v == "1") {
+        if setting("auto_connect").is_some_and(|v| v == "1") {
             self.stage = Stage::Approval { server: self.screen.server.clone(), name: self.screen.name.clone() };
         }
         events::subscribe(&[event_kind::FRAME_BEGIN]);

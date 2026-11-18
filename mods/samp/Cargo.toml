@@ -17,5 +17,6 @@ samp-client = { path = "../../samp-rs/crates/samp-client" }
 samp-proto = { path = "../../samp-rs/crates/samp-proto" }
 sa-samp-api = { path = "../../samp-rs/crates/sa-samp-api" }
 samp-overlay = { path = "../../samp-rs/crates/samp-overlay" }
+samp-ui = { path = "../../samp-rs/crates/samp-ui" }
 # the user's sampgui.png / mouse.png
 png = "0.18"

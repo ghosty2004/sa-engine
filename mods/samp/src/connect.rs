@@ -33,11 +33,6 @@ pub struct Screen {
     pub status: Option<String>,
 }
 
-fn read(key: &str) -> Option<String> {
-    let v = storage::read(key).ok().flatten()?;
-    String::from_utf8(v).ok().map(|s| s.trim().to_string()).filter(|s| !s.is_empty())
-}
-
 fn valid_server(s: &str) -> bool {
     s.rsplit_once(':').is_some_and(|(h, p)| !h.is_empty() && p.parse::<u16>().is_ok_and(|p| p != 0))
 }
@@ -46,11 +41,11 @@ impl Screen {
     /// The screen with the last server and name used and the favourites.
     pub fn load(default_server: &str, default_name: &str) -> Screen {
         let favourites: Vec<String> =
-            read("favourites").map(|t| t.lines().map(str::trim).filter(|l| valid_server(l)).map(String::from).collect())
+            crate::setting("favourites").map(|t| t.lines().map(str::trim).filter(|l| valid_server(l)).map(String::from).collect())
                 .unwrap_or_default();
         Screen {
-            server: read("server").unwrap_or_else(|| default_server.to_string()),
-            name: read("name").unwrap_or_else(|| default_name.to_string()),
+            server: crate::setting("server").unwrap_or_else(|| default_server.to_string()),
+            name: crate::setting("name").unwrap_or_else(|| default_name.to_string()),
             favourites,
             selected: 0,
             focus: Field::Server,

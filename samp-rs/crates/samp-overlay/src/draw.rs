@@ -40,6 +40,15 @@ pub enum Cmd {
         /// Tint `0xAARRGGBB`.
         colour: u32,
     },
+    /// A sprite textdraw (font 4, `txd:name`): `rect` `[left, top, right, bottom]`, tint `CRGBA`.
+    Sprite {
+        /// The textdraw's text.
+        text: Vec<u8>,
+        /// Rectangle.
+        rect: [f32; 4],
+        /// Tint.
+        colour: u32,
+    },
     /// A text textdraw: the `CFont` state, then `PrintString`.
     GameFont {
         /// The font state and position.

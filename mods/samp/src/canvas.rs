@@ -3,14 +3,29 @@
 
 use std::collections::BTreeMap;
 
-use sa_mod::{FontText, Image, Overlay, Quad, Rgba};
+use sa_mod::{FontText, GameTexture, Image, Overlay, Quad, Rgba};
 use sa_samp_api::ui::TextdrawFont;
 
-/// The UI's images, by the ids the UI knows them by.
+/// The UI's images, by the ids the UI knows them by, and the game textures of sprite textdraws, by their text
+/// (`None`: the game has no such texture).
 #[derive(Default)]
 pub struct Images {
     next: u32,
     images: BTreeMap<u32, Image>,
+    textures: BTreeMap<Vec<u8>, Option<GameTexture>>,
+}
+
+/// The game texture of a sprite textdraw's `txd:name`, found (or its dictionary loaded) as samp does: `Err(())`
+/// while the game has not looked yet, `Ok(None)` when there is none.
+fn find_texture(text: &[u8]) -> Result<Option<GameTexture>, ()> {
+    let Some(src) = samp_ui::textdraw::sprite_source(text) else { return Ok(None) };
+    let s = |b: &[u8]| String::from_utf8_lossy(b).into_owned();
+    let file = src.path().map(|p| s(&p));
+    match GameTexture::find(&s(&src.slot), file.as_deref(), &s(&src.texture)) {
+        Ok(t) => Ok(Some(t)),
+        Err(sa_mod::Error::Again) => Err(()),
+        Err(_) => Ok(None),
+    }
 }
 
 /// The overlay of the frame being drawn, with the UI's images.
@@ -90,5 +105,20 @@ impl samp_overlay::Canvas for ModCanvas<'_> {
             style: f.font,
         };
         self.overlay.game_text(&t, text).is_ok()
+    }
+
+    fn game_sprite(&mut self, text: &[u8], rect: [f32; 4], colour: u32) -> bool {
+        let tex = match self.images.textures.get(text) {
+            Some(t) => *t,
+            None => match find_texture(text) {
+                Ok(t) => *self.images.textures.entry(text.to_vec()).or_insert(t),
+                // the game looks it up in its next frame
+                Err(()) => return true,
+            },
+        };
+        let Some(tex) = tex else { return false };
+        let [l, t, r, b] = rect;
+        // the tint is a CRGBA word (R, G, B, A in memory order)
+        self.overlay.game_sprite(tex, [l, t, r - l, b - t], Rgba(colour.swap_bytes())).is_ok()
     }
 }
