@@ -495,6 +495,7 @@ impl HostedClient {
             R::PlayerQuit(p) => {
                 self.remove_player(p.player_id, game);
                 self.remotes.remove(&p.player_id);
+                self.note(format!("player {} left", p.player_id));
             }
             R::PlayerJoin(j) => {
                 self.remotes.insert(j.player_id, RemoteTag { npc: j.is_npc != 0, ..RemoteTag::default() });

@@ -17,7 +17,8 @@
 # EXTRA_CMDS: more server commands after the scripted ones, `;`-separated (`sleep|S` waits), e.g.
 # 'td|~y~textdraw;dialog|1|0|Welcome|Hello;sleep|8'; SA_GAME_KEYS adds scripted keys (`tab:1500:1502`
 # opens the scoreboard). BOT=1: samp-rs's samp-bot (SAMP_BOT, default samp-rs/target/release/samp-bot) joins as
-# a second, real player once ours spawned and stands at the spawn point, ahead of our player (its nametag).
+# a second, real player once ours spawned, stands at the spawn point, ahead of our player (its nametag), and leaves
+# after BOT_SECONDS (default 30).
 # WEB=1: the same join from the browser: the web build with mods (FEATURES=mods tools/web/build.sh) in headless
 # Chromium (tools/web/headless.mjs, WEB_SECONDS, default 150, WEB_GPU its --gpu, default swiftshader), its UDP through
 # sa-udp-proxy (UDP_PROXY, default
@@ -28,7 +29,10 @@
 # Screenshots in OUT/web/.
 # SA_GAME = the sa-game binary (default target/i686-unknown-linux-gnu/release/sa-game), MODS = the built mods
 # (default target/mods). FRAMES (default 1800). Port SAMP_PORT (default 7813).
-# Output: server.log, sa-game.log, report.md, present/*.png (every 20th in-game frame), server-events.txt.
+# Output: server.log, sa-game.log, report.md, present/*.png (every 20th in-game frame), server-events.txt, and
+# goal.txt: samp-rs's goal scenario (tools/e2e/goal.sh on the DLL host) as this host can show it: connected, spawned,
+# the server's commands acknowledged, our own walk seen by the server (>= 1 m from the teleport point), and with
+# BOT=1 the other player streamed in as a ped and removed when it leaves. Exit status 0 only if every step holds.
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/../../.." && pwd)"
@@ -171,7 +175,7 @@ if wait_log '\[cov\] spawn id=' 150; then
     say "spawned"
     if [ "${BOT:-0}" = 1 ]; then
         "${SAMP_BOT:-$ROOT/samp-rs/target/release/samp-bot}" "127.0.0.1:$PORT" --name BotPlayer --mode idle \
-            --seconds 300 --auth-table "$AUTH" > "$OUT/samp-bot.log" 2>&1 &
+            --seconds "${BOT_SECONDS:-30}" --auth-table "$AUTH" > "$OUT/samp-bot.log" 2>&1 &
         BOT_PID=$!
         say "samp-bot pid $BOT_PID"
     fi
@@ -187,6 +191,7 @@ if wait_log '\[cov\] spawn id=' 150; then
     sleep 3
     # facing north: the scripted walk goes up the street, not into the safe house (its save marker opens a menu)
     cmd "pos|2495|-1680|13.5|0"
+    POS_SEQ=$SEQ
     sleep 3
     cmd "npc|Bot|2492|-1684|13.5|105|0"
     sleep 3
@@ -200,6 +205,11 @@ if wait_log '\[cov\] spawn id=' 150; then
     for c in "${EXTRA[@]}"; do
         case "$c" in sleep\|*) sleep "${c#sleep|}" ;; ?*) cmd "$c" ;; esac
     done
+    if [ -n "$BOT_PID" ]; then
+        wait "$BOT_PID" 2> /dev/null
+        BOT_PID=
+        say "samp-bot left"
+    fi
 else
     say "FAIL: no spawn"
 fi
@@ -208,3 +218,29 @@ say "game exit $?"
 GAME_PID=
 grep -E '\[(join|part|connection)\]|\[cov\] (connect|class|spawn|state|where|npc|[0-9]+ done|disconnect)' "$SLOG" > "$OUT/server-events.txt"
 say "server events: $(wc -l < "$OUT/server-events.txt") lines; PNGs: $(ls "$OUT/present" | wc -l)"
+GLOG="$OUT/sa-game.log"
+[ "$WEB" = 1 ] && GLOG="$OUT/web/game-log.txt"
+python3 -I - "$SLOG" "$GLOG" "${POS_SEQ:-0}" "${BOT:-0}" "$SEQ" > "$OUT/goal.txt" << 'PY'
+import math, re, sys
+slog, glog, pos_seq, bot, seqs = open(sys.argv[1], errors="replace").read(), sys.argv[2], int(sys.argv[3]), sys.argv[4] == "1", int(sys.argv[5])
+try:
+    game = open(glog, errors="replace").read()
+except OSError:
+    game = ""
+steps = [("connected", bool(re.search(r"\[cov\] connect id=\d+ name=ModCJ", slog))),
+         ("spawned", "[cov] spawn id=" in slog),
+         ("commands acknowledged", all(re.search(rf"\[cov\] {i} done", slog) for i in range(1, seqs + 1)))]
+after = slog.split(f"[cov] {pos_seq} done", 1)[1] if pos_seq and f"[cov] {pos_seq} done" in slog else ""
+far = max((math.dist((float(x), float(y)), (2495.0, -1680.0)) for x, y in re.findall(r"where st=1 pos=(-?[\d.]+),(-?[\d.]+),", after)), default=0.0)
+steps.append((f"walk seen by the server ({far:.1f} m from the teleport point)", far >= 1.0))
+if bot:
+    m = re.search(r"player (\d+) \(skin \d+\) streamed in", game)
+    steps.append(("the other player streamed in as a ped", m is not None))
+    steps.append(("its ped removed when it left", m is not None and f"player {m.group(1)} left" in game))
+for name, ok in steps:
+    print(f"{'PASS' if ok else 'FAIL'} {name}")
+sys.exit(0 if all(ok for _, ok in steps) else 1)
+PY
+GOAL=$?
+cat "$OUT/goal.txt" | tee -a "$OUT/steps.log"
+exit "$GOAL"
