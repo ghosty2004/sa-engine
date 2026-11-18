@@ -35,6 +35,7 @@ const FX_VERTEX_BUFFER: u32 = 0xC4D958;
 const FX_PROJECT_PATH: usize = 0x85A6D4;
 /// `"water_splash_big"` (0x85A740, the system `TriggerWaterSplash` creates)
 const WATER_SPLASH_NAME: usize = 0x85A740;
+const TANK_FIRE_NAME: usize = 0x85A734;
 /// The wind vector / strength `Fx_c::Init` hands to `SetWindData` (`CWeather::WindDir` 0xC813E0,
 /// `CWeather::Wind` 0xC812F0).
 const WEATHER_WIND_DIR: usize = 0xC813E0;
@@ -646,6 +647,34 @@ pub fn fx_trigger_water_splash(_this: GPtr<u8>, pos: GPtr<u8>) {
     }
 }
 
+/// `Fx_c::TriggerTankFire(CVector& pos, CVector& dir)` (0x4A0FA0): the camera test of
+/// `TriggerWaterSplash` (`> 625.0` skips); then a `g_fxMan` matrix from `CreateMatFromVec(m, pos, dir)`,
+/// the `tank_fire` system created at a zero offset with that matrix as its parent, the parent copied into
+/// the system (`CopyParentMatrix`) and played-and-killed, and the matrix returned.
+#[hook(addr = 0x4A0FA0, conv = thiscall, name = "Fx_c::TriggerTankFire", expect = "A1 3C F0 B6 00", this = "Fx_c",
+       unverified = "frontier2-c22", route = "L2", hazards = "none")]
+pub fn fx_trigger_tank_fire(this: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>) {
+    let c = sa_world::world::common::cam_pos().cast::<u8>();
+    let dx = x(rd(c, 0)).fsub_m(rd(pos, 0));
+    let dy = x(rd(c, 4)).fsub_m(rd(pos, 4));
+    let dz = x(rd(c, 8)).fsub_m(rd(pos, 8));
+    let s = dx.fmul(dx).fadd(dz.fmul(dz)).fadd(dy.fmul(dy));
+    if !jne(s, x(k(K_625)), 0x41) {
+        return;
+    }
+    let m = fx_rw_matrix_create(g(FX_MAN));
+    let mp = GPtr::<u8>::from_addr(m as usize);
+    sa_core::bindings::fx_create_mat_from_vec(this, mp, pos, dir);
+    let mut offset = [0u32; 3];
+    let op = GPtr::<u32>::from_raw(offset.as_mut_ptr()).cast::<u8>();
+    let sys = create_fx_system_name(g(FX_MAN), g(TANK_FIRE_NAME), op, mp, 0);
+    if !sys.is_null() {
+        fx_system_copy_parent_matrix(sys);
+        system_play_and_kill(sys);
+    }
+    fx_rw_matrix_destroy(g(FX_MAN), m);
+}
+
 /// `FxEmitterBP_c::CreateInstance()` (0x4A2B40): `new FxEmitter_c` (0x14 bytes: the `FxPrim_c` base and
 /// the emitter vtable); null when the allocation fails. (SEH frame not reproduced: nothing throws.)
 #[hook(addr = 0x4A2B40, conv = thiscall, name = "FxEmitterBP_c::CreateInstance", expect = "6A FF 68 9B 8E 83 00", this = "FxEmitterBP_c")]
@@ -968,6 +997,7 @@ const OWN_HOOKS: &[HookReg] = &[
     HOOK_FX_DESTROY_ENTITY_FX,
     HOOK_FX_RENDER_BEGIN,
     HOOK_FX_TRIGGER_WATER_SPLASH,
+    HOOK_FX_TRIGGER_TANK_FIRE,
     HOOK_FX_EMITTER_BP_CREATE_INSTANCE,
     HOOK_FX_EMITTER_BP_UPDATE,
     HOOK_FX_INFO_MANAGER_PROCESS_MOVEMENT_INFO,
