@@ -97,7 +97,7 @@ pub fn jpeg_compress_screen_to_file(cam: GPtr<u8>, path: GPtr<u8>) {
 /// The file destination's `empty_output_buffer(j_compress_ptr)` (0x5D0400, cdecl): the whole buffer (0xBD0B78,
 /// 0x32000 bytes) written with `CFileMgr::Write` to `JPegPlugin`'s file, the manager (`cinfo` +0x18) reset to the
 /// buffer's start and size; returns TRUE (AL = 1).
-#[hook(addr = 0x5D0400, conv = cdecl, name = "JPegPlugin::EmptyOutputBuffer", expect = "A1 74 0B BD 00 68 00 20 03 00",
+#[hook(addr = 0x5D0400, conv = cdecl, name = "(missed by ghidra: data-code-immediate)", expect = "A1 74 0B BD 00 68 00 20 03 00",
        unverified = "pure1f-1", route = "L2", hazards = "heap-writes", note = "writes the JPEG file")]
 pub fn jpeg_empty_output_buffer(cinfo: GPtr<u8>) -> u8 {
     file_write(g::<GPtr<u8>>(FILE).read(), GPtr::from_addr(BUFFER), BUFFER_SIZE);
