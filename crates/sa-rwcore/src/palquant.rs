@@ -10,7 +10,7 @@
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::hook;
-use sa_math::x87::X87;
+use sa_math::x87::{Cmp, X87};
 
 use crate::bindings::{free_list_create, free_list_destroy};
 use crate::common::{g, p8, rd, rw_memory_alloc, rw_memory_free, wr};
@@ -207,7 +207,7 @@ pub fn rw_pal_quant_add_image(pq: GPtr<u8>, img: GPtr<u8>, weight: f32) {
 pub fn pal_quant_merge_stats(dst: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) {
     let var = X87::from_f32(rd(a, 0x14)).fadd_m(rd(b, 0x14)).to_f32();
     wr::<f32>(dst, 0x14, var);
-    let positive = |p: GPtr<u8>| X87::from_f32(rd(p, 0)).fcom(X87::zero()) == sa_math::x87::Cmp::Greater;
+    let positive = |p: GPtr<u8>| X87::from_f32(rd(p, 0)).fcom(X87::zero()) == Cmp::Greater;
     if positive(a) && positive(b) {
         let ia = X87::one().fdiv_m(rd(a, 0));
         let ib = X87::one().fdiv_m(rd(b, 0));
@@ -265,7 +265,7 @@ pub fn pal_quant_assign_indices(node: GPtr<u8>, cell: GPtr<u8>, levels: i32) -> 
     let s = r.fmul(r).fadd(gr.fmul(gr)).fadd(b.fmul(b)).fadd(a.fmul(a)).fdiv_m(rd(node, 0));
     let v = X87::from_f32(rd(node, 0x14)).fsub(s);
     wr::<f32>(node, 0x14, v.to_f32());
-    if v.fcom(X87::zero()) == sa_math::x87::Cmp::Less {
+    if v.fcom(X87::zero()) == Cmp::Less {
         wr::<u32>(node, 0x14, 0);
     }
     let c = channels(cell, 0xFF);
@@ -392,10 +392,6 @@ pub fn pal_quant_build_boxes(node: GPtr<u8>, origin: GPtr<i32>, levels: i32, bx:
     }
 }
 
-fn cmp_less(a: X87, b: X87) -> bool {
-    a.fcom(b) == sa_math::x87::Cmp::Less
-}
-
 /// `_rwPalQuantSplitCost(root, box, axis, cuts, stats)` (0x80BA30): bisects the box along `axis` for the
 /// cut that minimises the two halves' summed variance; `cuts[axis]` gets the best cut. Returns the best
 /// summed variance (the box's own when no cut improves it).
@@ -415,7 +411,7 @@ pub fn pal_quant_split_cost(root: GPtr<u8>, bx: GPtr<u8>, axis: i32, cuts: GPtr<
         pal_quant_box_stats(root, GPtr::from_raw(origin.as_mut_ptr()), depth(), GPtr::<i32>::from_raw(half.as_mut_ptr()).cast(), sp);
         let d: [f32; 5] = core::array::from_fn(|k| X87::from_f32(rd(stats, k as isize * 4)).fsub_m(rd(sp, k as isize * 4)).to_f32());
         let mut dv = X87::from_f32(rd(stats, 0x14)).fsub_m(rd(sp, 0x14));
-        let positive = |v: f32| X87::from_f32(v).fcom(X87::zero()) == sa_math::x87::Cmp::Greater;
+        let positive = |v: f32| X87::from_f32(v).fcom(X87::zero()) == Cmp::Greater;
         if positive(d[0]) && positive(rd(sp, 0)) {
             let is = X87::one().fdiv_m(rd(sp, 0));
             let id = X87::one().fdiv_m(d[0]);
@@ -434,18 +430,18 @@ pub fn pal_quant_split_cost(root: GPtr<u8>, bx: GPtr<u8>, axis: i32, cuts: GPtr<
             let q = x3.fmul(x3).fadd(x2.fmul(x2)).fadd(x1.fmul(x1)).fadd(X87::from_f32(x0).fmul_m(x0));
             dv = dv.fsub(q.fdiv(id.fadd(is)));
         }
-        let zero = |v: f32| X87::from_f32(v).fcom(X87::zero()) == sa_math::x87::Cmp::Equal;
+        let zero = |v: f32| X87::from_f32(v).fcom(X87::zero()) == Cmp::Equal;
         if zero(rd(sp, 0)) {
             lo = mid;
         } else if zero(d[0]) {
             hi = mid;
         } else {
             let total = X87::from_f32(rd(sp, 0x14)).fadd(dv);
-            if cmp_less(total, X87::from_f32(best)) {
+            if total.fcom(X87::from_f32(best)) == Cmp::Less {
                 best = total.to_f32();
                 wr::<i32>(cuts.cast(), axis as isize * 4, half[4 + axis as usize]);
             }
-            if cmp_less(X87::from_f32(rd(sp, 0x14)), dv) {
+            if X87::from_f32(rd(sp, 0x14)).fcom(dv) == Cmp::Less {
                 lo = mid;
             } else {
                 hi = mid;
@@ -532,7 +528,7 @@ pub fn rw_pal_quant_resolve_palette(palette: GPtr<u8>, max: i32, pq: GPtr<u8>) -
         let mut idx = -1i32;
         for i in 0..n {
             let v = X87::from_f32(rd(varp(pq, i), 0));
-            if cmp_less(top, v) {
+            if top.fcom(v) == Cmp::Less {
                 top = v;
                 idx = i;
             }
@@ -547,11 +543,11 @@ pub fn rw_pal_quant_resolve_palette(palette: GPtr<u8>, max: i32, pq: GPtr<u8>) -
         let costs: [f32; 4] = core::array::from_fn(|a| pal_quant_split_cost(root, bx, a as i32, cp, st).to_f32());
         let mut j = 0usize;
         for c in 0..4 {
-            if cmp_less(X87::from_f32(costs[c]), X87::from_f32(costs[j])) {
+            if X87::from_f32(costs[c]).fcom(X87::from_f32(costs[j])) == Cmp::Less {
                 j = c;
             }
         }
-        if cmp_less(X87::from_f32(costs[j]), X87::from_f32(rd(st, 0x14))) {
+        if X87::from_f32(costs[j]).fcom(X87::from_f32(rd(st, 0x14))) == Cmp::Less {
             let nb = boxp(pq, n);
             for k in 0..8 {
                 wr::<u32>(nb, k * 4, rd::<u32>(bx, k * 4));
