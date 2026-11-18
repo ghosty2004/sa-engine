@@ -11,10 +11,11 @@
 //!   functions), budgets and disabling: a mod that traps or overruns its fuel is disabled for the session and
 //!   reported; the game and the other mods go on.
 //!
-//! The host never changes game state: what a mod produces is overlay rectangles for the render layer, video-mode
-//! requests (which the game applies through the original's own video-mode state), its own files and log lines. It
-//! reads the game through the SA:MP game adapter ([`api::Game`]) and learns about hooked calls from the engine's
-//! hook registry ([`api::HookRegistry`]).
+//! A mod reads and changes the game through the engine's access layer `sa-access` ([`api::Game`]), with the
+//! permissions its manifest grants, and only between the game's frames: a change asked for inside a hook waits for
+//! the next frame boundary, entities and script commands are refused there. Entities a mod created are deleted
+//! when it is disabled. The host learns about hooked calls from the engine's hook registry
+//! ([`api::HookRegistry`]) and hands back what the hooks decided ([`api::HookDecision`]).
 
 pub mod api;
 mod backend;
@@ -31,7 +32,9 @@ use sa_mod_api::{
 };
 use sa_platform::gpu::OverlayRect;
 
-use crate::api::{CallCtx, Display, Files, Game, HookCall, Registry, VideoRequest};
+use sa_types::EntityRef;
+
+use crate::api::{CallCtx, Display, Files, Game, HookCall, HookDecision, Registry, VideoRequest};
 use crate::engine::{Engine, Instance};
 use crate::manifest::{INIT_FUEL_FACTOR, Manifest};
 
@@ -75,6 +78,10 @@ pub struct LoadedMod {
     /// Hook calls dropped by the per-frame limit ([`hook::MAX_CALLS_PER_FRAME`]).
     pub hook_dropped: u64,
     hook_calls_frame: u32,
+    /// The entities it created and has not deleted.
+    pub owned: Vec<EntityRef>,
+    /// Changes it asked for inside hooks, for the next frame boundary.
+    deferred: Vec<sa_mod_api::Call>,
 }
 
 /// The mod host.
@@ -91,6 +98,10 @@ pub struct Host {
     tracked: events::Tracked,
     /// Main-loop iterations since the start ([`Host::frame_begin`]).
     frame: u32,
+    /// The hooked functions whose calls hooks may change ([`hook::CONTROLLABLE`]).
+    controllable: Vec<u32>,
+    /// Entities of disabled mods, deleted at the next frame boundary.
+    orphans: Vec<EntityRef>,
 }
 
 impl Host {
@@ -111,6 +122,8 @@ impl Host {
             registry: None,
             tracked: events::Tracked::default(),
             frame: 0,
+            controllable: Vec::new(),
+            orphans: Vec::new(),
         }
     }
 
@@ -177,11 +190,12 @@ impl Host {
         let mut ctx = self.ctx(&manifest, &src, &hook_names, 0);
         let init_fuel = manifest.limits.fuel.saturating_mul(INIT_FUEL_FACTOR);
         let v = instance.call(EXPORT_API_VERSION, &[], init_fuel, &mut ctx).map_err(|e| format!("mod {id}: {e}"))?;
-        if unpack_version(v) != manifest.api {
-            let (a, b) = unpack_version(v);
+        // a mod rebuilt with a newer SDK may keep the older minor version its manifest asks for
+        let built = unpack_version(v);
+        if !sa_mod_api::compatible((API_MAJOR, API_MINOR), built) || !sa_mod_api::compatible(built, manifest.api) {
             return Err(format!(
-                "mod {id}: the module reports API {a}.{b}, its manifest {}.{}",
-                manifest.api.0, manifest.api.1
+                "mod {id}: the module reports API {}.{}, its manifest {}.{}, this host has API {API_MAJOR}.{API_MINOR}",
+                built.0, built.1, manifest.api.0, manifest.api.1
             ));
         }
         let r = instance.call(EXPORT_INIT, &[], init_fuel, &mut ctx);
@@ -193,17 +207,20 @@ impl Host {
         }
         let p = manifest.permissions;
         (self.log)(&format!(
-            "mod {id} loaded: {} {} from {at} ({} bytes, {}; render {}, files {}, state {}, input {}, hooks {:?}, memory \
-             cap {} MiB, fuel {} per call)",
+            "mod {id} loaded: {} {} from {at} ({} bytes, {}; render {}, files {}, state {}, input {}, hooks {:?}, \
+             entities {}, scripts {}, audio {}, memory cap {} MiB, fuel {} per call)",
             manifest.name,
             manifest.version,
             wasm.len(),
             self.engine.name(),
             p.render,
             p.files,
-            p.state,
+            if p.write { "write" } else if p.state { "read" } else { "none" },
             p.input,
             manifest.hooks,
+            p.entities,
+            p.scripts,
+            p.audio,
             manifest.limits.memory_bytes >> 20,
             manifest.limits.fuel
         ));
@@ -222,6 +239,8 @@ impl Host {
             hook_calls: 0,
             hook_dropped: 0,
             hook_calls_frame: 0,
+            owned: std::mem::take(&mut ctx.owned),
+            deferred: std::mem::take(&mut ctx.deferred),
         });
         let i = self.mods.len() - 1;
         self.take_subscriptions(i, &mut ctx);
@@ -248,8 +267,11 @@ impl Host {
         if let Some(mask) = ctx.events.take() {
             m.events = mask;
         }
-        for (target, phases) in ctx.subscribed.drain(..) {
+        for (target, phases, controllable) in ctx.subscribed.drain(..) {
             m.hooks.push((target, phases));
+            if controllable && !self.controllable.contains(&target) {
+                self.controllable.push(target);
+            }
             if let Some(r) = &self.registry {
                 r.0.watch(target, true);
             }
@@ -260,7 +282,14 @@ impl Host {
     fn disable(&mut self, i: usize, why: String) {
         let id = self.mods[i].manifest.id.clone();
         self.mods[i].disabled = Some(why.clone());
-        (self.log)(&format!("mod {id} disabled: {why}; the game continues"));
+        self.mods[i].deferred.clear();
+        let owned = std::mem::take(&mut self.mods[i].owned);
+        let n = owned.len();
+        self.orphans.extend(owned);
+        (self.log)(&format!(
+            "mod {id} disabled: {why}; the game continues{}",
+            if n > 0 { format!(" ({n} entities it created are deleted at the next frame)") } else { String::new() }
+        ));
         if let Some(r) = &self.registry {
             for &(t, _) in &self.mods[i].hooks {
                 let used = self.mods.iter().any(|m| m.disabled.is_none() && m.hooks.iter().any(|h| h.0 == t));
@@ -290,9 +319,12 @@ impl Host {
         ctx.overlay = export == EXPORT_OVERLAY;
         prep(&mut ctx);
         let m = &mut self.mods[i];
+        ctx.owned = std::mem::take(&mut m.owned);
         let t = web_time::Instant::now();
         let r = m.instance.call(export, args, m.manifest.limits.fuel, &mut ctx);
         m.micros += t.elapsed().as_micros() as u64;
+        m.owned = std::mem::take(&mut ctx.owned);
+        m.deferred.append(&mut ctx.deferred);
         let frame = m.frames;
         if export == EXPORT_OVERLAY {
             m.frames += 1;
@@ -399,16 +431,44 @@ impl Host {
         for m in &mut self.mods {
             m.hook_calls_frame = 0;
         }
+        self.apply_deferred();
         let wanted = self.wanted_events();
         if wanted == 0 {
             return;
         }
         let mut out = vec![(event::FRAME_BEGIN, self.frame as i32, 0)];
         if let Some(g) = &self.game {
-            self.tracked.update(&*g.0, wanted, &mut out);
+            self.tracked.update(&g.0.borrow(), wanted, &mut out);
         }
         out.retain(|e| wanted & (1 << e.0) != 0);
         self.deliver(&out);
+    }
+
+    /// Applies what the mods asked for inside hooks and deletes the entities of disabled mods (at the frame
+    /// boundary: the game is between two frames).
+    fn apply_deferred(&mut self) {
+        let Some(g) = self.game.clone() else { return };
+        let mut g = g.0.borrow_mut();
+        for e in std::mem::take(&mut self.orphans) {
+            let mut logs = Vec::new();
+            api::destroy_entity(&mut g, e, &mut logs);
+            for (_, l) in logs {
+                (self.log)(&format!("mods: {l}"));
+            }
+        }
+        for m in &mut self.mods {
+            if m.deferred.is_empty() || m.disabled.is_some() {
+                m.deferred.clear();
+                continue;
+            }
+            let mut logs = Vec::new();
+            for call in std::mem::take(&mut m.deferred) {
+                api::apply(&mut g, call, &mut logs);
+            }
+            for (_, l) in logs {
+                (self.log)(&format!("mod {}: error: {l}", m.manifest.id));
+            }
+        }
     }
 
     /// The end of a frame (after the overlay phase, before the present): the frame-end event.
@@ -419,8 +479,11 @@ impl Host {
     }
 
     /// A call of the registry function `target` in `phase` ([`hook::BEFORE`] / [`hook::AFTER`]): calls `sa_hook`
-    /// of every running mod hooked there, in load order, up to each mod's per-frame limit.
-    pub fn hook(&mut self, target: u32, phase: i32, call: &HookCall) {
+    /// of every running mod hooked there, in load order, up to each mod's per-frame limit. Returns what the hooks
+    /// decided about the call (a later mod's decision wins).
+    pub fn hook(&mut self, target: u32, phase: i32, call: &HookCall) -> HookDecision {
+        let control = self.controllable.contains(&target);
+        let mut decision = HookDecision::default();
         for i in 0..self.mods.len() {
             let m = &self.mods[i];
             if m.disabled.is_some() {
@@ -436,11 +499,18 @@ impl Host {
                 }
                 m.hook_calls_frame += 1;
                 let args = [Val::I32(id as i32), Val::I32(phase)];
-                if self.call_mod(i, EXPORT_HOOK, &args, (0, 0), |ctx| ctx.hook_call = Some(call.clone())).is_some() {
+                let prep = |ctx: &mut CallCtx| {
+                    ctx.hook_call = Some(call.clone());
+                    ctx.hook_phase = phase;
+                    ctx.hook_control = control;
+                };
+                if let Some(ctx) = self.call_mod(i, EXPORT_HOOK, &args, (0, 0), prep) {
                     self.mods[i].hook_calls += 1;
+                    decision.merge(ctx.decision);
                 }
             }
         }
+        decision
     }
 
     /// One line per mod: state, frames, time per frame, events and hook calls.
@@ -524,8 +594,8 @@ mod tests {
         let (mut h, _) = host();
         // newer minor API version
         let mut s = src("new", wat_mod("", "1", DRAW));
-        s.0[0].1 = b"[mod]\nid = \"new\"\napi_version = \"1.3\"\n".to_vec();
-        assert!(h.load(s).unwrap_err().contains("API 1.3"));
+        s.0[0].1 = b"[mod]\nid = \"new\"\napi_version = \"1.4\"\n".to_vec();
+        assert!(h.load(s).unwrap_err().contains("API 1.4"));
         // memory above the cap (16 MiB default: 300 pages)
         assert!(h.load(src("big", wat_mod("", "300", DRAW))).unwrap_err().contains("cap"));
         // growth beyond the cap fails inside the mod (memory.grow returns -1), the mod goes on
@@ -595,12 +665,12 @@ mod tests {
 
     #[test]
     fn events_and_hooks_reach_a_level_two_mod() {
-        use sa_samp::fake;
+        use sa_access::fake;
         let (mut h, log) = host();
         let mut g = fake::game();
         fake::set_game_state(&mut g, 9);
         fake::set_local_player(&mut g, 100.0, [1.0, 2.0, 3.0]);
-        h.set_game(Game(Rc::new(g)));
+        h.set_game(Game::new(g));
         let reg = Rc::new(FakeRegistry::default());
         h.set_registry(Registry(reg.clone()));
         let toml = "[mod]\nid = \"two\"\napi_version = \"1.2\"\n[permissions]\nstate = \"read\"\n\
@@ -621,7 +691,7 @@ mod tests {
         h.frame_end();
         assert_eq!(*log.borrow(), ["mod two: 0", "mod two: 1"]);
         log.borrow_mut().clear();
-        let call = HookCall { args: vec![hook::Value::Ped(sa_samp_api::PedRef(0x205))], result: None };
+        let call = HookCall { args: vec![hook::Value::Ped(sa_types::PedRef(0x205))], result: None };
         h.hook(7, hook::BEFORE, &call);
         h.hook(8, hook::BEFORE, &call);
         assert_eq!(*log.borrow(), ["mod two: h", "mod two: 2"]);

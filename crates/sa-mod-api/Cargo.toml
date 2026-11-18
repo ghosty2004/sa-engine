@@ -7,8 +7,8 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
-# the game adapter's types: the state records and hook values are expressed in them
-sa-samp-api = { path = "../sa-samp-api" }
+# the game's value types: the state records and hook values are expressed in them
+sa-types = { path = "../sa-types" }
 
 [lints.rust]
 unsafe_code = "forbid"

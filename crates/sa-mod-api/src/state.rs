@@ -1,12 +1,12 @@
-//! The read-only game state a mod sees (API 1.2, permission `state = "read"`): fixed records of little-endian 32-bit
-//! words that the host writes into the mod's memory (`player_info`, `ped_info`, ...) and the SDK reads back. The
-//! field types are the game adapter's own (`sa-samp-api`), so the mod API and the SA:MP adapter name the same
-//! things the same way; each record is filled from the adapter's snapshot of the same thing.
+//! The game state a mod sees (permission `state = "read"`): fixed records of little-endian 32-bit words that the host
+//! writes into the mod's memory (`player_info`, `ped_info`, ...) and the SDK reads back. The field types are the
+//! game's value types (`sa-types`); each record is filled from the engine's record of the same thing
+//! (`sa-access`).
 
-use sa_samp_api::camera::CameraState;
-use sa_samp_api::peds::PedSnapshot;
-use sa_samp_api::vehicles::VehicleSnapshot;
-use sa_samp_api::{AreaCode, GameState, ModelId, PedRef, TimeStep, Vec3, VehicleRef, WeaponType};
+use sa_types::camera::CameraState;
+use sa_types::ped::PedSnapshot;
+use sa_types::vehicle::VehicleSnapshot;
+use sa_types::{AreaCode, GameState, ModelId, PedRef, TimeStep, Vec3, VehicleRef, WeaponType};
 
 /// A value that travels as a fixed number of 32-bit words.
 pub trait Words: Sized {
@@ -257,7 +257,7 @@ impl From<&CameraState> for CameraInfo {
 }
 
 impl WorldInfo {
-    /// The record from the adapter's values: the game state, timer, clock `(h, m)`, weather `(forced, new, old)`,
+    /// The record from the game's values: the game state, timer, clock `(h, m)`, weather `(forced, new, old)`,
     /// area and gravity.
     pub fn new(
         game_state: GameState,

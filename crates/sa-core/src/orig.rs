@@ -205,11 +205,13 @@ pub fn fallback_entry(_cell: &AtomicU32, _name: &str) -> usize {
     0
 }
 
-/// Phases B/C: before / after observation of calls dispatched through the [`registry`] (the mod host's hooks on
-/// registry functions). Observation never changes a call: the observer sees copies of the argument words and of
-/// the result. Compiled in only with the feature `observe`; without it [`watched`](observe::watched) is a constant
-/// `false` and `orig!`'s dispatch is what it was. A port that calls a ported function directly (not through the
-/// registry) is not observed.
+/// Phases B/C: before / after observation of the calls of registry functions (the mod host's hooks), with the
+/// observer's decisions: in the before phase it may change the arguments or skip the call with a result of its
+/// choosing, in the after phase change the result. Compiled in only with the feature `observe`; without it
+/// [`watched`](observe::watched) is a constant `false`, nothing is ever observed and `orig!` calls exactly what it
+/// did. Observed are the calls `orig!` dispatches through the [`registry`] and, while any function is watched, the
+/// calls of declarations bound to a port directly (`=> path`, a port's calls into its own crate), which then take
+/// the same path for a watched callee.
 #[cfg(not(sa_phase_a))]
 pub mod observe {
     use core::sync::atomic::{AtomicUsize, Ordering};
@@ -239,15 +241,86 @@ pub mod observe {
         Other,
     }
 
+    /// What a declared type is, for reading and writing its words.
+    #[derive(Clone, Copy, PartialEq, Eq)]
+    enum Kind {
+        Int { bits: u32, signed: bool },
+        F32,
+        F64,
+        X87,
+        Address,
+        Other,
+    }
+
+    fn kind(ty: &str) -> Kind {
+        let int = |bits, signed| Kind::Int { bits, signed };
+        match ty {
+            "f32" => Kind::F32,
+            "f64" => Kind::F64,
+            "i8" => int(8, true),
+            "i16" => int(16, true),
+            "i32" | "isize" => int(32, true),
+            "i64" => int(64, true),
+            "bool" | "u8" => int(8, false),
+            "u16" => int(16, false),
+            "u32" | "usize" | "char" => int(32, false),
+            "u64" => int(64, false),
+            _ if ty.starts_with('*') || ty.starts_with('&') || ty.contains("GPtr<") => Kind::Address,
+            _ if ty.ends_with("x87::X87") => Kind::X87,
+            _ => Kind::Other,
+        }
+    }
+
+    /// The value of a type of kind `k` from its first two words (`f` the float of a float kind).
+    fn read(k: Kind, f: f64, lo: u32, hi: u32) -> Raw {
+        let v = u64::from(lo) | u64::from(hi) << 32;
+        match k {
+            Kind::Int { bits, signed: true } => Raw::Int(((v << (64 - bits)) as i64) >> (64 - bits)),
+            Kind::Int { bits, signed: false } => Raw::Int((v & (u64::MAX >> (64 - bits))) as i64),
+            Kind::F32 | Kind::F64 | Kind::X87 => Raw::Float(f),
+            Kind::Address => Raw::Address(lo),
+            Kind::Other => Raw::Other,
+        }
+    }
+
+    /// The words of `v` as a value of kind `k` (an integer truncated to its width, `bool` to 0 / 1), or `None` when
+    /// `v` does not fit the kind.
+    fn words(k: Kind, v: Raw) -> Option<[u32; 4]> {
+        Some(match (k, v) {
+            (Kind::Int { bits: 8, signed: false }, Raw::Int(i)) => [i as u8 as u32, 0, 0, 0],
+            (Kind::Int { bits, .. }, Raw::Int(i)) => {
+                let m = u64::MAX >> (64 - bits);
+                let u = i as u64 & m;
+                [u as u32, (u >> 32) as u32, 0, 0]
+            }
+            (Kind::F32, Raw::Float(f)) => [(f as f32).to_bits(), 0, 0, 0],
+            (Kind::F64, Raw::Float(f)) => {
+                let b = f.to_bits();
+                [b as u32, (b >> 32) as u32, 0, 0]
+            }
+            (Kind::X87, Raw::Float(f)) => {
+                let e = crate::wabi::ext_from_f64(f);
+                let w = |i: usize| u32::from_le_bytes([e[i], e[i + 1], *e.get(i + 2).unwrap_or(&0), *e.get(i + 3).unwrap_or(&0)]);
+                [w(0), w(4), u32::from(e[8]) | u32::from(e[9]) << 8, 0]
+            }
+            (Kind::Address, Raw::Address(a)) => [a, 0, 0, 0],
+            _ => return None,
+        })
+    }
+
     /// One observed call.
     pub struct Observed<'a> {
         /// The registry entry of the callee.
         pub entry: &'static Entry,
         /// Before or after.
         pub phase: Phase,
-        args: &'a Args,
+        args: &'a mut Args,
         params: &'a [(&'static str, usize)],
-        result: Option<(&'a Ret, &'static str, usize)>,
+        /// The declared result type and size.
+        ret_ty: (&'static str, usize),
+        ret: &'a mut Ret,
+        skipped: bool,
+        result_set: bool,
     }
 
     impl Observed<'_> {
@@ -256,52 +329,102 @@ pub mod observe {
             self.params.len()
         }
 
-        /// Argument `i`.
-        pub fn arg(&self, i: usize) -> Option<Raw> {
+        fn arg_at(&self, i: usize) -> Option<(Kind, usize)> {
             let (ty, _) = *self.params.get(i)?;
             let at: usize = self.params[..i].iter().map(|p| p.1.div_ceil(4)).sum();
+            Some((kind(ty), at))
+        }
+
+        /// Argument `i`.
+        pub fn arg(&self, i: usize) -> Option<Raw> {
+            let (k, at) = self.arg_at(i)?;
             let words = self.args.words();
-            let w = |k: usize| words.get(at + k).copied().unwrap_or(0);
-            Some(classify(ty, || f64::from(f32::from_bits(w(0))), || f64::from_bits(u64::from(w(0)) | u64::from(w(1)) << 32), w(0), w(1)))
+            let w = |n: usize| words.get(at + n).copied().unwrap_or(0);
+            let f = match k {
+                Kind::F64 => f64::from_bits(u64::from(w(0)) | u64::from(w(1)) << 32),
+                _ => f64::from(f32::from_bits(w(0))),
+            };
+            Some(read(k, f, w(0), w(1)))
         }
 
-        /// The result (after the call, of a function that returns a value).
+        /// The result (after the call, of a function that returns a value that fits [`Ret`]).
         pub fn result(&self) -> Option<Raw> {
-            let (ret, ty, _) = self.result?;
-            let b = &ret.bytes;
+            if self.phase != Phase::After || !self.returns() {
+                return None;
+            }
+            let b = &self.ret.bytes;
             let w = |k: usize| u32::from_le_bytes([b[4 * k], b[4 * k + 1], b[4 * k + 2], b[4 * k + 3]]);
-            Some(classify(ty, || ret.st0, || ret.st0, w(0), w(1)))
+            Some(read(kind(self.ret_ty.0), self.ret.st0, w(0), w(1)))
         }
-    }
 
-    fn classify(ty: &str, f32v: impl Fn() -> f64, f64v: impl Fn() -> f64, lo: u32, hi: u32) -> Raw {
-        let int = |bits: u32| {
-            let v = u64::from(lo) | u64::from(hi) << 32;
-            let shift = 64 - bits;
-            Raw::Int(((v << shift) as i64) >> shift)
-        };
-        let uint = |bits: u32| Raw::Int(((u64::from(lo) | u64::from(hi) << 32) & (u64::MAX >> (64 - bits))) as i64);
-        match ty {
-            "f32" => Raw::Float(f32v()),
-            "f64" => Raw::Float(f64v()),
-            "i8" => int(8),
-            "i16" => int(16),
-            "i32" | "isize" => int(32),
-            "i64" => int(64),
-            "bool" | "u8" => uint(8),
-            "u16" => uint(16),
-            "u32" | "usize" | "char" => uint(32),
-            "u64" => uint(64),
-            _ if ty.starts_with('*') || ty.starts_with('&') || ty.contains("GPtr<") => Raw::Address(lo),
-            _ if ty.ends_with("x87::X87") => Raw::Float(f32v()),
-            _ => Raw::Other,
+        fn returns(&self) -> bool {
+            self.ret_ty.1 > 0 && self.ret_ty.1 <= crate::wabi::RET_BYTES
+        }
+
+        /// Replaces argument `i` (before the call); false when there is no such argument or `v` does not fit its
+        /// declared type (a struct passed by value cannot be replaced).
+        pub fn set_arg(&mut self, i: usize, v: Raw) -> bool {
+            let Some((k, at)) = self.arg_at(i) else { return false };
+            let Some(w) = words(k, v) else { return false };
+            if self.phase != Phase::Before {
+                return false;
+            }
+            let n = self.params[i].1.div_ceil(4).min(4);
+            let dst = &mut self.args.words_mut()[at..at + n];
+            dst.copy_from_slice(&w[..n]);
+            true
+        }
+
+        fn put_result(&mut self, v: Option<Raw>) -> bool {
+            match v {
+                None => !self.returns() && self.ret_ty.1 == 0,
+                Some(v) => {
+                    let k = kind(self.ret_ty.0);
+                    if !self.returns() {
+                        return false;
+                    }
+                    match (k, v) {
+                        (Kind::F32 | Kind::F64 | Kind::X87, Raw::Float(f)) => self.ret.st0 = f,
+                        _ => {
+                            let Some(w) = words(k, v) else { return false };
+                            let n = self.ret_ty.1.min(8);
+                            for (i, b) in w.iter().flat_map(|w| w.to_le_bytes()).take(n).enumerate() {
+                                self.ret.bytes[i] = b;
+                            }
+                        }
+                    }
+                    true
+                }
+            }
+        }
+
+        /// Skips the call (before it): the caller gets `result` (`None` for a function without a result). False
+        /// (nothing skipped) when `result` does not fit the declared result type.
+        pub fn skip(&mut self, result: Option<Raw>) -> bool {
+            if self.phase != Phase::Before || !self.put_result(result) {
+                return false;
+            }
+            self.skipped = true;
+            true
+        }
+
+        /// Replaces the result (after the call); false when it does not fit the declared result type.
+        pub fn set_result(&mut self, v: Raw) -> bool {
+            if self.phase != Phase::After || !self.put_result(Some(v)) {
+                return false;
+            }
+            self.result_set = true;
+            true
         }
     }
 
     static HANDLER: AtomicUsize = AtomicUsize::new(0);
+    /// Entries watched now.
+    #[cfg(feature = "observe")]
+    static WATCHED: AtomicUsize = AtomicUsize::new(0);
 
     /// Sets the observer (the mod host). It runs on the game thread inside the observed call.
-    pub fn set_handler(f: fn(&Observed<'_>)) {
+    pub fn set_handler(f: fn(&mut Observed<'_>)) {
         HANDLER.store(f as usize, Ordering::Release);
     }
 
@@ -319,36 +442,70 @@ pub mod observe {
         }
     }
 
+    /// The watched entry of `addr`, for a declaration bound to a port directly: one relaxed load while nothing is
+    /// watched (and nothing at all without the feature `observe`); the registry is not consulted and its call counts
+    /// are not touched.
+    #[inline(always)]
+    pub fn watched_at(addr: usize) -> Option<&'static Entry> {
+        #[cfg(feature = "observe")]
+        {
+            if WATCHED.load(Ordering::Relaxed) == 0 {
+                return None;
+            }
+            super::registry::find(addr).filter(|e| watched(e))
+        }
+        #[cfg(not(feature = "observe"))]
+        {
+            let _ = addr;
+            None
+        }
+    }
+
     /// Turns observation of calls through `e` on or off (a no-op without the feature `observe`).
     pub fn watch(e: &Entry, on: bool) {
         #[cfg(feature = "observe")]
-        e.watch.store(on, Ordering::Relaxed);
+        if e.watch.swap(on, Ordering::Relaxed) != on {
+            if on {
+                WATCHED.fetch_add(1, Ordering::Relaxed);
+            } else {
+                WATCHED.fetch_sub(1, Ordering::Relaxed);
+            }
+        }
         #[cfg(not(feature = "observe"))]
         let _ = (e, on);
     }
 
-    fn notify(o: &Observed<'_>) {
+    fn notify(o: &mut Observed<'_>) {
         let h = HANDLER.load(Ordering::Acquire);
         if h != 0 {
-            // SAFETY: `HANDLER` holds 0 or a `fn(&Observed)` stored by `set_handler`.
-            let f = unsafe { core::mem::transmute::<usize, fn(&Observed<'_>)>(h) };
+            // SAFETY: `HANDLER` holds 0 or a `fn(&mut Observed)` stored by `set_handler`.
+            let f = unsafe { core::mem::transmute::<usize, fn(&mut Observed<'_>)>(h) };
             f(o);
         }
     }
 
-    /// Runs `call` (the dispatch to `e`'s native entry) between the observer's before and after calls.
-    /// `args` holds the arguments' words, `params` their declared types and sizes.
+    /// Runs `call` (the callee, with the argument words it is given) between the observer's before and after calls.
+    /// `args` holds the arguments' words, `params` their declared types and sizes. The observer may change the
+    /// words, skip the call (the caller gets the result it chose) or replace the result.
     #[inline(never)]
-    pub fn around<R>(e: &'static Entry, args: &Args, params: &[(&'static str, usize)], call: impl FnOnce() -> R) -> R {
-        notify(&Observed { entry: e, phase: Phase::Before, args, params, result: None });
-        let r = call();
+    pub fn around<R>(e: &'static Entry, args: &mut Args, params: &[(&'static str, usize)], call: impl FnOnce(&Args) -> R) -> R {
+        let ret_ty = (core::any::type_name::<R>(), core::mem::size_of::<R>());
         let mut ret = Ret::new();
-        let size = core::mem::size_of::<R>();
-        if size <= crate::wabi::RET_BYTES {
+        let mut o = Observed { entry: e, phase: Phase::Before, args, params, ret_ty, ret: &mut ret, skipped: false, result_set: false };
+        notify(&mut o);
+        if o.skipped {
+            return crate::wabi::get_ret(&ret);
+        }
+        let r = call(args);
+        let mut ret = Ret::new();
+        if ret_ty.1 <= crate::wabi::RET_BYTES {
             crate::wabi::put_ret_ref(&r, &mut ret);
         }
-        let result = (size > 0 && size <= crate::wabi::RET_BYTES).then_some((&ret, core::any::type_name::<R>(), size));
-        notify(&Observed { entry: e, phase: Phase::After, args, params, result });
+        let mut o = Observed { entry: e, phase: Phase::After, args, params, ret_ty, ret: &mut ret, skipped: false, result_set: false };
+        notify(&mut o);
+        if o.result_set {
+            return crate::wabi::get_ret(&ret);
+        }
         r
     }
 
@@ -356,23 +513,34 @@ pub mod observe {
     mod tests {
         use super::*;
 
-        #[test]
-        fn classifies_by_declared_type() {
+        fn params() -> [(&'static str, usize); 5] {
+            [
+                ("i16", 2),
+                ("f32", 4),
+                (core::any::type_name::<crate::mem::GPtr<u8>>(), core::mem::size_of::<crate::mem::GPtr<u8>>()),
+                ("f64", 8),
+                ("u8", 1),
+            ]
+        }
+
+        fn args() -> Args {
             let mut a = Args::new();
             a.push_ref(&-3i16);
             a.push_ref(&2.5f32);
             a.push_ref(&crate::mem::GPtr::<u8>::from_addr(0x1234));
             a.push_ref(&1.25f64);
             a.push_ref(&200u8);
-            let p = [
-                ("i16", 2),
-                ("f32", 4),
-                (core::any::type_name::<crate::mem::GPtr<u8>>(), core::mem::size_of::<crate::mem::GPtr<u8>>()),
-                ("f64", 8),
-                ("u8", 1),
-            ];
-            static E: Entry = Entry::new(0x401000, 1, "f");
-            let o = Observed { entry: &E, phase: Phase::Before, args: &a, params: &p, result: None };
+            a
+        }
+
+        static E: Entry = Entry::new(0x401000, 1, "f");
+
+        #[test]
+        fn classifies_by_declared_type() {
+            let mut a = args();
+            let p = params();
+            let mut ret = Ret::new();
+            let o = Observed { entry: &E, phase: Phase::Before, args: &mut a, params: &p, ret_ty: ("()", 0), ret: &mut ret, skipped: false, result_set: false };
             assert_eq!(o.arg_count(), 5);
             assert_eq!(o.arg(0), Some(Raw::Int(-3)));
             assert_eq!(o.arg(1), Some(Raw::Float(2.5)));
@@ -380,6 +548,42 @@ pub mod observe {
             assert_eq!(o.arg(3), Some(Raw::Float(1.25)));
             assert_eq!(o.arg(4), Some(Raw::Int(200)));
             assert_eq!(o.arg(5), None);
+        }
+
+        #[test]
+        fn decisions_change_arguments_skip_and_results() {
+            let p = params();
+            let callee = |a: &Args| {
+                let mut r = crate::wabi::Reader::over(a);
+                let (x, y) = (r.take::<i16>(), r.take::<f32>());
+                f32::from(x) * y
+            };
+            let mut a = args();
+            assert_eq!(around(&E, &mut a, &p, callee), -7.5);
+            // the observer of this thread's test: doubles argument 0, skips when argument 4 is 7, sets 99 after
+            static MODE: core::sync::atomic::AtomicU8 = core::sync::atomic::AtomicU8::new(0);
+            fn observer(o: &mut Observed<'_>) {
+                match (MODE.load(Ordering::Relaxed), o.phase) {
+                    (1, Phase::Before) => {
+                        let Some(Raw::Int(v)) = o.arg(0) else { panic!() };
+                        assert!(o.set_arg(0, Raw::Int(2 * v)));
+                        assert!(!o.set_arg(1, Raw::Int(1)));
+                    }
+                    (2, Phase::Before) => assert!(o.skip(Some(Raw::Float(4.0)))),
+                    (3, Phase::After) => {
+                        assert_eq!(o.result(), Some(Raw::Float(-7.5)));
+                        assert!(o.set_result(Raw::Float(99.0)));
+                    }
+                    _ => {}
+                }
+            }
+            set_handler(observer);
+            for (mode, want) in [(1u8, -15.0f32), (2, 4.0), (3, 99.0)] {
+                MODE.store(mode, Ordering::Relaxed);
+                let mut a = args();
+                assert_eq!(around(&E, &mut a, &p, callee), want, "mode {mode}");
+            }
+            MODE.store(0, Ordering::Relaxed);
         }
     }
 }
@@ -566,6 +770,12 @@ pub mod registry {
                 None
             }
         }
+    }
+
+    /// The entry for `addr`, if any (not counted).
+    pub fn find(addr: usize) -> Option<&'static Entry> {
+        let t = table();
+        position(t, addr).filter(|_| addr != 0).map(|i| &t[i])
     }
 
     /// The name of the native implementation at `addr`, if any (not counted).
@@ -979,7 +1189,7 @@ macro_rules! orig {
         $(#[$m])*
         #[allow(clippy::not_unsafe_ptr_arg_deref, clippy::too_many_arguments)]
         $vis fn $name($($a: $t),*) $(-> $r)? {
-            $crate::__orig_body!(ported $imp, $conv, ($addr as usize), ($($a: $t),*) $(-> $r)?)
+            $crate::__orig_body!(ported_at $imp, $conv, ($addr as usize), ($($a: $t),*) $(-> $r)?)
         }
         $crate::orig!($($rest)*);
     };
@@ -1202,6 +1412,26 @@ pub mod host {
     }
 }
 
+/// Phases B/C: a call of the watched entry `e` between the observer's before and after calls ([`observe::around`]):
+/// the arguments go into words the observer may change, and `$call` runs with the arguments read back from them.
+#[cfg(not(sa_phase_a))]
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __orig_observed {
+    ($e:expr, ($($a:ident : $t:ty),*), $call:expr) => {{
+        #[allow(unused_mut)]
+        let mut __sa_args = $crate::wabi::Args::new();
+        $(__sa_args.push::<$t>($a);)*
+        let __sa_params = [$((::core::any::type_name::<$t>(), ::core::mem::size_of::<$t>())),*];
+        $crate::orig::observe::around($e, &mut __sa_args, &__sa_params, |__sa_a| {
+            #[allow(unused_mut, unused_variables)]
+            let mut __sa_rd = $crate::wabi::Reader::over(__sa_a);
+            $(let $a: $t = __sa_rd.take::<$t>();)*
+            $call
+        })
+    }};
+}
+
 /// Phases B/C: call the Rust implementation, or fail loudly for an unported function (unless a host
 /// stand-in is registered, see [`host`]).
 #[cfg(not(sa_phase_a))]
@@ -1210,7 +1440,7 @@ pub mod host {
 macro_rules! __orig_body {
     (ported $imp:path, reg($spec:literal), ($addr:expr), ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {{
         const _: $crate::regconv::RegConv = $crate::regconv::RegConv::parse($spec);
-        $imp($($a),*)
+        $crate::__orig_body!(ported_at $imp, cdecl, ($addr), ($($a: $t),*) $(-> $r)?)
     }};
     (unported $name:path, reg($spec:literal), ($addr:expr), ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {{
         const SPEC: $crate::regconv::RegConv = $crate::regconv::RegConv::parse($spec);
@@ -1219,6 +1449,13 @@ macro_rules! __orig_body {
     }};
     (ported $imp:path, $conv:ident, ($addr:expr), ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {
         $imp($($a),*)
+    };
+    (ported_at $imp:path, $conv:ident, ($addr:expr), ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {
+        if let Some(e) = $crate::orig::observe::watched_at($addr) {
+            $crate::__orig_observed!(e, ($($a: $t),*), $imp($($a),*))
+        } else {
+            $imp($($a),*)
+        }
     };
     (unported $name:path, $conv:ident, ($addr:expr), ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {{
         {
@@ -1283,11 +1520,7 @@ macro_rules! __orig_dispatch {
     ($conv:ident, $callee:ident, ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {
         if let Some(e) = $crate::orig::registry::lookup($callee) {
             if $crate::orig::observe::watched(e) {
-                #[allow(unused_mut)]
-                let mut __sa_args = $crate::wabi::Args::new();
-                $(__sa_args.push_ref(&$a);)*
-                let __sa_params = [$((::core::any::type_name::<$t>(), ::core::mem::size_of::<$t>())),*];
-                return $crate::orig::observe::around(e, &__sa_args, &__sa_params, move || {
+                return $crate::__orig_observed!(e, ($($a: $t),*), {
                     $crate::__orig_dispatch_call!($conv, e.entry, ($($a: $t),*) $(-> $r)?);
                 });
             }
@@ -1335,8 +1568,8 @@ macro_rules! __orig_dispatch {
             $(__sa_args.push::<$t>($a);)*
             if $crate::orig::observe::watched(e) {
                 let __sa_params = [$((::core::any::type_name::<$t>(), ::core::mem::size_of::<$t>())),*];
-                return $crate::orig::observe::around(e, &__sa_args, &__sa_params, || {
-                    $crate::wabi::call(e.entry, $callee, &__sa_args)
+                return $crate::orig::observe::around(e, &mut __sa_args, &__sa_params, |__sa_a| {
+                    $crate::wabi::call(e.entry, $callee, __sa_a)
                 });
             }
             return $crate::wabi::call(e.entry, $callee, &__sa_args);

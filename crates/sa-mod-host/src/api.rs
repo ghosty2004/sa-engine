@@ -2,12 +2,17 @@
 //! backend decodes nothing itself, it hands [`dispatch`] the import index, the raw values and an accessor of the
 //! mod's linear memory ([`Mem`]).
 
+use std::cell::RefCell;
 use std::rc::Rc;
 
+use sa_access::View;
 use sa_mod_api::state::{CameraInfo, PedInfo, PlayerInfo, VehicleInfo, Words, WorldInfo, to_bytes};
-use sa_mod_api::{Call, IMPORTS, MAX_FILE, Permission, VIDEO_MODE_MAX, VIDEO_MODE_MIN, Val, event, hook, status, valid_file_name};
+use sa_mod_api::{
+    Call, IMPORTS, MAX_FILE, Permission, VIDEO_MODE_MAX, VIDEO_MODE_MIN, Val, event, hook, script, status, valid_file_name,
+};
 use sa_platform::gpu::OverlayRect;
-use sa_samp_api::{GameAdapter, PedRef, VehicleRef};
+use sa_types::script::{Opcode, ScriptArg, ScriptLocals};
+use sa_types::{EntityRef, GameError, GameResult, ModelId, ObjectRef, PedRef, Vec3, VehicleRef, WeaponType};
 
 use crate::ModSource;
 use crate::manifest::Permissions;
@@ -49,9 +54,19 @@ impl std::fmt::Debug for Files {
     }
 }
 
-/// The game, read through the SA:MP game adapter (the engine's `sa-samp` backend; a fake in tests).
+/// The game as the engine's access layer (`sa-access`) reaches it: the engine's memory in the game, a fake in tests.
+pub type GameAccess = sa_access::Game<Box<dyn View>>;
+
+/// The game the host functions read and change.
 #[derive(Clone)]
-pub struct Game(pub Rc<dyn GameAdapter>);
+pub struct Game(pub Rc<RefCell<GameAccess>>);
+
+impl Game {
+    /// The game over `game`'s view.
+    pub fn new<V: View + 'static>(game: sa_access::Game<V>) -> Game {
+        Game(Rc::new(RefCell::new(game.into_dyn())))
+    }
+}
 
 impl std::fmt::Debug for Game {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -87,6 +102,38 @@ pub struct HookCall {
     pub result: Option<hook::Value>,
 }
 
+/// What the hooks of one call decided (`hook_set_arg`, `hook_skip`, `hook_set_result`), for the engine to apply
+/// with the call's declared types.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct HookDecision {
+    /// Replaced arguments: (index, new value).
+    pub args: Vec<(usize, hook::Value)>,
+    /// Skip the call; the caller gets this result word.
+    pub skip: Option<i32>,
+    /// Replace the result with this word.
+    pub result: Option<i32>,
+}
+
+impl HookDecision {
+    /// Whether anything was decided.
+    pub fn is_empty(&self) -> bool {
+        self.args.is_empty() && self.skip.is_none() && self.result.is_none()
+    }
+
+    /// Takes over what `later` (a later mod) decided.
+    pub fn merge(&mut self, later: HookDecision) {
+        for (i, v) in later.args {
+            self.args.retain(|a| a.0 != i);
+            self.args.push((i, v));
+        }
+        self.skip = later.skip.or(self.skip);
+        self.result = later.result.or(self.result);
+    }
+}
+
+/// Changes queued from inside a hook, applied at the next frame boundary: at most this many per mod and frame.
+pub const MAX_DEFERRED: usize = 256;
+
 /// What a call may do and what it produced.
 #[derive(Debug, Default)]
 pub struct CallCtx {
@@ -114,12 +161,22 @@ pub struct CallCtx {
     pub hook_names: Rc<[String]>,
     /// The id the mod's next hook gets (its number of hooks so far).
     pub hook_base: usize,
-    /// The hooks the call subscribed to: (registry id, phases).
-    pub subscribed: Vec<(u32, i32)>,
+    /// The hooks the call subscribed to: (registry id, phases, controllable).
+    pub subscribed: Vec<(u32, i32, bool)>,
     /// The event mask the call subscribed to.
     pub events: Option<i32>,
     /// The hooked call of an `sa_hook` call.
     pub hook_call: Option<HookCall>,
+    /// The phase of the hooked call ([`hook::BEFORE`] / [`hook::AFTER`]; 0 outside `sa_hook`).
+    pub hook_phase: i32,
+    /// The hooked function is one of [`hook::CONTROLLABLE`].
+    pub hook_control: bool,
+    /// What the call decided about the hooked call.
+    pub decision: HookDecision,
+    /// Changes asked for inside a hook, for the next frame boundary.
+    pub deferred: Vec<Call>,
+    /// The entities the mod created and has not deleted.
+    pub owned: Vec<EntityRef>,
 }
 
 impl CallCtx {
@@ -132,7 +189,17 @@ impl CallCtx {
             Permission::State => self.permissions.state,
             Permission::Input => self.permissions.input,
             Permission::Hooks => self.permissions.hooks,
+            Permission::Write => self.permissions.write,
+            Permission::HookControl => self.permissions.hooks && self.permissions.write,
+            Permission::Entities => self.permissions.entities,
+            Permission::Scripts => self.permissions.scripts,
+            Permission::Audio => self.permissions.audio,
         }
+    }
+
+    /// True inside `sa_hook`, where the game is in the middle of its frame.
+    pub fn in_hook(&self) -> bool {
+        self.hook_call.is_some()
     }
 
     /// The events the permissions allow, as a mask.
@@ -164,7 +231,7 @@ fn write_handles(mem: &mut dyn Mem, ptr: i32, len: i32, handles: impl ExactSizeI
 }
 
 /// The local player as `player_info` reports it.
-pub fn player_info(game: &dyn GameAdapter) -> PlayerInfo {
+pub fn player_info(game: &GameAccess) -> PlayerInfo {
     let handle = game.local_player();
     PlayerInfo {
         handle,
@@ -222,8 +289,23 @@ pub fn dispatch(ctx: &mut CallCtx, mem: &mut dyn Mem, index: usize, args: &[Val]
     if !ctx.grants(IMPORTS[index].permission) {
         return Ok(status::DENIED);
     }
-    let game = ctx.game.clone();
-    let game = game.as_ref().map(|g| &*g.0);
+    if is_change(&call) {
+        if ctx.in_hook() {
+            if ctx.deferred.len() >= MAX_DEFERRED {
+                return Ok(status::FAILED);
+            }
+            ctx.deferred.push(call);
+            return Ok(status::OK);
+        }
+        let Some(g) = ctx.game.clone() else { return Ok(status::WRONG_PHASE) };
+        return Ok(apply(&mut g.0.borrow_mut(), call, &mut ctx.logs));
+    }
+    if let Some(r) = entities_and_scripts(ctx, mem, call) {
+        return Ok(r);
+    }
+    let game_rc = ctx.game.clone();
+    let game_ref = game_rc.as_ref().map(|g| g.0.borrow());
+    let game = game_ref.as_deref();
     let mode = |ctx: &CallCtx, index: i32| -> Option<(u32, u32)> {
         match index {
             -1 => Some(ctx.display.desktop),
@@ -369,7 +451,7 @@ pub fn dispatch(ctx: &mut CallCtx, mem: &mut dyn Mem, index: usize, args: &[Val]
                 return Ok(status::NOT_FOUND);
             };
             let id = ctx.hook_base + ctx.subscribed.len();
-            ctx.subscribed.push((target, phases));
+            ctx.subscribed.push((target, phases, hook::controllable(&name)));
             id.min(i32::MAX as usize) as i32
         }
         Call::hook_arg_count {} => ctx.hook_call.as_ref().map_or(status::BAD_ARG, |c| c.args.len() as i32),
@@ -383,7 +465,285 @@ pub fn dispatch(ctx: &mut CallCtx, mem: &mut dyn Mem, index: usize, args: &[Val]
             }
             kind
         }
+        Call::hook_set_arg { index, word } => {
+            let Some(c) = &ctx.hook_call else { return Ok(status::BAD_ARG) };
+            if !ctx.hook_control {
+                return Ok(status::DENIED);
+            }
+            let Some(old) = usize::try_from(index).ok().and_then(|i| c.args.get(i)) else {
+                return Ok(status::NOT_FOUND);
+            };
+            if ctx.hook_phase != hook::BEFORE {
+                return Ok(status::BAD_ARG);
+            }
+            let v = match *old {
+                hook::Value::Int(_) => hook::Value::Int(word),
+                hook::Value::Float(_) => hook::Value::Float(f32::from_bits(word as u32)),
+                hook::Value::Ped(_) => hook::Value::Ped(PedRef(word as u32)),
+                hook::Value::Vehicle(_) => hook::Value::Vehicle(VehicleRef(word as u32)),
+                hook::Value::Object(_) => hook::Value::Object(ObjectRef(word as u32)),
+                hook::Value::Pointer => return Ok(status::BAD_ARG),
+            };
+            if let Some(e) = entity_of(v)
+                && game.is_none_or(|g| g.entity_addr(e).is_err())
+            {
+                return Ok(status::NOT_FOUND);
+            }
+            ctx.decision.args.retain(|a| a.0 != index as usize);
+            ctx.decision.args.push((index as usize, v));
+            status::OK
+        }
+        Call::hook_skip { result } => {
+            if ctx.hook_call.is_none() || ctx.hook_phase != hook::BEFORE {
+                return Ok(status::BAD_ARG);
+            }
+            if !ctx.hook_control {
+                return Ok(status::DENIED);
+            }
+            ctx.decision.skip = Some(result);
+            status::OK
+        }
+        Call::hook_set_result { result } => {
+            if ctx.hook_call.is_none() || ctx.hook_phase != hook::AFTER {
+                return Ok(status::BAD_ARG);
+            }
+            if !ctx.hook_control {
+                return Ok(status::DENIED);
+            }
+            ctx.decision.result = Some(result);
+            status::OK
+        }
+        c => unreachable!("{c:?} is served before"),
     })
+}
+
+/// The calls that create or delete entities or run a script command: `None` for any other call.
+fn entities_and_scripts(ctx: &mut CallCtx, mem: &mut dyn Mem, call: Call) -> Option<i32> {
+    let game = ctx.game.clone();
+    Some(match call {
+        Call::create_vehicle { model, x, y, z, degrees } => {
+            create(ctx, game, |g| {
+                let v = g.create_car(ModelId(model), Vec3::new(x, y, z))?;
+                g.set_vehicle_heading(v, degrees)?;
+                Ok(EntityRef::Vehicle(v))
+            }, ModelId(model), [x, y, z, degrees])
+        }
+        Call::create_ped { model, x, y, z } => {
+            create(ctx, game, |g| g.create_ped(ModelId(model), Vec3::new(x, y, z)).map(EntityRef::Ped), ModelId(model), [x, y, z, 0.0])
+        }
+        Call::create_object { model, x, y, z } => {
+            create(ctx, game, |g| g.create_object(ModelId(model), Vec3::new(x, y, z)).map(EntityRef::Object), ModelId(model), [x, y, z, 0.0])
+        }
+        Call::destroy_vehicle { handle } => destroy(ctx, game, EntityRef::Vehicle(VehicleRef(handle as u32))),
+        Call::destroy_ped { handle } => destroy(ctx, game, EntityRef::Ped(PedRef(handle as u32))),
+        Call::destroy_object { handle } => destroy(ctx, game, EntityRef::Object(ObjectRef(handle as u32))),
+        Call::script_command { opcode, args_ptr, args_len, out_ptr } => {
+            let Some(params) = script::params(opcode) else { return Some(status::DENIED) };
+            if ctx.in_hook() {
+                return Some(status::WRONG_PHASE);
+            }
+            if args_len < 0 || args_len as usize != params.len() || args_ptr < 0 {
+                return Some(status::BAD_ARG);
+            }
+            let Some(raw) = mem.read(args_ptr as u32, 4 * args_len as u32) else { return Some(status::BAD_ARG) };
+            let words: Vec<i32> = raw.as_chunks::<4>().0.iter().map(|w| i32::from_le_bytes(*w)).collect();
+            let Some(g) = game else { return Some(status::WRONG_PHASE) };
+            let mut g = g.0.borrow_mut();
+            let mut args = Vec::with_capacity(params.len());
+            let mut outputs = 0u16;
+            for (k, &w) in params.chars().zip(&words) {
+                let entity = match k {
+                    'p' => Some(EntityRef::Ped(PedRef(w as u32))),
+                    'v' => Some(EntityRef::Vehicle(VehicleRef(w as u32))),
+                    _ => None,
+                };
+                if let Some(e) = entity
+                    && g.entity_addr(e).is_err()
+                {
+                    return Some(status::NOT_FOUND);
+                }
+                args.push(match k {
+                    'f' => ScriptArg::Float(f32::from_bits(w as u32)),
+                    'P' if w != 0 => return Some(status::BAD_ARG),
+                    'o' => {
+                        outputs += 1;
+                        ScriptArg::Local(outputs - 1)
+                    }
+                    _ => ScriptArg::Int(w),
+                });
+            }
+            let mut locals = ScriptLocals::default();
+            let r = guarded(&mut ctx.logs, "script_command", || g.run_command(Opcode(opcode as u16), &args, &mut locals));
+            let cond = match r {
+                Ok(c) => c,
+                Err(s) => return Some(s),
+            };
+            if outputs > 0 {
+                let out: Vec<u8> = locals.0[..usize::from(outputs)].iter().flat_map(|w| w.to_le_bytes()).collect();
+                if out_ptr < 0 || !mem.write(out_ptr as u32, &out) {
+                    return Some(status::BAD_ARG);
+                }
+            }
+            i32::from(cond)
+        }
+        _ => return None,
+    })
+}
+
+/// The entity a hook value names, if it names one.
+fn entity_of(v: hook::Value) -> Option<EntityRef> {
+    match v {
+        hook::Value::Ped(p) => Some(EntityRef::Ped(p)),
+        hook::Value::Vehicle(v) => Some(EntityRef::Vehicle(v)),
+        hook::Value::Object(o) => Some(EntityRef::Object(o)),
+        _ => None,
+    }
+}
+
+/// Whether `call` changes the game state through [`apply`] (deferred to the next frame boundary inside a hook).
+fn is_change(call: &Call) -> bool {
+    matches!(
+        call,
+        Call::set_ped_position { .. }
+            | Call::set_ped_heading { .. }
+            | Call::set_ped_health { .. }
+            | Call::set_ped_armour { .. }
+            | Call::give_weapon { .. }
+            | Call::set_money { .. }
+            | Call::set_wanted_level { .. }
+            | Call::set_clock { .. }
+            | Call::set_weather { .. }
+            | Call::set_vehicle_position { .. }
+            | Call::set_vehicle_heading { .. }
+            | Call::set_vehicle_health { .. }
+            | Call::set_vehicle_colours { .. }
+            | Call::play_frontend_sound { .. }
+            | Call::play_sound { .. }
+    )
+}
+
+/// Runs `f` (a call into the game's code); a panic (game code that is not ported yet) becomes `FAILED` with a log
+/// line instead of ending the game.
+fn guarded<R>(logs: &mut Vec<(i32, String)>, what: &str, f: impl FnOnce() -> GameResult<R>) -> Result<R, i32> {
+    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(f)) {
+        Ok(Ok(r)) => Ok(r),
+        Ok(Err(GameError::InvalidHandle)) => Err(status::NOT_FOUND),
+        Ok(Err(e)) => {
+            if logs.len() < MAX_LOG_LINES {
+                logs.push((sa_mod_api::level::ERROR, format!("{what}: {e}")));
+            }
+            Err(status::FAILED)
+        }
+        Err(p) => {
+            let msg = p.downcast_ref::<String>().cloned().or_else(|| p.downcast_ref::<&str>().map(|s| s.to_string()));
+            if logs.len() < MAX_LOG_LINES {
+                logs.push((sa_mod_api::level::ERROR, format!("{what}: the game failed: {}", msg.unwrap_or_default())));
+            }
+            Err(status::FAILED)
+        }
+    }
+}
+
+/// Applies a change ([`is_change`]) to the game: its status.
+pub fn apply(g: &mut GameAccess, call: Call, logs: &mut Vec<(i32, String)>) -> i32 {
+    let ped = |h: i32| PedRef(h as u32);
+    let veh = |h: i32| VehicleRef(h as u32);
+    let byte = |v: i32, max: i32| u8::try_from(v).ok().filter(|&b| i32::from(b) <= max);
+    let r = match call {
+        Call::set_ped_position { handle, x, y, z } => guarded(logs, "set_ped_position", || g.set_ped_position(ped(handle), Vec3::new(x, y, z))),
+        Call::set_ped_heading { handle, degrees } => guarded(logs, "set_ped_heading", || g.set_ped_heading(ped(handle), degrees)),
+        Call::set_ped_health { handle, health } => guarded(logs, "set_ped_health", || g.set_ped_health(ped(handle), health)),
+        Call::set_ped_armour { handle, armour } => guarded(logs, "set_ped_armour", || g.set_ped_armour(ped(handle), armour)),
+        Call::give_weapon { handle, weapon, ammo } => {
+            let (Some(w), Ok(ammo)) = (byte(weapon, 46), u32::try_from(ammo)) else { return status::BAD_ARG };
+            guarded(logs, "give_weapon", || g.give_weapon(ped(handle), WeaponType(w), ammo))
+        }
+        Call::set_money { money } => guarded(logs, "set_money", || g.set_player_money(money)),
+        Call::set_wanted_level { level } => {
+            let Some(l) = byte(level, 6) else { return status::BAD_ARG };
+            guarded(logs, "set_wanted_level", || g.set_wanted_level(l))
+        }
+        Call::set_clock { hour, minute } => {
+            let (Some(h), Some(m)) = (byte(hour, 23), byte(minute, 59)) else { return status::BAD_ARG };
+            guarded(logs, "set_clock", || g.set_clock(h, m))
+        }
+        Call::set_weather { weather } => {
+            let Some(w) = byte(weather, 22) else { return status::BAD_ARG };
+            guarded(logs, "set_weather", || g.set_weather(w))
+        }
+        Call::set_vehicle_position { handle, x, y, z } => guarded(logs, "set_vehicle_position", || g.set_vehicle_position(veh(handle), Vec3::new(x, y, z))),
+        Call::set_vehicle_heading { handle, degrees } => guarded(logs, "set_vehicle_heading", || g.set_vehicle_heading(veh(handle), degrees)),
+        Call::set_vehicle_health { handle, health } => guarded(logs, "set_vehicle_health", || g.set_vehicle_health(veh(handle), health)),
+        Call::set_vehicle_colours { handle, primary, secondary } => {
+            let (Some(a), Some(b)) = (byte(primary, 255), byte(secondary, 255)) else { return status::BAD_ARG };
+            guarded(logs, "set_vehicle_colours", || g.set_vehicle_colours(veh(handle), [a, b]))
+        }
+        Call::play_frontend_sound { event, speed } => {
+            let Ok(e) = u32::try_from(event) else { return status::BAD_ARG };
+            guarded(logs, "play_frontend_sound", || g.frontend_sound(e, speed))
+        }
+        Call::play_sound { sound, x, y, z } => guarded(logs, "play_sound", || g.one_off_sound(Vec3::new(x, y, z), sound)),
+        _ => return status::BAD_ARG,
+    };
+    r.map_or_else(|s| s, |()| status::OK)
+}
+
+/// Creates an entity with `f` after loading `model` (`at`: position and heading, which must be finite); the mod
+/// owns it.
+fn create(
+    ctx: &mut CallCtx,
+    game: Option<Game>,
+    f: impl FnOnce(&mut GameAccess) -> GameResult<EntityRef>,
+    model: ModelId,
+    at: [f32; 4],
+) -> i32 {
+    if ctx.in_hook() {
+        return status::WRONG_PHASE;
+    }
+    if !at.iter().all(|v| v.is_finite()) || !(0..20_000).contains(&model.0) {
+        return status::BAD_ARG;
+    }
+    let Some(g) = game else { return status::WRONG_PHASE };
+    let mut g = g.0.borrow_mut();
+    let r = guarded(&mut ctx.logs, "create", || {
+        g.load_model_now(model)?;
+        f(&mut g)
+    });
+    match r {
+        Ok(e) => {
+            ctx.owned.push(e);
+            let (EntityRef::Ped(PedRef(h)) | EntityRef::Vehicle(VehicleRef(h)) | EntityRef::Object(ObjectRef(h))) = e else {
+                return status::FAILED;
+            };
+            h as i32
+        }
+        Err(s) => s,
+    }
+}
+
+/// Deletes `e`, which the mod must own.
+fn destroy(ctx: &mut CallCtx, game: Option<Game>, e: EntityRef) -> i32 {
+    if ctx.in_hook() {
+        return status::WRONG_PHASE;
+    }
+    let Some(i) = ctx.owned.iter().position(|o| *o == e) else { return status::DENIED };
+    let Some(g) = game else { return status::WRONG_PHASE };
+    let r = destroy_entity(&mut g.0.borrow_mut(), e, &mut ctx.logs);
+    if r != status::FAILED {
+        ctx.owned.remove(i);
+    }
+    r
+}
+
+/// Deletes `e` (`NOT_FOUND`: it is gone already).
+pub fn destroy_entity(g: &mut GameAccess, e: EntityRef, logs: &mut Vec<(i32, String)>) -> i32 {
+    let r = guarded(logs, "destroy", || match e {
+        EntityRef::Ped(p) => g.destroy_ped(p),
+        EntityRef::Vehicle(v) => g.destroy_vehicle(v),
+        EntityRef::Object(o) => g.destroy_object(o),
+        _ => Err(GameError::InvalidHandle),
+    });
+    r.map_or_else(|s| s, |()| status::OK)
 }
 
 /// Lays out `text` in the host's 8x8 font (`font8x8`, ASCII; other characters as `?`), `size` pixels per glyph
@@ -525,13 +885,13 @@ mod tests {
     #[test]
     fn state_queries() {
         use sa_mod_api::state::from_bytes;
-        use sa_samp::fake;
+        use sa_access::fake;
         let mut g = fake::game();
         fake::set_game_state(&mut g, 9);
         fake::set_local_player(&mut g, 75.0, [10.0, -20.0, 5.5]);
         let mut data = vec![0u8; 512];
         let m = &mut SliceMem(&mut data);
-        let mut ctx = CallCtx { game: Some(Game(Rc::new(g))), ..Default::default() };
+        let mut ctx = CallCtx { game: Some(Game::new(g)), ..Default::default() };
         let i = |n| import_index(n).unwrap();
         let buf = |len| [Val::I32(64), Val::I32(len)];
         assert_eq!(dispatch(&mut ctx, m, i("player_info"), &buf(400)), Ok(status::DENIED));
@@ -574,5 +934,65 @@ mod tests {
         assert_eq!(dispatch(&mut ctx, m, i("hook_value"), &[Val::I32(-1), Val::I32(8)]), Ok(0));
         assert_eq!(&m.0[8..12], &(-4i32).to_le_bytes());
         assert_eq!(dispatch(&mut ctx, m, i("hook_value"), &[Val::I32(1), Val::I32(8)]), Ok(status::NOT_FOUND));
+    }
+
+    #[test]
+    fn changes_entities_and_scripts() {
+        use sa_access::fake;
+        let mut g = fake::game();
+        fake::set_local_player(&mut g, 100.0, [1.0, 2.0, 3.0]);
+        let game = Game::new(g);
+        let mut data = vec![0u8; 256];
+        let m = &mut SliceMem(&mut data);
+        let mut ctx = CallCtx { game: Some(game.clone()), ..Default::default() };
+        let i = |n| import_index(n).unwrap();
+        let money = [Val::I32(1234)];
+        let local = PedRef(0x205);
+        let health = [Val::I32(local.0 as i32), Val::F32(55.0)];
+        // permissions
+        assert_eq!(dispatch(&mut ctx, m, i("set_money"), &money), Ok(status::DENIED));
+        ctx.permissions = Permissions { state: true, write: true, ..Default::default() };
+        // at once outside a hook
+        assert_eq!(dispatch(&mut ctx, m, i("set_money"), &money), Ok(0));
+        assert_eq!(game.0.borrow().player_money(), 1234);
+        assert_eq!(dispatch(&mut ctx, m, i("set_ped_health"), &health), Ok(0));
+        assert_eq!(game.0.borrow().ped_snapshot(local).unwrap().health, 55.0);
+        let stale = [Val::I32(0x206), Val::F32(1.0)];
+        assert_eq!(dispatch(&mut ctx, m, i("set_ped_health"), &stale), Ok(status::NOT_FOUND));
+        assert_eq!(dispatch(&mut ctx, m, i("set_clock"), &[Val::I32(24), Val::I32(0)]), Ok(status::BAD_ARG));
+        // queued inside a hook
+        ctx.hook_call = Some(HookCall { args: vec![hook::Value::Ped(local)], result: None });
+        ctx.hook_phase = hook::BEFORE;
+        assert_eq!(dispatch(&mut ctx, m, i("set_money"), &[Val::I32(7)]), Ok(0));
+        assert_eq!(game.0.borrow().player_money(), 1234);
+        assert_eq!(ctx.deferred, [Call::set_money { money: 7 }]);
+        // decisions only on controllable functions, with write permission
+        let skip = [Val::I32(0)];
+        assert_eq!(dispatch(&mut ctx, m, i("hook_skip"), &skip), Ok(status::DENIED));
+        ctx.permissions.hooks = true;
+        assert_eq!(dispatch(&mut ctx, m, i("hook_skip"), &skip), Ok(status::DENIED));
+        ctx.hook_control = true;
+        assert_eq!(dispatch(&mut ctx, m, i("hook_skip"), &skip), Ok(0));
+        assert_eq!(dispatch(&mut ctx, m, i("hook_set_arg"), &[Val::I32(0), Val::I32(0x206)]), Ok(status::NOT_FOUND));
+        assert_eq!(dispatch(&mut ctx, m, i("hook_set_arg"), &[Val::I32(0), Val::I32(0x205)]), Ok(0));
+        assert_eq!(dispatch(&mut ctx, m, i("hook_set_result"), &skip), Ok(status::BAD_ARG));
+        assert_eq!(ctx.decision, HookDecision { args: vec![(0, hook::Value::Ped(local))], skip: Some(0), result: None });
+        // entities and scripts: not in a hook, only own entities
+        ctx.permissions.entities = true;
+        ctx.permissions.scripts = true;
+        let car = [Val::I32(411), Val::F32(0.0), Val::F32(0.0), Val::F32(0.0), Val::F32(0.0)];
+        assert_eq!(dispatch(&mut ctx, m, i("create_vehicle"), &car), Ok(status::WRONG_PHASE));
+        ctx.hook_call = None;
+        assert_eq!(dispatch(&mut ctx, m, i("destroy_ped"), &[Val::I32(0x205)]), Ok(status::DENIED));
+        m.0[..8].copy_from_slice(&[0, 0, 0, 0, 1, 0, 0, 0]);
+        let cmd = |op: i32, n: i32| [Val::I32(op), Val::I32(0), Val::I32(n), Val::I32(0)];
+        assert_eq!(dispatch(&mut ctx, m, i("script_command"), &cmd(0x00A5, 0)), Ok(status::DENIED));
+        assert_eq!(dispatch(&mut ctx, m, i("script_command"), &cmd(0x01B4, 1)), Ok(status::BAD_ARG));
+        assert_eq!(dispatch(&mut ctx, m, i("script_command"), &cmd(0x01B4, 2)), Ok(0));
+        let last = game.0.borrow().issued_commands().last().cloned().unwrap();
+        assert_eq!(last[..2], 0x01B4u16.to_le_bytes());
+        // a stale ped handle never reaches the command
+        m.0[..4].copy_from_slice(&0x206u32.to_le_bytes());
+        assert_eq!(dispatch(&mut ctx, m, i("script_command"), &cmd(0x0687, 1)), Ok(status::NOT_FOUND));
     }
 }

@@ -101,6 +101,11 @@ impl Args {
         &self.words[..self.len]
     }
 
+    /// The words pushed so far, to change them in place.
+    pub fn words_mut(&mut self) -> &mut [u32] {
+        &mut self.words[..self.len]
+    }
+
     pub fn as_ptr(&self) -> *const u32 {
         self.words.as_ptr()
     }
@@ -117,6 +122,11 @@ impl Reader {
     /// `p` points at an [`Args`] buffer of [`ARG_WORDS`] words.
     pub unsafe fn new(p: *const u32) -> Reader {
         Reader { p, off: 0 }
+    }
+
+    /// A reader of `args`.
+    pub fn over(args: &Args) -> Reader {
+        Reader { p: args.as_ptr(), off: 0 }
     }
 
     /// The next argument, of type `T`.

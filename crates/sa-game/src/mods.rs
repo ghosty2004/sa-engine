@@ -9,10 +9,11 @@
 //!   mods draw goes to the render layer's 2D overlay (`WgpuDevice::draw_overlay`), outside the game's D3D9 state;
 //!   then the frame-end event;
 //! * the resize event ([`resize`]), from the window / canvas backends;
-//! * the hooks: a call `orig!` dispatches through the address registry to a function a mod hooked is reported by
-//!   `sa_core::orig::observe` ([`observed`]); its arguments and result reach the mods as values and handles.
+//! * the hooks: a call of a function a mod hooked is reported by `sa_core::orig::observe` ([`observed`]); its
+//!   arguments and result reach the mods as values and handles, and what the hooks decide (changed arguments, a
+//!   skipped call, a changed result) goes back to the call.
 //!
-//! The mods read the game through `sa-samp`'s game adapter over the engine's memory, the same reads samp-rs makes.
+//! The mods read and change the game through the engine's access layer `sa-access`.
 //!
 //! **Video modes (ADR-004 §4.1).** A mod's requested video mode is applied through the original's own state, so
 //! the game sees what it would see had the player chosen it: the adapter (`IDirect3D9`, [`crate::display`]) lists
@@ -34,10 +35,9 @@ use sa_core::orig::observe::{self, Observed, Phase, Raw};
 use sa_core::orig::registry;
 use sa_mod_api::hook;
 use sa_mod_host::Host;
-use sa_mod_host::api::{Display, Game, HookCall, HookRegistry, Registry, VideoRequest};
+use sa_mod_host::api::{Display, Game, GameAccess, HookCall, HookDecision, HookRegistry, Registry, VideoRequest};
 use sa_rw_wgpu::d3d9::WgpuDevice;
-use sa_samp::{EngineView, NativeGame};
-use sa_samp_api::EntityRef;
+use sa_types::{EntityRef, ObjectRef, PedRef, VehicleRef};
 
 use crate::display;
 
@@ -49,8 +49,8 @@ thread_local! {
     /// The request of the settings phase and, for a size the original's list leaves out, the listed mode the menu
     /// shows instead ([`after_select`]).
     static SELECTED: Cell<Option<(VideoRequest, i32, Option<i32>)>> = const { Cell::new(None) };
-    /// The game adapter the mods read through (also turns hooked values into handles).
-    static GAME: RefCell<Option<Rc<NativeGame<EngineView>>>> = const { RefCell::new(None) };
+    /// The game the mods read and change (also turns hooked values into handles and back).
+    static GAME: RefCell<Option<Game>> = const { RefCell::new(None) };
 }
 
 /// The functions mods can hook: the entries of the address registry, by their names.
@@ -70,7 +70,7 @@ impl HookRegistry for EngineRegistry {
 }
 
 /// A hooked value as the mods see it: a pooled entity as its handle, any other pointer hidden.
-fn mod_value(game: &NativeGame<EngineView>, raw: Raw) -> hook::Value {
+fn mod_value(game: &GameAccess, raw: Raw) -> hook::Value {
     let entity = |e: EntityRef| match e {
         EntityRef::Ped(p) => hook::Value::Ped(p),
         EntityRef::Vehicle(v) => hook::Value::Vehicle(v),
@@ -89,28 +89,80 @@ fn mod_value(game: &NativeGame<EngineView>, raw: Raw) -> hook::Value {
     }
 }
 
-/// The observer of the hooked registry functions: hands the call to the mods hooked there.
-fn observed(o: &Observed<'_>) {
-    let call = GAME.with_borrow(|g| {
-        let g = g.as_ref()?;
-        Some(HookCall {
-            args: (0..o.arg_count().min(hook::MAX_ARGS)).filter_map(|i| o.arg(i)).map(|r| mod_value(g, r)).collect(),
-            result: o.result().map(|r| mod_value(g, r)),
-        })
-    });
-    let Some(call) = call else { return };
+/// The game value of a mod's value: a handle as the address of its live entity.
+fn game_value(game: &GameAccess, v: hook::Value) -> Option<Raw> {
+    let entity = |e| game.entity_addr(e).ok().map(Raw::Address);
+    match v {
+        hook::Value::Int(i) => Some(Raw::Int(i64::from(i))),
+        hook::Value::Float(f) => Some(Raw::Float(f64::from(f))),
+        hook::Value::Ped(p) => entity(EntityRef::Ped(p)),
+        hook::Value::Vehicle(v) => entity(EntityRef::Vehicle(v)),
+        hook::Value::Object(o) => entity(EntityRef::Object(o)),
+        hook::Value::Pointer => None,
+    }
+}
+
+/// The result word of `hook_skip` / `hook_set_result` as the declared result type takes it: an integer, a float's
+/// bits, or for a pointer the handle of a live ped, vehicle or object (0: null).
+fn result_candidates(game: &GameAccess, word: i32) -> Vec<Raw> {
+    let h = word as u32;
+    let mut out = vec![Raw::Int(i64::from(word)), Raw::Float(f64::from(f32::from_bits(h)))];
+    if h == 0 {
+        out.push(Raw::Address(0));
+    }
+    for e in [EntityRef::Ped(PedRef(h)), EntityRef::Vehicle(VehicleRef(h)), EntityRef::Object(ObjectRef(h))] {
+        if let Ok(a) = game.entity_addr(e) {
+            out.push(Raw::Address(a));
+        }
+    }
+    out
+}
+
+/// Applies what the hooks decided to the observed call.
+fn decide(game: &GameAccess, o: &mut Observed<'_>, d: HookDecision) {
+    for (i, v) in d.args {
+        let Some(raw) = game_value(game, v) else { continue };
+        // a port may declare an object pointer as an integer (`this: u32`)
+        if !o.set_arg(i, raw)
+            && let Raw::Address(a) = raw
+        {
+            o.set_arg(i, Raw::Int(i64::from(a)));
+        }
+    }
+    if let Some(w) = d.skip
+        && !o.skip(None)
+    {
+        result_candidates(game, w).into_iter().any(|r| o.skip(Some(r)));
+    }
+    if let Some(w) = d.result {
+        result_candidates(game, w).into_iter().any(|r| o.set_result(r));
+    }
+}
+
+/// The observer of the hooked functions: hands the call to the mods hooked there and applies their decisions.
+fn observed(o: &mut Observed<'_>) {
+    let Some(game) = GAME.with_borrow(Clone::clone) else { return };
+    // a hooked function that runs while the game is being changed for a mod is not reported
+    let Ok(g) = game.0.try_borrow() else { return };
+    let call = HookCall {
+        args: (0..o.arg_count().min(hook::MAX_ARGS)).filter_map(|i| o.arg(i)).map(|r| mod_value(&g, r)).collect(),
+        result: o.result().map(|r| mod_value(&g, r)),
+    };
+    drop(g);
     let phase = match o.phase {
         Phase::Before => hook::BEFORE,
         Phase::After => hook::AFTER,
     };
-    // a hooked function that runs while a mod is being called (none should: mods only read) is not reported
-    HOST.with(|h| {
-        if let Ok(mut h) = h.try_borrow_mut()
-            && let Some(h) = h.as_mut()
-        {
-            h.hook(o.entry.addr, phase, &call);
-        }
+    // nor one that runs while a mod is being called
+    let decision = HOST.with(|h| {
+        let mut h = h.try_borrow_mut().ok()?;
+        Some(h.as_mut()?.hook(o.entry.addr, phase, &call))
     });
+    if let Some(d) = decision.filter(|d| !d.is_empty())
+        && let Ok(g) = game.0.try_borrow()
+    {
+        decide(&g, o, d);
+    }
 }
 
 /// `FrontEndMenuManager.m_nPrefsVideoMode`, `m_nDisplayVideoMode`.
@@ -136,8 +188,8 @@ fn mod_display(d: &display::Display) -> Display {
 pub fn install(spec: &str) -> Result<(), String> {
     let mut host = Host::new(Box::new(|s| println!("sa-game: {s}")));
     host.set_display(mod_display(&display::reported()));
-    let game = Rc::new(sa_samp::engine());
-    host.set_game(Game(game.clone()));
+    let game = Game::new(sa_access::engine());
+    host.set_game(game.clone());
     GAME.with_borrow_mut(|g| *g = Some(game));
     host.set_registry(Registry(Rc::new(EngineRegistry)));
     observe::set_handler(observed);

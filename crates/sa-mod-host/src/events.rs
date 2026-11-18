@@ -3,7 +3,9 @@
 //! host reads, it never sits in a port's body.
 
 use sa_mod_api::event;
-use sa_samp_api::{GameAdapter, PedRef, VehicleRef};
+use sa_types::{PedRef, VehicleRef};
+
+use crate::api::GameAccess;
 
 /// `ePedState` of a dying and of a dead ped.
 const PED_STATE_DIE: u32 = 54;
@@ -33,7 +35,7 @@ pub struct Tracked {
 impl Tracked {
     /// Reads the game (only what the `wanted` events need), appends the events since the last call to `out` and
     /// keeps the new state. The first call compares with the state before the game starts (no player, state 0).
-    pub fn update(&mut self, game: &dyn GameAdapter, wanted: i32, out: &mut Vec<(i32, i32, i32)>) {
+    pub fn update(&mut self, game: &GameAccess, wanted: i32, out: &mut Vec<(i32, i32, i32)>) {
         if wanted & STATE_EVENTS != 0 {
             self.update_state(game, out);
         }
@@ -42,7 +44,7 @@ impl Tracked {
         }
     }
 
-    fn update_state(&mut self, game: &dyn GameAdapter, out: &mut Vec<(i32, i32, i32)>) {
+    fn update_state(&mut self, game: &GameAccess, out: &mut Vec<(i32, i32, i32)>) {
         let game_state = game.game_state().raw();
         if game_state != self.game_state {
             out.push((event::GAME_STATE, game_state, self.game_state));
@@ -77,7 +79,7 @@ impl Tracked {
         self.area = area;
     }
 
-    fn update_keys(&mut self, game: &dyn GameAdapter, out: &mut Vec<(i32, i32, i32)>) {
+    fn update_keys(&mut self, game: &GameAccess, out: &mut Vec<(i32, i32, i32)>) {
         for vk in 1..=255u16 {
             let (w, bit) = (usize::from(vk / 64), 1u64 << (vk % 64));
             let down = game.key_held(vk);

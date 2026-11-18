@@ -24,7 +24,7 @@ use std::cell::RefCell;
 
 pub use sa_mod_api::event::Event;
 pub use sa_mod_api::hook::Value;
-pub use sa_mod_api::sa_samp_api::{GameState, ObjectRef, PedRef, Vec3, VehicleRef};
+pub use sa_mod_api::sa_types::{GameState, ObjectRef, PedRef, Vec3, VehicleRef};
 pub use sa_mod_api::state::{CameraInfo, PedInfo, PlayerInfo, VehicleInfo, WorldInfo};
 pub use sa_mod_api::{API_MAJOR, API_MINOR, event as event_kind, level, status};
 
@@ -40,6 +40,10 @@ pub enum Error {
     BadArg,
     /// No such entity, function or value (`status::NOT_FOUND`).
     NotFound,
+    /// Not allowed in this phase, e.g. inside a hook (`status::WRONG_PHASE`).
+    WrongPhase,
+    /// The game could not do it; the log says why (`status::FAILED`).
+    Failed,
     /// Another negative status.
     Other(i32),
 }
@@ -50,6 +54,8 @@ fn check(r: i32) -> Result<i32, Error> {
         status::DENIED => Err(Error::Denied),
         status::BAD_ARG => Err(Error::BadArg),
         status::NOT_FOUND => Err(Error::NotFound),
+        status::WRONG_PHASE => Err(Error::WrongPhase),
+        status::FAILED => Err(Error::Failed),
         r => Err(Error::Other(r)),
     }
 }
@@ -281,7 +287,8 @@ pub mod state {
 }
 
 /// Before / after hooks on game functions (API 1.2, permission `hooks = [...]`): subscribe in [`Mod::init`],
-/// receive the calls in [`Mod::hook`]. Read-only: a hook sees the values, it cannot change them.
+/// receive the calls in [`Mod::hook`]. A hook sees the values; on the functions of `sa_mod_api::hook::CONTROLLABLE`
+/// a mod with `state = "write"` may also change them ([`Call::set_arg`], [`Call::skip`], [`Call::set_result`]).
 pub mod hooks {
     use super::*;
 
@@ -336,6 +343,193 @@ pub mod hooks {
         pub fn result(&self) -> Option<Value> {
             self.value(-1)
         }
+
+        /// Before the call: replaces argument `i` (an integer, a float, or a ped / vehicle / object of the same
+        /// kind as the argument's).
+        pub fn set_arg(&self, i: usize, v: Value) -> Result<(), Error> {
+            let (_, word) = v.encode();
+            // SAFETY: a host function call with plain values
+            check(unsafe { ffi::hook_set_arg(i32::try_from(i).map_err(|_| Error::BadArg)?, word as i32) }).map(drop)
+        }
+
+        /// Before the call: the game does not run it; its caller gets `result` (for a function with a result:
+        /// an integer, a float's bits via [`Value::Float`], or an entity's handle).
+        pub fn skip(&self, result: Value) -> Result<(), Error> {
+            let (_, word) = result.encode();
+            // SAFETY: a host function call with plain values
+            check(unsafe { ffi::hook_skip(word as i32) }).map(drop)
+        }
+
+        /// After the call: replaces its result.
+        pub fn set_result(&self, result: Value) -> Result<(), Error> {
+            let (_, word) = result.encode();
+            // SAFETY: a host function call with plain values
+            check(unsafe { ffi::hook_set_result(word as i32) }).map(drop)
+        }
+    }
+}
+
+/// Changes of the game state (permission `state = "write"`; API 1.3). Called outside a hook a change happens at
+/// once (the game is between frames); inside a hook it is queued for the next frame boundary.
+pub mod world {
+    use super::*;
+
+    fn done(r: i32) -> Result<(), Error> {
+        check(r).map(drop)
+    }
+
+    // SAFETY (every function below): a host function call with plain values.
+
+    /// Moves `ped` to `pos` (out of a vehicle first, onto the ground).
+    pub fn set_ped_position(ped: PedRef, pos: Vec3) -> Result<(), Error> {
+        done(unsafe { ffi::set_ped_position(ped.0 as i32, pos.x, pos.y, pos.z) })
+    }
+    /// Turns `ped` to `degrees`.
+    pub fn set_ped_heading(ped: PedRef, degrees: f32) -> Result<(), Error> {
+        done(unsafe { ffi::set_ped_heading(ped.0 as i32, degrees) })
+    }
+    /// Sets `ped`'s health.
+    pub fn set_ped_health(ped: PedRef, health: f32) -> Result<(), Error> {
+        done(unsafe { ffi::set_ped_health(ped.0 as i32, health) })
+    }
+    /// Sets `ped`'s armour.
+    pub fn set_ped_armour(ped: PedRef, armour: f32) -> Result<(), Error> {
+        done(unsafe { ffi::set_ped_armour(ped.0 as i32, armour) })
+    }
+    /// Gives `ped` weapon `weapon` (`eWeaponType`) with `ammo` rounds.
+    pub fn give_weapon(ped: PedRef, weapon: u8, ammo: u32) -> Result<(), Error> {
+        done(unsafe { ffi::give_weapon(ped.0 as i32, i32::from(weapon), ammo.min(i32::MAX as u32) as i32) })
+    }
+    /// Sets the player's money.
+    pub fn set_money(money: i32) -> Result<(), Error> {
+        done(unsafe { ffi::set_money(money) })
+    }
+    /// Sets the player's wanted level (0..=6).
+    pub fn set_wanted_level(level: u8) -> Result<(), Error> {
+        done(unsafe { ffi::set_wanted_level(i32::from(level)) })
+    }
+    /// Sets the game clock.
+    pub fn set_clock(hour: u8, minute: u8) -> Result<(), Error> {
+        done(unsafe { ffi::set_clock(i32::from(hour), i32::from(minute)) })
+    }
+    /// Sets the weather at once (`eWeatherType`).
+    pub fn set_weather(weather: u8) -> Result<(), Error> {
+        done(unsafe { ffi::set_weather(i32::from(weather)) })
+    }
+    /// Moves `vehicle` to `pos`.
+    pub fn set_vehicle_position(vehicle: VehicleRef, pos: Vec3) -> Result<(), Error> {
+        done(unsafe { ffi::set_vehicle_position(vehicle.0 as i32, pos.x, pos.y, pos.z) })
+    }
+    /// Turns `vehicle` to `degrees`.
+    pub fn set_vehicle_heading(vehicle: VehicleRef, degrees: f32) -> Result<(), Error> {
+        done(unsafe { ffi::set_vehicle_heading(vehicle.0 as i32, degrees) })
+    }
+    /// Sets `vehicle`'s health.
+    pub fn set_vehicle_health(vehicle: VehicleRef, health: f32) -> Result<(), Error> {
+        done(unsafe { ffi::set_vehicle_health(vehicle.0 as i32, health) })
+    }
+    /// Sets `vehicle`'s colours.
+    pub fn set_vehicle_colours(vehicle: VehicleRef, primary: u8, secondary: u8) -> Result<(), Error> {
+        done(unsafe { ffi::set_vehicle_colours(vehicle.0 as i32, i32::from(primary), i32::from(secondary)) })
+    }
+}
+
+/// Entities the mod creates and owns (permission `entities = true`; API 1.3): deleted by the host when the mod is
+/// disabled. Not inside a hook.
+pub mod entities {
+    use super::*;
+
+    // SAFETY (every function below): a host function call with plain values.
+
+    /// A vehicle of `model` at `pos` facing `degrees`.
+    pub fn create_vehicle(model: i32, pos: Vec3, degrees: f32) -> Result<VehicleRef, Error> {
+        check(unsafe { ffi::create_vehicle(model, pos.x, pos.y, pos.z, degrees) }).map(|h| VehicleRef(h as u32))
+    }
+    /// A civilian ped of `model` at `pos`.
+    pub fn create_ped(model: i32, pos: Vec3) -> Result<PedRef, Error> {
+        check(unsafe { ffi::create_ped(model, pos.x, pos.y, pos.z) }).map(|h| PedRef(h as u32))
+    }
+    /// An object of `model` at `pos`.
+    pub fn create_object(model: i32, pos: Vec3) -> Result<ObjectRef, Error> {
+        check(unsafe { ffi::create_object(model, pos.x, pos.y, pos.z) }).map(|h| ObjectRef(h as u32))
+    }
+    /// Deletes a vehicle the mod created.
+    pub fn destroy_vehicle(v: VehicleRef) -> Result<(), Error> {
+        check(unsafe { ffi::destroy_vehicle(v.0 as i32) }).map(drop)
+    }
+    /// Deletes a ped the mod created.
+    pub fn destroy_ped(p: PedRef) -> Result<(), Error> {
+        check(unsafe { ffi::destroy_ped(p.0 as i32) }).map(drop)
+    }
+    /// Deletes an object the mod created.
+    pub fn destroy_object(o: ObjectRef) -> Result<(), Error> {
+        check(unsafe { ffi::destroy_object(o.0 as i32) }).map(drop)
+    }
+}
+
+/// Script commands (permission `scripts = true`; API 1.3): the commands of `sa_mod_api::script::COMMANDS`.
+pub mod script {
+    use super::*;
+
+    /// One argument of [`run`].
+    #[derive(Clone, Copy, Debug, PartialEq)]
+    pub enum Arg {
+        /// An integer (`i`, and `P`: the player, 0).
+        Int(i32),
+        /// A float (`f`).
+        Float(f32),
+        /// A ped (`p`).
+        Ped(PedRef),
+        /// A vehicle (`v`).
+        Vehicle(VehicleRef),
+        /// An output (`o`).
+        Out,
+    }
+
+    /// What a command returned.
+    #[derive(Clone, Debug, Default, PartialEq, Eq)]
+    pub struct Outcome {
+        /// The condition result.
+        pub condition: bool,
+        /// The outputs, one word each, in parameter order.
+        pub outputs: Vec<u32>,
+    }
+
+    /// Runs script command `opcode` with `args` (one per parameter of its `COMMANDS` entry). Not inside a hook.
+    pub fn run(opcode: u16, args: &[Arg]) -> Result<Outcome, Error> {
+        let words: Vec<i32> = args
+            .iter()
+            .map(|a| match *a {
+                Arg::Int(i) => i,
+                Arg::Float(f) => f.to_bits() as i32,
+                Arg::Ped(p) => p.0 as i32,
+                Arg::Vehicle(v) => v.0 as i32,
+                Arg::Out => 0,
+            })
+            .collect();
+        let mut outputs = vec![0u32; args.iter().filter(|a| **a == Arg::Out).count()];
+        let args_ptr = words.as_ptr() as usize as i32;
+        let out_ptr = if outputs.is_empty() { 0 } else { outputs.as_mut_ptr() as usize as i32 };
+        // SAFETY: the host reads the argument words and writes one word per output through bounds-checked copies
+        let r = check(unsafe { ffi::script_command(i32::from(opcode), args_ptr, words.len() as i32, out_ptr) })?;
+        Ok(Outcome { condition: r != 0, outputs })
+    }
+}
+
+/// Game sounds (permission `audio = true`; API 1.3).
+pub mod audio {
+    use super::*;
+
+    /// Plays front-end sound `event` (`AE_FRONTEND_*`, 1..=46) at speed 1.
+    pub fn frontend(event: u32) -> Result<(), Error> {
+        // SAFETY: a host function call with plain values
+        check(unsafe { ffi::play_frontend_sound(event as i32, 1.0) }).map(drop)
+    }
+
+    /// Plays mission sound `sound` at `pos`.
+    pub fn at(sound: i32, pos: Vec3) -> Result<(), Error> {
+        // SAFETY: a host function call with plain values
+        check(unsafe { ffi::play_sound(sound, pos.x, pos.y, pos.z) }).map(drop)
     }
 }
 

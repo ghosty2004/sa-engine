@@ -25,7 +25,7 @@
 
 pub mod state;
 
-pub use sa_samp_api;
+pub use sa_types;
 
 /// The import module name of every host function.
 pub const IMPORT_MODULE: &str = "sa";
@@ -34,7 +34,7 @@ pub const EXPORT_MEMORY: &str = "memory";
 /// The API's major version.
 pub const API_MAJOR: u16 = 1;
 /// The API's minor version.
-pub const API_MINOR: u16 = 2;
+pub const API_MINOR: u16 = 3;
 
 /// `major << 16 | minor`, the value of the `sa_api_version` export.
 pub const fn pack_version(major: u16, minor: u16) -> i32 {
@@ -64,6 +64,12 @@ pub mod status {
     /// The file does not exist (`file_read`), the handle names no live entity, there is no local player, the
     /// registry has no function of that name, a hook value is absent.
     pub const NOT_FOUND: i32 = -3;
+    /// Not now: the call is not allowed in this phase (an entity created or a script command run from inside a
+    /// hook, a game call before the game exists).
+    pub const WRONG_PHASE: i32 = -4;
+    /// The game could not do it (a model that does not load, a pool that is full, game code that is not ported
+    /// yet); the host's log says why.
+    pub const FAILED: i32 = -5;
 }
 
 /// Log levels of the `log` import.
@@ -119,6 +125,17 @@ pub enum Permission {
     Input,
     /// `hooks = ["name", ...]`: before / after hooks on the named game functions (API 1.2).
     Hooks,
+    /// `state = "write"`: changes of the game state (API 1.3).
+    Write,
+    /// `hooks` and `state = "write"`: decisions in a hook (changed arguments, a skipped call, a changed result) on
+    /// the functions of [`hook::CONTROLLABLE`] (API 1.3).
+    HookControl,
+    /// `entities = true`: creating and deleting peds, vehicles and objects (API 1.3).
+    Entities,
+    /// `scripts = true`: the script commands of [`script::COMMANDS`] (API 1.3).
+    Scripts,
+    /// `audio = true`: game sounds (API 1.3).
+    Audio,
 }
 
 /// Game events (API 1.2): what a mod receives in `sa_event(kind, a, b)` after subscribing with
@@ -151,7 +168,7 @@ pub mod event {
     /// The number of event kinds.
     pub const COUNT: i32 = 10;
 
-    use sa_samp_api::{GameState, PedRef, VehicleRef};
+    use sa_types::{GameState, PedRef, VehicleRef};
 
     /// A decoded event.
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -229,7 +246,7 @@ pub mod event {
 
 /// Before / after hooks on game functions (API 1.2).
 pub mod hook {
-    use sa_samp_api::{ObjectRef, PedRef, VehicleRef};
+    use sa_types::{ObjectRef, PedRef, VehicleRef};
 
     /// `hook_subscribe` phases (bits) and `sa_hook`'s `phase` argument: before the function runs (its arguments).
     pub const BEFORE: i32 = 1;
@@ -239,6 +256,31 @@ pub mod hook {
     pub const MAX_ARGS: usize = 16;
     /// Hook calls one mod receives per frame at most; the rest of the frame's calls are dropped (and counted).
     pub const MAX_CALLS_PER_FRAME: u32 = 4096;
+
+    /// The functions whose calls a hook may change (`hook_set_arg`, `hook_skip`, `hook_set_result`): the ones
+    /// where the game copes with a changed argument, a skipped call or a changed result because the original
+    /// game's own code paths produce the same (a shot that does not happen, damage that is not dealt, a ped or
+    /// vehicle that does not run its control this step, an entity that is not drawn).
+    pub const CONTROLLABLE: &[&str] = &[
+        "CWeapon::Fire",
+        "CWeapon::GenerateDamageEvent",
+        "CBulletInfo::AddBullet",
+        "CEventDamage::AffectsPed",
+        "CPedDamageResponseCalculator::ComputeDamageResponse",
+        "CPed::ProcessControl",
+        "CPlayerPed::ProcessControl",
+        "CAutomobile::ProcessControl",
+        "CTaskComplexEnterCar::CreateFirstSubTask",
+        "CPed::Render",
+        "CObject::Render",
+        "CCamera::CamShake",
+        "CHud::DrawCrossHairs",
+    ];
+
+    /// Whether a hook may change the calls of `name` ([`CONTROLLABLE`]).
+    pub fn controllable(name: &str) -> bool {
+        CONTROLLABLE.contains(&name)
+    }
 
     /// An argument or result of a hooked function, as a mod sees it: plain values as they are, a pointer to a ped,
     /// vehicle or object as its handle, any other pointer hidden.
@@ -283,6 +325,59 @@ pub mod hook {
                 _ => return None,
             })
         }
+    }
+}
+
+/// Script commands (API 1.3, `scripts = true`): `script_command(opcode, args, out)` runs one command of the game's
+/// script language through the game's own command handler, on a private script thread of the host.
+pub mod script {
+    /// The most arguments of one command.
+    pub const MAX_ARGS: usize = 16;
+
+    /// The commands a mod may run, with their parameters, one letter each: `i` an integer, `f` a float, `p` a ped
+    /// handle, `v` a vehicle handle, `P` a player (0, the local player), `o` an output. Gameplay commands whose
+    /// handlers the engine has ported and that act on the player, the world, the camera, the HUD or an entity named
+    /// by its handle; the host checks every handle before the command runs (the game's handlers trust them).
+    /// Entity creation and deletion are not here: they are `create_*` / `destroy_*`, which keep track of what a mod
+    /// owns.
+    pub const COMMANDS: &[(u16, &str, &str)] = &[
+        (0x00C0, "SET_TIME_OF_DAY", "ii"),
+        (0x00DF, "IS_CHAR_IN_ANY_CAR", "p"),
+        (0x00EC, "LOCATE_CHAR_ANY_MEANS_2D", "pffffi"),
+        (0x0109, "ADD_SCORE", "Pi"),
+        (0x0110, "CLEAR_WANTED_LEVEL", "P"),
+        (0x0118, "IS_CHAR_DEAD", "p"),
+        (0x0119, "IS_CAR_DEAD", "v"),
+        (0x015F, "SET_FIXED_CAMERA_POSITION", "ffffff"),
+        (0x0160, "POINT_CAMERA_AT_POINT", "fffi"),
+        (0x01B4, "SET_PLAYER_CONTROL", "Pi"),
+        (0x01B6, "FORCE_WEATHER_NOW", "i"),
+        (0x01B7, "RELEASE_WEATHER", ""),
+        (0x01EB, "SET_CAR_DENSITY_MULTIPLIER", "f"),
+        (0x01F0, "SET_MAX_WANTED_LEVEL", "i"),
+        (0x020A, "LOCK_CAR_DOORS", "vi"),
+        (0x0223, "SET_CHAR_HEALTH", "pi"),
+        (0x0224, "SET_CAR_HEALTH", "vi"),
+        (0x0229, "CHANGE_CAR_COLOUR", "vii"),
+        (0x02A3, "SWITCH_WIDESCREEN", "i"),
+        (0x02AB, "SET_CHAR_PROOFS", "piiiii"),
+        (0x02AC, "SET_CAR_PROOFS", "viiiii"),
+        (0x02EB, "RESTORE_CAMERA_JUMPCUT", ""),
+        (0x0330, "SET_PLAYER_NEVER_GETS_TIRED", "Pi"),
+        (0x0373, "SET_CAMERA_BEHIND_PLAYER", ""),
+        (0x0397, "SWITCH_CAR_SIREN", "vi"),
+        (0x03C0, "STORE_CAR_CHAR_IS_IN_NO_SAVE", "po"),
+        (0x03DE, "SET_PED_DENSITY_MULTIPLIER", "f"),
+        (0x04BB, "SET_AREA_VISIBLE", "i"),
+        (0x0581, "DISPLAY_RADAR", "i"),
+        (0x05CB, "TASK_ENTER_CAR_AS_DRIVER", "pvi"),
+        (0x0687, "CLEAR_CHAR_TASKS", "p"),
+        (0x0826, "DISPLAY_HUD", "i"),
+    ];
+
+    /// The parameters of `opcode` ([`COMMANDS`]), if a mod may run it.
+    pub fn params(opcode: i32) -> Option<&'static str> {
+        COMMANDS.iter().find(|c| i32::from(c.0) == opcode).map(|c| c.2)
     }
 }
 
@@ -396,6 +491,68 @@ macro_rules! for_each_import {
             /// phase, the result: writes its word (4 bytes) at `out_ptr` and returns its kind
             /// ([`hook::Value::encode`]); `NOT_FOUND` when there is no such value, `BAD_ARG` outside `sa_hook`.
             [Hooks] fn hook_value(index: i32, out_ptr: i32) -> i32;
+            /// (1.3) In `sa_hook`'s before phase, for a function of [`hook::CONTROLLABLE`]: replaces argument `index`
+            /// with `word`, read as the argument's kind (an integer, a float's bits, or the handle of a live ped,
+            /// vehicle or object for an entity argument). `DENIED` for a function outside the list, `BAD_ARG`
+            /// outside the before phase or for a hidden pointer, `NOT_FOUND` for a stale handle.
+            [HookControl] fn hook_set_arg(index: i32, word: i32) -> i32;
+            /// (1.3) In `sa_hook`'s before phase, for a function of [`hook::CONTROLLABLE`]: the game does not run
+            /// the call; its caller gets `result` (read as the result's kind; ignored for a function without
+            /// one). Later hooks of the same call are still told (with the arguments as they are).
+            [HookControl] fn hook_skip(result: i32) -> i32;
+            /// (1.3) In `sa_hook`'s after phase, for a function of [`hook::CONTROLLABLE`]: replaces the result with
+            /// `result` (read as the result's kind).
+            [HookControl] fn hook_set_result(result: i32) -> i32;
+            /// (1.3) Moves ped `handle` to (`x`, `y`, `z`) (out of a vehicle first, onto the ground).
+            [Write] fn set_ped_position(handle: i32, x: f32, y: f32, z: f32) -> i32;
+            /// (1.3) Turns ped `handle` to `degrees` (0 = north, counter-clockwise).
+            [Write] fn set_ped_heading(handle: i32, degrees: f32) -> i32;
+            /// (1.3) Sets ped `handle`'s health.
+            [Write] fn set_ped_health(handle: i32, health: f32) -> i32;
+            /// (1.3) Sets ped `handle`'s armour.
+            [Write] fn set_ped_armour(handle: i32, armour: f32) -> i32;
+            /// (1.3) Gives ped `handle` weapon `weapon` (`eWeaponType`) with `ammo` rounds (its model loaded first).
+            [Write] fn give_weapon(handle: i32, weapon: i32, ammo: i32) -> i32;
+            /// (1.3) Sets the local player's money (and the HUD's displayed amount).
+            [Write] fn set_money(money: i32) -> i32;
+            /// (1.3) Sets the local player's wanted level (0..=6).
+            [Write] fn set_wanted_level(level: i32) -> i32;
+            /// (1.3) Sets the game clock.
+            [Write] fn set_clock(hour: i32, minute: i32) -> i32;
+            /// (1.3) Sets the weather at once (`eWeatherType`).
+            [Write] fn set_weather(weather: i32) -> i32;
+            /// (1.3) Moves vehicle `handle` to (`x`, `y`, `z`).
+            [Write] fn set_vehicle_position(handle: i32, x: f32, y: f32, z: f32) -> i32;
+            /// (1.3) Turns vehicle `handle` to `degrees`.
+            [Write] fn set_vehicle_heading(handle: i32, degrees: f32) -> i32;
+            /// (1.3) Sets vehicle `handle`'s health (1000 new, below 250 burning).
+            [Write] fn set_vehicle_health(handle: i32, health: f32) -> i32;
+            /// (1.3) Sets vehicle `handle`'s colours (`carcols.dat` indices).
+            [Write] fn set_vehicle_colours(handle: i32, primary: i32, secondary: i32) -> i32;
+            /// (1.3) Creates a vehicle of `model` at (`x`, `y`, `z`) facing `degrees` (the model is loaded first).
+            /// Returns its handle. The mod owns it: it is deleted when the mod is disabled. `WRONG_PHASE` inside a
+            /// hook.
+            [Entities] fn create_vehicle(model: i32, x: f32, y: f32, z: f32, degrees: f32) -> i32;
+            /// (1.3) Creates a civilian ped of `model` at (`x`, `y`, `z`), as `create_vehicle`.
+            [Entities] fn create_ped(model: i32, x: f32, y: f32, z: f32) -> i32;
+            /// (1.3) Creates an object of `model` at (`x`, `y`, `z`), as `create_vehicle`.
+            [Entities] fn create_object(model: i32, x: f32, y: f32, z: f32) -> i32;
+            /// (1.3) Deletes vehicle `handle`, which the mod created; `DENIED` for any other vehicle.
+            [Entities] fn destroy_vehicle(handle: i32) -> i32;
+            /// (1.3) Deletes ped `handle`, which the mod created; `DENIED` for any other ped.
+            [Entities] fn destroy_ped(handle: i32) -> i32;
+            /// (1.3) Deletes object `handle`, which the mod created; `DENIED` for any other object.
+            [Entities] fn destroy_object(handle: i32) -> i32;
+            /// (1.3) Runs script command `opcode` ([`script::COMMANDS`]) with the `args_len` argument words at
+            /// `args_ptr`, one per parameter (an integer, a float's bits, a handle; any value for an output), and
+            /// writes the outputs, one word each, to `out_ptr`. Returns the condition result (0 / 1). `DENIED` for
+            /// an opcode outside the list, `BAD_ARG` for a wrong argument count, `NOT_FOUND` for a stale handle,
+            /// `WRONG_PHASE` inside a hook.
+            [Scripts] fn script_command(opcode: i32, args_ptr: i32, args_len: i32, out_ptr: i32) -> i32;
+            /// (1.3) Plays front-end sound `event` (`AE_FRONTEND_*`, 1..=46) at playback speed `speed`.
+            [Audio] fn play_frontend_sound(event: i32, speed: f32) -> i32;
+            /// (1.3) Plays mission sound `sound` (`ADD_ONE_OFF_SOUND`) at (`x`, `y`, `z`).
+            [Audio] fn play_sound(sound: i32, x: f32, y: f32, z: f32) -> i32;
         }
     };
 }
@@ -628,9 +785,9 @@ mod tests {
         for v in [
             hook::Value::Int(-5),
             hook::Value::Float(2.5),
-            hook::Value::Ped(sa_samp_api::PedRef(0x205)),
-            hook::Value::Vehicle(sa_samp_api::VehicleRef(7)),
-            hook::Value::Object(sa_samp_api::ObjectRef(9)),
+            hook::Value::Ped(sa_types::PedRef(0x205)),
+            hook::Value::Vehicle(sa_types::VehicleRef(7)),
+            hook::Value::Object(sa_types::ObjectRef(9)),
             hook::Value::Pointer,
         ] {
             let (k, w) = v.encode();
@@ -638,5 +795,18 @@ mod tests {
         }
         assert_eq!(hook::Value::decode(6, 0), None);
         assert!(!export(EXPORT_HOOK).unwrap().required);
+    }
+
+    #[test]
+    fn level_three() {
+        assert_eq!(IMPORTS[import_index("create_vehicle").unwrap()].permission, Permission::Entities);
+        assert_eq!(IMPORTS[import_index("hook_skip").unwrap()].permission, Permission::HookControl);
+        assert_eq!(IMPORTS[import_index("set_money").unwrap()].permission, Permission::Write);
+        assert!(hook::controllable("CWeapon::Fire") && !hook::controllable("CGame::Process"));
+        assert_eq!(script::params(0x01B4), Some("Pi"));
+        assert_eq!(script::params(0x00A5), None);
+        let ops: Vec<u16> = script::COMMANDS.iter().map(|c| c.0).collect();
+        assert!(ops.windows(2).all(|w| w[0] < w[1]), "sorted, no duplicates");
+        assert!(script::COMMANDS.iter().all(|c| c.2.len() <= script::MAX_ARGS && c.2.chars().all(|k| "ifpvPo".contains(k))));
     }
 }
