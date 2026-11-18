@@ -92,6 +92,7 @@ use crate::bindings::set_render_state as rw_d3d9_set_render_state;
 use crate::bindings::set_surface_properties as rw_d3d9_set_surface_properties;
 use crate::bindings::set_texture as rw_d3d9_set_texture;
 use crate::bindings::set_tss as rw_d3d9_set_texture_stage_state;
+use crate::bindings::set_transform as rw_d3d9_set_transform;
 orig! {
     /// Bumped-texture builder (0x816290): (baseTexture, bumpTexture)
     fn matfx_create_bumped_texture(base: GPtr<u8>, bump: GPtr<u8>) -> GPtr<u8> = cdecl 0x816290 => unported;
@@ -111,7 +112,7 @@ orig! {
     /// MatFX D3D9 effect renderers: no-lighting (0x812C90), default (0x812AC0), dual (0x812D40), env
     /// (0x813A10), bump / bump-env (0x814460)
     fn matfx_render_black(header: GPtr<u8>, inst: GPtr<u8>) = cdecl 0x812C90 => unported;
-    fn matfx_render_default(header: GPtr<u8>, inst: GPtr<u8>, flags: u32, tex: u32) = cdecl 0x812AC0 => unported;
+    fn matfx_render_default(header: GPtr<u8>, inst: GPtr<u8>, flags: u32, tex: u32) = cdecl 0x812AC0 => matfx_default_render;
     fn matfx_render_dual(header: GPtr<u8>, inst: GPtr<u8>, flags: u32, tex: u32, dual: u32) = cdecl 0x812D40 => unported;
     fn matfx_render_env(header: GPtr<u8>, inst: GPtr<u8>, flags: u32, bump: u32, tex: u32, env: u32) = cdecl 0x813A10 => unported;
     fn matfx_render_bump(header: GPtr<u8>, inst: GPtr<u8>, flags: u32, tex: u32, bumped: u32, env: u32) = cdecl 0x814460 => unported;
@@ -901,8 +902,55 @@ pub fn matfx_engine_open(instance: u32, _offset: u32, _size: u32) -> u32 {
     instance
 }
 
+/// The texture-stage-0 transform the default MatFX render (0x812AC0) hands to `RwD3D9SetTransform` (a static
+/// D3DMATRIX; only _11 _12 _21 _22 _31 _32 are written).
+const UV_TRANSFORM: usize = 0x8E29C8;
+
+/// The default MatFX render of one mesh (0x812AC0, cdecl `(header, mesh, flags, texture)`; name unknown). With a
+/// texture flag (`flags & 0x84`): `RwD3D9SetTexture(texture, 0)`; a material effect of type 5 (UV transform) whose
+/// matrix is not identity (flags +0xC bit 0x20000) sets TEXTURETRANSFORMFLAGS 2 and the stage-0 texture transform
+/// (D3DTS_TEXTURE0) from the matrix's right / up / pos x, y; stage 0 = MODULATE(TEXTURE, DIFFUSE) for colour and
+/// alpha. Without: no texture, SELECTARG2(DIFFUSE) for both. Then the shared draw tail
+/// ([`matfx_d3d9_draw_mesh`](crate::frontier_b2::matfx_d3d9_draw_mesh), inlined in the original), and
+/// TEXTURETRANSFORMFLAGS back to 0 when the effect is a UV transform.
+#[hook(addr = 0x812AC0, conv = cdecl, name = "FUN_00812ac0", expect = "8A 44 24 0C 53 56",
+       unverified = "frontier2-c23", route = "L2", hazards = "none")]
+pub fn matfx_default_render(header: GPtr<u8>, mesh: GPtr<u8>, flags: u32, tex: u32) {
+    let mut uv = GPtr::<u8>::NULL;
+    if flags as u8 & 0x84 != 0 {
+        rw_d3d9_set_texture(GPtr::from_addr(tex as usize), 0);
+        let mat: GPtr<u8> = rd(mesh, 8);
+        let fx: GPtr<u8> = rd(mat, g::<i32>(MATFX_MATERIAL_OFFSET).read() as isize);
+        if !fx.is_null() && rd::<u32>(fx, 0x30) == 5 {
+            uv = fx;
+            let m: GPtr<u8> = rd(uv, 0);
+            if !m.is_null() && rd::<u32>(m, 0xC) & 0x2_0000 == 0 {
+                rw_d3d9_set_texture_stage_state(0, 0x18, 2);
+                let t = g::<u8>(UV_TRANSFORM);
+                for (dst, src) in [(0, 0), (4, 4), (0x10, 0x10), (0x14, 0x14), (0x20, 0x30), (0x24, 0x34)] {
+                    wr(t, dst, rd::<u32>(m, src));
+                }
+                rw_d3d9_set_transform(0x10, t);
+            }
+        }
+        for (ty, v) in [(1, 4), (2, 2), (3, 0), (4, 4), (5, 2), (6, 0)] {
+            rw_d3d9_set_texture_stage_state(0, ty, v);
+        }
+    } else {
+        rw_d3d9_set_texture(GPtr::NULL, 0);
+        for (ty, v) in [(1, 3), (3, 0), (4, 3), (6, 0)] {
+            rw_d3d9_set_texture_stage_state(0, ty, v);
+        }
+    }
+    crate::frontier_b2::matfx_d3d9_draw_mesh(header, mesh);
+    if !uv.is_null() {
+        rw_d3d9_set_texture_stage_state(0, 0x18, 0);
+    }
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_MATFX_DEFAULT_RENDER,
     HOOK_MATFX_ENGINE_OPEN,
     HOOK_RP_MATFX_MATERIAL_DATA_SET_FREE_LIST_CREATE_PARAMS,
     HOOK_RP_MATFX_PLUGIN_ATTACH,
