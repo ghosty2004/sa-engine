@@ -6,14 +6,15 @@
 //! statically linked third-party libraries (d3dx9, libpng + zlib, QuickTime: `excluded:thirdparty:*` in
 //! tools/catalog/classify_unknowns.py) it is not ported: the catalogue classes it `excluded:thirdparty:libjpeg-6b`
 //! (docs/re/specs/RW/_unk-M.md), its jmemnobs back end 0x5CF800-0x5CF830 included. The ports call it through the declarations below; the `jpeg_compress_struct`
-//! fields are written at their libjpeg 6b offsets.
+//! fields are written at their libjpeg 6b offsets. Without the exe, sa-game serves these entry points natively
+//! (`libjpeg.rs`).
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
 use crate::common::{g, rd, wr};
-use sa_core::bindings::{file_close, image_destroy, open_file};
+use sa_core::bindings::{file_close, file_write, image_destroy, open_file};
 use sa_core::field::ptr_of as lp;
 
 orig! {
@@ -93,7 +94,24 @@ pub fn jpeg_compress_screen_to_file(cam: GPtr<u8>, path: GPtr<u8>) {
     file_close(g::<GPtr<u8>>(FILE).read());
 }
 
+/// The file destination's `empty_output_buffer(j_compress_ptr)` (0x5D0400, cdecl): the whole buffer (0xBD0B78,
+/// 0x32000 bytes) written with `CFileMgr::Write` to `JPegPlugin`'s file, the manager (`cinfo` +0x18) reset to the
+/// buffer's start and size; returns TRUE (AL = 1).
+#[hook(addr = 0x5D0400, conv = cdecl, name = "JPegPlugin::EmptyOutputBuffer", expect = "A1 74 0B BD 00 68 00 20 03 00",
+       unverified = "pure1f-1", route = "L2", hazards = "heap-writes", note = "writes the JPEG file")]
+pub fn jpeg_empty_output_buffer(cinfo: GPtr<u8>) -> u8 {
+    file_write(g::<GPtr<u8>>(FILE).read(), GPtr::from_addr(BUFFER), BUFFER_SIZE);
+    let dst = GPtr::<u8>::from_addr(rd::<u32>(cinfo, 0x18) as usize);
+    wr::<u32>(dst, 0, BUFFER as u32);
+    wr::<u32>(dst, 4, BUFFER_SIZE);
+    1
+}
+
 /// `JPegPlugin`'s output file handle (0xBD0B74).
 const FILE: usize = 0xBD_0B74;
+/// The file destination's buffer (0xBD0B78) and its size.
+const BUFFER: usize = 0xBD_0B78;
+const BUFFER_SIZE: u32 = 0x3_2000;
 
-pub const HOOKS: &[HookReg] = &[HOOK_JPEG_COMPRESS_SCREEN, HOOK_JPEG_COMPRESS_SCREEN_TO_FILE];
+pub const HOOKS: &[HookReg] =
+    &[HOOK_JPEG_COMPRESS_SCREEN, HOOK_JPEG_COMPRESS_SCREEN_TO_FILE, HOOK_JPEG_EMPTY_OUTPUT_BUFFER];
