@@ -4228,3 +4228,61 @@
   cached all-original reference that `lanec13-c2426f` had just matched IDENTICAL; re-run alone as `lanec13-defaultb`:
   IDENTICAL (save files identical except the SAVE-1 residue). So both sets are IDENTICAL 13/13 on the final DLL.
   Writer gate (base cd865caa) all 16 steps PASS on cc4bdcf3; only docs commits after it.
+
+## 2026-11-18 — FRONTIER-2 turn 15, lane B: the replay playback frame and cameras, train passengers (agent, branch worktree-agent-a6e16eb45b685398d)
+- Base: lane B turn 14's head dec302b6 (gate base 9fea817f). `tools/gen/inflight.py` checked first: no other branch
+  registers any address ported here.
+- Batch `frontier2-b32` (WORLD replay, 4 hooks, plain `#[hook(`; no image reference to any entry's bytes):
+  - CReplay::PlayBackThisFrameInterpolation 0x45F380 (`world/replay_frame.rs`): the 20-way packet switch transcribed
+    from the bytes. The vehicle packet's subtype switch creates only subtypes 0 / 1 / 2 / 5 / 6 / 11 (CAutomobile,
+    CMonsterTruck, CQuadBike, CBoat, CTrain, CTrailer); the other subtypes jump to the shared set-up with the stale EBP
+    (the CAddressInReplayBuffer at first, then the last vehicle created or the last deleted-vehicle packet's slot,
+    null for a free slot), modelled as an explicit register. The creation frame re-reads the pool slot and runs the
+    update (ExtractVehicleUpdateData / Bike / Bmx / Train, heli rotor +0x84C, plane +0x9C8 / +0x9C4). Only the plain
+    vehicle packet clears the boat's +0x5AC bit 2. Packet 11 and types above 19 never advance (an endless loop in the
+    original too). The camera packet scales m_mCameraMatrix by the extended 1 - t, the copied packet matrix by t,
+    `operator+=`, copies to RW and blends the focus with 1 - t rounded to f32. The protection fragment 0x406491 in the
+    vehicle set-up only loads +0x42F. Not modelled: the original spills each looked-up vehicle into its own buffer
+    argument slot (no caller reads it).
+  - CReplay::ProcessReplayCamera 0x45D060 (top-down: forward (0,0,-1), up (0,1,0), right (1,0,0) at focus + 15; fixed:
+    look-at rows from CameraFixed; m_vecGameCamPos, CalculateDerivedValues(false, true), the RW frame refresh).
+  - CReplay::ProcessLookAroundCam 0x45D760: either mouse axis above 0.01 (gta-reversed tests only y) starts it; the
+    start distance is clamped against 15 with the extended value and against 3 with the stored f32; the angle is
+    fpatan(cam.x - player.x, f32(cam.y - player.y)) over two more FindPlayerCoors calls; both buttons move the
+    distance by 2 dy, else the view angle (0.1 .. 1.5); a line-of-sight hit is moved a quarter of the unit vector back
+    towards the focus on all three axes (gta-reversed: z unscaled). The look-at rows / RW refresh are shared with
+    ProcessReplayCamera.
+  - tReplayTrainBlock::ExtractTrainUpdateData 0x45CDB0 (sa-veh `replay_vehicle.rs`): the vehicle update, the speed
+    dwords and track byte, carriage references through the conversion table (index - 1).
+- Batch `frontier2-b33` (VEH, 1 hook): CTrain::AddNearbyPedAsRandomPassenger 0x6F8170 (sa-veh `train_passengers.rs`):
+  the player / primary-task guards, the passenger nibbles of +0x5CB, the boarding passenger (+0x5CC) kept or dropped
+  (CPopulation::RemovePed for a seated one), the nearest eligible random ped (squared horizontal distance < 625, the
+  boarding side by the plane `pos . right - carriage pos . right`, pool walked from the last slot), the door offset in
+  carriage space (inverted matrix times GetNearestCarDoor's position) moved by -right / +right, then the seek /
+  enter-car sequence (enter as driver on side 0, as passenger on side 1). The stack CEntitySeekPosCalculatorXYOffset
+  temporary (vtable 0x86F8F8) is not modelled (stack only). No rand / srand call in either batch.
+- Bindings: CCamera::CalculateDerivedValues 0x5150E0 (twin in sa-cam), RwFrameOrthoNormalize 0x7F1170 and the
+  CTaskComplexSeekEntity<XYOffset> constructor 0x661DC0 moved to sa-world (callers in sa-ai / sa-cam / sa-render
+  import it). The PlayBackThisFrame declarations of 0x45F380 / 0x45D760 and CTrain::ProcessControl's 0x6F8170 target
+  the ports. dupes: the field reader `gf` and sa-world's `in_vehicle` reused. convcheck 0 FAIL; bindings --check clean.
+- frontier.py --no-branches: to port 58 -> 55 (WORLD 0x45F380 / 0x45D760, VEH 0x6F8170); no new rows.
+- `replay` scenario: default 2400 iterations; frontier2-b32-counts.gdb: TriggerPlayback 1, PlayBackThisFrameInterpolation
+  865, ProcessReplayCamera 864, ProcessLookAroundCam 864, DealWithNewPedPacket 95, ProcessPedUpdate 8493, FinishPlayback
+  1, RestoreStuffFromMem 1; 2416 steps, 0 blocked, no crash. frontier.sh's usage lines no longer list `hydra`.
+- Scenarios (frontier.sh, i686 native sa-game of the final code, SA_ROOT=~/sa-engine; steps / blocked): pausemenu 416 /
+  0, solicit 4016 / 0, crossing 1216 / 0, crossing-long 4016 / 0, roadblocks 2016 / 0, melee 2616 / 0, sniper /
+  shootcar / shootdriver / quad / heli / plane / boat / cinema / monster / tanker / nitro 1216 / 0, roadblock-script
+  1016 / 0, roadblock-wanted 2016 / 0, gangwar 2016 / 0, jetpack 1016 / 0, copsf / coplv 2016 / 0, samsite 1616 / 0,
+  postfx 1016 / 0, replay 2416 / 0, tank 1215 / 1 (0x4A0FA0, lane C), hunter 999 / 217 (DoDriveByAutoAiming 0x73D720,
+  lane A); no crash, 0 blocked on lane B.
+- Writer gate (base 9fea817f) on abedb8b2 (the last code / catalog commit; only the roadmap and this worklog follow):
+  all 18 steps PASS, none skipped (note: frontier2-b32 spans UNK-game and WORLD, ExtractTrainUpdateData being
+  catalogued UNK-game). A first run failed only `queue` (line numbers after the dedup commit); refreshed in abedb8b2.
+- verify-all (lanes 4-5, fresh release sa-oracle + satool, DLL sha256 3cce7884… = the final code): `lb15-u`
+  (SA_UNVERIFIED=frontier2-b29,frontier2-b30,frontier2-b31,frontier2-b32,frontier2-b33,frontier2-c13) IDENTICAL 13/13;
+  default set `lb15-def` (same DLL) IDENTICAL 13/13.
+- Resources: CARGO_BUILD_JOBS=4 / JOBS=4, one cargo build at a time; wine lanes 4-5; target/ under 3 GB.
+- Open (lane B): CAM 0x519810 (Process_Cam_TwoPlayer_InCarAndShooting, 867 instructions, read only) / 0x525E50
+  (VM fragment 0x4082C0 to evaluate first); lane A's leftovers Interior_c FurnishBedroom 0x593FC0, FurnishLounge
+  0x597740, Kitchen_FurnishEdges 0x596930 and CStreaming::DeleteRwObjectsBehindCamera 0x40D7C0 (600-800 instructions
+  each, not started).
