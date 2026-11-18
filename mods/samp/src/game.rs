@@ -25,8 +25,27 @@ const PED_MODELS: std::ops::RangeInclusive<i32> = 0..=311;
 #[derive(Default)]
 pub struct ModGame {
     config: SampModeConfig,
-    /// What the UI draws through (the overlay of the frame being drawn).
-    pub ui: Option<Box<dyn sa_samp_api::ui::UiBackend>>,
+    /// What the UI draws through; [`crate::draw_ui`] turns it into overlay quads.
+    pub ui: samp_overlay::QuadUi,
+}
+
+/// World point `p` on a `size` screen with the game's camera (its horizontal field of view; the vertical one
+/// follows from the aspect ratio) and its depth in front of the camera, `None` behind the camera.
+pub fn project(p: Vec3, size: (i32, i32)) -> Option<(f32, f32, f32)> {
+    let c = state::camera()?;
+    let right = cross(c.front, c.up);
+    let d = Vec3::new(p.x - c.pos.x, p.y - c.pos.y, p.z - c.pos.z);
+    let dot = |a: Vec3, b: Vec3| a.x * b.x + a.y * b.y + a.z * b.z;
+    let z = dot(d, c.front);
+    if z <= 0.1 {
+        return None;
+    }
+    let half = (c.fov.to_radians() / 2.0).tan();
+    let aspect = if c.aspect_ratio > 0.0 { c.aspect_ratio } else { size.0 as f32 / size.1.max(1) as f32 };
+    let (w, h) = (size.0 as f32, size.1 as f32);
+    let x = w / 2.0 * (1.0 + dot(d, right) / (z * half));
+    let y = h / 2.0 * (1.0 - dot(d, c.up) / (z * half / aspect));
+    Some((x, y, z))
 }
 
 /// A mod API error as the adapter's.
@@ -77,10 +96,7 @@ impl GameAdapter for ModGame {
     fn request_quit(&mut self) {}
 
     fn ui(&mut self) -> Option<&mut dyn sa_samp_api::ui::UiBackend> {
-        match &mut self.ui {
-            Some(b) => Some(b.as_mut()),
-            None => None,
-        }
+        Some(&mut self.ui)
     }
 }
 
@@ -108,7 +124,11 @@ impl Camera for ModGame {
             ..CameraState::default()
         }
     }
-    fn world_to_screen(&self, _p: Vec3) -> Option<(Point2, f32)> { None }
+    fn world_to_screen(&self, p: Vec3) -> Option<(Point2, f32)> {
+        use sa_samp_api::ui::UiBackend as _;
+        let (x, y, depth) = project(p, self.ui.video_size())?;
+        Some((Point2 { x, y }, depth))
+    }
     fn sphere_visible(&self, _center: Vec3, _radius: f32) -> bool { false }
     fn set_fixed_position(&mut self, pos: Vec3, rot: Vec3) -> GameResult<()> {
         let f = Arg::Float;

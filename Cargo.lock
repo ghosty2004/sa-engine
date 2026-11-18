@@ -2786,10 +2786,12 @@ dependencies = [
 name = "sa-mod-samp"
 version = "0.1.0"
 dependencies = [
+ "png",
  "sa-mod",
  "sa-net",
  "sa-samp-api",
  "samp-client",
+ "samp-overlay",
  "samp-proto",
 ]
 
@@ -3080,6 +3082,15 @@ dependencies = [
  "samp-saa",
  "samp-ui",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "samp-overlay"
+version = "0.1.0"
+dependencies = [
+ "ab_glyph",
+ "sa-samp-api",
+ "samp-ui",
 ]
 
 [[package]]

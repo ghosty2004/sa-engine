@@ -12,8 +12,11 @@
 //!   the join at its auth check);
 //! * `auto_connect`: `1` joins `server` as `name` without the screen, `auto_spawn`: `1` presses Shift in class
 //!   selection by itself (headless runs);
+//! * `ui_scene`: `ref` shows the UI's fixed reference scene instead (no server; comparisons with screenshots);
 //! * `serial_seed`: made once, from the clock, never from user or host data.
 
+mod assets;
+mod canvas;
 mod connect;
 mod game;
 mod transport;
@@ -23,10 +26,13 @@ use std::time::Duration;
 use sa_mod::input::Input;
 use sa_mod::net::Socket;
 use sa_mod::game::{GameOption, set_option};
-use sa_mod::{Error, Event, GameState, Mod, Overlay, Rgba, event_kind, events, state, storage, time};
+use sa_mod::{Error, Event, GameState, Mod, Overlay, Vec3, event_kind, events, state, storage, time};
 use sa_samp_api::hooks::{FramePhase, GameHooks};
 use sa_samp_api::input::{EventResult, WindowEvent};
 use samp_client::hosted::{HostedClient, HostedConfig};
+use samp_client::ui::host::UiHost;
+use samp_client::ui::render::LabelDraw;
+use samp_client::ui::scene;
 use samp_client::netclient::NetClient;
 use samp_proto::auth::AuthTable;
 use samp_proto::time::HostTime;
@@ -89,17 +95,74 @@ enum Stage {
     Approval { server: String, name: String },
     /// The client runs.
     Client(Box<HostedClient>),
+    /// The UI's fixed reference scene, without a server (`ui_scene` = `ref`).
+    Scene(Box<Scene>),
+}
+
+/// samp-rs's UI showing [`samp_client::ui::scene`].
+struct Scene {
+    ui: UiHost,
+    /// Overlay frames drawn while the game runs its world.
+    frames: u32,
+    /// The 3D label's place, fixed in front of the camera at the first frame.
+    label: Option<Vec3>,
+}
+
+impl Scene {
+    /// The scene's frame `n`: the step's content and input, the UI's passes.
+    fn frame(&mut self, game: &mut game::ModGame) {
+        self.frames += 1;
+        let n = self.frames;
+        if n == 1 {
+            scene::setup(&mut self.ui.core);
+            if let Some(c) = state::camera() {
+                let z = state::player().filter(|p| p.handle.is_some()).map_or(c.pos.z, |p| p.ped.pos.z + 1.0);
+                self.label = Some(Vec3::new(c.pos.x + c.front.x * 7.0 + 1.5, c.pos.y + c.front.y * 7.0, z));
+            }
+        }
+        self.ui.world.labels = self
+            .label
+            .iter()
+            .map(|l| LabelDraw { pos: [l.x, l.y, l.z], text: scene::LABEL.into(), argb: 0xFFFF_FFFF })
+            .collect();
+        use sa_samp_api::ui::UiBackend as _;
+        let (w, h) = game.ui.video_size();
+        let mut input = Vec::new();
+        if let Some(name) = scene::step(n, w as f32, h as f32, &mut self.ui.core, &mut input) {
+            sa_mod::info(&format!("samp: ui scene frame {n}: {name}"));
+        }
+        for e in input {
+            if let WindowEvent::MouseMove { x, y } = e {
+                game.ui.set_cursor(x, y);
+            }
+            self.ui.window_event(e, game);
+        }
+        for phase in [FramePhase::Before2d, FramePhase::After2d, FramePhase::Present] {
+            self.ui.frame(phase, game);
+        }
+        self.ui.core.take_outgoing();
+    }
 }
 
 struct Samp {
     stage: Stage,
     screen: connect::Screen,
     game: game::ModGame,
+    images: canvas::Images,
 }
 
 impl Default for Samp {
     fn default() -> Samp {
-        Samp { stage: Stage::Screen, screen: connect::Screen::load(DEFAULT_SERVER, DEFAULT_NAME), game: Default::default() }
+        let mut game = game::ModGame::default();
+        game.ui.set_projector(Box::new(|p, size| {
+            game::project(Vec3::new(p[0], p[1], p[2]), size).map(|(x, y, _)| (x, y))
+        }));
+        Samp {
+            stage: Stage::Screen,
+            screen: connect::Screen::load(DEFAULT_SERVER, DEFAULT_NAME),
+            game,
+            images: Default::default(),
+        }
     }
 }
 
@@ -140,13 +203,20 @@ impl Samp {
         }
     }
 
-    /// The keyboard while the connect screen, the chat input or a dialog is up.
+    /// The keyboard while the connect screen, the chat input or a dialog is up; the mouse and the platform's
+    /// cursor while samp's UI shows its cursor (a dialog, the scoreboard).
     fn capture(&self) {
-        let keyboard = match &self.stage {
-            Stage::Screen | Stage::Approval { .. } => true,
-            Stage::Client(c) => c.ui.wants_keyboard(),
+        let (keyboard, mouse, cursor) = match &self.stage {
+            Stage::Screen | Stage::Approval { .. } => (true, true, false),
+            Stage::Client(c) => {
+                let (_, mouse, cursor) = self.game.ui.input_state();
+                (c.ui.wants_keyboard(), mouse, cursor)
+            }
+            Stage::Scene(_) => (false, false, false),
         };
-        let _ = sa_mod::input::capture(keyboard, keyboard, false);
+        // samp's own cursor (mouse.png) when the skin is there, else the platform's
+        let platform_cursor = cursor && !self.game.ui.draws_cursor();
+        let _ = sa_mod::input::capture(keyboard, mouse || keyboard, platform_cursor);
     }
 }
 
@@ -184,7 +254,10 @@ impl Mod for Samp {
         ] {
             set_option(o, false).map_err(|e| format!("game option {o:?}: {e:?}"))?;
         }
-        if setting("auto_connect").is_some_and(|v| v == "1") {
+        assets::install(&mut self.game.ui);
+        if setting("ui_scene").is_some_and(|v| v == "ref") {
+            self.stage = Stage::Scene(Box::new(Scene { ui: UiHost::new(None), frames: 0, label: None }));
+        } else if setting("auto_connect").is_some_and(|v| v == "1") {
             self.stage = Stage::Approval { server: self.screen.server.clone(), name: self.screen.name.clone() };
         }
         events::subscribe(&[event_kind::FRAME_BEGIN]);
@@ -202,6 +275,9 @@ impl Mod for Samp {
     }
 
     fn input(&mut self, event: Input) -> bool {
+        if let Input::MouseMove { x, y } = event {
+            self.game.ui.set_cursor(x, y);
+        }
         let consumed = match &mut self.stage {
             Stage::Screen => {
                 if let Some(connect::Action::Connect { server, name }) = self.screen.input(event) {
@@ -212,6 +288,7 @@ impl Mod for Samp {
             }
             Stage::Approval { .. } => false,
             Stage::Client(c) => c.window_event(window_event(event), &self.game) == EventResult::Consumed,
+            Stage::Scene(_) => false,
         };
         self.capture();
         consumed
@@ -224,11 +301,16 @@ impl Mod for Samp {
         if state::game_state() != Some(GameState::Playing) {
             return;
         }
-        match &self.stage {
+        match &mut self.stage {
             Stage::Screen | Stage::Approval { .. } => self.screen.draw(o),
-            Stage::Client(c) => {
-                let line = format!("SA:MP {}:{} ({:?})", self.screen.server, self.screen.name, c.net().phase());
-                let _ = o.text(8.0, 8.0, 12.0, Rgba::new(0xA9, 0xC4, 0xE4, 0xFF), &line);
+            Stage::Scene(s) => {
+                s.frame(&mut self.game);
+                let hide = state::menu_active();
+                self.game.ui.flush(&mut canvas::ModCanvas { overlay: o, images: &mut self.images }, hide);
+            }
+            Stage::Client(_) => {
+                let hide = state::menu_active();
+                self.game.ui.flush(&mut canvas::ModCanvas { overlay: o, images: &mut self.images }, hide);
             }
         }
     }
