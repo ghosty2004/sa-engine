@@ -147,6 +147,7 @@ pub const MODULES: &[&[HookReg]] = &[
     world::furniture_lists::HOOKS,
     world::world_small_actions::HOOKS,
     world::interior_room_items::HOOKS,
+    world::interior_room_furnish::HOOKS,
     world::stats_records::HOOKS,
     world::garage_checks::HOOKS,
     world::entity_sector_check::HOOKS,

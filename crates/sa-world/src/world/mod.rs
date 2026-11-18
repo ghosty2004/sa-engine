@@ -107,6 +107,7 @@ pub mod interior_furnish_lookup;
 pub mod furniture_lists;
 pub mod world_small_actions;
 pub mod interior_room_items;
+pub mod interior_room_furnish;
 pub mod stats_records;
 pub mod garage_checks;
 pub mod entity_sector_check;
