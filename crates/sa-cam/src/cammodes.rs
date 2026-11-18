@@ -686,8 +686,189 @@ pub fn process_wheel_cam(this: GPtr<u8>, _target: GPtr<u8>, _orientation: u32, _
     u8::from(hit == 0)
 }
 
+orig! {
+    /// CRT `sprintf(buf, fmt, double, double, double)` (0x821BB5; the doubles as dword pairs)
+    fn sprintf_3d(buf: GPtr<u8>, fmt: GPtr<u8>, a0: u32, a1: u32, b0: u32, b1: u32, c0: u32, c1: u32) -> i32 = cdecl 0x821BB5 => unported;
+    /// `CEntity::Teleport(CVector, bool)` (vslot 14)
+    fn v_teleport(e: GPtr<u8>, x: u32, y: u32, z: u32, reset: u32) = thiscall vslot 0x38 => unported;
+}
+
+/// `Process_Editor`'s statics: the look-at step 0xB6FFE4, the shadow switch 0xB7295A, the debug text switch
+/// 0xBAA45D, the explosion shadow texture 0xC403F4, `CWorld::PlayerInFocus` 0xB7CD74, `CWorld::Players` 0xB7CD98.
+const EDITOR_LOOK_AT: usize = 0xB6_FFE4;
+const EDITOR_SHADOWS: usize = 0xB7_295A;
+const EDITOR_DEBUG_TEXT: usize = 0xBA_A45D;
+const SHADOW_EXPLOSION_TEX: usize = 0xC4_03F4;
+const PLAYER_IN_FOCUS: usize = 0xB7_CD74;
+const PLAYERS: usize = 0xB7_CD98;
+
+/// The editor's wrap of a source coordinate: while `v * 0.02 + 60 > 115` it drops by 1 (kept on the x87 stack), then
+/// while `v * 0.02 + 60 < 5` (from the stored f32) it rises by 1.
+fn editor_wrap(p: GPtr<u8>) {
+    let a = k(0x3CA3_D70A);
+    let b = k(0x4270_0000);
+    let (hi, lo) = (k(0x42E6_0000), k(0x40A0_0000));
+    let over = |v: X87| !v.fmul_m(a).fadd_m(b).fcom(x(hi)).test_any(0x41);
+    if over(x(rd::<f32>(p, 0))) {
+        let mut v = x(rd::<f32>(p, 0));
+        loop {
+            v = v.fsub_m(k(0x3F80_0000));
+            if !over(v) {
+                break;
+            }
+        }
+        wr::<f32>(p, 0, f32_of(v));
+    }
+    let under = |v: X87| !v.fmul_m(a).fadd_m(b).fcom(x(lo)).test_parity(5);
+    if under(x(rd::<f32>(p, 0))) {
+        let mut v = x(rd::<f32>(p, 0));
+        loop {
+            v = v.fadd_m(k(0x3F80_0000));
+            if !under(v) {
+                break;
+            }
+        }
+        wr::<f32>(p, 0, f32_of(v));
+    }
+}
+
+/// `CCam::Process_Editor(const CVector&, float, float, float)` (0x50F3F0, thiscall `ret 0x10`, no argument read;
+/// FRONTIER-2 turn 13 lane B, batch `frontier2-b29`), from the 1.0 US bytes (gta-reversed as reading aid: its clamps
+/// and wrap bounds differ). On m_bResetStatics (+0xA): source = (796, -937, 40), the target entity (+0x21C)
+/// released. Near clip 0.3, FOV 70. Pad 1's left stick: `alpha += y * (pi/180) * 0.02`, `beta += x * 0.02618 *
+/// (1/19)`. The target = the target entity's position, else the source. alpha above 1.5620698 snaps to it; below
+/// -1.5620698 it snaps to that and the look-at step is only clamped; otherwise square / cross (+0x1C / +0x20) add /
+/// subtract 0.1 to the step (clamped to +-70) or it resets to 0. front = normalise(target - source), `source +=
+/// step * front` (y unrounded), `source.z` below -450 snaps to -450. RightShoulder2 just pressed (+0xE set, +0x3E
+/// clear): the player's vehicle `Teleport(source, false)`, else the focus player's ped moved to the source. x and
+/// y wrap ([`editor_wrap`]), GetVectorsReadyForRW, the explosion shadow unless LeftShock was just pressed (when
+/// 0xB7295A is set), and the three debug lines `sprintf`'d to a stack buffer when 0xBAA45D is set.
+#[hook(addr = 0x50F3F0, conv = thiscall, name = "CCam::Process_Editor", this = "CCam",
+       expect = "55 8B EC 83 E4 F8 81 EC 20 01 00 00",
+       unverified = "frontier2-b29", route = "L2", hazards = "none")]
+pub fn process_editor(this: GPtr<u8>, _target: GPtr<u8>, _orientation: u32, _speed: u32, _speed_wanted: u32) {
+    use sa_core::bindings::{entity_clean_up_old_reference, get_pad, rw_camera_set_near_clip_plane};
+    use sa_world::bindings::{find_player_vehicle, store_shadow_to_be_rendered};
+    use sa_math::fpu::xi;
+    let src = this.byte_add(0x19C);
+    let front = this.byte_add(0x190);
+    let look = g::<f32>(EDITOR_LOOK_AT);
+    if rd::<u8>(this, 0xA) != 0 {
+        wr::<u32>(src, 0, 0x4447_0000);
+        wr::<u32>(src, 4, 0xC46A_4000);
+        wr::<u32>(src, 8, 0x4220_0000);
+        let slot = this.byte_add(0x21C);
+        let e = rd::<GPtr<u8>>(slot, 0);
+        if !e.is_null() {
+            entity_clean_up_old_reference(e, slot);
+        }
+        wr::<u32>(slot, 0, 0);
+    }
+    wr::<u8>(this, 0xA, 0);
+    rw_camera_set_near_clip_plane(sa_core::platform::SCENE_CAMERA.get(), f32::from_bits(0x3E99_999A));
+    wr::<u32>(this, 0xB4, 0x428C_0000);
+    let sx = rd::<i16>(get_pad(1), 0);
+    let sy = rd::<i16>(get_pad(1), 2);
+    let alpha = xi(i32::from(sy)).fmul_m(k(0x3C8E_FA35)).fmul_m(k(0x3CA3_D70A)).fadd_m(rd::<f32>(this, 0xAC));
+    wr::<f32>(this, 0xAC, f32_of(alpha));
+    let beta = xi(i32::from(sx)).fmul_m(k(0x3CD6_7750)).fmul_m(k(0x3D57_9436)).fadd_m(rd::<f32>(this, 0xBC));
+    wr::<f32>(this, 0xBC, f32_of(beta));
+    let e = rd::<GPtr<u8>>(this, 0x21C);
+    let tp = if e.is_null() { src } else { pos_of(e) };
+    let t = [rd::<f32>(tp, 0), rd::<f32>(tp, 4), rd::<f32>(tp, 8)];
+    if !x(rd::<f32>(this, 0xAC)).fcom(x(k(0x3FC7_F1E7))).test_any(0x41) {
+        wr::<u32>(this, 0xAC, 0x3FC7_F1E7);
+    }
+    let clamp = if !x(rd::<f32>(this, 0xAC)).fcom(x(k(0xBFC7_F1E7))).test_parity(5) {
+        wr::<u32>(this, 0xAC, 0xBFC7_F1E7);
+        true
+    } else if rd::<u16>(get_pad(1), 0x1C) != 0 {
+        look.write(f32_of(x(look.read()).fadd_m(k(0x3DCC_CCCD))));
+        true
+    } else if rd::<u16>(get_pad(1), 0x20) != 0 {
+        look.write(f32_of(x(look.read()).fsub_m(k(0x3DCC_CCCD))));
+        true
+    } else {
+        look.write(0.0);
+        false
+    };
+    if clamp {
+        if !x(look.read()).fcom(x(k(0x428C_0000))).test_any(0x41) {
+            look.write(f32::from_bits(0x428C_0000));
+        } else if !x(look.read()).fcom(x(k(0xC28C_0000))).test_parity(5) {
+            look.write(f32::from_bits(0xC28C_0000));
+        }
+    }
+    for (i, c) in t.iter().enumerate() {
+        let o = 4 * i as isize;
+        wr::<f32>(front, o, f32_of(x(*c).fsub_m(rd::<f32>(src, o))));
+    }
+    vector_normalise(front.cast::<[f32; 3]>());
+    let l = look.read();
+    let px = x(l).fmul_m(rd::<f32>(front, 0));
+    let py = x(l).fmul_m(rd::<f32>(front, 4));
+    let pz = f32_of(x(l).fmul_m(rd::<f32>(front, 8)));
+    wr::<f32>(src, 0, f32_of(px.fadd_m(rd::<f32>(src, 0))));
+    wr::<f32>(src, 4, f32_of(py.fadd_m(rd::<f32>(src, 4))));
+    wr::<f32>(src, 8, f32_of(x(pz).fadd_m(rd::<f32>(src, 8))));
+    if !x(rd::<f32>(src, 8)).fcom(x(k(0xC3E1_0000))).test_parity(5) {
+        wr::<u32>(src, 8, 0xC3E1_0000);
+    }
+    let pad = get_pad(1);
+    if rd::<u16>(pad, 0xE) != 0 && rd::<u16>(pad, 0x3E) == 0 {
+        if !find_player_vehicle(-1, 0).is_null() {
+            let v = find_player_vehicle(-1, 0);
+            v_teleport(v, rd::<u32>(src, 0), rd::<u32>(src, 4), rd::<u32>(src, 8), 0);
+        } else {
+            let slot = usize::from(g::<u8>(PLAYER_IN_FOCUS).read());
+            let ped = g::<GPtr<u8>>(PLAYERS + slot * 0x190).read();
+            let m = rd::<GPtr<u8>>(ped, 0x14);
+            let dst = if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) };
+            for o in [0, 4, 8] {
+                wr::<u32>(dst, o, rd::<u32>(src, o));
+            }
+        }
+    }
+    editor_wrap(src);
+    editor_wrap(src.byte_add(4));
+    get_vectors_ready_for_rw_call(this);
+    let pad = get_pad(1);
+    let just_pressed = rd::<u16>(pad, 0x24) != 0 && rd::<u16>(pad, 0x54) == 0;
+    if !just_pressed && g::<u8>(EDITOR_SHADOWS).read() != 0 {
+        store_shadow_to_be_rendered(
+            2, g::<GPtr<u8>>(SHADOW_EXPLOSION_TEX).read(), src,
+            0x4140_0000, 0, 0, 0xC140_0000, 0x80, 0x80, 0x80, 0x80, 0x447A_0000, 0, 0x3F80_0000, GPtr::NULL, 0,
+        );
+    }
+    if g::<u8>(EDITOR_DEBUG_TEXT).read() != 0 {
+        let mut buf = [0u8; 0xD8];
+        let b = GPtr::from_raw(buf.as_mut_ptr());
+        let d = |v: X87| {
+            let bits = v.to_f64().to_bits();
+            (bits as u32, (bits >> 32) as u32)
+        };
+        let lines = [
+            (0x86_316C, x(rd::<f32>(src, 0)), x(rd::<f32>(src, 4)), x(rd::<f32>(src, 8))),
+            (0x86_313C, x(rd::<f32>(front, 0)), x(rd::<f32>(front, 4)), x(rd::<f32>(front, 8))),
+            (
+                0x86_310C,
+                x(rd::<f32>(front, 0)).fadd_m(rd::<f32>(src, 0)),
+                x(rd::<f32>(src, 4)).fadd_m(rd::<f32>(front, 4)),
+                x(rd::<f32>(src, 8)).fadd_m(rd::<f32>(front, 8)),
+            ),
+        ];
+        for (fmt, a, bb, c) in lines {
+            let (a0, a1) = d(a);
+            let (b0, b1) = d(bb);
+            let (c0, c1) = d(c);
+            sprintf_3d(b, GPtr::from_addr(fmt), a0, a1, b0, b1, c0, c1);
+        }
+    }
+}
+
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_PROCESS_EDITOR,
     HOOK_PROCESS_WHEEL_CAM,
     HOOK_PROCESS_PEDS_DEAD_BABY,
     HOOK_PROCESS_SPECIAL_FIXED_FOR_SYPHON,

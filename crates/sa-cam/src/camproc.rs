@@ -675,7 +675,7 @@ orig! {
     pub fn cam_special_fixed_for_syphon(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32) = thiscall 0x517500 => unported;
     pub fn cam_1st_person(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32) = thiscall 0x517EA0 => unported;
     pub fn cam_fly_by(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32) = thiscall 0x5B25F0 => unported;
-    pub fn cam_editor(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32) = thiscall 0x50F3F0 => unported;
+    pub fn cam_editor(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32) = thiscall 0x50F3F0 => crate::cammodes::process_editor;
     pub fn cam_1rst_person_ped_on_pc(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32) = thiscall 0x50EB70 => unported;
     pub fn cam_rocket(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32, b: u32) = thiscall 0x511B50 => unported;
     /// `CCam` mode processors without arguments
@@ -683,7 +683,7 @@ orig! {
     pub fn cam_two_player(c: GPtr<u8>) = thiscall 0x525E50 => unported;
     pub fn cam_two_player_in_car_and_shooting(c: GPtr<u8>) = thiscall 0x519810 => unported;
     pub fn cam_two_player_separate_cars(c: GPtr<u8>) = thiscall 0x513510 => unported;
-    pub fn cam_two_player_separate_cars_top_down(c: GPtr<u8>) = thiscall 0x513BE0 => unported;
+    pub fn cam_two_player_separate_cars_top_down(c: GPtr<u8>) = thiscall 0x513BE0 => crate::twoplayer::process_two_player_separate_cars_top_down;
     pub fn cam_arrest_cam_one(c: GPtr<u8>) -> u8 = thiscall 0x518500 => crate::frontier_b4_cam::process_arrest_cam_one;
     pub fn cam_attached_cam(c: GPtr<u8>) = thiscall 0x512B10 => unported;
     /// `CCam` DW processors `(bool)`, AL

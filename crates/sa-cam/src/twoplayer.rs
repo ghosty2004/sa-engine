@@ -279,4 +279,93 @@ pub fn get_two_player_aim_vector(this: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> {
     target
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_TWO_PLAYER_POINT_SEES_BOTH, HOOK_TWO_PLAYER_VECTORS, HOOK_GET_TWO_PLAYER_AIM_VECTOR];
+/// 80.0 (0x8CCCB8 holds the 0.4 rad tilt), 0.005 (0x858B4C), 0.0 (0x858B50), 10.0 (0x85862C), 30.0 (0x858CA4),
+/// 0.75 (0x858F34), 0.45 (0x8631D0).
+const K_80: u32 = 0x42A0_0000;
+const TOPDOWN_TILT: usize = 0x8C_CCB8;
+const K_0_005: u32 = 0x3BA3_D70A;
+const K_10: u32 = 0x4120_0000;
+const K_30: u32 = 0x41F0_0000;
+const K_0_75: u32 = 0x3F40_0000;
+const K_0_45: u32 = 0x3EE6_6666;
+const TIME_STEP: usize = 0xB7_CB5C;
+
+/// `CCam::Process_Cam_TwoPlayer_Separate_Cars_TopDown()` (0x513BE0, thiscall, no arguments; FRONTIER-2 turn 13 lane
+/// B, batch `frontier2-b29`), from the 1.0 US bytes (gta-reversed's version differs: it divides the time step by 200
+/// and builds the up vector from the source). FOV 80. `e_i` = player i's ped's +0x58C vehicle, else the ped
+/// (`FindPlayerEntity` inlined, no in-vehicle flag test). `c = (p1 + p0) * 0.5` (x stored as f32, y and z kept on the
+/// x87 stack, z's sum rounded first), `d = |p0 - p1|` (`(z^2 + y^2) + x^2`). The height target m: both players in a
+/// vehicle 1.0, one 0.75, none 0.45; `diff = m - h` (+0xD8), `s = f32(timeStep * 0.005)`: `h = m` when `|diff| < s`,
+/// else `h -/+ s` by the sign of `f32(diff)`. `R = max(d + 10, 30) * h`; with `a = f32(sin 0.4)`, `b = f32(-cos 0.4)`:
+/// source = `(f32(c.x - 0 * R), c.y - f32(a R), c.z - f32(b R))`, front = `(0, a, b)`, up = `(0, f32(-b), a)`,
+/// +0x148 = source.
+#[hook(addr = 0x513BE0, conv = thiscall, name = "CCam::Process_Cam_TwoPlayer_Separate_Cars_TopDown", this = "CCam",
+       expect = "83 EC 2C 53 C7 81 B4 00 00 00 00 00 A0 42",
+       unverified = "frontier2-b29", route = "L2", hazards = "x87-transcendental", note = "FSIN / FCOS of 0.4")]
+pub fn process_two_player_separate_cars_top_down(this: GPtr<u8>) {
+    use sa_math::fpu::{f32_of, x};
+    wr::<u32>(this, 0xB4, K_80);
+    let entity = |slot: usize| {
+        let ped = g::<GPtr<u8>>(slot).read();
+        let veh = rd::<GPtr<u8>>(ped, 0x58C);
+        (veh, if veh.is_null() { ped } else { veh })
+    };
+    let (v0, e0) = entity(PLAYER0_PED);
+    let (v1, e1) = entity(PLAYER1_PED);
+    let (q0, q1) = (pos_of(e0), pos_of(e1));
+    let sx = x(rd::<f32>(q1, 0)).fadd_m(rd::<f32>(q0, 0));
+    let sy = x(rd::<f32>(q0, 4)).fadd_m(rd::<f32>(q1, 4));
+    let sz = f32_of(x(rd::<f32>(q0, 8)).fadd_m(rd::<f32>(q1, 8)));
+    let cx = f32_of(sx.fmul_m(k(K_HALF)));
+    let cy = sy.fmul_m(k(K_HALF));
+    let cz = x(sz).fmul_m(k(K_HALF));
+    let dx = x(rd::<f32>(q0, 0)).fsub_m(rd::<f32>(q1, 0));
+    let dy = x(rd::<f32>(q0, 4)).fsub_m(rd::<f32>(q1, 4));
+    let dz = x(rd::<f32>(q0, 8)).fsub_m(rd::<f32>(q1, 8));
+    let dist = dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx)).fsqrt();
+    let m = match (v0.is_null(), v1.is_null()) {
+        (false, false) => K_ONE,
+        (true, true) => K_0_45,
+        _ => K_0_75,
+    };
+    let m = x(k(m));
+    let diff = m.fsub_m(rd::<f32>(this, 0xD8));
+    let diff32 = f32_of(diff);
+    let s = f32_of(x(g::<f32>(TIME_STEP).read()).fmul_m(k(K_0_005)));
+    let abs = if diff.fcom(x(0.0)).test_parity(5) { diff } else { diff.fchs() };
+    let h = if !abs.fcom(x(s)).test_parity(5) {
+        m
+    } else if x(diff32).fcom(x(0.0)).test_parity(5) {
+        x(s).fadd_m(rd::<f32>(this, 0xD8))
+    } else {
+        x(rd::<f32>(this, 0xD8)).fsub_m(s)
+    };
+    wr::<f32>(this, 0xD8, f32_of(h));
+    let r = dist.fadd_m(k(K_10));
+    let r = if x(k(K_30)).fcom(r).test_any(0x41) { r } else { x(k(K_30)) };
+    let r = r.fmul_m(rd::<f32>(this, 0xD8));
+    let a = f32_of(x(g::<f32>(TOPDOWN_TILT).read()).fsin());
+    let b = f32_of(x(g::<f32>(TOPDOWN_TILT).read()).fcos().fchs());
+    let ar = f32_of(x(a).fmul(r));
+    let br = f32_of(x(b).fmul(r));
+    let src = [f32_of(x(cx).fsub(x(0.0).fmul(r))), f32_of(cy.fsub_m(ar)), f32_of(cz.fsub_m(br))];
+    let up_y = f32_of(x(b).fchs());
+    for (i, v) in src.iter().enumerate() {
+        let o = 4 * i as isize;
+        wr::<f32>(this, 0x19C + o, *v);
+        wr::<f32>(this, 0x148 + o, *v);
+    }
+    wr::<u32>(this, 0x190, 0);
+    wr::<f32>(this, 0x194, a);
+    wr::<f32>(this, 0x198, b);
+    wr::<u32>(this, 0x1B4, 0);
+    wr::<f32>(this, 0x1B8, up_y);
+    wr::<f32>(this, 0x1BC, a);
+}
+
+pub const HOOKS: &[HookReg] = &[
+    HOOK_TWO_PLAYER_POINT_SEES_BOTH,
+    HOOK_TWO_PLAYER_VECTORS,
+    HOOK_GET_TWO_PLAYER_AIM_VECTOR,
+    HOOK_PROCESS_TWO_PLAYER_SEPARATE_CARS_TOP_DOWN,
+];
