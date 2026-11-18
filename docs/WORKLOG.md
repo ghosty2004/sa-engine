@@ -3558,10 +3558,11 @@
   truck's disks), tank 1200 / 1 (CWeapon::DoTankDoomAiming 0x73D1E0, WEAPON, the cannon shot); no crash, 0 blocked
   on lane B (VEH / CAM).
 - verify-all (lanes 4-5, fresh release sa-oracle, DLL of 187ad5b2 = the final code): `lb10-u`
-  (SA_UNVERIFIED=frontier2-b22,frontier2-b23) IDENTICAL 13/13; default set `lb10-def`: recorded below. An earlier
+  (SA_UNVERIFIED=frontier2-b22,frontier2-b23) IDENTICAL 13/13; default set `lb10-def` (same DLL) IDENTICAL 13/13. An earlier
   `lb10-u1` (b22 + 0x73DF00) was stopped after 2/13 PASS when the code moved on.
 - Writer gate (base e87dcae2): on 40b96b37 all 16 steps PASS, none skipped (note: frontier2-b23 spans VEH and WORLD,
-  for TankerCheat); rerun on the final head: recorded below.
+  for TankerCheat); rerun on 4cccb976 (the last code / tools commit; only this worklog line follows): all 16 PASS, none
+  skipped.
 - Resources: CARGO_BUILD_JOBS=4 / JOBS=4, one cargo build at a time; the main session's integration verify shared
   lanes 4-5.
 - Open (lane B): CAM Process_WheelCam 0x512110, Process_Editor 0x50F3F0, the two-player cams 0x513510 / 0x513BE0 /
