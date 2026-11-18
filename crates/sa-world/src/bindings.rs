@@ -909,8 +909,13 @@ orig! {
 }
 
 orig! {
+    /// `CShopping::LoadPrices` (0x49B8D0)
+    pub fn load_prices(s: GPtr<u8>) = cdecl 0x49B8D0 => crate::world::shopping::load_prices;
+}
+
+orig! {
     /// `CShopping::LoadShop` (0x49BBE0)
-    pub fn load_shop(s: GPtr<u8>) = cdecl 0x49BBE0 => unported;
+    pub fn load_shop(s: GPtr<u8>) = cdecl 0x49BBE0 => crate::world::shopping::load_shop;
 }
 
 orig! {

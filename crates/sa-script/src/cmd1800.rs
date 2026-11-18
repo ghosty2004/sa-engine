@@ -79,6 +79,7 @@ use sa_veh::bindings::get_vehicle_appearance;
 use sa_world::bindings::hold_entity_drop_entity as drop_entity;
 use sa_world::bindings::intel_get_task_hold as get_task_hold;
 use sa_world::bindings::load_shop;
+use sa_world::bindings::load_prices;
 use sa_ai::bindings::ped_groups_get_peds_group as get_peds_group;
 use sa_world::bindings::placeable_get_heading as get_heading;
 use sa_world::bindings::remove_from_moving_list;
@@ -155,8 +156,6 @@ orig! {
     /// 0x46AE80 (thiscall on the patrol route 0xC18DB8, `(const CVector*, const record*)`, AL ignored; a
     /// `.HOODLUM` stub: appends a point)
     fn patrol_route_add(r: GPtr<u8>, pos: GPtr<u32>, rec: GPtr<u8>) -> u8 = thiscall 0x46AE80 => unported;
-    /// `CShopping::LoadPrices(const char*)` (0x49B8D0) / `LoadShop(const char*)` (0x49BBE0)
-    fn load_prices(s: GPtr<u8>) = cdecl 0x49B8D0 => unported;
     /// `CShopping::GetPrice(uint32)` (0x49AD50)
     fn get_price(i: u32) -> u32 = cdecl 0x49AD50 => unported;
 }

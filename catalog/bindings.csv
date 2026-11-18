@@ -2045,7 +2045,8 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x48E970,sa-world,hands_up_ctor,thiscall,,t:GPtr<u8>;time:u32,GPtr<u8>,unported,CTaskSimpleHandsUp::Constructor,
 0x492E20,sa-world,dive_from_attached_ctor,thiscall,,t:GPtr<u8>;time:u32,GPtr<u8>,unported,CTaskComplexDiveFromAttachedEntityAndGetUp::Constructor,
 0x49AE30,sa-world,shopping_remove_loaded_shop,cdecl,,,,unported,CShopping::RemoveLoadedShop,
-0x49BBE0,sa-world,load_shop,cdecl,,s:GPtr<u8>,,unported,CShopping::LoadShop,
+0x49B8D0,sa-world,load_prices,cdecl,,s:GPtr<u8>,,sa_world::world::shopping::load_prices,CShopping::LoadPrices,
+0x49BBE0,sa-world,load_shop,cdecl,,s:GPtr<u8>,,sa_world::world::shopping::load_shop,CShopping::LoadShop,
 0x49C9E0,sa-world,stunt_jump_pool_new,thiscall,,p:GPtr<u8>,GPtr<u8>,unported,thunk_FUN_01566280,
 0x49CCE0,sa-world,tag_manager_is_tag,cdecl,,e:GPtr<u8>,u8,unported,CTagManager::IsTag,
 0x49CF90,sa-world,tag_manager_get_alpha,cdecl,,e:GPtr<u8>,u8,unported,CTagManager::GetAlpha-Entity,sa_pop::misc2::get_alpha_entity

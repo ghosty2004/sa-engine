@@ -7,9 +7,9 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::hook;
+use sa_core::{hook, orig};
 
-use super::common::{ftol32, g, rd, x, xi};
+use super::common::{ftol32, g, rd, wr, x, xi};
 use super::cworld::{PLAYERS, PLAYER_INFO_SIZE, PLAYER_IN_FOCUS};
 
 const NUM_KEYS: i32 = 0x230;
@@ -344,6 +344,280 @@ pub fn load_stats() {
     close_file(f);
 }
 
+/// `ms_priceSectionLoaded` (0xA9A7C8), `ms_numPriceModifiers` (0xA9A7D0), `ms_shopLoaded` (0xA9A7D8, a string),
+/// `ms_numItemsInShop` (0xA9A7F0), `ms_shopContents` (0xA9A318), `ms_priceModifiers` (0xA98650, key / price).
+const SECTION_LOADED: usize = 0xA9_A7C8;
+const NUM_PRICE_MODIFIERS: usize = 0xA9_A7D0;
+const SHOP_LOADED_NAME: usize = 0xA9_A7D8;
+const NUM_ITEMS_IN_SHOP: usize = 0xA9_A7F0;
+const SHOP_CONTENTS: usize = 0xA9_A318;
+const PRICE_MODIFIER_TABLE: usize = 0xA9_8650;
+/// `"shops"` (0x85A550), `"bought"` (0x85A558), `"type"` (0x85A548), `"item"` (0x85A540).
+const STR_SHOPS: usize = 0x85_A550;
+const STR_BOUGHT: usize = 0x85_A558;
+const STR_TYPE: usize = 0x85_A548;
+const STR_ITEM: usize = 0x85_A540;
+/// `CModelInfo::ms_modelInfoPtrs` (0xA9B0C8).
+const MODEL_INFOS: usize = 0xA9_B0C8;
+
+orig! {
+    /// `CVehicleModelInfo::GetNumWheelUpgrades(int32 set)` (0x4C8740)
+    fn get_num_wheel_upgrades(set: i32) -> i32 = cdecl 0x4C8740 => sa_stream::modelinfo::vehicle::get_num_wheel_upgrades;
+    /// `CVehicleModelInfo::GetWheelUpgrade(int32 set, int32 i)` (0x4C8750)
+    fn get_wheel_upgrade(set: i32, i: i32) -> i32 = cdecl 0x4C8750 => sa_stream::modelinfo::vehicle::get_wheel_upgrade;
+    /// `CShopping::GetKey(const char*, int32 section)` (0x49AB30)
+    fn get_key_call(name: GPtr<u8>, section: i32) -> u32 = cdecl 0x49AB30 => get_key;
+    /// `IsValidModForVehicle(uint32 key, CVehicle*)` (0x49B010)
+    fn is_valid_mod_for_vehicle_call(key: u32, veh: GPtr<u8>) -> u8 = cdecl 0x49B010 => is_valid_mod_for_vehicle;
+}
+use crate::bindings::find_player_vehicle;
+use sa_stream::bindings::{get_animation_block_index, load_all_requested_models};
+use crate::bindings::load_prices as load_prices_call;
+use sa_core::bindings::{crt_strncpy, streaming_request_model, timer_resume, timer_suspend};
+
+/// `CShopping::GetKey(const char* name, int32 section)` (stub 0x49AB30 -> 0x1561A10, cdecl): sections 4, 5, 6
+/// `CKeyGen::GetUppercaseKey(name)`; 9 `CWeaponInfo::FindWeaponType(name)` (called through the protection's computed
+/// jump, `[0x1560480] - [0x4D9E12] - 1` = 0x743D10); 2 the section itself; else the model index of
+/// `CModelInfo::GetModelInfo(name, &slot)` with the section slot preset to -1.
+#[hook(addr = 0x49AB30, conv = cdecl, name = "CShopping::GetKey", expect = "E9 DB 6E 0C 01",
+       unverified = "frontier2-a27", route = "L2", hazards = "none")]
+pub fn get_key(name: GPtr<u8>, section: i32) -> u32 {
+    match section {
+        4..=6 => get_uppercase_key(name),
+        9 => find_weapon_type(name) as u32,
+        2 => 2,
+        _ => {
+            let mut idx: i32 = -1;
+            get_model_info(name, GPtr::from_raw(&raw mut idx));
+            idx as u32
+        }
+    }
+}
+
+/// `IsValidModForVehicle(uint32 key, CVehicle* veh)` (stub 0x49B010 -> 0x15691D0, cdecl, AL). With the upgrade
+/// model's flag 0x100 (+0x12): a wheel (`flags & 0x7C00 == 0x800`) is valid when it is one of the vehicle model's
+/// wheel set (+0x4F) upgrades (`GetNumWheelUpgrades` through the protection's computed jump, `~[0x156053C] ^
+/// [0x665DA4]` = 0x4C8740, re-read per step); another upgrade when it is among the model's 18 upgrades (+0x2D6, i16).
+/// Without the flag a 0x4400 kind is valid when +0x1D3 is clear and (+0x1BE != 1 or +0x42E bit 0x10); any other kind
+/// by the upgrade list.
+#[hook(addr = 0x49B010, conv = cdecl, name = "IsValidModForVehicle", expect = "E9 BB E1 0C 01",
+       unverified = "frontier2-a27", route = "L2", hazards = "none")]
+pub fn is_valid_mod_for_vehicle(key: u32, veh: GPtr<u8>) -> u8 {
+    let mi = |i: i32| g::<GPtr<u8>>(MODEL_INFOS).wrapping_index(i).read();
+    let vmi = mi(i32::from(rd::<i16>(veh, 0x22)));
+    let flags = u32::from(rd::<u16>(mi(key as i32), 0x12));
+    let in_list = || (0..0x12isize).any(|i| i32::from(rd::<i16>(vmi, 0x2D6 + 2 * i)) == key as i32);
+    if flags & 0x100 != 0 {
+        if flags & 0x7C00 != 0x800 {
+            return u8::from(in_list());
+        }
+        let set = i32::from(rd::<i8>(vmi, 0x4F));
+        let mut i = 0;
+        if get_num_wheel_upgrades(set) > 0 {
+            loop {
+                if get_wheel_upgrade(set, i) == key as i32 {
+                    return 1;
+                }
+                i += 1;
+                if i >= get_num_wheel_upgrades(set) {
+                    break;
+                }
+            }
+        }
+        return 0;
+    }
+    if flags & 0x7C00 != 0x4400 {
+        return u8::from(in_list());
+    }
+    if rd::<u8>(veh, 0x1D3) != 0 {
+        return 0;
+    }
+    if rd::<u8>(veh, 0x1BE) != 1 || rd::<u8>(veh, 0x42E) & 0x10 != 0 {
+        return 1;
+    }
+    0
+}
+
+/// `CShopping::LoadPrices(const char* section)` (0x49B8D0, cdecl). Nothing when the section
+/// (`GetPriceSectionFromName`) is already loaded; a loaded one first gets its animation block deletable (the inlined
+/// RemoveLoadedPrices). Then the section index, `ms_numPrices` and `ms_numItemsInShop` = 0, `CTimer::Suspend`,
+/// `data\shopping.dat` read from `section prices` / `section <name>`: every line not empty, `#` or "end" (which
+/// stops) adds a price: key (`GetKey(first token)`), name tag (`strncpy` 8), sections 4 / 5 the clothes model key
+/// (`GetUppercaseKey`) and type (`atol`), 6 the tattoo type (-1 for `-`) and texture key, 9 the ammo; four tokens
+/// skipped, the price (`atol`), replaced by every matching price modifier (the last one wins; gta-reversed stops
+/// at the first); comment lines do not count (gta-reversed counts them). Then the section's animation block
+/// requested (flags 0x1A) and loaded, and `CTimer::Resume` (tail call).
+#[hook(addr = 0x49B8D0, conv = cdecl, name = "CShopping::LoadPrices", expect = "56 57 8B 7C 24 0C 57",
+       unverified = "frontier2-a27", route = "L2", hazards = "heap-writes",
+       note = "file I/O (shopping.dat), streams the section's animation block")]
+pub fn load_prices(name: GPtr<u8>) {
+    let sec = get_price_section_from_name(name);
+    let loaded = g::<i32>(SECTION_LOADED).read();
+    if sec == loaded {
+        return;
+    }
+    if loaded != 0 {
+        super::misc2::remove_loaded_prices();
+    }
+    g::<i32>(SECTION_LOADED).write(sec);
+    g::<i32>(NUM_PRICES).write(0);
+    g::<i32>(NUM_ITEMS_IN_SHOP).write(0);
+    timer_suspend();
+    let f = open_file(g::<u8>(STR_SHOPPING_DAT), g::<u8>(STR_MODE_R));
+    if find_section(f, g::<u8>(STR_PRICES)) & 0xFF != 0 {
+        find_section(f, name);
+    }
+    let d = || g::<u8>(STR_STATS_DELIMS);
+    let mut line = load_line(f);
+    while !line.is_null() {
+        let c = line.read();
+        if c != b'#' && c != 0 {
+            if is_end(line) {
+                break;
+            }
+            let tok = strtok(line, d());
+            let key = get_key_call(tok, g::<i32>(SECTION_LOADED).read());
+            let it = || item(g::<i32>(NUM_PRICES).read());
+            wr::<u32>(it(), 0, key);
+            let tag = strtok(GPtr::NULL, d());
+            crt_strncpy(it().byte_add(0x10), tag, 8);
+            match g::<i32>(SECTION_LOADED).read() {
+                4 | 5 => {
+                    let a = strtok(GPtr::NULL, d());
+                    let b = strtok(GPtr::NULL, d());
+                    wr::<u32>(it(), 8, get_uppercase_key(a));
+                    let v = atol(b);
+                    wr::<i32>(it(), 0xC, v);
+                }
+                6 => {
+                    let a = strtok(GPtr::NULL, d());
+                    let b = strtok(GPtr::NULL, d());
+                    let v = if a.read() == b'-' { -1 } else { atol(a) };
+                    wr::<i32>(it(), 8, v);
+                    wr::<u32>(it(), 0xC, get_uppercase_key(b));
+                }
+                9 => {
+                    let v = atol(strtok(GPtr::NULL, d()));
+                    wr::<i32>(it(), 8, v);
+                }
+                _ => {}
+            }
+            for _ in 0..4 {
+                strtok(GPtr::NULL, d());
+            }
+            let p = it();
+            wr::<i32>(p, 4, atol(strtok(GPtr::NULL, d())));
+            let n = g::<i32>(NUM_PRICE_MODIFIERS).read();
+            for k in 0..n.max(0) as isize {
+                let m = g::<u8>(PRICE_MODIFIER_TABLE).byte_add(8 * k);
+                if rd::<u32>(p, 0) == rd::<u32>(m, 0) {
+                    wr::<u32>(p, 4, rd::<u32>(m, 4));
+                }
+            }
+            g::<i32>(NUM_PRICES).write(g::<i32>(NUM_PRICES).read().wrapping_add(1));
+        }
+        line = load_line(f);
+    }
+    close_file(f);
+    let sname = g::<GPtr<u8>>(SECTION_NAMES).wrapping_index(g::<i32>(SECTION_LOADED).read()).read();
+    let b = get_animation_block_index(sname);
+    if b != -1 {
+        streaming_request_model(b.wrapping_add(0x63E7), 0x1A);
+        load_all_requested_models(1);
+    }
+    timer_resume();
+}
+
+/// `repe cmpsb` over 5 bytes (a 4-letter keyword with its terminator).
+fn bytes_eq5(a: GPtr<u8>, b: GPtr<u8>) -> bool {
+    (0..5isize).all(|i| a.byte_add(i).read() == b.byte_add(i).read())
+}
+
+/// `CShopping::LoadShop(const char* name)` (0x49BBE0, cdecl). Nothing when `_stricmp(name, ms_shopLoaded)` is 0;
+/// else the name copied into `ms_shopLoaded`, `CTimer::Suspend`, `ms_numItemsInShop` = 0. "bought": the shop holds
+/// the keys of the loaded prices the player has bought (the CTimer stays suspended: no Resume on this path, as the
+/// original). Else `data\shopping.dat` from `section shops` / `section <name>`: a `type` line loads its prices
+/// (`LoadPrices` of the token copied to a local), an `item` line adds `GetKey(token, section)` unless the section is
+/// car mods (1) and `IsValidModForVehicle(key, FindPlayerVehicle(-1, false))` fails; then `CTimer::Resume`.
+#[hook(addr = 0x49BBE0, conv = cdecl, name = "CShopping::LoadShop", expect = "83 EC 20 56 8B 74 24 28",
+       unverified = "frontier2-a27", route = "L2", hazards = "heap-writes",
+       note = "file I/O (shopping.dat); the bought path leaves CTimer suspended (original)")]
+pub fn load_shop(name: GPtr<u8>) {
+    let shop = g::<u8>(SHOP_LOADED_NAME);
+    if stricmp(name, shop) == 0 {
+        return;
+    }
+    let mut i = 0isize;
+    loop {
+        let c = name.byte_add(i).read();
+        shop.byte_add(i).write(c);
+        if c == 0 {
+            break;
+        }
+        i += 1;
+    }
+    timer_suspend();
+    g::<i32>(NUM_ITEMS_IN_SHOP).write(0);
+    if stricmp(name, g::<u8>(STR_BOUGHT)) == 0 {
+        let n = g::<i32>(NUM_PRICES).read();
+        if n > 0 {
+            let mut count = g::<i32>(NUM_ITEMS_IN_SHOP).read();
+            for k in 0..n {
+                let key = rd::<u32>(item(k), 0);
+                if g::<u8>(HAS_BOUGHT).byte_add(key_index(key) as isize).read() != 0 {
+                    g::<u32>(SHOP_CONTENTS).wrapping_index(count).write(key);
+                    count += 1;
+                }
+            }
+            g::<i32>(NUM_ITEMS_IN_SHOP).write(count);
+        }
+        return;
+    }
+    let f = open_file(g::<u8>(STR_SHOPPING_DAT), g::<u8>(STR_MODE_R));
+    if find_section(f, g::<u8>(STR_SHOPS)) & 0xFF != 0 {
+        find_section(f, name);
+    }
+    let d = || g::<u8>(STR_SECTION_DELIMS);
+    let mut line = load_line(f);
+    while !line.is_null() {
+        let c = line.read();
+        if c != b'#' && c != 0 {
+            if is_end(line) {
+                break;
+            }
+            let tok = strtok(line, d());
+            if bytes_eq5(g::<u8>(STR_TYPE), tok) {
+                let t = strtok(GPtr::NULL, d());
+                let mut buf = [0u8; 0x100];
+                let mut k = 0usize;
+                loop {
+                    let ch = t.byte_add(k as isize).read();
+                    buf[k] = ch;
+                    if ch == 0 {
+                        break;
+                    }
+                    k += 1;
+                }
+                load_prices_call(GPtr::from_raw(buf.as_mut_ptr()));
+            } else if bytes_eq5(g::<u8>(STR_ITEM), tok) {
+                let t = strtok(GPtr::NULL, d());
+                let key = get_key_call(t, g::<i32>(SECTION_LOADED).read());
+                if g::<i32>(SECTION_LOADED).read() != 1
+                    || is_valid_mod_for_vehicle_call(key, find_player_vehicle(-1, 0)) != 0
+                {
+                    let n = g::<i32>(NUM_ITEMS_IN_SHOP).read();
+                    g::<u32>(SHOP_CONTENTS).wrapping_index(n).write(key);
+                    g::<i32>(NUM_ITEMS_IN_SHOP).write(n.wrapping_add(1));
+                }
+            }
+        }
+        line = load_line(f);
+    }
+    close_file(f);
+    timer_resume();
+}
+
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_FIND_SECTION,
     HOOK_GET_NEXT_SECTION,
@@ -360,4 +634,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_RESTORE_CLOTHES_STATE,
     HOOK_HAS_PLAYER_BOUGHT,
     HOOK_SET_PLAYER_HAS_BOUGHT,
+    HOOK_GET_KEY,
+    HOOK_IS_VALID_MOD_FOR_VEHICLE,
+    HOOK_LOAD_PRICES,
+    HOOK_LOAD_SHOP,
 ];
