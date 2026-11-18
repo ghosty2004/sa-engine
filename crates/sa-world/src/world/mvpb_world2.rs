@@ -45,7 +45,7 @@ orig! {
 }
 
 /// The inline `UpdateRwMatrix` + `UpdateRwFrame` pair.
-fn update_rw(e: GPtr<u8>) {
+pub(crate) fn update_rw(e: GPtr<u8>) {
     let rw = rd::<GPtr<u8>>(e, 0x18);
     if !rw.is_null() {
         let m = rd::<GPtr<u8>>(rw, 4).byte_add(0x10);

@@ -9,8 +9,13 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-use super::common::{g, rd, wr};
+use sa_core::bindings::{matrix_assign, object_ctor_5a1d70, object_new, vector_normalise, world_add};
+use sa_core::field::gf;
+use sa_math::x87::X87;
+
+use super::common::{cam_pos, ftol32, g, rd, wr, x, xi};
 use super::pickups::{entity_vdelete, world_remove};
+use crate::bindings::physical_remove_and_add;
 
 pub const NUM_ESCALATORS: usize = 32;
 pub const ESCALATOR_SIZE: usize = 0x150;
@@ -48,7 +53,7 @@ orig! {
     /// `CEscalator::AddThisOne(...)` (0x717970)
     pub fn add_this_one(e: GPtr<u8>, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) = thiscall 0x717970 => unported;
     /// `CEscalator::Update` (0x717D30)
-    pub fn escalator_update(e: GPtr<u8>) = thiscall 0x717D30 => unported;
+    pub fn escalator_update_call(e: GPtr<u8>) = thiscall 0x717D30 => escalator_update;
     /// `CPool<CStuntJump>::CPool(int32 size, const char* name)` (`thunk_FUN_0156fa80`, 0x49C8F0)
     pub fn stunt_jump_pool_ctor(p: GPtr<u8>, size: i32, name: GPtr<u8>) -> GPtr<u8> = thiscall 0x49C8F0 => unported;
     /// `CPool<CStuntJump>::Clear` (0x49C9A0)
@@ -137,8 +142,7 @@ pub fn init() {
 #[allow(clippy::too_many_arguments)]
 pub fn escalator_add_this_one(this: GPtr<u8>, start: GPtr<u8>, bottom: GPtr<u8>, top: GPtr<u8>, end: GPtr<u8>,
                               move_down: u32, entity: GPtr<u8>) {
-    use sa_core::bindings::{entity_register_reference, vector_normalise};
-    use sa_math::fpu::{ftol32, x};
+    use sa_core::bindings::entity_register_reference;
     let f = |o: isize| rd::<f32>(this, o);
     wr::<u8>(this, 0x78, 1);
     for (o, src) in [(0, start), (0xC, bottom), (0x18, top), (0x24, end)] {
@@ -186,6 +190,152 @@ pub fn escalator_add_this_one(this: GPtr<u8>, start: GPtr<u8>, bottom: GPtr<u8>,
     entity_register_reference(entity, this.byte_add(0xA4));
 }
 
+/// The camera position minus the escalator's bounding sphere centre (+0x90).
+fn camera_offset(this: GPtr<u8>) -> [X87; 3] {
+    let cam = cam_pos();
+    [0, 1, 2].map(|k| x(cam.wrapping_index(k).read()).fsub_m(rd::<f32>(this, 0x90 + 4 * k as isize)))
+}
+
+/// One step object moved for this frame: the escalator's rotation (+0x30), the position, the move speed, the RW
+/// matrix and frame, then `RemoveAndAdd`.
+fn place_step(this: GPtr<u8>, obj: GPtr<u8>, pos: [f32; 3], speed: [f32; 3]) {
+    matrix_assign(rd::<GPtr<u8>>(obj, 0x14), this.byte_add(0x30));
+    for k in 0..3 {
+        wr::<f32>(rd::<GPtr<u8>>(obj, 0x14), 0x30 + 4 * k as isize, pos[k]);
+        wr::<f32>(obj, 0x44 + 4 * k as isize, speed[k]);
+    }
+    super::mvpb_world2::update_rw(obj);
+    physical_remove_and_add(obj);
+}
+
+/// `to - from` normalised, and that direction times 0.016 (negated when the escalator moves down).
+fn step_direction(this: GPtr<u8>, from: isize, to: isize) -> ([f32; 3], [f32; 3]) {
+    let mut d = [0, 4, 8].map(|k| x(rd::<f32>(this, to + k)).fsub_m(rd::<f32>(this, from + k)).to_f32());
+    vector_normalise(GPtr::from_raw(&mut d));
+    let down = rd::<u8>(this, 0x7A) != 0;
+    let speed = d.map(|c| {
+        let v = x(c).fmul_m(f32::from_bits(0x3C83_126F)).to_f32();
+        if down { -v } else { v }
+    });
+    (d, speed)
+}
+
+/// `CEscalator::Update` (0x717D30, thiscall). Without step objects: when the camera is nearer than the bounding radius
+/// + 20 and the object pool has more than `steps + 10` free slots, the steps are created (`MI_ESCALATORSTEP`
+/// 0x8CD674 for the middle ones, `MI_ESCALATORSTEP8` 0x8CD678 for the bottom / top ones), placed at the bottom
+/// point (+0xC), added to the world and made decorations (+0x13C = 5); the position (+0xA0) restarts at 0. With
+/// steps, the position advances by `timestep / 25` (down: `pos - step + 1`) and keeps its fraction (the
+/// integer part by `_ftol`). Middle step `i` sits at `top - d * ((i - pos + 1) * 0.4)` with `d` the normalised
+/// `top - bottom`; bottom step `k` at `start + d * ((8k + 4 + pos) * 0.4)` along `bottom - start`; top step `k` at
+/// `top + d * ((8k + 4 + pos) * 0.4)` along `end - top`; each moves at `d * 0.016` (negated going down). The x
+/// offsets stay extended, the y / z ones are rounded to floats first, as the bytes. Beyond the radius + 23 the
+/// escalator switches off.
+#[hook(addr = 0x717D30, conv = thiscall, name = "CEscalator::Update", this = "CEscalator",
+       expect = "6A FF 64 A1 00 00 00 00", unverified = "frontier2-a29", route = "L2", hazards = "heap-writes",
+       note = "creates / moves the step objects (object pool, world sectors)")]
+pub fn escalator_update(this: GPtr<u8>) {
+    let slot = |i: i32| this.byte_add(0xA8 + 4 * i as isize).cast::<GPtr<u8>>();
+    if rd::<u8>(this, 0x79) == 0 {
+        let [dx, dy, dz] = camera_offset(this);
+        let dist = dx.fmul(dx).fadd(dy.fmul(dy)).fadd(dz.fmul(dz)).fsqrt();
+        if !x(rd::<f32>(this, 0x9C)).fadd_m(20.0).fcom(dist).test_any(0x41) {
+            let pool = g::<GPtr<u8>>(0xB7449C).read();
+            let size = rd::<i32>(pool, 8);
+            let used = (0..size.max(0)).filter(|&i| rd::<i8>(rd::<GPtr<u8>>(pool, 4), i as isize) >= 0).count() as i32;
+            let [n0, n1, n2] = [0x7C, 0x80, 0x84].map(|o| rd::<i32>(this, o));
+            if size.wrapping_sub(used) > n1.wrapping_add(n0).wrapping_add(n2).wrapping_add(10) {
+                wr::<u8>(this, 0x79, 1);
+                wr::<u32>(this, 0xA0, 0);
+                let create = |mi_cell: usize, i: i32| {
+                    let mem = object_new(0x17C);
+                    let o = if mem.is_null() {
+                        GPtr::NULL
+                    } else {
+                        object_ctor_5a1d70(mem, i32::from(g::<u16>(mi_cell).read()), 1)
+                    };
+                    slot(i).write(o);
+                    let o = slot(i).read();
+                    if o.is_null() {
+                        return;
+                    }
+                    let m = rd::<GPtr<u8>>(o, 0x14);
+                    let pos = if m.is_null() { o.byte_add(4) } else { m.byte_add(0x30) };
+                    for k in 0..3 {
+                        wr::<u32>(pos, 4 * k, rd::<u32>(this, 0xC + 4 * k));
+                    }
+                    world_add(slot(i).read());
+                    wr::<u8>(slot(i).read(), 0x13C, 5);
+                };
+                let mut i = 0;
+                while i < rd::<i32>(this, 0x7C) {
+                    create(0x8CD674, i);
+                    i += 1;
+                }
+                let mut j = 0;
+                while j < rd::<i32>(this, 0x80).wrapping_add(rd::<i32>(this, 0x84)) {
+                    create(0x8CD678, rd::<i32>(this, 0x7C).wrapping_add(j));
+                    j += 1;
+                }
+            }
+        }
+        if rd::<u8>(this, 0x79) == 0 {
+            return;
+        }
+    }
+    let step = x(gf(0xB7CB5C)).fmul_m(f32::from_bits(0x3D23_D70A));
+    let cur = rd::<f32>(this, 0xA0);
+    let v = if rd::<u8>(this, 0x7A) != 0 { step.fsubr_m(cur).fadd_m(1.0) } else { step.fadd_m(cur) };
+    wr::<f32>(this, 0xA0, v.fsub(xi(ftol32(v))).to_f32());
+    let pos_now = || rd::<f32>(this, 0xA0);
+    let top = |k: isize| rd::<f32>(this, 0x18 + k);
+    let mut i = 0;
+    while i < rd::<i32>(this, 0x7C) {
+        let (d, speed) = step_direction(this, 0xC, 0x18);
+        let o = slot(i).read();
+        if !o.is_null() {
+            let t = xi(i).fsub_m(pos_now()).fadd_m(1.0).fmul_m(0.4);
+            let (oy, oz) = (x(d[1]).fmul(t).to_f32(), x(d[2]).fmul(t).to_f32());
+            let px = x(top(0)).fsub(x(d[0]).fmul(t)).to_f32();
+            let pos = [px, x(top(4)).fsub_m(oy).to_f32(), x(top(8)).fsub_m(oz).to_f32()];
+            place_step(this, o, pos, speed);
+        }
+        i += 1;
+    }
+    // the bottom steps along `bottom - start` from start, then the top ones along `end - top` from top; the counts
+    // and the first slot re-read every step
+    for (from, to, count_off) in [(0isize, 0xCisize, 0x80isize), (0x18, 0x24, 0x84)] {
+        let mut k = 0;
+        let mut c = 4;
+        while k < rd::<i32>(this, count_off) {
+            let first = if count_off == 0x80 {
+                rd::<i32>(this, 0x7C)
+            } else {
+                rd::<i32>(this, 0x7C).wrapping_add(rd::<i32>(this, 0x80))
+            };
+            let (d, speed) = step_direction(this, from, to);
+            let o = slot(first.wrapping_add(k)).read();
+            if !o.is_null() {
+                let t = xi(c).fadd_m(pos_now()).fmul_m(0.4);
+                let (oy, oz) = (x(d[1]).fmul(t).to_f32(), x(d[2]).fmul(t).to_f32());
+                let base = |k: isize| rd::<f32>(this, from + k);
+                let pos = [
+                    x(d[0]).fmul(t).fadd_m(base(0)).to_f32(),
+                    x(oy).fadd_m(base(4)).to_f32(),
+                    x(oz).fadd_m(base(8)).to_f32(),
+                ];
+                place_step(this, o, pos, speed);
+            }
+            k += 1;
+            c += 8;
+        }
+    }
+    let [dx, dy, dz] = camera_offset(this);
+    let dist = dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx)).fsqrt();
+    if !x(rd::<f32>(this, 0x9C)).fadd_m(23.0).fcom(dist).test_parity(0x05) {
+        switch_off_call(this);
+    }
+}
+
 /// `CEscalators::AddOne(...)` (0x717C90): `AddThisOne` on the first escalator without `m_bExist`, with
 /// the six argument dwords; nothing when all 32 exist.
 #[hook(addr = 0x717C90, conv = cdecl, name = "CEscalators::AddOne", expect = "33 C9 B8 20 EA C6 00")]
@@ -207,7 +357,7 @@ pub fn update() {
     }
     for i in 0..NUM_ESCALATORS {
         if rd::<u8>(escalator(i), 0x78) != 0 {
-            escalator_update(escalator(i));
+            escalator_update_call(escalator(i));
         }
     }
 }
@@ -272,6 +422,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_SHUTDOWN,
     HOOK_INIT,
     HOOK_ESCALATOR_ADD_THIS_ONE,
+    HOOK_ESCALATOR_UPDATE,
     HOOK_ADD_ONE,
     HOOK_UPDATE,
     HOOK_SJ_INIT,

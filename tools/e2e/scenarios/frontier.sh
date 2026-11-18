@@ -2,7 +2,7 @@
 # FRONTIER-1 scenarios: native sa-game runs (deterministic, --fixed-step 40, offscreen) that reach the blockers the
 # user hit. Each must end with an empty blocker list in OUT/report.md and no crash.
 #
-#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra|hunter|nitro|postfx|shotgun|flamer|driveby|camera OUTDIR [FRAMES]
+#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra|hunter|nitro|postfx|shotgun|flamer|driveby|camera|escalator OUTDIR [FRAMES]
 #
 # pausemenu (400)  Esc, down x3, Enter (pause-menu item 4: Stats), down, Enter, Enter: the Stats pages draw
 #                  (was a SIGSEGV at iteration ~171: CStats::GetStatValue's X87 result dispatched as cdecl)
@@ -98,6 +98,8 @@
 # driveby  (1200)  next to the crossing run's Greenwood: KJKSZPJ and four `e` presses (the Tec-9) on foot, `f` to get in,
 #                  then `q` held (look left) with the fire button: the driver's drive-by (CVehicle::DoDriveByShootings,
 #                  CWeapon::FireFromCar / FireInstantHitFromCar, DoDriveByAutoAiming 0x73D720)
+# escalator (800)  CJ taken to the Verona Mall escalators (1130, -1460) and walked onto one: CEscalator::Update 0x717D30
+#                  creates the step objects when the camera comes near and moves them every frame
 # (no camera scenario: the camera weapon comes from a mission or a pickup; poking it into the special slot crashes in
 #  FxSystem_c::Kill on the weapon switch, an inconsistent set-up, so TakePhotograph is not reached natively)
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-counts.gdb --args" counts the FRONTIER-2 ports' calls
@@ -298,7 +300,12 @@ driveby)
     export SA_GAME_KEYS="$keys,f:220:223,q:400:750,e:850:1150"
     export SA_GAME_LMB="${SA_GAME_LMB:-420:750,870:1150}"
     run "${3:-1200}" --start-in-world ;;
+escalator)
+    # the Verona Mall's escalators (the first starts at 1128.05, -1470.09, 14.93 and climbs south): CJ 4 m north of
+    # it facing south, then walked onto it
+    export SA_GAME_SCRIPT_SKIP=1 SA_GAME_TELEPORT="60:1128.0:-1466.0:15.0:3.1416" SA_GAME_KEYS="w:300:420"
+    run "${3:-800}" --start-in-world ;;
 *)
-    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra|hunter|nitro|postfx|shotgun|flamer|driveby|camera OUTDIR [FRAMES]" >&2
+    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra|hunter|nitro|postfx|shotgun|flamer|driveby|camera|escalator OUTDIR [FRAMES]" >&2
     exit 2 ;;
 esac
