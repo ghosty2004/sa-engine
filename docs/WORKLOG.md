@@ -3410,3 +3410,54 @@
   GetNearestCarPassengerDoor 0x650BB0, UpdateTrailerLink / UpdateTractorLink 0x6DFC50 / 0x6E0050, FireFixedMachineGuns
   0x73DF00, the nitro / tow truck / harvester / tank / RC bandit / plane gun / missile / water splash / train passenger
   / replacement upgrade direct rows.
+## 2026-11-18 — FRONTIER-2 turn 11, lane A: registered conventions for generated declarations, the partial ports made whole (agent, branch worktree-agent-a6afbf8f5fa20dfce)
+- Base: lane A turn 10's head 4b35531d. Every port from the 1.0 US bytes (gta-reversed read as an aid), every address
+  checked against `inflight.py` first (none registered elsewhere). Batches `frontier2-a16` (POP: 3 hooks made whole),
+  `frontier2-a17` (HUD: 1) and `frontier2-a18` (SCRIPT 0x48B590 / 0x659410, RENDER 0x558D10: 3), plain `#[hook(`; no
+  phase B native this turn (the hook table tests found no code-key entry). `-j4` builds, one cargo at a time.
+- Item 1, the generated declarations' calling convention (2627ab9d). patterns.py / ai_patterns.py (and audio_patterns.py
+  through it) declared a callee `thiscall` whenever ECX held a known value at the call; the wasm32 dispatch ignores the
+  convention and hands the port the declaration's words in order, so gen_subtasks' `c_5980f0_t1(0xBAF670, block)` gave
+  the stdcall port of InteriorManager_c::AreAnimsLoaded the caller's ECX as its block. `tools/lib/exe.py` now loads every
+  `#[hook]` / `#[native]` registration's convention (outside the running generator's own files) and
+  `conv_as_registered` makes a direct callee's declaration use it (a call the registration cannot describe is rejected).
+  Regenerated: 0x5980F0 `stdcall`; eight 0-argument callees lose an unread `this` (0x56CF20, 0x464D50, 0x5EE190,
+  0x561AD0, 0x4E6C30, 0x619410, 0x541330, 0x4A8DC0); GetMillisecondTime 0x5617C0 becomes a cdecl hook. The check:
+  new `tools/verify/convcheck.py`, writer gate step `conv`: every `orig!` declaration of a registered address
+  (`=> unported`, the ones the phase B registry dispatches) must pass its argument words from the original locations
+  the port reads them from (register prefix, `reg()` locations, stack slots by type size; port parameters named `_x`
+  are unread) and agree on who pops the stack. Besides 0x5980F0 it found an unused sa-anim declaration of
+  CKeyGen::GetKey-sized 0x53CED0 with one argument (removed). 6040 declarations, 0 FAIL; 27 differ only in the
+  convention's name (same words, e.g. a `thiscall` declaration of a 0-argument cdecl port), listed by `--all`.
+- Item 2, lane A's partial ports (no ADR-002 fallback left in lane A's areas except ProcessColModels):
+  CCarGenerator::DoInternalProcessing 0x6F34D0 (the hotdog van's vendor: AddPed's fourth argument is the `push 0` at
+  0x6F3CDA, pushed before the position's temporaries, not the caller's saved EDI as the old note said; vendor model
+  0xA8 load wait, `AddPed(4, 0xA8, pos - right * 3, false)`, attach with the static (0, 0, 0.6) guard 0xC2B974, the
+  brains script check), CPopulation::AddPed 0x612710 (types < 4, 21, > 31 take the whole makeWander slot as the ped:
+  the hook reads the slot as a dword, the binding's fourth argument is u32), CRoadBlocks::GenerateRoadBlockPedsForCar
+  0x461170 (an index past the 12-entry table reads (0, 0, 0); unreachable, the only writers 0x4623A7..0x462489 store
+  pair 0..2 / count 1..2), CHud::DrawVehicleName 0x58AEA0 (a state outside 0..=4: no state change, alpha 0 for the
+  original's never-written local = caller's ECX), ProcessCommands1200To1299 0x48B590 (0503 CREATE_SWAT_ROPE, the
+  last opcode: the clear-space vector is never written in the original, zero here) with its two new callees
+  CRopes::CreateRopeForSwatPed 0x558D10 and the CTaskComplexUseSwatRope constructor 0x659410 (catalogue
+  FUN_00659410). Divergence ledger entries for the four unreachable / uninitialised cases. Not done:
+  ProcessColModels' A-disk path (gta-reversed's reversal is ~170 lines with x87 quirks; `bUsesDisks` is never set
+  in SA: the three COL loaders clear it and every AllocateData caller passes false), 0x47A760 stays partial by design
+  (SA:MP's 09C6 / 09D3).
+- frontier.py --no-branches: to port 118 -> 113 (POP 3 -> 0, HUD 1 -> 0, SCRIPT 2 -> 1 (0x47A760 by design); WORLD 21,
+  WEAPON 5, STREAM 3, CORE 1, COLL 1 unchanged).
+- Scenarios (frontier.sh, i686 native, SA_ROOT=~/sa-engine, sa-game of 64e9d370): pausemenu 416 / 0 blocked, solicit
+  4016 / 0, crossing 1216 / 0, crossing-long 4016 / 0, roadblocks 2015 / 1 (lane C: RtDictSchemaStreamReadDict
+  0x7CF240), melee 2616 / 0, sniper 1216 / 0, shootcar 1216 / 0, shootdriver 1216 / 0, quad 1216 / 0, heli 1216 / 0,
+  plane 824 / 392 (lane C: 0x43E0E0), roadblock-script 1016 / 0, roadblock-wanted 2016 / 0, boat 1216 / 0, gangwar
+  2016 / 0, jetpack 1016 / 0, copsf 2015 / 1 (0x7CF240), coplv 2016 / 0, samsite 1615 / 1 (0x7CF240); no crash, no lane
+  A blocker.
+- Writer gate (base 4b35531d): all 17 steps PASS on 64e9d370 (the new `conv` step included; 2 new hooks, both
+  unverified in frontier2-a18; the three POP / one HUD / one SCRIPT hooks made whole moved into frontier2-a16..a18).
+- verify-all (lanes 1-3, host sa-oracle rebuilt from this tree, DLL sha256 7e243e17… of 64e9d370): `f2a11-u`
+  (SA_UNVERIFIED=frontier2-a16,frontier2-a17,frontier2-a18) IDENTICAL 13/13, `f2a11-def` (default set) IDENTICAL 13/13;
+  save-load identical except the SAVE-1 stack residue.
+- Not done: ProcessColModels' A-disk path, the rest of WORLD (DoMineEffects / DoCollectableEffects, CReplay, CShopping,
+  Interior_c furnishing, CEscalator, ...), WEAPON (5), STREAM (3), CORE ShutdownRenderWare 0x53BB80 (its port would add
+  five unported callees: DestroyDebugFont, CVisibilityPlugins::Shutdown, RpWorldDestroy, CancelBuffering,
+  CPostEffects::Close).
