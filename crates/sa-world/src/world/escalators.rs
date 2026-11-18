@@ -122,6 +122,70 @@ pub fn init() {
     }
 }
 
+/// `CEscalator::AddThisOne(const CVector& start, const CVector& bottom, const CVector& top, const CVector& end, bool
+/// moveDown, CEntity* entity)` (0x717970, thiscall, `ret 0x18`). Exists; the four points are copied to +0 / +0xC /
+/// +0x18 / +0x24 and lowered by the step model's (`MI_ESCALATORSTEP`) bounding box max z. Plane counts (the bytes'
+/// x87 order: start's lowered z stays extended for the first distance's z term): +0x7C = `ftol(|bottom - top| * 2.5 +
+/// 1)`, +0x80 = `1 - ftol(|start - bottom| * -0.3125)`, +0x84 = `1 - ftol(|top - end| * -0.3125)`. The rotation
+/// (+0x30) from the normalised xy of the unlowered `start - bottom` `d`: right `(d.y, -d.x, 0)`, forward `(d.x, d.y,
+/// 0)`, up `(0, 0, 1)`, position 0 (the matrix's padding and attach fields untouched). +0x7A = moveDown; the bounding
+/// sphere (+0x90) centre `(start + end) / 2`, radius the distance to start; +0xA4 = entity, whose
+/// `RegisterReference(&+0xA4)` is called (on a null entity as well).
+#[hook(addr = 0x717970, conv = thiscall, name = "CEscalator::AddThisOne", this = "CEscalator",
+       expect = "83 EC 24 8B 44 24 28 53", unverified = "frontier2-a19", route = "L2", hazards = "heap-writes",
+       note = "IPL / script escalators (CEscalators::AddOne)")]
+#[allow(clippy::too_many_arguments)]
+pub fn escalator_add_this_one(this: GPtr<u8>, start: GPtr<u8>, bottom: GPtr<u8>, top: GPtr<u8>, end: GPtr<u8>,
+                              move_down: u32, entity: GPtr<u8>) {
+    use sa_core::bindings::{entity_register_reference, vector_normalise};
+    use sa_math::fpu::{ftol32, x};
+    let f = |o: isize| rd::<f32>(this, o);
+    wr::<u8>(this, 0x78, 1);
+    for (o, src) in [(0, start), (0xC, bottom), (0x18, top), (0x24, end)] {
+        for k in 0..3 {
+            wr::<u32>(this, o + 4 * k, rd::<u32>(src, 4 * k));
+        }
+    }
+    let mi = g::<GPtr<u8>>(0xA9_B0C8 + 4 * g::<u16>(0x8C_D674).read() as usize).read();
+    let h = x(rd::<f32>(rd::<GPtr<u8>>(mi, 0x14), 0x14));
+    let start_z = x(f(8)).fsub(h);
+    wr::<f32>(this, 8, start_z.to_f32());
+    for o in [0x14, 0x20, 0x2C] {
+        wr::<f32>(this, o, x(f(o)).fsub(h).to_f32());
+    }
+    let sb = [x(f(0)).fsub_m(f(0xC)).to_f32(), x(f(4)).fsub_m(f(0x10)).to_f32()];
+    let sbz = start_z.fsub_m(f(0x14));
+    let (ax, ay, az) = (x(f(0xC)).fsub_m(f(0x18)), x(f(0x10)).fsub_m(f(0x1C)), x(f(0x14)).fsub_m(f(0x20)));
+    let te = [0, 4, 8].map(|k| x(f(0x18 + k)).fsub_m(f(0x24 + k)).to_f32());
+    let mid = az.fmul(az).fadd(ay.fmul(ay)).fadd(ax.fmul(ax)).fsqrt();
+    wr::<i32>(this, 0x7C, ftol32(mid.fmul_m(2.5).fadd_m(1.0)));
+    let lo = sbz.fmul(sbz).fadd(x(sb[1]).fmul_m(sb[1])).fadd(x(sb[0]).fmul_m(sb[0])).fsqrt();
+    wr::<i32>(this, 0x80, 1i32.wrapping_sub(ftol32(lo.fmul_m(-0.3125))));
+    let hi = x(te[2]).fmul_m(te[2]).fadd(x(te[1]).fmul_m(te[1])).fadd(x(te[0]).fmul_m(te[0])).fsqrt();
+    wr::<i32>(this, 0x84, 1i32.wrapping_sub(ftol32(hi.fmul_m(-0.3125))));
+    let a = |k: isize| rd::<f32>(start, k);
+    let b = |k: isize| rd::<f32>(bottom, k);
+    let mut d = [x(a(0)).fsub_m(b(0)).to_f32(), x(a(4)).fsub_m(b(4)).to_f32(), 0.0f32];
+    vector_normalise(GPtr::from_raw(&mut d));
+    wr::<f32>(this, 0x34, x(d[0]).fchs().to_f32());
+    wr::<f32>(this, 0x40, d[0]);
+    wr::<f32>(this, 0x44, d[1]);
+    wr::<f32>(this, 0x30, d[1]);
+    wr::<u8>(this, 0x7A, move_down as u8);
+    for o in [0x50, 0x54, 0x48, 0x38, 0x68, 0x64, 0x60] {
+        wr::<u32>(this, o, 0);
+    }
+    wr::<f32>(this, 0x58, 1.0);
+    let cz = x(f(0x2C)).fadd_m(f(8)).to_f32();
+    wr::<f32>(this, 0x90, x(f(0x24)).fadd_m(f(0)).fmul_m(0.5).to_f32());
+    wr::<f32>(this, 0x94, x(f(0x28)).fadd_m(f(4)).fmul_m(0.5).to_f32());
+    wr::<f32>(this, 0x98, x(cz).fmul_m(0.5).to_f32());
+    let (dx, dy, dz) = (x(f(0)).fsub_m(f(0x90)), x(f(4)).fsub_m(f(0x94)), x(f(8)).fsub_m(f(0x98)));
+    wr::<GPtr<u8>>(this, 0xA4, entity);
+    wr::<f32>(this, 0x9C, dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx)).fsqrt().to_f32());
+    entity_register_reference(entity, this.byte_add(0xA4));
+}
+
 /// `CEscalators::AddOne(...)` (0x717C90): `AddThisOne` on the first escalator without `m_bExist`, with
 /// the six argument dwords; nothing when all 32 exist.
 #[hook(addr = 0x717C90, conv = cdecl, name = "CEscalators::AddOne", expect = "33 C9 B8 20 EA C6 00")]
@@ -207,6 +271,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_SWITCH_OFF,
     HOOK_SHUTDOWN,
     HOOK_INIT,
+    HOOK_ESCALATOR_ADD_THIS_ONE,
     HOOK_ADD_ONE,
     HOOK_UPDATE,
     HOOK_SJ_INIT,
