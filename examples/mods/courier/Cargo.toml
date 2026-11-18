@@ -1,0 +1,13 @@
+[package]
+name = "sa-mod-courier"
+version = "0.1.0"
+description = "Example mod: a small gameplay mod that spawns cars on a key, runs a timed race to a marker with a reward, and shields the player from damage through a hook decision (docs/mods/getting-started.md)"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+sa-mod = { path = "../../../crates/sa-mod" }

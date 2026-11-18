@@ -1,0 +1,17 @@
+# The courier mod's manifest (docs/arch/ADR-004-mods.md section 3.3). examples/mods/build.sh puts it next to
+# courier.wasm.
+[mod]
+id = "courier"
+name = "Courier (gameplay example)"
+version = "0.1.0"
+api_version = "1.3"
+entry = "courier.wasm"
+
+[permissions]
+render = true
+state = "write"
+input = "read"
+entities = true
+scripts = true
+audio = true
+hooks = ["CPedDamageResponseCalculator::ComputeDamageResponse"]

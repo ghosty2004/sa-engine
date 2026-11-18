@@ -7,6 +7,7 @@
 #   OUT/resolution/{mod.toml,resolution.wasm}     the game at the desktop / a chosen resolution, with its
 #                                                 config.toml (copied only when missing: the mod rewrites it)
 #   OUT/trainer-hud/{mod.toml,trainer-hud.wasm}  a read-only trainer overlay: live state, mini-map, events, hooks
+#   OUT/courier/{mod.toml,courier.wasm}          a gameplay mod: spawned cars, a timed run, a damage shield
 #   OUT/broken-trap/{mod.toml,broken-trap.wasm}   traps after 30 frames (test of the host's error handling)
 #   OUT/broken-spin/{mod.toml,broken-spin.wasm}   loops forever after 30 frames (test of the fuel budget)
 #
@@ -30,6 +31,10 @@ cargo build -q --release --target wasm32-unknown-unknown -p sa-mod-trainer-hud
 mkdir -p "$out/trainer-hud"
 cp "$wasm/sa_mod_trainer_hud.wasm" "$out/trainer-hud/trainer-hud.wasm"
 cp examples/mods/trainer-hud/mod.toml "$out/trainer-hud/mod.toml"
+cargo build -q --release --target wasm32-unknown-unknown -p sa-mod-courier
+mkdir -p "$out/courier"
+cp "$wasm/sa_mod_courier.wasm" "$out/courier/courier.wasm"
+cp examples/mods/courier/mod.toml "$out/courier/mod.toml"
 for v in trap spin; do
     feat=""
     [ "$v" = spin ] && feat="--features spin"
