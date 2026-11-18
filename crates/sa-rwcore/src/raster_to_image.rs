@@ -74,7 +74,7 @@ fn argb4444(dst: GPtr<u8>, v: u32) {
 
 /// `_rwD3D9ImageGetRasterBody(image, raster)` (0x7FF450): the pixels of a locked raster into a 32-bit image.
 /// Rasters without a cFormat nibble go through [`d3d9_convert_raster_to_image`].
-#[hook(addr = 0x7FF450, conv = cdecl, name = "FUN_007ff450", expect = "83 EC 08 53 55 56 8B 74",
+#[hook(addr = 0x7FF450, conv = cdecl, name = "FUN_007ff450", expect = "83 EC 08 53 55",
        unverified = "frontier2-c29", route = "L2", hazards = "heap-writes")]
 pub fn d3d9_image_get_raster32(img: GPtr<u8>, r: GPtr<u8>) {
     let nibble = u32::from(rd::<u8>(r, 0x23) & 0xF);
@@ -147,7 +147,7 @@ fn pixel_to_rgba_converter(d3d_format: u32) -> u32 {
 
 /// `_rwD3D9ConvertRasterToImage(image, raster)` (0x7FF8C0): every raster pixel through the converter of
 /// the parent's D3D format.
-#[hook(addr = 0x7FF8C0, conv = cdecl, name = "FUN_007ff8c0", expect = "8B 0D E0 E9 B4 00 83 EC",
+#[hook(addr = 0x7FF8C0, conv = cdecl, name = "FUN_007ff8c0", expect = "8B 0D E0 E9 B4 00",
        unverified = "frontier2-c29", route = "L2", hazards = "heap-writes")]
 pub fn d3d9_convert_raster_to_image(img: GPtr<u8>, r: GPtr<u8>) {
     let conv = pixel_to_rgba_converter(parent_d3d_format(r));
@@ -186,7 +186,7 @@ pub fn a1r5g5b5_to_rgba(dst: GPtr<u8>, v: u32) {
 }
 
 /// D3DFMT_A4R4G4B4 to RGBA (0x7FFCB0).
-#[hook(addr = 0x7FFCB0, conv = cdecl, name = "(missed by ghidra: data-code-immediate)", expect = "8B 44 24 08 8B C8 81 E1",
+#[hook(addr = 0x7FFCB0, conv = cdecl, name = "(missed by ghidra: data-code-immediate)", expect = "8B 44 24 08 8B C8",
        unverified = "frontier2-c29", route = "L2", hazards = "heap-writes")]
 pub fn a4r4g4b4_to_rgba(dst: GPtr<u8>, v: u32) {
     argb4444(dst, v);
@@ -303,7 +303,7 @@ fn set_raster_alpha(r: GPtr<u8>, ext: GPtr<u8>, alpha: bool) {
 
 /// `_rwD3D9RasterSetImagePalettized(raster, image)` (0x801390): a 4/8-bit (through its palette) or 32-bit
 /// image into a locked 24/32-bit raster, then the raster's alpha flag.
-#[hook(addr = 0x801390, conv = cdecl, name = "FUN_00801390", expect = "81 EC 10 04 00 00 A1 E0",
+#[hook(addr = 0x801390, conv = cdecl, name = "FUN_00801390", expect = "81 EC 10 04 00 00",
        unverified = "frontier2-c29", route = "L2", hazards = "heap-writes,uninit-locals",
        note = "a 4-bit image's indices above 15 read the never-written part of the 256-entry stack table (port: zeros)")]
 pub fn d3d9_raster_set_image_32(r: GPtr<u8>, img: GPtr<u8>) {
@@ -402,7 +402,7 @@ fn for_each_raster_byte(r: GPtr<u8>, img: GPtr<u8>, src_step: isize, mut f: impl
 /// else luminance times alpha), through the image palette for 4/8-bit images. A palettised raster takes
 /// a 4/8-bit image's indices and (unless the raster's palette is shared) its palette; a 32-bit image is
 /// quantised to the raster's depth first (an opaque result clears the raster's alpha flag).
-#[hook(addr = 0x800C80, conv = cdecl, name = "FUN_00800c80", expect = "B8 0C 41 00 00 E8 E6 13",
+#[hook(addr = 0x800C80, conv = cdecl, name = "FUN_00800c80", expect = "B8 0C 41 00 00",
        unverified = "frontier2-c34", route = "L2", hazards = "heap-writes,uninit-locals",
        note = "a 4-bit image's indices above 15 read the never-written part of the 256-entry stack table (port: zeros); the quantiser is a zeroed local in the port")]
 pub fn d3d9_raster_set_image_pal(r: GPtr<u8>, img: GPtr<u8>) {

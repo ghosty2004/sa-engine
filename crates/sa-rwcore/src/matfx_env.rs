@@ -172,7 +172,7 @@ fn blend_env_pass(header: GPtr<u8>, mesh: GPtr<u8>, env: GPtr<u8>, frame: GPtr<u
 /// only). Pass 0 draws the base texture and puts the env map on top in one draw where it can (the env
 /// pixel shaders for an env map with alpha, or a second texture stage), else blends a second draw;
 /// later passes only blend.
-#[hook(addr = 0x813A10, conv = cdecl, name = "FUN_00813a10", expect = "83 EC 10 8B 15 74 AB C9",
+#[hook(addr = 0x813A10, conv = cdecl, name = "FUN_00813a10", expect = "83 EC 10 8B 15 74 AB C9 00",
        unverified = "frontier2-c32", route = "L2", hazards = "heap-writes",
        note = "keeps its flags, the blend states and render states in its own argument slots (not reproduced)")]
 pub fn matfx_render_env(header: GPtr<u8>, mesh: GPtr<u8>, flags: u32, pass: u32, tex: GPtr<u8>, env: GPtr<u8>) {

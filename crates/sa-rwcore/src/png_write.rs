@@ -48,7 +48,7 @@ orig! {
 /// ones as RGBA. The original arms libpng's error longjmp with `setjmp` on the png_struct; a Rust frame
 /// cannot be re-entered that way, so a libpng error here jumps to the stale target libpng's own
 /// constructor left behind.
-#[hook(addr = 0x7CF600, conv = cdecl, name = "RtPNGImageWrite", expect = "55 8B EC 83 EC 28 8B 45",
+#[hook(addr = 0x7CF600, conv = cdecl, name = "RtPNGImageWrite", expect = "55 8B EC 83 EC 28",
        unverified = "frontier2-c31", route = "split", hazards = "heap-writes",
        note = "file writes; no setjmp: a libpng error (out of memory, bad depth) does not return NULL as in the original")]
 pub fn rt_png_image_write(img: GPtr<u8>, filename: GPtr<u8>) -> GPtr<u8> {

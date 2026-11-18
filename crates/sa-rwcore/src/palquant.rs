@@ -70,7 +70,7 @@ fn new_node(pq: GPtr<u8>, leaf: bool) -> GPtr<u8> {
 }
 
 /// `RwPalQuantInit(pq)` (0x80C470): the spread table, the node free list and an empty root.
-#[hook(addr = 0x80C470, conv = cdecl, name = "RwPalQuantInit", expect = "51 55 56 57 8B 3D E0 26",
+#[hook(addr = 0x80C470, conv = cdecl, name = "RwPalQuantInit", expect = "51 55 56 57 8B 3D E0 26 8E 00",
        unverified = "frontier2-c33", route = "L2", hazards = "heap-writes")]
 pub fn rw_pal_quant_init(pq: GPtr<u8>) -> u32 {
     let bits = depth() as u32;
@@ -98,7 +98,7 @@ pub fn rw_pal_quant_init(pq: GPtr<u8>) -> u32 {
 
 /// `_rwPalQuantOctreeInsert(pq, node, path, levels)` (0x80AED0): the node `levels` steps down `path`,
 /// created as needed.
-#[hook(addr = 0x80AED0, conv = cdecl, name = "FUN_0080aed0", expect = "55 8B 6C 24 14 85 ED 74",
+#[hook(addr = 0x80AED0, conv = cdecl, name = "FUN_0080aed0", expect = "55 8B 6C 24 14",
        unverified = "frontier2-c33", route = "L2", hazards = "heap-writes")]
 pub fn pal_quant_octree_insert(pq: GPtr<u8>, mut node: GPtr<u8>, mut path: u32, mut levels: i32) -> GPtr<u8> {
     while levels != 0 {
@@ -274,7 +274,7 @@ pub fn pal_quant_assign_indices(node: GPtr<u8>, cell: GPtr<u8>, levels: i32) -> 
 }
 
 /// `_rwPalQuantCountLeaves(node, levels)` (0x80BE60).
-#[hook(addr = 0x80BE60, conv = cdecl, name = "FUN_0080be60", expect = "8B 4C 24 04 55 33 ED 85",
+#[hook(addr = 0x80BE60, conv = cdecl, name = "FUN_0080be60", expect = "8B 4C 24 04 55",
        unverified = "frontier2-c33", route = "L2", hazards = "none")]
 pub fn pal_quant_count_leaves(node: GPtr<u8>, levels: i32) -> i32 {
     if node.is_null() {
@@ -372,7 +372,7 @@ pub fn pal_quant_box_stats(node: GPtr<u8>, origin: GPtr<i32>, levels: i32, bx: G
 
 /// `_rwPalQuantBuildBoxes(node, origin, levels, box, index)` (0x80B5D0): every leaf inside the box gets
 /// the box's palette index.
-#[hook(addr = 0x80B5D0, conv = cdecl, name = "FUN_0080b5d0", expect = "8B 44 24 04 83 EC 24 85",
+#[hook(addr = 0x80B5D0, conv = cdecl, name = "FUN_0080b5d0", expect = "8B 44 24 04 83 EC 24",
        unverified = "frontier2-c33", route = "L2", hazards = "heap-writes")]
 pub fn pal_quant_build_boxes(node: GPtr<u8>, origin: GPtr<i32>, levels: i32, bx: GPtr<u8>, index: u32) {
     if node.is_null() {
@@ -653,7 +653,7 @@ pub fn rw_pal_quant_match_image(mut dst: GPtr<u8>, dst_stride: i32, dst_depth: u
 }
 
 /// `_rwPalQuantFreeTree(pq, node, levels)` (0x80C5A0): the subtree back to the free list.
-#[hook(addr = 0x80C5A0, conv = cdecl, name = "FUN_0080c5a0", expect = "56 8B 74 24 0C 85 F6 74",
+#[hook(addr = 0x80C5A0, conv = cdecl, name = "FUN_0080c5a0", expect = "56 8B 74 24 0C",
        unverified = "frontier2-c33", route = "L2", hazards = "heap-writes")]
 pub fn pal_quant_free_tree(pq: GPtr<u8>, node: GPtr<u8>, levels: i32) {
     if node.is_null() {

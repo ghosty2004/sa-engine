@@ -1251,7 +1251,7 @@ pub fn matfx_bump_map_create_raster(base: GPtr<u8>, bump: GPtr<u8>) -> GPtr<u8> 
 /// `_rwImageFindFileTypeCB(path, data)` (0x803340): `path` with each registered image format's lower-case,
 /// then upper-case extension appended until such a file exists; that extension goes to `*data` and the
 /// search stops (0). Returns `path` (go on) when none exists.
-#[hook(addr = 0x803340, conv = cdecl, name = "(missed by ghidra: data-code-immediate)", expect = "A1 24 7B C9 00 53 8B 5C",
+#[hook(addr = 0x803340, conv = cdecl, name = "(missed by ghidra: data-code-immediate)", expect = "A1 24 7B C9 00",
        unverified = "frontier2-c34", route = "L2", hazards = "heap-writes",
        note = "probes the file system (rwfexist)")]
 pub fn image_find_file_type_cb(path: GPtr<u8>, data: GPtr<u32>) -> GPtr<u8> {
@@ -1272,7 +1272,7 @@ pub fn image_find_file_type_cb(path: GPtr<u8>, data: GPtr<u32>) -> GPtr<u8> {
 
 /// `_rwImageFindFileType(name)` (0x803310): the extension of the first registered image format whose
 /// file exists along the image path, or NULL.
-#[hook(addr = 0x803310, conv = cdecl, name = "FUN_00803310", expect = "51 8B 4C 24 08 8D 44 24",
+#[hook(addr = 0x803310, conv = cdecl, name = "FUN_00803310", expect = "51 8B 4C 24 08",
        unverified = "frontier2-c34", route = "L2", hazards = "heap-writes",
        note = "probes the file system (rwfexist)")]
 pub fn image_find_file_type(name: GPtr<u8>) -> GPtr<u8> {
@@ -1294,7 +1294,7 @@ fn copy_with_extension(buf: GPtr<u8>, name: GPtr<u8>) {
 /// colours for `count` images, each image then replaced by its `bits`-deep palettised copy (the
 /// originals destroyed except `keep`). Images that already share one palette keep their pixels and give
 /// it out. Returns 0 when the quantiser or an image cannot be created.
-#[hook(addr = 0x7F44C0, conv = cdecl, name = "FUN_007f44c0", expect = "B8 10 40 00 00 E8 A6 DB",
+#[hook(addr = 0x7F44C0, conv = cdecl, name = "FUN_007f44c0", expect = "B8 10 40 00 00",
        unverified = "frontier2-c34", route = "L2", hazards = "heap-writes",
        note = "the quantiser is a zeroed local in the port; the original's (0x4008 bytes of stack) is only read past its last split box")]
 pub fn images_make_shared_palette(pal: GPtr<u8>, keep: u32, images: GPtr<u32>, count: i32, bits: u32) -> u32 {
@@ -1357,7 +1357,7 @@ pub fn images_make_shared_palette(pal: GPtr<u8>, keep: u32, images: GPtr<u32>, c
 /// (file extensions found along the image path), its raster format found when `*w` or `*h` is 0, and
 /// the image resampled to `*w` x `*h` (32-bit); a 4/8-bit source comes back palettised again with a
 /// palette of its own.
-#[hook(addr = 0x7F4690, conv = cdecl, name = "FUN_007f4690", expect = "B8 10 46 00 00 E8 D6 D9",
+#[hook(addr = 0x7F4690, conv = cdecl, name = "FUN_007f4690", expect = "B8 10 46 00 00",
        unverified = "frontier2-c34", route = "split", hazards = "heap-writes",
        note = "reads the image files; the quantiser is a zeroed local in the port")]
 pub fn texture_image_read_and_mask(
@@ -1453,7 +1453,7 @@ pub fn texture_image_read_and_mask(
 /// image (and with mipmaps but no automatic generation every level's own image, the mipmap name
 /// callback telling each level's name) into a raster of the found format; palettised rasters share one
 /// palette over all levels. The texture is built inline and named like the default read callback's.
-#[hook(addr = 0x7F4AE0, conv = cdecl, name = "FUN_007f4ae0", expect = "81 EC 68 06 00 00 8B 0D",
+#[hook(addr = 0x7F4AE0, conv = cdecl, name = "FUN_007f4ae0", expect = "81 EC 68 06 00 00",
        unverified = "frontier2-c34", route = "split", hazards = "heap-writes",
        note = "reads the image files")]
 pub fn texture_read_auto_mipmap(name: GPtr<u8>, mask: GPtr<u8>) -> GPtr<u8> {
