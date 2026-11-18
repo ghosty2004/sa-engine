@@ -108,7 +108,7 @@ orig! {
     /// (0x813A10), bump / bump-env (0x814460)
     fn matfx_render_black(header: GPtr<u8>, inst: GPtr<u8>) = cdecl 0x812C90 => unported;
     fn matfx_render_default(header: GPtr<u8>, inst: GPtr<u8>, flags: u32, tex: u32) = cdecl 0x812AC0 => matfx_default_render;
-    fn matfx_render_dual(header: GPtr<u8>, inst: GPtr<u8>, flags: u32, tex: u32, dual: u32) = cdecl 0x812D40 => unported;
+    fn matfx_render_dual(header: GPtr<u8>, inst: GPtr<u8>, flags: u32, tex: GPtr<u8>, dual: GPtr<u8>) = cdecl 0x812D40 => crate::matfx_dual::matfx_render_dual;
     fn matfx_render_env(header: GPtr<u8>, inst: GPtr<u8>, flags: u32, pass: u32, tex: GPtr<u8>, env: GPtr<u8>) = cdecl 0x813A10 => crate::matfx_env::matfx_render_env;
     fn matfx_render_bump(header: GPtr<u8>, inst: GPtr<u8>, flags: u32, tex: u32, bumped: u32, env: u32) = cdecl 0x814460 => unported;
 }
@@ -673,8 +673,8 @@ pub fn rp_matfx_d3d9_atomic_render_callback(header: GPtr<u8>, object: GPtr<u8>, 
                 1 => matfx_render_bump(h, inst, flags, tex, rd::<u32>(d, 4), 0),
                 3 => matfx_render_bump(h, inst, flags, tex, rd::<u32>(d, 4), rd::<u32>(d, 0x1C)),
                 2 => matfx_render_env(h, inst, flags, 0, p8(tex), p8(rd::<u32>(d, 4))),
-                4 => matfx_render_dual(h, inst, flags, tex, rd::<u32>(d, 0)),
-                6 => matfx_render_dual(h, inst, flags, tex, rd::<u32>(d, 0x18)),
+                4 => matfx_render_dual(h, inst, flags, p8(tex), p8(rd::<u32>(d, 0))),
+                6 => matfx_render_dual(h, inst, flags, p8(tex), p8(rd::<u32>(d, 0x18))),
                 _ => matfx_render_default(h, inst, flags, tex),
             }
         }
@@ -890,6 +890,20 @@ pub fn matfx_engine_open(instance: u32, _offset: u32, _size: u32) -> u32 {
 /// D3DMATRIX; only _11 _12 _21 _22 _31 _32 are written).
 const UV_TRANSFORM: usize = 0x8E29C8;
 
+/// A UV-transform matrix (when present and not identity, flags +0xC bit 0x20000) as `stage`'s 2D texture
+/// transform: the matrix's right / up / pos x, y into the static D3DMATRIX.
+pub(crate) fn set_uv_transform(stage: u32, m: GPtr<u8>) {
+    if m.is_null() || rd::<u32>(m, 0xC) & 0x2_0000 != 0 {
+        return;
+    }
+    rw_d3d9_set_texture_stage_state(stage, 0x18, 2);
+    let t = g::<u8>(UV_TRANSFORM);
+    for (dst, src) in [(0, 0), (4, 4), (0x10, 0x10), (0x14, 0x14), (0x20, 0x30), (0x24, 0x34)] {
+        wr(t, dst, rd::<u32>(m, src));
+    }
+    rw_d3d9_set_transform(0x10 + stage, t);
+}
+
 /// The default MatFX render of one mesh (0x812AC0, cdecl `(header, mesh, flags, texture)`; name unknown). With a
 /// texture flag (`flags & 0x84`): `RwD3D9SetTexture(texture, 0)`; a material effect of type 5 (UV transform) whose
 /// matrix is not identity (flags +0xC bit 0x20000) sets TEXTURETRANSFORMFLAGS 2 and the stage-0 texture transform
@@ -908,14 +922,7 @@ pub fn matfx_default_render(header: GPtr<u8>, mesh: GPtr<u8>, flags: u32, tex: u
         if !fx.is_null() && rd::<u32>(fx, 0x30) == 5 {
             uv = fx;
             let m: GPtr<u8> = rd(uv, 0);
-            if !m.is_null() && rd::<u32>(m, 0xC) & 0x2_0000 == 0 {
-                rw_d3d9_set_texture_stage_state(0, 0x18, 2);
-                let t = g::<u8>(UV_TRANSFORM);
-                for (dst, src) in [(0, 0), (4, 4), (0x10, 0x10), (0x14, 0x14), (0x20, 0x30), (0x24, 0x34)] {
-                    wr(t, dst, rd::<u32>(m, src));
-                }
-                rw_d3d9_set_transform(0x10, t);
-            }
+            set_uv_transform(0, m);
         }
         for (ty, v) in [(1, 4), (2, 2), (3, 0), (4, 4), (5, 2), (6, 0)] {
             rw_d3d9_set_texture_stage_state(0, ty, v);

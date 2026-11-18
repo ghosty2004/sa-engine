@@ -42,9 +42,9 @@ const D3DRS_TEXTUREFACTOR: u32 = 0x3C;
 
 orig! {
     /// `IDirect3DDevice9::ValidateDevice(&passes)` (+0x118)
-    fn dev_validate_device(dev: GPtr<u8>, passes: GPtr<u32>) -> i32 = stdcall vslot 0x118 => unported;
+    pub(crate) fn dev_validate_device(dev: GPtr<u8>, passes: GPtr<u32>) -> i32 = stdcall vslot 0x118 => unported;
     /// `RwRenderStateGet(state, &value)` (G+0x24)
-    fn rw_render_state_get(state: u32, out: GPtr<u32>) -> u32 = cdecl table 0xC97B24 0x24 => unported;
+    pub(crate) fn rw_render_state_get(state: u32, out: GPtr<u32>) -> u32 = cdecl table 0xC97B24 0x24 => unported;
 }
 
 fn set_pixel_shader(ps: u32) {
