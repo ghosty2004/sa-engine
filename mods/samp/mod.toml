@@ -1,0 +1,16 @@
+# SA:MP's mod manifest (docs/arch/ADR-004-mods.md section 3.3). mods/build.sh puts it next to samp.wasm.
+[mod]
+id = "samp"
+name = "SA:MP"
+version = "0.1.0"
+api_version = "1.4"
+entry = "samp.wasm"
+
+[permissions]
+render = true
+net = ["udp:127.0.0.1:*"]   # local test servers
+storage = true              # settings: server, name, auth_table.txt
+
+[limits]
+memory_mib = 64
+fuel = 200000000

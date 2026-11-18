@@ -2700,6 +2700,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "sa-mod-samp"
+version = "0.1.0"
+dependencies = [
+ "sa-mod",
+ "sa-net",
+ "samp-client",
+ "samp-proto",
+]
+
+[[package]]
 name = "sa-mod-trainer-hud"
 version = "0.1.0"
 dependencies = [

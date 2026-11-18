@@ -1,0 +1,17 @@
+[package]
+name = "sa-mod-samp"
+version = "0.1.0"
+description = "SA:MP as a mod: samp-rs's client core on the mod API, its sockets the mod's UDP sockets, its clock and settings the host's"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+sa-mod = { path = "../../crates/sa-mod" }
+# the transport trait samp-rs's RakNet layer polls (without its `websocket` feature: no JavaScript imports)
+sa-net = { path = "../../crates/sa-net" }
+samp-client = { path = "../../samp-rs/crates/samp-client" }
+samp-proto = { path = "../../samp-rs/crates/samp-proto" }
