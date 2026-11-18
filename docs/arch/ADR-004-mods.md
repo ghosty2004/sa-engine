@@ -49,8 +49,8 @@ User decisions (2026-11-17):
 
 | crate | what | depends on |
 |---|---|---|
-| `sa-mod-api` | the interface definition and its Rust types (shared by host and SDK); no `unsafe`, builds for every target | `sa-samp-api` types |
-| `sa-mod-host` | loads and runs mods; one implementation, two engine backends (wasmtime / browser) behind one trait (ADR-003) | `sa-mod-api`, `sa-samp`, platform/render layer |
+| `sa-mod-api` | the interface definition and its Rust types (shared by host and SDK); no `unsafe`, builds for every target | `sa-types` (since M3; M2: `sa-samp-api`) |
+| `sa-mod-host` | loads and runs mods; one implementation, two engine backends (wasmtime / browser) behind one trait (ADR-003) | `sa-mod-api`, `sa-access` (since M3; M2: `sa-samp`), platform/render layer |
 | `sa-mod` (SDK) | what a mod author links: safe Rust bindings, macros for the entry points, examples | `sa-mod-api` |
 | `examples/mods/*` | reference mods: `resolution`, `msaa`, `fps-overlay`, later `samp` | `sa-mod` |
 
@@ -165,7 +165,8 @@ the HUD): its reference is the original at the same mode, not the 800x600 run (W
 
 API 1.2 (a minor version; reference `docs/mods/api.md`). Decisions:
 
-- **One vocabulary with SA:MP.** The state records (`sa_mod_api::state`: `PlayerInfo`, `PedInfo`, `VehicleInfo`,
+- **One vocabulary with SA:MP** (the dependency on sa-samp / sa-samp-api was inverted in M3, §4.1b: the types are
+  `sa-types`, the reads `sa-access`). The state records (`sa_mod_api::state`: `PlayerInfo`, `PedInfo`, `VehicleInfo`,
   `WorldInfo`, `CameraInfo`) have the game adapter's field types (`sa-samp-api`: `Vec3`, `PedRef`, `VehicleRef`,
   `ModelId`, `GameState`, ...) and are filled from the adapter's snapshots (`PedSnapshot`, `VehicleSnapshot`,
   `CameraState`); `sa-mod-api` depends on `sa-samp-api` (its own layer above the leaves). The host reads the game only
@@ -198,6 +199,49 @@ What SA:MP needs and M2 does not give yet: writes and mid-frame decisions (`Hook
 `Shot`, `Damage`, `PlayerContext` swaps around `ProcessControl`), entity creation, script commands, audio (M3); the
 network and storage (M4). The `GameHooks` callbacks that need a dispatch point inside a port (`fire`, `ped_damage`,
 `enter_vehicle_task`, ...) get it there, as samp-rs's engine host needs the same points.
+
+### 4.1b Level 3 (M3, 2026-11-18): changes, entities, script commands, sounds, hook decisions
+
+API 1.3 (reference `docs/mods/api.md`). Decisions:
+
+- **The engine stays a GTA SA rewrite (user, 2026-11-18).** The engine exposes a generic mod API only, never
+  SA:MP-specific paths; `crates/sa-samp` (with sa-game's `samp` feature and the SA:MP adapter) leaves `crates/` once
+  SA:MP runs as a mod (M5), and samp-rs then builds as a mod against the generic API alone. M3 inverted M2's
+  dependency (sa-mod-api on sa-samp-api, the host reading the game through `sa_samp::engine()`):
+  - `crates/sa-types` (leaf, no dependencies): the game's value types (vectors, matrices, handles, model / weapon
+    ids, `GameState`, the ped / vehicle / camera records, script arguments, `GameError`). sa-samp-api re-exports them
+    at their old paths, so samp-rs is unchanged; sa-mod-api's records are expressed in them.
+  - `crates/sa-access` (engine side, above sa-core): the running game's state read and changed through handles
+    (`Game<V: View>`: pool lookups, records, keys, the private script threads, changes, entity creation and deletion,
+    sounds; the fake memory for tests). Everything moved here from sa-samp (its view, addresses, script threads,
+    reads and the changes samp-rs already used) without a copy: sa-samp's `NativeGame` holds an `sa_access::Game`,
+    derefs to it and its trait methods delegate. M5 deletes sa-samp; sa-access stays.
+  - sa-mod-api depends on sa-types only, sa-mod-host on sa-mod-api, sa-access and sa-types: no SA:MP crate below the
+    host.
+- **Changes only between frames.** A change asked for inside a hook is queued and applied at the next frame
+  boundary; entity creation / deletion and script commands are refused there (WRONG_PHASE). Between frames they run
+  at once, through the game's own code (the ported script command handlers: positions, weapons, wanted level,
+  clock, entity creation with model requests, pool allocation, `CWorld::Add`), plain field writes only where the game
+  itself only stores the value. A panic of unported game code inside a change becomes FAILED with a log line
+  (natively; on wasm32 a panic aborts, which is why only commands whose handlers are ported are offered).
+- **Ownership.** A mod deletes only entities it created; the host deletes them when it disables the mod (at the next
+  frame boundary).
+- **Script commands are a whitelist with signatures** (`sa_mod_api::script::COMMANDS`: opcode, name, parameter
+  letters). The game's handlers trust handles; the host checks every `p` / `v` argument against the pools first.
+  Creation and deletion stay typed calls (ownership).
+- **Hook decisions** (`hook_set_arg`, `hook_skip`, `hook_set_result`) need `state = "write"` and work only on
+  `hook::CONTROLLABLE` functions. In the engine, `sa_core::orig::observe::around` takes the argument words mutably and
+  gives the call the words as the observer left them (read back with the declared types), returns a chosen result
+  without calling (skip), or replaces the result; values are encoded per declared type (integers truncated to their
+  width, floats, x87, pointers: a handle becomes its entity's address).
+- **Dispatch points for direct calls.** Calls a port makes to a ported function of its own crate went through the
+  `orig!` binding straight to the Rust function (`=> crate::path`) and were invisible. With the feature `observe`,
+  such a binding with a literal address checks one relaxed counter of watched entries and, when some function is
+  watched and the callee is, takes the same observed path as a registry dispatch (`observe::watched_at`). Without the
+  feature the check is a constant `None` and the binding is the direct call it was; with it and nothing watched it is
+  one load. The registry's call counts are not touched (the crossing report stays comparable).
+- **Sounds**: front-end sounds through `CAudioEngine::ReportFrontendAudioEvent`; mission sounds through
+  `ADD_ONE_OFF_SOUND` (its unported audio case falls back as sa-samp did).
 
 ### 4.2 Data mods (added by the user, 2026-11-17)
 
@@ -254,7 +298,7 @@ data only, with no `.wasm`):
 | M1 | level 1 complete; the **resolution** mod (desktop resolution / any size, window and fullscreen, saved per mod), MSAA, anisotropic filtering, FPS overlay | 1920×1080 natively and in the browser; corpus replays IDENTICAL with the mods loaded |
 | MD | data mods (§4.2): the virtual file system overlay with line-merged definition files, content registration with new model IDs, the mods-only limits table | an example mod adds a new car (own model, textures, handling) that spawns and drives natively and in the browser; the parity build and verify-all unchanged |
 | M2 | level 2: events, read-only state, before/after hooks on registry functions (done 2026-11-18, §4.1a) | an example mini-map / trainer read-only overlay (`examples/mods/trainer-hud`) |
-| M3 | level 3: state write, entities, script commands, audio | an example gameplay mod |
+| M3 | level 3: state write, entities, script commands, audio (done 2026-11-18, §4.1b) | an example gameplay mod (`examples/mods/courier`) |
 | M4 | level 4: network, storage; samp-rs client core split from its hosts | samp-rs builds as a mod |
 | M5 | **SA:MP as a mod**: joins a 0.3.7-R4 / open.mp server natively and from the browser | the samp-rs e2e suite passes on the mod host; the DLL host still passes |
 | M6 | SDK docs, the `sa-mod` crate, templates, a mod folder and settings UI | an outside developer builds a mod from the docs alone |

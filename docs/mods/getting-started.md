@@ -88,6 +88,53 @@ target/i686-unknown-linux-gnu/release/sa-game --game wine/gta-sa --start-in-worl
 The log shows the events it records (`mod trainer-hud: trainer-hud: entered vehicle 0x101 (model 492)`) and, at exit,
 its overlay calls, time per frame, events and hook calls.
 
+## The courier (level 3)
+
+`examples/mods/courier` is a small gameplay mod: F6 spawns a car in front of the player (the next of five models each
+time), F10 deletes the cars it spawned, F8 starts a run (a marker object 150 m ahead, 45 seconds to reach it; a win
+pays $500 through the game's own `ADD_SCORE` command, clears the wanted level and plays the pick-up sound), F9
+toggles a damage shield: a before-hook on `CPedDamageResponseCalculator::ComputeDamageResponse` that skips the call
+for the player's ped. Its manifest asks for what it uses:
+
+```toml
+[permissions]
+render = true
+state = "write"
+input = "read"
+entities = true
+scripts = true
+audio = true
+hooks = ["CPedDamageResponseCalculator::ComputeDamageResponse"]
+```
+
+```rust
+fn spawn_car(&mut self) {
+    let Some(p) = state::player().filter(|p| p.handle.is_some()) else { return };
+    let at = ahead(p.ped.pos, p.ped.heading, 5.0);
+    if let Ok(v) = entities::create_vehicle(411, at, p.ped.heading.to_degrees() + 90.0) {
+        self.cars.push(v); // deleted by the host if the mod is disabled
+    }
+}
+
+fn hook(&mut self, hook: HookId, phase: Phase, call: &Call) {
+    if self.shield && Some(hook) == self.damage_hook && phase == Phase::Before
+        && call.arg(1) == state::player().and_then(|p| p.handle).map(Value::Ped)
+    {
+        let _ = call.skip(Value::Int(0)); // no damage for the player this time
+    }
+}
+```
+
+```sh
+examples/mods/build.sh      # -> target/mods/courier/{mod.toml,courier.wasm}
+SA_GAME_KEYS=f6:400:402,f8:460:462 target/i686-unknown-linux-gnu/release/sa-game --game wine/gta-sa \
+    --start-in-world --fixed-step 40 --frames 700 --mods target/mods/courier --present-dir target/courier
+# browser: tools/web/serve.sh --game wine/gta-sa --mods target/mods, then ?autostart=1&mods=courier
+```
+
+Changes happen between frames: a change a hook asks for waits for the next frame boundary, and creating entities or
+running script commands inside a hook is refused (`docs/mods/api.md`, level 3).
+
 ## The resolution mod
 
 `examples/mods/resolution` runs the game at the desktop resolution (in the browser: the canvas's size on the page in
