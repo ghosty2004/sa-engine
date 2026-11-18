@@ -64,7 +64,12 @@ orig! {
     /// `CCollision::ProcessSphereTriangle(sphere, verts, tri, plane, CColPoint&, float&)` (0x416BA0, AL)
     fn process_sphere_triangle(sp: GPtr<u8>, verts: GPtr<u8>, tri: GPtr<u8>, plane: GPtr<u8>, cp: GPtr<u8>, min: GPtr<u8>) -> u8
         = cdecl 0x416ba0 => super::mvpe_coll1::process_sphere_triangle;
+    /// `CCollision::ProcessDiscCollision(tri, matBA, disk, diskCP, lineCollision, lineRatio, lineCP)` (0x413960, AL)
+    fn process_disc_collision(tri: GPtr<f32>, mat: GPtr<f32>, disk: GPtr<f32>, disk_cp: GPtr<f32>, line_collision: GPtr<u8>,
+        line_ratio: GPtr<f32>, line_cp: GPtr<f32>) -> u8
+        = cdecl 0x413960 => super::prim::process_disc_collision;
 }
+use crate::bindings::col_point_assign;
 
 use sa_core::field::pa as p;
 
@@ -174,9 +179,9 @@ fn statics_init() {
 
 /// `CCollision::ProcessColModels(const CMatrix& transformA, CColModel& cmA, const CMatrix& transformB,
 /// CColModel& cmB, CColPoint* sphereCPs, CColPoint* lineCPs, float* maxTouch, bool returnAll)`
-/// (0x4185C0, EAX = number of sphere colpoints), partial port (ADR-002 fallback).
+/// (0x4185C0, EAX = number of sphere colpoints).
 ///
-/// PORTED: everything except A's disks. Statics initialised; no data on either model → 0.
+/// Statics initialised; no data on either model → 0.
 /// `matAtoB = Invert(B) * A`, A's bounding sphere moved into B's space must touch B's box
 /// (`TestSphereBox`) or 0. `matBtoA = Invert(A) * B`. A's spheres → B's space (radius, centre,
 /// surface), those touching B's box (`TestSphereBox`) listed; B's spheres → A's space, listed by the
@@ -196,7 +201,7 @@ fn statics_init() {
 /// and fewer than 31 points each box/triangle hit takes its own point (next depth -1, minimum reset);
 /// otherwise the point is kept and finished after the sphere (at 31 points the pass ends).
 ///
-/// A's lines (no disks): moved into B's space; per line (hit byte cleared) `ProcessLineSphere` against
+/// A's disks (A +7 bit 0, the monster truck's wheels): see [`disk_pass`]. A's lines (no disks): moved into B's space; per line (hit byte cleared) `ProcessLineSphere` against
 /// the listed B sphere indices (as spheres, no disk check), `ProcessLineBox`, `ProcessLineTriangle`
 /// (no poly) into `lineCPs[i]` with `maxTouch[i]`; a hit line's point and normal go to world space
 /// (`transformB`). The sphere points so far go to world space (`transformB`).
@@ -209,20 +214,12 @@ fn statics_init() {
 /// triangle part ends); then per B sphere all A boxes (`ProcessSphereBox`), each hit a new point with
 /// surface A = the box's, surface B = the sphere's, normal flipped (at 31 points the next sphere
 /// follows). These new points go to world space (`transformA`) with surfaces A and B swapped.
-///
-/// NOT PORTED (fallback to the whole original, decided at entry from reads without side effects): A
-/// with disks (+7 bit 0) and lines, the wheel-disk path (`ProcessDiscCollision`; SA's loader clears
-/// the disk flag, so it is not expected to run).
-#[hook(addr = 0x4185c0, conv = cdecl, name = "CCollision::ProcessColModels", expect = "E9 D8 96 FE FF 81 EC F0 00 00 00", fallback,
-       unverified = "mvpf-coll-1", route = "L2", hazards = "heap-writes", recs = "grove-walk,driving",
-       note = "writes the function statics 0x965A30..0x9689D0 and the callers' colpoint arrays; A-disk path falls back")]
+#[hook(addr = 0x4185c0, conv = cdecl, name = "CCollision::ProcessColModels", expect = "E9 D8 96 FE FF 81 EC F0 00 00 00",
+       unverified = "frontier2-a23", route = "L2", hazards = "heap-writes", recs = "grove-walk,driving",
+       note = "writes the function statics 0x965A30..0x9689D0 and the callers' colpoint arrays; the A-disk path also the disks' centre z")]
 #[allow(clippy::too_many_arguments)]
 pub fn process_col_models(ta: GPtr<u8>, cma: GPtr<u8>, tb: GPtr<u8>, cmb: GPtr<u8>, sphere_cps: GPtr<u8>,
     line_cps: GPtr<u8>, max_touch: GPtr<u8>, return_all: u8) -> i32 {
-    let cda0 = rd::<GPtr<u8>>(cma, 0x2C);
-    if !cda0.is_null() && !rd::<GPtr<u8>>(cmb, 0x2C).is_null() && rd::<u8>(cda0, 7) & 1 != 0 && rd::<u8>(cda0, 6) != 0 {
-        return process_col_models_original(ta, cma, tb, cmb, sphere_cps, line_cps, max_touch, return_all);
-    }
     statics_init();
     let cdb = rd::<GPtr<u8>>(cmb, 0x2C);
     let cda = rd::<GPtr<u8>>(cma, 0x2C);
@@ -346,6 +343,8 @@ pub fn process_col_models(ta: GPtr<u8>, cma: GPtr<u8>, tb: GPtr<u8>, cmb: GPtr<u
     }
     // B's triangles against A's bounding sphere
     calculate_triangle_planes(cdb.cast());
+    // [esp+0x54]: B's plane array as it stands after CalculateTrianglePlanes (read by the disk pass)
+    let planes_b = rd::<GPtr<u8>>(cdb, 0x1C);
     let mut n_tri_b = 0i32;
     if rd::<i16>(cdb, 4) != 0 {
         if rd::<u8>(cdb, 7) & 2 != 0 {
@@ -473,7 +472,29 @@ pub fn process_col_models(ta: GPtr<u8>, cma: GPtr<u8>, tb: GPtr<u8>, cmb: GPtr<u
         }
         k += 1;
     }
-    // A's lines
+    let b = BLists { n_sph: n_sph_b, n_box: n_box_b, n_tri: n_tri_b, planes: planes_b };
+    if rd::<u8>(cda, 7) & 1 != 0 {
+        n_cps = disk_pass(cda, cdb, cmb, tb, sphere_cps, line_cps, max_touch, n_cps, &b);
+    } else {
+        line_pass(cda, cdb, a2b, tb, line_cps, max_touch, &b);
+    }
+    world_pass(cma, cda, cdb, ta, tb, cmb, b2a, sphere_cps, n_cps, n_sph_b, n_disk_b)
+}
+
+/// B's pieces listed against A (the function's locals `[esp+0x48]`, `[esp+0x4C]`, `[esp+0x44]`,
+/// `[esp+0x54]`).
+struct BLists {
+    n_sph: i32,
+    n_box: i32,
+    n_tri: i32,
+    planes: GPtr<u8>,
+}
+
+/// A's lines (0x4196B2, A without disks).
+#[allow(clippy::too_many_arguments)]
+fn line_pass(cda: GPtr<u8>, cdb: GPtr<u8>, a2b: GPtr<u8>, tb: GPtr<u8>, line_cps: GPtr<u8>, max_touch: GPtr<u8>,
+    b: &BLists) {
+    let (n_sph_b, n_box_b, n_tri_b) = (b.n_sph, b.n_box, b.n_tri);
     if rd::<i8>(cda, 6) > 0 {
         let mut i = 0i32;
         while i < rd::<i8>(cda, 6) as i32 {
@@ -532,6 +553,12 @@ pub fn process_col_models(ta: GPtr<u8>, cma: GPtr<u8>, tb: GPtr<u8>, cmb: GPtr<u
         }
         k += 1;
     }
+}
+
+/// From 0x419968: the sphere points so far into world space (`transformB`), then B's spheres against A.
+#[allow(clippy::too_many_arguments)]
+fn world_pass(cma: GPtr<u8>, cda: GPtr<u8>, cdb: GPtr<u8>, ta: GPtr<u8>, tb: GPtr<u8>, cmb: GPtr<u8>, b2a: GPtr<u8>,
+    sphere_cps: GPtr<u8>, mut n_cps: i32, n_sph_b: i32, n_disk_b: i32) -> i32 {
     // the sphere points so far into world space
     let mut q = 0i32;
     while q < n_cps {
@@ -668,6 +695,242 @@ pub fn process_col_models(ta: GPtr<u8>, cma: GPtr<u8>, tb: GPtr<u8>, cmb: GPtr<u
         wr::<u16>(cp, 0x23, a.0);
         wr::<u8>(cp, 0x25, a.1);
         q += 1;
+    }
+    n_cps
+}
+
+/// The wheel-touch height of a disk at a point in A's space (0x4191C9 / 0x419364):
+/// `sqrt((r*r - dy*dy) - dx*dx) + p.z` on the x87 stack (no clamp: NaN when the point is outside the
+/// disk's circle), `dy = p.y - c.y` and `dx = p.x - c.x` kept extended.
+fn disk_height(f: &mut Fpu, pa: [f32; 3], disk: GPtr<u8>) {
+    f.fld(pa[1]);
+    f.fsub_m(rd::<f32>(disk, 4));
+    f.fld(pa[0]);
+    f.fsub_m(rd::<f32>(disk, 0));
+    f.fld(rd::<f32>(disk, 0xC));
+    f.fld_st(0);
+    f.fmul_st(1);
+    f.fld_st(3);
+    f.fmul_st(4);
+    f.fsubp(1);
+    f.fld_st(2);
+    f.fmul_st(3);
+    f.fsubp(1);
+    f.fsqrt();
+    f.fstp_st(3);
+    f.fstp_st(0);
+    f.fstp_st(0);
+    f.fadd_m(pa[2]);
+}
+
+/// A line-touch from a sphere or box hit (0x41921F / 0x4193E1): the hit byte set, `maxTouch = h` (pops
+/// the height), `lineCP = cp`, its depth re-read through the current depth slot, its surface A the
+/// disk's.
+fn disk_line_touch(f: &mut Fpu, hit: GPtr<u8>, mt: GPtr<u8>, lcp: GPtr<u8>, cp: GPtr<u8>, depth: GPtr<u8>,
+    disk: GPtr<u8>) {
+    hit.write(1);
+    wr::<f32>(mt, 0, f.fstp());
+    col_point_assign(lcp, cp);
+    wr::<u32>(lcp, 0x28, rd::<u32>(depth, 0));
+    copy_surf(lcp.byte_add(0x20), disk.byte_add(0x10));
+}
+
+/// A's disks (0x418F52, A +7 bit 0): the wheels of a monster truck. Each disk centre's z is first
+/// overwritten in the live model with its touch distance `maxTouch[i]` (never restored); the disks
+/// (radius, centre through `matAtoB`, surface) then go to A's sphere list FROM INDEX 0. Per disk (hit
+/// byte cleared, the current point's depth -1), when its sphere overlaps B's box (inline test):
+/// B's listed spheres (as spheres, no disk check) through `ProcessSphereSphere` into the current point;
+/// a hit's point and normal go to A's space and the disk height `h` (see [`disk_height`]) is a line
+/// touch unless `h < maxTouch[i]` (NaN: no touch); the minimum is reset after a hit only. B's listed
+/// boxes through `ProcessSphereBox`: a hit below the disk centre with an A-space normal z above 0.5
+/// gives `h`; unless `h < maxTouch[i]`, a rise above `0.35 * r` also keeps the point (its minimum
+/// recorded, surface A the disk's) and the touch is taken; any other hit keeps the point when its
+/// distance is below the kept one; the minimum is reset after every box. B's listed triangles through
+/// `ProcessSphereTriangle` into a copy of the current point (taken once, depth -1 per triangle, the
+/// minimum never reset): a hit's normal is replaced by the plane's (`n / 4096`) when its z > 0.3 and
+/// `transformB`'s at.z > 0.9, then `ProcessDiscCollision` decides (a kept point when it returns 1).
+/// A kept point takes a new slot unless 31 points. A touched line's point and normal go to world space
+/// (`transformB`), an untouched one gets `maxTouch = -1e8`.
+#[allow(clippy::too_many_arguments)]
+#[inline(never)] // a gdb count point (tools/e2e/scenarios/frontier2-a13-counts.gdb)
+fn disk_pass(cda: GPtr<u8>, cdb: GPtr<u8>, cmb: GPtr<u8>, tb: GPtr<u8>, sphere_cps: GPtr<u8>, line_cps: GPtr<u8>,
+    max_touch: GPtr<u8>, mut n_cps: i32, b: &BLists) -> i32 {
+    let a2b = p(MAT_A_TO_B);
+    let b2a = p(MAT_B_TO_A);
+    let mut i = 0i32;
+    while i < rd::<i8>(cda, 6) as i32 {
+        let disk = rd::<GPtr<u8>>(cda, 0x10).byte_add(i as isize * 0x24);
+        wr::<u32>(disk, 8, rd::<u32>(max_touch, i as isize * 4));
+        i += 1;
+    }
+    let mut i = 0i32;
+    while i < rd::<i8>(cda, 6) as i32 {
+        let d = sph(SPH_A, i);
+        let disk = rd::<GPtr<u8>>(cda, 0x10).byte_add(i as isize * 0x24);
+        wr::<u32>(d, 0xC, rd::<u32>(disk, 0xC));
+        xform_point(d, a2b, disk);
+        copy_surf(d.byte_add(0x10), rd::<GPtr<u8>>(cda, 0x10).byte_add(i as isize * 0x24 + 0x10));
+        i += 1;
+    }
+    let mut cp = sphere_cps.byte_add(n_cps as isize * CP);
+    let mut depth = cp.byte_add(0x28);
+    let k_half = g::<f32>(0x858B8C).read();
+    let k_rise = g::<f32>(0x858C0C).read();
+    let k_plane = g::<f32>(0x858BFC).read();
+    let k_nz = g::<f32>(0x858C24).read();
+    let k_atz = g::<f32>(0x858C20).read();
+    let mut i = 0i32;
+    while i < rd::<i8>(cda, 6) as i32 {
+        let hit = g::<u8>(LINE_HIT + i as usize);
+        hit.write(0);
+        wr::<u32>(depth, 0, DEPTH_UNUSED);
+        let sa = sph(SPH_A, i);
+        if !sphere_box_inline(v3(sa), rd::<f32>(sa, 0xC), cmb) {
+            i += 1;
+            continue;
+        }
+        let lcp = line_cps.byte_add(i as isize * CP);
+        let mt = max_touch.byte_add(i as isize * 4);
+        let mut kept = false;
+        let mut m = [NO_TOUCH, NO_TOUCH];
+        let min = local(&mut m);
+        let kept_min = min.byte_add(4);
+        // B's spheres
+        let mut j = 0i32;
+        while j < b.n_sph {
+            let sb = rd::<GPtr<u8>>(cdb, 8).byte_add(idx(COLL_SPH_B, j) as isize * 0x14);
+            if process_sphere_sphere(sa.cast(), sb.cast(), cp.cast(), min.cast()) != 0 {
+                let mut pa = [0u32; 3];
+                xform_point(local(&mut pa), b2a, cp);
+                let mut na = [0u32; 3];
+                multiply3x3(local(&mut na), b2a, cp.byte_add(0x10));
+                let pa = pa.map(f32::from_bits);
+                let disk = rd::<GPtr<u8>>(cda, 0x10).byte_add(i as isize * 0x24);
+                let mut f = Fpu::new();
+                disk_height(&mut f, pa, disk);
+                f.fld_st(0);
+                f.fcomp_m(rd::<f32>(mt, 0));
+                if f.jne(1) {
+                    f.fstp_st(0);
+                } else {
+                    disk_line_touch(&mut f, hit, mt, lcp, cp, depth, disk);
+                }
+                wr::<u32>(min, 0, NO_TOUCH);
+            }
+            j += 1;
+        }
+        // B's boxes
+        let mut j = 0i32;
+        while j < b.n_box {
+            let bx = rd::<GPtr<u8>>(cdb, 0xC).byte_add(idx(COLL_BOX_B, j) as isize * 0x1C);
+            if process_sphere_box(sa.cast(), bx.cast(), cp.cast(), min.cast()) != 0 {
+                let mut pa = [0u32; 3];
+                xform_point(local(&mut pa), b2a, cp);
+                let mut na = [0u32; 3];
+                xform_vec(local(&mut na), b2a, cp.byte_add(0x10));
+                let pa = pa.map(f32::from_bits);
+                let disk = rd::<GPtr<u8>>(cda, 0x10).byte_add(i as isize * 0x24);
+                let mut f = Fpu::new();
+                f.fld(pa[2]);
+                f.fcomp_m(rd::<f32>(disk, 8));
+                let mut wheel = !f.jp(5);
+                if wheel {
+                    f.fld(f32::from_bits(na[2]));
+                    f.fcomp_m(k_half);
+                    wheel = !f.jne(0x41);
+                }
+                if wheel {
+                    disk_height(&mut f, pa, disk);
+                    f.fld_st(0);
+                    f.fcomp_m(rd::<f32>(mt, 0));
+                    if f.jne(1) {
+                        f.fstp_st(0);
+                    } else {
+                        f.fld_st(0);
+                        f.fsub_m(rd::<f32>(mt, 0));
+                        f.fld(k_rise);
+                        f.fmul_m(rd::<f32>(disk, 0xC));
+                        f.fcompp();
+                        if !f.jp(5) {
+                            wr::<u32>(kept_min, 0, rd::<u32>(min, 0));
+                            copy_surf(cp.byte_add(0x20), disk.byte_add(0x10));
+                            kept = true;
+                        }
+                        disk_line_touch(&mut f, hit, mt, lcp, cp, depth, disk);
+                    }
+                } else {
+                    let mut f = Fpu::new();
+                    f.fld(rd::<f32>(min, 0));
+                    f.fcomp_m(rd::<f32>(kept_min, 0));
+                    if !f.jp(5) {
+                        wr::<u32>(kept_min, 0, rd::<u32>(min, 0));
+                        copy_surf(cp.byte_add(0x20), disk.byte_add(0x10));
+                        kept = true;
+                    }
+                }
+            }
+            wr::<u32>(min, 0, NO_TOUCH);
+            j += 1;
+        }
+        // B's triangles
+        let mut tcp = [0u32; 11];
+        for (o, v) in tcp.iter_mut().enumerate() {
+            *v = rd::<u32>(cp, o as isize * 4);
+        }
+        let tri_cp = local(&mut tcp);
+        let mut t = 0i32;
+        while t < b.n_tri {
+            let ti = idx(COLL_TRI_B, t);
+            let plane = rd::<GPtr<u8>>(cdb, 0x1C).byte_add(ti as isize * 10);
+            let tri = rd::<GPtr<u8>>(cdb, 0x18).byte_add(ti as isize * 8);
+            wr::<u32>(tri_cp, 0x28, DEPTH_UNUSED);
+            if process_sphere_triangle(sa, rd(cdb, 0x14), tri, plane, tri_cp, min) != 0 {
+                let ti = idx(COLL_TRI_B, t);
+                let pl = b.planes.byte_add(ti as isize * 10);
+                let mut n = [0f32; 3];
+                let mut f = Fpu::new();
+                for (k, v) in n.iter_mut().enumerate() {
+                    f.fild(rd::<i16>(pl, k as isize * 2) as i32);
+                    f.fmul_m(k_plane);
+                    if k < 2 {
+                        *v = f.fstp();
+                    } else {
+                        *v = f.fst();
+                        f.fcomp_m(k_nz);
+                    }
+                }
+                if !f.jne(0x41) {
+                    let mut g2 = Fpu::new();
+                    g2.fld(rd::<f32>(tb, 0x28));
+                    g2.fcomp_m(k_atz);
+                    if !g2.jne(0x41) {
+                        for (k, v) in n.iter().enumerate() {
+                            wr::<f32>(tri_cp, 0x10 + k as isize * 4, *v);
+                        }
+                    }
+                }
+                let disk = rd::<GPtr<u8>>(cda, 0x10).byte_add(i as isize * 0x24);
+                if process_disc_collision(tri_cp.cast(), b2a.cast(), disk.cast(), cp.cast(), hit, mt.cast(), lcp.cast())
+                    != 0
+                {
+                    kept = true;
+                }
+            }
+            t += 1;
+        }
+        if kept && n_cps < 0x1F {
+            n_cps += 1;
+            depth = depth.byte_add(CP);
+            cp = depth.byte_add(-0x28);
+            wr::<u32>(depth, 0, DEPTH_UNUSED);
+        }
+        if hit.read() != 0 {
+            xform_point(lcp, tb, lcp);
+            xform_vec(lcp.byte_add(0x10), tb, lcp.byte_add(0x10));
+        } else {
+            wr::<u32>(mt, 0, 0xCCBEBC20);
+        }
+        i += 1;
     }
     n_cps
 }
