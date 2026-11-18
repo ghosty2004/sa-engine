@@ -8,6 +8,7 @@ use sa_core::hook;
 
 use crate::bindings::{material_list_find_call, rp_material_destroy};
 use crate::common::{g, rd, wr};
+use crate::bindings::check_valid_texture_format_call as texture_valid;
 
 use crate::raster::{d3d9_check_valid_camera_texture_format as camera_ok, d3d9_check_valid_texture_format as texture_ok};
 
@@ -223,9 +224,70 @@ pub fn raster_check_format_by_type(cube: u32, ty: u32, format: u32) -> u32 {
     }
 }
 
+/// `_rwD3D9ImageFindFormat(image)` (0x7FFFF0): the raster format for an image. 4 / 8-bit: all palette alphas 0xFF
+/// (16 / 256 entries), or every pixel's palette alpha 0xFF (rows of `width` bytes), gives PAL4 / PAL8 | 888 (0x4600 /
+/// 0x2600), else PAL4 / PAL8 | 8888 (0x4500 / 0x2500). Otherwise (32-bit) the pixel alphas: all 0xFF gives 888 (0x600)
+/// when the display depth is above 16 and D3DFMT_X8R8G8B8 is valid, else 565 (0x200); any alpha 0x10..0xFE gives 8888
+/// (0x500) when the display depth is above 16 and D3DFMT_A8R8G8B8 is valid, else 4444 (0x300) when D3DFMT_A4R4G4B4
+/// is valid, else 1555 (0x100); only alphas 0..0xF besides 0xFF give 8888 (above 16 bits, A8R8G8B8 valid) or 1555.
+/// The original keeps its row counter in its own argument slot.
+#[hook(addr = 0x7FFFF0, conv = cdecl, name = "_rwD3D9ImageFindFormat", expect = "83 EC 0C 53 8B 5C 24 14",
+       unverified = "frontier2-c23", route = "L2", hazards = "stack-residue",
+       note = "the 32-bit path writes its row counter into its image argument slot")]
+pub fn d3d9_image_find_format(img: GPtr<u8>) -> u32 {
+    let depth: i32 = rd(img, 0xC);
+    let deep = || g::<i32>(MODE_DEPTH).read() > 16;
+    if depth == 4 || depth == 8 {
+        let w: i32 = rd(img, 4);
+        let pal: GPtr<u8> = rd(img, 0x18);
+        let h: i32 = rd(img, 8);
+        let n = if depth == 4 { 0x10 } else { 0x100 };
+        if (0..n).any(|i| rd::<u8>(pal, i * 4 + 3) != 0xFF) {
+            let mut row: GPtr<u8> = rd(img, 0x14);
+            for _ in 0..h.max(0) {
+                for x in 0..w.max(0) as isize {
+                    if rd::<u8>(pal, isize::from(rd::<u8>(row, x)) * 4 + 3) != 0xFF {
+                        return if depth == 4 { 0x4500 } else { 0x2500 };
+                    }
+                }
+                row = row.byte_add(rd::<i32>(img, 0x10) as isize);
+            }
+        }
+        return if depth == 4 { 0x4600 } else { 0x2600 };
+    }
+    let w: i32 = rd(img, 4);
+    let mut row: GPtr<u8> = rd(img, 0x14);
+    let mut low = false;
+    let mut y = 0i32;
+    while y < rd::<i32>(img, 8) {
+        for x in 0..w.max(0) as isize {
+            let a = rd::<u8>(row, x * 4 + 3);
+            if a == 0xFF {
+                continue;
+            }
+            if a > 0xF {
+                if deep() && texture_valid(0x15) != 0 {
+                    return 0x500;
+                }
+                return if texture_valid(0x1A) != 0 { 0x300 } else { 0x100 };
+            }
+            low = true;
+        }
+        row = row.byte_add(rd::<i32>(img, 0x10) as isize);
+        y += 1;
+    }
+    match (low, deep()) {
+        (false, true) => if texture_valid(0x16) != 0 { 0x600 } else { 0x200 },
+        (false, false) => 0x200,
+        (true, true) => if texture_valid(0x15) != 0 { 0x500 } else { 0x100 },
+        (true, false) => 0x100,
+    }
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] =
     &[
+        HOOK_D3D9_IMAGE_FIND_FORMAT,
         HOOK_RP_GEOMETRY_REPLACE_OLD_MATERIAL_WITH_NEW_MATERIAL,
         HOOK_RASTER_SET_FORMAT,
         HOOK_RASTER_CHECK_FORMAT_BY_TYPE,

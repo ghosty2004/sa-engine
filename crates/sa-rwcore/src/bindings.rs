@@ -765,7 +765,7 @@ orig! {
 
 orig! {
     /// `FUN_007ffff0` (0x7FFFF0)
-    pub fn image_find_format(img: GPtr<u8>) -> u32 = cdecl 0x7FFFF0 => unported;
+    pub fn image_find_format(img: GPtr<u8>) -> u32 = cdecl 0x7FFFF0 => crate::frontier_c::d3d9_image_find_format;
 }
 
 orig! {

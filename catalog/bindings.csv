@@ -1503,7 +1503,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x7FDE70,sa-rwcore,set_texture,cdecl,,t:GPtr<u8>;stage:u32,u32,sa_rwcore::d3d9state::set_texture,RwD3D9SetTexture,
 0x7FE0A0,sa-rwcore,vertex_alpha_enable,cdecl,,on:u32,u32,sa_rwcore::d3d9state::rs_vertex_alpha_enable,_rwD3D9RenderStateVertexAlphaEnable,
 0x7FED70,sa-rwcore,clamp_raster_size,cdecl,,w:GPtr<i32>;h:GPtr<i32>;flags:u32,,sa_rwcore::d3d9state::clamp_raster_size,FUN_007fed70,
-0x7FFFF0,sa-rwcore,image_find_format,cdecl,,img:GPtr<u8>,u32,unported,FUN_007ffff0,
+0x7FFFF0,sa-rwcore,image_find_format,cdecl,,img:GPtr<u8>,u32,sa_rwcore::frontier_c::d3d9_image_find_format,FUN_007ffff0,
 0x801980,sa-rwcore,free_list_create,cdecl,,size:u32;per_block:u32;align:u32;hint:u32,GPtr<u8>,sa_rwcore::memory::rw_freelist_create,_rwFreeListCreate,
 0x801B70,sa-rwcore,free_list_create_prealloc,cdecl,,size:u32;per_block:u32;align:u32;n:u32;space:GPtr<u8>;hint:u32,GPtr<u8>,sa_rwcore::memory::rw_freelist_create_and_preallocate_space,RwFreeListCreateAndPreallocateSpace,
 0x801B80,sa-rwcore,free_list_destroy,cdecl,,fl:GPtr<u8>,u32,sa_rwcore::memory::rw_freelist_destroy,RwFreeListDestroy,
