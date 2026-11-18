@@ -62,6 +62,9 @@ THIRD_PARTY = [
     ('libpng-1.0.12+zlib-1.1.3', 0x7CFE00, 0x7EB5C0,
      r'libpng|IHDR|IDAT|PLTE|chunk|zlib|incorrect header check|invalid (block type|'
      r'distance code|window size|bit length repeat|literal/length code)|tree'),
+    # IJG libjpeg 6b (JPEG_LIB_VERSION 62), RE-SPEC-UNK (docs/re/specs/RW/_unk-M.md); the block includes its
+    # jmemnobs.c back end (0x5CF800-0x5CF830), rewritten to call CMemoryMgr and reached only from jmemmgr
+    ('libjpeg-6b', 0x5C26B0, 0x5D0260, r'JPEGMEM'),
     ('quicktime-qtml', 0x818430, 0x81E406,
      r'QuickTime\.qts|_CallComponent|theQuickTimeDispatcher'),
 ]

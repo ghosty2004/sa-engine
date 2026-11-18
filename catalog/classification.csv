@@ -2752,210 +2752,210 @@ address,class,subsystem,name,evidence
 0x5c18f0,game,UNK-game,,refs=D
 0x5c1b10,game,UNK-game,,refs=D
 0x5c1d30,game,UNK-game,,refs=D
-0x5c26b0,game,UNK-game,,refs=C
-0x5c2730,game,UNK-game,,refs=C
-0x5c30d0,game,UNK-game,,refs=C
-0x5c31e0,game,UNK-game,,refs=I
-0x5c32c0,game,UNK-game,,refs=I
-0x5c33e0,game,UNK-game,,refs=I
-0x5c3490,game,UNK-game,,refs=I
-0x5c35f0,game,UNK-game,,refs=I
-0x5c3660,game,UNK-game,,refs=I
-0x5c36f0,game,UNK-game,,refs=I
-0x5c3700,game,UNK-game,,refs=C
-0x5c3940,game,UNK-game,,refs=I
-0x5c3b70,game,UNK-game,,refs=I
-0x5c4380,game,UNK-game,,refs=C
-0x5c43f0,game,UNK-game,,refs=C
-0x5c4640,game,UNK-game,,refs=C
-0x5c4658,excluded:mis-split,,,"SecuROM re-entry point inside 0x5c25f0 (FxEmitterBP_c::Load): mid-body (previous byte 0xff), only jumped to from protection code (0x402080)"
-0x5c4760,game,UNK-game,,refs=C
-0x5c48f0,game,UNK-game,,refs=C
-0x5c49c0,game,UNK-game,,refs=I
-0x5c4af0,game,UNK-game,,refs=I
-0x5c4b90,game,UNK-game,,refs=C
-0x5c4c80,game,UNK-game,,refs=I
-0x5c4d50,game,UNK-game,,refs=C
-0x5c4fa0,game,UNK-game,,refs=I
-0x5c5090,game,UNK-game,,refs=I
-0x5c5210,game,UNK-game,,refs=C
-0x5c5260,game,UNK-game,,refs=C
-0x5c5320,game,UNK-game,,refs=I
-0x5c53d0,game,UNK-game,,refs=I
-0x5c5420,game,UNK-game,,refs=C
-0x5c54f0,game,UNK-game,,refs=C
-0x5c551a,excluded:mis-split,,,"SecuROM re-entry point inside 0x5c25f0 (FxEmitterBP_c::Load): mid-body (previous byte 0xff), only jumped to from protection code (0x40726c)"
-0x5c5560,game,UNK-game,,refs=C
-0x5c55d0,game,UNK-game,,refs=C
-0x5c5780,game,UNK-game,,refs=C
-0x5c5910,game,UNK-game,,no static reference found (dead code or reached through a computed pointer)
-0x5c5940,game,UNK-game,,refs=J
-0x5c5ac0,excluded:mis-split,,,"piece of 0x5c25f0: lies in its span, only jumped to from it (0x5c62c1) and jumps back into it at 0x5c5b20"
-0x5c5ca0,game,UNK-game,,refs=C
-0x5c5ec0,game,UNK-game,,refs=J
-0x5c6030,game,UNK-game,,refs=I
-0x5c6070,game,UNK-game,,refs=I
-0x5c60b0,game,UNK-game,,refs=I
-0x5c6100,game,UNK-game,,refs=I
-0x5c62d0,game,UNK-game,,refs=I
-0x5c62f0,game,UNK-game,,refs=I
-0x5c63d0,game,UNK-game,,refs=C
-0x5c63e5,excluded:mis-split,,,"SecuROM re-entry point inside 0x5c25f0 (FxEmitterBP_c::Load): mid-body (previous byte 0xff), only jumped to from protection code (0x405bbf)"
-0x5c6430,game,UNK-game,,refs=C
-0x5c6600,game,UNK-game,,refs=C
-0x5c6680,game,UNK-game,,refs=C
-0x5c6850,game,UNK-game,,refs=I
-0x5c69e0,game,UNK-game,,refs=I
-0x5c6a10,game,UNK-game,,refs=I
-0x5c6a90,game,UNK-game,,refs=C
-0x5c6b50,game,UNK-game,,refs=CJ
-0x5c6b90,game,UNK-game,,refs=CJ
-0x5c6bb0,game,UNK-game,,refs=C
-0x5c6bd0,game,UNK-game,,refs=C
-0x5c6bf0,game,UNK-game,,refs=C
-0x5c6c08,excluded:mis-split,,,"SecuROM re-entry point inside 0x5c25f0 (FxEmitterBP_c::Load): mid-body (previous byte 0xff), only jumped to from protection code (0x401e9d)"
-0x5c7010,game,UNK-game,,refs=C
-0x5c70d0,game,UNK-game,,refs=C
-0x5c7130,game,UNK-game,,refs=C
-0x5c7420,game,UNK-game,,refs=C
-0x5c7590,game,UNK-game,,refs=C
-0x5c76a0,game,UNK-game,,refs=I
-0x5c7710,game,UNK-game,,refs=I
-0x5c7920,game,UNK-game,,refs=C
-0x5c79e0,game,UNK-game,,refs=I
-0x5c79f0,game,UNK-game,,refs=C
-0x5c7a50,game,UNK-game,,refs=I
-0x5c7ae0,game,UNK-game,,refs=I
-0x5c7c10,game,UNK-game,,refs=I
-0x5c7c60,game,UNK-game,,refs=I
-0x5c7d10,game,UNK-game,,refs=I
-0x5c7df0,game,UNK-game,,refs=C
-0x5c8620,game,UNK-game,,refs=C
-0x5c8690,game,UNK-game,,refs=C
-0x5c87e0,game,UNK-game,,refs=C
-0x5c88f0,game,UNK-game,,refs=I
-0x5c8af0,game,UNK-game,,refs=J
-0x5c8b40,game,UNK-game,,refs=I
-0x5c8b60,game,UNK-game,,refs=I
-0x5c8b70,game,UNK-game,,refs=I
-0x5c8e10,game,UNK-game,,refs=I
-0x5c8e20,game,UNK-game,,refs=C
-0x5c8ee0,game,UNK-game,,refs=C
-0x5c8fb0,game,UNK-game,,refs=I
-0x5c90d0,game,UNK-game,,refs=I
-0x5c9150,game,UNK-game,,refs=I
-0x5c9180,game,UNK-game,,refs=I
-0x5c91e0,game,UNK-game,,refs=I
-0x5c9340,game,UNK-game,,refs=I
-0x5c9350,game,UNK-game,,refs=C
-0x5c9510,game,UNK-game,,refs=I
-0x5c9710,game,UNK-game,,refs=C
-0x5c9790,game,UNK-game,,refs=C
-0x5c9a60,game,UNK-game,,refs=C
-0x5c9b80,game,UNK-game,,refs=C
-0x5c9c60,game,UNK-game,,refs=C
-0x5c9ce0,game,UNK-game,,refs=I
-0x5ca110,game,UNK-game,,refs=I
-0x5ca260,game,UNK-game,,refs=C
-0x5ca2a0,game,UNK-game,,refs=C
-0x5ca490,game,UNK-game,,refs=C
-0x5ca630,game,UNK-game,,refs=C
-0x5ca6e0,game,UNK-game,,refs=CI
-0x5ca720,game,UNK-game,,refs=I
-0x5ca7e0,game,UNK-game,,refs=I
-0x5ca820,game,UNK-game,,refs=I
-0x5ca840,game,UNK-game,,refs=C
-0x5ca890,game,UNK-game,,refs=C
-0x5ca940,game,UNK-game,,refs=C
-0x5caa90,game,UNK-game,,refs=C
-0x5cab70,game,UNK-game,,refs=C
-0x5cac10,game,UNK-game,,refs=I
-0x5cac80,game,UNK-game,,refs=I
-0x5cadc0,game,UNK-game,,refs=I
-0x5cae30,game,UNK-game,,refs=C
-0x5caf00,game,UNK-game,,refs=C
-0x5cafb0,game,UNK-game,,refs=C
-0x5cafcb,excluded:mis-split,,,"SecuROM re-entry point inside 0x5c25f0 (FxEmitterBP_c::Load): mid-body (previous byte 0xff), only jumped to from protection code (0x401e0a)"
-0x5cb2c0,game,UNK-game,,refs=C
-0x5cb5b0,game,UNK-game,,refs=C
-0x5cb8c0,game,UNK-game,,refs=C
-0x5cbb20,game,UNK-game,,refs=C
-0x5cbc00,game,UNK-game,,refs=C
-0x5cbe50,game,UNK-game,,refs=C
-0x5cbf00,game,UNK-game,,refs=I
-0x5cc050,game,UNK-game,,refs=CI
-0x5cc0f0,game,UNK-game,,refs=C
-0x5cc11e,excluded:mis-split,,,"SecuROM re-entry point inside 0x5c25f0 (FxEmitterBP_c::Load): mid-body (previous byte 0xff), only jumped to from protection code (0x402229)"
-0x5cc1f0,game,UNK-game,,refs=C
-0x5cc290,game,UNK-game,,refs=I
-0x5cc610,game,UNK-game,,refs=I
-0x5cc7a0,game,UNK-game,,refs=I
-0x5cc7d0,game,UNK-game,,refs=C
-0x5cc8c0,game,UNK-game,,refs=C
-0x5cc950,game,UNK-game,,refs=C
-0x5cc9d0,game,UNK-game,,refs=C
-0x5ccb50,game,UNK-game,,refs=I
-0x5ccc90,game,UNK-game,,refs=I
-0x5cccc0,game,UNK-game,,refs=C
-0x5cccf0,game,UNK-game,,refs=I
-0x5ccd70,game,UNK-game,,refs=I
-0x5ccdf0,game,UNK-game,,refs=C
-0x5cce60,game,UNK-game,,refs=I
-0x5cce80,game,UNK-game,,refs=I
-0x5ccf60,game,UNK-game,,refs=I
-0x5ccf70,game,UNK-game,,refs=I
-0x5ccf80,game,UNK-game,,refs=I
-0x5cd080,game,UNK-game,,refs=I
-0x5cd0e0,game,UNK-game,,refs=I
-0x5cd160,game,UNK-game,,refs=I
-0x5cd220,game,UNK-game,,refs=I
-0x5cd350,game,UNK-game,,refs=C
-0x5cd6b0,game,UNK-game,,refs=I
-0x5cd6d0,game,UNK-game,,refs=I
-0x5cd700,game,UNK-game,,refs=I
-0x5cd740,game,UNK-game,,refs=I
-0x5cd7f0,game,UNK-game,,refs=I
-0x5cd810,game,UNK-game,,refs=C
-0x5cd860,game,UNK-game,,refs=I
-0x5cda90,game,UNK-game,,refs=I
-0x5cebc0,game,UNK-game,,refs=CI
-0x5cebcb,excluded:mis-split,,,"SecuROM re-entry point inside 0x5c25f0 (FxEmitterBP_c::Load): mid-body (previous byte 0xff), only jumped to from protection code (0x4074d5)"
-0x5ced10,game,UNK-game,,refs=CI
-0x5cedd0,game,UNK-game,,refs=CI
-0x5cee80,game,UNK-game,,refs=CI
-0x5cef30,game,UNK-game,,refs=I
-0x5cefa0,game,UNK-game,,refs=I
-0x5cf010,game,UNK-game,,refs=I
-0x5cf1b0,game,UNK-game,,refs=C
-0x5cf250,game,UNK-game,,refs=C
-0x5cf2f0,game,UNK-game,,refs=I
-0x5cf430,game,UNK-game,,refs=I
-0x5cf580,game,UNK-game,,refs=CI
-0x5cf690,game,UNK-game,,refs=I
-0x5cf6d0,game,UNK-game,,refs=C
-0x5cf800,game,UNK-game,,refs=C
-0x5cf810,game,UNK-game,,refs=C
-0x5cf820,game,UNK-game,,refs=C
-0x5cf830,game,UNK-game,,refs=C
-0x5cf840,game,UNK-game,,refs=C
-0x5cf850,game,UNK-game,,refs=C
-0x5cf870,game,UNK-game,,refs=C
-0x5cf880,game,UNK-game,,refs=C
-0x5cf890,game,UNK-game,,refs=C
-0x5cf8a0,game,UNK-game,,refs=C
-0x5cf8c0,game,UNK-game,,refs=C
-0x5cf940,game,UNK-game,,refs=C
-0x5cf960,game,UNK-game,,refs=C
-0x5cfa30,game,UNK-game,,jmp thunk to 0x5c6b90; refs=C
-0x5cfa50,game,UNK-game,,refs=C
-0x5cfac0,game,UNK-game,,refs=C
-0x5cfd20,game,UNK-game,,refs=C
-0x5cfe00,game,UNK-game,,jmp thunk to 0x5c6b90; refs=C
-0x5cfe20,game,UNK-game,,refs=C
-0x5cff68,excluded:mis-split,,,"SecuROM re-entry point inside 0x5c25f0 (FxEmitterBP_c::Load): mid-body (previous byte 0xff), only jumped to from protection code (0x408392)"
-0x5cffb0,game,UNK-game,,refs=C
-0x5d0110,game,UNK-game,,refs=C
-0x5d01d0,game,UNK-game,,refs=C
+0x5c26b0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c2730,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c30d0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c31e0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c32c0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c33e0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c3490,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c35f0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c3660,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c36f0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c3700,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c3940,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c3b70,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c4380,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c43f0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c4640,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c4658,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c4760,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c48f0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c49c0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c4af0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c4b90,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c4c80,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c4d50,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c4fa0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c5090,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c5210,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c5260,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c5320,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c53d0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c5420,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c54f0,excluded:thirdparty:libjpeg-6b,,,link order only: inside contiguous block between identified functions 0x5c26b0 and 0x5cf6d0; refs=C; block 0x5c26b0-0x5d0260
+0x5c551a,excluded:thirdparty:libjpeg-6b,,,link order only: inside contiguous block between identified functions 0x5c26b0 and 0x5cf6d0; refs=J; block 0x5c26b0-0x5d0260
+0x5c5560,excluded:thirdparty:libjpeg-6b,,,link order only: inside contiguous block between identified functions 0x5c26b0 and 0x5cf6d0; refs=C; block 0x5c26b0-0x5d0260
+0x5c55d0,excluded:thirdparty:libjpeg-6b,,,link order only: inside contiguous block between identified functions 0x5c26b0 and 0x5cf6d0; refs=C; block 0x5c26b0-0x5d0260
+0x5c5780,excluded:thirdparty:libjpeg-6b,,,link order only: inside contiguous block between identified functions 0x5c26b0 and 0x5cf6d0; refs=C; block 0x5c26b0-0x5d0260
+0x5c5910,excluded:thirdparty:libjpeg-6b,,,link order only: inside contiguous block between identified functions 0x5c26b0 and 0x5cf6d0; refs=none; block 0x5c26b0-0x5d0260
+0x5c5940,excluded:thirdparty:libjpeg-6b,,,link order only: inside contiguous block between identified functions 0x5c26b0 and 0x5cf6d0; refs=J; block 0x5c26b0-0x5d0260
+0x5c5ac0,excluded:thirdparty:libjpeg-6b,,,link order only: inside contiguous block between identified functions 0x5c26b0 and 0x5cf6d0; refs=J; block 0x5c26b0-0x5d0260
+0x5c5ca0,excluded:thirdparty:libjpeg-6b,,,link order only: inside contiguous block between identified functions 0x5c26b0 and 0x5cf6d0; refs=C; block 0x5c26b0-0x5d0260
+0x5c5ec0,excluded:thirdparty:libjpeg-6b,,,link order only: inside contiguous block between identified functions 0x5c26b0 and 0x5cf6d0; refs=J; block 0x5c26b0-0x5d0260
+0x5c6030,excluded:thirdparty:libjpeg-6b,,,link order only: inside contiguous block between identified functions 0x5c26b0 and 0x5cf6d0; refs=I; block 0x5c26b0-0x5d0260
+0x5c6070,excluded:thirdparty:libjpeg-6b,,,link order only: inside contiguous block between identified functions 0x5c26b0 and 0x5cf6d0; refs=I; block 0x5c26b0-0x5d0260
+0x5c60b0,excluded:thirdparty:libjpeg-6b,,,link order only: inside contiguous block between identified functions 0x5c26b0 and 0x5cf6d0; refs=I; block 0x5c26b0-0x5d0260
+0x5c6100,excluded:thirdparty:libjpeg-6b,,,link order only: inside contiguous block between identified functions 0x5c26b0 and 0x5cf6d0; refs=I; block 0x5c26b0-0x5d0260
+0x5c62d0,excluded:thirdparty:libjpeg-6b,,,link order only: inside contiguous block between identified functions 0x5c26b0 and 0x5cf6d0; refs=I; block 0x5c26b0-0x5d0260
+0x5c62f0,excluded:thirdparty:libjpeg-6b,,,link order only: inside contiguous block between identified functions 0x5c26b0 and 0x5cf6d0; refs=I; block 0x5c26b0-0x5d0260
+0x5c63d0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c63e5,excluded:thirdparty:libjpeg-6b,,,link order only: inside contiguous block between identified functions 0x5c26b0 and 0x5cf6d0; refs=J; block 0x5c26b0-0x5d0260
+0x5c6430,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c6600,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c6680,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c6850,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c69e0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c6a10,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c6a90,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c6b50,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c6b90,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c6bb0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c6bd0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c6bf0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c6c08,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c7010,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c70d0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c7130,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c7420,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c7590,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c76a0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c7710,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c7920,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c79e0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c79f0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c7a50,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c7ae0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c7c10,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c7c60,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c7d10,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c7df0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c8620,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c8690,excluded:thirdparty:libjpeg-6b,,,link order only: inside contiguous block between identified functions 0x5c26b0 and 0x5cf6d0; refs=C; block 0x5c26b0-0x5d0260
+0x5c87e0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c88f0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c8af0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c8b40,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c8b60,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c8b70,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c8e10,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c8e20,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c8ee0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c8fb0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c90d0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c9150,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c9180,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c91e0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c9340,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c9350,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c9510,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c9710,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c9790,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c9a60,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c9b80,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c9c60,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5c9ce0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5ca110,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5ca260,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5ca2a0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5ca490,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5ca630,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5ca6e0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5ca720,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5ca7e0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5ca820,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5ca840,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5ca890,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5ca940,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5caa90,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cab70,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cac10,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cac80,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cadc0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cae30,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5caf00,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cafb0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cafcb,excluded:thirdparty:libjpeg-6b,,,link order only: inside contiguous block between identified functions 0x5c26b0 and 0x5cf6d0; refs=J; block 0x5c26b0-0x5d0260
+0x5cb2c0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cb5b0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cb8c0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cbb20,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cbc00,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cbe50,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cbf00,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cc050,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cc0f0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cc11e,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cc1f0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cc290,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cc610,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cc7a0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cc7d0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cc8c0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cc950,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cc9d0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5ccb50,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5ccc90,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cccc0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cccf0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5ccd70,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5ccdf0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cce60,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cce80,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5ccf60,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5ccf70,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5ccf80,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cd080,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cd0e0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cd160,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cd220,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cd350,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cd6b0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cd6d0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cd700,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cd740,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cd7f0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cd810,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cd860,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cda90,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cebc0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cebcb,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5ced10,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cedd0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cee80,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cef30,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cefa0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cf010,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cf1b0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cf250,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cf2f0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cf430,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cf580,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cf690,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cf6d0,excluded:thirdparty:libjpeg-6b,,,libjpeg strings: 'JPEGMEM'; block 0x5c26b0-0x5d0260
+0x5cf800,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cf810,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cf820,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cf830,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cf840,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cf850,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cf870,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cf880,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cf890,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cf8a0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cf8c0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cf940,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cf960,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cfa30,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cfa50,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cfac0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cfd20,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cfe00,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cfe20,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5cff68,excluded:thirdparty:libjpeg-6b,,,link order only: inside contiguous block between identified functions 0x5cf6d0 and 0x5d0260; refs=J; block 0x5c26b0-0x5d0260
+0x5cffb0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5d0110,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
+0x5d01d0,excluded:thirdparty:libjpeg-6b,,,call-graph/vtable component linked to identified functions; block 0x5c26b0-0x5d0260
 0x5d0260,game,UNK-game,,refs=I
 0x5d0280,game,UNK-game,,refs=I
 0x5d02d0,game,UNK-game,,refs=I

@@ -13,8 +13,6 @@
 use super::*;
 
 orig! {
-    /// `CMemoryMgr::Malloc-` (0x72F420), cdecl, 2 stack argument(s)
-    fn c_72f420_c2(a0: u32, a1: u32) -> u32 = cdecl 0x72F420 => unported;
     /// `_rpMeshWrite` (0x758D70), cdecl, 4 stack argument(s)
     fn c_758d70_c4(a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = cdecl 0x758D70 => unported;
     /// `_rpMeshSize` (0x759090), cdecl, 2 stack argument(s)
@@ -31,20 +29,6 @@ orig! {
     fn c_7edb30_c1(a0: u32) -> u32 = cdecl 0x7EDB30 => unported;
     /// `RwD3D9SetSurfaceProperties` (0x7FC4D0), cdecl, 3 stack argument(s)
     fn c_7fc4d0_c3(a0: u32, a1: u32, a2: u32) -> u32 = cdecl 0x7FC4D0 => unported;
-}
-
-/// `FUN_005cf800` (0x5CF800, RW): thunk, cdecl, `ret`; 6 instruction(s) matched.
-#[hook(addr = 0x5CF800, conv = cdecl, name = "FUN_005cf800", expect = "8B 44 24 08 6A 00", unverified = "gen2-rw-4", route = "L2", hazards = "none")]
-pub fn g_fun_005cf800_5cf800(_a0: u32, a1: u32) -> u32 {
-    let v1 = c_72f420_c2(a1, 0);
-    v1
-}
-
-/// `FUN_005cf820` (0x5CF820, RW): thunk, cdecl, `ret`; 6 instruction(s) matched.
-#[hook(addr = 0x5CF820, conv = cdecl, name = "FUN_005cf820", expect = "8B 44 24 08 6A 00", unverified = "gen2-rw-4", route = "L2", hazards = "none")]
-pub fn g_fun_005cf820_5cf820(_a0: u32, a1: u32) -> u32 {
-    let v1 = c_72f420_c2(a1, 0);
-    v1
 }
 
 /// `FUN_005daac0` (0x5DAAC0, RW): thunk, cdecl, `ret`; 6 instruction(s) matched.
@@ -120,8 +104,6 @@ pub fn g_rt_quat_modulus_7ebd10(a0: u32) -> u32 {
 /// (address, 64-bit FNV-1a of the matched bytes, the matched spans `(va, len)`: the stub, every
 /// executed instruction, switch tables): the bodies this file was generated from.
 pub const BODIES: &[Body] = &[
-    (0x5CF800, 0x6216F37661CD9043, &[(0x5CF800, 16)]),
-    (0x5CF820, 0x09306080B9279F96, &[(0x5CF820, 16)]),
     (0x5DAAC0, 0xC9023B05030F6ABD, &[(0x5DAAC0, 21)]),
     (0x750D90, 0xADF5FD957578EF9C, &[(0x750D90, 27)]),
     (0x750DE0, 0x563D4BFA7A5FD28D, &[(0x750DE0, 18)]),

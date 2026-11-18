@@ -2389,7 +2389,6 @@ value,source,slot_or_sites,verdict,kind,evidence
 0x5b0189,.data,0x8db51c,rejected,,inside the body of 0x5b0130
 0x5b01c7,.data,0x8d9f14,rejected,,inside the body of 0x5b0130
 0x5b1793,_TEXT_HA,0xcac1f4,rejected,,inside the body of 0x5b1720
-0x5b6900,code-imm,0x5c8ee0@0x5c8f32,rejected,code-immediate,inside the body of 0x5b6890
 0x5b7cea,_TEXT_HA,0xca67c0,rejected,,inside the body of 0x5b7670
 0x5b9a38,_TEXT_HA,0xcad424,rejected,,inside the body of 0x5b99f0
 0x5ba2e8,.data,0x8e3a8c,rejected,,inside the body of 0x5ba1a0
@@ -2432,9 +2431,7 @@ value,source,slot_or_sites,verdict,kind,evidence
 0x5c18f0,.rdata,0x85a97c,catalogue,vtable,table 0x85a978
 0x5c1b10,.rdata,0x85a984,catalogue,vtable,table 0x85a980
 0x5c1d30,.rdata,0x85a98c,catalogue,vtable,table 0x85a988
-0x5c2ff0,code-imm,0x5c30d0@0x5c30f2,rejected,code-immediate,"not preceded by padding, ret or a switch table (byte 0xff)"
 0x5c4458,.rdata,0x866d04,rejected,,inside the body of 0x5c43f0
-0x5c61e0,code-imm,0x5c63d0@0x5c63f5,rejected,code-immediate,"not preceded by padding, ret or a switch table (byte 0xff)"
 0x5c6478,.rdata,0x859f40,rejected,,inside the body of 0x5c6430
 0x5cffff,.data,0x8c794c,rejected,,inside the body of 0x5cffb0
 0x5cffff,.data,0x8c7ed0,rejected,,inside the body of 0x5cffb0
@@ -4828,7 +4825,6 @@ value,source,slot_or_sites,verdict,kind,evidence
 0x805e6e,_TEXT_HA,0xcacab0,rejected,,inside the body of 0x805e20
 0x806c70,_TEXT_HA,0xca8f34,rejected,,inside the body of 0x806be0
 0x806c70,_TEXT_HA,0xca9060,rejected,,inside the body of 0x806be0
-0x807fff,code-imm,0x5c31e0@0x5c3214,rejected,code-immediate,inside the body of 0x807ed0
 0x808080,.data,0x8a5fb0,rejected,,inside the body of 0x807ed0
 0x808080,.data,0x8a5fb8,rejected,,inside the body of 0x807ed0
 0x80a67f,_TEXT_HA,0xcac440,rejected,,inside the body of 0x80a510

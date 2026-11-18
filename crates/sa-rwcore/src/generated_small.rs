@@ -167,7 +167,7 @@ pub fn g_rp_anisot_plugin_attach_748f70() -> u32 {
 }
 
 /// `cb_RIGHTTORENDER_RpMaterial_StreamRead` (0x74D7D0, RW): small, cdecl, `ret`; 25 instruction(s) matched.
-#[hook(addr = 0x74D7D0, conv = cdecl, name = "cb_RIGHTTORENDER_RpMaterial_StreamRead", expect = "56 8B 74 24 08", unverified = "gen2-rw-3", route = "L2", hazards = "none")]
+#[hook(addr = 0x74D7D0, conv = cdecl, name = "cb_RIGHTTORENDER_RpMaterial_StreamRead", expect = "56 8B 74 24 08", unverified = "gen2-rw-4", route = "L2", hazards = "none")]
 pub fn g_cb_righttorender_rp_material_stream_read_74d7d0(a0: u32, a1: u32) -> u32 {
     let v1 = c_7ed540_c3(a0, 0xC9_2510, 4);
     if v1 != 0 {
@@ -187,7 +187,7 @@ pub fn g_cb_righttorender_rp_material_stream_read_74d7d0(a0: u32, a1: u32) -> u3
 }
 
 /// `_rpWorldAddLightCB` (0x7513D0, RW): small, cdecl, `ret`; 29 instruction(s) matched.
-#[hook(addr = 0x7513D0, conv = cdecl, name = "_rpWorldAddLightCB", expect = "A1 B0 25 C9 00", unverified = "gen2-rw-3", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x7513D0, conv = cdecl, name = "_rpWorldAddLightCB", expect = "A1 B0 25 C9 00", unverified = "gen2-rw-4", route = "L2", hazards = "heap-writes")]
 pub fn g_rp_world_add_light_cb_7513d0(a0: u32, a1: u32) -> u32 {
     let v1 = g::<u32>(0xC9_25B0).read();
     wr::<u32>(p(v1.wrapping_add(a0)), 0, a1);

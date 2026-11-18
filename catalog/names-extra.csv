@@ -733,19 +733,6 @@ address,name,role,subsystem,source,confidence,evidence
 0x5c18f0,FxInterpInfoU255_c::Load,,,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Fx/Blueprints/Interp/FxInterpInfoU255.cpp:11; other candidates: FxInterpInfoU255_c::vfunc_1 (vtable-class)
 0x5c1b10,FxInterpInfo32_c::Load,,,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Fx/Blueprints/Interp/FxInterpInfo32.cpp:11; other candidates: FxInterpInfo32_c::vfunc_1 (vtable-class)
 0x5c1d30,FxInterpInfo255_c::Load,,,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Fx/Blueprints/Interp/FxInterpInfo255.cpp:11; other candidates: FxInterpInfo255_c::vfunc_1 (vtable-class)
-0x5c26b0,sub_5c26b0_from_JPegPlugin__JPegCompressScreen,,,hint-caller,low,only caller 0x5d0470 JPegPlugin::JPegCompressScreen
-0x5c2730,sub_5c2730_from_JPegPlugin__JPegCompressScreen,,,hint-caller,low,only caller 0x5d0470 JPegPlugin::JPegCompressScreen
-0x5c7590,sub_5c7590_from_JPegPlugin__JPegCompressScreen,,,hint-caller,low,only caller 0x5d0470 JPegPlugin::JPegCompressScreen
-0x5c8690,sub_5c8690_from_JPegPlugin__JPegDecompressToRaster,,,hint-caller,low,only caller 0x5d05f0 JPegPlugin::JPegDecompressToRaster
-0x5c87e0,sub_5c87e0_from_JPegPlugin__JPegDecompressToRaster,,,hint-caller,low,only caller 0x5d05f0 JPegPlugin::JPegDecompressToRaster
-0x5cf6d0,sub_5cf6d0_JPEGMEM,,,hint-string,low,"references the one string ""JPEGMEM"""
-0x5cf960,sub_5cf960_from_JPegPlugin__JPegCompressScreen,,,hint-caller,low,only caller 0x5d0470 JPegPlugin::JPegCompressScreen
-0x5cfa30,sub_5cfa30_from_JPegPlugin__JPegCompressScreen,,,hint-caller,low,only caller 0x5d0470 JPegPlugin::JPegCompressScreen
-0x5cfac0,sub_5cfac0_from_JPegPlugin__JPegCompressScreen,,,hint-caller,low,only caller 0x5d0470 JPegPlugin::JPegCompressScreen
-0x5cfd20,sub_5cfd20_from_JPegPlugin__JPegDecompressToRaster,,,hint-caller,low,only caller 0x5d05f0 JPegPlugin::JPegDecompressToRaster
-0x5cfe00,sub_5cfe00_from_JPegPlugin__JPegDecompressToRaster,,,hint-caller,low,only caller 0x5d05f0 JPegPlugin::JPegDecompressToRaster
-0x5d0110,sub_5d0110_from_JPegPlugin__JPegDecompressToRaster,,,hint-caller,low,only caller 0x5d05f0 JPegPlugin::JPegDecompressToRaster
-0x5d01d0,sub_5d01d0_from_JPegPlugin__JPegDecompressToRaster,,,hint-caller,low,only caller 0x5d05f0 JPegPlugin::JPegDecompressToRaster
 0x5d0570,sub_5d0570_from_JPegPlugin__JPegDecompressToRaster,,,hint-caller,low,only caller 0x5d05f0 JPegPlugin::JPegDecompressToRaster
 0x5d13fd,sub_5d13fd_from_CGenericGameStorage__GenericSave,,,hint-caller,low,only caller 0x5d13e0 CGenericGameStorage::GenericSave
 0x5d24b0,sub_5d24b0_from_CPlayerInfo__Save,,,hint-caller,low,only caller 0x5d3ac0 CPlayerInfo::Save

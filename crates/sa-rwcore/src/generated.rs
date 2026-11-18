@@ -257,8 +257,6 @@ pub const HOOKS: &[HookReg] = &[
     generated_small::HOOK_G_FUN_007CC810_7CC810,
     generated_small::HOOK_G_RP_UVANIM_LINEAR_KEY_FRAME_APPLY_7CC9F0,
     generated_small::HOOK_G_RW_TEX_DICTIONARY_DESTROY_TEXTURE_CB_804E40,
-    generated_thunks::HOOK_G_FUN_005CF800_5CF800,
-    generated_thunks::HOOK_G_FUN_005CF820_5CF820,
     generated_thunks::HOOK_G_FUN_005DAAC0_5DAAC0,
     generated_thunks::HOOK_G_CB_BINMESHPLUGIN_RP_GEOMETRY_STREAM_WRITE_750D90,
     generated_thunks::HOOK_G_CB_BINMESHPLUGIN_RP_GEOMETRY_STREAM_GET_SIZE_750DE0,

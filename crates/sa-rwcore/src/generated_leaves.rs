@@ -106,7 +106,7 @@ pub fn g_rw_im3_dget_pool_7efdd0() -> u32 {
 }
 
 /// `FUN_00800aa0` (0x800AA0, RW): getter, cdecl, `ret`; 13 instruction(s) matched.
-#[hook(addr = 0x800AA0, conv = cdecl, name = "FUN_00800aa0", expect = "8B 4C 24 04 33 C0", unverified = "gen2-rw-2", route = "L2", hazards = "none")]
+#[hook(addr = 0x800AA0, conv = cdecl, name = "FUN_00800aa0", expect = "8B 4C 24 04 33 C0", unverified = "gen2-rw-3", route = "L2", hazards = "none")]
 pub fn g_fun_00800aa0_800aa0(a0: u32) -> u32 {
     let v1 = u32::from(rd::<u8>(p(a0), 0));
     let v2 = u32::from(rd::<u8>(p(a0), 1));
@@ -118,7 +118,7 @@ pub fn g_fun_00800aa0_800aa0(a0: u32) -> u32 {
 }
 
 /// `FUN_00800ad0` (0x800AD0, RW): getter, cdecl, `ret`; 13 instruction(s) matched.
-#[hook(addr = 0x800AD0, conv = cdecl, name = "FUN_00800ad0", expect = "8B 4C 24 04 33 C0", unverified = "gen2-rw-2", route = "L2", hazards = "none")]
+#[hook(addr = 0x800AD0, conv = cdecl, name = "FUN_00800ad0", expect = "8B 4C 24 04 33 C0", unverified = "gen2-rw-3", route = "L2", hazards = "none")]
 pub fn g_fun_00800ad0_800ad0(a0: u32) -> u32 {
     let v1 = u32::from(rd::<u8>(p(a0), 2));
     let v2 = u32::from(rd::<u8>(p(a0), 1));

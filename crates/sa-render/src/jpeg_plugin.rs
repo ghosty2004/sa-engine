@@ -4,9 +4,10 @@
 //!
 //! The IJG libjpeg 6b they call is statically linked at 0x5C26B0-0x5D0260 (JPEG_LIB_VERSION 62). Like the other
 //! statically linked third-party libraries (d3dx9, libpng + zlib, QuickTime: `excluded:thirdparty:*` in
-//! tools/catalog/classify_unknowns.py) it is not ported: RE-SPEC-UNK proposed it as `excluded:thirdparty:libjpeg-6b`
-//! (catalog/unk-classification-proposal.csv, docs/re/specs/RW/_unk-M.md). The ports call it through the
-//! declarations below; the `jpeg_compress_struct` fields are written at their libjpeg 6b offsets.
+//! tools/catalog/classify_unknowns.py) it is not ported: the catalogue classes it `excluded:thirdparty:libjpeg-6b`
+//! (subsystem X-libjpeg-6b, proposed by RE-SPEC-UNK, docs/re/specs/RW/_unk-M.md), its jmemnobs back end
+//! 0x5CF800-0x5CF830 included. The ports call it through the declarations below; the `jpeg_compress_struct`
+//! fields are written at their libjpeg 6b offsets.
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
