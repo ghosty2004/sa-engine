@@ -90,7 +90,7 @@ pub fn render_fading_entities() {
 /// (alpha, boat atomics, entities, underwater entities, really-draw-last at +0x50 of each list, and the weapon peds'
 /// node array 0xC88254): each node array freed (`free` 0x8213AE), then its pointer cleared.
 #[hook(addr = 0x732EB0, conv = cdecl, name = "CVisibilityPlugins::Shutdown", expect = "A1 C0 80 C8 00 56 50 E8",
-       unverified = "frontier2-a20", route = "L2", hazards = "heap-writes", note = "CGame::ShutdownRenderWare")]
+       unverified = "frontier2-a21", route = "L2", hazards = "heap-writes", note = "CGame::ShutdownRenderWare")]
 pub fn visibility_plugins_shutdown() {
     for cell in [0xC8_80C0usize, 0xC8_8118, 0xC8_8170, 0xC8_81C8, 0xC8_8220, 0xC8_8254] {
         sa_core::bindings::crt_free(g::<GPtr<u8>>(cell).read());

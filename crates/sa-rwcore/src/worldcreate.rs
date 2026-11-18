@@ -259,7 +259,7 @@ fn world_destroy(w: GPtr<u8>) {
 
 /// `RpWorldDestroy(RpWorld*)` (0x74F610, cdecl): [`world_destroy`]; returns 1.
 #[hook(addr = 0x74F610, conv = cdecl, name = "RpWorldDestroy", expect = "A1 24 7B C9 00 8B 0D 4C 25 C9 00",
-       unverified = "frontier2-a20", route = "L2", hazards = "heap-writes",
+       unverified = "frontier2-a22", route = "L2", hazards = "heap-writes",
        note = "CGame::ShutdownRenderWare (game exit)")]
 pub fn rp_world_destroy(w: GPtr<u8>) -> u32 {
     world_destroy(w);
