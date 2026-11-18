@@ -313,7 +313,7 @@ orig! {
     /// `CMirrors::CreateBuffer()` (0x7230A0)
     fn mirrors_create_buffer() = cdecl 0x7230A0 => unported;
     /// `CMirrors::BuildCameraMatrixForScreens(CMatrix&)` (0x7266B0)
-    fn mirrors_build_camera_matrix_for_screens(m: GPtr<u8>) = cdecl 0x7266B0 => unported;
+    fn mirrors_build_camera_matrix_for_screens(m: GPtr<u8>) = cdecl 0x7266B0 => crate::mirrors::build_camera_matrix_for_screens;
     /// `CCamera::DealWithMirrorBeforeConstructRenderList(bool, CVector normal, float v, CMatrix*)` (0x50B510)
     #[allow(clippy::too_many_arguments)]
     fn camera_deal_with_mirror(this: GPtr<u8>, active: u32, nx: u32, ny: u32, nz: u32, v: u32, m: GPtr<u8>) = thiscall 0x50B510 => unported;

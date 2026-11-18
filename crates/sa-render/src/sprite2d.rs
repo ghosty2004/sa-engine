@@ -13,7 +13,7 @@ use sa_core::mem::GPtr;
 use sa_core::platform::SCENE_CAMERA;
 use sa_core::{hook, orig};
 
-use crate::common::{f32_of, g, rd, wr, x};
+use crate::common::{f32_of, ftol32, g, rd, wr, x};
 
 sa_core::globals! {
     list GLOBALS;
@@ -61,6 +61,8 @@ pub use crate::bindings::set_vertices_quad_call;
 orig! {
     /// `RwRenderStateSet(state, value)` through `RwEngineInstance` +0x20
     pub fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
+    /// `RwIm2DRenderTriangle(verts, n, v1, v2, v3)` through `RwEngineInstance` +0x2C
+    fn rw_im2d_render_triangle(verts: GPtr<u8>, n: i32, v1: i32, v2: i32, v3: i32) -> i32 = cdecl table 0xC97B24 0x2C => unported;
 }
 
 /// The D3DCOLOR of a `CRGBA` (bytes r, g, b, a): `a << 24 | r << 16 | g << 8 | b`.
@@ -681,6 +683,57 @@ pub fn draw_bar_chart(x: f32, y: f32, width: u32, height: u32, progress: f32, pr
 }
 
 /// This module's registrations.
+/// `CSprite2d::DrawCircleAtNearClip(const CVector2D& pos, float radius, const CRGBA& colour, int32 numVerts)`
+/// (0x727D60): vertex 0 of `maVertices` is the centre (near-screen z, recip near clip, uv 0.5, the colour); raster
+/// state (1) = NULL, vertex alpha (12) = 1; `step = (float)(360 / numVerts)` (signed `idiv`, stored over the `pos`
+/// argument slot). For each of the `numVerts` segments the angle in sine-table units `A = i * step * pi/180 *
+/// 256/2pi` (kept on the x87 stack) and `A + step units` give vertices 1 and 2: `pos + radius * (table[ftol(a + 64)
+/// & 255], table[ftol(a) & 255])` (the sine table 0xBB3E00), uv `(that + 1) * 0.5`; `RwIm2DRenderTriangle(maVertices,
+/// 3, 2, 1, 0)`. The loop index lives in the colour argument's slot.
+#[hook(addr = 0x727D60, conv = cdecl, name = "CSprite2d::DrawCircleAtNearClip", expect = "51 8B 15 60 04 C8 00",
+       unverified = "frontier2-c20", route = "L2", hazards = "stack-residue",
+       note = "the step and the loop index are written over its own pos / colour argument slots")]
+pub fn draw_circle_at_near_clip(pos: GPtr<u32>, radius: f32, colour: GPtr<u8>, n: i32) {
+    let v = g::<u8>(0xC8_0468);
+    let pos = pos.cast::<u8>();
+    wr::<u32>(v, 0, rd::<u32>(pos, 0));
+    wr::<u32>(v, 4, rd::<u32>(pos, 4));
+    wr::<u32>(v, 0xC, recip_bits());
+    wr::<u32>(v, 8, near_z_bits());
+    wr::<u32>(v, 0x14, 0x3F00_0000);
+    wr::<u32>(v, 0x18, 0x3F00_0000);
+    wr::<u32>(v, 0x10, argb(colour));
+    let step = X87::from_i32(360i32.wrapping_div(n)).to_f32();
+    rw_render_state_set(1, 0);
+    rw_render_state_set(0xC, 1);
+    if n <= 0 {
+        return;
+    }
+    let deg = f32::from_bits(0x3C8E_FA35);
+    let units = f32::from_bits(0x4222_F983);
+    let quarter = f32::from_bits(0x4280_0000);
+    let step_units = x(step).fmul_m(deg).fmul_m(units).to_f32();
+    let table = |a: X87| g::<f32>(0xBB_3E00 + (ftol32(a) as u32 & 0xFF) as usize * 4).read();
+    let one = f32::from_bits(0x3F80_0000);
+    let half = f32::from_bits(0x3F00_0000);
+    for i in 0..n {
+        let a = X87::from_i32(i).fmul_m(step).fmul_m(deg).fmul_m(units);
+        for (o, a) in [(0x1C, a), (0x38, a.fadd_m(step_units))] {
+            let e = v.byte_add(o);
+            let c = table(x(quarter).fadd(a));
+            let s = table(a);
+            wr::<f32>(e, 0, x(radius).fmul_m(c).fadd_m(rd::<f32>(pos, 0)).to_f32());
+            wr::<f32>(e, 4, x(radius).fmul_m(s).fadd_m(rd::<f32>(pos, 4)).to_f32());
+            wr::<u32>(e, 8, near_z_bits());
+            wr::<u32>(e, 0xC, recip_bits());
+            wr::<u32>(e, 0x10, argb(colour));
+            wr::<f32>(e, 0x14, x(c).fadd_m(one).fmul_m(half).to_f32());
+            wr::<f32>(e, 0x18, x(s).fadd_m(one).fmul_m(half).to_f32());
+        }
+        rw_im2d_render_triangle(v, 3, 2, 1, 0);
+    }
+}
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_DRAW_BAR_CHART,
     HOOK_DRAW_RECT_COLOURED,
@@ -708,4 +761,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_DRAW_RECT4,
     HOOK_DRAW_RECT_XLU,
     HOOK_DRAW_ANY_RECT,
+    HOOK_DRAW_CIRCLE_AT_NEAR_CLIP,
 ];

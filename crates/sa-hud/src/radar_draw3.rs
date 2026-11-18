@@ -174,7 +174,7 @@ use sa_world::bindings::find_player_vehicle;
 use crate::bindings::limit_radar_point_call_st0;
 orig! {
     /// `CSprite2d::DrawCircleAtNearClip(const CVector2D&, float radius, const CRGBA&, int32 numVerts)` (0x727D60)
-    fn sprite2d_draw_circle_at_near_clip(pos: GPtr<u32>, radius: f32, colour: GPtr<u8>, n: i32) = cdecl 0x727D60 => unported;
+    fn sprite2d_draw_circle_at_near_clip(pos: GPtr<u32>, radius: f32, colour: GPtr<u8>, n: i32) = cdecl 0x727D60 => sa_render::sprite2d::draw_circle_at_near_clip;
 }
 
 /// [`limit_radar_point_call_st0`] as an x87 value.
