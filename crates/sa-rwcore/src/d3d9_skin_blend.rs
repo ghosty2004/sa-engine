@@ -15,7 +15,7 @@ use sa_core::{hook, orig};
 use crate::common::{g, p8, rd, rw_globals, wr};
 
 /// The skin matrix buffer (`RwMatrix[]`, 16-aligned).
-const MATRIX_BUFFER: usize = 0xC978AC;
+pub(crate) const MATRIX_BUFFER: usize = 0xC978AC;
 /// Last hierarchy / render frame / atomic frame of the matrix cache (shared with
 /// `_rpD3D9SkinVertexShaderMatrixUpdate`).
 const CACHE_HIER: usize = 0xC978D4;
@@ -36,10 +36,10 @@ orig! {
 
 /// A 16-byte aligned local RwMatrix.
 #[repr(C, align(16))]
-struct Mat([u32; 16]);
+pub(crate) struct Mat(pub(crate) [u32; 16]);
 
 impl Mat {
-    fn p(&mut self) -> GPtr<u8> {
+    pub(crate) fn p(&mut self) -> GPtr<u8> {
         GPtr::from_raw(self.0.as_mut_ptr()).cast()
     }
 }
@@ -106,11 +106,7 @@ pub fn skin_prepare_matrices_internal(atomic: GPtr<u8>, skin: GPtr<u8>, hierarch
 #[hook(addr = 0x7CAA30, conv = cdecl, name = "(missed by ghidra: cat7-call)", expect = "A1 D4 78 C9 00 56 8B 74 24 10",
        unverified = "std10-skin-2", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn skin_prepare_matrices_sse(atomic: GPtr<u8>, skin: GPtr<u8>, hierarchy: GPtr<u8>) -> GPtr<u8> {
-    let frame = || u32::from(rd::<u16>(rw_globals(), 8));
-    let hit = g::<u32>(CACHE_HIER).read() == hierarchy.addr() as u32
-        && g::<u32>(CACHE_FRAME).read() == frame()
-        && g::<u32>(CACHE_ATOMIC_FRAME).read() == rd::<u32>(atomic, 4);
-    if !hit {
+    if !matrix_cache_hit(atomic, hierarchy) {
         prepare_internal_call(atomic, skin, hierarchy);
         let buf = p8(g::<u32>(MATRIX_BUFFER).read());
         let mut i = 0;
@@ -121,11 +117,23 @@ pub fn skin_prepare_matrices_sse(atomic: GPtr<u8>, skin: GPtr<u8>, hierarchy: GP
             }
             i += 1;
         }
-        g::<u32>(CACHE_HIER).write(hierarchy.addr() as u32);
-        g::<u32>(CACHE_FRAME).write(frame());
-        g::<u32>(CACHE_ATOMIC_FRAME).write(rd::<u32>(atomic, 4));
+        matrix_cache_store(atomic, hierarchy);
     }
     p8(g::<u32>(MATRIX_BUFFER).read())
+}
+
+/// Whether hierarchy, render frame (`RwGlobals` +8, u16) and atomic frame equal the cached ones.
+pub(crate) fn matrix_cache_hit(atomic: GPtr<u8>, hierarchy: GPtr<u8>) -> bool {
+    g::<u32>(CACHE_HIER).read() == hierarchy.addr() as u32
+        && g::<u32>(CACHE_FRAME).read() == u32::from(rd::<u16>(rw_globals(), 8))
+        && g::<u32>(CACHE_ATOMIC_FRAME).read() == rd::<u32>(atomic, 4)
+}
+
+/// Records hierarchy, render frame and atomic frame as the cached ones.
+pub(crate) fn matrix_cache_store(atomic: GPtr<u8>, hierarchy: GPtr<u8>) {
+    g::<u32>(CACHE_HIER).write(hierarchy.addr() as u32);
+    g::<u32>(CACHE_FRAME).write(u32::from(rd::<u16>(rw_globals(), 8)));
+    g::<u32>(CACHE_ATOMIC_FRAME).write(rd::<u32>(atomic, 4));
 }
 
 /// Three rows (right, up, at) and the position row of a matrix, xyz lanes.

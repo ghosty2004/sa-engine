@@ -102,15 +102,15 @@ orig! {
 
     /// The skin matrices (0x7CAA30 with SSE, 0x7CA850 without)
     fn prepare_matrices_sse(atomic: GPtr<u8>, skin: GPtr<u8>, hierarchy: GPtr<u8>) -> GPtr<u8> = cdecl 0x7CAA30 => crate::d3d9_skin_blend::skin_prepare_matrices_sse;
-    fn prepare_matrices(atomic: GPtr<u8>, skin: GPtr<u8>, hierarchy: GPtr<u8>) -> GPtr<u8> = cdecl 0x7CA850 => unported;
+    fn prepare_matrices(atomic: GPtr<u8>, skin: GPtr<u8>, hierarchy: GPtr<u8>) -> GPtr<u8> = cdecl 0x7CA850 => crate::d3d9_skin_blend_x87::skin_prepare_matrices_x87;
     /// SSE blenders (4 / 2 weights, one bone, rigid per vertex)
     fn blend_sse4(n: u32, w: GPtr<u8>, i: GPtr<u8>, m: GPtr<u8>, dst: GPtr<u8>, src: GPtr<u8>, dn: GPtr<u8>, sn: GPtr<u8>, stride: u32) = cdecl 0x7CAC60 => crate::d3d9_skin_blend::skin_blend_sse_weights4;
     fn blend_sse2(n: u32, w: GPtr<u8>, i: GPtr<u8>, m: GPtr<u8>, dst: GPtr<u8>, src: GPtr<u8>, dn: GPtr<u8>, sn: GPtr<u8>, stride: u32) = cdecl 0x7CAF50 => crate::d3d9_skin_blend::skin_blend_sse_weights2;
     fn blend_sse_one(n: u32, m: GPtr<u8>, dst: GPtr<u8>, src: GPtr<u8>, dn: GPtr<u8>, sn: GPtr<u8>, stride: u32) = cdecl 0x7CAAD0 => crate::d3d9_skin_blend::skin_blend_sse_one_matrix;
     fn blend_sse_rigid(n: u32, i: GPtr<u8>, m: GPtr<u8>, dst: GPtr<u8>, src: GPtr<u8>, dn: GPtr<u8>, sn: GPtr<u8>, stride: u32) = cdecl 0x7CAB80 => crate::d3d9_skin_blend::skin_blend_sse_rigid;
     /// x87 blenders (4 / 2 weights, one bone, rigid per vertex)
-    fn blend_x87_4(n: u32, w: GPtr<u8>, i: GPtr<u8>, m: GPtr<u8>, dst: GPtr<u8>, src: GPtr<u8>, dn: GPtr<u8>, sn: GPtr<u8>, stride: u32) = cdecl 0x7C9DA0 => unported;
-    fn blend_x87_2(n: u32, w: GPtr<u8>, i: GPtr<u8>, m: GPtr<u8>, dst: GPtr<u8>, src: GPtr<u8>, dn: GPtr<u8>, sn: GPtr<u8>, stride: u32) = cdecl 0x7CA410 => unported;
+    fn blend_x87_4(n: u32, w: GPtr<u8>, i: GPtr<u8>, m: GPtr<u8>, dst: GPtr<u8>, src: GPtr<u8>, dn: GPtr<u8>, sn: GPtr<u8>, stride: u32) = cdecl 0x7C9DA0 => crate::d3d9_skin_blend_x87::skin_blend_x87_weights4;
+    fn blend_x87_2(n: u32, w: GPtr<u8>, i: GPtr<u8>, m: GPtr<u8>, dst: GPtr<u8>, src: GPtr<u8>, dn: GPtr<u8>, sn: GPtr<u8>, stride: u32) = cdecl 0x7CA410 => crate::d3d9_skin_blend_x87::skin_blend_x87_weights2;
     fn blend_x87_one(n: u32, m: GPtr<u8>, dst: GPtr<u8>, src: GPtr<u8>, dn: GPtr<u8>, sn: GPtr<u8>, stride: u32) = cdecl 0x7CA330 => unported;
     fn blend_x87_rigid(n: u32, i: GPtr<u8>, m: GPtr<u8>, dst: GPtr<u8>, src: GPtr<u8>, dn: GPtr<u8>, sn: GPtr<u8>, stride: u32) = cdecl 0x7CA240 => unported;
 
