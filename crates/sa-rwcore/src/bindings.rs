@@ -824,6 +824,11 @@ orig! {
 }
 
 orig! {
+    /// `RwImageFindRasterFormat` (0x8042C0)
+    pub fn rw_image_find_raster_format(img: GPtr<u8>, ty: u32, w: GPtr<u32>, h: GPtr<u32>, depth: GPtr<u32>, format: GPtr<u32>) -> GPtr<u8> = cdecl 0x8042C0 => crate::image::rw_image_find_raster_format;
+}
+
+orig! {
     /// `RwTextureStreamRead` (0x8046E0)
     pub fn rw_texture_stream_read_call(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x8046E0 => crate::texture::rw_texture_stream_read;
 }

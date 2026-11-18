@@ -503,7 +503,7 @@ orig! {
     /// `RwImageCopy(dst, src)` (0x803950, `_rwImageCopyResample` in rw-names)
     fn rw_image_copy(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = cdecl 0x803950 => rw_image_copy_port;
     /// `RwImageResample(dst, src)` (0x80C600)
-    fn rw_image_resample(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = cdecl 0x80C600 => unported;
+    pub(crate) fn rw_image_resample(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = cdecl 0x80C600 => crate::image2::rw_image_resample;
 }
 
 /// `RwImageSetPath(path)` (0x802EA0): grows the module path buffer (M+4, capacity M+8, `rwrealloc`

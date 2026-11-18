@@ -11,6 +11,7 @@ use sa_rwcore::bindings::rw_texture_create as texture_create;
 use sa_rwcore::bindings::rw_texture_set_name as texture_set_name;
 use sa_rwcore::bindings::image_destroy;
 use sa_rwcore::bindings::raster_set_from_image;
+use sa_rwcore::bindings::rw_image_find_raster_format as image_find_raster_format;
 use sa_rwcore::bindings::rw_raster_create as raster_create;
 use sa_core::bindings::rw_tex_dictionary_add_texture as tex_dictionary_add_texture;
 use sa_rwcore::bindings::rw_texture_read as texture_read;
@@ -20,8 +21,6 @@ orig! {
     fn sprintf1(buf: u32, fmt: u32, s: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
     /// `RtBMPImageRead(path)` (0x7CDF60)
     fn bmp_image_read(path: u32) -> GPtr<u8> = cdecl 0x7CDF60 => unported;
-    /// `RwImageFindRasterFormat(image, type, &w, &h, &depth, &format)` (0x8042C0)
-    fn image_find_raster_format(img: GPtr<u8>, ty: u32, w: GPtr<u8>, h: GPtr<u8>, d: GPtr<u8>, f: GPtr<u8>) -> GPtr<u8> = cdecl 0x8042C0 => unported;
 }
 
 /// The player TXD slot (0xC3F03C), the TXD pool (0xC8800C), the path buffer (0xB71670).
@@ -52,7 +51,7 @@ pub fn get_skin_texture(name: GPtr<u8>) -> GPtr<u8> {
     }
     let mut l = [0u32; 4];
     let base = l.as_mut_ptr() as usize;
-    let p = |i: usize| -> GPtr<u8> { GPtr::from_addr(base + 4 * i) };
+    let p = |i: usize| -> GPtr<u32> { GPtr::from_addr(base + 4 * i) };
     image_find_raster_format(img, 4, p(3), p(2), p(1), p(0));
     let r = raster_create((((l[3]) as i32) as u32) as i32, (((l[2]) as i32) as u32) as i32, (((l[1]) as i32) as u32) as i32, l[0]);
     raster_set_from_image(r, img);

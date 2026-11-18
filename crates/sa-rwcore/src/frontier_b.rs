@@ -42,7 +42,7 @@ orig! {
     /// `RwD3D9RasterIsCompressed(raster)` (0x820C90)
     fn raster_is_compressed(r: GPtr<u8>) -> u32 = cdecl 0x820C90 => crate::raster::d3d9_raster_is_compressed;
     /// The MatFX bumped-texture builder's worker (0x810830): `(base, bump)`
-    fn matfx_build_bumped_texture(base: GPtr<u8>, bump: GPtr<u8>) -> GPtr<u8> = cdecl 0x810830 => unported;
+    fn matfx_build_bumped_texture(base: GPtr<u8>, bump: GPtr<u8>) -> GPtr<u8> = cdecl 0x810830 => crate::image2::matfx_bump_map_create_raster;
 }
 
 /// The `RpWorldSector` plugin registry (0x8D736C) and the `RpGeometry` one (0x8D628C).

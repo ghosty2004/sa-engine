@@ -43,6 +43,10 @@ use crate::bindings::rw_stream_close;
 use crate::bindings::rw_stream_open;
 use crate::bindings::rw_texture_create;
 use crate::bindings::rw_texture_set_name;
+use crate::bindings::rw_image_create;
+use crate::bindings::rw_image_find_raster_format;
+use crate::image::rw_image_resample as rw_image_resample_call;
+use sa_core::common::rw_image_set_from_raster;
 orig! {
     /// `_rwerror(code, a)` (0x8088D0, two arguments)
     fn rw_error2(code: u32, a: u32) -> u32 = cdecl 0x8088D0 => unported;
@@ -1079,8 +1083,93 @@ fn dds_not_found(name: GPtr<u8>) -> GPtr<u8> {
     GPtr::NULL
 }
 
+/// `_rpMatFXBumpMapCreateRaster`-like (0x810830, cdecl `(base, bump)`; name from the RW symbols, low confidence):
+/// the bumped texture of a MatFX bump map. The bump raster is read into a 32-bit image; the base raster likewise
+/// (without a base, an all-0xFFFFFFFF image of the bump size). The bump image, resampled to the base size when the
+/// sizes differ, becomes a mask (`RwImageMakeMask`) applied to the base image; a raster of the base image's
+/// `RwImageFindRasterFormat(.., rwRASTERTYPETEXTURE)` format (plus MIPMAP | AUTOMIPMAP when the base raster, else the
+/// bump raster, is mipmapped) is set from it and wrapped in a texture whose filter and addressing come from the base
+/// (else the bump) texture, U and V both the old U when they matched, else 0. Its name interleaves the base's (else
+/// the bump's) and the bump's names a character each, at most 31 characters. Both images are destroyed. The
+/// original keeps the new texture in the caller's `base` argument slot.
+#[hook(addr = 0x810830, conv = cdecl, name = "FUN_00810830", expect = "83 EC 38 8B 44 24 40",
+       unverified = "frontier2-c26", route = "L2", hazards = "heap-writes,stack-residue",
+       note = "keeps the new texture in the caller's base argument slot")]
+pub fn matfx_bump_map_create_raster(base: GPtr<u8>, bump: GPtr<u8>) -> GPtr<u8> {
+    let bump_raster = p8(rd::<u32>(bump, 0));
+    let (bw, bh) = (rd::<i32>(bump_raster, 0xC), rd::<i32>(bump_raster, 0x10));
+    let bump_image = rw_image_create(bw, bh, 0x20);
+    rw_image_allocate_pixels(bump_image);
+    rw_image_set_from_raster(bump_image, bump_raster);
+    let base_raster = if base.is_null() { GPtr::NULL } else { p8(rd::<u32>(base, 0)) };
+    let (w, h, base_image);
+    if !base.is_null() {
+        (w, h) = (rd::<i32>(base_raster, 0xC), rd::<i32>(base_raster, 0x10));
+        base_image = rw_image_create(w, h, 0x20);
+        rw_image_allocate_pixels(base_image);
+        rw_image_set_from_raster(base_image, base_raster);
+    } else {
+        (w, h) = (bw, bh);
+        base_image = rw_image_create(w, h, 0x20);
+        rw_image_allocate_pixels(base_image);
+        for y in 0..h {
+            for xx in 0..w {
+                let row = p8(rd::<u32>(base_image, 0x14)).byte_add(rd::<i32>(base_image, 0x10).wrapping_mul(y) as isize);
+                wr::<u32>(row, 4 * xx as isize, 0xFFFF_FFFF);
+            }
+        }
+    }
+    let mask = if w == bw && h == bh {
+        bump_image
+    } else {
+        let m = rw_image_create(w, h, 0x20);
+        rw_image_allocate_pixels(m);
+        rw_image_resample_call(m, bump_image);
+        rw_image_destroy(bump_image);
+        m
+    };
+    rw_image_make_mask(mask);
+    rw_image_apply_mask_call(base_image, mask);
+    let mut fmt = [0u32; 4];
+    let at = GPtr::<u32>::from_raw(fmt.as_mut_ptr());
+    rw_image_find_raster_format(base_image, 4, at, at.wrapping_index(1), at.wrapping_index(2), at.wrapping_index(3));
+    let src_raster = if base.is_null() { bump_raster } else { base_raster };
+    if rd::<u8>(src_raster, 0x23) & 0x80 != 0 {
+        fmt[3] |= 0x9000;
+    }
+    let raster = rw_raster_create(fmt[0] as i32, fmt[1] as i32, fmt[2] as i32, fmt[3]);
+    rw_raster_set_from_image(raster, base_image);
+    let tex = rw_texture_create(raster);
+    let fa = rd::<u32>(if base.is_null() { bump } else { base }, 0x50);
+    let (u, v) = ((fa >> 8) & 0xF, (fa >> 12) & 0xF);
+    let e = if u == v { v } else { 0 };
+    let old = rd::<u32>(tex, 0x50);
+    wr::<u32>(tex, 0x50, (old & 0xFFFF_0000) | (e << 4 | e) << 8 | (fa & 0xFF));
+    rw_image_destroy(base_image);
+    rw_image_destroy(mask);
+    let mut name = [0u8; 32];
+    let mut src = [if base.is_null() { bump } else { base }.byte_add(0x10), bump.byte_add(0x10)];
+    let mut n = 0usize;
+    while src[0].read() != 0 || src[1].read() != 0 {
+        for p in src.iter_mut() {
+            let c = p.read();
+            if c != 0 {
+                name[n] = c;
+                n += 1;
+                *p = p.byte_add(1);
+            }
+        }
+        if n >= 0x1E {
+            break;
+        }
+    }
+    rw_texture_set_name(tex, GPtr::from_raw(name.as_mut_ptr()));
+    tex
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_MATFX_BUMP_MAP_CREATE_RASTER,
     HOOK_RW_TEXTURE_DEFAULT_READ_CALLBACK,
     HOOK_IMAGE_GROW_SCRATCH_BUFFER,
     HOOK_IMAGE_FIND_FILE_AND_CALL_PORT,

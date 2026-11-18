@@ -2529,6 +2529,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x801E90,sa-rwcore,free_list_for_all_used,cdecl,,fl:GPtr<u8>;cb:u32;data:u32,GPtr<u8>,unported,RwFreeListForAllUsed,
 0x802FD0,sa-rwcore,rw_image_read,cdecl,,name:GPtr<u8>,GPtr<u8>,sa_rwcore::image2::rw_image_read,RwImageRead,
 0x803FE0,sa-rwcore,image_set_gamma,cdecl,,gamma:f32,i32,sa_rwcore::imagemod::rw_image_set_gamma,RwImageSetGamma,
+0x8042C0,sa-rwcore,rw_image_find_raster_format,cdecl,,img:GPtr<u8>;ty:u32;w:GPtr<u32>;h:GPtr<u32>;depth:GPtr<u32>;format:GPtr<u32>,GPtr<u8>,sa_rwcore::image::rw_image_find_raster_format,RwImageFindRasterFormat,
 0x804290,sa-rwcore,raster_set_from_image,cdecl,,r:GPtr<u8>;img:GPtr<u8>,GPtr<u8>,sa_rwcore::image::rw_raster_set_from_image,RwRasterSetFromImage,
 0x8046E0,sa-rwcore,rw_texture_stream_read_call,cdecl,,s:GPtr<u8>,GPtr<u8>,sa_rwcore::texture::rw_texture_stream_read,RwTextureStreamRead,
 0x804F40,sa-rwcore,object_release_frame,cdecl,,obj:GPtr<u8>,GPtr<u8>,sa_rwcore::frame::object_has_frame_release_frame,_rwObjectHasFrameReleaseFrame,
