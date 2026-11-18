@@ -231,7 +231,7 @@ pub fn raster_check_format_by_type(cube: u32, ty: u32, format: u32) -> u32 {
 /// (0x500) when the display depth is above 16 and D3DFMT_A8R8G8B8 is valid, else 4444 (0x300) when D3DFMT_A4R4G4B4
 /// is valid, else 1555 (0x100); only alphas 0..0xF besides 0xFF give 8888 (above 16 bits, A8R8G8B8 valid) or 1555.
 /// The original keeps its row counter in its own argument slot.
-#[hook(addr = 0x7FFFF0, conv = cdecl, name = "_rwD3D9ImageFindFormat", expect = "83 EC 0C 53 8B 5C 24 14",
+#[hook(addr = 0x7FFFF0, conv = cdecl, name = "FUN_007ffff0", expect = "83 EC 0C 53 8B 5C 24 14",
        unverified = "frontier2-c23", route = "L2", hazards = "stack-residue",
        note = "the 32-bit path writes its row counter into its image argument slot")]
 pub fn d3d9_image_find_format(img: GPtr<u8>) -> u32 {

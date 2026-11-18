@@ -659,7 +659,7 @@ use crate::image::IMAGE_MODULE;
 /// when `size` is larger than its size (M+0x214, signed): `G->rwrealloc` of the old buffer, or `G->rwmalloc` without
 /// one (hint 0x1040018); a failure sets `_rwerror(E_RW_NOMEM, size)` and returns null, the old buffer kept. Returns
 /// the buffer.
-#[hook(addr = 0x803210, conv = cdecl, name = "_rwImageGrowScratchBuffer", expect = "8B 0D 5C A6 C9 00",
+#[hook(addr = 0x803210, conv = cdecl, name = "FUN_00803210", expect = "8B 0D 5C A6 C9 00",
        unverified = "frontier2-c23", route = "L2", hazards = "heap-writes")]
 pub fn image_grow_scratch_buffer(size: i32) -> GPtr<u8> {
     if size > rd::<i32>(module(IMAGE_MODULE), 0x214) {
@@ -684,7 +684,7 @@ pub fn image_grow_scratch_buffer(size: i32) -> GPtr<u8> {
 /// path (an empty rest ends the search), `entry + name`, until `cb` returns 0 or the entries run out. Each path is
 /// built in the scratch buffer, grown to `strlen(name) (+ entry length) + extra`; a failed growth returns null.
 /// Returns `name`. (`strchr(entry, ';')` runs twice per entry, as in the original.)
-#[hook(addr = 0x8030C0, conv = cdecl, name = "_rwImageFindFileAndCall", expect = "51 A1 24 7B C9 00",
+#[hook(addr = 0x8030C0, conv = cdecl, name = "FUN_008030c0", expect = "51 A1 24 7B C9 00",
        unverified = "frontier2-c23", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn image_find_file_and_call_port(name: GPtr<u8>, extra: u32, cb: u32, data: GPtr<u8>) -> GPtr<u8> {
     let paths: GPtr<u8> = rd(module(IMAGE_MODULE), 4);
@@ -725,7 +725,7 @@ pub fn image_find_file_and_call_port(name: GPtr<u8>, extra: u32, cb: u32, data: 
 /// `_rwImageReadFileCB(path, data)` (0x8032D0; the `RwImageRead` callback of `_rwImageFindFileAndCall`): when
 /// `G->rwfexist(path)`, `data->image = data->reader(path)`; a read image stops the search (returns 0), anything
 /// else returns `path` (go on).
-#[hook(addr = 0x8032D0, conv = cdecl, name = "_rwImageReadFileCB", expect = "A1 24 7B C9 00 57",
+#[hook(addr = 0x8032D0, conv = cdecl, name = "(missed by ghidra: data-code-immediate)", expect = "A1 24 7B C9 00 57",
        unverified = "frontier2-c23", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn image_read_file_cb(path: GPtr<u8>, data: GPtr<u8>) -> GPtr<u8> {
     if rw_fexist(path) != 0 {

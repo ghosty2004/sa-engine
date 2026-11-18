@@ -591,7 +591,7 @@ pub fn rw_image_create_resample_port(src: GPtr<u8>, w: i32, h: i32) -> GPtr<u8> 
 /// palette entry of every source byte; any other pair `RwErrorSet({1, _rwerror(0x80000009)})` and the flags update
 /// below on a null image (the original faults there). Then the destination's flag 2 becomes the source's; returns
 /// `dst`.
-#[hook(addr = 0x803950, conv = cdecl, name = "RwImageCopy", expect = "8B 44 24 04 83 EC 0C",
+#[hook(addr = 0x803950, conv = cdecl, name = "FUN_00803950", expect = "8B 44 24 04 83 EC 0C",
        unverified = "frontier2-c23", route = "L2", hazards = "heap-writes")]
 pub fn rw_image_copy_port(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> {
     let rows = |bytes: &dyn Fn(GPtr<u8>, GPtr<u8>)| {
