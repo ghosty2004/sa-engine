@@ -3461,3 +3461,53 @@
   Interior_c furnishing, CEscalator, ...), WEAPON (5), STREAM (3), CORE ShutdownRenderWare 0x53BB80 (its port would add
   five unported callees: DestroyDebugFont, CVisibilityPlugins::Shutdown, RpWorldDestroy, CancelBuffering,
   CPostEffects::Close).
+## 2026-11-18 — FRONTIER-2 turn 10 lane C: 0x7CC110's uninitialised matrix, 0x4CAEA0, the water layers, the building render callback, CRope::PickUpObject, batches c18 / c19 (agent, branch worktree-agent-adedd375ed5512407)
+- Base: lane C turn 9 head 186a73e3. Every port address checked against `tools/gen/inflight.py` first (no RW /
+  RENDER address in flight).
+- 0x7CC110 probe (main-session decision: measure the stack word on the game's real call path first): a coverage
+  points file with int3 at 0x7CC123 (after the prologue; the flags word at entry ESP - 0x34 still untouched) and
+  0x7CC361, `SA_COV_CAP=3000 SA_COV_PEEK=0x7cc123` (the 0x30 dwords above ESP logged per hit), all-original `plain`
+  runs (`port-l2.sh ports REC --runs plain`, lanes 6-7): 0 hits on grove-walk, driving, world-cheats, menus-hud,
+  air-water, c-bug; both verify-all runs below carried the same points on every recording (plain and rust runs):
+  0 hits on all 13 recordings (39 coverage outputs, every one `0x7cc123,0` / `0x7cc361,0`).
+  Only CEntity::PreRender of a MatFX atomic with UV animations reaches it, and the corpus has none.
+  Static reading of the only call path instead (MaterialUpdateUVAnimCB 0x532D70 calls RpMaterialUVAnimAddAnimTime
+  0x7CC4B0 and then 0x7CC110 at the same ESP): the word is the EDI that RtAnimInterpolatorAddAnimTime 0x7CD8D0 pushes
+  (`push edi` at 0x7CD8F1, entry - 0x1C) for 0x7CC4B0's slot counter, `8 - k` for the last set slot k (8 for one
+  animation in slot 0; a time step <= 0 returns before the push and leaves an earlier call's value). Choice: the
+  hook reads the local's 16 words as they are at entry (`peek = 0x40`, exact under any caller in phase A); phases
+  B/C start from zeros with flags 8 (ledger entry under "original UB").
+- Batch frontier2-c18 (RW, 3 hooks):
+  - `_rwD3D9RasterClearGeneric` 0x4CAEA0 (sa-rwcore `d3d9rastrender.rs`, `conv = reg("args = esi stack")`): the
+    six-way switch on the context raster's type (camera Clear TARGET, Z-buffer Clear ZBUFFER on the top parent's
+    depth surface, camera texture / default-pool texture ColorFill on level 0, otherwise lock and fill rows by depth
+    with the 8-bit nearest palette index); its orig! binding targets the port. `raster_copy.rs`'s level-0 surface
+    lookup became one helper (`level0_surface`, also used by surface_of and the quad render).
+  - RpMaterialUVAnimApplyUpdate 0x7CC110 (`frontier_b.rs`, next to the param apply it inlines; the linear apply
+    inline is the generated 0x7CC9F0 body): the key frame pointer advances only on applied nodes, as in the original.
+  - CCustomBuildingPipeline::CustomPipeRenderCB 0x5D77D0 (sa-render `building_dn_render.rs`): the DN callback's
+    bytes but for the transform cells (0xC02C70 / 0xC02C84 / 0xC02CAC / 0xC02C98) and stage-1 COLORARG2 TFACTOR; both
+    hooks share one body.
+- Batch frontier2-c19 (RENDER, 3 hooks):
+  - RenderFlatWaterRectangle_OneLayer 0x6E9940 / RenderFlatWaterTriangle_OneLayer 0x6E8ED0: no longer `fallback`;
+    the never-reached layers (callers pass 0 and 1) read three never-written locals through `peek = 0x10`, v0 from
+    the layer argument's bits, alpha from its low byte; the z offset local (0 for layers 0 / 1) is added to z.
+  - CRope::PickUpObject 0x5569C0 (`ropes_register.rs`): release (the generated 0x556030 body), register, the hook
+    object moved to the object's matrix times its col model's bbox max z, the vehicle / object wake-up.
+- Not done: CWaterLevel::AddWaterLevelQuad 0x6E7EF0 (its 1 / 3 vertices-on-the-minimum-line case overflows the
+  original's two-slot lists into each other and into a never-written slot: needs a peek model of that frame),
+  JPegCompressScreenToFile 0x5D0820 (would open JPegCompressScreen 0x5D0470 and the libjpeg calls as new rows).
+- Gates: writer gate (base 186a73e3) all PASS on 7d82632f (hooks: 4 new, all unverified, batches frontier2-c18 /
+  c19; the water hooks became unverified frontier2-c19; sa-hook's regconv check accepts 0x4CAEA0's spec); re-run on the
+  final head (docs commits only after it): all PASS.
+- Scenarios (frontier.sh, i686 native sa-game of 9fbff5e8, SA_ROOT=~/sa-engine; target/lc10/scen): pausemenu 416 / 0
+  blocked, solicit 4016 / 0, crossing 1216 / 0, crossing-long 4016 / 0, roadblocks 2016 / 0, melee 2616 / 0, sniper /
+  shootcar / shootdriver 1216 / 0, quad / heli / plane / boat 1216 / 0, roadblock-script 1016 / 0, gangwar 2016 / 0,
+  jetpack 1016 / 0, roadblock-wanted 2015 / 1 (CObject::Explode 0x5A1340, lane A's, in flight); no crash; unchanged
+  from turn 9.
+- frontier.py --no-branches: "to port" 127 -> 122 (RW 28 -> 26: 0x4CAEA0, 0x7CC110; RENDER 19 -> 16: 0x5569C0 and
+  the partials 0x6E9940 / 0x6E8ED0); 0x5D77D0 was not a frontier row (reached through a stored callback); no new rows.
+- verify-all (lanes 6-7, host sa-oracle and satool rebuilt; DLL of 9fbff5e8, sha256 6b2c917d…, the queue / docs
+  commits after it change no code; lanes shared by flock with lanes A / B and the main session's runs):
+  `lanec10-c1819` (SA_UNVERIFIED=frontier2-c18,frontier2-c19) IDENTICAL 13/13; `lanec10-default` (default set)
+  IDENTICAL 13/13.
