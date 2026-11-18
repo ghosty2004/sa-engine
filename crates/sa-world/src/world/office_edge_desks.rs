@@ -7,7 +7,8 @@ use sa_core::mem::GPtr;
 use sa_core::orig::at_site;
 use sa_core::hook;
 
-use super::common::{ftol32, rd, xi};
+use super::common::{ftol32, rd, x, xi};
+use sa_core::field::ptr_of as p;
 
 use crate::bindings::get_num_empty_tiles;
 use crate::bindings::office_place_desk;
@@ -68,4 +69,56 @@ pub fn office_place_edge_desks(this: GPtr<u8>, _id: i32, tx: i32, ty: i32, dir: 
 }
 
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_OFFICE_PLACE_EDGE_DESKS];
+/// `Interior_c::Office_PlaceDesk(int32 x, int32 y, int32 dir, int32, int32, int32 id)` (0x5993E0, thiscall, `ret 0x18`;
+/// the fourth and fifth arguments are not read). `rot = (dir - 2) & 3`. The desk (`GetFurniture(1, 0, id, wealth)`,
+/// wealth = the group's +0x1F) is placed at the tile `(x + (dir == 1), y + (dir == 2))`; no desk placed returns 1.
+/// Then the chair (`GetFurniture(1, 1, office id +0x792 (sign-extended into AX; EAX's high half is the previous
+/// value: dir, or y + 1 for dir 1), wealth)`) at `(x, y)` moved by dir (2: x + 1, 0: y + 1, 3: both) with the last
+/// argument 1; a sit-at-desk point (type 6) at the chair tile's float coordinates moved by 0.5 towards `rot` (2: +y,
+/// 0: -y, 3: -x, 1: +x), facing `(rot - 2) & 3`, with the chair object; the tile `(x + (dir is 0 or 3), y + (dir is
+/// 0, 1 or 3))` gets status 2 (1x1, forced). Returns 2.
+#[hook(addr = 0x5993E0, conv = thiscall, name = "Interior_c::Office_PlaceDesk", this = "Interior_c",
+       expect = "83 EC 0C 8B 44 24 18 53", unverified = "frontier2-a19", route = "L2", hazards = "heap-writes",
+       note = "office interiors (Office_PlaceEdgeDesks / Office_FurnishCenter)")]
+#[allow(clippy::too_many_arguments)]
+pub fn office_place_desk_port(this: GPtr<u8>, tx: i32, ty: i32, dir: i32, _a3: i32, _a4: i32, id: i32) -> i32 {
+    use crate::bindings::{add_interior_info, get_furniture, place_furniture, set_tiles_status};
+    const FURNITURE_MANAGER: usize = 0xBA_B380;
+    let man = GPtr::<u8>::from_addr(FURNITURE_MANAGER);
+    let rot = dir.wrapping_sub(2) & 3;
+    let wealth = || u32::from(rd::<u8>(rd::<GPtr<u8>>(this, 0x14), 0x1F));
+    let (dx, dy) = (tx + i32::from(dir == 1), ty + i32::from(dir == 2));
+    let (mut ow, mut od) = (0u32, 0u32);
+    let desk = get_furniture(man, 1, 0, id, wealth());
+    if place_furniture(this, desk, dx, dy, 0, 1, rot, p(&mut ow), p(&mut od), 0).is_null() {
+        return 1;
+    }
+    let (cx, cy, mut eax) = match dir {
+        2 => (tx + 1, ty, 2u32),
+        0 => (tx, ty + 1, 0),
+        3 => (tx + 1, ty + 1, 3),
+        1 => (tx, ty, ty.wrapping_add(1) as u32),
+        d => (tx, ty, d as u32),
+    };
+    let (sx, sy) = match dir {
+        0 => (tx + 1, ty + 1),
+        3 => (tx + 1, ty + 1),
+        1 => (tx, ty + 1),
+        _ => (tx, ty),
+    };
+    eax = (eax & 0xFFFF_0000) | u32::from(rd::<i8>(this, 0x792) as i16 as u16);
+    let chair = get_furniture(man, 1, 1, eax as i32, wealth());
+    let obj = place_furniture(this, chair, cx, cy, 0, 1, rot, p(&mut ow), p(&mut od), 1);
+    let (mut fx, mut fy) = (cx as f32, cy as f32);
+    match rot {
+        2 => fy = x(fy).fadd_m(0.5).to_f32(),
+        0 => fy = x(fy).fsub_m(0.5).to_f32(),
+        3 => fx = x(fx).fsub_m(0.5).to_f32(),
+        _ => fx = x(fx).fadd_m(0.5).to_f32(),
+    }
+    add_interior_info(this, 6, fx, fy, (rot.wrapping_sub(2) & 3) as u32, obj.addr() as u32);
+    set_tiles_status(this, sx, sy, 1, 1, 2, 1);
+    2
+}
+
+pub const HOOKS: &[HookReg] = &[HOOK_OFFICE_PLACE_EDGE_DESKS, HOOK_OFFICE_PLACE_DESK_PORT];
