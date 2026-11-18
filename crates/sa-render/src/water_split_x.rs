@@ -1,12 +1,12 @@
-//! `CWaterLevel::SplitWaterTriangleAlongXLine` (0x6ECF00, batch `samp2-water-1`). Ported from the 1.0 US
-//! bytes (gta-reversed `WaterLevel.cpp` gives the structure; the rounding and the argument order of the
-//! six calls follow the bytes). Unverified (docs/verify/HOWTO.md).
+//! `CWaterLevel::SplitWaterTriangleAlongXLine` and `SplitWaterTriangleAlongYLine`: a right triangle cut by
+//! a camera-range line into a rectangle and two triangles.
 
 use sa_core::abi::HookReg;
 use sa_core::hook;
 use sa_math::x87::X87;
 
-use crate::common::{x, xi};
+use crate::common::{f32_of, x, xi};
+use crate::waterlevel::lerp_into;
 
 use crate::bindings::o_render_water_rectangle as render_water_rectangle;
 use crate::bindings::render_water_triangle;
@@ -119,5 +119,58 @@ pub fn split_water_triangle_along_x_line(xs: i32, x1: i32, y1: i32, a0: u32, a1:
     }
 }
 
+/// `CWaterLevel::SplitWaterTriangleAlongYLine(int32 ys, int32 x1, int32 y1, CRenPar p1, int32 x2, int32 y2,
+/// CRenPar p2, int32 x3, int32 y3, CRenPar p3)` (0x6EE5A0, cdecl). `t = f32((ys - y1) / (y3 - y1))` (`fild` /
+/// `fidiv`); every mid CRenPar is a call of the lerp 0x6E5280 at `t`, recomputed before each use. Right angle
+/// at the left (`x1 == x3`): the cut meets the hypotenuse at `xs = (x1 - x2) * (ys - y1) / (y3 - y1) + x2`;
+/// otherwise at `xs = (x2 - x1) * (ys - y1) / (y3 - y1) + x1`. Then the triangle above the cut, the
+/// rectangle between (its y order by `y1 < y3`), the triangle below.
+///
+/// The bytes differ from gta-reversed (which re-derives the cut and calls the X split): with `y1 >= y3` and
+/// `x1 != x3` the rectangle's `(x2, ys)` corner is `lerp(p1, p3)`, not `lerp(p2, p3)`. The lerp leaves the
+/// flow dword's upper half of its output alone; the three output locals (entry ESP - 0x10, - 0x20, - 0x30)
+/// are never written otherwise, so that half is the caller's stack residue (`peek`).
+#[hook(addr = 0x6EE5A0, conv = cdecl, name = "CWaterLevel::SplitWaterTriangleAlongYLine", expect = "83 EC 30 8B 4C 24 34",
+       peek = 0x30, unverified = "frontier2-c24", route = "L2", hazards = "stack-residue")]
+#[allow(clippy::too_many_arguments)]
+pub fn split_water_triangle_along_y_line(ys: i32, x1: i32, y1: i32, a0: u32, a1: u32, a2: u32, a3: u32, x2: i32,
+    y2: i32, b0: u32, b1: u32, b2: u32, b3: u32, x3: i32, y3: i32, c0: u32, c1: u32, c2: u32, c3: u32) {
+    let (p1, p2, p3) = ([a0, a1, a2, a3], [b0, b1, b2, b3], [c0, c1, c2, c3]);
+    let dy = ys.wrapping_sub(y1);
+    let h = y3.wrapping_sub(y1);
+    let t = f32_of(xi(dy).fdiv(xi(h))).to_bits();
+    let residue = |off: i32| sa_core::abi::peek_stack(0x6EE5A0, off).unwrap_or(0);
+    let lerp = |buf: i32, a: [u32; 4], b: [u32; 4]| RenPar(lerp_into([0, 0, 0, residue(buf + 0xC)], a, b, t));
+    let (l10, l20, l30) = (-0x10, -0x20, -0x30);
+    let (q1, q2, q3) = (RenPar(p1), RenPar(p2), RenPar(p3));
+    if x1 == x3 {
+        let xs = x1.wrapping_sub(x2).wrapping_mul(dy).wrapping_div(h).wrapping_add(x2);
+        let (r1, r2) = if y1 < y3 { (lerp(l30, p2, p3), lerp(l20, p2, p1)) } else { (lerp(l10, p2, p3), lerp(l20, p2, p1)) };
+        tri(xs, y1, r2, x2, y2, q2, xs, ys, r1);
+        if y1 < y3 {
+            let (r4, r5, r6) = (lerp(l20, p2, p3), lerp(l30, p1, p3), lerp(l10, p2, p1));
+            rect(x1, xs, y1, ys, q1, r6, r5, r4);
+        } else {
+            let (r4, r5, r6) = (lerp(l10, p2, p1), lerp(l20, p2, p3), lerp(l30, p1, p3));
+            rect(x1, xs, ys, y1, r6, r5, q1, r4);
+        }
+        let (r8, r9) = (lerp(l10, p2, p3), lerp(l20, p1, p3));
+        tri(x1, ys, r9, xs, ys, r8, x3, y3, q3);
+    } else {
+        let xs = x2.wrapping_sub(x1).wrapping_mul(dy).wrapping_div(h).wrapping_add(x1);
+        let (r1, r2) = (lerp(l10, p1, p3), lerp(l20, p1, p2));
+        tri(x1, y1, q1, xs, y1, r2, xs, ys, r1);
+        if y1 < y3 {
+            let (r4, r5, r6) = (lerp(l10, p2, p3), lerp(l20, p1, p3), lerp(l30, p1, p2));
+            rect(xs, x2, y1, ys, r6, q2, r5, r4);
+        } else {
+            let (r4, r5, r6) = (lerp(l10, p1, p2), lerp(l20, p1, p3), lerp(l30, p1, p3));
+            rect(xs, x2, ys, y1, r6, r5, r4, q2);
+        }
+        let (r8, r9) = (lerp(l10, p2, p3), lerp(l20, p1, p3));
+        tri(xs, ys, r9, x2, ys, r8, x3, y3, q3);
+    }
+}
+
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_SPLIT_WATER_TRIANGLE_ALONG_X_LINE];
+pub const HOOKS: &[HookReg] = &[HOOK_SPLIT_WATER_TRIANGLE_ALONG_X_LINE, HOOK_SPLIT_WATER_TRIANGLE_ALONG_Y_LINE];
