@@ -1183,7 +1183,7 @@ orig! {
     /// `_rwStringStreamWrite(string, stream)` (0x80A4A0)
     fn string_stream_write(string: GPtr<u8>, s: GPtr<u8>) -> GPtr<u8> = cdecl 0x80A4A0 => unported;
     /// `_rwPluginRegistryWriteDataChunks(reg, stream, obj)` (0x808B40)
-    fn plugin_write_data_chunks(reg: GPtr<u8>, s: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808B40 => unported;
+    pub(crate) fn plugin_write_data_chunks(reg: GPtr<u8>, s: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = cdecl 0x808B40 => unported;
     /// `RwRasterGetNumLevels(raster)` (0x7FB160)
     fn rw_raster_get_num_levels_call(r: GPtr<u8>) -> i32 = cdecl 0x7FB160 => rw_raster_get_num_levels;
     /// `_rwD3D9NativeTextureGetSize(&size, texture, 0)` (0x4CD360)

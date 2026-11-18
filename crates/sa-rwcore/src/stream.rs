@@ -54,6 +54,7 @@ pub use crate::bindings::free_list_create_prealloc as rw_free_list_create_and_pr
 pub use crate::bindings::read_chunk_header_call;
 pub use crate::bindings::rw_stream_skip as rw_stream_skip_call;
 pub use crate::bindings::stream_read as rw_stream_read_call;
+use crate::bindings::rw_stream_write as rw_stream_write_call;
 orig! {
     /// `G->fileFuncs.rwfopen(name, mode)` (G+0xC8)
     pub fn rw_fopen(name: GPtr<u8>, mode: GPtr<u8>) -> u32 = cdecl table 0xC97B24 0xC8 => unported;
@@ -664,8 +665,28 @@ pub fn string_stream_find_and_read(string: GPtr<u8>, s: GPtr<u8>) -> GPtr<u8> {
     }
 }
 
+/// `RwStreamWriteReal(stream, data, size)` (0x7ED3D0): the floats written through a 256-byte local copy, at most
+/// 256 bytes per `RwStreamWrite`. Returns `stream`, or NULL when a write fails.
+#[hook(addr = 0x7ED3D0, conv = cdecl, name = "RwStreamWriteReal", expect = "81 EC 00 01 00 00 53 55",
+       unverified = "frontier2-c28", route = "split", hazards = "none", note = "stream write (file effects)")]
+pub fn rw_stream_write_real(s: GPtr<u8>, data: GPtr<u8>, size: u32) -> GPtr<u8> {
+    let mut buf = [0u8; 0x100];
+    let (mut src, mut left) = (data, size);
+    while left != 0 {
+        let n = left.min(0x100);
+        crate::common::copy_bytes(GPtr::from_raw(buf.as_mut_ptr()), src, n);
+        if rw_stream_write_call(s, GPtr::from_raw(buf.as_mut_ptr()), n).is_null() {
+            return GPtr::NULL;
+        }
+        src = src.byte_add(n as isize);
+        left -= n;
+    }
+    s
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_RW_STREAM_WRITE_REAL,
     HOOK_STREAM_MODULE_OPEN,
     HOOK_STREAM_MODULE_CLOSE,
     HOOK_RW_STREAM_INITIALIZE,

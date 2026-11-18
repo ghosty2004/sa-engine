@@ -16,6 +16,7 @@ const GEOMETRY_TK_LIST: u32 = 0x8D628C;
 const TEXDICT_TK_LIST: u32 = 0x8E23E4;
 const TEXTURE_TK_LIST: u32 = 0x8E23CC;
 const FRAME_TK_LIST: u32 = 0x8E2270;
+const MATERIAL_TK_LIST: u32 = 0x8D62A4;
 
 use sa_core::bindings::rw_stream_find_chunk_call as stream_find_chunk;
 use sa_core::bindings::rp_geometry_destroy as geometry_destroy;
@@ -25,6 +26,8 @@ use crate::bindings::plugin_get_size;
 use crate::bindings::rw_stream_write_int32 as stream_write_int32;
 use crate::bindings::rw_stream_write as stream_write;
 use crate::bindings::stream_read;
+use crate::bindings::stream_write_chunk_header as write_chunk_header;
+use crate::raster::plugin_write_data_chunks;
 orig! {
     /// `RpGeometryStreamGetSize(geometry)` (0x74CE20)
     fn geometry_stream_get_size(g: GPtr<u8>) -> u32 = cdecl 0x74CE20 => geometry_stream_get_size_port;
@@ -35,7 +38,21 @@ orig! {
     /// `RpMaterialStreamGetSize(material)` (0x74E010)
     fn material_stream_get_size(m: GPtr<u8>) -> u32 = cdecl 0x74E010 => unported;
     /// `_rpAtomicStreamWrite(atomic, info)` (0x74A880)
-    fn atomic_stream_write_internal(a: GPtr<u8>, info: GPtr<u8>) -> GPtr<u8> = cdecl 0x74A880 => unported;
+    fn atomic_stream_write_internal(a: GPtr<u8>, info: GPtr<u8>) -> GPtr<u8> = cdecl 0x74A880 => clump_atomic_stream_write;
+    /// `_rwFrameListFindFrame(list, frame, indexOut)` (0x8076E0)
+    fn frame_list_find_frame_call(l: GPtr<u8>, f: GPtr<u8>, out: GPtr<i32>) -> u32 = cdecl 0x8076E0 => frame_list_find_frame;
+    /// `RpGeometryStreamWrite(geometry, stream)` (0x74CED0)
+    fn geometry_stream_write_call(g: GPtr<u8>, s: GPtr<u8>) -> GPtr<u8> = cdecl 0x74CED0 => geometry_stream_write;
+    /// `_rpMaterialListStreamWrite(list, stream)` (0x74E4B0)
+    fn material_list_stream_write_call(l: GPtr<u8>, s: GPtr<u8>) -> GPtr<u8> = cdecl 0x74E4B0 => material_list_stream_write;
+    /// `RpMaterialStreamWrite(material, stream)` (0x74E050)
+    fn material_stream_write_call(m: GPtr<u8>, s: GPtr<u8>) -> GPtr<u8> = cdecl 0x74E050 => material_stream_write;
+    /// `RwStreamWriteReal(stream, data, size)` (0x7ED3D0)
+    fn stream_write_real(s: GPtr<u8>, data: GPtr<u8>, size: u32) -> GPtr<u8> = cdecl 0x7ED3D0 => crate::stream::rw_stream_write_real;
+    /// `RwTextureStreamGetSize(texture)` (0x8045A0)
+    fn texture_stream_get_size(t: GPtr<u8>) -> u32 = cdecl 0x8045A0 => crate::raster::rw_texture_stream_get_size;
+    /// `RwTextureStreamWrite(texture, stream)` (0x8045E0)
+    fn texture_stream_write(t: GPtr<u8>, s: GPtr<u8>) -> GPtr<u8> = cdecl 0x8045E0 => crate::raster::rw_texture_stream_write;
     /// `RpLightStreamGetSize(light)` (0x751E10)
     fn light_stream_get_size(l: GPtr<u8>) -> u32 = cdecl 0x751E10 => unported;
     /// `RwCameraStreamGetSize(camera)` (0x808CE0)
@@ -806,8 +823,232 @@ pub fn memory_default_calloc(n: u32, size: u32) -> u32 {
     GPtr::<u8>::addr(crt_calloc(n, size)) as u32
 }
 
+/// `_rpClumpAtomicStreamWrite(atomic, info)` (0x74A880; info: stream, frame list (+4 frames, +8 count), +0xC
+/// geometries, +0x10 geometry count, +0x14 status cleared on most failures): the atomic chunk (0x14; size
+/// `RpGeometryStreamGetSize + 0x28 + plugins + 0xC` when the info lists no geometries, else `plugins + 0x28`), its
+/// struct (1, 0x10): frame index, geometry index, the atomic's flags byte (+2), 0; the geometry chunk itself when no
+/// geometries are listed; the plugin chunks. A frame not in a non-empty frame list or a geometry not in the list
+/// fails. Returns the atomic, or NULL.
+#[hook(addr = 0x74A880, conv = cdecl, name = "_rpClumpAtomicStreamWrite", expect = "83 EC 10 53 55 8B 5C 24 1C",
+       peek = 0x10, unverified = "frontier2-c28", route = "split", hazards = "uninit-locals",
+       note = "stream write (file effects); with an empty frame / geometry list the written index is stack residue")]
+pub fn clump_atomic_stream_write(a: GPtr<u8>, info: GPtr<u8>) -> GPtr<u8> {
+    let residue = |off: i32| sa_core::abi::peek_stack(0x74A880, off).unwrap_or(0);
+    let fail = || {
+        wr::<u32>(info, 0x14, 0);
+        GPtr::NULL
+    };
+    let s = p8(rd::<u32>(info, 0));
+    let tk = p8(ATOMIC_TK_LIST);
+    let size = if rd::<u32>(info, 0x10) == 0 {
+        let g = geometry_stream_get_size(p8(rd::<u32>(a, 0x18))).wrapping_add(0x28);
+        plugin_get_size(tk, a).wrapping_add(g).wrapping_add(0xC)
+    } else {
+        plugin_get_size(tk, a).wrapping_add(0x28)
+    };
+    if write_chunk_header(s, 0x14, size, 0x36003, 0xFFFF).is_null() {
+        return fail();
+    }
+    if write_chunk_header(s, 1, 0x10, 0x36003, 0xFFFF).is_null() {
+        return GPtr::NULL;
+    }
+    let mut data = [residue(-0x10), residue(-0xC), u32::from(rd::<u8>(a, 2)), 0];
+    if rd::<u32>(info, 8) != 0
+        && frame_list_find_frame_call(info.byte_add(4), p8(rd::<u32>(a, 4)), GPtr::from_raw(&mut data[0]).cast()) == 0
+    {
+        return fail();
+    }
+    let n = rd::<i32>(info, 0x10);
+    if n != 0 {
+        let list = p8(rd::<u32>(info, 0xC));
+        let geo = rd::<u32>(a, 0x18);
+        match (0..n).find(|&i| rd::<u32>(list, i as isize * 4) == geo) {
+            Some(i) => data[1] = i as u32,
+            None => return fail(),
+        }
+    }
+    if stream_write(s, GPtr::from_raw(data.as_mut_ptr()).cast(), 0x10).is_null() {
+        return fail();
+    }
+    if rd::<u32>(info, 0x10) == 0 && geometry_stream_write_call(p8(rd::<u32>(a, 0x18)), s).is_null() {
+        return fail();
+    }
+    if plugin_write_data_chunks(tk, s, a).is_null() {
+        return fail();
+    }
+    a
+}
+
+/// `RpGeometryStreamWrite(geometry, stream)` (0x74CED0): the geometry chunk (0xF; size struct + material list +
+/// plugins, each + 0xC), its struct (1, `_rpGeometryStructGetSize`): `flags | (texCoordSets & 0xFF) << 16`,
+/// triangle, vertex and morph target counts; unless native (flag 0x1000000) or vertex-less: the prelit colours
+/// (flag 8), each texture coordinate set (`RwStreamWriteReal`, 8 bytes per vertex), the triangles as two dwords
+/// `w0 << 16 | w1`, `w2 << 16 | w3`; per morph target its bounding sphere and has-vertices / has-normals flags (0
+/// when native), then those arrays (12 bytes per vertex); the material list; the plugin chunks. Returns the
+/// geometry, or NULL.
+#[hook(addr = 0x74CED0, conv = cdecl, name = "RpGeometryStreamWrite", expect = "83 EC 30 53 55 56 8B 74 24 40",
+       unverified = "frontier2-c28", route = "split", hazards = "none",
+       note = "stream write (file effects); keeps the texture coordinate byte count in its own geometry argument slot")]
+pub fn geometry_stream_write(g: GPtr<u8>, s: GPtr<u8>) -> GPtr<u8> {
+    let st = geometry_struct_get_size(g).wrapping_add(0xC);
+    let ml = material_list_stream_get_size(g.byte_add(0x20)).wrapping_add(0xC).wrapping_add(st);
+    let size = plugin_get_size(p8(GEOMETRY_TK_LIST), g).wrapping_add(0xC).wrapping_add(ml);
+    if write_chunk_header(s, 0xF, size, 0x36003, 0xFFFF).is_null() {
+        return GPtr::NULL;
+    }
+    if write_chunk_header(s, 1, geometry_struct_get_size(g), 0x36003, 0xFFFF).is_null() {
+        return GPtr::NULL;
+    }
+    let mut head = [
+        ((rd::<u32>(g, 0x1C) & 0xFF) << 16) | rd::<u32>(g, 8),
+        rd::<u32>(g, 0x10),
+        rd::<u32>(g, 0x14),
+        rd::<u32>(g, 0x18),
+    ];
+    if stream_write(s, GPtr::from_raw(head.as_mut_ptr()).cast(), 0x10).is_null() {
+        return GPtr::NULL;
+    }
+    let flags = rd::<u32>(g, 8);
+    if flags & 0x0100_0000 == 0 && rd::<u32>(g, 0x14) != 0 {
+        if flags & 8 != 0 && stream_write(s, p8(rd::<u32>(g, 0x30)), rd::<u32>(g, 0x14).wrapping_mul(4)).is_null() {
+            return GPtr::NULL;
+        }
+        if rd::<i32>(g, 0x1C) > 0 {
+            let bytes = rd::<u32>(g, 0x14) << 3;
+            let mut i = 0;
+            while i < rd::<i32>(g, 0x1C) {
+                if stream_write_real(s, p8(rd::<u32>(g, 0x34 + i as isize * 4)), bytes).is_null() {
+                    return GPtr::NULL;
+                }
+                i += 1;
+            }
+        }
+        let mut left = rd::<u32>(g, 0x10);
+        let mut tri = p8(rd::<u32>(g, 0x2C));
+        while left != 0 {
+            let w = |o: isize| u32::from(rd::<u16>(tri, o));
+            let mut v = [w(0) << 16 | w(2), w(4) << 16 | w(6)];
+            left -= 1;
+            tri = tri.byte_add(8);
+            if stream_write(s, GPtr::from_raw(v.as_mut_ptr()).cast(), 8).is_null() {
+                return GPtr::NULL;
+            }
+        }
+    }
+    let mut i = 0;
+    while i < rd::<i32>(g, 0x18) {
+        let mt = p8(rd::<u32>(g, 0x5C)).byte_add(i as isize * 0x1C);
+        let (verts, normals) = if rd::<u32>(g, 8) & 0x0100_0000 != 0 {
+            (0, 0)
+        } else {
+            (u32::from(rd::<u32>(mt, 0x14) != 0), u32::from(rd::<u32>(mt, 0x18) != 0))
+        };
+        let mut m = [rd::<u32>(mt, 4), rd::<u32>(mt, 8), rd::<u32>(mt, 0xC), rd::<u32>(mt, 0x10), verts, normals];
+        if stream_write(s, GPtr::from_raw(m.as_mut_ptr()).cast(), 0x18).is_null() {
+            return GPtr::NULL;
+        }
+        for (has, off) in [(verts, 0x14), (normals, 0x18)] {
+            if has != 0 {
+                let arr = p8(rd::<u32>(p8(rd::<u32>(g, 0x5C)).byte_add(i as isize * 0x1C), off));
+                if stream_write_real(s, arr, rd::<u32>(g, 0x14).wrapping_mul(12)).is_null() {
+                    return GPtr::NULL;
+                }
+            }
+        }
+        i += 1;
+    }
+    if material_list_stream_write_call(g.byte_add(0x20), s).is_null() {
+        return GPtr::NULL;
+    }
+    if plugin_write_data_chunks(p8(GEOMETRY_TK_LIST), s, g).is_null() { GPtr::NULL } else { g }
+}
+
+/// The index of the last earlier entry of a material list holding the same material as entry `i`, or -1.
+fn material_list_first_use(l: GPtr<u8>, i: i32) -> i32 {
+    let mats = p8(rd::<u32>(l, 0));
+    let m = rd::<u32>(mats, i as isize * 4);
+    (0..i).rev().find(|&j| rd::<u32>(mats, j as isize * 4) == m).unwrap_or(-1)
+}
+
+/// `_rpMaterialListStreamWrite(list, stream)` (0x74E4B0): the material list chunk (8; size `4 * count + 0x10` plus
+/// `RpMaterialStreamGetSize + 0xC` per first use of a material), its struct (1, `4 * count + 4`): the count, per
+/// entry the index of an earlier entry with the same material (or -1); then each material at its first use.
+/// Returns the list, or NULL.
+#[hook(addr = 0x74E4B0, conv = cdecl, name = "_rpMaterialListStreamWrite", expect = "53 8B 5C 24 08 55 56",
+       unverified = "frontier2-c28", route = "split", hazards = "none",
+       note = "stream write (file effects); keeps each written index in its own list argument slot")]
+pub fn material_list_stream_write(l: GPtr<u8>, s: GPtr<u8>) -> GPtr<u8> {
+    let mat = |i: i32| p8(rd::<u32>(p8(rd::<u32>(l, 0)), i as isize * 4));
+    let mut size = rd::<u32>(l, 4).wrapping_mul(4).wrapping_add(0x10);
+    let mut i = 0;
+    while i < rd::<i32>(l, 4) {
+        if material_list_first_use(l, i) < 0 {
+            size = size.wrapping_add(material_stream_get_size(mat(i))).wrapping_add(0xC);
+        }
+        i += 1;
+    }
+    if write_chunk_header(s, 8, size, 0x36003, 0xFFFF).is_null() {
+        return GPtr::NULL;
+    }
+    if write_chunk_header(s, 1, rd::<u32>(l, 4).wrapping_mul(4).wrapping_add(4), 0x36003, 0xFFFF).is_null() {
+        return GPtr::NULL;
+    }
+    if stream_write_int32(s, l.byte_add(4), 4).is_null() {
+        return GPtr::NULL;
+    }
+    let mut i = 0;
+    while i < rd::<i32>(l, 4) {
+        let mut index = material_list_first_use(l, i);
+        if stream_write_int32(s, GPtr::from_raw(&mut index).cast(), 4).is_null() {
+            return GPtr::NULL;
+        }
+        i += 1;
+    }
+    let mut i = 0;
+    while i < rd::<i32>(l, 4) {
+        if material_list_first_use(l, i) < 0 && material_stream_write_call(mat(i), s).is_null() {
+            return GPtr::NULL;
+        }
+        i += 1;
+    }
+    l
+}
+
+/// `RpMaterialStreamWrite(material, stream)` (0x74E050): the material chunk (7; size `RwTextureStreamGetSize +
+/// 0x34` with a texture, else 0x28, plus plugins + 0xC), its struct (1, 0x1C): flags 0, colour, an unused word,
+/// textured, ambient, specular, diffuse; the texture; the plugin chunks. Returns the material, or NULL.
+#[hook(addr = 0x74E050, conv = cdecl, name = "RpMaterialStreamWrite", expect = "83 EC 1C 56 8B 74 24 24",
+       peek = 0x14, unverified = "frontier2-c28", route = "split", hazards = "uninit-locals",
+       note = "stream write (file effects); the struct's unused word is stack residue")]
+pub fn material_stream_write(m: GPtr<u8>, s: GPtr<u8>) -> GPtr<u8> {
+    let tex = p8(rd::<u32>(m, 0));
+    let base = if tex.is_null() { 0x28 } else { texture_stream_get_size(tex).wrapping_add(0x34) };
+    let size = plugin_get_size(p8(MATERIAL_TK_LIST), m).wrapping_add(base).wrapping_add(0xC);
+    if write_chunk_header(s, 7, size, 0x36003, 0xFFFF).is_null() {
+        return GPtr::NULL;
+    }
+    if write_chunk_header(s, 1, 0x1C, 0x36003, 0xFFFF).is_null() {
+        return GPtr::NULL;
+    }
+    let unused = sa_core::abi::peek_stack(0x74E050, -0x14).unwrap_or(0);
+    let textured = u32::from(rd::<u32>(m, 0) != 0);
+    let mut d = [0, rd::<u32>(m, 4), unused, textured, rd::<u32>(m, 0xC), rd::<u32>(m, 0x10), rd::<u32>(m, 0x14)];
+    if stream_write(s, GPtr::from_raw(d.as_mut_ptr()).cast(), 0x1C).is_null() {
+        return GPtr::NULL;
+    }
+    let tex = p8(rd::<u32>(m, 0));
+    if !tex.is_null() && texture_stream_write(tex, s).is_null() {
+        return GPtr::NULL;
+    }
+    if plugin_write_data_chunks(p8(MATERIAL_TK_LIST), s, m).is_null() { GPtr::NULL } else { m }
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_CLUMP_ATOMIC_STREAM_WRITE,
+    HOOK_GEOMETRY_STREAM_WRITE,
+    HOOK_MATERIAL_LIST_STREAM_WRITE,
+    HOOK_MATERIAL_STREAM_WRITE,
     HOOK_STREAM_WRITE_VERSIONED_CHUNK_HEADER,
     HOOK_ATOMIC_STREAM_GET_SIZE,
     HOOK_ATOMIC_STREAM_WRITE,
