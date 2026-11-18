@@ -1792,7 +1792,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x72DD90,sa-pop,cull_zones_fewer_peds,cdecl,,,u8,unported,CCullZones::FewerPeds,
 0x73DF00,sa-pop,fire_fixed_machine_guns,thiscall,,v:GPtr<u8>,,unported,CVehicle::FireFixedMachineGuns,sa_veh::vehicle_guns::fire_fixed_machine_guns
 0x742CA0,sa-pop,clear_cross_hair_immediately,cdecl,,n:i32,,unported,CWeaponEffects::ClearCrossHairImmediately,
-0x7F1170,sa-pop,rw_frame_ortho_normalize,cdecl,,f:GPtr<u8>,GPtr<u8>,unported,RwFrameOrthoNormalize,
+0x7F1170,sa-world,rw_frame_ortho_normalize,cdecl,,f:GPtr<u8>,GPtr<u8>,unported,RwFrameOrthoNormalize,
 0x41B7C0,sa-ai,point_route_new,cdecl,,size:u32,GPtr<u8>,sa_world::world::mvpa2::point_route_new,CPointRoute::operator new,
 0x420E30,sa-ai,task_timer_is_out_of_time,thiscall,,t:GPtr<u8>,u8,unported,CTaskTimer::IsOutOfTime,
 0x420E70,sa-ai,acquaintance_ped_hate_ctor,thiscall,,e:u32;ped:u32,u32,sa_ai::gen_ctors::g_event_acquaintance_ped_hate_constructor2_420e70,CEventAcquaintancePedHate::Constructor2,
@@ -2054,7 +2054,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x6611B0,sa-ai,pass_object_ctor,thiscall,,t:GPtr<u8>;e:GPtr<u8>;b:u32,GPtr<u8>,unported,CTaskComplexPassObject::Constructor,
 0x6616F0,sa-ai,gang_join_respond_ctor,thiscall,,t:GPtr<u8>;b:u32,GPtr<u8>,unported,CTaskComplexGangJoinRespond::Constructor,
 0x661BB0,sa-ai,is_task_valid,cdecl,,a:GPtr<u8>;b:GPtr<u8>,u8,sa_ai::prostitute_solicit::prostitute_solicit_is_task_valid,CTaskComplexProstituteSolicit::IsTaskValid,
-0x661DC0,sa-ai,seek_entity_xy_offset_ctor,thiscall,,t:GPtr<u8>;e:GPtr<u8>;a:u32;b:u32;r:u32;d1:u32;d2:u32;c1:u32;c2:u32,GPtr<u8>,unported,CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::Constructor,
+0x661DC0,sa-world,seek_entity_xy_offset_ctor,thiscall,,t:GPtr<u8>;e:GPtr<u8>;a:u32;b:u32;r:u32;d1:u32;d2:u32;c1:u32;c2:u32,GPtr<u8>,unported,CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::Constructor,
 0x667A10,sa-ai,goto_has_circled_target,thiscall,,t:GPtr<u8>;ped:GPtr<u8>,u8,unported,CTaskSimpleGoTo::HasCircledTarget,
 0x667AD0,sa-ai,goto_set_up_ik,thiscall,,t:GPtr<u8>;ped:GPtr<u8>,,unported,CTaskSimpleGoTo::SetUpIK,
 0x667CA0,sa-ai,goto_quit_ik,thiscall,,t:GPtr<u8>;ped:GPtr<u8>,,unported,CTaskSimpleGoTo::QuitIK,
@@ -2300,7 +2300,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x50E6D0,sa-cam,idle_cam_init_call,thiscall,,this:GPtr<u8>,,sa_cam::idlecam::idle_cam_init,CIdleCam::Init,
 0x50EAE0,sa-cam,get_look_at_position_on_target,thiscall,,this:GPtr<u8>;e:GPtr<u8>;out:GPtr<u8>,,sa_cam::idlecam::get_look_at_position_on_target,CIdleCam::GetLookAtPositionOnTarget,
 0x512110,sa-cam,cam_process_wheel_cam,thiscall,,c:GPtr<u8>;t:GPtr<u8>;o:u32;sv:u32;svw:u32,u8,sa_cam::cammodes::process_wheel_cam,CCam::Process_WheelCam,
-0x5150E0,sa-cam,calculate_derived_values,thiscall,,this:GPtr<u8>;a:u8;b:u8,,sa_cam::camctl::calculate_derived_values_port,CCamera::CalculateDerivedValues,
+0x5150E0,sa-world,calculate_derived_values,thiscall,,this:GPtr<u8>;a:u8;b:u8,,unported,CCamera::CalculateDerivedValues,sa_cam::camctl::calculate_derived_values_port
 0x515200,sa-cam,cc_start_transition,thiscall,,this:GPtr<u8>;mode:u32,,unported,CCamera::StartTransition,
 0x516440,sa-cam,process_vector_track_linear,thiscall,,this:GPtr<u8>,,unported,CCamera::ProcessVectorTrackLinear-wo-ratio,
 0x5164A0,sa-cam,process_vector_move_linear,thiscall,,this:GPtr<u8>,,unported,CCamera::ProcessVectorMoveLinear-wo-ratio,

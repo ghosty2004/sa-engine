@@ -1564,6 +1564,11 @@ orig! {
 }
 
 orig! {
+    /// `CCamera::CalculateDerivedValues` (0x5150E0)
+    pub fn calculate_derived_values(this: GPtr<u8>, a: u8, b: u8) = thiscall 0x5150E0 => unported;
+}
+
+orig! {
     /// `CCam::Process_FollowPed_SA` (0x522D40)
     pub fn cam_follow_ped_sa(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32, b: u32) = thiscall 0x522D40 => unported;
 }
@@ -3794,6 +3799,11 @@ orig! {
 }
 
 orig! {
+    /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::Constructor` (0x661DC0)
+    pub fn seek_entity_xy_offset_ctor(t: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32, r: u32, d1: u32, d2: u32, c1: u32, c2: u32) -> GPtr<u8> = thiscall 0x661DC0 => unported;
+}
+
+orig! {
     /// `CTaskSimpleAchieveHeading::CTaskSimpleAchieveHeading` (0x667E20)
     pub fn achieve_heading_ctor(t: GPtr<u8>, heading: f32, rate: u32, tol: u32) -> GPtr<u8> = thiscall 0x667E20 => unported;
 }
@@ -4631,6 +4641,11 @@ orig! {
 orig! {
     /// `RwFrameSetIdentity` (0x7F10B0)
     pub fn rw_frame_set_identity(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F10B0 => unported;
+}
+
+orig! {
+    /// `RwFrameOrthoNormalize` (0x7F1170)
+    pub fn rw_frame_ortho_normalize(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F1170 => unported;
 }
 
 orig! {

@@ -28,7 +28,7 @@ use sa_core::bindings::rw_matrix_update;
 use sa_rwcore::bindings::rw_raster_destroy;
 use sa_core::bindings::rw_v3d_transform_points;
 use sa_core::bindings::vector_normalise;
-use sa_pop::bindings::rw_frame_ortho_normalize;
+use sa_world::bindings::rw_frame_ortho_normalize;
 use sa_core::bindings::ped_get_bone_position;
 use crate::bindings::rw_im2d_render_indexed_primitive as im2d_render_indexed_primitive;
 use crate::bindings::shadow_camera_set_light;

@@ -1409,11 +1409,6 @@ orig! {
 }
 
 orig! {
-    /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::Constructor` (0x661DC0)
-    pub fn seek_entity_xy_offset_ctor(t: GPtr<u8>, e: GPtr<u8>, a: u32, b: u32, r: u32, d1: u32, d2: u32, c1: u32, c2: u32) -> GPtr<u8> = thiscall 0x661DC0 => unported;
-}
-
-orig! {
     /// `CTaskSimpleGoTo::HasCircledTarget` (0x667A10)
     pub fn goto_has_circled_target(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x667A10 => unported;
 }

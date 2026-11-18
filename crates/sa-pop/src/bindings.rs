@@ -522,8 +522,3 @@ orig! {
     /// `CWeaponEffects::ClearCrossHairImmediately` (0x742CA0)
     pub fn clear_cross_hair_immediately(n: i32) = cdecl 0x742CA0 => unported;
 }
-
-orig! {
-    /// `RwFrameOrthoNormalize` (0x7F1170)
-    pub fn rw_frame_ortho_normalize(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F1170 => unported;
-}

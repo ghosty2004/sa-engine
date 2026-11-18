@@ -74,7 +74,7 @@ use sa_world::bindings::pause_ctor;
 use crate::bindings::ped_is_playing_hand_signal;
 use sa_world::bindings::ped_set_move_anim_speed;
 use crate::bindings::play_hand_signal_anim_ctor_61b2b0 as play_hand_signal_anim_ctor;
-use crate::bindings::seek_entity_xy_offset_ctor;
+use sa_world::bindings::seek_entity_xy_offset_ctor;
 use crate::bindings::should_load_gang_anims;
 use crate::bindings::task_complex_dtor;
 use crate::bindings::task_timer_is_out_of_time;

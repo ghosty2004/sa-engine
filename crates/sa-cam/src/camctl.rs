@@ -70,7 +70,7 @@ pub use sa_core::bindings::matrix_invert_59bdd0 as matrix_invert;
 pub use sa_core::bindings::matrix_update_matrix;
 pub use sa_rwcore::bindings::rw_frame_update_objects;
 pub use sa_core::bindings::rw_matrix_update;
-pub use sa_pop::bindings::rw_frame_ortho_normalize;
+pub use sa_world::bindings::rw_frame_ortho_normalize;
 pub use sa_world::bindings::get_vehicle_appearance;
 pub use sa_world::bindings::placeable_set_matrix;
 pub use sa_world::bindings::vector_ne;

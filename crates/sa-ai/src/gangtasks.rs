@@ -40,7 +40,7 @@ use crate::bindings::partner_ctor_orig;
 use crate::bindings::ped_is_playing_hand_signal;
 use crate::bindings::ped_stop_playing_hand_signal;
 use crate::bindings::play_hand_signal_anim_ctor_61b2b0 as play_hand_signal_anim_ctor;
-use crate::bindings::seek_entity_xy_offset_ctor;
+use sa_world::bindings::seek_entity_xy_offset_ctor;
 use crate::bindings::should_load_gang_anims;
 use sa_pop::bindings::wander_gang_ctor;
 use sa_world::bindings::entity_register_reference;

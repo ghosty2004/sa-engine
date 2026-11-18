@@ -46,7 +46,7 @@ use sa_world::bindings::vehicle_is_on_its_side;
 use sa_world::bindings::vehicle_is_upside_down;
 use crate::bindings::is_task_valid;
 use sa_world::bindings::wanted_set_wanted_level;
-use crate::bindings::seek_entity_xy_offset_ctor as seek_entity_xy_ctor;
+use sa_world::bindings::seek_entity_xy_offset_ctor as seek_entity_xy_ctor;
 orig! {
     /// `CTaskComplexProstituteSolicit::CreateSubTask(int32, CPed*)` (0x666360)
     fn create_sub_task(t: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x666360 => prostitute_solicit_create_sub_task;

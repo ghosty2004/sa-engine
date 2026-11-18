@@ -8,9 +8,10 @@ use sa_core::bindings::{task_new, vector_normalise};
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::fpu::{fcom_ne, lt, st0};
+use sa_world::bindings::seek_entity_xy_offset_ctor;
 
 use crate::bindings::{
-    climb_test_for_climb, membership_count_members, ped_groups_get_peds_group, seek_entity_xy_offset_ctor, stand_still_dtor,
+    climb_test_for_climb, membership_count_members, ped_groups_get_peds_group, stand_still_dtor,
     stand_still_process_ped,
     event_base_dtor, event_group_add, use_gun_ctor,
 };
