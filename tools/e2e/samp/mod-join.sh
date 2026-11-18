@@ -12,6 +12,11 @@
 # By default the mod joins at once (`auto_connect`) and the server is already approved in the host's list
 # (OUT/moddata/sa-engine-host/net.samp). UX=1 goes through the connect screen and the host's approval prompt
 # instead, with scripted keys (Enter on the screen at iteration UX_ENTER, default 400; Y at UX_ENTER + 40).
+# SA:MP's UI files (sampgui.png, mouse.png, sampaux3.ttf from SAMP_CLIENT, default $SA_ROOT/re/samp/client, and the
+# game's gtaweap3.ttf; third-party, never committed) are copied into the samp mod's folder when they exist.
+# EXTRA_CMDS: more server commands after the scripted ones, `;`-separated (`sleep|S` waits), e.g.
+# 'td|~y~textdraw;dialog|1|0|Welcome|Hello;sleep|8'; SA_GAME_KEYS adds scripted keys (`tab:1500:1502`
+# opens the scoreboard).
 # SA_GAME = the sa-game binary (default target/i686-unknown-linux-gnu/release/sa-game), MODS = the built mods
 # (default target/mods). FRAMES (default 1800). Port SAMP_PORT (default 7813).
 # Output: server.log, sa-game.log, report.md, present/*.png (every 20th in-game frame), server-events.txt.
@@ -50,13 +55,17 @@ printf 'ModCJ' > "$OUT/moddata/samp/name"
 printf '1' > "$OUT/moddata/samp/auto_spawn"
 if [ "${UX:-0}" = 1 ]; then
     E="${UX_ENTER:-400}"
-    export SA_GAME_KEYS="enter:$E:$((E + 2)),y:$((E + 40)):$((E + 42))"
+    export SA_GAME_KEYS="enter:$E:$((E + 2)),y:$((E + 40)):$((E + 42))${SA_GAME_KEYS:+,$SA_GAME_KEYS}"
 else
     printf '1' > "$OUT/moddata/samp/auto_connect"
     mkdir -p "$OUT/moddata/sa-engine-host"
     printf 'allow 127.0.0.1:%s\n' "$PORT" > "$OUT/moddata/sa-engine-host/net.samp"
 fi
 cp "$AUTH" "$OUT/moddata/samp/auth_table.txt"
+CLIENT="${SAMP_CLIENT:-$SA_ROOT/re/samp/client}"
+for f in "$CLIENT/sampgui.png" "$CLIENT/mouse.png" "$CLIENT/sampaux3.ttf" "$SA_ROOT/wine/gta-sa/gtaweap3.ttf"; do
+    [ -f "$f" ] && cp "$f" "$MODS/samp/"
+done
 rsync -a --delete --exclude log.txt "$SERVER_SRC/" "$SRV/"
 ( cd "$SRV" && LD_LIBRARY_PATH=qawno ./qawno/pawncc "$HERE/sampcov.pwn" -iqawno/include \
     -ogamemodes/sampcov.amx -d0 > "$OUT/pawncc.log" 2>&1 ) || { cat "$OUT/pawncc.log"; exit 1; }

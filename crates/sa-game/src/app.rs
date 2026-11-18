@@ -553,6 +553,7 @@ fn keys_spec() -> Vec<(Key, u32, Option<u32>)> {
                 "space" => Key::Space,
                 "enter" => Key::Enter,
                 "esc" => Key::Escape,
+                "tab" => Key::Tab,
                 "shift" => Key::ShiftLeft,
                 "ctrl" => Key::ControlLeft,
                 "up" => Key::Up,
