@@ -456,7 +456,7 @@ orig! {
 }
 
 /// The extension of a raster.
-fn ext(r: GPtr<u8>) -> GPtr<u8> {
+pub(crate) fn ext(r: GPtr<u8>) -> GPtr<u8> {
     r.byte_add(g::<i32>(D3D9_RASTER_EXT_OFFSET).read() as isize)
 }
 

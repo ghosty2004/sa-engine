@@ -107,7 +107,7 @@ orig! {
     /// `G->fileFuncs.rwfexist(name)` (G+0xC4)
     fn rw_fexist(name: GPtr<u8>) -> u32 = cdecl table 0xC97B24 0xC4 => unported;
     /// `RwD3D9RasterStreamReadDDS(stream)` (0x81F360)
-    fn rw_d3d9_raster_stream_read_dds(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x81F360 => unported;
+    fn rw_d3d9_raster_stream_read_dds(s: GPtr<u8>) -> GPtr<u8> = cdecl 0x81F360 => crate::dds::raster_stream_read_dds;
 }
 
 /// `RwErrorSet({1, code})` with a code already returned by `_rwerror`.

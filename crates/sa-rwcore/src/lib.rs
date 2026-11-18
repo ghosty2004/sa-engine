@@ -107,3 +107,4 @@ pub mod png_write;
 pub mod matfx_env;
 pub mod matfx_dual;
 pub mod palquant;
+pub mod dds;

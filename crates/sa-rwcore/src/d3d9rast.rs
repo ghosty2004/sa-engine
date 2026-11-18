@@ -73,7 +73,7 @@ orig! {
     /// `IDirect3DDevice9::CreateTexture(w, h, levels, usage, format, pool, out, shared)` (+0x5C)
     pub fn dev_create_texture(d: GPtr<u8>, w: u32, h: u32, levels: u32, usage: u32, f: u32, pool: u32, out: GPtr<u8>, shared: u32) -> i32 = stdcall vslot 0x5C => unported;
     /// `IDirect3DDevice9::CreateCubeTexture(edge, levels, usage, format, pool, out, shared)` (+0x64)
-    fn dev_create_cube_texture(d: GPtr<u8>, edge: u32, levels: u32, usage: u32, f: u32, pool: u32, out: GPtr<u8>, shared: u32) -> i32 = stdcall vslot 0x64 => unported;
+    pub(crate) fn dev_create_cube_texture(d: GPtr<u8>, edge: u32, levels: u32, usage: u32, f: u32, pool: u32, out: GPtr<u8>, shared: u32) -> i32 = stdcall vslot 0x64 => unported;
     /// `IDirect3DDevice9::CreateDepthStencilSurface(w, h, format, ms, quality, discard, out, shared)` (+0x74)
     fn dev_create_depth_stencil_surface(d: GPtr<u8>, w: u32, h: u32, f: u32, ms: u32, q: u32, discard: u32, out: GPtr<u8>, shared: u32) -> i32 = stdcall vslot 0x74 => unported;
 
