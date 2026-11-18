@@ -4734,3 +4734,7 @@
 - verify-all (lanes 6-7, host sa-oracle built from this tree): `lanec16-c2437` (SA_UNVERIFIED=frontier2-c24
   .. frontier2-c37, DLL of d4d17d5f = the code of 52193f63, sha256 fefe154d…) IDENTICAL 13/13 (save-load: save files
   identical except the SAVE-1 residue). Default set: see the last line.
+- Final verify-all, default set (DLL of d4d17d5f, sha256 fefe154d…, the same DLL as `lanec16-c2437`; the commits after
+  it change no code): `lanec16-default` IDENTICAL 13/13 (save-load: save files identical except the SAVE-1 residue).
+  So both sets are IDENTICAL 13/13 on the final code's DLL. Writer gate (base 910ace63) all 16 steps PASS on 52193f63;
+  only docs commits after it.
