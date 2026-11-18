@@ -173,6 +173,7 @@ pub const MODULES: &[&[HookReg]] = &[
     world::frontier_b2b::HOOKS,
     world::frontier_c::HOOKS3,
     world::frontier_b3::HOOKS,
+    world::replay_setup::HOOKS,
     world::frontier_c::HOOKS6,
 ];
 

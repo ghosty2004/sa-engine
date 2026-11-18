@@ -126,3 +126,4 @@ pub mod frontier_c;
 pub mod frontier_b2;
 pub mod frontier_b2b;
 pub mod frontier_b3;
+pub mod replay_setup;

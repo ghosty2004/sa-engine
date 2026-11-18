@@ -16,7 +16,7 @@ use sa_core::bindings::{matrix_mul_vec, ped_is_alive, task_new};
 
 sa_core::orig! {
     /// `CReplay::FindSizeOfPacket(uint8)` (0x45C850)
-    fn replay_find_size_of_packet(ty: u32) -> u32 = cdecl 0x45C850 => crate::generated::replay_generated::g_creplay_find_size_of_packet_45c850;
+    pub(crate) fn replay_find_size_of_packet(ty: u32) -> u32 = cdecl 0x45C850 => crate::generated::replay_generated::g_creplay_find_size_of_packet_45c850;
     /// `CWorld::FindObjectsIntersectingAngledCollisionBoxSectorList(list, box, transform, point, count, maxCount, out)`
     /// (0x565200)
     fn list_scan(list: GPtr<u8>, bx: GPtr<u8>, transform: GPtr<u8>, point: GPtr<u8>, count: GPtr<i16>, max: i16, out: GPtr<GPtr<u8>>) = cdecl 0x565200 => super::protected_world_queries::find_objects_intersecting_angled_collision_box_sector_list;
@@ -194,29 +194,18 @@ pub fn world_find_objects_intersecting_angled_collision_box(bx: GPtr<u8>, transf
        note = "requests and loads models (streaming state)")]
 pub fn replay_stream_all_necessary_cars_and_peds() {
     use sa_core::bindings::{load_all_requested_models, streaming_request_model};
-    for i in 0..8usize {
-        let buf = GPtr::<u8>::from_addr(0x97_FB88 + 100_000 * i);
-        if g::<u8>(0x97_FB7C + i).read() == 0 || rd::<u8>(buf, 0) == 0 {
-            continue;
-        }
-        let mut off = 0isize;
-        loop {
-            let ty = rd::<u8>(buf, off);
-            match ty {
-                1 | 2 => {
-                    streaming_request_model(i32::from(rd::<i16>(buf, off + 0x1A)), 0);
-                }
-                3 => {
-                    streaming_request_model(i32::from(rd::<i16>(buf, off + 2)), 0);
-                }
-                _ => {}
+    super::replay_setup::scan_replay_packets(|p, ty| {
+        match ty {
+            1 | 2 => {
+                streaming_request_model(i32::from(rd::<i16>(p, 0x1A)), 0);
             }
-            off += replay_find_size_of_packet(u32::from(ty)) as isize;
-            if rd::<u8>(buf, off) == 0 {
-                break;
+            3 => {
+                streaming_request_model(i32::from(rd::<i16>(p, 2)), 0);
             }
+            _ => {}
         }
-    }
+        false
+    });
     load_all_requested_models(0);
 }
 
