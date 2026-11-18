@@ -682,7 +682,7 @@ orig! {
     pub fn cam_peds_dead_baby(c: GPtr<u8>) = thiscall 0x519250 => unported;
     pub fn cam_two_player(c: GPtr<u8>) = thiscall 0x525E50 => unported;
     pub fn cam_two_player_in_car_and_shooting(c: GPtr<u8>) = thiscall 0x519810 => unported;
-    pub fn cam_two_player_separate_cars(c: GPtr<u8>) = thiscall 0x513510 => unported;
+    pub fn cam_two_player_separate_cars(c: GPtr<u8>) = thiscall 0x513510 => crate::twoplayer::process_two_player_separate_cars;
     pub fn cam_two_player_separate_cars_top_down(c: GPtr<u8>) = thiscall 0x513BE0 => crate::twoplayer::process_two_player_separate_cars_top_down;
     pub fn cam_arrest_cam_one(c: GPtr<u8>) -> u8 = thiscall 0x518500 => crate::frontier_b4_cam::process_arrest_cam_one;
     pub fn cam_attached_cam(c: GPtr<u8>) = thiscall 0x512B10 => unported;
