@@ -18,6 +18,14 @@
 # 'td|~y~textdraw;dialog|1|0|Welcome|Hello;sleep|8'; SA_GAME_KEYS adds scripted keys (`tab:1500:1502`
 # opens the scoreboard). BOT=1: samp-rs's samp-bot (SAMP_BOT, default samp-rs/target/release/samp-bot) joins as
 # a second, real player once ours spawned and stands at the spawn point, ahead of our player (its nametag).
+# WEB=1: the same join from the browser: the web build with mods (FEATURES=mods tools/web/build.sh) in headless
+# Chromium (tools/web/headless.mjs, WEB_SECONDS, default 150, WEB_GPU its --gpu, default swiftshader), its UDP through
+# sa-udp-proxy (UDP_PROXY, default
+# target/release/sa-udp-proxy, on 127.0.0.1:PROXY_PORT, default 7791) to the server, the page served by
+# tools/web/serve.sh (WEB_PORT, default 8655). The page's storage starts empty: the mod reads its settings and the
+# auth table from files in its served folder (OUT/webmods/samp), and the scripted Y presses answer the game's
+# approval prompt. The server waits 60 s for a silent client (software rendering can hold one frame for seconds).
+# Screenshots in OUT/web/.
 # SA_GAME = the sa-game binary (default target/i686-unknown-linux-gnu/release/sa-game), MODS = the built mods
 # (default target/mods). FRAMES (default 1800). Port SAMP_PORT (default 7813).
 # Output: server.log, sa-game.log, report.md, present/*.png (every 20th in-game frame), server-events.txt.
@@ -39,7 +47,14 @@ SRV="$OUT/server"
 SLOG="$OUT/server.log"
 [ -x "$SERVER_SRC/omp-server" ] || { echo "mod-join: $SERVER_SRC/omp-server missing" >&2; exit 1; }
 [ -f "$AUTH" ] || { echo "mod-join: auth table $AUTH missing" >&2; exit 1; }
-[ -x "$GAME_BIN" ] || { echo "mod-join: $GAME_BIN missing (cargo build --release -p sa-game --features mods --target i686-unknown-linux-gnu)" >&2; exit 1; }
+WEB="${WEB:-0}"
+PROXY_BIN="${UDP_PROXY:-$ROOT/target/release/sa-udp-proxy}"
+if [ "$WEB" = 1 ]; then
+    [ -f "$ROOT/web/pkg/sa_game_bg.wasm" ] || { echo "mod-join: web/pkg missing (FEATURES=mods tools/web/build.sh)" >&2; exit 1; }
+    [ -x "$PROXY_BIN" ] || { echo "mod-join: $PROXY_BIN missing (cargo build --release -p sa-udp-proxy)" >&2; exit 1; }
+else
+    [ -x "$GAME_BIN" ] || { echo "mod-join: $GAME_BIN missing (cargo build --release -p sa-game --features mods --target i686-unknown-linux-gnu)" >&2; exit 1; }
+fi
 [ -f "$MODS/samp/samp.wasm" ] || { echo "mod-join: $MODS/samp/samp.wasm missing (mods/build.sh)" >&2; exit 1; }
 free_kb="$(df -Pk /home | awk 'NR == 2 { print $4 }')"
 [ "$free_kb" -ge $((20 * 1024 * 1024)) ] || { echo "mod-join: less than 20 GB free on /home" >&2; exit 1; }
@@ -70,14 +85,17 @@ done
 rsync -a --delete --exclude log.txt "$SERVER_SRC/" "$SRV/"
 ( cd "$SRV" && LD_LIBRARY_PATH=qawno ./qawno/pawncc "$HERE/sampcov.pwn" -iqawno/include \
     -ogamemodes/sampcov.amx -d0 > "$OUT/pawncc.log" 2>&1 ) || { cat "$OUT/pawncc.log"; exit 1; }
-python3 -I - "$SRV/config.json" "$PORT" << 'PY'
+python3 -I - "$SRV/config.json" "$PORT" "$WEB" << 'PY'
 import json, sys
-p, port = sys.argv[1], int(sys.argv[2])
+p, port, web = sys.argv[1], int(sys.argv[2]), sys.argv[3] == "1"
 d = json.load(open(p))
 d["announce"] = False
 d["max_bots"] = 4
 d["network"]["port"] = port
 d["network"]["bind"] = "127.0.0.1"
+# software rendering in the browser can hold a frame (streaming the spawn area) longer than the default 10 s
+if web:
+    d["network"]["player_timeout"] = 60000
 d["artwork"]["enable"] = False
 d["rcon"]["enable"] = False
 d["pawn"]["main_scripts"] = ["sampcov 1"]
@@ -88,9 +106,11 @@ PY
 SRV_PID=$!
 GAME_PID=
 BOT_PID=
+WEB_PIDS=
 cleanup() {
     [ -n "$GAME_PID" ] && kill "$GAME_PID" 2> /dev/null
     [ -n "$BOT_PID" ] && kill "$BOT_PID" 2> /dev/null
+    for p in $WEB_PIDS; do kill "$p" 2> /dev/null; done
     kill "$SRV_PID" 2> /dev/null
     wait "$SRV_PID" 2> /dev/null || true
 }
@@ -111,12 +131,33 @@ say "server pid $SRV_PID on 127.0.0.1:$PORT"
 
 # The exploration stubs of native-join.sh (render callbacks, skin node, effects, a vehicle's LOD render and sparks).
 STUBS='0x6a6dc0=0/12,0x7331e0=0/0,0x7c7b90=1/0,0x80e270=1/0,0x455720=0/0,0x4f6420=0/2,0x732f30=0/0,0x5d9900=0/0,0x4a2c40=0/4,0x701780=0/0,0x733f80=0/0,0x733240=0/0'
-SA_MOD_DATA="$OUT/moddata" SA_GAME_STUB="${SA_GAME_STUB:-$STUBS}" SA_GAME_SCRIPT_SKIP=1 SA_GAME_PRESENT_GAME=1 \
-    SA_GAME_PRESENT_EVERY="${SA_GAME_PRESENT_EVERY:-20}" \
-    "$GAME_BIN" --game "$SA_ROOT/wine/gta-sa" --frames "$FRAMES" --start-in-world --mods "$MODS/samp" \
-    --present-dir "$OUT/present" --report "$OUT/report.md" > "$OUT/sa-game.log" 2>&1 &
-GAME_PID=$!
-say "sa-game pid $GAME_PID ($FRAMES frames)"
+if [ "$WEB" = 1 ]; then
+    PROXY_PORT="${PROXY_PORT:-7791}"
+    WEB_PORT="${WEB_PORT:-8655}"
+    rm -rf "$OUT/webmods" "$OUT/web"
+    mkdir -p "$OUT/webmods" "$OUT/web"
+    cp -r "$MODS/samp" "$OUT/webmods/samp"
+    cp "$OUT/moddata/samp/"* "$OUT/webmods/samp/"
+    "$PROXY_BIN" "127.0.0.1:$PORT" --bind "127.0.0.1:$PROXY_PORT" > "$OUT/proxy.log" 2>&1 &
+    WEB_PIDS="$!"
+    "$ROOT/tools/web/serve.sh" --port "$WEB_PORT" --game "$SA_ROOT/wine/gta-sa" --mods "$OUT/webmods" \
+        > "$OUT/serve.log" 2>&1 &
+    WEB_PIDS="$WEB_PIDS $!"
+    sleep 2
+    url="http://127.0.0.1:$WEB_PORT/?autostart=1&mods=samp&proxy=ws://127.0.0.1:$PROXY_PORT"
+    node "$ROOT/tools/web/headless.mjs" --url "$url" --out "$OUT/web" --seconds "${WEB_SECONDS:-150}" --every 5 \
+        --gpu "${WEB_GPU:-swiftshader}" \
+        --walk-after 3 --walk "${WEB_WALK:-y:1,x:3,y:1,x:3,y:1,x:45,w:10}" > "$OUT/headless.log" 2>&1 &
+    GAME_PID=$!
+    say "headless Chromium pid $GAME_PID ($url)"
+else
+    SA_MOD_DATA="$OUT/moddata" SA_GAME_STUB="${SA_GAME_STUB:-$STUBS}" SA_GAME_SCRIPT_SKIP=1 SA_GAME_PRESENT_GAME=1 \
+        SA_GAME_PRESENT_EVERY="${SA_GAME_PRESENT_EVERY:-20}" \
+        "$GAME_BIN" --game "$SA_ROOT/wine/gta-sa" --frames "$FRAMES" --start-in-world --mods "$MODS/samp" \
+        --present-dir "$OUT/present" --report "$OUT/report.md" > "$OUT/sa-game.log" 2>&1 &
+    GAME_PID=$!
+    say "sa-game pid $GAME_PID ($FRAMES frames)"
+fi
 
 SEQ=0
 CMDF="$SRV/scriptfiles/sampcov.txt"
@@ -163,7 +204,7 @@ else
     say "FAIL: no spawn"
 fi
 wait "$GAME_PID"
-say "sa-game exit $?"
+say "game exit $?"
 GAME_PID=
 grep -E '\[(join|part|connection)\]|\[cov\] (connect|class|spawn|state|where|npc|[0-9]+ done|disconnect)' "$SLOG" > "$OUT/server-events.txt"
 say "server events: $(wc -l < "$OUT/server-events.txt") lines; PNGs: $(ls "$OUT/present" | wc -l)"

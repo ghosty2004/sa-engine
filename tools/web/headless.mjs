@@ -9,7 +9,8 @@
 //
 // --walk-after S: S seconds after gGameState first reaches IDLE (in game), W goes down for --walk-for seconds; or
 // --walk 'w:20,wa:6,w:10,wd:6,w:20': held key sets and seconds, in order (real key events): W/A/S/D, j or h = left
-// Shift (jump; SA:MP class selection's spawn), p = Space (sprint), n / b = right / left arrow (SA:MP class selection).
+// Shift (jump; SA:MP class selection's spawn), p = Space (sprint), n / b = right / left arrow (SA:MP class selection),
+// y = Y (the game's "allow" answer when a mod asks to reach a server).
 // --enter-every S: presses Enter every S seconds until the game is in IDLE (menus) with real key events.
 // --walk letters l / r: mouse-look left / right while that segment lasts (a real click on the canvas first locks the
 // pointer, then real mouse moves; the page does not pass that click to the game).
@@ -46,7 +47,7 @@ const walkPlan = (arg('walk', '') || `w:${walkFor}`).split(',').map((x) => {
 const walkTotal = walkPlan.reduce((a, p) => a + p.secs, 0);
 const lookPx = Number(arg('look-px', '40'));
 // w a s d; j / h = left Shift (jump, SA:MP spawn), p = Space (sprint), n / b = right / left arrow
-const KEYS = { w: ['KeyW', 'w', 87], a: ['KeyA', 'a', 65], s: ['KeyS', 's', 83], d: ['KeyD', 'd', 68], j: ['ShiftLeft', 'Shift', 16], h: ['ShiftLeft', 'Shift', 16], p: ['Space', ' ', 32], n: ['ArrowRight', 'ArrowRight', 39], b: ['ArrowLeft', 'ArrowLeft', 37] };
+const KEYS = { w: ['KeyW', 'w', 87], a: ['KeyA', 'a', 65], s: ['KeyS', 's', 83], d: ['KeyD', 'd', 68], j: ['ShiftLeft', 'Shift', 16], h: ['ShiftLeft', 'Shift', 16], p: ['Space', ' ', 32], n: ['ArrowRight', 'ArrowRight', 39], b: ['ArrowLeft', 'ArrowLeft', 37], y: ['KeyY', 'y', 89] };
 const pointerPlan = (arg('pointer', '') || '').split(',').filter(Boolean).map((x) => {
   const [secs, px, py, click] = x.split(':');
   return { secs: Number(secs), x: Number(px), y: Number(py), click: click === 'click', done: false };

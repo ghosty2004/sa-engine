@@ -8,11 +8,6 @@ every file). The game files never leave this machine: the server refuses any non
 With --mods DIR (MOD-2), the mod folders in DIR (each with mod.toml and its .wasm, from mods/build.sh or
 examples/mods/build.sh) are served under /mods/ for the page's ?mods=NAME,... (sa-game built with FEATURES=mods).
 
-With --samp-dir DIR (the files of a SA:MP client install: samp.saa, sampgui.png, mouse.png, ...), those files are
-overlaid on the game folder: listed in /game-index.json and served under /game/ like the game's own files (a file
-of the game folder wins; DLLs are left out), so the page's file layer finds them where the native build looks for
-them (the game folder).
-
 Every file of /game-index.json carries its mtime: the page's persistent cache (RENDER-2 R2a, web/loader.js) keys its
 blocks by path, size and mtime, so a changed file is fetched again.
 
@@ -41,27 +36,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 WEB = os.path.join(ROOT, "web")
 
 
-def game_index(game, skip_dll=False):
+def game_index(game):
     out = []
     for d, _, files in os.walk(game):
         for f in files:
-            if skip_dll and f.lower().endswith(".dll"):
-                continue
             p = os.path.join(d, f)
             rel = os.path.relpath(p, game).replace(os.sep, "/")
             st = os.stat(p)
             out.append({"path": rel, "size": st.st_size, "mtime": int(st.st_mtime)})
-    out.sort(key=lambda e: e["path"])
-    return out
-
-
-def merged_index(game, samp):
-    """The game folder's index plus the SA:MP files it does not have (case-insensitive paths)."""
-    idx = game_index(game) if game else []
-    have = {e["path"].lower() for e in idx}
-    extra = [e for e in game_index(samp, skip_dll=True) if e["path"].lower() not in have]
-    Handler.samp_files = {e["path"] for e in extra}
-    out = idx + extra
     out.sort(key=lambda e: e["path"])
     return out
 
@@ -91,9 +73,6 @@ class Handler(SimpleHTTPRequestHandler):
     web = WEB
     game = None
     index = b"[]"
-    samp_auth = None
-    samp_dir = None
-    samp_files = set()
     mods = None
 
     def __init__(self, *a, **kw):
@@ -123,18 +102,6 @@ class Handler(SimpleHTTPRequestHandler):
             body = Handler.index
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
-            return
-        if url.path == "/samp-auth.txt":
-            if Handler.samp_auth is None:
-                self.send_error(404, "no --samp-auth file")
-                return
-            with open(Handler.samp_auth, "rb") as f:
-                body = f.read()
-            self.send_response(200)
-            self.send_header("Content-Type", "text/plain")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
@@ -172,8 +139,7 @@ class Handler(SimpleHTTPRequestHandler):
         if rel.startswith("..") or rel.startswith("/"):
             self.send_error(403)
             return
-        base = Handler.samp_dir if rel in Handler.samp_files else Handler.game
-        path = os.path.join(base, *rel.split("/"))
+        path = os.path.join(Handler.game, *rel.split("/"))
         if not os.path.isfile(path):
             self.send_error(404)
             return
@@ -216,8 +182,6 @@ def main():
     ap.add_argument("--port", type=int, default=8642)
     ap.add_argument("--bind", default="127.0.0.1")
     ap.add_argument("--game", help="your GTA San Andreas folder (served to this machine only)")
-    ap.add_argument("--samp-dir", help="a SA:MP client folder (samp.saa, sampgui.png, mouse.png) overlaid on the game folder")
-    ap.add_argument("--samp-auth", help="the SA:MP auth table (third-party data, served to this machine only as /samp-auth.txt)")
     ap.add_argument("--mods", help="a folder of mod folders (MOD-2), served under /mods/ for the page's ?mods=NAME,...")
     ap.add_argument("--web", help="serve this directory instead of web/ (a saved build of the page)")
     ap.add_argument("--throttle-rtt", type=float, default=0, help="milliseconds each /game/ request waits (slow link)")
@@ -234,17 +198,6 @@ def main():
             sys.exit(f"serve.py: {a.game} has no models/gta3.img (not a GTA San Andreas folder)")
         Handler.game = os.path.abspath(a.game)
         Handler.index = json.dumps(game_index(Handler.game)).encode()
-    if a.samp_dir:
-        if not a.game:
-            sys.exit("serve.py: --samp-dir needs --game")
-        if not os.path.isfile(os.path.join(a.samp_dir, "samp.saa")):
-            sys.exit(f"serve.py: {a.samp_dir} has no samp.saa")
-        Handler.samp_dir = os.path.abspath(a.samp_dir)
-        Handler.index = json.dumps(merged_index(Handler.game, Handler.samp_dir)).encode()
-    if a.samp_auth:
-        if not os.path.isfile(a.samp_auth):
-            sys.exit(f"serve.py: {a.samp_auth} does not exist")
-        Handler.samp_auth = os.path.abspath(a.samp_auth)
     if a.mods:
         if not os.path.isdir(a.mods):
             sys.exit(f"serve.py: --mods {a.mods} is not a folder")
