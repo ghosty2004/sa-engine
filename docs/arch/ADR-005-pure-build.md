@@ -87,6 +87,14 @@ generator, shared `tools/lib/exe.py`, `--check` in the writer gate; generated ou
 - the **import table** and the **call-site table** (§3.3) in their own modules. The code constants of §3.4 do not go
   here: they belong to the ports that read them.
 
+As built (PURE-1b, 2026-11-18): the bytes are one committed blob, `crates/sa-image/image.bin` (566,667 bytes: 2,243
+runs at their addresses, every zero stretch of 16 bytes or more left out) behind `include_bytes!`, with the runs, the
+import table and the call-site table as generated Rust tables (`src/generated.rs`, 56 KB) and small accessors. The
+typing above is not done in the image itself: the blob compiles in well under a second and keeps the byte-for-byte
+equality trivial, and typed declarations belong to the owners the objects move to in PURE-2 (§3.6), not to a second
+copy here. The image source without `--image` is `exe` when the game folder has gta_sa.exe and `builtin` otherwise;
+the web build is always `builtin`.
+
 `arena::map` gets an image source: `builtin` (default once PURE-1e lands), `exe` (today's path, kept for checks and for
 anyone who wants the original bytes), `check` (both: fills from the built-in image, compares it byte for byte with the
 exe's sections over the whole initialised range and reports every non-zero exe byte the image lacks, by object and

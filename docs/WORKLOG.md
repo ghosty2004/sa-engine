@@ -4612,3 +4612,41 @@
   after it change no code): `lanec15-default` IDENTICAL 13/13 (save-load: save files identical except the SAVE-1
   residue). So both sets are IDENTICAL 13/13 on the final code's DLL. Writer gate (base 64c1331d) all 16 steps PASS
   on 47bc26d5; only docs commits after it.
+
+## 2026-11-18 — PURE-1b..1e: the first sa-game without gta_sa.exe (agent, branch worktree-agent-aafa180b4489b4e23)
+- ADR-005 accepted (user, 2026-11-18); CLAUDE.md's Rockstar-files rule now names its one exception: the sa-image
+  tables generated from the exe's data sections and the ports' few code-byte constants are committed, nothing else
+  derived from the exe; the repository stays private.
+- 1d (`refactor(ports)`): the 66 code dwords read as data are constants next to their readers: switch byte tables
+  0x4382E4 (sa-pop `MISSION_WITHOUT_TARGET`), 0x4B3F3C (sa-ai `DEATH_ANIM_WEAPON_CLASS`), 0x4F4F48 / 0x4DADAC /
+  0x4E1C7C / 0x501640 / 0x4F7998 (sa-audio jump-table index tables); protection values 0x1000 (sa-veh
+  RemoveCarSitAnim), 0xB6B99C and 1.0f (sa-audio). Unit tests compare each with the exe (`sa_testkit::
+  check_image_bytes` / `image_u32`, skipped without it). The static protection reads in `globals!` at code addresses
+  (sa-core platform / pools / video, sa-stream txdstore) were already Rust storage with their values.
+- 1b (`feat(sa-image)`): `tools/gen/image_rs.py` writes `crates/sa-image/image.bin` (566,667 bytes: the arena's
+  initialised bytes in 2,243 runs, zero stretches >= 16 bytes left out; 641,024 raw / 455,453 non-zero) and
+  `src/generated.rs` (56 KB: runs, 214 imports, 69 call sites). Encoding: a committed blob behind `include_bytes!`
+  plus typed accessors, not typed Rust literals (ADR-005 §3.2 "as built"): sa-image compiles in 0.33 s (rustc max
+  RSS 126 MB), so there is no build-cost concern. `--check` is in the writer gate's `gen` step (regenerates and
+  compares with the exe; without it checks only that every `site` declaration has a call-site entry).
+- 1b + 1c (`feat(sa-game)`): `--image exe|builtin|check`; imports (IAT traps) and `orig!` `site` resolution come
+  from sa-image in every mode, the `.text` copy is gone; builtin / check map no code section (exe still maps `.text`
+  / `.HOODLUM` read-only as a fallback); check compares the whole arena (4,558,848 bytes), the import table and
+  every call site with the exe and refuses to start on a difference. Unit test: the built-in image equals the exe.
+- 1e (`feat(sa-game)`): natively the default is exe when the game folder has gta_sa.exe, else builtin; the SHA-256
+  check only applies to a read exe. Web: always builtin; the page asks for models/gta3.img, drops gta_sa.exe from
+  the file list (not read, not copied), the loader's start-up guess no longer lists it, serve.py --game checks
+  models/gta3.img. README, web/README.md, platform.md §6 / §8 updated.
+- Verification: 31 FRONTIER scenarios (`--fixed-step 40`, offscreen), `--image exe` from the user's folder against
+  the default from a symlinked copy of that folder without gta_sa.exe (= builtin): 30 reports identical apart from
+  the frame-pacing line, every run rc 0, 0 crashes; postfx differs, and differs as much between two exe runs
+  (QueryPerformanceCounter / CreateSoundBuffer counts: not deterministic on its own). `--image check` on pausemenu:
+  identical (arena, 214 imports, 69 call sites); pausemenu reports identical across exe / builtin / check.
+- Web: tools/web/build.sh (wasm 32.5 MB), serve.py --game on the folder without gta_sa.exe (not in game-index.json),
+  headless Chromium: boots from the built-in image, Enter through the menus, gGameState IDLE at 93 s, CJ walks
+  in Grove Street, 0 blocked.
+- verify-all (phase A, untouched) at 85b1e60c, lanes 1-3: IDENTICAL 13/13 (tag pure1-85b1e60c).
+- Writer gate (base 5288e1b2): all 17 steps PASS (gen includes image_rs --check); queue regenerated (line numbers moved).
+- Cost: ~3 h; builds i686 sa-game, wasm, sa-oracle, the hook DLL; 63 scenario runs (7-120 s), 2 web runs.
+- Remains: PURE-1f (third-party paths), PURE-2 (ownership / trimming of the image; typed declarations go to the
+  owners then), the default image source (exe when present) could become builtin everywhere once the user agrees.
