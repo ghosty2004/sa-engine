@@ -4,8 +4,10 @@
 
 use std::rc::Rc;
 
-use sa_mod_api::{Call, IMPORTS, MAX_FILE, Permission, VIDEO_MODE_MAX, VIDEO_MODE_MIN, Val, status, valid_file_name};
+use sa_mod_api::state::{CameraInfo, PedInfo, PlayerInfo, VehicleInfo, Words, WorldInfo, to_bytes};
+use sa_mod_api::{Call, IMPORTS, MAX_FILE, Permission, VIDEO_MODE_MAX, VIDEO_MODE_MIN, Val, event, hook, status, valid_file_name};
 use sa_platform::gpu::OverlayRect;
+use sa_samp_api::{GameAdapter, PedRef, VehicleRef};
 
 use crate::ModSource;
 use crate::manifest::Permissions;
@@ -47,6 +49,44 @@ impl std::fmt::Debug for Files {
     }
 }
 
+/// The game, read through the SA:MP game adapter (the engine's `sa-samp` backend; a fake in tests).
+#[derive(Clone)]
+pub struct Game(pub Rc<dyn GameAdapter>);
+
+impl std::fmt::Debug for Game {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Game")
+    }
+}
+
+/// The game functions mods can hook: the engine's hook registry.
+pub trait HookRegistry {
+    /// The function named `name` (as the registry names it), as an id the host passes back in
+    /// [`HookRegistry::watch`] and receives in `Host::hook`.
+    fn resolve(&self, name: &str) -> Option<u32>;
+    /// Starts or stops reporting the calls of `target`.
+    fn watch(&self, target: u32, on: bool);
+}
+
+/// The engine's hook registry, as the host holds it.
+#[derive(Clone)]
+pub struct Registry(pub Rc<dyn HookRegistry>);
+
+impl std::fmt::Debug for Registry {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Registry")
+    }
+}
+
+/// The hooked call `sa_hook` runs for.
+#[derive(Clone, Debug, PartialEq)]
+pub struct HookCall {
+    /// Its arguments (at most [`hook::MAX_ARGS`]).
+    pub args: Vec<hook::Value>,
+    /// Its result (after the call, of a function that returns one).
+    pub result: Option<hook::Value>,
+}
+
 /// What a call may do and what it produced.
 #[derive(Debug, Default)]
 pub struct CallCtx {
@@ -66,6 +106,72 @@ pub struct CallCtx {
     pub logs: Vec<(i32, String)>,
     /// The video mode the call requested (the last request).
     pub video: Option<VideoRequest>,
+    /// The game (`None`: no state queries, e.g. before the game exists).
+    pub game: Option<Game>,
+    /// The hook registry (`None`: nothing can be hooked).
+    pub registry: Option<Registry>,
+    /// The functions the manifest lets the mod hook.
+    pub hook_names: Rc<[String]>,
+    /// The id the mod's next hook gets (its number of hooks so far).
+    pub hook_base: usize,
+    /// The hooks the call subscribed to: (registry id, phases).
+    pub subscribed: Vec<(u32, i32)>,
+    /// The event mask the call subscribed to.
+    pub events: Option<i32>,
+    /// The hooked call of an `sa_hook` call.
+    pub hook_call: Option<HookCall>,
+}
+
+impl CallCtx {
+    /// Whether the permissions grant `p`.
+    fn grants(&self, p: Permission) -> bool {
+        match p {
+            Permission::None => true,
+            Permission::Render => self.permissions.render,
+            Permission::Files => self.permissions.files && self.files.is_some(),
+            Permission::State => self.permissions.state,
+            Permission::Input => self.permissions.input,
+            Permission::Hooks => self.permissions.hooks,
+        }
+    }
+
+    /// The events the permissions allow, as a mask.
+    pub fn allowed_events(&self) -> i32 {
+        (0..event::COUNT).filter(|&k| self.grants(event::permission(k))).fold(0, |m, k| m | 1 << k)
+    }
+}
+
+/// Writes `record` into the buffer (`ptr`, `len` bytes): its size, or `BAD_ARG`.
+fn write_record<T: Words>(mem: &mut dyn Mem, ptr: i32, len: i32, record: &T) -> i32 {
+    let bytes = to_bytes(record);
+    if ptr < 0 || len < 0 || (len as usize) < bytes.len() || !mem.write(ptr as u32, &bytes) {
+        return status::BAD_ARG;
+    }
+    bytes.len() as i32
+}
+
+/// Writes the handles into the buffer, as many as fit: their number, or `BAD_ARG`.
+fn write_handles(mem: &mut dyn Mem, ptr: i32, len: i32, handles: impl ExactSizeIterator<Item = u32>) -> i32 {
+    if ptr < 0 || len < 0 {
+        return status::BAD_ARG;
+    }
+    let n = handles.len();
+    let bytes: Vec<u8> = handles.take(len as usize / 4).flat_map(u32::to_le_bytes).collect();
+    if !mem.write(ptr as u32, &bytes) {
+        return status::BAD_ARG;
+    }
+    n.min(i32::MAX as usize) as i32
+}
+
+/// The local player as `player_info` reports it.
+pub fn player_info(game: &dyn GameAdapter) -> PlayerInfo {
+    let handle = game.local_player();
+    PlayerInfo {
+        handle,
+        money: game.player_money(),
+        wanted: game.wanted_level().unwrap_or(0),
+        ped: handle.and_then(|p| game.ped_snapshot(p).ok()).map(|s| PedInfo::from(&s)).unwrap_or_default(),
+    }
 }
 
 /// The mod's linear memory, as the host functions see it.
@@ -113,14 +219,11 @@ fn file_name(mem: &dyn Mem, ptr: i32, len: i32) -> Option<String> {
 /// interface: the module checks make it unreachable); everything a mod can get wrong is a negative status.
 pub fn dispatch(ctx: &mut CallCtx, mem: &mut dyn Mem, index: usize, args: &[Val]) -> Result<i32, String> {
     let call = Call::decode(index, args).ok_or_else(|| format!("import {index} called with {args:?}"))?;
-    let granted = match IMPORTS[index].permission {
-        Permission::None => true,
-        Permission::Render => ctx.permissions.render,
-        Permission::Files => ctx.permissions.files && ctx.files.is_some(),
-    };
-    if !granted {
+    if !ctx.grants(IMPORTS[index].permission) {
         return Ok(status::DENIED);
     }
+    let game = ctx.game.clone();
+    let game = game.as_ref().map(|g| &*g.0);
     let mode = |ctx: &CallCtx, index: i32| -> Option<(u32, u32)> {
         match index {
             -1 => Some(ctx.display.desktop),
@@ -202,6 +305,84 @@ pub fn dispatch(ctx: &mut CallCtx, mem: &mut dyn Mem, index: usize, args: &[Val]
                 }
             }
         }
+        Call::events_subscribe { mask } => {
+            let granted = mask & ctx.allowed_events();
+            ctx.events = Some(granted);
+            granted
+        }
+        Call::game_state {} => game.map_or(status::NOT_FOUND, |g| g.game_state().raw()),
+        Call::player_info { buf_ptr, buf_len } => {
+            let Some(g) = game else { return Ok(status::NOT_FOUND) };
+            write_record(mem, buf_ptr, buf_len, &player_info(g))
+        }
+        Call::ped_info { handle, buf_ptr, buf_len } => {
+            let Some(s) = game.and_then(|g| g.ped_snapshot(PedRef(handle as u32)).ok()) else {
+                return Ok(status::NOT_FOUND);
+            };
+            write_record(mem, buf_ptr, buf_len, &PedInfo::from(&s))
+        }
+        Call::vehicle_info { handle, buf_ptr, buf_len } => {
+            let Some(s) = game.and_then(|g| g.vehicle_snapshot(VehicleRef(handle as u32)).ok()) else {
+                return Ok(status::NOT_FOUND);
+            };
+            write_record(mem, buf_ptr, buf_len, &VehicleInfo::from(&s))
+        }
+        Call::world_info { buf_ptr, buf_len } => {
+            let Some(g) = game else { return Ok(status::NOT_FOUND) };
+            let w = WorldInfo::new(
+                g.game_state(),
+                g.game_time_ms(),
+                g.time_step(),
+                g.clock(),
+                g.weather(),
+                g.area_raw(),
+                g.gravity(),
+            );
+            write_record(mem, buf_ptr, buf_len, &w)
+        }
+        Call::camera_info { buf_ptr, buf_len } => {
+            let Some(g) = game else { return Ok(status::NOT_FOUND) };
+            write_record(mem, buf_ptr, buf_len, &CameraInfo::from(&g.camera()))
+        }
+        Call::ped_list { buf_ptr, buf_len } => {
+            let peds = game.map(|g| g.peds()).unwrap_or_default();
+            write_handles(mem, buf_ptr, buf_len, peds.into_iter().map(|p| p.0))
+        }
+        Call::vehicle_list { buf_ptr, buf_len } => {
+            let vehicles = game.map(|g| g.vehicles()).unwrap_or_default();
+            write_handles(mem, buf_ptr, buf_len, vehicles.into_iter().map(|v| v.0))
+        }
+        Call::key_down { vk } => match u16::try_from(vk) {
+            Ok(vk) if vk <= 0xFF => game.is_some_and(|g| g.key_held(vk)) as i32,
+            _ => status::BAD_ARG,
+        },
+        Call::hook_subscribe { name_ptr, name_len, phases } => {
+            let Some(name) = text(mem, name_ptr, name_len) else { return Ok(status::BAD_ARG) };
+            if !ctx.hook_names.contains(&name) {
+                return Ok(status::DENIED);
+            }
+            let phases = phases & (hook::BEFORE | hook::AFTER);
+            if phases == 0 {
+                return Ok(status::BAD_ARG);
+            }
+            let Some(target) = ctx.registry.as_ref().and_then(|r| r.0.resolve(&name)) else {
+                return Ok(status::NOT_FOUND);
+            };
+            let id = ctx.hook_base + ctx.subscribed.len();
+            ctx.subscribed.push((target, phases));
+            id.min(i32::MAX as usize) as i32
+        }
+        Call::hook_arg_count {} => ctx.hook_call.as_ref().map_or(status::BAD_ARG, |c| c.args.len() as i32),
+        Call::hook_value { index, out_ptr } => {
+            let Some(c) = &ctx.hook_call else { return Ok(status::BAD_ARG) };
+            let v = if index == -1 { c.result } else { usize::try_from(index).ok().and_then(|i| c.args.get(i).copied()) };
+            let Some(v) = v else { return Ok(status::NOT_FOUND) };
+            let (kind, word) = v.encode();
+            if out_ptr < 0 || !mem.write(out_ptr as u32, &word.to_le_bytes()) {
+                return Ok(status::BAD_ARG);
+            }
+            kind
+        }
     })
 }
 
@@ -249,7 +430,7 @@ mod tests {
         let mut data = *b"hi\xFF";
         let m = &mut SliceMem(&mut data);
         let mut ctx = CallCtx {
-            permissions: Permissions { render: true, files: false },
+            permissions: Permissions { render: true, ..Default::default() },
             screen: (640, 480),
             overlay: true,
             ..Default::default()
@@ -300,7 +481,7 @@ mod tests {
         let i = |n| import_index(n).unwrap();
         // no permissions
         assert_eq!(dispatch(&mut ctx, m, i("display_mode_count"), &[]), Ok(status::DENIED));
-        ctx.permissions = Permissions { render: true, files: true };
+        ctx.permissions = Permissions { render: true, files: true, ..Default::default() };
         assert_eq!(dispatch(&mut ctx, m, i("display_mode_count"), &[]), Ok(2));
         assert_eq!(dispatch(&mut ctx, m, i("display_mode_width"), &[Val::I32(-1)]), Ok(1920));
         assert_eq!(dispatch(&mut ctx, m, i("display_mode_height"), &[Val::I32(0)]), Ok(600));
@@ -339,5 +520,59 @@ mod tests {
         let mut q = Vec::new();
         text_rects(0.0, 0.0, 8.0, 0, "?", &mut q);
         assert_eq!(out, q);
+    }
+
+    #[test]
+    fn state_queries() {
+        use sa_mod_api::state::from_bytes;
+        use sa_samp::fake;
+        let mut g = fake::game();
+        fake::set_game_state(&mut g, 9);
+        fake::set_local_player(&mut g, 75.0, [10.0, -20.0, 5.5]);
+        let mut data = vec![0u8; 512];
+        let m = &mut SliceMem(&mut data);
+        let mut ctx = CallCtx { game: Some(Game(Rc::new(g))), ..Default::default() };
+        let i = |n| import_index(n).unwrap();
+        let buf = |len| [Val::I32(64), Val::I32(len)];
+        assert_eq!(dispatch(&mut ctx, m, i("player_info"), &buf(400)), Ok(status::DENIED));
+        assert_eq!(dispatch(&mut ctx, m, i("key_down"), &[Val::I32(0x41)]), Ok(status::DENIED));
+        ctx.permissions.state = true;
+        assert_eq!(dispatch(&mut ctx, m, i("game_state"), &[]), Ok(9));
+        let n = 4 * PlayerInfo::WORDS as i32;
+        assert_eq!(dispatch(&mut ctx, m, i("player_info"), &buf(n - 1)), Ok(status::BAD_ARG));
+        assert_eq!(dispatch(&mut ctx, m, i("player_info"), &buf(400)), Ok(n));
+        let p: PlayerInfo = from_bytes(&m.0[64..]).unwrap();
+        assert_eq!(p.handle, Some(PedRef(0x205)));
+        assert_eq!((p.ped.health, p.ped.pos.x, p.ped.pos.z), (75.0, 10.0, 5.5));
+        let ped = [Val::I32(0x205), Val::I32(64), Val::I32(400)];
+        assert_eq!(dispatch(&mut ctx, m, i("ped_info"), &ped), Ok(4 * PedInfo::WORDS as i32));
+        let stale = [Val::I32(0x206), Val::I32(64), Val::I32(400)];
+        assert_eq!(dispatch(&mut ctx, m, i("ped_info"), &stale), Ok(status::NOT_FOUND));
+        assert_eq!(dispatch(&mut ctx, m, i("vehicle_info"), &stale), Ok(status::NOT_FOUND));
+        // one ped, a buffer for none: the count all the same
+        assert_eq!(dispatch(&mut ctx, m, i("ped_list"), &buf(0)), Ok(1));
+        assert_eq!(dispatch(&mut ctx, m, i("vehicle_list"), &buf(64)), Ok(0));
+        assert_eq!(dispatch(&mut ctx, m, i("world_info"), &buf(400)), Ok(4 * WorldInfo::WORDS as i32));
+        assert_eq!(dispatch(&mut ctx, m, i("camera_info"), &buf(400)), Ok(4 * CameraInfo::WORDS as i32));
+        ctx.permissions.input = true;
+        assert_eq!(dispatch(&mut ctx, m, i("key_down"), &[Val::I32(0x41)]), Ok(0));
+        assert_eq!(dispatch(&mut ctx, m, i("key_down"), &[Val::I32(256)]), Ok(status::BAD_ARG));
+        // events: only those the permissions allow
+        let granted = dispatch(&mut ctx, m, i("events_subscribe"), &[Val::I32(-1)]).unwrap();
+        assert_eq!(granted, (1 << event::COUNT) - 1);
+        ctx.permissions = Permissions::default();
+        let granted = dispatch(&mut ctx, m, i("events_subscribe"), &[Val::I32(-1)]).unwrap();
+        assert_eq!(granted, (1 << event::FRAME_BEGIN) | (1 << event::FRAME_END));
+        assert_eq!(ctx.events, Some(granted));
+        // hook values only inside sa_hook
+        ctx.permissions.hooks = true;
+        assert_eq!(dispatch(&mut ctx, m, i("hook_arg_count"), &[]), Ok(status::BAD_ARG));
+        ctx.hook_call = Some(HookCall { args: vec![hook::Value::Float(1.5)], result: Some(hook::Value::Int(-4)) });
+        assert_eq!(dispatch(&mut ctx, m, i("hook_arg_count"), &[]), Ok(1));
+        assert_eq!(dispatch(&mut ctx, m, i("hook_value"), &[Val::I32(0), Val::I32(8)]), Ok(1));
+        assert_eq!(&m.0[8..12], &1.5f32.to_le_bytes());
+        assert_eq!(dispatch(&mut ctx, m, i("hook_value"), &[Val::I32(-1), Val::I32(8)]), Ok(0));
+        assert_eq!(&m.0[8..12], &(-4i32).to_le_bytes());
+        assert_eq!(dispatch(&mut ctx, m, i("hook_value"), &[Val::I32(1), Val::I32(8)]), Ok(status::NOT_FOUND));
     }
 }

@@ -8,7 +8,9 @@ The order is the one the code has (measured 2026-11-14): `sa-pop` sits below `sa
 LAYERS = [
     # leaves: no engine dependency
     ['sa-macros', 'sa-math', 'sa-platform', 'sa-oracle-format', 'sa-samp-api', 'sa-net',
-     'sa-launcher', 'sa-udp-proxy', 'sa-mod-api'],
+     'sa-launcher', 'sa-udp-proxy'],
+    # the mod API's interface definition, in the game adapter's types
+    ['sa-mod-api'],
     # sa-mod: the mod SDK (MOD-2), linked by mods, not by the game
     ['sa-core', 'sa-mod'],
     ['sa-rwcore', 'sa-stream', 'sa-input', 'sa-anim', 'sa-testkit'],

@@ -10,8 +10,11 @@
 //!
 //! [permissions]
 //! render = true              # overlays, display modes, the video mode
-//! files = "own"              # the mod's own files (API 1.1); the other keys of ADR-004 §3.3 are known but not
-//!                            # granted yet
+//! files = "own"              # the mod's own files (API 1.1)
+//! state = "read"             # game state queries and game events (API 1.2)
+//! input = "read"             # key state and key events (API 1.2)
+//! hooks = ["CPed::Render"]   # before / after hooks on these game functions (API 1.2); the other keys of
+//!                            # ADR-004 §3.3 are known but not granted yet
 //!
 //! [limits]                   # optional; clamped to the host's maxima
 //! memory_mib = 16            # linear memory cap
@@ -27,6 +30,12 @@ pub struct Permissions {
     pub render: bool,
     /// `files = "own"`: the mod's own files.
     pub files: bool,
+    /// `state = "read"`: game state queries and game events.
+    pub state: bool,
+    /// `input = "read"`: key state and key events.
+    pub input: bool,
+    /// `hooks = [...]` names at least one function ([`Manifest::hooks`]).
+    pub hooks: bool,
 }
 
 /// A mod's budgets.
@@ -70,6 +79,8 @@ pub struct Manifest {
     pub entry: String,
     /// What it asked for and was granted.
     pub permissions: Permissions,
+    /// The game functions it may hook (`hooks = [...]`), by their names in the hook registry.
+    pub hooks: Vec<String>,
     /// Its budgets.
     pub limits: Limits,
 }
@@ -120,6 +131,7 @@ pub fn parse(text: &str) -> Result<(Manifest, Vec<String>), String> {
         }
     }
     let mut permissions = Permissions::default();
+    let mut hooks = Vec::new();
     if let Some(p) = root.get("permissions") {
         let Value::Table(p) = p else { return Err("mod.toml: [permissions] is not a table".into()) };
         for (k, v) in p {
@@ -133,9 +145,35 @@ pub fn parse(text: &str) -> Result<(Manifest, Vec<String>), String> {
                     _ => return Err(format!("mod.toml: permissions.render: expected true or false, got {v:?}")),
                 },
                 "files" if matches!(v, Value::String(s) if s == "own") => permissions.files = true,
-                "input" | "ui" | "state" | "hooks" | "entities" | "net" | "files" => {
+                "state" | "input" if !nothing => {
+                    let Value::String(level) = v else {
+                        return Err(format!("mod.toml: permissions.{k}: expected a string, got {v:?}"));
+                    };
+                    let granted = if k == "state" { &mut permissions.state } else { &mut permissions.input };
+                    match level.as_str() {
+                        "read" => *granted = true,
+                        "write" | "capture" => {
+                            *granted = true;
+                            warnings.push(format!("permission {k} = {level:?}: only \"read\" is available in API 1.2"));
+                        }
+                        _ => return Err(format!("mod.toml: permissions.{k}: expected \"none\" or \"read\", got {level:?}")),
+                    }
+                }
+                "hooks" => {
+                    let Value::Array(names) = v else {
+                        return Err(format!("mod.toml: permissions.hooks: expected a list of function names, got {v:?}"));
+                    };
+                    for n in names {
+                        let Value::String(n) = n else {
+                            return Err(format!("mod.toml: permissions.hooks: expected function names, got {n:?}"));
+                        };
+                        hooks.push(n.clone());
+                    }
+                    permissions.hooks = !hooks.is_empty();
+                }
+                "state" | "input" | "ui" | "entities" | "net" | "files" => {
                     if !nothing {
-                        warnings.push(format!("permission {k} = {v:?}: not available in API 1.1, not granted"));
+                        warnings.push(format!("permission {k} = {v:?}: not available in API 1.2, not granted"));
                     }
                 }
                 _ => warnings.push(format!("[permissions] {k}: unknown permission, ignored")),
@@ -176,6 +214,7 @@ pub fn parse(text: &str) -> Result<(Manifest, Vec<String>), String> {
             api,
             entry,
             permissions,
+            hooks,
             limits,
         },
         warnings,
@@ -199,6 +238,22 @@ mod tests {
         assert!(m.permissions.render);
         assert_eq!(m.limits.memory_bytes, MAX_MEMORY_MIB << 20);
         assert_eq!(w.len(), 2, "{w:?}");
+    }
+
+    #[test]
+    fn level_two_permissions() {
+        let (m, w) = parse(
+            "[mod]\nid = \"t\"\napi_version = \"1.2\"\n\
+             [permissions]\nstate = \"read\"\ninput = \"capture\"\nhooks = [\"CPed::Render\"]\n",
+        )
+        .unwrap();
+        assert!(m.permissions.state && m.permissions.input && m.permissions.hooks);
+        assert_eq!(m.hooks, ["CPed::Render"]);
+        assert_eq!(w.len(), 1, "{w:?}");
+        let (m, _) = parse("[mod]\nid = \"t\"\napi_version = \"1.2\"\n[permissions]\nstate = \"none\"\nhooks = []\n").unwrap();
+        assert_eq!(m.permissions, Permissions::default());
+        assert!(parse("[mod]\nid = \"t\"\napi_version = \"1.2\"\n[permissions]\nstate = true\n").is_err());
+        assert!(parse("[mod]\nid = \"t\"\napi_version = \"1.2\"\n[permissions]\nhooks = [1]\n").is_err());
     }
 
     #[test]

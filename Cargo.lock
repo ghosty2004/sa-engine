@@ -2512,6 +2512,7 @@ dependencies = [
  "sa-core",
  "sa-hud",
  "sa-input",
+ "sa-mod-api",
  "sa-mod-host",
  "sa-ped",
  "sa-platform",
@@ -2630,6 +2631,9 @@ dependencies = [
 [[package]]
 name = "sa-mod-api"
 version = "0.1.0"
+dependencies = [
+ "sa-samp-api",
+]
 
 [[package]]
 name = "sa-mod-broken"
@@ -2652,6 +2656,8 @@ dependencies = [
  "font8x8",
  "sa-mod-api",
  "sa-platform",
+ "sa-samp",
+ "sa-samp-api",
  "toml",
  "wasm-bindgen",
  "wasm-encoder 0.261.0",
@@ -2663,6 +2669,13 @@ dependencies = [
 
 [[package]]
 name = "sa-mod-resolution"
+version = "0.1.0"
+dependencies = [
+ "sa-mod",
+]
+
+[[package]]
+name = "sa-mod-trainer-hud"
 version = "0.1.0"
 dependencies = [
  "sa-mod",

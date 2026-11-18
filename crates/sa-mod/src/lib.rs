@@ -1,5 +1,5 @@
-//! The Rust SDK for sa-engine mods (MOD-2, `docs/arch/ADR-004-mods.md`; how to build and run one:
-//! `docs/mods/getting-started.md`).
+//! The Rust SDK for sa-engine mods (`docs/arch/ADR-004-mods.md`; how to build and run one:
+//! `docs/mods/getting-started.md`, the API: `docs/mods/api.md`).
 //!
 //! A mod is a `cdylib` crate built for `wasm32-unknown-unknown`. It implements [`Mod`] on a `Default` type and names
 //! it with [`entry!`]:
@@ -22,7 +22,11 @@
 
 use std::cell::RefCell;
 
-pub use sa_mod_api::{API_MAJOR, API_MINOR, level, status};
+pub use sa_mod_api::event::Event;
+pub use sa_mod_api::hook::Value;
+pub use sa_mod_api::sa_samp_api::{GameState, ObjectRef, PedRef, Vec3, VehicleRef};
+pub use sa_mod_api::state::{CameraInfo, PedInfo, PlayerInfo, VehicleInfo, WorldInfo};
+pub use sa_mod_api::{API_MAJOR, API_MINOR, event as event_kind, level, status};
 
 #[doc(hidden)]
 pub mod ffi;
@@ -34,6 +38,8 @@ pub enum Error {
     Denied,
     /// An argument was out of range (`status::BAD_ARG`).
     BadArg,
+    /// No such entity, function or value (`status::NOT_FOUND`).
+    NotFound,
     /// Another negative status.
     Other(i32),
 }
@@ -43,6 +49,7 @@ fn check(r: i32) -> Result<i32, Error> {
         r if r >= 0 => Ok(r),
         status::DENIED => Err(Error::Denied),
         status::BAD_ARG => Err(Error::BadArg),
+        status::NOT_FOUND => Err(Error::NotFound),
         r => Err(Error::Other(r)),
     }
 }
@@ -177,6 +184,161 @@ pub mod files {
     }
 }
 
+/// Game events (API 1.2; `docs/mods/api.md`): subscribe in [`Mod::init`], receive them in [`Mod::event`].
+pub mod events {
+    use super::ffi;
+
+    /// Subscribes to the events of `kinds` (`sa_mod::event_kind::*`; replaces the earlier subscription). Returns
+    /// the kinds granted as a mask (`1 << kind`): frame events always, game-state events with `state = "read"`, key
+    /// events with `input = "read"`.
+    pub fn subscribe(kinds: &[i32]) -> i32 {
+        let mask = kinds.iter().filter(|k| (0..31).contains(*k)).fold(0, |m, k| m | 1 << k);
+        // SAFETY: a host function call with a plain value
+        unsafe { ffi::events_subscribe(mask) }
+    }
+}
+
+/// Read-only game state (API 1.2, permission `state = "read"`; keys: `input = "read"`). Every function reads the
+/// game as it is at the moment of the call.
+pub mod state {
+    use sa_mod_api::state::{Words, from_bytes};
+
+    use super::*;
+
+    fn record<T: Words>(f: impl FnOnce(i32, i32) -> i32) -> Option<T> {
+        let mut buf = vec![0u8; 4 * T::WORDS];
+        let (p, n) = (buf.as_mut_ptr() as usize as i32, buf.len() as i32);
+        check(f(p, n)).ok()?;
+        from_bytes(&buf)
+    }
+
+    fn handles(f: impl Fn(i32, i32) -> i32) -> Vec<u32> {
+        let mut buf = vec![0u8; 4 * 256];
+        loop {
+            let (p, n) = (buf.as_mut_ptr() as usize as i32, buf.len() as i32);
+            let Ok(count) = check(f(p, n)) else { return Vec::new() };
+            let count = count as usize;
+            if 4 * count <= buf.len() {
+                return buf.as_chunks::<4>().0.iter().take(count).map(|c| u32::from_le_bytes(*c)).collect();
+            }
+            buf.resize(4 * count, 0);
+        }
+    }
+
+    /// The game state machine.
+    pub fn game_state() -> Option<GameState> {
+        // SAFETY: a host function call without arguments
+        check(unsafe { ffi::game_state() }).ok().map(GameState::from_raw)
+    }
+
+    /// The local player (`handle` is `None` while there is no player ped).
+    pub fn player() -> Option<PlayerInfo> {
+        // SAFETY: the host writes at most `n` bytes at `p`, inside the record's buffer
+        record(|p, n| unsafe { ffi::player_info(p, n) })
+    }
+
+    /// A ped; `None` when the handle names no live ped.
+    pub fn ped(ped: PedRef) -> Option<PedInfo> {
+        // SAFETY: as in `player`
+        record(|p, n| unsafe { ffi::ped_info(ped.0 as i32, p, n) })
+    }
+
+    /// A vehicle; `None` when the handle names no live vehicle.
+    pub fn vehicle(vehicle: VehicleRef) -> Option<VehicleInfo> {
+        // SAFETY: as in `player`
+        record(|p, n| unsafe { ffi::vehicle_info(vehicle.0 as i32, p, n) })
+    }
+
+    /// Time, weather and the world.
+    pub fn world() -> Option<WorldInfo> {
+        // SAFETY: as in `player`
+        record(|p, n| unsafe { ffi::world_info(p, n) })
+    }
+
+    /// The camera.
+    pub fn camera() -> Option<CameraInfo> {
+        // SAFETY: as in `player`
+        record(|p, n| unsafe { ffi::camera_info(p, n) })
+    }
+
+    /// Every ped in the ped pool.
+    pub fn peds() -> Vec<PedRef> {
+        // SAFETY: the host writes at most `n` bytes at `p`, inside the buffer
+        handles(|p, n| unsafe { ffi::ped_list(p, n) }).into_iter().map(PedRef).collect()
+    }
+
+    /// Every vehicle in the vehicle pool.
+    pub fn vehicles() -> Vec<VehicleRef> {
+        // SAFETY: as in `peds`
+        handles(|p, n| unsafe { ffi::vehicle_list(p, n) }).into_iter().map(VehicleRef).collect()
+    }
+
+    /// Whether the key with Windows virtual-key code `vk` is held (permission `input = "read"`).
+    pub fn key_down(vk: u8) -> bool {
+        // SAFETY: a host function call with a plain value
+        unsafe { ffi::key_down(i32::from(vk)) == 1 }
+    }
+}
+
+/// Before / after hooks on game functions (API 1.2, permission `hooks = [...]`): subscribe in [`Mod::init`],
+/// receive the calls in [`Mod::hook`]. Read-only: a hook sees the values, it cannot change them.
+pub mod hooks {
+    use super::*;
+
+    /// A hook, as [`subscribe`] returned it.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+    pub struct HookId(pub u32);
+
+    /// When a hook runs.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum Phase {
+        /// Before the function runs.
+        Before,
+        /// After it returned.
+        After,
+    }
+
+    /// Hooks the game function `name` (its name in the hook registry, listed in the manifest's `hooks`), before
+    /// and / or after it runs. `NotFound`: the registry has no such function; `Denied`: the manifest does not
+    /// name it.
+    pub fn subscribe(name: &str, before: bool, after: bool) -> Result<HookId, Error> {
+        let (p, n) = ptr_len(name.as_bytes());
+        let phases = if before { sa_mod_api::hook::BEFORE } else { 0 } | if after { sa_mod_api::hook::AFTER } else { 0 };
+        // SAFETY: a host function call; the host reads `name` through a bounds-checked copy
+        check(unsafe { ffi::hook_subscribe(p, n, phases) }).map(|id| HookId(id as u32))
+    }
+
+    /// The hooked call [`Mod::hook`] runs for.
+    pub struct Call {
+        pub(crate) _private: (),
+    }
+
+    impl Call {
+        /// Its number of arguments.
+        pub fn arg_count(&self) -> usize {
+            // SAFETY: a host function call without arguments
+            unsafe { ffi::hook_arg_count() }.max(0) as usize
+        }
+
+        fn value(&self, index: i32) -> Option<Value> {
+            let mut word = 0u32;
+            // SAFETY: the host writes 4 bytes at the address of `word`
+            let kind = unsafe { ffi::hook_value(index, (&raw mut word) as usize as i32) };
+            check(kind).ok().and_then(|k| Value::decode(k, word))
+        }
+
+        /// Argument `i`.
+        pub fn arg(&self, i: usize) -> Option<Value> {
+            self.value(i32::try_from(i).ok()?)
+        }
+
+        /// The result (after the call, of a function that returns a value).
+        pub fn result(&self) -> Option<Value> {
+            self.value(-1)
+        }
+    }
+}
+
 /// A mod: its callbacks, called by the host on the game thread in the load order.
 pub trait Mod: 'static {
     /// Called once after loading. An error refuses the mod (its message goes to the log).
@@ -198,6 +360,16 @@ pub trait Mod: 'static {
     /// changed size (API 1.1).
     fn resize(&mut self, width: u32, height: u32) {
         let _ = (width, height);
+    }
+
+    /// A game event the mod subscribed to ([`events::subscribe`]; API 1.2).
+    fn event(&mut self, event: Event) {
+        let _ = event;
+    }
+
+    /// A hooked game function runs ([`hooks::subscribe`]; API 1.2). Called in the middle of the game's frame.
+    fn hook(&mut self, hook: hooks::HookId, phase: hooks::Phase, call: &hooks::Call) {
+        let _ = (hook, phase, call);
     }
 }
 
@@ -250,6 +422,18 @@ pub mod rt {
     pub fn sa_resize<T>(width: i32, height: i32) -> i32 {
         with(|m| m.resize(width.max(0) as u32, height.max(0) as u32))
     }
+
+    pub fn sa_event<T>(kind: i32, a: i32, b: i32) -> i32 {
+        match Event::decode(kind, a, b) {
+            Some(e) => with(|m| m.event(e)),
+            None => 0,
+        }
+    }
+
+    pub fn sa_hook<T>(hook: i32, phase: i32) -> i32 {
+        let phase = if phase == sa_mod_api::hook::AFTER { hooks::Phase::After } else { hooks::Phase::Before };
+        with(|m| m.hook(hooks::HookId(hook as u32), phase, &hooks::Call { _private: () }))
+    }
 }
 
 /// Exports the mod's entry points for the `Default` type `$t` implementing [`Mod`].
@@ -287,6 +471,9 @@ mod tests {
         assert_eq!(__sa_mod_entry::sa_overlay(0), 0);
         assert_eq!(__sa_mod_entry::sa_settings(), 0);
         assert_eq!(__sa_mod_entry::sa_resize(640, 480), 0);
+        assert_eq!(__sa_mod_entry::sa_event(event_kind::KEY_DOWN, 0x41, 0), 0);
+        assert_eq!(__sa_mod_entry::sa_hook(0, sa_mod_api::hook::AFTER), 0);
+        assert!(state::peds().is_empty());
         assert_eq!(display::desktop(), (0, 0));
         assert_eq!(sa_mod_api::unpack_version(__sa_mod_entry::sa_api_version()), (API_MAJOR, API_MINOR));
     }

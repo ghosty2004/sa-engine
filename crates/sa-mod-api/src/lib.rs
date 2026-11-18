@@ -1,4 +1,4 @@
-//! The mod API's interface definition (MOD-2, `docs/arch/ADR-004-mods.md` §3.2): the one source of truth of the
+//! The mod API's interface definition (`docs/arch/ADR-004-mods.md` §3.2): the one source of truth of the
 //! ABI between the game's mod host (`sa-mod-host`) and a mod (`sa-mod`, the Rust SDK, or any language with a wasm32
 //! target).
 //!
@@ -23,6 +23,10 @@
 
 #![forbid(unsafe_code)]
 
+pub mod state;
+
+pub use sa_samp_api;
+
 /// The import module name of every host function.
 pub const IMPORT_MODULE: &str = "sa";
 /// The name under which a mod exports its linear memory.
@@ -30,7 +34,7 @@ pub const EXPORT_MEMORY: &str = "memory";
 /// The API's major version.
 pub const API_MAJOR: u16 = 1;
 /// The API's minor version.
-pub const API_MINOR: u16 = 1;
+pub const API_MINOR: u16 = 2;
 
 /// `major << 16 | minor`, the value of the `sa_api_version` export.
 pub const fn pack_version(major: u16, minor: u16) -> i32 {
@@ -57,7 +61,8 @@ pub mod status {
     /// An argument is invalid: a `(ptr, len)` range outside the mod's memory, text that is not UTF-8, a value out
     /// of range.
     pub const BAD_ARG: i32 = -2;
-    /// The file does not exist (`file_read`).
+    /// The file does not exist (`file_read`), the handle names no live entity, there is no local player, the
+    /// registry has no function of that name, a hook value is absent.
     pub const NOT_FOUND: i32 = -3;
 }
 
@@ -108,6 +113,177 @@ pub enum Permission {
     Render,
     /// `files = "own"`: the mod's own files (its folder, through the host).
     Files,
+    /// `state = "read"`: game state queries and the game events (API 1.2).
+    State,
+    /// `input = "read"`: key state and key events (API 1.2).
+    Input,
+    /// `hooks = ["name", ...]`: before / after hooks on the named game functions (API 1.2).
+    Hooks,
+}
+
+/// Game events (API 1.2): what a mod receives in `sa_event(kind, a, b)` after subscribing with
+/// `events_subscribe(mask)` (bit `1 << kind`). The host derives them from the game state at frame boundaries, in
+/// this order within a frame; it never changes the game.
+pub mod event {
+    use super::Permission;
+
+    /// A main-loop iteration begins (before the game's logic). `a`: the frame counter.
+    pub const FRAME_BEGIN: i32 = 0;
+    /// A frame is presented (after the game's drawing and the overlay phase). `a`: the frame counter.
+    pub const FRAME_END: i32 = 1;
+    /// The game state machine (`gGameState`) changed. `a`: the new state, `b`: the old one (raw values: 7
+    /// frontend idle, 8 loading, 9 playing).
+    pub const GAME_STATE: i32 = 2;
+    /// The local player's ped appeared or came back to life. `a`: its handle.
+    pub const PLAYER_SPAWN: i32 = 3;
+    /// The local player's ped died (health at 0 or its state dying / dead). `a`: its handle.
+    pub const PLAYER_DEATH: i32 = 4;
+    /// The local player entered a vehicle. `a`: the vehicle, `b`: the player's ped.
+    pub const VEHICLE_ENTER: i32 = 5;
+    /// The local player left a vehicle. `a`: the vehicle (it may no longer exist), `b`: the player's ped.
+    pub const VEHICLE_EXIT: i32 = 6;
+    /// The current area / interior changed. `a`: the new area, `b`: the old one.
+    pub const AREA: i32 = 7;
+    /// A key went down. `a`: its Windows virtual-key code.
+    pub const KEY_DOWN: i32 = 8;
+    /// A key went up. `a`: its Windows virtual-key code.
+    pub const KEY_UP: i32 = 9;
+    /// The number of event kinds.
+    pub const COUNT: i32 = 10;
+
+    use sa_samp_api::{GameState, PedRef, VehicleRef};
+
+    /// A decoded event.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum Event {
+        /// [`FRAME_BEGIN`].
+        FrameBegin(u32),
+        /// [`FRAME_END`].
+        FrameEnd(u32),
+        /// [`GAME_STATE`].
+        GameState {
+            /// The new state.
+            new: GameState,
+            /// The old one.
+            old: GameState,
+        },
+        /// [`PLAYER_SPAWN`].
+        PlayerSpawn(PedRef),
+        /// [`PLAYER_DEATH`].
+        PlayerDeath(PedRef),
+        /// [`VEHICLE_ENTER`].
+        VehicleEnter {
+            /// The vehicle.
+            vehicle: VehicleRef,
+            /// The player's ped.
+            ped: PedRef,
+        },
+        /// [`VEHICLE_EXIT`].
+        VehicleExit {
+            /// The vehicle.
+            vehicle: VehicleRef,
+            /// The player's ped.
+            ped: PedRef,
+        },
+        /// [`AREA`].
+        Area {
+            /// The new area.
+            new: i32,
+            /// The old one.
+            old: i32,
+        },
+        /// [`KEY_DOWN`].
+        KeyDown(u16),
+        /// [`KEY_UP`].
+        KeyUp(u16),
+    }
+
+    impl Event {
+        /// The event of `sa_event(kind, a, b)`.
+        pub fn decode(kind: i32, a: i32, b: i32) -> Option<Event> {
+            Some(match kind {
+                FRAME_BEGIN => Event::FrameBegin(a as u32),
+                FRAME_END => Event::FrameEnd(a as u32),
+                GAME_STATE => Event::GameState { new: GameState::from_raw(a), old: GameState::from_raw(b) },
+                PLAYER_SPAWN => Event::PlayerSpawn(PedRef(a as u32)),
+                PLAYER_DEATH => Event::PlayerDeath(PedRef(a as u32)),
+                VEHICLE_ENTER => Event::VehicleEnter { vehicle: VehicleRef(a as u32), ped: PedRef(b as u32) },
+                VEHICLE_EXIT => Event::VehicleExit { vehicle: VehicleRef(a as u32), ped: PedRef(b as u32) },
+                AREA => Event::Area { new: a, old: b },
+                KEY_DOWN => Event::KeyDown(a as u16),
+                KEY_UP => Event::KeyUp(a as u16),
+                _ => return None,
+            })
+        }
+    }
+
+    /// The permission an event needs.
+    pub const fn permission(kind: i32) -> Permission {
+        match kind {
+            FRAME_BEGIN | FRAME_END => Permission::None,
+            KEY_DOWN | KEY_UP => Permission::Input,
+            _ => Permission::State,
+        }
+    }
+}
+
+/// Before / after hooks on game functions (API 1.2).
+pub mod hook {
+    use sa_samp_api::{ObjectRef, PedRef, VehicleRef};
+
+    /// `hook_subscribe` phases (bits) and `sa_hook`'s `phase` argument: before the function runs (its arguments).
+    pub const BEFORE: i32 = 1;
+    /// After it returned (its arguments and its result).
+    pub const AFTER: i32 = 2;
+    /// The most arguments a hook passes on.
+    pub const MAX_ARGS: usize = 16;
+    /// Hook calls one mod receives per frame at most; the rest of the frame's calls are dropped (and counted).
+    pub const MAX_CALLS_PER_FRAME: u32 = 4096;
+
+    /// An argument or result of a hooked function, as a mod sees it: plain values as they are, a pointer to a ped,
+    /// vehicle or object as its handle, any other pointer hidden.
+    #[derive(Clone, Copy, Debug, PartialEq)]
+    pub enum Value {
+        /// An integer (signed or not, 32 bits at most).
+        Int(i32),
+        /// A float.
+        Float(f32),
+        /// A ped.
+        Ped(PedRef),
+        /// A vehicle.
+        Vehicle(VehicleRef),
+        /// An object.
+        Object(ObjectRef),
+        /// Another pointer (mods never see game addresses).
+        Pointer,
+    }
+
+    impl Value {
+        /// `(kind, word)`: what `hook_value` returns and writes.
+        pub fn encode(self) -> (i32, u32) {
+            match self {
+                Value::Int(v) => (0, v as u32),
+                Value::Float(v) => (1, v.to_bits()),
+                Value::Ped(p) => (2, p.0),
+                Value::Vehicle(v) => (3, v.0),
+                Value::Object(o) => (4, o.0),
+                Value::Pointer => (5, 0),
+            }
+        }
+
+        /// The value of `(kind, word)`.
+        pub fn decode(kind: i32, word: u32) -> Option<Value> {
+            Some(match kind {
+                0 => Value::Int(word as i32),
+                1 => Value::Float(f32::from_bits(word)),
+                2 => Value::Ped(PedRef(word)),
+                3 => Value::Vehicle(VehicleRef(word)),
+                4 => Value::Object(ObjectRef(word)),
+                5 => Value::Pointer,
+                _ => return None,
+            })
+        }
+    }
 }
 
 /// One host function (an import of the mod).
@@ -184,6 +360,42 @@ macro_rules! for_each_import {
             /// `data_ptr` (at most 1 MiB). Natively the file lives in the mod's folder; in the browser it is kept
             /// for the session (the page keeps no files). Returns 0.
             [Files] fn file_write(name_ptr: i32, name_len: i32, data_ptr: i32, data_len: i32) -> i32;
+            /// (1.2) Subscribes to the game events of `mask` (bits `1 << event::KIND`; replaces the earlier
+            /// subscription). Returns the mask granted: the events the manifest's permissions allow
+            /// ([`event::permission`]).
+            [None] fn events_subscribe(mask: i32) -> i32;
+            /// (1.2) The game state machine's value (`gGameState`: 7 frontend idle, 8 loading, 9 playing).
+            [State] fn game_state() -> i32;
+            /// (1.2) Writes the local player ([`state::PlayerInfo`]) to the buffer (`buf_ptr`, `buf_len` bytes).
+            /// Returns the bytes written, `BAD_ARG` (the buffer is too small or outside the memory).
+            [State] fn player_info(buf_ptr: i32, buf_len: i32) -> i32;
+            /// (1.2) Writes the ped `handle` ([`state::PedInfo`]) to the buffer, as `player_info`; `NOT_FOUND`
+            /// when the handle names no live ped.
+            [State] fn ped_info(handle: i32, buf_ptr: i32, buf_len: i32) -> i32;
+            /// (1.2) Writes the vehicle `handle` ([`state::VehicleInfo`]) to the buffer, as `ped_info`.
+            [State] fn vehicle_info(handle: i32, buf_ptr: i32, buf_len: i32) -> i32;
+            /// (1.2) Writes time, weather and the world ([`state::WorldInfo`]) to the buffer, as `player_info`.
+            [State] fn world_info(buf_ptr: i32, buf_len: i32) -> i32;
+            /// (1.2) Writes the camera ([`state::CameraInfo`]) to the buffer, as `player_info`.
+            [State] fn camera_info(buf_ptr: i32, buf_len: i32) -> i32;
+            /// (1.2) Writes the handles of the peds in the ped pool (one `u32` each, slot order) to the buffer, as
+            /// many as fit, and returns how many there are.
+            [State] fn ped_list(buf_ptr: i32, buf_len: i32) -> i32;
+            /// (1.2) The vehicles in the vehicle pool, as `ped_list`.
+            [State] fn vehicle_list(buf_ptr: i32, buf_len: i32) -> i32;
+            /// (1.2) 1 while the key with Windows virtual-key code `vk` (0..=255) is held, else 0.
+            [Input] fn key_down(vk: i32) -> i32;
+            /// (1.2) Subscribes to the game function `name` (UTF-8, `name_len` bytes at `name_ptr`: its name in
+            /// the hook registry, e.g. `CPed::Render`), which the manifest's `hooks` list must name, in the
+            /// `phases` [`hook::BEFORE`] / [`hook::AFTER`]. Returns the hook's id (passed to `sa_hook`),
+            /// `DENIED` (not in the manifest), `NOT_FOUND` (the registry has no such function).
+            [Hooks] fn hook_subscribe(name_ptr: i32, name_len: i32, phases: i32) -> i32;
+            /// (1.2) In `sa_hook`: the number of arguments of the call.
+            [Hooks] fn hook_arg_count() -> i32;
+            /// (1.2) In `sa_hook`: argument `index` (`0 .. hook_arg_count()`) or, with `index` -1 in the after
+            /// phase, the result: writes its word (4 bytes) at `out_ptr` and returns its kind
+            /// ([`hook::Value::encode`]); `NOT_FOUND` when there is no such value, `BAD_ARG` outside `sa_hook`.
+            [Hooks] fn hook_value(index: i32, out_ptr: i32) -> i32;
         }
     };
 }
@@ -212,6 +424,14 @@ macro_rules! for_each_export {
             /// browser canvas's size on the page in device pixels) changed to `width` x `height`. The game's video
             /// mode does not follow by itself (the image is scaled); a mod may request a new one. Returns 0.
             [Optional] fn sa_resize(width: i32, height: i32) -> i32;
+            /// (1.2) A game event the mod subscribed to (`events_subscribe`): its kind ([`event`]) and values.
+            /// Returns 0.
+            [Optional] fn sa_event(kind: i32, a: i32, b: i32) -> i32;
+            /// (1.2) A hooked game function (`hook_subscribe`) runs: `hook` is the id `hook_subscribe` returned,
+            /// `phase` [`hook::BEFORE`] or [`hook::AFTER`]; its values through `hook_arg_count` / `hook_value`.
+            /// Called in the middle of the game's frame: the state functions read the state as it is at that
+            /// moment. Returns 0.
+            [Optional] fn sa_hook(hook: i32, phase: i32) -> i32;
         }
     };
 }
@@ -324,6 +544,10 @@ pub const EXPORT_OVERLAY: &str = "sa_overlay";
 pub const EXPORT_SETTINGS: &str = "sa_settings";
 /// The name of the `sa_resize` export (1.1).
 pub const EXPORT_RESIZE: &str = "sa_resize";
+/// The name of the `sa_event` export (1.2).
+pub const EXPORT_EVENT: &str = "sa_event";
+/// The name of the `sa_hook` export (1.2).
+pub const EXPORT_HOOK: &str = "sa_hook";
 
 /// `request_video_mode`'s accepted sizes (inclusive).
 pub const VIDEO_MODE_MIN: (i32, i32) = (320, 240);
@@ -370,7 +594,7 @@ mod tests {
 
     #[test]
     fn exports_are_named_once() {
-        for n in [EXPORT_API_VERSION, EXPORT_INIT, EXPORT_OVERLAY, EXPORT_SETTINGS, EXPORT_RESIZE] {
+        for n in [EXPORT_API_VERSION, EXPORT_INIT, EXPORT_OVERLAY, EXPORT_SETTINGS, EXPORT_RESIZE, EXPORT_EVENT, EXPORT_HOOK] {
             assert_eq!(EXPORTS.iter().filter(|d| d.name == n).count(), 1, "{n}");
         }
         assert!(export(EXPORT_INIT).unwrap().required);
@@ -392,5 +616,27 @@ mod tests {
         assert!(compatible((1, 2), (1, 0)));
         assert!(!compatible((1, 0), (1, 1)));
         assert!(!compatible((1, 0), (2, 0)));
+    }
+
+    #[test]
+    fn level_two() {
+        assert_eq!(IMPORTS[import_index("player_info").unwrap()].permission, Permission::State);
+        assert_eq!(IMPORTS[import_index("hook_subscribe").unwrap()].permission, Permission::Hooks);
+        assert_eq!(event::permission(event::FRAME_END), Permission::None);
+        assert_eq!(event::permission(event::KEY_UP), Permission::Input);
+        assert_eq!(event::permission(event::VEHICLE_ENTER), Permission::State);
+        for v in [
+            hook::Value::Int(-5),
+            hook::Value::Float(2.5),
+            hook::Value::Ped(sa_samp_api::PedRef(0x205)),
+            hook::Value::Vehicle(sa_samp_api::VehicleRef(7)),
+            hook::Value::Object(sa_samp_api::ObjectRef(9)),
+            hook::Value::Pointer,
+        ] {
+            let (k, w) = v.encode();
+            assert_eq!(hook::Value::decode(k, w), Some(v));
+        }
+        assert_eq!(hook::Value::decode(6, 0), None);
+        assert!(!export(EXPORT_HOOK).unwrap().required);
     }
 }
