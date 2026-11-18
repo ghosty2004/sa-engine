@@ -190,6 +190,37 @@ pub enum GameState {
     Other(i32),
 }
 
+impl Default for GameState {
+    /// The value before the game's start-up sets it.
+    fn default() -> GameState {
+        GameState::Starting(0)
+    }
+}
+
+impl GameState {
+    /// The state of the raw `gGameState` value.
+    pub const fn from_raw(v: i32) -> GameState {
+        match v {
+            0..=6 => GameState::Starting(v as u8),
+            7 => GameState::FrontendIdle,
+            8 => GameState::LoadingStarted,
+            9 => GameState::Playing,
+            v => GameState::Other(v),
+        }
+    }
+
+    /// The raw `gGameState` value.
+    pub const fn raw(self) -> i32 {
+        match self {
+            GameState::Starting(v) => v as i32,
+            GameState::FrontendIdle => 7,
+            GameState::LoadingStarted => 8,
+            GameState::Playing => 9,
+            GameState::Other(v) => v,
+        }
+    }
+}
+
 /// Frame time steps (1.0 = 1/50 s).
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct TimeStep {

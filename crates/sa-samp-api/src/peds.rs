@@ -200,6 +200,15 @@ pub trait Peds {
     fn anim_playing(&self, ped: PedRef, block: &str, name: &str) -> GameResult<bool>;
     /// Local player money (`CWorld::Players[0] + 0xB8` 0xB7CE50).
     fn player_money(&self) -> i32;
+    /// Local player wanted level (`FindPlayerWanted(-1)->m_WantedLevel`: `CPed::m_pPlayerData` +0x480,
+    /// `CPlayerPedData::m_pWanted` +0x0, `CWanted::m_WantedLevel` +0x2C).
+    fn wanted_level(&self) -> GameResult<u8> {
+        Err(crate::GameError::Unsupported("Peds::wanted_level"))
+    }
+    /// Every ped in the ped pool (`CPools::ms_pPedPool` 0xB74490), in slot order.
+    fn peds(&self) -> Vec<PedRef> {
+        Vec::new()
+    }
 
     // --- state writes -------------------------------------------------------------------------------
     /// Sets position, keeping rotation (teleport).

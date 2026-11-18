@@ -12,49 +12,9 @@ use sa_samp_api::world::WorldState;
 use sa_samp_api::*;
 
 use crate::addr::{self, off};
-use crate::view::{FakeView, View};
+use crate::fake::*;
+use crate::view::View;
 use crate::{NativeGame, script};
-
-const PED_HEADER: u32 = 0x0100_0000;
-const PED_MAP: u32 = 0x0100_1000;
-const PEDS: u32 = 0x0110_0000;
-const VEH_HEADER: u32 = 0x0120_0000;
-const VEH_MAP: u32 = 0x0120_1000;
-const VEHS: u32 = 0x0130_0000;
-const OBJ_HEADER: u32 = 0x0140_0000;
-const OBJ_MAP: u32 = 0x0140_1000;
-const OBJS: u32 = 0x0150_0000;
-const MATRIX: u32 = 0x0160_0000;
-
-fn put<T: Copy>(g: &mut NativeGame<FakeView>, a: u32, v: T) {
-    // SAFETY: test values are plain integers / floats.
-    let bytes = unsafe { std::slice::from_raw_parts((&raw const v).cast::<u8>(), size_of::<T>()) };
-    g.view.write(a, bytes);
-}
-
-fn pool(g: &mut NativeGame<FakeView>, global: u32, header: u32, objects: u32, map: u32, size: i32) {
-    put(g, global, header);
-    put(g, header, objects);
-    put(g, header + 4, map);
-    put(g, header + 8, size);
-    for i in 0..size as u32 {
-        put(g, map + i, 0x80u8);
-    }
-}
-
-/// A game with the three pools and the local player in ped slot 2 (reuse counter 5).
-fn game() -> NativeGame<FakeView> {
-    let mut g = NativeGame::with_executor(FakeView::default(), |_| 0);
-    pool(&mut g, addr::PED_POOL.global, PED_HEADER, PEDS, PED_MAP, 140);
-    pool(&mut g, addr::VEHICLE_POOL.global, VEH_HEADER, VEHS, VEH_MAP, 110);
-    pool(&mut g, addr::OBJECT_POOL.global, OBJ_HEADER, OBJS, OBJ_MAP, 350);
-    put(&mut g, PED_MAP + 2, 0x05u8);
-    put(&mut g, addr::PLAYERS, PEDS + 2 * addr::PED_POOL.element);
-    g
-}
-
-/// The local player's ped (slot 2 of the ped pool).
-const LOCAL: u32 = PEDS + 2 * 0x7C4;
 
 #[test]
 fn reports_the_native_backend() {
@@ -653,4 +613,36 @@ fn skin_anim_and_task_effects_go_through_opcodes() {
     assert_eq!(issued(&g, 0), enc(0x0687, &[I(h)]));
     g.start_task(me, PedTask::HandsUp { time_ms: -2 }).unwrap();
     assert_eq!(issued(&g, 0), enc(0x05C4, &[I(h), I(-2)]));
+}
+
+#[test]
+fn lists_pools_and_reads_the_wanted_level() {
+    let mut g = game();
+    assert_eq!(g.peds(), [PedRef((2 << 8) | 5)]);
+    assert!(g.vehicles().is_empty());
+    put(&mut g, VEH_MAP + 7, 0x01u8);
+    assert_eq!(g.vehicles(), [VehicleRef((7 << 8) | 1)]);
+    assert_eq!(g.entity_at(VEHS + 7 * addr::VEHICLE_POOL.element), Some(EntityRef::Vehicle(VehicleRef(0x701))));
+    assert_eq!(g.entity_at(LOCAL), Some(EntityRef::Ped(PedRef(0x205))));
+    assert_eq!(g.entity_at(LOCAL + 4), None);
+    assert_eq!(g.wanted_level(), Err(GameError::InvalidHandle));
+    let (data, wanted) = (0x0180_0000u32, 0x0180_1000u32);
+    put(&mut g, LOCAL + off::PED_PLAYER_DATA, data);
+    put(&mut g, data + off::PLAYER_DATA_WANTED, wanted);
+    put(&mut g, wanted + off::WANTED_LEVEL, 3u32);
+    assert_eq!(g.wanted_level(), Ok(3));
+}
+
+#[test]
+fn keys_read_the_games_keyboard_state() {
+    let mut g = game();
+    assert!(!g.key_held(0x41));
+    put(&mut g, addr::NEW_KEY_STATE + 2 * (12 + 0x41), 255i16);
+    put(&mut g, addr::NEW_KEY_STATE + 2 * 2, 255i16);
+    put(&mut g, addr::NEW_KEY_STATE + 2 * (12 + 256 + 36), 255i16);
+    assert!(g.key_held(0x41));
+    assert!(g.key_held(0x72));
+    assert!(g.key_held(0x10));
+    assert!(!g.key_held(0x42));
+    assert!(!g.key_held(0xFF));
 }

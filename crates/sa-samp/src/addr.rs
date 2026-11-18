@@ -184,6 +184,12 @@ pub mod off {
     pub const WEAPON_SIZE: u32 = 0x1C;
     /// `CPed::m_nActiveWeaponSlot` (u8).
     pub const PED_WEAPON_SLOT: u32 = 0x718;
+    /// `CPed::m_pPlayerData` (`CPlayerPedData*`, player peds only).
+    pub const PED_PLAYER_DATA: u32 = 0x480;
+    /// `CPlayerPedData::m_pWanted` (`CWanted*`).
+    pub const PLAYER_DATA_WANTED: u32 = 0x0;
+    /// `CWanted::m_WantedLevel`.
+    pub const WANTED_LEVEL: u32 = 0x2C;
 
     /// `CVehicle::m_nVehicleFlags` byte with the siren bit (0x80).
     pub const VEH_SIREN_BYTE: u32 = 0x42D;

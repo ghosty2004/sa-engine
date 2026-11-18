@@ -97,6 +97,10 @@ impl<V: View> Vehicles for NativeGame<V> {
         self.vehicle_ref(self.view.read_u32(ped + off::PED_VEHICLE))
     }
 
+    fn vehicles(&self) -> Vec<VehicleRef> {
+        addr::VEHICLE_POOL.refs(&self.view).into_iter().map(VehicleRef).collect()
+    }
+
     fn create_vehicle(&mut self, spawn: &VehicleSpawn) -> GameResult<VehicleRef> {
         let p = spawn.pos;
         let h = self.run_op_out(op::CREATE_CAR, &[I(spawn.model.0), F(p.x), F(p.y), F(p.z), L(0)])? as i32;

@@ -19,5 +19,9 @@ samp-ui = { path = "../../samp-rs/crates/samp-ui" }
 # gtaweap3.ttf, sampaux3.ttf): pure Rust, builds for i686 and wasm32.
 ab_glyph = "0.2"
 
+[features]
+# `fake`: a fake engine memory for other crates' host tests
+fake = []
+
 [lints.rust]
 missing_docs = "warn"

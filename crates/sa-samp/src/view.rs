@@ -120,6 +120,17 @@ impl Pool {
         (v.read_u8(map + slot as u32) == r as u8).then(|| objects + slot as u32 * self.element)
     }
 
+    /// The references of every used slot, in slot order.
+    pub fn refs<V: View + ?Sized>(&self, v: &V) -> Vec<u32> {
+        let Some((_, map, size)) = self.header(v) else { return Vec::new() };
+        (0..size as u32)
+            .filter_map(|slot| {
+                let b = v.read_u8(map + slot);
+                (b & sa_core::pool::FREE == 0).then_some((slot << 8) | u32::from(b))
+            })
+            .collect()
+    }
+
     /// The reference of the object at `obj` (`CPool::GetRef`: `slot << 8 | map[slot]`), or `None` when `obj`
     /// is not the start of a used slot of this pool.
     pub fn ref_of<V: View + ?Sized>(&self, v: &V, obj: u32) -> Option<u32> {
@@ -133,34 +144,5 @@ impl Pool {
         }
         let b = v.read_u8(map + slot);
         (b & sa_core::pool::FREE == 0).then_some((slot << 8) | u32::from(b))
-    }
-}
-
-/// A fake memory for host tests: sparse pages of zeroes.
-#[cfg(test)]
-#[derive(Default)]
-pub struct FakeView {
-    pages: std::collections::HashMap<u32, Box<[u8; 0x1000]>>,
-}
-
-#[cfg(test)]
-impl View for FakeView {
-    fn read(&self, addr: u32, buf: &mut [u8]) {
-        for (i, b) in buf.iter_mut().enumerate() {
-            let a = addr.wrapping_add(i as u32);
-            *b = self
-                .pages
-                .get(&(a & !0xFFF))
-                .map_or(0, |p| p[(a & 0xFFF) as usize]);
-        }
-    }
-
-    fn write(&mut self, addr: u32, data: &[u8]) {
-        for (i, b) in data.iter().enumerate() {
-            let a = addr.wrapping_add(i as u32);
-            self.pages
-                .entry(a & !0xFFF)
-                .or_insert_with(|| Box::new([0; 0x1000]))[(a & 0xFFF) as usize] = *b;
-        }
     }
 }

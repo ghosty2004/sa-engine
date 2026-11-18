@@ -107,6 +107,10 @@ pub trait Vehicles {
     fn vehicle_in_water(&self, v: VehicleRef) -> GameResult<bool>;
     /// The local player's vehicle (`FindPlayerVehicle`).
     fn local_vehicle(&self) -> Option<VehicleRef>;
+    /// Every vehicle in the vehicle pool (`CPools::ms_pVehiclePool` 0xB74494), in slot order.
+    fn vehicles(&self) -> Vec<VehicleRef> {
+        Vec::new()
+    }
 
     /// Creates a vehicle (`CREATE_CAR` 00A5, then colours/paintjob/area; trains `CREATE_MISSION_TRAIN` 06D8).
     fn create_vehicle(&mut self, spawn: &VehicleSpawn) -> GameResult<VehicleRef>;

@@ -202,6 +202,23 @@ impl<V: View> Peds for NativeGame<V> {
         self.view.read_i32(addr::PLAYER_MONEY)
     }
 
+    fn wanted_level(&self) -> GameResult<u8> {
+        let ped = self.view.read_u32(addr::PLAYERS);
+        if self.ped_ref(ped).is_none() {
+            return Err(GameError::InvalidHandle);
+        }
+        let data = self.view.read_u32(ped + off::PED_PLAYER_DATA);
+        let wanted = if data == 0 { 0 } else { self.view.read_u32(data + off::PLAYER_DATA_WANTED) };
+        if wanted == 0 {
+            return Err(GameError::InvalidHandle);
+        }
+        Ok(self.view.read_u32(wanted + off::WANTED_LEVEL).min(u32::from(u8::MAX)) as u8)
+    }
+
+    fn peds(&self) -> Vec<PedRef> {
+        addr::PED_POOL.refs(&self.view).into_iter().map(PedRef).collect()
+    }
+
     fn set_ped_position(&mut self, ped: PedRef, pos: Vec3) -> GameResult<()> {
         let h = self.ped_script_handle(ped)?.0;
         self.run_op(op::SET_CHAR_COORDINATES, &[I(h), F(pos.x), F(pos.y), F(pos.z)])

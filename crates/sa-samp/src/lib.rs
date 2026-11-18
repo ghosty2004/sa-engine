@@ -45,6 +45,9 @@ pub mod script;
 mod streaming;
 mod vehicles;
 mod view;
+
+#[cfg(any(test, feature = "fake"))]
+pub mod fake;
 mod world;
 
 #[cfg(test)]
@@ -102,6 +105,22 @@ impl<V: View> NativeGame<V> {
         &self.view
     }
 
+    /// The handle of the pooled ped, vehicle or object that starts at `address` (an argument or result of a game
+    /// function the engine observed), if there is one.
+    pub fn entity_at(&self, address: u32) -> Option<sa_samp_api::EntityRef> {
+        use sa_samp_api::{EntityRef, ObjectRef};
+        if address == 0 {
+            return None;
+        }
+        if let Some(p) = self.ped_ref(address) {
+            return Some(EntityRef::Ped(p));
+        }
+        if let Some(v) = self.vehicle_ref(address) {
+            return Some(EntityRef::Vehicle(v));
+        }
+        addr::OBJECT_POOL.ref_of(&self.view, address).map(|r| EntityRef::Object(ObjectRef(r)))
+    }
+
     /// Whether [`SampHost::install`] ran.
     pub fn installed(&self) -> bool {
         self.installed
@@ -153,13 +172,7 @@ impl<V: View> GameAdapter for NativeGame<V> {
     }
 
     fn game_state(&self) -> GameState {
-        match self.view.read_i32(addr::GAME_STATE) {
-            v @ 0..=6 => GameState::Starting(v as u8),
-            7 => GameState::FrontendIdle,
-            8 => GameState::LoadingStarted,
-            9 => GameState::Playing,
-            v => GameState::Other(v),
-        }
+        GameState::from_raw(self.view.read_i32(addr::GAME_STATE))
     }
 
     fn time_step(&self) -> TimeStep {
