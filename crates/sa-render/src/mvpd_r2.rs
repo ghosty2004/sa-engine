@@ -490,8 +490,6 @@ orig! {
     fn camera_looking_lrb_first_person(this: GPtr<u8>) -> u8 = thiscall 0x50AE60 => unported;
     /// `CVehicle::CarHasRoof()` (0x6D25D0, bool in AL)
     fn car_has_roof(v: GPtr<u8>) -> u8 = thiscall 0x6D25D0 => unported;
-    /// `CWeather::AddSandStormParticles()` (0x72A820)
-    fn add_sand_storm_particles() = cdecl 0x72A820 => unported;
 }
 
 /// `CWeather::Rain` (f32)
@@ -628,21 +626,40 @@ pub fn add_rain() {
     }
     let mut prt = [0u8; 0x40];
     fx_prt_mult_ctor(lp(&mut prt), f32::from_bits(0x3F66_6666), f32::from_bits(0x3F66_6666), f32::from_bits(0x3F80_0000), f32::from_bits(g::<u32>(0xC81410).read()), f32::from_bits(0x3F80_0000), f32::from_bits(0), f32::from_bits(0x3E4C_CCCD));
-    let c = cam_pos();
+    add_wind_particle(lp(&mut prt), [0x72_AE79, 0x72_AEA0, 0x72_AEC7], k(0x4170_0000));
+}
+
+/// The particle `AddRain`'s splash tail and `AddSandStormParticles` share: 10 units ahead of the camera along
+/// `TheCamera`'s front (0xB6F9AC / 0xB6F9B0, z the camera's), moved by `rand() / 32767 * 40 - 20` in x and y and
+/// `* 7 - 2` in z (the three `rand()` return sites), the wind (0xC813E0..) times `wind` as the velocity;
+/// `g_fx`'s particle system 0xA9AE1C `AddParticle(pos, vel, 0, mult, -1, 1.2, 0.6, 0)`.
+fn add_wind_particle(prt: GPtr<u8>, sites: [u32; 3], wind: f32) {
+    let c = sa_world::world::common::cam_pos().cast::<u8>();
     let mut p: [f32; 3] = [
         x(g::<f32>(0xB6F9AC).read()).fmul_m(k(0x4120_0000)).fadd_m(rd::<f32>(c, 0)).to_f32(),
         x(g::<f32>(0xB6F9B0).read()).fmul_m(k(0x4120_0000)).fadd_m(rd::<f32>(c, 4)).to_f32(),
         rd::<f32>(c, 8),
     ];
-    p[0] = X87::from_i32(rand_at(0x72_AE79)).fmul_m(k(0x3800_0100)).fmul_m(k(0x4220_0000)).fadd_m(p[0]).fsub_m(k(0x41A0_0000)).to_f32();
-    p[1] = X87::from_i32(rand_at(0x72_AEA0)).fmul_m(k(0x3800_0100)).fmul_m(k(0x4220_0000)).fadd_m(p[1]).fsub_m(k(0x41A0_0000)).to_f32();
-    p[2] = X87::from_i32(rand_at(0x72_AEC7)).fmul_m(k(0x3800_0100)).fmul_m(k(0x40E0_0000)).fadd_m(p[2]).fsub_m(k(0x4000_0000)).to_f32();
+    p[0] = X87::from_i32(rand_at(sites[0])).fmul_m(k(0x3800_0100)).fmul_m(k(0x4220_0000)).fadd_m(p[0]).fsub_m(k(0x41A0_0000)).to_f32();
+    p[1] = X87::from_i32(rand_at(sites[1])).fmul_m(k(0x3800_0100)).fmul_m(k(0x4220_0000)).fadd_m(p[1]).fsub_m(k(0x41A0_0000)).to_f32();
+    p[2] = X87::from_i32(rand_at(sites[2])).fmul_m(k(0x3800_0100)).fmul_m(k(0x40E0_0000)).fadd_m(p[2]).fsub_m(k(0x4000_0000)).to_f32();
     let mut wv: [f32; 3] = [
-        x(g::<f32>(0xC813E0).read()).fmul_m(k(0x4170_0000)).to_f32(),
-        x(g::<f32>(0xC813E4).read()).fmul_m(k(0x4170_0000)).to_f32(),
-        x(g::<f32>(0xC813E8).read()).fmul_m(k(0x4170_0000)).to_f32(),
+        x(g::<f32>(0xC813E0).read()).fmul_m(wind).to_f32(),
+        x(g::<f32>(0xC813E4).read()).fmul_m(wind).to_f32(),
+        x(g::<f32>(0xC813E8).read()).fmul_m(wind).to_f32(),
     ];
-    fx_add_particle(g::<GPtr<u8>>(0xA9AE1C).read(), lp(&mut p), lp(&mut wv), f32::from_bits(0).to_bits(), lp(&mut prt), f32::from_bits(0xBF80_0000).to_bits(), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
+    fx_add_particle(g::<GPtr<u8>>(0xA9AE1C).read(), lp(&mut p), lp(&mut wv), f32::from_bits(0).to_bits(), prt, f32::from_bits(0xBF80_0000).to_bits(), f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
+}
+
+/// `CWeather::AddSandStormParticles()` (0x72A820): a `FxPrtMult_c(0.67, 0.65, 0.55, 0.25, 1.0, 0, 0.2)` and the
+/// wind particle 10 units ahead of the camera (the wind times 25), as `AddRain`'s.
+#[hook(addr = 0x72A820, conv = cdecl, name = "CWeather::AddSandStormParticles", expect = "83 EC 44 68 CD CC 4C 3E",
+       unverified = "frontier2-c20", route = "L2", hazards = "heap-writes",
+       note = "rand sites 0x72A8AB / 0x72A8D2 / 0x72A8F9; adds a particle to the sand storm system")]
+pub fn add_sand_storm_particles() {
+    let mut prt = [0u8; 0x40];
+    fx_prt_mult_ctor(lp(&mut prt), f32::from_bits(0x3F2B_851F), f32::from_bits(0x3F26_6666), f32::from_bits(0x3F0C_CCCD), f32::from_bits(0x3E80_0000), f32::from_bits(0x3F80_0000), f32::from_bits(0), f32::from_bits(0x3E4C_CCCD));
+    add_wind_particle(lp(&mut prt), [0x72_A8B0, 0x72_A8D7, 0x72_A8FE], k(0x41C8_0000));
 }
 
 pub const HOOKS: &[HookReg] = &[
@@ -651,4 +668,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_BIRDS_UPDATE,
     HOOK_MIRRORS_BEFORE_CONSTRUCT_RENDER_LIST,
     HOOK_MIRRORS_BEFORE_MAIN_RENDER,
+    HOOK_ADD_SAND_STORM_PARTICLES,
 ];
