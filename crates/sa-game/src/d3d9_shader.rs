@@ -459,8 +459,8 @@ fn d3dx_assemble_shader(src: u32, len: u32, _defines: u32, _include: u32, _flags
 
 macro_rules! entries {
     ($( $addr:expr, $name:literal => $f:path : fn($($a:ident : $t:ty),*) -> $r:ty ;)*) => {
-        /// `(address, name, native stdcall entry)` of every implemented method and of
-        /// `D3DXAssembleShader`.
+        /// `(address, name, native stdcall entry)` of every implemented method, of `D3DXAssembleShader` and of the
+        /// D3DX matrix helpers ([`crate::d3dx_math`]).
         pub fn entries() -> Vec<(u32, &'static str, usize)> {
             let mut v: Vec<(u32, &'static str, usize)> = Vec::new();
             $({
@@ -493,6 +493,11 @@ fn dev(slot: usize) -> u32 {
 
 entries! {
     0x0076_52AE, "D3DXAssembleShader" => d3dx_assemble_shader: fn(src: u32, len: u32, defines: u32, include: u32, flags: u32, out: GPtr<u32>, errors: GPtr<u32>) -> i32;
+    0x0076_72E1, "D3DXMatrixMultiply" => crate::d3dx_math::d3dx_matrix_multiply: fn(out: u32, a: u32, b: u32) -> u32;
+    0x0076_76C7, "D3DXMatrixMultiplyTranspose" => crate::d3dx_math::d3dx_matrix_multiply_transpose: fn(out: u32, a: u32, b: u32) -> u32;
+    0x0076_75EE, "D3DXMatrixTranspose" => crate::d3dx_math::d3dx_matrix_transpose: fn(out: u32, m: u32) -> u32;
+    0x0076_6AB7, "D3DXVec3TransformNormal" => crate::d3dx_math::d3dx_vec3_transform_normal: fn(out: u32, v: u32, m: u32) -> u32;
+    0x0076_6A32, "D3DXVec3TransformCoord" => crate::d3dx_math::d3dx_vec3_transform_coord: fn(out: u32, v: u32, m: u32) -> u32;
     dev(91), "IDirect3DDevice9::CreateVertexShader" => dev_create_vertex_shader: fn(this: u32, code: u32, out: GPtr<u32>) -> i32;
     dev(92), "IDirect3DDevice9::SetVertexShader" => dev_set_vertex_shader: fn(this: u32, sh: u32) -> i32;
     dev(93), "IDirect3DDevice9::GetVertexShader" => dev_get_vertex_shader: fn(this: u32, out: GPtr<u32>) -> i32;
