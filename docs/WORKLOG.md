@@ -4381,3 +4381,57 @@
 - Final verify-all, default set (DLL of 97cc423c, sha256 62ac9893…, the same DLL as `lanec14-c2428`; the docs commits
   after it change no code): `lanec14-default` IDENTICAL 13/13 (save-load: save files identical except the SAVE-1
   residue). So both sets are IDENTICAL 13/13 on the final code's DLL.
+
+## 2026-11-18 — MOD-2 M3: API 1.3, the engine's access layer, the courier mod (agent, worktree)
+- User rule (2026-11-18): the engine stays a GTA SA rewrite; the engine exposes a generic mod API only, sa-samp and the
+  `samp` feature leave `crates/` once SA:MP runs as a mod. M2's dependency inverted:
+  - `crates/sa-types` (leaf, no dependencies): the value types (Vec3, Matrix, handles, ModelId, WeaponType, GameState,
+    TimeStep, PedSnapshot / VehicleSnapshot / CameraState, VehicleSpawn, script args, GameError), moved out of
+    sa-samp-api (git mv); sa-samp-api re-exports them at the old paths, samp-rs unchanged (`cargo check -p samp-client`
+    in samp-rs passes; its Cargo.lock gains sa-types).
+  - `crates/sa-access` (engine side, above sa-core): `Game<V: View>`: sa-samp's view.rs, addr.rs, fake.rs, script.rs
+    (git mv) and its reads / changes (ped / vehicle / object lookups and records, money, wanted level, pool lists,
+    camera, clock, weather, area, keys, model streaming, one-off and front-end sounds, entity creation / deletion), plus
+    new ones (create_car, create_ped, destroy_ped, set_vehicle_position, set_wanted_level, load_model_now,
+    frontend_sound, entity_addr, into_dyn). sa-samp's NativeGame holds it and derefs to it; trait methods delegate
+    (31 sa-samp tests unchanged in behaviour; the audio test moved with its code).
+  - sa-mod-api depends on sa-types only; sa-mod-host on sa-mod-api, sa-access, sa-types (no SA:MP crate);
+    sa-game's `mods` reads the game through `sa_access::engine()`.
+- API 1.3 (`docs/mods/api.md` level 3, ADR-004 §4.1b): permissions `state = "write"`, `entities`, `scripts`, `audio`;
+  statuses WRONG_PHASE / FAILED; 13 changes (ped position / heading / health / armour / weapon, money, wanted level,
+  clock, weather, vehicle position / heading / health / colours) at once between frames, queued from hooks (256 per
+  mod and frame); create / destroy vehicle / ped / object (model loaded first, owned, deleted when the mod is
+  disabled); `script_command` with a 32-command whitelist and parameter signatures (handles checked against the
+  pools first); `play_frontend_sound`, `play_sound`; hook decisions `hook_set_arg` / `hook_skip` / `hook_set_result`
+  on 13 `hook::CONTROLLABLE` functions. A panic of unported game code inside a change is caught natively (FAILED +
+  log). SDK: `sa_mod::{world, entities, script, audio}`, `hooks::Call::{set_arg, skip, set_result}`.
+- Engine (sa-core `observe`): `around` takes the argument words mutably, the callee gets them back with the declared
+  types (`__orig_observed!`, `wabi::Reader::over`), a skip returns the chosen result, the after phase may replace it;
+  values encoded per declared type (ints truncated, f32 / f64 / x87, pointers). Direct calls: an `orig!` binding with
+  a literal address to an own-crate port (`=> crate::path`) takes the observed path while any function is watched
+  (`observe::watched_at`: a relaxed counter load, the registry looked up without counting); without the feature the
+  check is a constant None. sa-game applies decisions (handles back to addresses, results tried as none / int /
+  float / pointer).
+- `examples/mods/courier` (82 KB): F6 car, F10 delete them, F8 timed run to a marker object (ADD_SCORE reward,
+  wanted level cleared, front-end sound), F9 damage shield (before-hook skipping ComputeDamageResponse for the player).
+  Native (i686 release, offscreen, `--fixed-step 40 --start-in-world`, SA_GAME_KEYS with the new f-keys): spawned
+  0x1b02 (model 411), 0x2502 (560), run started, both cars removed; with a 26 m fall at iteration 520: shield off ->
+  "player died", shield on -> "the shield blocked damage", player alive (target/m3/fall-on, fall-off). Trainer HUD
+  (API 1.2 manifest, rebuilt with the 1.3 SDK) loads and runs beside it (7602 hook calls, 0 dropped).
+- Tests: sa-core observe 2 (decisions), sa-mod-api 7, sa-mod-host 15 (level-3 manifest, changes / queueing /
+  decisions / entities / scripts), sa-samp 31, courier 2.
+- Determinism (native, crossing 1200 iterations, `--fixed-step 40`): the default build, the mods build without mods
+  and the mods build with the courier loaded (its damage hook watched, so every own-crate `orig!` binding takes the
+  `watched_at` check) give byte-identical reports (every function's dispatch count, platform calls, 0 blocked) apart
+  from the frame pacing line (target/m3/crossing-{default,mods,courier}).
+- Verified: writer gate (base 588e7fc0) all PASS on 98cea10b (clippy host + i686, wasm32 incl. the mod crates, l1test);
+  verify-all lanes 1-3 IDENTICAL 13/13, tag mod2m3, host sa-oracle rebuilt from this tree; `cargo check` of sa-game
+  for wasm32 with `mods` (the observed wasm32 dispatch).
+- Browser (FEATURES=mods `tools/web/build.sh`, 36.9 MB; headless Chromium, `?autostart=1&auto=1&mods=courier,trainer-hud`):
+  both mods load on the browser engine (instrumented fuel), draw their panels in game (state 9, 0 blocked), the
+  trainer HUD's hooks fire (target/m3/web2). The F-key actions were driven natively only (`SA_GAME_KEYS` numbers
+  main-loop iterations, which the web build's loading spins through).
+- Left for M4 / M5: `input = "capture"` (keys the game should not see); more controllable functions and SA:MP's typed
+  contexts (Shot / Damage / PlayerContext) as mod-API shapes over the decisions; net and storage (M4); samp-rs's
+  engine host moved onto sa-access / the mod API, then sa-samp, the `samp` feature and sa-samp-api's engine backend
+  deleted (M5).
