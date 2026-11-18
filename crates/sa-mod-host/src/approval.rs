@@ -38,8 +38,9 @@ impl std::fmt::Debug for Approvals {
     }
 }
 
-fn key(id: &str) -> String {
-    format!("net.{id}")
+/// The key of mod `id`'s answers in [`AREA`].
+fn answers_key(id: &str) -> String {
+    ["net.", id].concat()
 }
 
 impl Approvals {
@@ -51,7 +52,7 @@ impl Approvals {
     fn answers(&mut self, id: &str) -> &mut HashMap<String, bool> {
         let store = self.store.clone();
         self.answers.entry(id.to_string()).or_insert_with(|| {
-            let text = store.and_then(|s| s.read(&key(id)).ok().flatten()).unwrap_or_default();
+            let text = store.and_then(|s| s.read(&answers_key(id)).ok().flatten()).unwrap_or_default();
             String::from_utf8_lossy(&text)
                 .lines()
                 .filter_map(|l| match l.split_once(' ') {
@@ -84,7 +85,7 @@ impl Approvals {
         let text: String =
             list.iter().map(|(t, a)| format!("{} {t}\n", if *a { "allow" } else { "deny" })).collect();
         if let Some(s) = &self.store {
-            let _ = s.write(&key(&q.id), text.as_bytes());
+            let _ = s.write(&answers_key(&q.id), text.as_bytes());
         }
         Some(q)
     }
