@@ -4144,3 +4144,81 @@
   update; it pulls in ProcessReplayCamera 0x45D060 and tReplayTrainBlock::ExtractTrainUpdateData 0x45CDB0, both
   unported), ProcessLookAroundCam 0x45D760 (433 instructions), so the `replay` scenario's 0 lane B blockers; CAM
   0x519810 / 0x525E50; CTrain::AddNearbyPedAsRandomPassenger 0x6F8170.
+## 2026-11-18 — FRONTIER-2 turn 13 lane C: the water triangle Y split and layer, AddWaterLevelQuad's overflow, the x87 skin path, the MatFX bumped texture, batches c24 to c26 (c27 taken back) (agent, branch worktree-agent-ad072a85875ed3f8d)
+- Base: lane C turn 12 head cd865caa. Every port address checked against `tools/gen/inflight.py` first (none of this
+  turn's addresses registered elsewhere). Analysis aids under target/lc13: a symbolic stack tracer (call arguments per
+  branch path, entry-relative stack slots) and an x87 block translator (store expressions in the original's operand
+  order); not committed.
+- Batch frontier2-c24 (RENDER, 3 hooks, from the 1.0 US bytes):
+  - CWaterLevel::SplitWaterTriangleAlongYLine 0x6EE5A0 (`water_split_x.rs`, next to the X split, sharing its
+    triangle / rectangle helpers): four cases by `x1 == x3` and `y1 < y3`, every mid CRenPar a call of the lerp
+    0x6E5280 recomputed before each use. gta-reversed re-derives the cut and calls the X split; the bytes differ:
+    with `y1 >= y3` and `x1 != x3` the rectangle's (x2, ys) corner is lerp(p1, p3), kept. The lerp output locals'
+    upper flow half is never written (stack residue, `peek = 0x30`).
+  - FUN_006e8780 0x6E8780 (`waterlevel.rs`): one layer of a high-detail water triangle, `n + 1` rows of `n + 1 - j`
+    vertices, the grid from p1 (right angle left) or p2; unlike the rectangle 0x6E91D0 no counter flag, layer 0's
+    colour uses 0.577 (not the computed multiplier), and a layer 2 exists (glare: uv scale 0.1 and shifts
+    0xC21174 / 0xC21170, z + 0.1, colour 255 * glare) that no caller passes; its glare local is read through
+    `peek`. The uv origin, camera position, wave fade and colour packing became helpers shared with 0x6E91D0.
+  - CWaterLevel::AddWaterLevelQuad 0x6E7EF0 is no longer a fallback port: the A / B lists are two-slot locals back
+    to back (A at entry ESP - 0x20, B at - 0x18, two unused slots after), so 1 or 3 vertices on the minimum line
+    overflow into each other; the port writes the same six slots (initialised from `peek = 0x20`) and reads the
+    first four, as the original. Ledger entry (stack residue, turn 13).
+- Batch frontier2-c25 (RW, 3 hooks, `d3d9_skin_blend_x87.rs`): the skin path without SSE. The cached bone matrices
+  0x7CA850 (the last product by the x87 multiply 0x7CA6C0; the cache check / update became helpers shared with the
+  SSE 0x7CAA30), the four-weight blender 0x7C9DA0 and the two-weight blender 0x7CA410 (x87, the per-component
+  addition orders and the partial sums kept unrounded on the stack as the bytes have them; bone 1 of the
+  two-weight blender adds in other orders than bone 0). The four-weight blender stores its normal accumulators
+  even when only outNormals is set (`peek = 0x18`). Both keep pointers / the index dword in the caller's argument
+  slots (not reproduced, hazards noted).
+- Batch frontier2-c26 (RW, 1 hook): the MatFX bumped-texture builder 0x810830 (`image2.rs`): the bump raster as a
+  mask (resampled to the base size) applied to the base image (or an all-white image), a raster of the base
+  image's format (+ MIPMAP | AUTOMIPMAP from the mipmapped source raster), filter / addressing from the base (U and
+  V both U when they matched, else 0), the two names interleaved (at most 31 characters). RwImageFindRasterFormat
+  0x8042C0 got one sa-rwcore binding (sa-render's player skin dropped its local declaration); image.rs's
+  RwImageResample declaration targets its port.
+- Batch frontier2-c27 (RW, 1 hook, ported and taken back): the vertex-shader skin render 0x7C8060 (`d3d9_skin_vs.rs`
+  in 1c501cc1): descriptor from the begin callback, the shared / transform constants, the bone matrix update; per
+  mesh the shader callback (descriptor features dropped while it needs more constants than the bones leave), light /
+  material colour / fog constants when they change, the bone matrices for the dispatch's base register (split
+  ranges through the remap table, the whole palette, or runs of consecutive used bones), the mesh render callback;
+  never-written locals through `peek = 0x40`; the instanced header's buffer binding as a d3d9dev helper shared with
+  0x815C20. verify-all `lanec13-c2427` (SA_UNVERIFIED=c24..c27, DLL of c077058f): inf4-rec, air-water and
+  anim-input DIVERGED at frame 595 in `objects` (single-frame object hash differences at 595 / 1550 / 1551 / 2061 in
+  inf4-rec, peds / vehicles / pools / world / heapaddr identical, then `scripts` from 3230; the run was stopped
+  after four recordings by moving its index file past the end). Bisect on inf4-rec with the same DLL:
+  `lanec13-bis-c27` (SA_UNVERIFIED=frontier2-c27) DIVERGED at 595 objects, `lanec13-bis-c2426`
+  (c24..c26) IDENTICAL. A re-read of the port against the bytes found no difference (argument slots, callback
+  arguments, the descriptor reductions, the three upload paths); a render path only reaches game state through
+  memory or through the stack residue it leaves for later original code, so the next step is a footprint / peek
+  comparison of the frame-595 object update (which original function reads residue, or which write differs).
+  Reverted in 2952a468 (the port stays in history for that investigation); 0x7C8060 stays a frontier row.
+- Not done: 0x7C8060 (above); the MatFX renders 0x812D40 (dual, 3.3 KB of texture-stage switch), 0x813A10 (env, 2.1 KB) and 0x814460
+  (bump, 1.4 KB; it calls the env render and two unported helpers, 0x8149E0 (4.7 KB) and 0x814270, so porting it
+  alone would add rows); CPostEffects::Radiosity 0x702080. No new scenario: none of this turn's ports is reached by
+  a native run that a short scenario can script (water triangles at the camera range edge, the x87 / vertex-shader
+  skin paths, MatFX bump maps).
+- convcheck (master's tools/verify/convcheck.py run by hand on this tree): 9 FAIL, all on declarations this turn
+  did not touch (0x5980F0, 0x5EB6F0, 0x5FDA60, 0x5FDB60, 0x53CED0, 0x4F60B0, 0x722150, 0x7221C0, 0x6E7680; the base's
+  own declarations, none on a line this turn changed); none for this turn's declarations (0x7CA6C0, the 0x8042C0
+  binding).
+- Gates: writer gate (base cd865caa) all 16 steps PASS on cc4bdcf3 (hooks: 6 new, all unverified, batches
+  frontier2-c24 / c25 / c26); an earlier run on 9cea177e + the uncommitted c27 work failed only l1test
+  (fsin_fcos_model_matches_the_cpu: its generated ref.c was truncated while being compiled, a test-harness file race;
+  the next two runs passed it).
+- Scenarios (frontier.sh, i686 native sa-game of 9cea177e, the same code as the final head; SA_ROOT=~/sa-engine;
+  target/lc13/scen-turn-start-code): postfx 1016 / 0 blocked, pausemenu 416 / 0, solicit 4016 / 0, crossing 1216 / 0,
+  crossing-long 4016 / 0, roadblocks 2016 / 0, melee 2616 / 0, sniper / shootcar / shootdriver 1216 / 0, quad / heli /
+  plane / boat 1216 / 0, roadblock-script 1016 / 0, gangwar 2016 / 0, jetpack 1016 / 0, roadblock-wanted 2015 / 1
+  (CObject::Explode 0x5A1340, lane A's); no crash; unchanged from turn 12 (the 1c501cc1 build with c27 gave the same).
+- frontier.py --no-branches: "to port" 105 -> 98 (RW 21 -> 17: 0x810830, 0x7CA850, 0x7C9DA0, 0x7CA410; RENDER: 0x6EE5A0,
+  0x6E8780 and the partial 0x6E7EF0); no new rows.
+- verify-all (lanes 6-7, host sa-oracle and satool rebuilt; lanes shared by flock with lanes A / B):
+  `lanec13-c242526` (SA_UNVERIFIED=frontier2-c24,c25,c26; started on the DLL of 9cea177e, but the writer gate rebuilt
+  the DLL with the then uncommitted c27 work mid-run, so it only counts as a preliminary signal): 12 IDENTICAL,
+  save-load skipped (disk under 20 GB at its start). `lanec13-c2427` / the bisect: above (c27). Final code (cc4bdcf3,
+  DLL sha256 384b1dc9…): `lanec13-c2426f` (SA_UNVERIFIED=frontier2-c24,frontier2-c25,frontier2-c26) IDENTICAL 13/13
+  (save-load: save files identical except the SAVE-1 stack residue); `lanec13-default` (default set): see the last line.
+- Open (lane C): 0x7C8060 (explain the objects divergence first; the port is in 1c501cc1), the MatFX renders 0x812D40 /
+  0x813A10 / 0x814460 (with 0x8149E0 and 0x814270), CPostEffects::Radiosity 0x702080; the image / raster helpers and
+  the other RW rows moved to another lane.
