@@ -10,9 +10,9 @@ use sa_core::hook;
 use crate::common::{Fpu, g, k, rd, wr};
 
 /// `CWorld::Players[0].m_pPed`, `CWorld::Players[1].m_pPed`, `gCurCamColVars`.
-const PLAYER0_PED: usize = 0xB7CD98;
-const PLAYER1_PED: usize = 0xB7CF28;
-const CUR_CAM_COL_VARS: usize = 0x8CCB80;
+pub(crate) const PLAYER0_PED: usize = 0xB7CD98;
+pub(crate) const PLAYER1_PED: usize = 0xB7CF28;
+pub(crate) const CUR_CAM_COL_VARS: usize = 0x8CCB80;
 /// 0.67 (0x8631C8), 7.0 (0x858F48), 0.25 (0x858C84), 0.5 (0x858B8C), 1.0 (0x858624), 0.1 (0x858B1C).
 const K_0_67: u32 = 0x3F2B_851F;
 const K_7: u32 = 0x40E0_0000;
@@ -24,7 +24,7 @@ const K_0_1: u32 = 0x3DCC_CCCD;
 pub use sa_core::bindings::vector_normalise;
 pub use sa_world::bindings::process_line_of_sight;
 
-use sa_world::world::common::entity_pos as pos_of;
+pub(crate) use sa_world::world::common::entity_pos as pos_of;
 
 /// `FUN_00513220(CVector point)` (0x513220, `ret 0xC`, AL; the vector by value; the entry fragment
 /// 0x40110D loads `ECX = Players[0].m_pPed`, so the caller's ECX is never read). `gCurCamColVars = 5`

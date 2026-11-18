@@ -680,7 +680,7 @@ orig! {
     pub fn cam_rocket(c: GPtr<u8>, t: GPtr<u8>, o: u32, sv: u32, svw: u32, b: u32) = thiscall 0x511B50 => unported;
     /// `CCam` mode processors without arguments
     pub fn cam_peds_dead_baby(c: GPtr<u8>) = thiscall 0x519250 => unported;
-    pub fn cam_two_player(c: GPtr<u8>) = thiscall 0x525E50 => unported;
+    pub fn cam_two_player(c: GPtr<u8>) = thiscall 0x525E50 => crate::twoplayer_shared::process_two_player;
     pub fn cam_two_player_in_car_and_shooting(c: GPtr<u8>) = thiscall 0x519810 => unported;
     pub fn cam_two_player_separate_cars(c: GPtr<u8>) = thiscall 0x513510 => crate::twoplayer::process_two_player_separate_cars;
     pub fn cam_two_player_separate_cars_top_down(c: GPtr<u8>) = thiscall 0x513BE0 => crate::twoplayer::process_two_player_separate_cars_top_down;
