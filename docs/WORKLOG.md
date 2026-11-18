@@ -3620,3 +3620,67 @@
 - verify-all (lanes 1-3, host sa-oracle / satool rebuilt from this tree, DLL sha256 975cccdc… of ef448f7f): `f2a12-u`
   (SA_UNVERIFIED=frontier2-a19,frontier2-a20,frontier2-a21,frontier2-a22) IDENTICAL 13/13, `f2a12-def` (default set)
   IDENTICAL 13/13; save-load identical except the SAVE-1 stack residue.
+
+## 2026-11-18 — FRONTIER-2 turn 13, lane A: ProcessColModels' A-disk path, path nodes, interior peds (agent, branch worktree-agent-aef944c32aa65a641)
+- Base: lane A turn 12's head 3b3ede99. Every port from the 1.0 US bytes (gta-reversed read as an aid; where it differs
+  the bytes win), every address checked against `inflight.py` first (none registered elsewhere). Batches
+  `frontier2-a23` (COLL: ProcessColModels made whole), `frontier2-a24` (STREAM: 2 hooks), `frontier2-a25` (WORLD: 2
+  hooks), plain `#[hook(`; no phase B native. `-j4` builds, one cargo at a time.
+- Item 1, `CCollision::ProcessColModels` 0x4185C0's A-disk path (0x418F52..0x4196AD): no ADR-002 fallback left. The
+  disks' centre z in the live model take `maxTouch[i]` first (never restored), the disks go to A's sphere list FROM
+  INDEX 0 (gta-reversed appends them after the spheres), then per disk overlapping B's box (inline test): B's listed
+  spheres through ProcessSphereSphere, a hit's A-space point gives the disk height `sqrt((r*r - dy*dy) - dx*dx) + p.z`
+  (x87, no clamp: gta-reversed adds `max(0, ...)`), a line touch unless `h < maxTouch[i]`, the minimum reset after a hit
+  only; B's boxes through ProcessSphereBox, the wheel case only below the centre with an A-space normal z > 0.5, a
+  rise above `0.35 * r` also keeps the point (its distance recorded, surface A the disk's), other hits keep the point
+  when nearer than the kept one, the minimum reset after every box; B's triangles through ProcessSphereTriangle into one
+  copy of the current point (depth -1 per triangle, the minimum never reset), the plane normal (`n / 4096`) replacing
+  the hit's when its z > 0.3 and transformB's at.z > 0.9, then ProcessDiscCollision 0x413960. A kept point takes a new
+  slot unless 31; a touched line goes to world space, an untouched one gets `maxTouch = -1e8`. The disk pass returns to
+  0x419968 (the sphere points into world space, B vs A) like the line pass. Lane B's `monster` scenario is in
+  frontier.sh (only `monster`; tanker / tank stay lane B's); frontier2-a13-counts.gdb counts the pass. On this branch
+  alone the run blocks once on lane B's SetupSuspensionLines 0x6C7FB0 (the truck's disks are set up there, so the disk
+  path is not reached: process_col_models 61207 calls, disk pass 0); with lane B's 0c96b309 cherry-picked on a
+  throw-away branch: 0 blocked, process_col_models 40658, disk pass 3832, ProcessDiscCollision 4312, no crash.
+- Item 2, CReplay::TriggerPlayback 0x4600F0: analysed, not ported. Its three protection fragments evaluate to
+  GetCurrentRadioStationID 0x4E83F0 (`ror([0x1560590], [0x156C3FE])`), TheCamera's matrix cell 0xB6F03C
+  (`[0x1560594] + [0x156F5D3] + CF`) and, through the VM (vm_eval.py 156D544 156D565, descriptor 0x1560070),
+  ECX = gFireManager 0xB71F80 for DestroyAllFxSystems 0x539D10; the slot search starts after the in-use buffer or, with
+  none, from 9 & 7 = 1 (gta-reversed: 0). But porting it adds eight unported callees to the frontier (StoreStuffInMem,
+  the two pool conversion tables with IsThisPed/VehicleUsedInRecording, EmptyPedsAndVehiclePools_NoDestructors,
+  CreatePlayerPed with DealWithNewPedPacket / ProcessPedUpdate, FindFirstFocusCoordinate, CSpecialFX::ReplayStarted),
+  and PlayBackThisFrameInterpolation (937 instructions) pulls in the packet handlers: the replay is one
+  multi-hour job, left for a turn of its own.
+- Item 3, STREAM (a24): CFileLoader::LoadPedPathNode 0x5B41F0 (the format 0x868C58 pushed by the fragment 0x4022CD,
+  `rol([0x1560744], [0x156F5DE])`) and LoadCarPathNode 0x5B4380: the 13-field sscanf (rate / last default 1.0 / 0),
+  then the empty CPathFind stores with all their stack words in the original order (detached: int16-truncated
+  coordinates; attached: `_ftol`'d ones; the flag bits `(flags >> k) & 0xFFFFFF01`; the `!= 0` bytes over EDX = the
+  preceding `_ftol`'s high dword). The attached ped store's last `!= 0` byte carries ECX's leftover from sscanf in the
+  original (0 here; the callee is empty; divergence ledger, STREAM turn 13). The store declarations now carry their words (0x44D2E0's native in sa-pop
+  takes 14, 0x44D2C0 / 0x44D2F0 target sa-stream's no-ops, 0x44D2D0 the generated leaf). Not done:
+  DeleteRwObjectsBehindCamera 0x40D7C0 (738 instructions).
+- Item 4, WORLD (a25): InteriorGroup_c::UpdateOfficePeds 0x594E90 (office peds by the hour: 9-18 `n/2..n`, 18-22 /
+  6-9 `0..n/2` of GetNumInteriorInfos(6), capped at 16, rand site 0x594F9C; the slot written even for a failed AddPed)
+  and SetupHousePeds 0x5965E0 (one or two peds, or 3 / 4 gang members of PickGangToCreateMembersOf when the second
+  roll is <= 15, the "house" brain, CTaskInteriorBeInHouse; RemovePed for every slot whose flag 0xBB3D9C + k is clear,
+  a null slot included; rand sites 0x59666A / 0x5966CC / 0x5966FA / 0x596742); both reuse CPlaceable::GetMatrix's
+  port for the inlined GetMatrix. 0x60F8D0 got a binding row (sa-world + sa-pop twin). Not done: CShopping (3), the
+  furnishing (3), CEscalator::Update, WEAPON (5).
+- frontier.py --no-branches: to port 103 -> 98 (COLL partial 1 -> 0, STREAM 3 -> 1, WORLD 13 -> 11; no new rows).
+- Scenarios (frontier.sh, i686 native, SA_ROOT=~/sa-engine, sa-game of this code): pausemenu 400 / 0 blocked, solicit
+  4000 / 0, crossing 1200 / 0, crossing-long 4000 / 0, roadblocks 2000 / 1 (lane C: RtDictSchemaStreamReadDict
+  0x7CF240), melee 2600 / 0, sniper 1200 / 0, shootcar 1200 / 0, shootdriver 1200 / 0, quad 1200 / 0, heli 1200 / 0,
+  plane 1200 / 1 (lane C: 0x43E0E0), roadblock-script 1000 / 0, roadblock-wanted 2000 / 0, gangwar 2000 / 0, boat
+  1200 / 0, jetpack 1000 / 0, copsf 2000 / 1 (0x7CF240), coplv 2000 / 0, samsite 1600 / 1 (0x7CF240), monster 1200 / 1
+  (lane B: SetupSuspensionLines 0x6C7FB0; 0 with lane B's port, see item 1); frames / distinct blockers, no crash, no
+  lane A blocker.
+- Writer gate (base 3b3ede99): a first run on 1f5c1bdc failed `queue` (regenerated after the commits), `hooktest`
+  (LoadCarPathNode's expect ended inside the stolen `lea`; fixed in a96bf173) and `l1test` (ref.exe under Wine exited
+  1 while other agents' Wine runs were active; the rerun alone passed 18/18); the final head's run: all 17 steps PASS.
+- verify-all (lanes 1-3, host sa-oracle / satool rebuilt from this tree, DLL sha256 8ba92dc7… of a96bf173):
+  `f2a13-u` (SA_UNVERIFIED=frontier2-a23,frontier2-a24,frontier2-a25) IDENTICAL 13/13, `f2a13-def` (default set)
+  IDENTICAL 13/13; save-load identical except the SAVE-1 stack residue.
+- Not done: the replay (TriggerPlayback 0x4600F0 with its eight callees, PlayBackThisFrameInterpolation 0x45F380,
+  ProcessLookAroundCam 0x45D760), CStreaming::DeleteRwObjectsBehindCamera 0x40D7C0, CShopping (LoadPrices / LoadShop /
+  Buy), Interior_c FurnishBedroom / FurnishLounge / Kitchen_FurnishEdges, CEscalator::Update 0x717D30, WEAPON (5:
+  DoDriveByAutoAiming, TakePhotograph, SetUpPelletCol, DoDoomAiming, FireAreaEffect).
