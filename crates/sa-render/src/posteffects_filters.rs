@@ -13,7 +13,7 @@ use crate::common::{ftol32, g, jp, x, xi};
 use sa_core::bindings::{rs_camera_begin_update, rw_camera_end_update};
 use sa_world::bindings::find_player_speed;
 use sa_core::bindings::{get_current_time_in_cycles, get_cycles_per_millisecond, rw_raster_lock};
-use sa_core::crt::{rand, srand, time as crt_time};
+use sa_core::crt::{rand_at, srand, time as crt_time};
 use sa_rwcore::bindings::rw_raster_unlock;
 
 orig! {
@@ -374,7 +374,7 @@ pub fn set_filter_main_colour(_raster: u32, colour: u32) {
 /// address (2) = wrap, filter (9) = linear; `ux = 1.5` (`W / 640 * 1.5` above 640 wide), `uy = H / W * ux` (the
 /// screen sizes as f32 locals) as the quad's UVs; a full-screen white quad of alpha `strength` with the grain
 /// raster; default UVs; the states restored (tail jump). The original's first `srand` and the reseeds take the
-/// wall clock (`time`), as here.
+/// wall clock (`time`), as here. rand site 0x703852.
 #[hook(addr = 0x7037C0, conv = cdecl, name = "CPostEffects::Grain", expect = "8A 44 24 08 83 EC 08 84 C0",
        unverified = "frontier2-c20", route = "L2", hazards = "heap-writes",
        note = "reseeds the CRT rand from the wall clock (time()) while refilling the grain texture")]
@@ -396,7 +396,7 @@ pub fn grain(strength: u32, update: u32) {
                 n = 0;
                 srand(crt_time(GPtr::from_addr(0)).wrapping_add(reseeds.read()).wrapping_add(ms));
             }
-            let v = rand() as u8;
+            let v = rand_at(0x70_3857) as u8;
             for o in [1u32, 0, 0xFFFF_FFFF, 0xFFFF_FFFE] {
                 GPtr::<u8>::from_addr(p.wrapping_add(o) as usize).write(v);
             }
