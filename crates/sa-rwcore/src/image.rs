@@ -12,7 +12,7 @@ use sa_core::mem::{GPtr, GlobalDesc};
 use sa_core::{hook, orig};
 
 use crate::common::{
-    RwError, error1, module, p8, rd, rw_error_set, rw_free, rw_malloc, rw_memory_alloc, rw_memory_free, wr,
+    RwError, copy_bytes, error1, module, p8, rd, rw_error_set, rw_free, rw_malloc, rw_memory_alloc, rw_memory_free, wr,
 };
 
 /// IMAGEMODULE offset global.
@@ -501,7 +501,7 @@ orig! {
     /// `RwImageFreePixels(image)` (0x802860)
     fn rw_image_free_pixels_call(img: GPtr<u8>) -> GPtr<u8> = cdecl 0x802860 => rw_image_free_pixels;
     /// `RwImageCopy(dst, src)` (0x803950, `_rwImageCopyResample` in rw-names)
-    fn rw_image_copy(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = cdecl 0x803950 => unported;
+    fn rw_image_copy(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = cdecl 0x803950 => rw_image_copy_port;
     /// `RwImageResample(dst, src)` (0x80C600)
     fn rw_image_resample(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> = cdecl 0x80C600 => unported;
 }
@@ -584,8 +584,64 @@ pub fn rw_image_create_resample_port(src: GPtr<u8>, w: i32, h: i32) -> GPtr<u8> 
     dst
 }
 
+/// `RwImageCopy(dst, src)` (0x803950, `_rwImageCopyResample` in rw-names). Equal depths: the palette (`4 << depth`
+/// bytes, both palettes present and the depth at most 8, signed) and every row of `((depth + 7) >> 3) * width` bytes
+/// (the destination's depth, width, height and strides, re-read per row). Else by `src depth << 8 | dst depth`:
+/// 0x404 / 0x808 / 0x2020 nothing; 0x408 a byte copy of `dst width` bytes per row; 0x420 / 0x820 the 32-bit
+/// palette entry of every source byte; any other pair `RwErrorSet({1, _rwerror(0x80000009)})` and the flags update
+/// below on a null image (the original faults there). Then the destination's flag 2 becomes the source's; returns
+/// `dst`.
+#[hook(addr = 0x803950, conv = cdecl, name = "RwImageCopy", expect = "8B 44 24 04 83 EC 0C",
+       unverified = "frontier2-c23", route = "L2", hazards = "heap-writes")]
+pub fn rw_image_copy_port(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> {
+    let rows = |bytes: &dyn Fn(GPtr<u8>, GPtr<u8>)| {
+        let (mut d, mut s): (GPtr<u8>, GPtr<u8>) = (rd(dst, 0x14), rd(src, 0x14));
+        let mut y = 0i32;
+        while y < rd::<i32>(dst, 8) {
+            bytes(d, s);
+            d = d.byte_add(rd::<i32>(dst, 0x10) as isize);
+            s = s.byte_add(rd::<i32>(src, 0x10) as isize);
+            y += 1;
+        }
+    };
+    let dd: i32 = rd(dst, 0xC);
+    let sd: i32 = rd(src, 0xC);
+    let mut out = dst;
+    if dd == sd {
+        let (dp, sp): (GPtr<u8>, GPtr<u8>) = (rd(dst, 0x18), rd(src, 0x18));
+        if !dp.is_null() && !sp.is_null() && sd <= 8 {
+            copy_bytes(dp, sp, (1u32 << (sd as u32 & 31)) << 2);
+        }
+        let n = ((rd::<i32>(dst, 0xC) + 7) >> 3).wrapping_mul(rd::<i32>(dst, 4)) as u32;
+        rows(&|d, s| copy_bytes(d, s, n));
+    } else {
+        let w: i32 = rd(dst, 4);
+        match ((sd as u32) << 8) | dd as u32 {
+            0x404 | 0x808 | 0x2020 => {}
+            0x408 => rows(&|d, s| copy_bytes(d, s, w as u32)),
+            0x420 | 0x820 => {
+                let pal: GPtr<u32> = rd(src, 0x18);
+                rows(&|d, s| {
+                    for i in 0..w.max(0) as isize {
+                        wr(d, i * 4, pal.wrapping_index(i32::from(rd::<u8>(s, i))).read());
+                    }
+                });
+            }
+            _ => {
+                error1(0x8000_0009);
+                out = GPtr::NULL;
+            }
+        }
+    }
+    let f = rd::<u32>(out, 0) & !2;
+    wr(out, 0, f);
+    wr(out, 0, (rd::<u32>(src, 0) & 2) | f);
+    out
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_RW_IMAGE_COPY_PORT,
     HOOK_RW_IMAGE_CREATE,
     HOOK_RW_IMAGE_DESTROY,
     HOOK_RW_IMAGE_ALLOCATE_PIXELS,
