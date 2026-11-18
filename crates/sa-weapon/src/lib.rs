@@ -44,3 +44,5 @@ pub mod generated;
 pub mod frontier_b2;
 pub mod doom_aiming;
 pub mod photograph;
+pub mod aiming;
+pub mod pellet;

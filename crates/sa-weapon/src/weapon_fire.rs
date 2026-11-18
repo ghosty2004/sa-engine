@@ -41,7 +41,7 @@ fn ent_pos(e: GPtr<u8>) -> GPtr<u8> {
 }
 
 /// "Ensure matrix": `if (!e->m_matrix) { e->AllocateMatrix(); e->m_placement.UpdateMatrix(e->m_matrix); }`.
-fn ensure_matrix(e: GPtr<u8>) {
+pub(crate) fn ensure_matrix(e: GPtr<u8>) {
     if rp(e, 0x14).is_null() {
         allocate_matrix(e);
         simple_transform_update_matrix(e.byte_add(4), rp(e, 0x14));
@@ -791,7 +791,7 @@ fn windscreen(veh: GPtr<u8>, origin: GPtr<u8>, target: GPtr<u8>, line: GPtr<u8>)
 
 orig! {
     /// `CWeapon::DoDriveByAutoAiming(CEntity* owner, CVehicle*, CVector* start, CVector* end, bool canAimVehicles)` (0x73D720)
-    pub fn do_drive_by_auto_aiming(owner: GPtr<u8>, veh: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>, aim_vehicles: u32) = cdecl 0x73D720 => unported;
+    pub fn do_drive_by_auto_aiming(owner: GPtr<u8>, veh: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>, aim_vehicles: u32) = cdecl 0x73D720 => crate::aiming::do_drive_by_auto_aiming;
     /// `CWeapon::FireInstantHitFromCar2(CVector, CVector, CVehicle*, CEntity*)` (0x73CBA0, thiscall)
     pub fn fire_instant_hit_from_car2_call(this: GPtr<u8>, sx: f32, sy: f32, sz: f32, ex: f32, ey: f32, ez: f32, veh: GPtr<u8>, owner: GPtr<u8>) = thiscall 0x73CBA0 => fire_instant_hit_from_car2;
 }

@@ -31,6 +31,8 @@ pub const MODULES: &[&[HookReg]] = &[
     // FRONTIER-2 turn 11, lane B
     crate::doom_aiming::HOOKS,
     crate::photograph::HOOKS,
+    crate::aiming::HOOKS,
+    crate::pellet::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

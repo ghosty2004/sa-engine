@@ -44,7 +44,7 @@ use sa_world::bindings::process_col_models as collision_process_col_models;
 use sa_stream::bindings::animate_ped_col_model_skinned as ped_mi_animate_col_model_skinned;
 orig! {
     /// `CWeapon::DoDoomAiming(CEntity* owner, CVector* start, CVector* end)` (0x73CDC0)
-    fn do_doom_aiming(owner: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) = cdecl 0x73CDC0 => unported;
+    fn do_doom_aiming(owner: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) = cdecl 0x73CDC0 => crate::aiming::do_doom_aiming;
     /// `FUN_006E61B0(CVector start, CVector end, CVector* out)` (`CWaterLevel::TestLineAgainstWater`), AL
     #[allow(clippy::too_many_arguments)]
     fn test_line_against_water(sx: f32, sy: f32, sz: f32, ex: f32, ey: f32, ez: f32, out: GPtr<u8>) -> u8 = cdecl 0x6E61B0 => unported;
@@ -53,7 +53,7 @@ orig! {
     /// `CWeapon::SetUpPelletCol(int32 n, CEntity* owner, CEntity* victim, CVector& point, CColPoint&, CMatrix&
     /// out)` (0x73C710, thiscall `ret 0x18`)
     #[allow(clippy::too_many_arguments)]
-    fn set_up_pellet_col(this: GPtr<u8>, n: i32, owner: GPtr<u8>, victim: GPtr<u8>, point: GPtr<u8>, cp: GPtr<u8>, mat: GPtr<u8>) -> u8 = thiscall 0x73C710 => unported;
+    fn set_up_pellet_col(this: GPtr<u8>, n: i32, owner: GPtr<u8>, victim: GPtr<u8>, point: GPtr<u8>, cp: GPtr<u8>, mat: GPtr<u8>) = thiscall 0x73C710 => crate::pellet::set_up_pellet_col;
 }
 
 /// `CWorld::pIgnoreEntity` (0xB7CD68) and the line-test options `bIncludeDeadPeds` (0xB7CD6F),
