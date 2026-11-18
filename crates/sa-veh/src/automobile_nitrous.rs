@@ -17,11 +17,15 @@ use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::fx_kill;
 use sa_world::bindings::get_pad_from_player;
 use sa_world::bindings::pad_get_car_gun_fired;
+use sa_core::bindings::{fx_play, fx_stop, matrix_mul_vec};
+use sa_world::bindings::{fx_create_system, fx_get_play_status, fx_set_const_time, fx_set_local_particles, get_water_level};
+use sa_core::field::{gf, ptr_of as vp};
+use sa_math::vector::CVector;
+use crate::common::model_info;
+use crate::mvpd_v1::read_vec;
 orig! {
     /// `CVehicle::RemoveUpgrade(int32 upgradeId)` (0x6D3630)
     fn vehicle_remove_upgrade(v: GPtr<u8>, id: u32) = thiscall 0x6D3630 => unported;
-    /// `CAutomobile::DoNitroEffect(float power)` (0x6A3BD0)
-    fn do_nitro_effect(v: GPtr<u8>, power: f32) = thiscall 0x6A3BD0 => unported;
 }
 
 use sa_pop::carctrl3::time_step;
@@ -141,4 +145,75 @@ pub fn automobile_nitrous_control(this: GPtr<u8>, boosts: u32) {
 }
 
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_AUTOMOBILE_NITROUS_CONTROL];
+/// `g_fxMan` (FxManager_c), the string "nitro", -1.0f.
+const FX_MAN: usize = 0xA9_AE80;
+const S_NITRO: usize = 0x87_1114;
+const K_MINUS_ONE: usize = 0x85_8C1C;
+
+/// The exhaust's water test: `p = m_matrix * e`; under water when `GetWaterLevel(p, &level, true, null)` finds a
+/// level and `!(level < p.z)` (`fcomp; test ah, 1; jne`).
+fn exhaust_under_water(this: GPtr<u8>, e: &mut CVector) -> bool {
+    let mut out = CVector::default();
+    let p = read_vec(matrix_mul_vec(vp(&mut out), rd::<GPtr<u8>>(this, 0x14), vp(e)));
+    let mut level = 0f32;
+    get_water_level(p.x, p.y, p.z, vp(&mut level), 1, GPtr::NULL) != 0 && !x(level).fcom(x(p.z)).c0()
+}
+
+/// One exhaust's fx system at `slot`: none yet, with `create` (the first exhaust's water flag clear and a frame
+/// matrix) `CreateFxSystem("nitro", e, rwm, true)`, stored, then local particles and `Play()` (the original returns
+/// right after a created second system). An existing one gets `SetConstTime(1, |power|)`, then
+/// `Stop()` when playing (status 0) under water, else `Play()` when stopped (status 1, re-read) above it.
+fn exhaust_fx(this: GPtr<u8>, slot: isize, create: bool, e: &mut CVector, rwm: GPtr<u8>, power: f32, wet: bool) {
+    let fx = rd::<GPtr<u8>>(this, slot);
+    if fx.is_null() {
+        if create && !rwm.is_null() {
+            let fx = fx_create_system(GPtr::from_addr(FX_MAN), GPtr::from_addr(S_NITRO), vp(e), rwm, 1);
+            wr::<GPtr<u8>>(this, slot, fx);
+            if !fx.is_null() {
+                fx_set_local_particles(fx, 1);
+                fx_play(rd::<GPtr<u8>>(this, slot));
+            }
+        }
+        return;
+    }
+    fx_set_const_time(fx, 1, power.abs());
+    if fx_get_play_status(rd::<GPtr<u8>>(this, slot)) == 0 && wet {
+        fx_stop(rd::<GPtr<u8>>(this, slot));
+    } else if fx_get_play_status(rd::<GPtr<u8>>(this, slot)) == 1 && !wet {
+        fx_play(rd::<GPtr<u8>>(this, slot));
+    }
+}
+
+/// `CAutomobile::DoNitroEffect(float power)` (0x6A3BD0, thiscall, `ret 4`).
+///
+/// The exhaust dummy (vehicle struct +0x48) and, for a `DOUBLE_EXHAUST` handling (+0xCC bit 0x2000), its mirror
+/// (x * -1.0 as an f32 store). With bTouchingWater (+0x40 bit 27) each is tested for being under water (the
+/// mirror only then, unlike gta-reversed). `rwm` is the RW frame's modelling matrix (frame + 0x10) or null. The
+/// first fx system (+0x978) follows the first exhaust; the second (+0x97C) is created only when the first exhaust
+/// is dry (the bytes test the first flag) and then follows the second.
+#[hook(addr = 0x6A3BD0, conv = thiscall, name = "CAutomobile::DoNitroEffect", this = "CAutomobile",
+       expect = "83 EC 2C 53 56 8B F1", unverified = "frontier2-b25", route = "L2", hazards = "heap-writes",
+       note = "creates / plays / stops the exhaust fx systems")]
+pub fn do_nitro_effect(this: GPtr<u8>, power: f32) {
+    let e1p = rd::<GPtr<u8>>(model_info(rd::<i16>(this, 0x22) as i32), 0x5C).byte_add(0x48);
+    let mut e1 = read_vec(e1p);
+    let wet_water = rd::<u32>(this, 0x40) & 0x0800_0000 != 0;
+    let wet1 = wet_water && exhaust_under_water(this, &mut e1);
+    let double = || rd::<u32>(rd::<GPtr<u8>>(this, 0x384), 0xCC) & 0x2000 != 0;
+    let mut e2 = CVector::default();
+    let mut wet2 = false;
+    if double() {
+        e2 = CVector::new(f32_of(x(e1.x).fmul_m(gf(K_MINUS_ONE))), e1.y, e1.z);
+        if rd::<u32>(this, 0x40) & 0x0800_0000 != 0 {
+            wet2 = exhaust_under_water(this, &mut e2);
+        }
+    }
+    let obj = rd::<GPtr<u8>>(this, 0x18);
+    let rwm = if obj.is_null() { GPtr::NULL } else { rd::<GPtr<u8>>(obj, 4).byte_add(0x10) };
+    exhaust_fx(this, 0x978, !wet1, &mut e1, rwm, power, wet1);
+    if double() {
+        exhaust_fx(this, 0x97C, !wet1, &mut e2, rwm, power, wet2);
+    }
+}
+
+pub const HOOKS: &[HookReg] = &[HOOK_AUTOMOBILE_NITROUS_CONTROL, HOOK_DO_NITRO_EFFECT];
