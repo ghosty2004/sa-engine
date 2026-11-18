@@ -478,7 +478,7 @@ const AUDIO_ENGINE: usize = 0xB6_BC90;
 /// 100000), the frontend event 13, stat 0xE7 + 1. When stat 0xE7 then equals stat 0xE8: "SN_ALL" (0x859B7C)
 /// and + 100000 to the player in focus; else "SN_ONE" (0x859B74) with `ftol(0xE7)`, 5000, `ftol(0xE8)`.
 #[hook(addr = 0x456A70, conv = cdecl, name = "CPickups::PictureTaken", expect = "83 EC 30 55 56 57",
-       unverified = "frontier2-a26", route = "L2", hazards = "heap-writes",
+       unverified = "frontier2-a27", route = "L2", hazards = "heap-writes",
        note = "removes the photographed snapshot pickup (object deleted), money and stats")]
 pub fn picture_taken() {
     let mut best_d = f32::from_bits(0x4974_23FE);
