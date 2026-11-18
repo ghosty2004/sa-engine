@@ -22,7 +22,7 @@ use sa_math::x87::X87;
 use crate::common::{f32_of, g, p8, rd, rw_memory_alloc, wr, x};
 
 /// Material plugin offset.
-const MATFX_MATERIAL_OFFSET: usize = 0xC9AB74;
+pub(crate) const MATFX_MATERIAL_OFFSET: usize = 0xC9AB74;
 /// Atomic plugin offset.
 const MATFX_ATOMIC_OFFSET: usize = 0xC9AB84;
 /// World-sector plugin offset.
@@ -109,7 +109,7 @@ orig! {
     fn matfx_render_black(header: GPtr<u8>, inst: GPtr<u8>) = cdecl 0x812C90 => unported;
     fn matfx_render_default(header: GPtr<u8>, inst: GPtr<u8>, flags: u32, tex: u32) = cdecl 0x812AC0 => matfx_default_render;
     fn matfx_render_dual(header: GPtr<u8>, inst: GPtr<u8>, flags: u32, tex: u32, dual: u32) = cdecl 0x812D40 => unported;
-    fn matfx_render_env(header: GPtr<u8>, inst: GPtr<u8>, flags: u32, bump: u32, tex: u32, env: u32) = cdecl 0x813A10 => unported;
+    fn matfx_render_env(header: GPtr<u8>, inst: GPtr<u8>, flags: u32, pass: u32, tex: GPtr<u8>, env: GPtr<u8>) = cdecl 0x813A10 => crate::matfx_env::matfx_render_env;
     fn matfx_render_bump(header: GPtr<u8>, inst: GPtr<u8>, flags: u32, tex: u32, bumped: u32, env: u32) = cdecl 0x814460 => unported;
 }
 
@@ -672,7 +672,7 @@ pub fn rp_matfx_d3d9_atomic_render_callback(header: GPtr<u8>, object: GPtr<u8>, 
             match fx {
                 1 => matfx_render_bump(h, inst, flags, tex, rd::<u32>(d, 4), 0),
                 3 => matfx_render_bump(h, inst, flags, tex, rd::<u32>(d, 4), rd::<u32>(d, 0x1C)),
-                2 => matfx_render_env(h, inst, flags, 0, tex, rd::<u32>(d, 4)),
+                2 => matfx_render_env(h, inst, flags, 0, p8(tex), p8(rd::<u32>(d, 4))),
                 4 => matfx_render_dual(h, inst, flags, tex, rd::<u32>(d, 0)),
                 6 => matfx_render_dual(h, inst, flags, tex, rd::<u32>(d, 0x18)),
                 _ => matfx_render_default(h, inst, flags, tex),

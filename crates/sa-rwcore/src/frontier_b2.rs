@@ -71,6 +71,11 @@ pub fn matfx_d3d9_draw_mesh(header: GPtr<u8>, mesh: GPtr<u8>) -> i32 {
         g::<u32>(0x8E_2448).write(vs);
         dev_set_vertex_shader(device(), rd(mesh, 0x10));
     }
+    flush_draw_mesh(header, mesh)
+}
+
+/// The render-state cache flushed, then the mesh drawn: indexed with an index buffer (header +8), else not.
+pub fn flush_draw_mesh(header: GPtr<u8>, mesh: GPtr<u8>) -> i32 {
     flush_cache();
     if rd::<u32>(header, 8) != 0 {
         dev_draw_indexed_primitive(device(), rd(header, 0xC), rd(mesh, 0x14), 0, rd(mesh, 0x18), rd(mesh, 0x1C), rd(mesh, 0x20))

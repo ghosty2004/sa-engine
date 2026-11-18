@@ -89,6 +89,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::frontier_c::HOOKS,
     crate::raster_to_image::HOOKS,
     crate::png_write::HOOKS,
+    crate::matfx_env::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
