@@ -3,12 +3,13 @@
 //! `Weapon.cpp` as reading aids; the bytes win). Unverified (docs/verify/HOWTO.md).
 
 use sa_core::abi::HookReg;
-use sa_core::field::rd;
+use sa_core::field::{rd, rd3f};
+use sa_core::field::gf;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
 use crate::bindings::try_to_start_fire_at_coors;
-use crate::common::{g, get_weapon_info, rand, x, xi, X87};
+use crate::common::{get_weapon_info, rand, x, xi, X87};
 use sa_core::bindings::{
     cam_using_3rd_person_mouse_cam, find_player_ped, general_angle_between_points, ped_get_bone_position,
     vector_normalise,
@@ -38,13 +39,7 @@ const K_2_5: usize = 0x85_8FA0;
 const K_3_5: usize = 0x85_9028;
 const K_0_5: usize = 0x85_8B8C;
 
-fn kf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
 
-fn v3(p: GPtr<u8>) -> [f32; 3] {
-    [rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8)]
-}
 
 fn sub3(a: [f32; 3], b: [f32; 3]) -> [f32; 3] {
     [x(a[0]).fsub_m(b[0]).to_f32(), x(a[1]).fsub_m(b[1]).to_f32(), x(a[2]).fsub_m(b[2]).to_f32()]
@@ -68,25 +63,25 @@ fn sub3(a: [f32; 3], b: [f32; 3]) -> [f32; 3] {
 pub fn fire_area_effect(this: GPtr<u8>, firer: GPtr<u8>, origin: GPtr<u8>, target_ent: GPtr<u8>, target: GPtr<u8>) -> u8 {
     let ty = rd::<i32>(this, 0);
     let wi = get_weapon_info(ty, 1);
-    let o = v3(origin);
+    let o = rd3f(origin);
     let mut d: [f32; 3];
     let t: [f32; 3];
     if !target_ent.is_null() || !target.is_null() {
-        let a = if !target_ent.is_null() { v3(entity_pos(target_ent)) } else { v3(target) };
+        let a = if !target_ent.is_null() { rd3f(entity_pos(target_ent)) } else { rd3f(target) };
         general_angle_between_points(a[0], a[1], o[0], o[1]);
         t = if !target.is_null() {
-            v3(target)
+            rd3f(target)
         } else if rd::<u8>(target_ent, 0x36) & 7 == 3 {
             let mut b = [0f32; 3];
             ped_get_bone_position(target_ent, GPtr::from_raw(b.as_mut_ptr()).cast(), 3, 0);
             b
         } else {
-            v3(entity_pos(target_ent))
+            rd3f(entity_pos(target_ent))
         };
         d = sub3(t, o);
         vector_normalise(GPtr::from_raw(&mut d as *mut [f32; 3]));
     } else {
-        let deg = placeable_heading(firer).fmul_m(kf(K_DEG)).to_f32();
+        let deg = placeable_heading(firer).fmul_m(gf(K_DEG)).to_f32();
         if firer == find_player_ped(-1) && cam_using_3rd_person_mouse_cam(GPtr::from_addr(CAM0)) != 0 {
             let range = rd::<f32>(wi, 8);
             let mut s = [0f32; 3];
@@ -100,10 +95,10 @@ pub fn fire_area_effect(this: GPtr<u8>, firer: GPtr<u8>, origin: GPtr<u8>, targe
             let r = vector_div(
                 GPtr::from_raw(q.as_mut_ptr()).cast(), GPtr::from_raw(diff.as_mut_ptr()).cast(), rd::<f32>(wi, 8),
             );
-            d = v3(r);
+            d = rd3f(r);
             t = tt;
         } else {
-            let r: X87 = x(deg).fmul_m(kf(K_RAD));
+            let r: X87 = x(deg).fmul_m(gf(K_RAD));
             d = [r.fsin().fchs().to_f32(), r.fcos().to_f32(), 0.0];
             if rd::<u8>(firer, 0x36) & 7 == 3 {
                 let pd = rd::<GPtr<u8>>(firer, 0x480);
@@ -121,9 +116,9 @@ pub fn fire_area_effect(this: GPtr<u8>, firer: GPtr<u8>, origin: GPtr<u8>, targe
     do_weapon_effect(this, o[0], o[1], o[2], d[0], d[1], d[2]);
     if rd::<i32>(this, 0) == 0x25 && sa_core::orig::at_site(0x73_EB61, rand) & 3 == 2 {
         let r = sa_core::orig::at_site(0x73_EB70, rand);
-        let f = xi(r).fmul_m(kf(K_RAND)).fmul_m(kf(K_2_5)).fadd_m(kf(K_3_5));
+        let f = xi(r).fmul_m(gf(K_RAND)).fmul_m(gf(K_2_5)).fadd_m(gf(K_3_5));
         let p: [f32; 3] = core::array::from_fn(|k| x(f.fmul_m(d[k]).to_f32()).fadd_m(o[k]).to_f32());
-        let z = x(p[2]).fadd_m(kf(K_0_5)).to_f32();
+        let z = x(p[2]).fadd_m(gf(K_0_5)).to_f32();
         if try_to_start_fire_at_coors(p[0], p[1], z, 0, 1, 0, f32::from_bits(0x4013_3333)) != 0 {
             stats_increment_stat(0xD8, 1.0);
         }

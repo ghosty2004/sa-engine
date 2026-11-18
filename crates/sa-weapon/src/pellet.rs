@@ -3,8 +3,9 @@
 //! reading aids; the bytes win). Unverified (docs/verify/HOWTO.md).
 
 use sa_core::abi::HookReg;
-use sa_core::field::{rd, wr};
+use sa_core::field::{rd, rd3f, wr};
 use sa_core::hook;
+use sa_core::field::gf;
 use sa_core::mem::GPtr;
 
 use crate::common::{g, rand, x, xi, X87};
@@ -29,9 +30,6 @@ const K_0_9: usize = 0x85_8C20;
 const COL: usize = PELLET_TEST_COL;
 const COL_DATA: usize = COL + 0x2C;
 
-fn kf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
 
 fn put3(p: GPtr<u8>, v: [f32; 3]) {
     wr::<f32>(p, 0, v[0]);
@@ -39,15 +37,12 @@ fn put3(p: GPtr<u8>, v: [f32; 3]) {
     wr::<f32>(p, 8, v[2]);
 }
 
-fn get3(p: GPtr<u8>) -> [f32; 3] {
-    [rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8)]
-}
 
 /// `out = a x b` through `CVector::CrossProduct` into a temporary, copied to `out` (as the original).
 fn cross_into(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) {
     let mut t = [0f32; 3];
     let r = cross_product(GPtr::from_raw(t.as_mut_ptr()).cast(), a, b);
-    put3(out, get3(r));
+    put3(out, rd3f(r));
 }
 
 /// [`cross_into`] with a constant axis vector as `b`.
@@ -79,28 +74,28 @@ pub fn set_up_pellet_col(_this: GPtr<u8>, n: i32, owner: GPtr<u8>, victim: GPtr<
         g::<u8>(COL + 0x28).write(0);
     }
     let data = g::<GPtr<u8>>(COL_DATA).read();
-    let (c, pt) = (get3(cp), get3(point));
+    let (c, pt) = (rd3f(cp), rd3f(point));
     let mut dir = [0f32; 3];
     for k in 0..3 {
         dir[k] = x(c[k]).fsub_m(pt[k]).to_f32();
     }
     let sq = |v: f32| x(v).fmul_m(v);
     let len = sq(dir[1]).fadd(sq(dir[0])).fadd(sq(dir[2])).fsqrt();
-    let depth = len.fmul_m(kf(SPREAD_RATE)).fmul_m(kf(SCALE_MULT)).to_f32();
+    let depth = len.fmul_m(gf(SPREAD_RATE)).fmul_m(gf(SCALE_MULT)).to_f32();
     let neg = x(depth).fchs().to_f32();
     let lines = rd::<GPtr<u8>>(data, 0x10);
     put3(lines, [0.0, neg, 0.0]);
     put3(lines.byte_add(0x10), [0.0, depth, 0.0]);
     if n > 1 {
-        let lo = x(depth).fmul_m(kf(K_0_2)).to_f32();
+        let lo = x(depth).fmul_m(gf(K_0_2)).to_f32();
         let w = x(depth).fsub_m(lo).to_f32();
-        let y0 = x(depth).fmul_m(kf(K_M2)).to_f32();
+        let y0 = x(depth).fmul_m(gf(K_M2)).to_f32();
         let y1 = x(depth).fadd(x(depth)).to_f32();
         for i in 1..n as isize {
             let r1 = sa_core::orig::at_site(0x73_C875, rand);
-            let angle = xi(r1).fmul_m(kf(K_RAND)).fmul_m(kf(K_2PI)).fsub_m(kf(K_PI)).to_f32();
+            let angle = xi(r1).fmul_m(gf(K_RAND)).fmul_m(gf(K_2PI)).fsub_m(gf(K_PI)).to_f32();
             let r2 = sa_core::orig::at_site(0x73_C898, rand);
-            let spread = xi(r2).fmul_m(kf(K_RAND)).fmul_m(w).fadd_m(lo);
+            let spread = xi(r2).fmul_m(gf(K_RAND)).fmul_m(w).fadd_m(lo);
             let px = x(angle).fcos().fmul(spread).to_f32();
             let pz = x(angle).fsin().fmul(spread).to_f32();
             let l = lines.byte_add(0x20 * i);
@@ -108,9 +103,9 @@ pub fn set_up_pellet_col(_this: GPtr<u8>, n: i32, owner: GPtr<u8>, victim: GPtr<
             put3(l.byte_add(0x10), [px, y1, pz]);
         }
     }
-    g::<f32>(COL + 0x24).write(x(depth).fmul_m(kf(K_2_5)).to_f32());
+    g::<f32>(COL + 0x24).write(x(depth).fmul_m(gf(K_2_5)).to_f32());
     wr::<u8>(data, 6, n as u8);
-    put3(GPtr::from_addr(COL), [neg, x(depth).fmul_m(kf(K_M2)).to_f32(), neg]);
+    put3(GPtr::from_addr(COL), [neg, x(depth).fmul_m(gf(K_M2)).to_f32(), neg]);
     put3(GPtr::from_addr(COL + 0xC), [depth, x(depth).fadd(x(depth)).to_f32(), depth]);
 
     let normal = cp.byte_add(0x10);
@@ -118,15 +113,15 @@ pub fn set_up_pellet_col(_this: GPtr<u8>, n: i32, owner: GPtr<u8>, victim: GPtr<
     let building = rd::<u8>(victim, 0x36) & 7 == 1;
     let dp = GPtr::from_raw(dir.as_mut_ptr()).cast::<u8>();
     if building {
-        let nv = get3(normal);
+        let nv = rd3f(normal);
         put3(fwd, [x(nv[0]).fchs().to_f32(), x(nv[1]).fchs().to_f32(), x(nv[2]).fchs().to_f32()]);
         let nx = x(nv[0]).fabs();
-        let axis = if nx.fcom(x(kf(K_0_9))).test_parity(0x05) { [0.0, 1.0, 0.0] } else { [1.0, 0.0, 0.0] };
+        let axis = if nx.fcom(x(gf(K_0_9))).test_parity(0x05) { [0.0, 1.0, 0.0] } else { [1.0, 0.0, 0.0] };
         cross_axis(mat, normal, axis);
     } else {
         vector_normalise(GPtr::from_raw(&mut dir as *mut [f32; 3]));
         put3(fwd, dir);
-        if x(dir[2]).fabs().fcom(x(kf(K_0_9))).test_any(0x41) {
+        if x(dir[2]).fabs().fcom(x(gf(K_0_9))).test_any(0x41) {
             cross_axis(mat, dp, [0.0, 0.0, 1.0]);
         } else if rd::<u8>(owner, 0x36) & 7 == 3 {
             ensure_matrix(owner);
@@ -140,14 +135,14 @@ pub fn set_up_pellet_col(_this: GPtr<u8>, n: i32, owner: GPtr<u8>, victim: GPtr<
     let pos = mat.byte_add(0x30);
     put3(pos, c);
     if !building {
-        let f = get3(fwd);
-        let nv = get3(normal);
+        let f = rd3f(fwd);
+        let nv = rd3f(normal);
         let px: X87 = x(neg).fmul_m(f[0]);
         let py = x(neg).fmul_m(f[1]).to_f32();
         let pz = x(neg).fmul_m(f[2]).to_f32();
         let dot = x(nv[2]).fmul_m(f[2]).fadd(x(nv[1]).fmul_m(f[1])).fadd(x(nv[0]).fmul_m(f[0])).to_f32();
         let pz = x(pz).fmul_m(dot).to_f32();
-        let p0 = get3(pos);
+        let p0 = rd3f(pos);
         wr::<f32>(pos, 0, px.fmul_m(dot).fadd_m(p0[0]).to_f32());
         wr::<f32>(pos, 4, x(py).fmul_m(dot).fadd_m(p0[1]).to_f32());
         wr::<f32>(pos, 8, x(pz).fadd_m(p0[2]).to_f32());

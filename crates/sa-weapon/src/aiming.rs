@@ -5,11 +5,12 @@
 //! (docs/verify/HOWTO.md).
 
 use sa_core::abi::HookReg;
-use sa_core::field::rd;
+use sa_core::field::{rd, rd3f};
+use sa_core::field::gf;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-use crate::common::{g, x, X87};
+use crate::common::{x, X87};
 use crate::weapon::world_process_line_of_sight;
 use crate::weapon_fire::ensure_matrix;
 use sa_world::bindings::{dist_to_line, find_objects_in_range, placeable_get_matrix};
@@ -36,13 +37,7 @@ const K_0_5: usize = 0x85_8B8C;
 const K_DEG: usize = 0x85_95EC;
 const K_2_5: usize = 0x85_8FA0;
 
-fn kf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
 
-fn v3(p: GPtr<u8>) -> [f32; 3] {
-    [rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8)]
-}
 
 /// `sqrt((dz*dz + dy*dy) + dx*dx)` of `a - b` (x87, each difference an extended register).
 fn dist_zyx(a: [f32; 3], b: [f32; 3]) -> X87 {
@@ -64,8 +59,8 @@ fn dist_zyx(a: [f32; 3], b: [f32; 3]) -> X87 {
        unverified = "frontier2-a26", route = "L2", hazards = "heap-writes",
        note = "may allocate the owner's / a candidate's matrix (ensure-matrix pattern)")]
 pub fn do_doom_aiming(owner: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) {
-    let s = v3(start);
-    let r = dist_zyx(v3(end), s).to_f32();
+    let s = rd3f(start);
+    let r = dist_zyx(rd3f(end), s).to_f32();
     let mut list = [GPtr::<u8>::NULL; 16];
     let mut count = 0i16;
     find_objects_in_range(
@@ -85,7 +80,7 @@ pub fn do_doom_aiming(owner: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) {
         if c == owner || ped_can_see_entity(owner, c, f32::from_bits(0x3EC9_0FDB)) == 0 {
             continue;
         }
-        if matches!(rd::<u8>(list[k], 0x36) >> 3, 6 | 7 | 5) {
+        if matches!(rd::<u8>(list[k], 0x36) >> 3, 5..=7) {
             continue;
         }
         ensure_matrix(owner);
@@ -96,11 +91,11 @@ pub fn do_doom_aiming(owner: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) {
         let dy = x(rd::<f32>(om, 0x34)).fsub_m(rd::<f32>(cm, 0x34));
         let d2 = dx.fmul(dx).fadd(dy.fmul(dy)).fsqrt().to_f32();
         let v = x(rd::<f32>(om, 0x38)).fsub_m(rd::<f32>(cm, 0x38));
-        let neg = !v.fcom(x(kf(K_0))).test_parity(0x05);
+        let neg = !v.fcom(x(gf(K_0))).test_parity(0x05);
         let a = rd::<f32>(placeable_get_matrix(owner), 0x38);
         let az = x(a).fsub_m(rd::<f32>(placeable_get_matrix(list[k]), 0x38));
         let az = if neg { az.fchs() } else { az };
-        if x(kf(K_1_5)).fmul(az).fcom(x(d2)).test_parity(0x05) {
+        if x(gf(K_1_5)).fmul(az).fcom(x(d2)).test_parity(0x05) {
             continue;
         }
         let d3 = az.fmul(az).fadd(x(d2).fmul_m(d2)).fsqrt();
@@ -110,7 +105,7 @@ pub fn do_doom_aiming(owner: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) {
         closest = d3.to_f32();
         best = k;
     }
-    if x(closest).fcom(x(kf(K_9000))).test_parity(0x05) {
+    if x(closest).fcom(x(gf(K_9000))).test_parity(0x05) {
         return;
     }
     let t = list[best];
@@ -123,17 +118,17 @@ pub fn do_doom_aiming(owner: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) {
     if hit_any != 0 {
         return;
     }
-    let e = v3(end);
+    let e = rd3f(end);
     let ey = x(e[1]).fsub_m(s[1]);
     let ex = x(e[0]).fsub_m(s[0]);
     let l = ey.fmul(ey).fadd(ex.fmul(ex)).fsqrt();
-    let tp = v3(entity_pos(t));
+    let tp = rd3f(entity_pos(t));
     let ty = x(tp[1]).fsub_m(s[1]);
     let tx = x(tp[0]).fsub_m(s[0]);
     let dd = ty.fmul(ty).fadd(tx.fmul(tx)).fsqrt();
-    let mut tz = x(tp[2]).fadd_m(kf(K_0_3));
+    let mut tz = x(tp[2]).fadd_m(gf(K_0_3));
     if rd::<u8>(t, 0x36) & 7 == 3 && rd::<u32>(t, 0x46C) & 0x400_0000 != 0 {
-        tz = tz.fsub_m(kf(K_0_8));
+        tz = tz.fsub_m(gf(K_0_8));
     }
     let k = l.fdiv(dd);
     let z = k.fmul(tz.fsub_m(s[2])).fadd_m(s[2]).to_f32();
@@ -156,8 +151,8 @@ pub fn do_doom_aiming(owner: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) {
        unverified = "frontier2-a26", route = "L2", hazards = "x87-transcendental",
        note = "FPTAN threshold; no candidate with a threshold above 10000 reads list[0] (the original: an unwritten index)")]
 pub fn do_drive_by_auto_aiming(owner: GPtr<u8>, veh: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>, aim_vehicles: u32) {
-    let s = v3(start);
-    let len = dist_zyx(v3(end), s).to_f32();
+    let s = rd3f(start);
+    let len = dist_zyx(rd3f(end), s).to_f32();
     let mut counts = [0u32; 2];
     if owner.is_null() {
         return;
@@ -187,24 +182,24 @@ pub fn do_drive_by_auto_aiming(owner: GPtr<u8>, veh: GPtr<u8>, start: GPtr<u8>, 
             continue;
         }
         let dl = X87::from_f64_exact(dist_to_line(start, end, entity_pos(c)));
-        let cpos = || v3(entity_pos(list[k]));
+        let cpos = || rd3f(entity_pos(list[k]));
         let score = match rd::<u32>(veh, 0x594) {
             3 | 4 => {
-                let vp = || v3(entity_pos(veh));
-                if !dist_zyx(cpos(), vp()).fcom(x(kf(K_5))).test_parity(0x05) {
-                    dl.fdiv(x(kf(K_5)))
+                let vp = || rd3f(entity_pos(veh));
+                if !dist_zyx(cpos(), vp()).fcom(x(gf(K_5))).test_parity(0x05) {
+                    dl.fdiv(x(gf(K_5)))
                 } else {
                     dl.fdiv(dist_zyx(cpos(), vp()))
                 }
             }
-            _ => dl.fadd(dist_zyx(cpos(), v3(entity_pos(veh))).fmul_m(kf(K_0_15))),
+            _ => dl.fadd(dist_zyx(cpos(), rd3f(entity_pos(veh))).fmul_m(gf(K_0_15))),
         };
         let p = cpos();
-        let e = v3(end);
+        let e = rd3f(end);
         let a = |j: usize| x(p[j]).fsub_m(s[j]);
         let b = |j: usize| x(e[j]).fsub_m(s[j]);
         let dot = b(2).fmul(a(2)).fadd(b(1).fmul(a(1))).fadd(b(0).fmul(a(0)));
-        if dot.fcom(x(kf(K_0))).test_any(0x41) {
+        if dot.fcom(x(gf(K_0))).test_any(0x41) {
             continue;
         }
         if score.fcom(x(best_score)).test_parity(0x05) {
@@ -214,19 +209,19 @@ pub fn do_drive_by_auto_aiming(owner: GPtr<u8>, veh: GPtr<u8>, start: GPtr<u8>, 
         best = k;
     }
     let ang = get_plane_guns_auto_aim_angle(veh);
-    let thr = if ang.fcom(x(kf(K_0_5))).test_any(0x41) {
-        x(kf(K_2_5))
+    let thr = if ang.fcom(x(gf(K_0_5))).test_any(0x41) {
+        x(gf(K_2_5))
     } else {
-        let r = ang.fmul_m(kf(K_DEG));
+        let r = ang.fmul_m(gf(K_DEG));
         r.fptan().map_or(r, |(t, _one)| t)
     };
     if x(best_score).fcom(thr).test_parity(0x05) {
         return;
     }
     let t = list[best];
-    let e = v3(end);
+    let e = rd3f(end);
     let l = dist_zyx(s, e);
-    let tp = v3(entity_pos(t));
+    let tp = rd3f(entity_pos(t));
     let dd = dist_zyx(s, tp);
     let vz = x(tp[2]).fsub_m(s[2]).to_f32();
     let k = l.fdiv(dd).to_f32();

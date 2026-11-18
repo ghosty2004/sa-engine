@@ -4,6 +4,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::field::rd;
+use sa_core::field::gf;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
@@ -34,9 +35,6 @@ const K_LO: usize = 0x85_8B1C;
 const K_HI: usize = 0x85_8C20;
 const K_BACK: usize = 0x85_8CE8;
 
-fn kf(a: usize) -> f32 {
-    g::<f32>(a).read()
-}
 
 /// `sqrt((dz*dz + dy*dy) + dx*dx)` of `p - TheCamera.pos` below 125 (NaN fails).
 fn near_camera(p: GPtr<f32>) -> bool {
@@ -44,7 +42,7 @@ fn near_camera(p: GPtr<f32>) -> bool {
     let d = |o: isize| x(p.byte_add(o).read()).fsub_m(c.byte_add(o).read());
     let (dx, dy, dz) = (d(0), d(4), d(8));
     let r = dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx)).fsqrt();
-    !r.fcom(x(kf(K_RANGE))).test_parity(0x05)
+    !r.fcom(x(gf(K_RANGE))).test_parity(0x05)
 }
 
 /// `CSprite::CalcScreenCoors(p, &s, &w, &h, false, true)` succeeds and `0.1 * W < s.x < 0.9 * W`,
@@ -59,7 +57,7 @@ fn in_frame(p: GPtr<f32>) -> bool {
     }
     let inside = |size: usize, v: f32| {
         let n = xi(g::<i32>(size).read());
-        !n.fmul_m(kf(K_LO)).fcom(x(v)).test_parity(0x05) && !x(v).fcom(n.fmul_m(kf(K_HI))).test_parity(0x05)
+        !n.fmul_m(gf(K_LO)).fcom(x(v)).test_parity(0x05) && !x(v).fcom(n.fmul_m(gf(K_HI))).test_parity(0x05)
     };
     inside(SCREEN_W, s[0]) && inside(SCREEN_H, s[1])
 }
@@ -146,7 +144,7 @@ pub fn weapon_take_photograph(_this: GPtr<u8>, _owner: GPtr<u8>, point: GPtr<u8>
         }
         vector_normalise(GPtr::from_raw(&mut dir as *mut [f32; 3]));
         for (h, d) in head.iter_mut().zip(dir) {
-            let d = x(d).fmul_m(kf(K_BACK)).to_f32();
+            let d = x(d).fmul_m(gf(K_BACK)).to_f32();
             *h = x(*h).fadd_m(d).to_f32();
         }
         if camera_sees(&mut head, ped) {
