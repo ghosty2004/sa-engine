@@ -4683,3 +4683,54 @@
 - Verified: verify-all lanes 1-3 IDENTICAL 13/13 (tag mod2m5, host sa-oracle rebuilt from this tree); writer gate
   (base 72ea67c0) all PASS on the final head; samp-rs workspace tests, clippy (host, i686 Windows samp-client) and
   the samp_client.dll release build (i686-pc-windows-gnu) pass.
+## 2026-11-18 — FRONTIER-2 turn 16 lane C: RwD3D9RasterStreamReadDDS with the DXT3 / DXT5 decoders, CPostEffects::Radiosity, the exhaustive tri-strip generator, batches c35 to c37 (agent, branch worktree-agent-a80722c729393593d)
+- Base: lane C turn 15 head 910ace63. Every address checked against `tools/gen/inflight.py` first (none registered
+  elsewhere). Reading aids under target/lc16 (Ghidra decompilations, capstone listings; not committed).
+- Batch frontier2-c35 (RW, 4 hooks, new module `dds.rs`): `RwD3D9RasterStreamReadDDS` 0x81F360 (magic + 0x7C-byte
+  header; the native path: FourCC textures (2D or cube, compressed nibble, levels from the mipmap count), the
+  uncompressed masks mapped to D3D formats through `_rwD3D9RasterCreateFromDDSFormat` 0x4CD050 when the device keeps
+  the size (cube maps through CreateCubeTexture, only at the file's size), every level / cube face read (caps2 face
+  order; the cube-map bit is cleared with the first face), levels past the raster's own skipped; the image path:
+  DXT1 / DXT3 / DXT5, A16B16G16R16 and the 8/16/24/32-bit layouts decoded into a 32-bit image with the original's
+  channel bit tricks, a raster of the closest format, resampled when the device clamps the size; the alpha / cFormat
+  tail with the DXT1 transparency scan). Quirks kept: the 0x40 / 24-bit path checks the *cube* format 0x14 for a 2D
+  texture, the fourth DXT3 / DXT5 colour of a three-colour block is (0, 255, 255, 0), the format table is indexed
+  without a bound, failures leak the rasters they created (a short level read leaves it locked). The decoders
+  0x81EA70 (DXT3), 0x81EDC0 (DXT5) and 0x81F0C0 (DXT5 alpha, sevenths / fifths by signed division) share the
+  colour-block decoder. Stack residue (row step of an A16B16G16R16 file with a pitch, a GetLevelDesc that fails)
+  through `peek = 0xD8`: ledger.
+- Batch frontier2-c36 (RENDER, 1 hook, `postfx_radiosity.rs`): `CPostEffects::Radiosity` 0x702080. The bytes use
+  m_RadiosityPixelsX / Y (0xC40314 / 0xC40318) as ints (gta-reversed declares floats). The 4x-unrolled vertex loops
+  are one loop per pass kind; every texture coordinate is an fild / fidiv pair (exact integers divided once), the
+  rhw `1 / near` an f32 division, as the X87 model has them.
+- Batch frontier2-c37 (RW, 1 hook, `tristrip.rs`): the exhaustive generator 0x75A960. Its outer part is 0x7591D0's
+  with two other memory hints (0x30502 for the pointer array and the mesh pieces), so `generate_tristrip` became a
+  shared driver taking the hint and the per-material stripper; qsort (a CRT native) gets the comparator 0x759640 by
+  address as the original passes it. The inlined per-material stripper tries every (triangle, rotation) of buckets
+  1..3 as trial pass 1 and scores `2 * (triangles + 1) - indices` (signed, first best wins), replays it as pass 4 and
+  extends backwards; isolated triangles only set the final used flag. 0x759790's setup, strip start, backward
+  extension, emission and teardown became helpers both strippers use (its behaviour unchanged; the copy loop now uses
+  common::copy_bytes).
+- Not done: the MatFX bump render 0x814460 with the bump-env vertex builder 0x8149E0 (4.7 KB, 1306 instructions of
+  x87 in three paths: per-vertex with tangents, indexed / strip triangles without, plus the light position through
+  RwV3dTransformPoint / Vector): time. Porting 0x814460 alone would only move the row to 0x8149E0.
+- convcheck (master's tools/verify/convcheck.py on this tree): 9 FAIL, the same nine base declarations as turns
+  13..15; none on this turn's declarations.
+- frontier.py (this tree, --no-branches): RW / RENDER rows 4 -> 1 (0x814460); no new rows (every callee of the new
+  ports was already ported).
+- Scenarios (frontier.sh, i686 native sa-game of d4d17d5f = the final code, SA_ROOT=~/sa-engine; target/lc16/scen):
+  postfx, pausemenu, solicit, crossing, crossing-long, roadblocks, melee, sniper, shootcar, shootdriver, quad, heli,
+  plane, boat, roadblock-script, gangwar, jetpack: 0 blocked; roadblock-wanted 1 blocked (CObject::Explode 0x5A1340,
+  lane A's); no crash; unchanged from turn 15.
+- frontier.py on master 88ed32f1 (a temporary checkout under target/lc16, removed after): without branches direct 21,
+  partial 1 ("to port" 22: 0x7F44C0, 0x593FC0, 0x597740, 0x75A960, 0x7F4690, 0x800C80, 0x813A10, 0x40D7C0, 0x519810,
+  0x525E50, 0x596930, 0x702080, 0x763F20, 0x7641C0, 0x7CF600, 0x7F4AE0, 0x7FF450, 0x801390, 0x812D40, 0x814460,
+  0x81F360 and the partial 0x47A760); with branches direct 1 (+20 registered on other branches: lane C turns 15 / 16
+  and worktree-agent-a8f4c2b5abe823c9e), virtual 0, imports 0, partial 1: still open anywhere are only the MatFX bump
+  render 0x814460 (with 0x8149E0 behind it) and the partial script switch 0x47A760 (5 of 100 opcodes); the other
+  ADR-002 partials of turn 15's list are complete on master.
+- Gates: writer gate (base 910ace63) all 16 steps PASS on 52193f63 (hooks: 6 new, all unverified, batches
+  frontier2-c35 / c36 / c37); the DLL's sha256 was the same before and after the gate.
+- verify-all (lanes 6-7, host sa-oracle built from this tree): `lanec16-c2437` (SA_UNVERIFIED=frontier2-c24
+  .. frontier2-c37, DLL of d4d17d5f = the code of 52193f63, sha256 fefe154d…) IDENTICAL 13/13 (save-load: save files
+  identical except the SAVE-1 residue). Default set: see the last line.
