@@ -15,3 +15,4 @@ sa-mod = { path = "../../crates/sa-mod" }
 sa-net = { path = "../../crates/sa-net" }
 samp-client = { path = "../../samp-rs/crates/samp-client" }
 samp-proto = { path = "../../samp-rs/crates/samp-proto" }
+sa-samp-api = { path = "../../samp-rs/crates/sa-samp-api" }

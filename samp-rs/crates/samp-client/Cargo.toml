@@ -20,8 +20,8 @@ samp-saa = { path = "../samp-saa" }
 samp-ui = { path = "../samp-ui" }
 # Datagram transports (UDP natively, WebSocket through sa-udp-proxy on wasm32), from this repository.
 sa-net = { path = "../../../crates/sa-net" }
-# Game-adapter traits shared with the engine (docs/samp/game-adapter.md).
-sa-samp-api = { path = "../../../crates/sa-samp-api" }
+# The game-adapter traits the client calls (implemented by the original-exe backend and the samp mod).
+sa-samp-api = { path = "../sa-samp-api" }
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "=0.61.2", features = [

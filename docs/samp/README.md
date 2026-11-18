@@ -1,4 +1,34 @@
-# SAMP-1 (static part): what the SA:MP client needs from gta_sa.exe
+# SA:MP in sa-engine
+
+## Running SA:MP (the samp mod)
+
+The engine is a GTA SA rewrite only; SA:MP runs as a mod (`mods/samp`, docs/arch/ADR-004-mods.md §4.1d): samp-rs's
+client (`samp_client::hosted`) on the generic mod API. Build the game with mods and the first-party mods:
+
+    cargo build --release -p sa-game --features mods --target i686-unknown-linux-gnu
+    mods/build.sh                       # target/mods/{resolution,samp}
+
+Natively (multiplayer; single player stays `play.sh` without the samp mod):
+
+    sa-game --game GAME_DIR --start-in-world --mods target/mods/resolution,target/mods/samp
+
+`--mods` takes one or more folders, comma-separated, in load order (a folder holding `mod.toml` is one mod, any other
+folder loads each mod folder in it). In the browser (`FEATURES=mods tools/web/build.sh`, `tools/web/serve.sh --mods
+target/mods`, `sa-udp-proxy` running): `?mods=resolution,samp&proxy=ws://127.0.0.1:7781`.
+
+Joining: once the world runs the mod shows its connect screen: the server (`HOST:PORT`), the nickname and the
+favourite servers (Tab: next field, Up / Down: a favourite, Insert: add the server, Delete: remove it, Enter:
+connect). The manifest asks for `net = ["udp:user-approved"]`: the first time the mod connects to a server the game
+(the mod host, not the mod) asks "SA:MP wants to connect to HOST:PORT. Allow it?" (Y / Enter, N / Esc) and remembers
+the answer per mod (natively `$SA_MOD_DATA` or `~/.local/share/sa-engine/mods/sa-engine-host/net.samp`, in the browser
+the page's IndexedDB). The mod's storage (natively `.../sa-engine/mods/samp/`) holds `server`, `name`, `favourites`,
+the servers' `auth_table.txt` (third-party data the user provides; without it servers refuse the join at their auth
+check), and for headless runs `auto_connect` / `auto_spawn` (`1`). The native join test with our own open.mp server
+copy: `tools/e2e/samp/mod-join.sh` (`UX=1`: through the connect screen and the approval prompt with scripted keys).
+
+On the original `gta_sa.exe` samp-rs stays a DLL (`samp_client.dll`, samp-rs's own build and tests).
+
+## What the SA:MP client needs from gta_sa.exe (static inventory)
 
 Goal: find out which gta_sa.exe 1.0 US functionality the SA:MP client depends on, so that an
 "SA:MP-playable standalone" milestone can be scoped. The client in question is samp-rs, which reproduces

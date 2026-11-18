@@ -2,14 +2,19 @@
 [mod]
 id = "samp"
 name = "SA:MP"
-version = "0.1.0"
-api_version = "1.4"
+version = "0.2.0"
+api_version = "1.5"
 entry = "samp.wasm"
 
 [permissions]
 render = true
-net = ["udp:127.0.0.1:*"]   # local test servers
-storage = true              # settings: server, name, auth_table.txt
+state = "write"             # the local player, the camera, the HUD, the clock and weather the server sets
+input = "capture"           # the connect screen, chat typing and dialogs take the keyboard
+entities = true             # the server's vehicles and the other players
+scripts = true              # tasks, animations, camera and world commands
+audio = true                # the sounds the server plays
+net = ["udp:user-approved"]  # the servers the user approves (the host asks once per server)
+storage = true              # server, name, favourites, auth_table.txt, auto_connect, auto_spawn; the serial seed
 
 [limits]
 memory_mib = 64

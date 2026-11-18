@@ -1,55 +1,56 @@
-//! `--samp` with the `samp` feature: a minimal SA:MP client on samp-rs's network core (`NetClient`, the sync
-//! builders of `footsync`) that drives the local player through the native game adapter (docs/samp/native-plan.md
-//! §3). It joins, picks the first class, spawns, applies the player RPCs a gamemode uses on its own player
-//! (position, facing, health, armour, weapons, money, clock, weather, interior, control, camera) through
-//! `sa_samp_api` writes and sends on-foot and stats sync from `ped_snapshot`.
+//! samp-rs's client on a game that serves `sa_samp_api::GameAdapter` (the game's mod API, through the SA:MP mod):
+//! samp's netgame on [`NetClient`] and the sync builders of `footsync`, driving the local player through the
+//! adapter. It joins, runs class selection, spawns, applies the player RPCs a gamemode uses on its own player
+//! (position, facing, health, armour, weapons, money, clock, weather, interior, control, camera, skin, animations),
+//! streams the server's vehicles and the other players in and out, and sends on-foot, driver and stats sync.
 //!
-//! This stands in for samp-rs's full client until its game logic is linkable here (migration step 10); remote
-//! players, vehicles and objects come with it. The UI is samp-rs's own ([`UiHost`]: `UiCore` fed with the RPCs,
-//! drawn through the engine backend). Everything runs on the game thread inside the frame callback; RakNet's
-//! update thread is samp-rs's own.
+//! The UI is samp-rs's own ([`UiHost`]: `UiCore` fed with the RPCs, drawn through the adapter's UI backend).
+//! Everything runs on the game thread inside the frame callback; the host gives the session its transport and the
+//! clock (`samp_proto::time`).
 
-use std::cell::RefCell;
 use std::collections::HashMap;
-#[cfg(not(target_arch = "wasm32"))]
-use std::fmt::Write as _;
-use std::path::Path;
-#[cfg(not(target_arch = "wasm32"))]
-use std::path::PathBuf;
-use std::rc::Rc;
 use std::time::Duration;
 
-use web_time::Instant;
+use samp_proto::time::Instant;
 
-use samp_client::classsel::{self, ClassSelection};
-use samp_client::footsync::{self, FootSender, KeyContext, LocalSample, Rotation};
-use samp_client::lifecycle::{self, NetGame};
-use samp_client::netclient::{Event, NetClient, NetPacket};
-use samp_client::ui::host::UiHost;
-use samp_ui::classpanel::ClassButton;
-use samp_ui::text::NoExpansion;
-use samp_proto::auth::AuthTable;
+use crate::classsel::{self, ClassSelection};
+use crate::footsync::{self, FootSender, KeyContext, LocalSample, Rotation};
+use crate::lifecycle::{self, NetGame};
+use crate::netclient::{Event, NetClient, NetPacket};
+use crate::ui::host::UiHost;
 use samp_proto::raknet::Reliability;
 use samp_proto::rpcs::{Incoming, player, vehicle};
 use samp_proto::sync::player::StatsSync;
+use samp_ui::classpanel::ClassButton;
+use samp_ui::text::NoExpansion;
 
 use sa_samp_api::camera::CameraCut;
 use sa_samp_api::hooks::{FramePhase, GameHooks};
 use sa_samp_api::input::{EventResult, WindowEvent};
 use sa_samp_api::peds::{AnimRequest, PedTask};
 use sa_samp_api::vehicles::VehicleSpawn;
-use sa_samp_api::{AreaCode, GameAdapter, ModelId, Vec3, VehicleRef, WeaponType};
+use sa_samp_api::{AreaCode, GameAdapter, ModelId, PedRef, Vec3, VehicleRef, WeaponType};
 
-use crate::samp::Target;
+/// Where a hosted client's lines go (the host's log).
+pub type Log = Box<dyn Fn(&str)>;
 
-/// What the client did, for the run report (shared with `samp.rs`).
-pub type Journal = Rc<RefCell<Vec<String>>>;
+/// What the host tells the client at start.
+pub struct HostedConfig {
+    /// The server as the user named it (for samp's `Connecting to` line).
+    pub host: String,
+    /// The server's port.
+    pub port: u16,
+    /// Our player name.
+    pub name: String,
+    /// Press Shift in class selection by itself (headless runs have no keyboard; samp's 2 s guard still applies).
+    pub auto_spawn: bool,
+}
 
-/// The native client's state.
-pub struct NetHooks {
+/// The hosted client's state.
+pub struct HostedClient {
     net: NetClient,
     start: Instant,
-    journal: Journal,
+    log: Log,
     connected: bool,
     on_foot_rate: u32,
     spawn: Option<player::SpawnInfo>,
@@ -59,8 +60,10 @@ pub struct NetHooks {
     syncs_sent: u32,
     last_report: Option<Instant>,
     world_set_up: bool,
-    /// Server vehicle id → the engine's vehicle (streamed in by RPC 164).
+    /// Server vehicle id → the game's vehicle (streamed in by RPC 164).
     vehicles: HashMap<u16, VehicleRef>,
+    /// Server player id → the ped standing in for that player (streamed in by RPC 32).
+    players: HashMap<u16, PedRef>,
     last_car_sync: Option<Instant>,
     car_rotation: Option<samp_proto::types::Quat>,
     /// samp's netgame state and connect timer (`Connecting to` 3 s after `Started`).
@@ -71,20 +74,19 @@ pub struct NetHooks {
     class_sel: ClassSelection,
     /// `HOST:PORT` for the `Connecting to` line.
     server_text: (String, u16),
-    /// Synthetic Shift for headless runs (`SA_SAMP_AUTO_SPAWN=1`): the offscreen mode has no keyboard.
     auto_spawn: bool,
     netgame_created: bool,
     /// Our player name (the netgame's).
     name: String,
     /// samp-rs's UI: chat, dialogs, textdraws, game text, scoreboard, class-selection panel.
-    ui: UiHost,
+    pub ui: UiHost,
 }
 
-/// `CKeyboardState` offsets of the keys class selection polls (NewKeyState 0xB73190): left, right, and the
-/// shift words (lshift, rshift, shift); samp asks for VK_SHIFT, which is either Shift key.
-const KEY_LEFT: u16 = 0x22A;
-const KEY_RIGHT: u16 = 0x22C;
-const KEY_SHIFTS: [u16; 3] = [0x25C, 0x25E, 0x260];
+/// The keys class selection polls (Windows virtual-key codes): left, right, and either Shift key (samp asks for
+/// VK_SHIFT).
+const KEY_LEFT: u16 = 0x25;
+const KEY_RIGHT: u16 = 0x27;
+const KEY_SHIFTS: [u16; 3] = [0x10, 0xA0, 0xA1];
 /// samp's not-connected scene (samp-rs `connecting_tick`, samp.dll 0x100089B0): the ped parked here, the
 /// camera fixed at `CONNECT_CAMERA` looking at `CONNECT_LOOK_AT` with a jump cut, weather 1, HUD off.
 const CONNECT_PED_POS: Vec3 = Vec3::new(1133.05, -2038.40, 69.1);
@@ -95,88 +97,15 @@ const CONNECT_WEATHER: u8 = 1;
 /// `World::time_of_day` in `world_frame`); before InitGame it is the connecting scene's clock.
 const CONNECT_HOUR: u8 = 12;
 
-/// The auth table (third-party data, never committed): `--samp-auth FILE` or `SAMP_AUTH_TABLE`; in the browser
-/// its text, which the page fetches from the local web server (`SA_SAMP_AUTH`).
-#[cfg(target_arch = "wasm32")]
-fn auth_table(_path: Option<&Path>) -> Result<AuthTable, String> {
-    let text = crate::env::var("SA_SAMP_AUTH")
-        .map_err(|_| "samp: no auth table (the page passes it as SA_SAMP_AUTH; tools/web/serve.sh --samp-auth FILE)")?;
-    AuthTable::parse(&text).map_err(|e| format!("samp: auth table: {e:?}"))
-}
-
-/// The auth table (third-party data, never committed): `--samp-auth FILE` or `SAMP_AUTH_TABLE`.
-#[cfg(not(target_arch = "wasm32"))]
-fn auth_table(path: Option<&Path>) -> Result<AuthTable, String> {
-    let p: PathBuf = match path {
-        Some(p) => p.into(),
-        None => std::env::var_os("SAMP_AUTH_TABLE")
-            .map(PathBuf::from)
-            .ok_or("samp: no auth table (--samp-auth FILE or SAMP_AUTH_TABLE)")?,
-    };
-    let text = std::fs::read_to_string(&p).map_err(|e| format!("samp: {}: {e}", p.display()))?;
-    AuthTable::parse(&text).map_err(|e| format!("samp: {}: {e:?}", p.display()))
-}
-
-/// The client serial's seed: made once per install from randomness and kept in sa-game's configuration
-/// (`$XDG_CONFIG_HOME/sa-engine/samp.cfg`, line `serial_seed=<40 hex digits>`); never derived from user or host
-/// data (main-session decision 2026-11-12). In the browser: a new one per page load (no configuration folder).
-#[cfg(target_arch = "wasm32")]
-pub fn serial_seed() -> String {
-    // samp-rs's `pseudo_random_hex40` reads std's clock, which wasm32-unknown-unknown does not have
-    (0..40)
-        .map(|_| char::from_digit((js_sys::Math::random() * 16.0) as u32 & 15, 16).unwrap_or('0'))
-        .collect::<String>()
-        .to_ascii_uppercase()
-}
-
-/// The client serial's seed: made once per install from randomness and kept in sa-game's configuration
-/// (`$XDG_CONFIG_HOME/sa-engine/samp.cfg`, line `serial_seed=<40 hex digits>`); never derived from user or host
-/// data (main-session decision 2026-11-12).
-#[cfg(not(target_arch = "wasm32"))]
-pub fn serial_seed() -> String {
-    let dir = std::env::var_os("XDG_CONFIG_HOME")
-        .map(PathBuf::from)
-        .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".config")))
-        .unwrap_or_else(std::env::temp_dir)
-        .join("sa-engine");
-    let file = dir.join("samp.cfg");
-    let text = std::fs::read_to_string(&file).unwrap_or_default();
-    if let Some(seed) = parse_seed(&text) {
-        return seed;
-    }
-    let seed = samp_client::netclient::pseudo_random_hex40();
-    let _ = std::fs::create_dir_all(&dir);
-    let mut out = text;
-    if !out.is_empty() && !out.ends_with('\n') {
-        out.push('\n');
-    }
-    let _ = writeln!(out, "serial_seed={seed}");
-    if let Err(e) = std::fs::write(&file, out) {
-        println!("samp: cannot keep the serial seed in {}: {e}", file.display());
-    }
-    seed
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn parse_seed(text: &str) -> Option<String> {
-    text.lines()
-        .filter_map(|l| l.trim().strip_prefix("serial_seed="))
-        .map(str::trim)
-        .find(|s| s.len() == 40 && s.bytes().all(|b| b.is_ascii_hexdigit()))
-        .map(str::to_string)
-}
-
-impl NetHooks {
-    /// Opens the session (the first request goes out with the first update).
-    pub fn connect(target: &Target, auth: Option<&Path>, journal: Journal) -> Result<Self, String> {
-        let mut net = open_session(target, auth_table(auth)?)?;
-        net.set_serial_seed(&serial_seed());
-        // samp connects from its connect tick, 3 s after the netgame was created (`tick`).
+impl HostedClient {
+    /// The client on `net` (the session the host opened, its serial seed set); the first request goes out with the
+    /// first frame.
+    pub fn new(net: NetClient, config: HostedConfig, log: Log) -> Self {
         let now = Instant::now();
-        Ok(Self {
+        Self {
             net,
-            start: Instant::now(),
-            journal,
+            start: now,
+            log,
             connected: false,
             on_foot_rate: 30,
             spawn: None,
@@ -187,23 +116,27 @@ impl NetHooks {
             last_report: None,
             world_set_up: false,
             vehicles: HashMap::new(),
+            players: HashMap::new(),
             last_car_sync: None,
             car_rotation: None,
             netgame: NetGame::new(0),
             phone: false,
             class_sel: ClassSelection::new(now),
-            server_text: (target.host.clone(), target.port),
-            auto_spawn: crate::env::var("SA_SAMP_AUTO_SPAWN").is_ok_and(|v| v == "1"),
+            server_text: (config.host, config.port),
+            auto_spawn: config.auto_spawn,
             netgame_created: false,
-            name: target.name.clone(),
+            name: config.name,
             ui: UiHost::new(None),
-        })
+        }
+    }
+
+    /// The session.
+    pub fn net(&self) -> &NetClient {
+        &self.net
     }
 
     fn note(&self, line: String) {
-        let line = format!("{:>6} ms  {line}", self.start.elapsed().as_millis());
-        println!("samp: {line}");
-        self.journal.borrow_mut().push(line);
+        (self.log)(&format!("{:>6} ms  {line}", self.start.elapsed().as_millis()));
     }
 
     fn tick(&mut self, game: &mut dyn GameAdapter) {
@@ -219,7 +152,7 @@ impl NetHooks {
             self.netgame = NetGame::new(now_ms);
             let (host, port) = self.server_text.clone();
             self.ui.core.on_netgame_start(&host, port, self.name.as_bytes());
-            self.note(format!("chat (debug): {}", samp_client::ui::core::msg::STARTED));
+            self.note(format!("chat (debug): {}", crate::ui::core::msg::STARTED));
         }
         if self.netgame.connect_due(now_ms) {
             let line = lifecycle::msg::connecting(&self.server_text.0, self.server_text.1);
@@ -329,11 +262,11 @@ impl NetHooks {
                     Incoming::Player(p) => self.on_player_rpc(p, game),
                     Incoming::Vehicle(v) => self.on_vehicle_rpc(v, game),
                     Incoming::Ui(u) => self.note(format!("ui rpc {}", u.id())),
-                    Incoming::Remote(_) => {}
+                    Incoming::Remote(r) => self.on_remote_rpc(r, game),
                     other => self.note(format!("rpc {} (not applied natively yet)", other_id(&other))),
                 }
             }
-            Event::Sync(_) => {}
+            Event::Sync(s) => self.on_sync(s, game),
         }
     }
 
@@ -517,11 +450,57 @@ impl NetHooks {
         }
     }
 
+    /// The other players: a ped stands in for each player the server streams in, placed by its on-foot sync.
+    fn on_remote_rpc(&mut self, rpc: samp_proto::rpcs::remote::Incoming, game: &mut dyn GameAdapter) {
+        use samp_proto::rpcs::remote::Incoming as R;
+        match rpc {
+            R::PlayerStreamIn(p) => {
+                self.remove_player(p.player_id, game);
+                let model = if game.is_ped_model(ModelId(p.skin as i32)) { p.skin as i32 } else { 0 };
+                let pos = Vec3::new(p.position.x, p.position.y, p.position.z);
+                match game.create_actor(ModelId(model), pos, p.facing_angle) {
+                    Ok(ped) => {
+                        self.players.insert(p.player_id, ped);
+                        self.note(format!(
+                            "player {} (skin {}) streamed in at ({:.1},{:.1},{:.1}) as {:#x}",
+                            p.player_id, p.skin, pos.x, pos.y, pos.z, ped.0
+                        ));
+                    }
+                    Err(e) => self.note(format!("player {} (skin {}): {e}", p.player_id, p.skin)),
+                }
+            }
+            R::PlayerStreamOut(p) => {
+                self.remove_player(p.player_id, game);
+                self.note(format!("player {} streamed out", p.player_id));
+            }
+            R::PlayerQuit(p) => self.remove_player(p.player_id, game),
+            _ => {}
+        }
+    }
+
+    fn remove_player(&mut self, id: u16, game: &mut dyn GameAdapter) {
+        if let Some(ped) = self.players.remove(&id) {
+            report(self, "destroy_ped", game.destroy_ped(ped));
+        }
+    }
+
+    /// The other players' on-foot sync: their stand-in peds take the position and the heading.
+    fn on_sync(&mut self, sync: samp_proto::sync::IncomingSync, game: &mut dyn GameAdapter) {
+        let samp_proto::sync::IncomingSync::Foot { sync, .. } = sync else { return };
+        let Some(&ped) = self.players.get(&sync.player_id) else { return };
+        let f = crate::remote::FootData::from_sync(&sync);
+        let forward = crate::remote::rows_from_quat(f.rotation).forward;
+        let heading = crate::remote::heading_from_forward(forward).to_degrees();
+        let [x, y, z] = f.position;
+        report(self, "set_ped_position", game.set_ped_position(ped, Vec3::new(x, y, z)));
+        report(self, "set_ped_heading", game.set_ped_heading(ped, heading, false));
+    }
+
     /// What the player did in the UI, sent like samp does (chat lines and commands, dialog answers, clicks).
     fn ui_events(&mut self) {
         for o in self.ui.core.take_outgoing() {
             self.note(format!("ui: {o:?}"));
-            samp_client::ui::core::send_outgoing(&mut self.net, o);
+            crate::ui::core::send_outgoing(&mut self.net, o);
         }
     }
 
@@ -610,7 +589,7 @@ impl NetHooks {
         let (pad, _) = game.pad();
         let a = |v: Vec3| [v.x, v.y, v.z];
         let m = vs.matrix;
-        let sample = samp_client::vehicle::DriverSample {
+        let sample = crate::vehicle::DriverSample {
             vehicle_id: id,
             left_right: pad.left_x,
             up_down: pad.left_y,
@@ -632,7 +611,7 @@ impl NetHooks {
             trailer_id: 0,
             extra: 0,
         };
-        let p = samp_client::vehicle::build_driver_sync(&sample, self.car_rotation);
+        let p = crate::vehicle::build_driver_sync(&sample, self.car_rotation);
         self.car_rotation = Some(p.rotation);
         self.net.send_sync(&p);
         self.syncs_sent += 1;
@@ -755,10 +734,10 @@ impl NetHooks {
         // Shift does nothing while the chat input is open (samp-rs `class_selection_keys`).
         let chat_open = self.ui.core.input.is_open();
         let keys = classsel::Keys {
-            left: click == Some(ClassButton::Previous) || game.game_key_down(KEY_LEFT),
-            right: click == Some(ClassButton::Next) || game.game_key_down(KEY_RIGHT),
+            left: click == Some(ClassButton::Previous) || game.key_held(KEY_LEFT),
+            right: click == Some(ClassButton::Next) || game.key_held(KEY_RIGHT),
             shift: click == Some(ClassButton::Spawn)
-                || (!chat_open && KEY_SHIFTS.iter().any(|k| game.game_key_down(*k)))
+                || (!chat_open && KEY_SHIFTS.iter().any(|k| game.key_held(*k)))
                 || self.auto_spawn,
         };
         match self.class_sel.tick(now, keys) {
@@ -875,28 +854,6 @@ impl NetHooks {
     }
 }
 
-/// The session natively: a UDP socket to the resolved server.
-#[cfg(not(target_arch = "wasm32"))]
-fn open_session(target: &Target, auth: AuthTable) -> Result<NetClient, String> {
-    let addr = samp_client::netclient::resolve(&target.host, target.port)
-        .map_err(|e| format!("samp: {}: {e}", target.host))?;
-    NetClient::new(addr, &target.name, auth).map_err(|e| format!("samp: {e}"))
-}
-
-/// The session in the browser: a WebSocket to sa-udp-proxy, which resolves `host:port` and relays the datagrams
-/// (docs/samp/web-proxy.md).
-#[cfg(target_arch = "wasm32")]
-fn open_session(target: &Target, auth: AuthTable) -> Result<NetClient, String> {
-    let proxy = target
-        .proxy
-        .clone()
-        .ok_or("samp: the browser needs a sa-udp-proxy URL (&proxy=ws://127.0.0.1:7781)")?;
-    let mut net = NetClient::new_unresolved(&format!("{}:{}", target.host, target.port), &target.name, auth)
-        .map_err(|e| format!("samp: {e}"))?;
-    net.set_connector(Box::new(samp_client::netclient::WebSocketNetConnector { proxy_url: proxy }));
-    Ok(net)
-}
-
 /// SA:MP text (code page 1252 bytes) as a `String`, byte for byte (Latin-1 view, the UI's font covers it).
 fn text(b: &[u8]) -> String {
     b.iter().map(|&c| char::from(c)).collect()
@@ -916,13 +873,13 @@ fn other_id(i: &Incoming) -> String {
 }
 
 /// Logs an adapter call that failed (an unported path), once per call site and error.
-fn report(h: &NetHooks, what: &str, r: sa_samp_api::GameResult<()>) {
+fn report(h: &HostedClient, what: &str, r: sa_samp_api::GameResult<()>) {
     if let Err(e) = r {
         h.note(format!("adapter {what}: {e}"));
     }
 }
 
-impl GameHooks for NetHooks {
+impl GameHooks for HostedClient {
     fn frame(&mut self, phase: FramePhase, game: &mut dyn GameAdapter) {
         if phase == FramePhase::BeforeGameProcess {
             self.tick(game);
@@ -940,15 +897,3 @@ impl GameHooks for NetHooks {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn keeps_a_valid_serial_seed_only() {
-        let s = "0123456789ABCDEF0123456789abcdef01234567";
-        assert_eq!(parse_seed(&format!("x=1\nserial_seed={s}\n")).as_deref(), Some(s));
-        assert_eq!(parse_seed("serial_seed=123"), None);
-        assert_eq!(parse_seed(""), None);
-    }
-}

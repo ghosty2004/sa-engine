@@ -19,6 +19,7 @@ pub mod crash;
 pub mod footsync;
 pub mod frametimer;
 pub mod game;
+pub mod hosted;
 pub mod lifecycle;
 pub mod log;
 pub mod netclient;

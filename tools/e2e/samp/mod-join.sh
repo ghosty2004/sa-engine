@@ -1,0 +1,150 @@
+#!/usr/bin/env bash
+# SA:MP as a mod, natively: sa-game (i686 Linux, `--features mods`) runs the samp mod (mods/build.sh), which joins a
+# private copy of our open.mp 1.6.7 server on 127.0.0.1, spawns, and the server then drives the player
+# (tools/e2e/samp/sampcov.pwn: chat, game text, health, weapon, clock, weather, position, a vehicle) and an NPC walks
+# up to it (a remote player for the client). No Wine, no gta_sa.exe.
+#
+#   tools/e2e/samp/mod-join.sh [OUT_DIR]       (default target/samp-mod-join)
+#
+# Inputs (gitignored, never committed): $SA_ROOT/re/samp/server (open.mp), $SA_ROOT/wine/gta-sa (the game data),
+# the auth table AUTH_TABLE (default $SA_ROOT/re/samp/auth_table.txt, third-party data, read only), which goes into
+# the mod's storage (OUT/moddata/samp/, `SA_MOD_DATA`) with the server and the player name.
+# By default the mod joins at once (`auto_connect`) and the server is already approved in the host's list
+# (OUT/moddata/sa-engine-host/net.samp). UX=1 goes through the connect screen and the host's approval prompt
+# instead, with scripted keys (Enter on the screen at iteration UX_ENTER, default 400; Y at UX_ENTER + 40).
+# SA_GAME = the sa-game binary (default target/i686-unknown-linux-gnu/release/sa-game), MODS = the built mods
+# (default target/mods). FRAMES (default 1800). Port SAMP_PORT (default 7813).
+# Output: server.log, sa-game.log, report.md, present/*.png (every 20th in-game frame), server-events.txt.
+set -uo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$HERE/../../.." && pwd)"
+SA_ROOT="${SA_ROOT:-$ROOT}"
+OUT="$(mkdir -p "${1:-$ROOT/target/samp-mod-join}" && cd "${1:-$ROOT/target/samp-mod-join}" && pwd)"
+AUTH="${AUTH_TABLE:-$SA_ROOT/re/samp/auth_table.txt}"
+PORT="${SAMP_PORT:-7813}"
+GAME_BIN="${SA_GAME:-$ROOT/target/i686-unknown-linux-gnu/release/sa-game}"
+MODS="${MODS:-$ROOT/target/mods}"
+FRAMES="${FRAMES:-1800}"
+# W held from iteration 1000 for 450 iterations (after the server's commands): the server sees the walk in the
+# on-foot sync.
+export SA_GAME_WALK="${SA_GAME_WALK:-1000:450}"
+SERVER_SRC="$SA_ROOT/re/samp/server"
+SRV="$OUT/server"
+SLOG="$OUT/server.log"
+[ -x "$SERVER_SRC/omp-server" ] || { echo "mod-join: $SERVER_SRC/omp-server missing" >&2; exit 1; }
+[ -f "$AUTH" ] || { echo "mod-join: auth table $AUTH missing" >&2; exit 1; }
+[ -x "$GAME_BIN" ] || { echo "mod-join: $GAME_BIN missing (cargo build --release -p sa-game --features mods --target i686-unknown-linux-gnu)" >&2; exit 1; }
+[ -f "$MODS/samp/samp.wasm" ] || { echo "mod-join: $MODS/samp/samp.wasm missing (mods/build.sh)" >&2; exit 1; }
+free_kb="$(df -Pk /home | awk 'NR == 2 { print $4 }')"
+[ "$free_kb" -ge $((20 * 1024 * 1024)) ] || { echo "mod-join: less than 20 GB free on /home" >&2; exit 1; }
+
+mkdir -p "$SA_ROOT/target/locks"
+exec {LOCK_FD}> "$SA_ROOT/target/locks/${SAMP_LOCK:-samp-mod.lock}"
+flock "$LOCK_FD"
+if ss -lun | grep -q ":$PORT "; then echo "mod-join: UDP $PORT busy" >&2; exit 1; fi
+
+rm -rf "$OUT/present" "$OUT/report.md" "$OUT/moddata"
+mkdir -p "$SRV" "$OUT/present" "$OUT/moddata/samp"
+printf '127.0.0.1:%s' "$PORT" > "$OUT/moddata/samp/server"
+printf 'ModCJ' > "$OUT/moddata/samp/name"
+printf '1' > "$OUT/moddata/samp/auto_spawn"
+if [ "${UX:-0}" = 1 ]; then
+    E="${UX_ENTER:-400}"
+    export SA_GAME_KEYS="enter:$E:$((E + 2)),y:$((E + 40)):$((E + 42))"
+else
+    printf '1' > "$OUT/moddata/samp/auto_connect"
+    mkdir -p "$OUT/moddata/sa-engine-host"
+    printf 'allow 127.0.0.1:%s\n' "$PORT" > "$OUT/moddata/sa-engine-host/net.samp"
+fi
+cp "$AUTH" "$OUT/moddata/samp/auth_table.txt"
+rsync -a --delete --exclude log.txt "$SERVER_SRC/" "$SRV/"
+( cd "$SRV" && LD_LIBRARY_PATH=qawno ./qawno/pawncc "$HERE/sampcov.pwn" -iqawno/include \
+    -ogamemodes/sampcov.amx -d0 > "$OUT/pawncc.log" 2>&1 ) || { cat "$OUT/pawncc.log"; exit 1; }
+python3 -I - "$SRV/config.json" "$PORT" << 'PY'
+import json, sys
+p, port = sys.argv[1], int(sys.argv[2])
+d = json.load(open(p))
+d["announce"] = False
+d["max_bots"] = 4
+d["network"]["port"] = port
+d["network"]["bind"] = "127.0.0.1"
+d["artwork"]["enable"] = False
+d["rcon"]["enable"] = False
+d["pawn"]["main_scripts"] = ["sampcov 1"]
+d["pawn"]["side_scripts"] = []
+json.dump(d, open(p, "w"), indent=4)
+PY
+(cd "$SRV" && exec ./omp-server > "$SLOG" 2>&1) &
+SRV_PID=$!
+GAME_PID=
+cleanup() {
+    [ -n "$GAME_PID" ] && kill "$GAME_PID" 2> /dev/null
+    kill "$SRV_PID" 2> /dev/null
+    wait "$SRV_PID" 2> /dev/null || true
+}
+trap cleanup EXIT
+wait_log() { # REGEX SECS
+    local i
+    for ((i = 0; i < $2 * 2; i++)); do
+        grep -qE "$1" "$SLOG" 2> /dev/null && return 0
+        [ -n "$GAME_PID" ] && ! kill -0 "$GAME_PID" 2> /dev/null && return 1
+        sleep 0.5
+    done
+    return 1
+}
+wait_log 'Legacy Network started' 20 || { echo "mod-join: server did not start" >&2; cat "$SLOG"; exit 1; }
+say() { echo "[$(date +%T)] $*" | tee -a "$OUT/steps.log"; }
+: > "$OUT/steps.log"
+say "server pid $SRV_PID on 127.0.0.1:$PORT"
+
+# The exploration stubs of native-join.sh (render callbacks, skin node, effects, a vehicle's LOD render and sparks).
+STUBS='0x6a6dc0=0/12,0x7331e0=0/0,0x7c7b90=1/0,0x80e270=1/0,0x455720=0/0,0x4f6420=0/2,0x732f30=0/0,0x5d9900=0/0,0x4a2c40=0/4,0x701780=0/0,0x733f80=0/0,0x733240=0/0'
+SA_MOD_DATA="$OUT/moddata" SA_GAME_STUB="${SA_GAME_STUB:-$STUBS}" SA_GAME_SCRIPT_SKIP=1 SA_GAME_PRESENT_GAME=1 \
+    SA_GAME_PRESENT_EVERY="${SA_GAME_PRESENT_EVERY:-20}" \
+    "$GAME_BIN" --game "$SA_ROOT/wine/gta-sa" --frames "$FRAMES" --start-in-world --mods "$MODS/samp" \
+    --present-dir "$OUT/present" --report "$OUT/report.md" > "$OUT/sa-game.log" 2>&1 &
+GAME_PID=$!
+say "sa-game pid $GAME_PID ($FRAMES frames)"
+
+SEQ=0
+CMDF="$SRV/scriptfiles/sampcov.txt"
+cmd() {
+    SEQ=$((SEQ + 1))
+    echo "$SEQ $1" >> "$CMDF"
+    wait_log "\[cov\] $SEQ (done|unknown)" 10 && say "server: $1" || say "command $SEQ ($1) not acknowledged"
+}
+if wait_log '\[cov\] connect id=[0-9]+ name=ModCJ' 150; then say "connected"; else say "FAIL: no connect"; fi
+if wait_log '\[cov\] spawn id=' 150; then
+    say "spawned"
+    sleep 4
+    cmd "msg|Welcome, the SA:MP mod: chat from open.mp"
+    cmd "gametext|3|6000|~g~SA:MP ~w~mod"
+    cmd "hp|60"
+    cmd "armour|40"
+    cmd "money|5000"
+    cmd "weapon|24|100"
+    cmd "time|22"
+    cmd "weather|4"
+    sleep 3
+    cmd "pos|2495|-1680|13.5|180"
+    sleep 3
+    cmd "npc|Bot|2492|-1684|13.5|105|0"
+    sleep 3
+    cmd "npcmove|$(grep -oE '\[cov\] [0-9]+ npc -?[0-9]+' "$SLOG" | tail -1 | awk '{print $4}')|2497|-1678|13.5"
+    sleep 4
+    cmd "time|12"
+    cmd "weather|10"
+    cmd "veh|560|2502|-1690|13.4|90"
+    sleep 6
+    IFS=';' read -ra EXTRA <<< "${EXTRA_CMDS:-}"
+    for c in "${EXTRA[@]}"; do
+        case "$c" in sleep\|*) sleep "${c#sleep|}" ;; ?*) cmd "$c" ;; esac
+    done
+else
+    say "FAIL: no spawn"
+fi
+wait "$GAME_PID"
+say "sa-game exit $?"
+GAME_PID=
+grep -E '\[(join|part|connection)\]|\[cov\] (connect|class|spawn|state|where|npc|[0-9]+ done|disconnect)' "$SLOG" > "$OUT/server-events.txt"
+say "server events: $(wc -l < "$OUT/server-events.txt") lines; PNGs: $(ls "$OUT/present" | wc -l)"
