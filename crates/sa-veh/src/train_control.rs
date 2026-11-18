@@ -55,7 +55,7 @@ orig! {
     /// `CTrain::RemoveRandomPassenger()` (0x6F6850)
     fn remove_random_passenger(t: GPtr<u8>) = thiscall 0x6F6850 => unported;
     /// `CTrain::AddNearbyPedAsRandomPassenger()` (0x6F8170)
-    fn add_nearby_ped_as_random_passenger(t: GPtr<u8>) = thiscall 0x6F8170 => unported;
+    fn add_nearby_ped_as_random_passenger(t: GPtr<u8>) = thiscall 0x6F8170 => crate::train_passengers::add_nearby_ped_as_random_passenger;
     /// `CEntity::SetIsStatic(bool)` (vtable +0x10)
     fn v_set_is_static(e: GPtr<u8>, s: u32) = thiscall vslot 0x10 => unported;
 }

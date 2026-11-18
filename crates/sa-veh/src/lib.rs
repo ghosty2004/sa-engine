@@ -96,6 +96,7 @@ pub mod bmx_ai;
 pub mod car_enter_exit_offsets;
 pub mod automobile_render;
 pub mod train_control;
+pub mod train_passengers;
 pub mod bike_control;
 pub mod bike_render;
 pub mod automobile_random_damage;

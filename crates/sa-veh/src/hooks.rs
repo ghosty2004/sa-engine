@@ -74,6 +74,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::car_enter_exit_offsets::HOOKS,
     crate::automobile_render::HOOKS,
     crate::train_control::HOOKS,
+    crate::train_passengers::HOOKS,
     crate::bike_control::HOOKS,
     crate::bike_render::HOOKS,
     crate::generated::HOOKS,
