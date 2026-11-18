@@ -43,9 +43,11 @@ use sa_world::bindings::multiply3x3;
 use sa_world::bindings::get_water_level;
 use sa_world::bindings::placeable_get_top_direction as get_top_direction;
 use sa_world::bindings::physical_get_speed as get_speed;
+use sa_world::bindings::{fx_add_particle, fx_prt_mult_ctor, get_triangle_point};
+use crate::common::{f32_of, rand_at};
+use crate::mvpd_v1::read_vec;
+use sa_core::field::ptr_of as vp;
 orig! {
-    /// `CVehicle::AddWaterSplashParticles()` (0x6DDF60)
-    fn add_water_splash_particles(v: GPtr<u8>) = thiscall 0x6DDF60 => unported;
     /// `CCamera::GetLookingForwardFirstPerson()` (0x50AED0) on `TheCamera`
     pub(crate) fn get_looking_forward_first_person(cam: GPtr<u8>) -> u8 = thiscall 0x50AED0 => unported;
     /// `CAutomobile::ProcessSwingingDoor(int32 node, eDoors)` (0x6A9D70)
@@ -1138,6 +1140,77 @@ pub fn automobile_do_hover_suspension_ratios(this: GPtr<u8>) {
     }
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_AUTOMOBILE_PRE_RENDER, HOOK_AUTOMOBILE_DO_HOVER_SUSPENSION_RATIOS];
+/// `CWeather::Rain` (0xC81324), `g_fx.m_Splash` (0xA9AE30), `TheCamera` (0xB6F028: matrix +0x14, placement +4),
+/// 100.0 (double, 0x871FC8), -2.0 (0x858B18), 1/32767 (0x858C7C).
+const RAIN: usize = 0xC8_1324;
+const FX_SPLASH: usize = 0xA9_AE30;
+const CAMERA: usize = 0xB6_F028;
+const K_SPLASH_RANGE_SQ: f64 = 100.0;
+const K_MINUS_TWO: usize = 0x85_8B18;
+const K_RAND: usize = 0x85_8C7C;
+
+/// `CVehicle::AddWaterSplashParticles()` (0x6DDF60, thiscall, plain `ret`).
+///
+/// Only within 10 of the camera (`(dz*dz + dy*dy) + dx*dx` of camera - vehicle against the double 100; NaN passes).
+/// For every triangle of the col model: its corners through the matrix (`V0 / V1 / V2`), `e1 = V1 - V0`, `e2 = V2 -
+/// V1` (f32), and `1 - _ftol(Rain * -2.0)` splash particles at `V0 + e1 * t1 + e2 * (t2 * t1)` (t1 / t2 the rand()
+/// fractions, t1 an f32; the x / y products of `e1` and every product of `e2` but its x stored through f32 as the
+/// bytes order them; gta-reversed draws two independent fractions) with zero velocity and the prt mult (1, 1, 1,
+/// 0.35, 0.02, 0, 0.03), `AddParticle(.., 0, prt, -1.0, 1.2, 0.6, 0)`.
+#[hook(addr = 0x6DDF60, conv = thiscall, name = "CVehicle::AddWaterSplashParticles", this = "CVehicle",
+       expect = "81 EC C4 00 00 00 53", unverified = "frontier2-b25", route = "L2", hazards = "heap-writes",
+       note = "splash particles; consumes two rand() values per particle")]
+pub fn add_water_splash_particles(this: GPtr<u8>) {
+    let tp = sa_world::world::common::entity_pos(this);
+    let cam = GPtr::<u8>::from_addr(CAMERA);
+    let cp = sa_world::world::common::entity_pos(cam);
+    let d = |o: isize| x(rd::<f32>(cp, o)).fsub_m(rd::<f32>(tp, o));
+    let (dx, dy, dz) = (d(0), d(4), d(8));
+    let sq = dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx));
+    if !sq.fcom(X87::from_f64_exact(K_SPLASH_RANGE_SQ)).test_any(0x41) {
+        return;
+    }
+    let cd = rd::<GPtr<u8>>(get_col_model(this), 0x2C);
+    let n = i32::from(rd::<i16>(cd, 4));
+    for t in 0..n {
+        let corner = |k: isize| {
+            let idx = i32::from(rd::<u16>(rd::<GPtr<u8>>(cd, 0x18), t as isize * 8 + 2 * k));
+            let mut p = CVector::default();
+            get_triangle_point(cd.cast(), GPtr::from_raw(&mut p), idx);
+            let mut out = CVector::default();
+            read_vec(matrix_mul_vector(vp(&mut out), rd::<GPtr<u8>>(this, 0x14), vp(&mut p)))
+        };
+        let v0 = corner(0);
+        let v1 = corner(1);
+        let v2 = corner(2);
+        let mut prt = [0u32; 7];
+        let pp = GPtr::from_raw(prt.as_mut_ptr()).cast::<u8>();
+        fx_prt_mult_ctor(pp, 1.0, 1.0, 1.0, f32::from_bits(0x3EB3_3333), f32::from_bits(0x3CA3_D70A), 0.0,
+            f32::from_bits(0x3CF5_C28F));
+        let sub = |a: f32, b: f32| f32_of(x(a).fsub_m(b));
+        let e1 = CVector::new(sub(v1.x, v0.x), sub(v1.y, v0.y), sub(v1.z, v0.z));
+        let e2 = CVector::new(sub(v2.x, v1.x), sub(v2.y, v1.y), sub(v2.z, v1.z));
+        let count = 1i32.wrapping_sub(ftol32(x(g::<f32>(RAIN).read()).fmul_m(g::<f32>(K_MINUS_TWO).read())));
+        let mut left = count;
+        while left > 0 {
+            let k = g::<f32>(K_RAND).read();
+            let t1 = f32_of(xi(rand_at(0x6D_E10D)).fmul_m(k));
+            let s = xi(rand_at(0x6D_E124)).fmul_m(k).fmul_m(t1);
+            let e2x = x(e2.x).fmul(s);
+            let e2y = f32_of(x(e2.y).fmul(s));
+            let e2z = f32_of(x(e2.z).fmul(s));
+            let px = f32_of(x(e1.x).fmul_m(t1).fadd_m(v0.x));
+            let py = f32_of(x(e1.y).fmul_m(t1).fadd_m(v0.y));
+            let pz = f32_of(x(f32_of(x(e1.z).fmul_m(t1))).fadd_m(v0.z));
+            let mut pos = CVector::new(f32_of(x(px).fadd(e2x)), f32_of(x(py).fadd_m(e2y)), f32_of(x(pz).fadd_m(e2z)));
+            let mut vel = CVector::default();
+            fx_add_particle(g::<GPtr<u8>>(FX_SPLASH).read(), vp(&mut pos), vp(&mut vel), 0, pp, 0xBF80_0000,
+                f32::from_bits(0x3F99_999A), f32::from_bits(0x3F19_999A), 0);
+            left -= 1;
+        }
+    }
+}
+
+pub const HOOKS: &[HookReg] = &[HOOK_AUTOMOBILE_PRE_RENDER, HOOK_AUTOMOBILE_DO_HOVER_SUSPENSION_RATIOS, HOOK_ADD_WATER_SPLASH_PARTICLES];
 
 pub const GLOBALS: &[sa_core::mem::GlobalDesc] = &[];
