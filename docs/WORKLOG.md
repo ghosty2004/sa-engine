@@ -4378,3 +4378,6 @@
   0x7F44C0 (with the RwPalQuant functions), 0x7F4690, 0x7F4AE0, 0x7FF450, 0x800C80, 0x801390, 0x75A960, 0x763F20 /
   0x7641C0, 0x7CF600 (RtPNGImageWrite, libpng through bindings), 0x81F360 (RwD3D9RasterStreamReadDDS), CPostEffects::
   Radiosity 0x702080.
+- Final verify-all, default set (DLL of 97cc423c, sha256 62ac9893…, the same DLL as `lanec14-c2428`; the docs commits
+  after it change no code): `lanec14-default` IDENTICAL 13/13 (save-load: save files identical except the SAVE-1
+  residue). So both sets are IDENTICAL 13/13 on the final code's DLL.
