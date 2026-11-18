@@ -56,6 +56,7 @@ const REPLAY_MODE: usize = 0xA43088;
 const AUDIO_ENGINE: usize = 0xB6BC90;
 const GAMMA: usize = 0xC92134;
 
+use sa_core::bindings::loading_screen_shutdown;
 use sa_core::bindings::di_mouse_init;
 use sa_core::bindings::get_mouse_set_up;
 use sa_input::bindings::get_pad;
@@ -101,7 +102,7 @@ sa_core::orig! {
     fn loading_screen_init(unk1: u8, unk2: u8) = cdecl 0x5902B0 => unported;
     fn do_pc_title_fade_in() = cdecl 0x590860 => unported;
     fn do_pc_title_fade_out() = cdecl 0x590990 => unported;
-    fn loading_screen_shutdown(unk: u8) = cdecl 0x58FF10 => unported;
+
     fn video_player_play(cmd_show: i32, file: GPtr<u8>) = cdecl 0x747660 => unported;
     fn is_enter_just_pressed(pad: GPtr<u8>) -> u8 = thiscall 0x4D5980 => unported;
     fn is_standard_key_just_pressed(pad: GPtr<u8>, key: u32) -> u8 = thiscall 0x4D59B0 => unported;

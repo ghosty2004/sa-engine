@@ -465,7 +465,22 @@ pub fn heat_haze_fx_init() {
     }
 }
 
+/// `CPostEffects::Close()` (0x7010C0, cdecl): `RwRasterDestroy(m_pGrainRaster)` (not checked for null), then the
+/// front buffer raster, when set, destroyed and cleared.
+#[hook(addr = 0x7010C0, conv = cdecl, name = "CPostEffects::Close", expect = "A1 B0 02 C4 00 50 E8",
+       unverified = "frontier2-a20", route = "L2", hazards = "heap-writes", note = "CGame::ShutdownRenderWare")]
+pub fn post_effects_close() {
+    use sa_core::bindings::rw_raster_destroy;
+    rw_raster_destroy(GPtr::from_addr(GRAIN_RASTER.get() as usize));
+    let fb = RASTER_FRONT_BUFFER.get();
+    if fb != 0 {
+        rw_raster_destroy(GPtr::from_addr(fb as usize));
+        RASTER_FRONT_BUFFER.set(0);
+    }
+}
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_POST_EFFECTS_CLOSE,
     HOOK_SETUP_BACK_BUFFER_VERTEX,
     HOOK_IMMEDIATE_MODE_FILTER_STUFF_INITIALIZE,
     HOOK_HEAT_HAZE_FX_INIT,

@@ -157,6 +157,7 @@ pub mod call {
     pub use crate::bindings::rw_camera_clear;
     pub use crate::bindings::rw_camera_create;
     pub use crate::bindings::rw_camera_destroy;
+    pub use crate::bindings::{loading_screen_shutdown, rw_matrix_destroy};
     pub use crate::bindings::rw_camera_end_update;
     pub use crate::bindings::rw_frame_create;
     pub use crate::bindings::rw_frame_destroy;
@@ -213,7 +214,18 @@ pub mod call {
         pub fn cd_stream_shutdown() = cdecl 0x406370 => unported;
         /// `IUnknown::Release()` (COM slot 8)
         pub fn com_release(obj: GPtr<u8>) -> u32 = stdcall vslot 0x8 => unported;
-        pub fn game_shutdown_render_ware() = cdecl 0x53BB80 => unported;
+        pub fn game_shutdown_render_ware() = cdecl 0x53BB80 => super::shutdown_render_ware;
+        pub fn hud_shutdown() = cdecl 0x588850 => unported;
+        pub fn font_shutdown() = cdecl 0x7189B0 => unported;
+        pub fn delete_player_skin(info: GPtr<u8>) = thiscall 0x56EA80 => unported;
+        pub fn player_skin_shutdown() = cdecl 0x6FF8D0 => unported;
+        pub fn destroy_debug_font() = cdecl 0x734620 => unported;
+        pub fn lights_destroy(world: GPtr<u8>) -> GPtr<u8> = cdecl 0x735730 => unported;
+        pub fn visibility_plugins_shutdown() = cdecl 0x732EB0 => unported;
+        pub fn rp_world_remove_camera(world: GPtr<u8>, cam: GPtr<u8>) -> GPtr<u8> = cdecl 0x750F50 => unported;
+        pub fn rp_world_destroy(world: GPtr<u8>) -> u32 = cdecl 0x74F610 => unported;
+        pub fn cancel_buffering() = cdecl 0x730900 => super::d3d_resource_system_cancel_buffering;
+        pub fn post_effects_close() = cdecl 0x7010C0 => unported;
         /// `IDirect3DDevice9::SetGammaRamp(swapchain, flags, ramp)` (COM slot 0x54)
         pub fn d3d_device_set_gamma_ramp(dev: GPtr<u32>, swapchain: u32, flags: u32, ramp: GPtr<u8>) = stdcall vslot 0x54 => unported;
         /// CRT `printf` (one argument at its only call site here)
@@ -645,6 +657,35 @@ pub fn camera_destroy(camera: GPtr<u8>) {
     call::rw_camera_destroy(camera);
 }
 
+/// `CGame::ShutdownRenderWare()` (0x53BB80, cdecl): destroys the two working matrices, `CLoadingScreen::Shutdown(0)`,
+/// `CHud::Shutdown`, `CFont::Shutdown`, `DeletePlayerSkin` of both `CWorld::Players`, `CPlayerSkin::Shutdown`,
+/// `DestroyDebugFont`, `LightsDestroy(Scene.world)`, `CVisibilityPlugins::Shutdown`, `RpWorldRemoveCamera` /
+/// `RpWorldDestroy` of the scene world, `CameraDestroy(Scene.camera)`, clears both scene pointers, then
+/// `D3DResourceSystem::CancelBuffering` and `CPostEffects::Close` (a tail jump).
+#[hook(addr = 0x53BB80, conv = cdecl, name = "CGame::ShutdownRenderWare", expect = "A1 20 29 B7 00 56 50 E8",
+       unverified = "frontier2-a20", route = "L2", hazards = "heap-writes", note = "game exit (RsEventHandler rsRWTERMINATE)")]
+pub fn shutdown_render_ware() {
+    call::rw_matrix_destroy(WORKING_MATRIX_1.get());
+    call::rw_matrix_destroy(WORKING_MATRIX_2.get());
+    call::loading_screen_shutdown(0);
+    call::hud_shutdown();
+    call::font_shutdown();
+    for i in 0..2 {
+        call::delete_player_skin(GPtr::from_addr(0xB7_CD98 + i * 0x190));
+    }
+    call::player_skin_shutdown();
+    call::destroy_debug_font();
+    call::lights_destroy(SCENE_WORLD.get());
+    call::visibility_plugins_shutdown();
+    call::rp_world_remove_camera(SCENE_WORLD.get(), SCENE_CAMERA.get());
+    call::rp_world_destroy(SCENE_WORLD.get());
+    camera_destroy(SCENE_CAMERA.get());
+    SCENE_WORLD.set(GPtr::NULL);
+    SCENE_CAMERA.set(GPtr::NULL);
+    call::cancel_buffering();
+    call::post_effects_close();
+}
+
 /// `CGame::InitialiseRenderWare` (0x5BD600, cdecl, bool in AL).
 ///
 /// Original behaviour kept (gta-reversed differs): when `RwCameraCreate` fails, `CameraDestroy(NULL)`
@@ -713,6 +754,46 @@ pub fn initialise_render_ware() -> bool {
     PREV_D3D_RESTORE_CALLBACK.set(call::rw_d3d9_device_get_restore_callback());
     call::rw_d3d9_device_set_restore_callback(0x5BA120);
     true
+}
+
+/// One recycling list's release as `CancelBuffering` inlines it: every pooled COM object (`count` at `count_cell`, the
+/// array pointer after it) released through its vtable (slot 8, the count re-read per step), count and counter
+/// (`count_cell - 4`) cleared, the array freed and cleared when set.
+fn d3d_res_release(count_cell: usize) {
+    let count = GPtr::<i32>::from_addr(count_cell);
+    let arr = GPtr::<GPtr<GPtr<u8>>>::from_addr(count_cell + 4);
+    let mut j = 0;
+    while j < count.read() {
+        call::com_release(arr.read().wrapping_index(j).read());
+        j += 1;
+    }
+    let a = arr.read();
+    count.write(0);
+    GPtr::<u32>::from_addr(count_cell - 4).write(0);
+    if !a.is_null() {
+        crate::bindings::crt_free_8214bd(a.cast());
+        arr.write(GPtr::NULL);
+    }
+}
+
+/// `D3DResourceSystem::CancelBuffering()` (0x730900, cdecl): releases every pooled texture of the texture buffers
+/// (their number at 0xC87C60, re-read per step; count +0x14 of each 0x1C-byte buffer), clears that number, then the
+/// 16 index buffer buckets (0xC87E48, 0x18 each) and the large-size one (0xC87FC8) the same way, and turns resource
+/// buffering off (0x8D6084 = 0).
+#[hook(addr = 0x730900, conv = cdecl, name = "D3DResourceSystem::CancelBuffering", expect = "A1 60 7C C8 00 53 55",
+       unverified = "frontier2-a20", route = "L2", hazards = "heap-writes", note = "CGame::ShutdownRenderWare")]
+pub fn d3d_resource_system_cancel_buffering() {
+    let mut i = 0;
+    while (i as i32) < D3D_RES_C87C60.get() as i32 {
+        d3d_res_release(0xC8_7C7C + i as usize * 0x1C);
+        i += 1;
+    }
+    D3D_RES_C87C60.set(0);
+    for k in 0..16 {
+        d3d_res_release(0xC8_7E58 + k * 0x18);
+    }
+    d3d_res_release(0xC8_7FD8);
+    D3D_RES_BUFFERING.set(0);
 }
 
 /// One `D3DResourceSystem` buffer list (6 dwords: +0 type, +4 size, +8 capacity, +0xC / +0x10
@@ -1208,6 +1289,8 @@ pub const HOOKS: &[crate::abi::HookReg] = &[
     HOOK_CAMERA_DESTROY,
     HOOK_INITIALISE_RENDER_WARE,
     HOOK_D3D_RESOURCE_SYSTEM_INIT,
+    HOOK_D3D_RESOURCE_SYSTEM_CANCEL_BUFFERING,
+    HOOK_SHUTDOWN_RENDER_WARE,
     HOOK_TEXTURE_BUFFER_POP,
     HOOK_D3D_RESOURCE_CREATE_TEXTURE,
     HOOK_RW_TERMINATE,

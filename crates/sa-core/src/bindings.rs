@@ -1384,6 +1384,11 @@ orig! {
 }
 
 orig! {
+    /// `CLoadingScreen::Shutdown` (0x58FF10)
+    pub fn loading_screen_shutdown(unk: u8) = cdecl 0x58FF10 => unported;
+}
+
+orig! {
     /// `CLoadingScreen::SetLoadingBarMsg` (0x590240)
     pub fn loading_screen_set_loading_bar_msg(msg: GPtr<u8>, msg2: GPtr<u8>) = cdecl 0x590240 => unported;
 }

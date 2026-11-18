@@ -783,6 +783,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x588880,sa-core,hud_re_initialise,cdecl,,,,unported,CHud::ReInitialise,sa_hud::hud_draw::re_initialise
 0x588BE0,sa-core,hud_set_help_message,cdecl,,text:GPtr<u8>;a:u8;b:u8;c:u8,,unported,CHud::SetHelpMessage,sa_hud::hud_draw::set_help_message
 0x58D490,sa-core,hud_draw_after_fade,cdecl,,,,unported,CHud::DrawAfterFade,
+0x58FF10,sa-core,loading_screen_shutdown,cdecl,,unk:u8,,unported,CLoadingScreen::Shutdown,
 0x590240,sa-core,loading_screen_set_loading_bar_msg,cdecl,,msg:GPtr<u8>;msg2:GPtr<u8>,,unported,CLoadingScreen::SetLoadingBarMsg,sa_stream::loading_screen::set_loading_bar_msg
 0x590D00,sa-core,loading_screen_new_chunk_loaded,cdecl,,,,unported,CLoadingScreen::NewChunkLoaded,sa_stream::loading_screen::new_chunk_loaded
 0x598F50,sa-core,interior_man_update,thiscall,,this:GPtr<u8>,u8,unported,InteriorManager_c::Update,
