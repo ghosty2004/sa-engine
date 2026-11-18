@@ -2,7 +2,7 @@
 # FRONTIER-1 scenarios: native sa-game runs (deterministic, --fixed-step 40, offscreen) that reach the blockers the
 # user hit. Each must end with an empty blocker list in OUT/report.md and no crash.
 #
-#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra|hunter|nitro OUTDIR [FRAMES]
+#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra|hunter|nitro|postfx OUTDIR [FRAMES]
 #
 # pausemenu (400)  Esc, down x3, Enter (pause-menu item 4: Stats), down, Enter, Enter: the Stats pages draw
 #                  (was a SIGSEGV at iteration ~171: CStats::GetStatValue's X87 result dispatched as cdecl)
@@ -85,6 +85,10 @@
 #                  constructor's SetupSuspensionLines 0x6C7FB0), `f` to get in, driven with turns:
 #                  CMonsterTruck::ProcessSuspension 0x6C83A0 every step, CCollision::ProcessColModels' A-disk path
 #                  (the truck's wheel disks) (FRONTIER-2 turn 10 lane B, turn 13 lane A)
+# postfx   (1000)  on foot at Grove Street, the sand storm cheat CWJXUOC (CWeather::AddSandStormParticles 0x72A820), then
+#                  CPostEffects' fog (0xC402C6), infrared (0xC402B9) and grain (0xC402B4) flags poked on every 10 iterations
+#                  from 300: CPostEffects::Fog 0x704150, InfraredVision 0x703F80 / SetFilterMainColour 0x703520 and Grain
+#                  0x7037C0 every frame (FRONTIER-2 turn 11 lane C)
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-a5-counts.gdb --args" counts the road block / gang war / jet pack
 # calls.
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-counts.gdb --args" counts the FRONTIER-2 ports' calls
@@ -148,6 +152,13 @@ jetpack)
     export SA_GAME_SCRIPT_SKIP=1
     keys=; i=150; for c in r o c k e t m a n; do keys="$keys${keys:+,}$c:$i:$((i + 2))"; i=$((i + 6)); done
     export SA_GAME_KEYS="$keys,space:300:520,w:360:700,a:540:600,d:640:700,s:760:800"
+    run "${3:-1000}" --start-in-world ;;
+postfx)
+    export SA_GAME_SCRIPT_SKIP=1
+    keys=; i=150; for c in c w j x u o c; do keys="$keys${keys:+,}$c:$i:$((i + 2))"; i=$((i + 6)); done
+    export SA_GAME_KEYS="$keys"
+    p=; i=300; while [ $i -le "${3:-1000}" ]; do p="$p${p:+;}$i:0xC402C6:1:1;$i:0xC402B9:1:1;$i:0xC402B4:1:1"; i=$((i + 10)); done
+    export SA_GAME_POKE="$p"
     run "${3:-1000}" --start-in-world ;;
 melee)
     # the PEDHIT foot run's sprint into the Grove Street peds (they are next to CJ at ~905), then punches every 25
@@ -256,6 +267,6 @@ monster)
     export SA_GAME_KEYS="$keys,f:260:263,w:400:1150,a:600:660,d:800:860"
     run "${3:-1200}" --start-in-world ;;
 *)
-    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra|hunter|nitro OUTDIR [FRAMES]" >&2
+    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra|hunter|nitro|postfx OUTDIR [FRAMES]" >&2
     exit 2 ;;
 esac
