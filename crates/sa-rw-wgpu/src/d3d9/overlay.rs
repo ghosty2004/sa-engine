@@ -1,4 +1,4 @@
-//! The 2D overlay (feature `overlay`, MOD-2): quads of plain colour or of an image, alpha-blended over the back
+//! The 2D overlay (feature `overlay`): quads of plain colour or of an image, alpha-blended over the back
 //! buffer just before the present, outside the game's D3D9 call stream and state (no D3D9 state is read or changed;
 //! the back buffer's alpha is kept). The mod host's overlay phase draws through it.
 

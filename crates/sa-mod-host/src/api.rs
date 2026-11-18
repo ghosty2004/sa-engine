@@ -473,8 +473,7 @@ pub fn dispatch(ctx: &mut CallCtx, mem: &mut dyn Mem, index: usize, args: &[Val]
             let before = ctx.quads.len();
             let clip = ctx.clip;
             ctx.quads.extend(parsed.into_iter().filter_map(|q| images::clip(q, clip)));
-            let drawn = (ctx.quads.len() - before) as i32;
-            drawn
+            (ctx.quads.len() - before) as i32
         }
         Call::game_text { style_ptr, text_ptr, text_len } => {
             if !ctx.overlay || ctx.game_2d.len() >= sa_mod_api::text::MAX_PER_FRAME || style_ptr < 0 || text_ptr < 0 {
