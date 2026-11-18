@@ -21,7 +21,7 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-use crate::common::{module, p8, rd, rw_free, rw_malloc, rw_memory_alloc, rw_memory_free, wr};
+use crate::common::{copy_bytes, module, p8, rd, rw_free, rw_malloc, rw_memory_alloc, rw_memory_free, wr};
 
 /// MESHMODULE offset global (+0 u16 next serial number, +4 the temporary strip freelist).
 const MESH_MODULE: usize = 0xC9B8C0;
@@ -88,18 +88,36 @@ pub fn generate_default_tristrip(bm: GPtr<u8>, _data: u32) -> GPtr<u8> {
     generate_tristrip_call(bm, 0, 1)
 }
 
-/// The tri-strip generator (0x7591D0, cdecl `(buildMesh, winding, joinParity)`): sorts pointers to
-/// the build mesh's triangles with `qsort` (comparator 0x759640), splits them into runs of one
-/// material (`groups`: 12-byte entries {0, count, material}), creates the strip freelist (0x10 bytes,
-/// `n / 10 + 5` per block) at MESHMODULE +4, and per run copies its triangles, strips them
-/// (0x759790), joins the strips (0x75A660) and keeps each resulting strip as a mesh piece (`count *
-/// 2 + 0xC` bytes: indices pointer, count, material). Then the header (`0x10 + Σ(0xC + 2 count)`
-/// bytes, flags 1 = tri-strip, the module's serial number, post-incremented) with the meshes and their
-/// indices; the temporaries are freed. NULL when the pointer array cannot be allocated.
+/// The tri-strip generator (0x7591D0, cdecl `(buildMesh, winding, joinParity)`): the strips of each
+/// material through 0x759790.
 #[hook(addr = 0x7591D0, conv = cdecl, name = "FUN_007591d0", expect = "83 EC 1C 55 8B 0D 24 7B C9 00",
        route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn generate_tristrip(bm: GPtr<u8>, winding: u32, join_parity: u32) -> GPtr<u8> {
-    let sorted = rw_malloc(rd::<u32>(bm, 4) << 2, HINT_MESH);
+    generate_strips(bm, HINT_MESH, join_parity, &|tris, n, list| {
+        strip_material_call(tris, n, list, winding);
+    })
+}
+
+/// The exhaustive tri-strip generator (0x75A960, cdecl `(buildMesh, data, joinParity)`): every
+/// strip starts from the best-scoring triangle and rotation (see [`strip_material_exhaustive`]).
+#[hook(addr = 0x75A960, conv = cdecl, name = "(missed by ghidra: cat7-call)", expect = "83 EC 6C 53 8B 0D 24 7B C9 00",
+       unverified = "frontier2-c37", route = "L2", hazards = "heap-writes",
+       note = "keeps the strip list in its buildMesh argument slot (not reproduced)")]
+pub fn generate_tristrip_exhaustive(bm: GPtr<u8>, _data: u32, join_parity: u32) -> GPtr<u8> {
+    generate_strips(bm, HINT_STRIP, join_parity, &|tris, n, list| strip_material_exhaustive(tris, n, list))
+}
+
+/// The generators' common part: sorts pointers to the build mesh's triangles with `qsort`
+/// (comparator 0x759640), splits them into runs of one material (`groups`: 12-byte entries {0,
+/// count, material}), creates the strip freelist (0x10 bytes, `n / 10 + 5` per block) at MESHMODULE
+/// +4, and per run copies its triangles, strips them (`strip_group(tris, n, &list)`), joins the
+/// strips (0x75A660) and keeps each resulting strip as a mesh piece (`count * 2 + 0xC` bytes:
+/// indices pointer, count, material). Then the header (`0x10 + Σ(0xC + 2 count)` bytes, flags 1 =
+/// tri-strip, the module's serial number, post-incremented) with the meshes and their indices; the
+/// temporaries are freed. NULL when the pointer array cannot be allocated. `hint` is the memory hint
+/// of the pointer array and the mesh pieces.
+fn generate_strips(bm: GPtr<u8>, hint: u32, join_parity: u32, strip_group: &dyn Fn(GPtr<u8>, u32, GPtr<u8>)) -> GPtr<u8> {
+    let sorted = rw_malloc(rd::<u32>(bm, 4) << 2, hint);
     if sorted.is_null() {
         return p8(0);
     }
@@ -166,11 +184,11 @@ pub fn generate_tristrip(bm: GPtr<u8>, winding: u32, join_parity: u32) -> GPtr<u
             cursor += 1;
             j += 1;
         }
-        strip_material_call(tris, rd::<u32>(entry, 0), list_p, winding);
+        strip_group(tris, rd::<u32>(entry, 0), list_p);
         join_strips_call(list_p, join_parity);
         let mut s = p8(list);
         while !s.is_null() {
-            let m = rw_malloc(rd::<u32>(s, 4) * 2 + 0xC, HINT_MESH);
+            let m = rw_malloc(rd::<u32>(s, 4) * 2 + 0xC, hint);
             wr::<u32>(m, 8, rd::<u32>(entry, 4));
             wr::<u32>(m, 4, rd::<u32>(s, 4));
             wr::<u32>(m, 0, addr(m) + 0xC);
@@ -308,30 +326,25 @@ fn bucket_unlink(t: GPtr<u8>, buckets: GPtr<u8>) {
     }
 }
 
-/// Strips one material's triangles (0x759790, cdecl `(tris, n, &list, winding)`): builds the
-/// adjacency (0x75A090), puts every node at the front of the bucket of its neighbour count, then
-/// until every triangle is in a strip: an isolated triangle (bucket 0) becomes a 3-index strip; else
-/// the first node of the lowest non-empty bucket starts a strip. Its rotation comes from the unused
-/// neighbours across its edges; with `winding` the passes 0..2 try the three rotations from it (trial
-/// flags +0x1C) and pass 3 keeps the best, without it a single pass 3 uses it. A pass marks the
-/// triangle (0x75A250), extends the strip forwards across one edge (0x75A370), then backwards across
-/// the other when that side has an unused triangle (an odd backward strip gets a repeated index);
-/// the final pass emits the backward part reversed followed by the forward strip (or the forward
-/// strip alone) at the front of `list`. Returns 1. The buffers copy `count * 4` bytes of the forward
-/// strip (twice its indices, as the original's `rep movsd`).
-#[hook(addr = 0x759790, conv = cdecl, name = "FUN_00759790", expect = "83 EC 4C 8B 44 24 50 53",
-       unverified = "std5-tristrip-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
-pub fn strip_material(tris: GPtr<u8>, n: u32, list: GPtr<u8>, winding: u32) -> u32 {
-    let mut buckets = [0u32; 4];
-    let mut edges = 0u32;
-    let mut fls = [0u32; 2];
-    let bp: GPtr<u8> = GPtr::from_raw(buckets.as_mut_ptr()).cast();
-    let arr = build_adjacency_call(
-        n,
-        GPtr::from_raw(fls.as_mut_ptr()).cast(),
-        GPtr::from_raw(&mut edges as *mut u32).cast(),
-        tris,
-    );
+/// The two working strips (forward, backward) one material's stripping fills, each with room for
+/// `2 * n + 2` indices.
+fn work_strips(n: u32) -> (GPtr<u8>, GPtr<u8>) {
+    let cap = 2 * n + 2;
+    let s1 = rw_memory_alloc(strip_free_list(), HINT_MESH);
+    wr::<u32>(s1, 4, 0);
+    wr::<u32>(s1, 8, cap);
+    wr::<u32>(s1, 0, addr(rw_malloc(cap * 4, HINT_MESH)));
+    let s2 = rw_memory_alloc(strip_free_list(), HINT_MESH);
+    wr::<u32>(s2, 8, cap);
+    wr::<u32>(s2, 4, 0);
+    wr::<u32>(s2, 0, addr(rw_malloc(cap * 4, HINT_MESH)));
+    (s1, s2)
+}
+
+/// The adjacency of `n` triangles (0x75A090) with every node at the front of the bucket of its
+/// neighbour count. Returns the node array.
+fn adjacency_in_buckets(tris: GPtr<u8>, n: u32, bp: GPtr<u8>, fls: GPtr<u8>, edges: GPtr<u8>) -> GPtr<u8> {
+    let arr = build_adjacency_call(n, fls, edges, tris);
     let node = |i: u32| ptr(arr, 4 * i as isize);
     for i in 0..n {
         let t = node(i);
@@ -344,58 +357,169 @@ pub fn strip_material(tris: GPtr<u8>, n: u32, list: GPtr<u8>, winding: u32) -> u
         wr::<u32>(bp, 4 * isize::from(rd::<u8>(t, 0x20)), addr(t));
         wr::<u32>(node(i), 0x14, 0);
     }
-    let cap = 2 * n + 2;
-    let s1 = rw_memory_alloc(strip_free_list(), HINT_MESH);
-    wr::<u32>(s1, 4, 0);
-    wr::<u32>(s1, 8, cap);
-    wr::<u32>(s1, 0, addr(rw_malloc(cap * 4, HINT_MESH)));
-    let s2 = rw_memory_alloc(strip_free_list(), HINT_MESH);
-    wr::<u32>(s2, 8, cap);
-    wr::<u32>(s2, 4, 0);
-    wr::<u32>(s2, 0, addr(rw_malloc(cap * 4, HINT_MESH)));
+    arr
+}
 
-    let new_strip = |cap: u32, count: u32| -> GPtr<u8> {
-        let st = rw_memory_alloc(strip_free_list(), HINT_STRIP);
-        wr::<u32>(st, 0xC, rd::<u32>(list, 0));
-        wr::<u32>(list, 0, addr(st));
-        wr::<u32>(st, 8, cap);
-        wr::<u32>(st, 4, count);
-        st
-    };
-    let copy_bytes = |dst: u32, src: GPtr<u8>, bytes: u32| {
-        for b in 0..bytes {
-            wr::<u8>(p8(dst), b as isize, rd::<u8>(src, b as isize));
+/// Frees the working strips, the edges, the nodes and the node array.
+fn free_work(n: u32, arr: GPtr<u8>, (s1, s2): (GPtr<u8>, GPtr<u8>), edges: u32, fls: [u32; 2]) {
+    rw_free(ptr(s2, 0));
+    wr::<u32>(s2, 0, 0);
+    rw_memory_free(strip_free_list(), s2);
+    rw_free(ptr(s1, 0));
+    wr::<u32>(s1, 0, 0);
+    rw_memory_free(strip_free_list(), s1);
+    let mut e = edges;
+    while e != 0 {
+        let nx = rd::<u32>(p8(e), 0xC);
+        rw_memory_free(p8(fls[1]), p8(e));
+        e = nx;
+    }
+    free_list_destroy(p8(fls[1]));
+    for i in 0..n {
+        rw_memory_free(p8(fls[0]), ptr(arr, 4 * i as isize));
+        wr::<u32>(arr, 4 * i as isize, 0);
+    }
+    free_list_destroy(p8(fls[0]));
+    rw_free(arr);
+}
+
+/// A new strip at the front of `list` with capacity `cap` and `count` indices (buffer not set).
+fn push_strip(list: GPtr<u8>, cap: u32, count: u32) -> GPtr<u8> {
+    let st = rw_memory_alloc(strip_free_list(), HINT_STRIP);
+    wr::<u32>(st, 0xC, rd::<u32>(list, 0));
+    wr::<u32>(list, 0, addr(st));
+    wr::<u32>(st, 8, cap);
+    wr::<u32>(st, 4, count);
+    st
+}
+
+/// The isolated triangle `t` as a 3-index strip at the front of `list`.
+fn isolated_strip(t: GPtr<u8>, tris: GPtr<u8>, list: GPtr<u8>) {
+    let idx = rd::<u32>(t, 0);
+    let st = push_strip(list, 3, 3);
+    let buf = rw_malloc(0xC, HINT_STRIP);
+    wr::<u32>(st, 0, addr(buf));
+    let tri = tris.byte_add(0x14 * idx as isize);
+    wr::<u16>(ptr(st, 0), 0, rd::<u16>(tri, 0));
+    wr::<u16>(ptr(st, 0), 2, rd::<u16>(tri, 2));
+    wr::<u16>(ptr(st, 0), 4, rd::<u16>(tri, 4));
+}
+
+/// Takes the head off bucket 0.
+fn pop_isolated(buckets: &mut [u32; 4]) {
+    buckets[0] = rd::<u32>(p8(buckets[0]), 0x10);
+    if buckets[0] != 0 {
+        wr::<u32>(p8(buckets[0]), 0x14, 0);
+    }
+}
+
+/// Starts the forward strip with `t`'s indices rotated by `r` and sets the edges the strip leaves
+/// forwards / backwards (`r` > 2 keeps them).
+fn start_strip(t: GPtr<u8>, r: u32, tris: GPtr<u8>, s1: GPtr<u8>, edges: &mut (u32, u32)) {
+    match r {
+        0 => *edges = (rd::<u32>(t, 8), rd::<u32>(t, 4)),
+        1 => *edges = (rd::<u32>(t, 0xC), rd::<u32>(t, 8)),
+        2 => *edges = (rd::<u32>(t, 4), rd::<u32>(t, 0xC)),
+        _ => {}
+    }
+    let tri = tris.byte_add(0x14 * rd::<u32>(t, 0) as isize);
+    let b1 = ptr(s1, 0);
+    wr::<u16>(b1, 0, rd::<u16>(tri, 2 * (r % 3) as isize));
+    wr::<u16>(b1, 2, rd::<u16>(tri, 2 * ((r + 1) % 3) as isize));
+    wr::<u16>(b1, 4, rd::<u16>(tri, 2 * ((r + 2) % 3) as isize));
+    wr::<u32>(s1, 4, 3);
+}
+
+/// The backward strip from the forward strip's first two indices (swapped) across `edge`, padded
+/// to an even length with the index two back. Returns the triangles it added.
+fn extend_backwards(s1: GPtr<u8>, s2: GPtr<u8>, edge: u32, bp: GPtr<u8>, tris: GPtr<u8>, pass: u32) -> u32 {
+    let b2 = ptr(s2, 0);
+    wr::<u16>(b2, 0, rd::<u16>(ptr(s1, 0), 2));
+    wr::<u16>(ptr(s2, 0), 2, rd::<u16>(ptr(s1, 0), 0));
+    wr::<u32>(s2, 4, 2);
+    let added = extend_strip_call(s2, p8(edge), bp, tris, pass);
+    let c2 = rd::<u32>(s2, 4);
+    if c2 & 1 != 0 {
+        let b2 = ptr(s2, 0);
+        wr::<u16>(b2, 2 * c2 as isize, rd::<u16>(b2, 2 * c2 as isize - 4));
+        wr::<u32>(s2, 4, rd::<u32>(s2, 4) + 1);
+    }
+    added
+}
+
+/// Emits the finished strip at the front of `list`: the backward part reversed followed by the
+/// forward strip, or the forward strip alone. The forward copy takes `count * 4` bytes (twice its
+/// indices, as the original's `rep movsd`).
+fn emit_strip(s1: GPtr<u8>, s2: GPtr<u8>, back: bool, list: GPtr<u8>) {
+    if back {
+        let cap = rd::<u32>(s1, 4).wrapping_add(rd::<u32>(s2, 4)).wrapping_sub(2);
+        let st = push_strip(list, cap, 0);
+        wr::<u32>(st, 0, addr(rw_malloc(cap << 2, HINT_STRIP)));
+        while rd::<u32>(s2, 4) > 2 {
+            let c2 = rd::<u32>(s2, 4);
+            let v = rd::<u16>(ptr(s2, 0), 2 * c2 as isize - 2);
+            wr::<u16>(ptr(st, 0), 2 * rd::<u32>(st, 4) as isize, v);
+            wr::<u32>(st, 4, rd::<u32>(st, 4) + 1);
+            wr::<u32>(s2, 4, c2 - 1);
         }
-    };
+        let dst = rd::<u32>(st, 0).wrapping_add(2 * rd::<u32>(st, 4));
+        copy_bytes(p8(dst), ptr(s1, 0), rd::<u32>(s1, 4) << 2);
+        wr::<u32>(st, 4, rd::<u32>(st, 8));
+    } else {
+        let c1 = rd::<u32>(s1, 4);
+        let st = push_strip(list, c1, c1);
+        let buf = rw_malloc(rd::<u32>(s1, 4) << 2, HINT_STRIP);
+        wr::<u32>(st, 0, addr(buf));
+        copy_bytes(buf, ptr(s1, 0), rd::<u32>(s1, 4) << 2);
+    }
+}
+
+/// Copies every node's final used flag into its trial flag.
+fn reset_trial_flags(arr: GPtr<u8>, n: u32) {
+    for j in 1..=n {
+        let tj = ptr(arr, 4 * (j - 1) as isize);
+        wr::<u32>(tj, 0x1C, rd::<u32>(tj, 0x18));
+    }
+}
+
+/// Strips one material's triangles (0x759790, cdecl `(tris, n, &list, winding)`): builds the
+/// adjacency (0x75A090), puts every node at the front of the bucket of its neighbour count, then
+/// until every triangle is in a strip: an isolated triangle (bucket 0) becomes a 3-index strip; else
+/// the first node of the lowest non-empty bucket starts a strip. Its rotation comes from the unused
+/// neighbours across its edges; with `winding` the passes 0..2 try the three rotations from it (trial
+/// flags +0x1C) and pass 3 keeps the best, without it a single pass 3 uses it. A pass marks the
+/// triangle (0x75A250), extends the strip forwards across one edge (0x75A370), then backwards across
+/// the other when that side has an unused triangle (an odd backward strip gets a repeated index);
+/// the final pass emits the backward part reversed followed by the forward strip (or the forward
+/// strip alone) at the front of `list`. Returns 1.
+#[hook(addr = 0x759790, conv = cdecl, name = "FUN_00759790", expect = "83 EC 4C 8B 44 24 50 53",
+       unverified = "std5-tristrip-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+pub fn strip_material(tris: GPtr<u8>, n: u32, list: GPtr<u8>, winding: u32) -> u32 {
+    let mut buckets = [0u32; 4];
+    let mut edges = 0u32;
+    let mut fls = [0u32; 2];
+    let bp: GPtr<u8> = GPtr::from_raw(buckets.as_mut_ptr()).cast();
+    let arr = adjacency_in_buckets(
+        tris,
+        n,
+        bp,
+        GPtr::from_raw(fls.as_mut_ptr()).cast(),
+        GPtr::from_raw(&mut edges as *mut u32).cast(),
+    );
+    let (s1, s2) = work_strips(n);
 
     let mut stripped = 0u32; // [esp+0x14]
-    let (mut first_edge, mut second_edge) = (0u32, 0u32); // [esp+0x20], [esp+0x10]
+    let mut out_edges = (0u32, 0u32); // [esp+0x20], [esp+0x10]
     if n != 0 {
         loop {
             let start_pass: u32 = if winding != 0 { 0 } else { 3 };
             let mut best = 0u32;
             if buckets[0] != 0 {
-                // an isolated triangle
-                let t = p8(buckets[0]);
-                let idx = rd::<u32>(t, 0);
-                let st = rw_memory_alloc(strip_free_list(), HINT_STRIP);
-                wr::<u32>(st, 0xC, rd::<u32>(list, 0));
-                wr::<u32>(list, 0, addr(st));
-                wr::<u32>(st, 8, 3);
-                wr::<u32>(st, 4, 3);
-                let buf = rw_malloc(0xC, HINT_STRIP);
-                wr::<u32>(st, 0, addr(buf));
-                let tri = tris.byte_add(0x14 * idx as isize);
-                wr::<u16>(ptr(st, 0), 0, rd::<u16>(tri, 0));
-                wr::<u16>(ptr(st, 0), 2, rd::<u16>(tri, 2));
-                wr::<u16>(ptr(st, 0), 4, rd::<u16>(tri, 4));
+                isolated_strip(p8(buckets[0]), tris, list);
                 let t = p8(buckets[0]);
                 wr::<u32>(t, 0x18, 1);
                 wr::<u32>(t, 0x1C, 1);
-                buckets[0] = rd::<u32>(t, 0x10);
-                if buckets[0] != 0 {
-                    wr::<u32>(p8(buckets[0]), 0x14, 0);
-                }
+                pop_isolated(&mut buckets);
                 stripped += 1;
             } else {
                 let mut bi = 1usize;
@@ -425,10 +549,7 @@ pub fn strip_material(tris: GPtr<u8>, n: u32, list: GPtr<u8>, winding: u32) -> u
                 let sel = rot;
                 let mut pass = start_pass;
                 loop {
-                    for j in 1..=n {
-                        let tj = node(j - 1);
-                        wr::<u32>(tj, 0x1C, rd::<u32>(tj, 0x18));
-                    }
+                    reset_trial_flags(arr, n);
                     let p = pass;
                     pass += 1;
                     let r = match p {
@@ -437,37 +558,15 @@ pub fn strip_material(tris: GPtr<u8>, n: u32, list: GPtr<u8>, winding: u32) -> u
                         2 => (sel + 2) % 3,
                         _ => best_rot,
                     };
-                    let t = head(&buckets);
-                    match r {
-                        0 => (first_edge, second_edge) = (rd::<u32>(t, 8), rd::<u32>(t, 4)),
-                        1 => (first_edge, second_edge) = (rd::<u32>(t, 0xC), rd::<u32>(t, 8)),
-                        2 => (first_edge, second_edge) = (rd::<u32>(t, 4), rd::<u32>(t, 0xC)),
-                        _ => {}
-                    }
-                    let tri = tris.byte_add(0x14 * rd::<u32>(t, 0) as isize);
-                    let b1 = ptr(s1, 0);
-                    wr::<u16>(b1, 0, rd::<u16>(tri, 2 * (r % 3) as isize));
-                    wr::<u16>(b1, 2, rd::<u16>(tri, 2 * ((r + 1) % 3) as isize));
-                    wr::<u16>(b1, 4, rd::<u16>(tri, 2 * ((r + 2) % 3) as isize));
-                    wr::<u32>(s1, 4, 3);
+                    start_strip(head(&buckets), r, tris, s1, &mut out_edges);
                     mark_used_call(head(&buckets), bp, pass);
-                    let added = extend_strip_call(s1, p8(first_edge), bp, tris, pass);
+                    let added = extend_strip_call(s1, p8(out_edges.0), bp, tris, pass);
                     let mut score = added.wrapping_add(base).wrapping_add(1);
                     stripped = score;
-                    let back = free_on(p8(second_edge), flag_of(pass)) > 0;
+                    let back = free_on(p8(out_edges.1), flag_of(pass)) > 0;
                     if back {
-                        let b2 = ptr(s2, 0);
-                        wr::<u16>(b2, 0, rd::<u16>(ptr(s1, 0), 2));
-                        wr::<u16>(ptr(s2, 0), 2, rd::<u16>(ptr(s1, 0), 0));
-                        wr::<u32>(s2, 4, 2);
-                        score = score.wrapping_add(extend_strip_call(s2, p8(second_edge), bp, tris, pass));
+                        score = score.wrapping_add(extend_backwards(s1, s2, out_edges.1, bp, tris, pass));
                         stripped = score;
-                        let c2 = rd::<u32>(s2, 4);
-                        if c2 & 1 != 0 {
-                            let b2 = ptr(s2, 0);
-                            wr::<u16>(b2, 2 * c2 as isize, rd::<u16>(b2, 2 * c2 as isize - 4));
-                            wr::<u32>(s2, 4, rd::<u32>(s2, 4) + 1);
-                        }
                     }
                     if score > best {
                         best = score;
@@ -476,27 +575,7 @@ pub fn strip_material(tris: GPtr<u8>, n: u32, list: GPtr<u8>, winding: u32) -> u
                     if (pass as i32) < 4 {
                         continue;
                     }
-                    if back {
-                        let cap = rd::<u32>(s1, 4).wrapping_add(rd::<u32>(s2, 4)).wrapping_sub(2);
-                        let st = new_strip(cap, 0);
-                        wr::<u32>(st, 0, addr(rw_malloc(cap << 2, HINT_STRIP)));
-                        while rd::<u32>(s2, 4) > 2 {
-                            let c2 = rd::<u32>(s2, 4);
-                            let v = rd::<u16>(ptr(s2, 0), 2 * c2 as isize - 2);
-                            wr::<u16>(ptr(st, 0), 2 * rd::<u32>(st, 4) as isize, v);
-                            wr::<u32>(st, 4, rd::<u32>(st, 4) + 1);
-                            wr::<u32>(s2, 4, c2 - 1);
-                        }
-                        let dst = rd::<u32>(st, 0).wrapping_add(2 * rd::<u32>(st, 4));
-                        copy_bytes(dst, ptr(s1, 0), rd::<u32>(s1, 4) << 2);
-                        wr::<u32>(st, 4, rd::<u32>(st, 8));
-                    } else {
-                        let c1 = rd::<u32>(s1, 4);
-                        let st = new_strip(c1, c1);
-                        let buf = rw_malloc(rd::<u32>(s1, 4) << 2, HINT_STRIP);
-                        wr::<u32>(st, 0, addr(buf));
-                        copy_bytes(addr(buf), ptr(s1, 0), rd::<u32>(s1, 4) << 2);
-                    }
+                    emit_strip(s1, s2, back, list);
                     break;
                 }
             }
@@ -506,27 +585,79 @@ pub fn strip_material(tris: GPtr<u8>, n: u32, list: GPtr<u8>, winding: u32) -> u
             }
         }
     }
-    let _ = (first_edge, second_edge);
-    rw_free(ptr(s2, 0));
-    wr::<u32>(s2, 0, 0);
-    rw_memory_free(strip_free_list(), s2);
-    rw_free(ptr(s1, 0));
-    wr::<u32>(s1, 0, 0);
-    rw_memory_free(strip_free_list(), s1);
-    let mut e = edges;
-    while e != 0 {
-        let nx = rd::<u32>(p8(e), 0xC);
-        rw_memory_free(p8(fls[1]), p8(e));
-        e = nx;
-    }
-    free_list_destroy(p8(fls[1]));
-    for i in 0..n {
-        rw_memory_free(p8(fls[0]), node(i));
-        wr::<u32>(arr, 4 * i as isize, 0);
-    }
-    free_list_destroy(p8(fls[0]));
-    rw_free(arr);
+    free_work(n, arr, (s1, s2), edges, fls);
     1
+}
+
+/// One material's strips for the exhaustive generator (inlined in 0x75A960): as 0x759790, but a
+/// strip starts from the best of every (triangle, rotation) of the buckets 1..3: each candidate is
+/// marked (trial pass 1) and extended forwards from a fresh copy of the used flags, scoring
+/// `2 * (triangles + 1) - indices`; the first highest score wins and is replayed as the final pass,
+/// then extended backwards when that side has an unused triangle. Isolated triangles only get the
+/// final used flag.
+fn strip_material_exhaustive(tris: GPtr<u8>, n: u32, list: GPtr<u8>) {
+    let mut buckets = [0u32; 4];
+    let mut edges = 0u32;
+    let mut fls = [0u32; 2];
+    let bp: GPtr<u8> = GPtr::from_raw(buckets.as_mut_ptr()).cast();
+    let arr = adjacency_in_buckets(
+        tris,
+        n,
+        bp,
+        GPtr::from_raw(fls.as_mut_ptr()).cast(),
+        GPtr::from_raw(&mut edges as *mut u32).cast(),
+    );
+    let (s1, s2) = work_strips(n);
+    let mut stripped = 0u32;
+    let mut out_edges = (0u32, 0u32);
+    let mut best_rot = 0u32;
+    if n != 0 {
+        loop {
+            if buckets[0] != 0 {
+                isolated_strip(p8(buckets[0]), tris, list);
+                wr::<u32>(p8(buckets[0]), 0x18, 1);
+                pop_isolated(&mut buckets);
+                stripped += 1;
+            } else {
+                let base = stripped;
+                let mut best_t = GPtr::NULL;
+                let mut best = i32::MIN;
+                for b in 1..4isize {
+                    let mut t = ptr(bp, 4 * b);
+                    while !t.is_null() {
+                        for r in 0..3u32 {
+                            if free_on(ptr(t, 4 * ((r + 1) % 3) as isize + 4), 0x18) == 0 {
+                                continue;
+                            }
+                            reset_trial_flags(arr, n);
+                            start_strip(t, r, tris, s1, &mut out_edges);
+                            mark_used_call(t, bp, 1);
+                            let added = extend_strip_call(s1, p8(out_edges.0), bp, tris, 1);
+                            let score = added.wrapping_add(1).wrapping_mul(2).wrapping_sub(rd::<u32>(s1, 4)) as i32;
+                            if score > best {
+                                best = score;
+                                best_t = t;
+                                best_rot = r;
+                            }
+                        }
+                        t = ptr(t, 0x10);
+                    }
+                }
+                start_strip(best_t, best_rot, tris, s1, &mut out_edges);
+                mark_used_call(best_t, bp, 4);
+                stripped = extend_strip_call(s1, p8(out_edges.0), bp, tris, 4).wrapping_add(base).wrapping_add(1);
+                let back = free_on(p8(out_edges.1), 0x18) > 0;
+                if back {
+                    stripped = stripped.wrapping_add(extend_backwards(s1, s2, out_edges.1, bp, tris, 4));
+                }
+                emit_strip(s1, s2, back, list);
+            }
+            if stripped >= n {
+                break;
+            }
+        }
+    }
+    free_work(n, arr, (s1, s2), edges, fls);
 }
 
 /// The adjacency build (0x75A090, cdecl `(n, freelists[2], &edgeList, tris)`): the node pointer
@@ -828,6 +959,7 @@ pub fn join_strips(list: GPtr<u8>, join_parity: u32) -> u32 {
 pub const HOOKS: &[HookReg] = &[
     HOOK_GENERATE_DEFAULT_TRISTRIP,
     HOOK_GENERATE_TRISTRIP,
+    HOOK_GENERATE_TRISTRIP_EXHAUSTIVE,
     HOOK_MATERIAL_COMPARE,
     HOOK_STRIP_MATERIAL,
     HOOK_BUILD_ADJACENCY,
