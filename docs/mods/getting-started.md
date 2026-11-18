@@ -1,14 +1,16 @@
-# Mods: getting started (MOD-2)
+# Mods: getting started
 
 sa-engine mods are WebAssembly modules (`docs/arch/ADR-004-mods.md`). The same `.wasm` runs in the native game
 (wasmtime) and in the browser build (the browser's WebAssembly), sandboxed: a mod reaches the game only through the
 mod API, defined once in `crates/sa-mod-api`. Mod support is a compile-time feature, `mods`; the default build has
 none of it.
 
-API 1.0 (M0) has: the API version, `init`, the overlay phase (called once per presented frame, after the game's own
-drawing), filled rectangles and text in the 2D overlay, and a log. API 1.1 (M1) adds the display and the video mode
-(`render`), the mod's own files (`files = "own"`), the settings phase and the resize event (below). More comes in M1
-and later (ADR-004 §4, §7).
+API 1.0 has: the API version, `init`, the overlay phase (called once per presented frame, after the game's own
+drawing), filled rectangles and text in the 2D overlay, and a log. API 1.1 adds the display and the video mode
+(`render`), the mod's own files (`files = "own"`), the settings phase and the resize event (below). API 1.2 (level 2)
+adds read-only game state (`state = "read"`), game events, key state (`input = "read"`) and before / after hooks on
+game functions (`hooks = [...]`); the reference of every function is `docs/mods/api.md`. Game control, entities,
+network and storage come later (ADR-004 §4, §7).
 
 ## Call points
 
@@ -18,8 +20,73 @@ and later (ADR-004 §4, §7).
 | `sa_settings` (`settings`, 1.1) | once in the boot: after the game has read its settings file (`gta_sa.set`), before it selects its video mode (`psSelectDevice`) and creates its D3D device. A video mode requested here applies from the first frame |
 | `sa_overlay` (`overlay`) | every presented frame, after the game's drawing |
 | `sa_resize` (`resize`, 1.1) | the native window's client area / the browser canvas (its size on the page in device pixels) changed size |
+| `sa_event` (`event`, 1.2) | a game event the mod subscribed to (frame begin / end, game state, spawn, death, vehicle enter / exit, area, keys) |
+| `sa_hook` (`hook`, 1.2) | a game function the mod hooked runs (before / after) |
 
 Entry points added in a minor version are optional: a mod built for 1.0 has no `sa_settings` and the host skips it.
+
+## The trainer HUD (level 2)
+
+`examples/mods/trainer-hud` is a read-only trainer overlay: the player (position, heading, health, armour, money,
+wanted level), the vehicle (model, health, speed), the world (game state, clock, weather, area), the camera, a
+mini-map of the peds and vehicles within 100 m, the last game events, and two hooks: the result of
+`CWorld::FindPlayerHeading` (an after-hook, shown next to the heading read from the state) and the peds
+`CPed::ProcessControl` runs for per game step (a before-hook). F7 hides it. Its manifest:
+
+```toml
+[mod]
+id = "trainer-hud"
+name = "Trainer HUD (read-only)"
+version = "0.1.0"
+api_version = "1.2"
+entry = "trainer-hud.wasm"
+
+[permissions]
+render = true
+state = "read"
+input = "read"
+hooks = ["CWorld::FindPlayerHeading", "CPed::ProcessControl"]
+```
+
+The level-2 parts of its code:
+
+```rust
+use sa_mod::hooks::{self, Call, HookId, Phase};
+use sa_mod::{Event, Mod, Value, event_kind, state};
+
+impl Mod for TrainerHud {
+    fn init(&mut self) -> Result<(), String> {
+        sa_mod::events::subscribe(&[event_kind::FRAME_BEGIN, event_kind::PLAYER_SPAWN, event_kind::VEHICLE_ENTER]);
+        self.heading_hook = hooks::subscribe("CWorld::FindPlayerHeading", false, true).ok();
+        Ok(())
+    }
+
+    fn event(&mut self, event: Event) {
+        if let Event::VehicleEnter { vehicle, .. } = event {
+            let model = state::vehicle(vehicle).map_or(-1, |v| v.model.0);
+            sa_mod::info(&format!("entered vehicle {:#x} (model {model})", vehicle.0));
+        }
+    }
+
+    fn hook(&mut self, hook: HookId, phase: Phase, call: &Call) {
+        if Some(hook) == self.heading_hook && phase == Phase::After {
+            if let Some(Value::Float(h)) = call.result() {
+                self.hooked_heading = Some(h);
+            }
+        }
+    }
+}
+```
+
+```sh
+examples/mods/build.sh      # -> target/mods/trainer-hud/{mod.toml,trainer-hud.wasm}
+target/i686-unknown-linux-gnu/release/sa-game --game wine/gta-sa --start-in-world --frames 500 \
+    --mods target/mods/trainer-hud --present-dir target/hud
+# browser: tools/web/serve.sh --game wine/gta-sa --mods target/mods, then ?autostart=1&mods=trainer-hud
+```
+
+The log shows the events it records (`mod trainer-hud: trainer-hud: entered vehicle 0x101 (model 492)`) and, at exit,
+its overlay calls, time per frame, events and hook calls.
 
 ## The resolution mod
 
@@ -115,8 +182,8 @@ target/i686-unknown-linux-gnu/release/sa-game --game wine/gta-sa --start-in-worl
 
 `--mods DIR` takes one mod folder (with `mod.toml`) or a folder of mod folders (loaded in name order, e.g.
 `--mods target/mods`). Add `--window` to play with the overlay; offscreen, `--present-dir DIR` / `--screenshot FILE`
-write the frames. The log shows `mod hello loaded: ...`; at exit, one line per mod with its overlay calls and time per
-call. `--perf FILE` has the host's time per frame in the `mods` phase (docs/perf/measure.md).
+write the frames. The log shows `mod hello loaded: ...`; at exit, one line per mod with its overlay calls, time per
+frame, events and hook calls. `--perf FILE` has the host's time per frame in the `mods` phase (docs/perf/measure.md).
 
 ## Run it in the browser
 
@@ -136,11 +203,13 @@ node tools/web/headless.mjs --url 'http://localhost:8642/?autostart=1&auto=1&mod
 
 - It gets values and handles, never game addresses, and cannot read game memory.
 - Every host function returns an `i32`: a result `>= 0`, or `-1` (not permitted by the manifest), `-2` (a bad
-  argument: a range outside the mod's memory, text that is not UTF-8, drawing outside the overlay phase) or `-3`
-  (`file_read`: no such file).
+  argument: a range outside the mod's memory, text that is not UTF-8, drawing outside the overlay phase, a hook value
+  outside `sa_hook`) or `-3` (not found: no such file, a handle that names no live entity, a function the hook registry
+  does not have).
 - A call that traps (a panic, `unreachable`, an out-of-bounds access) or runs out of fuel disables the mod for the
   session. Memory beyond the cap cannot be allocated (`memory.grow` fails).
-- A level-1 (visual) mod does not change the game: deterministic runs give the same game state with and without it.
+- A level-1 (visual) or level-2 (read-only) mod does not change the game: deterministic runs give the same game state
+  with and without it. Hooks observe; they cannot change a call.
 
 ## Other languages
 

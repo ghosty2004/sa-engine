@@ -161,6 +161,44 @@ original path (`IsVMNotSelected` clear, `gCurrentVideoMode` = the mode), the men
 No port body changes. A different video mode is a different game input (screen size and aspect reach the camera and
 the HUD): its reference is the original at the same mode, not the 800x600 run (WORKLOG, MOD-2 M1).
 
+### 4.1a Level 2 (M2, 2026-11-18): state, events, hooks
+
+API 1.2 (a minor version; reference `docs/mods/api.md`). Decisions:
+
+- **One vocabulary with SA:MP.** The state records (`sa_mod_api::state`: `PlayerInfo`, `PedInfo`, `VehicleInfo`,
+  `WorldInfo`, `CameraInfo`) have the game adapter's field types (`sa-samp-api`: `Vec3`, `PedRef`, `VehicleRef`,
+  `ModelId`, `GameState`, ...) and are filled from the adapter's snapshots (`PedSnapshot`, `VehicleSnapshot`,
+  `CameraState`); `sa-mod-api` depends on `sa-samp-api` (its own layer above the leaves). The host reads the game only
+  through `Rc<dyn GameAdapter>`: in the game that is `sa-samp`'s engine backend, the same reads samp-rs makes, so a
+  read the mod API needs is added to the adapter (wanted level, pool lists and held keys were, for M2) and serves
+  both. On the wire a record is fixed little-endian 32-bit words in field order (`Words`), one definition for host
+  and SDK.
+- **Events are derived, not hooked.** Frame begin (start of a main-loop iteration) and end (after the overlay phase),
+  game state, player spawn / death, vehicle enter / exit, area and keys come from comparing the adapter's state with
+  the previous iteration's (`sa-mod-host/src/events.rs`): no port body or call site changes, and the reads happen only
+  for kinds some mod subscribed to (`events_subscribe`). Events at fixed points other than these (weapon fired,
+  damage, ped created) map onto the adapter's `GameHooks` callbacks and come with the dispatch points samp-rs needs
+  (M3 / M4).
+- **Hooks are registry observation.** A before / after hook watches an entry of the `orig!` address registry
+  (`sa_core::orig::observe`): when a dispatch reaches a watched entry, the observer gets copies of the argument words
+  with the declared types and, after the call, of the result. Values reach the mod typed (`hook::Value`): integers,
+  floats, a pointer to a pooled ped / vehicle / object as its handle, other pointers hidden. Read-only: the call runs
+  exactly as without the hook. Names are the registry's (catalogue) names, and the manifest lists the ones a mod may
+  hook. Cost: the check is one relaxed flag load of the entry the dispatch already looked up, compiled in only with
+  the `sa-core` feature `observe` (enabled by sa-game's `mods`); without it `Entry` has no flag and the dispatch is
+  unchanged. Limit: calls a port makes directly to a ported function of its own crate do not pass the registry and
+  are not seen; virtual calls (`ProcessControl`, `Render`, the vtable redirects samp patches), cross-crate calls and
+  function pointers are. Each mod gets at most 4096 hook calls per iteration (the rest are dropped and counted).
+- **Permissions** `state = "read"`, `input = "read"`, `hooks = [names]`, checked per host function and per hooked
+  name; event kinds need the permission of what they reveal (frames none, keys `input`, the rest `state`).
+- **Determinism.** Level-2 mods only read: the crossing run with the trainer HUD loaded gives the same report
+  (5000+ functions' dispatch counts, platform calls, blocked iterations) as without it, frame pacing aside.
+
+What SA:MP needs and M2 does not give yet: writes and mid-frame decisions (`HookAction::Skip`, changed arguments:
+`Shot`, `Damage`, `PlayerContext` swaps around `ProcessControl`), entity creation, script commands, audio (M3); the
+network and storage (M4). The `GameHooks` callbacks that need a dispatch point inside a port (`fire`, `ped_damage`,
+`enter_vehicle_task`, ...) get it there, as samp-rs's engine host needs the same points.
+
 ### 4.2 Data mods (added by the user, 2026-11-17)
 
 Code mods (levels 1–4) cannot add content on their own: a new vehicle, ped, weapon or building needs files (models,
@@ -215,7 +253,7 @@ data only, with no `.wasm`):
 | M0 | decide the ABI (§3.2 open point); `sa-mod-api` level 1 definition; `sa-mod-host` skeleton with wasmtime and the browser backend; `--features mods`; a "hello" mod that draws text | the same `.wasm` draws the text natively and in the browser; verify-all IDENTICAL with and without `mods` |
 | M1 | level 1 complete; the **resolution** mod (desktop resolution / any size, window and fullscreen, saved per mod), MSAA, anisotropic filtering, FPS overlay | 1920×1080 natively and in the browser; corpus replays IDENTICAL with the mods loaded |
 | MD | data mods (§4.2): the virtual file system overlay with line-merged definition files, content registration with new model IDs, the mods-only limits table | an example mod adds a new car (own model, textures, handling) that spawns and drives natively and in the browser; the parity build and verify-all unchanged |
-| M2 | level 2: events, read-only state, before/after hooks on registry functions | an example mini-map / trainer read-only overlay |
+| M2 | level 2: events, read-only state, before/after hooks on registry functions (done 2026-11-18, §4.1a) | an example mini-map / trainer read-only overlay (`examples/mods/trainer-hud`) |
 | M3 | level 3: state write, entities, script commands, audio | an example gameplay mod |
 | M4 | level 4: network, storage; samp-rs client core split from its hosts | samp-rs builds as a mod |
 | M5 | **SA:MP as a mod**: joins a 0.3.7-R4 / open.mp server natively and from the browser | the samp-rs e2e suite passes on the mod host; the DLL host still passes |
@@ -224,8 +262,11 @@ data only, with no `.wasm`):
 ## 8. Risks
 
 - **The browser and the component model** (§3.2): avoided by the core-wasm ABI (decided in M0).
-- **Call overhead** at mid-frame hooks (SA:MP hooks ped rendering, weapon fire, vehicle control): a wasm call is tens of
-  nanoseconds; measured with the PERF-0 instrumentation from M2 on.
+- **Call overhead** at mid-frame hooks (SA:MP hooks ped rendering, weapon fire, vehicle control): a host-to-mod call is
+  ~15 µs on the i686 build's Pulley interpreter (M0), so a hook on a function called per entity and pass costs real
+  time: the per-iteration limit caps it, the trainer HUD's two hooks (~30 calls per step) cost 0.1-0.2 ms per frame
+  in total with its overlay and events (M2). Precompiled / JIT engines natively are the way out if SA:MP's hooks need
+  it.
 - **API stability**: once outside developers depend on it, breaking changes need a major version; keep level 1 small.
 - **wasmtime size**: a few MB in the native binary, only with `mods`.
 - **Security**: sandboxing covers memory; the permission system covers files and network; the host never gives a mod a
