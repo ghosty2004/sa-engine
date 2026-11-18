@@ -1,6 +1,6 @@
 # gdb command file for tools/e2e/scenarios/frontier.sh (WRAP="gdb -q -batch -x THIS --args"): counts the calls of
-# the FRONTIER-2 turn 11 lane B ports (the Rust functions themselves) the scenarios tank / hunter / heli reach, and
-# prints the hit counts at the end.
+# the FRONTIER-2 turn 11 lane B ports (the Rust functions themselves) under any frontier.sh scenario (tank:
+# DoTankDoomAiming), and prints the hit counts at the end.
 set pagination off
 set breakpoint pending on
 handle SIGSEGV stop nopass
