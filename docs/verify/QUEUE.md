@@ -119,6 +119,9 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-b31 | 7 | WORLD | 0b21393a | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
 | frontier2-b32 | 4 | UNK-game, WORLD | a527f78e | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
 | frontier2-b33 | 1 | VEH | 2d9e3944 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| frontier2-b34 | 2 | CAM | 8cbde141 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| frontier2-b35 | 5 | WORLD | bd38d7cd | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| frontier2-b36 | 1 | STREAM | 90946c1d | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | frontier2-b4 | 5 | RW, SAVE | 2f47ba34 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | frontier2-b5 | 25 | MATH, POP, VEH, WORLD | 1caf613f | master | 25 | 0 | 0 | 0 | 0 | L2 22, split 3 |
 | frontier2-b6 | 6 | VEH | c21bbc1e | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
@@ -144,7 +147,15 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-c24 | 3 | RENDER | d2a69cfa | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
 | frontier2-c25 | 3 | RW | f87f62d7 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
 | frontier2-c26 | 1 | RW | 72047d6d | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| frontier2-c27 | 1 | RW | 315e3940 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| frontier2-c28 | 6 | RW | 156388b1 | master | 6 | 0 | 0 | 0 | 0 | L2 1, split 5 |
+| frontier2-c29 | 12 | RW | 8765a958 | int-g6 | 12 | 0 | 0 | 0 | 0 | L2 12 |
 | frontier2-c3 | 11 | AI, SCRIPT, UNK-game | 49bdb6d2 | master | 11 | 0 | 0 | 0 | 0 | L2 11 |
+| frontier2-c30 | 2 | RW | be1bb258 | int-g6 | 2 | 0 | 0 | 0 | 0 | split 2 |
+| frontier2-c31 | 1 | RW | 42a79f8b | int-g6 | 1 | 0 | 0 | 0 | 0 | split 1 |
+| frontier2-c32 | 3 | RW | 066572a3 | int-g6 | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| frontier2-c33 | 17 | RW | 36345de8 | int-g6 | 17 | 0 | 0 | 0 | 0 | L2 17 |
+| frontier2-c34 | 6 | RW | 6054ab03 | int-g6 | 6 | 0 | 0 | 0 | 0 | L2 4, split 2 |
 | frontier2-c4 | 10 | AUDIO, CALLED-ONLY, SCRIPT, UNK-game | d18327f1 | master | 10 | 0 | 0 | 0 | 0 | L2 9, split 1 |
 | frontier2-c5 | 22 | AI, ANIM, AUDIO, CALLED-ONLY, MATH, SCRIPT, UNK-game, WORLD | 749ddded | master | 22 | 0 | 0 | 0 | 0 | L2 21, split 1 |
 | frontier2-c6 | 12 | AI, UNK-game, WORLD | 749ddded | master | 12 | 0 | 0 | 0 | 0 | L2 12 |
@@ -3398,6 +3409,56 @@ SA_UNVERIFIED=frontier2-b33 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b33 
 |---|---|---|---|---|
 | 0x6F8170 | `CTrain::AddNearbyPedAsRandomPassenger` | written | L2 | heap-writes |
 
+## frontier2-b34
+
+2 hooks in sa-cam; hazards: x87-transcendental (2); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-b34 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-b34 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b34 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-b34
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x519810 | `CCam::Process_Cam_TwoPlayer_InCarAndShooting` | written | L2 | x87-transcendental |
+| 0x525E50 | `CCam::Process_Cam_TwoPlayer` | written | L2 | x87-transcendental |
+
+## frontier2-b35
+
+5 hooks in sa-world; hazards: heap-writes (5), uninit-locals (3); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-b35 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-b35 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b35 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-b35
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x593FC0 | `Interior_c::FurnishBedroom` | written | L2 | uninit-locals,heap-writes |
+| 0x596930 | `Interior_c::Kitchen_FurnishEdges` | written | L2 | heap-writes |
+| 0x597240 | `Interior_c::Lounge_AddTV` | written | L2 | uninit-locals,heap-writes |
+| 0x5975C0 | `Interior_c::Lounge_AddSofaInfo` | written | L2 | heap-writes |
+| 0x597740 | `Interior_c::FurnishLounge` | written | L2 | uninit-locals,heap-writes |
+
+## frontier2-b36
+
+1 hooks in sa-stream; hazards: heap-writes (1); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-b36 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-b36 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b36 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-b36
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x40D7C0 | `CStreaming::DeleteRwObjectsBehindCamera` | written | L2 | heap-writes |
+
 ## frontier2-b4
 
 5 hooks in sa-core, sa-rwcore; hazards: heap-writes (3); recordings calling them: no coverage data.
@@ -3978,6 +4039,67 @@ SA_UNVERIFIED=frontier2-c26 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c26 
 |---|---|---|---|---|
 | 0x810830 | `FUN_00810830` | written | L2 | heap-writes,stack-residue |
 
+## frontier2-c27
+
+1 hooks in sa-rwcore; hazards: heap-writes (1), stack-residue (1); recordings calling them: pause-restart (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-c27 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-c27 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c27 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag frontier2-c27
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x7C8060 | `(missed by ghidra: cat7-call)` | written | L2 | heap-writes,stack-residue |
+
+## frontier2-c28
+
+6 hooks in sa-rwcore; hazards: heap-writes (1), uninit-locals (2); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-c28 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-c28 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c28 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-c28
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x74A880 | `_rpClumpAtomicStreamWrite` | written | split | uninit-locals |
+| 0x74CED0 | `RpGeometryStreamWrite` | written | split | none |
+| 0x74E050 | `RpMaterialStreamWrite` | written | split | uninit-locals |
+| 0x74E4B0 | `_rpMaterialListStreamWrite` | written | split | none |
+| 0x7ED3D0 | `RwStreamWriteReal` | written | split | none |
+| 0x80CA20 | `FUN_0080ca20` | written | L2 | heap-writes |
+
+## frontier2-c29
+
+12 hooks in sa-rwcore; hazards: heap-writes (12), uninit-locals (1); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-c29 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-c29 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c29 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-c29
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x7FF450 | `FUN_007ff450` | written | L2 | heap-writes |
+| 0x7FF8C0 | `FUN_007ff8c0` | written | L2 | heap-writes |
+| 0x7FFC10 | `(missed by ghidra: data-code-immediate)` | written | L2 | heap-writes |
+| 0x7FFC70 | `(missed by ghidra: data-code-immediate)` | written | L2 | heap-writes |
+| 0x7FFCB0 | `(missed by ghidra: data-code-immediate)` | written | L2 | heap-writes |
+| 0x7FFD00 | `(missed by ghidra: data-code-immediate)` | written | L2 | heap-writes |
+| 0x7FFD30 | `(missed by ghidra: data-code-immediate)` | written | L2 | heap-writes |
+| 0x7FFD60 | `(missed by ghidra: data-code-immediate)` | written | L2 | heap-writes |
+| 0x7FFE50 | `(missed by ghidra: data-code-immediate)` | written | L2 | heap-writes |
+| 0x7FFE70 | `(missed by ghidra: data-code-immediate)` | written | L2 | heap-writes |
+| 0x7FFE90 | `(missed by ghidra: data-code-immediate)` | written | L2 | heap-writes |
+| 0x801390 | `FUN_00801390` | written | L2 | heap-writes,uninit-locals |
+
 ## frontier2-c3
 
 11 hooks in sa-ai, sa-cam, sa-script; hazards: heap-writes (2), uninit-locals (1); recordings calling them: grove-walk (1).
@@ -4002,6 +4124,105 @@ SA_UNVERIFIED=frontier2-c3 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c3 $S
 | 0x6919C0 | `CTaskComplexGoPickUpEntity::Constructor` | written | L2 | heap-writes |
 | 0x6FA7C0 | `CScripted2dEffects::AddScripted2DEffect` | written | L2 | none |
 | 0x6FA840 | `CScripted2dEffects::GetEffectPairs` | written | L2 | none |
+
+## frontier2-c30
+
+2 hooks in sa-rwcore; hazards: heap-writes (2); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-c30 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-c30 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c30 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-c30
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x763F20 | `_rpD3D9NativeDataWorldSectorStreamWrite` | written | split | heap-writes |
+| 0x7641C0 | `_rpD3D9NativeDataWorldSectorStreamRead` | written | split | heap-writes |
+
+## frontier2-c31
+
+1 hooks in sa-rwcore; hazards: heap-writes (1); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-c31 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-c31 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c31 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-c31
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x7CF600 | `RtPNGImageWrite` | written | split | heap-writes |
+
+## frontier2-c32
+
+3 hooks in sa-rwcore; hazards: heap-writes (3), stack-residue (1); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-c32 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-c32 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c32 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-c32
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x812D40 | `FUN_00812d40` | written | L2 | heap-writes |
+| 0x813A10 | `FUN_00813a10` | written | L2 | heap-writes |
+| 0x814270 | `FUN_00814270` | written | L2 | heap-writes,stack-residue |
+
+## frontier2-c33
+
+17 hooks in sa-rwcore; hazards: heap-writes (15); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-c33 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-c33 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c33 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-c33
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x80AA80 | `RwPalQuantAddImage` | written | L2 | heap-writes |
+| 0x80AD90 | `FUN_0080ad90` | written | L2 | heap-writes |
+| 0x80AED0 | `FUN_0080aed0` | written | L2 | heap-writes |
+| 0x80AF60 | `RwPalQuantResolvePalette` | written | L2 | heap-writes |
+| 0x80B490 | `FUN_0080b490` | written | L2 | heap-writes |
+| 0x80B5D0 | `FUN_0080b5d0` | written | L2 | heap-writes |
+| 0x80B730 | `FUN_0080b730` | written | L2 | heap-writes |
+| 0x80B910 | `FUN_0080b910` | written | L2 | heap-writes |
+| 0x80BA30 | `FUN_0080ba30` | written | L2 | heap-writes |
+| 0x80BCA0 | `FUN_0080bca0` | written | L2 | heap-writes |
+| 0x80BE60 | `FUN_0080be60` | written | L2 | none |
+| 0x80BEB0 | `FUN_0080beb0` | written | L2 | heap-writes |
+| 0x80BF20 | `RwPalQuantMatchImage` | written | L2 | heap-writes |
+| 0x80C430 | `FUN_0080c430` | written | L2 | none |
+| 0x80C470 | `RwPalQuantInit` | written | L2 | heap-writes |
+| 0x80C520 | `RwPalQuantTerm` | written | L2 | heap-writes |
+| 0x80C5A0 | `FUN_0080c5a0` | written | L2 | heap-writes |
+
+## frontier2-c34
+
+6 hooks in sa-rwcore; hazards: heap-writes (6), uninit-locals (1); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-c34 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-c34 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-c34 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-c34
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x7F44C0 | `FUN_007f44c0` | written | L2 | heap-writes |
+| 0x7F4690 | `FUN_007f4690` | written | split | heap-writes |
+| 0x7F4AE0 | `FUN_007f4ae0` | written | split | heap-writes |
+| 0x800C80 | `FUN_00800c80` | written | L2 | heap-writes,uninit-locals |
+| 0x803310 | `FUN_00803310` | written | L2 | heap-writes |
+| 0x803340 | `(missed by ghidra: data-code-immediate)` | written | L2 | heap-writes |
 
 ## frontier2-c4
 
