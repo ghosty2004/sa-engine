@@ -64,6 +64,11 @@ orig! {
 }
 
 orig! {
+    /// `thunk_FUN_015658a0` (0x45AFB0)
+    pub fn physical_45afb0(p: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x45AFB0 => unported;
+}
+
+orig! {
     /// `CRoadBlocks::ClearScriptRoadBlocks` (0x460EC0)
     pub fn clear_script_road_blocks() = cdecl 0x460EC0 => unported;
 }

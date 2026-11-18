@@ -618,6 +618,161 @@ pub fn load_shop(name: GPtr<u8>) {
 }
 
 
+/// Byte `k` of buyable item `index`'s stat modifiers (stat, change, stat, change), sign-extended.
+fn stat_modifier(index: i32, k: isize) -> i32 {
+    i32::from(g::<i8>(STAT_MODIFIERS).byte_add(index as isize * 4 + k).read())
+}
+
+/// `CShopping::UpdateStats(int32 index, bool increment)` (stub 0x49BEF0 -> 0x156B6F0, cdecl): both stat modifiers of
+/// the item through `IncrementStat`, their changes negated when `increment` is false.
+#[hook(addr = 0x49BEF0, conv = cdecl, name = "CShopping::UpdateStats", expect = "E9 FB F7 0C 01",
+       unverified = "frontier2-a28", route = "L2", hazards = "none")]
+pub fn update_stats(index: i32, increment: u8) {
+    let change = |k| if increment != 0 { stat_modifier(index, k) } else { stat_modifier(index, k).wrapping_neg() };
+    super::misc2::shopping_increment_stat(stat_modifier(index, 0), change(1));
+    super::misc2::shopping_increment_stat(stat_modifier(index, 2), change(3));
+}
+
+/// The car-mod part of `CShopping::Buy` (0x49B0E0, EDI = the upgrade's model index): `AddVehicleUpgrade` on the
+/// player's vehicle; for an automobile (+0x590 == 0) the part the upgrade replaces is repaired. The part is the
+/// upgrade model's slot (`(flags +0x12 >> 10) & 0x1F`) when it uses a vehicle dummy (flag 0x100), else the parent
+/// component of that slot in the vehicle model's upgrade table (+0x5C, 0x20 bytes per slot, +0xD0): 2 (the wheels:
+/// tyres 0, 2, 1, 3 in that order; gta-reversed fixes 0, 1, 2, 3), 12 / 13 the front / rear bumper panel, 16 / 17
+/// the bonnet / boot door. Both model infos are read before the upgrade is added.
+#[hook(addr = 0x49B0E0, conv = reg("args = edi"), name = "FUN_0049b0e0", expect = "53 55 56 6A 00 6A FF",
+       unverified = "frontier2-a28", route = "L2", hazards = "heap-writes",
+       note = "adds the upgrade's RW clump to the vehicle")]
+pub fn buy_car_mod(key: u32) {
+    let veh = find_player_vehicle(-1, 0);
+    let upgrade = g::<GPtr<u8>>(MODEL_INFOS).wrapping_index(key as i32).read();
+    let vmi = g::<GPtr<u8>>(MODEL_INFOS).wrapping_index(i32::from(rd::<i16>(veh, 0x22))).read();
+    add_vehicle_upgrade(veh, key as i32);
+    if rd::<u32>(veh, 0x590) != 0 {
+        return;
+    }
+    let flags = u32::from(rd::<u16>(upgrade, 0x12));
+    let slot = (flags >> 10) & 0x1F;
+    let part = if flags & 0x100 != 0 {
+        slot
+    } else {
+        rd::<u32>(rd::<GPtr<u8>>(vmi, 0x5C), (slot * 0x20 + 0xD0) as isize)
+    };
+    match part {
+        2 => {
+            for w in [0, 2, 1, 3] {
+                fix_tyre(veh, w);
+            }
+        }
+        12 => fix_panel(veh, 0xC, 5),
+        13 => fix_panel(veh, 0xD, 6),
+        16 => fix_door(veh, 0x10, 0),
+        17 => fix_door(veh, 0x11, 1),
+        _ => {}
+    }
+}
+
+/// `CShopping::Buy(uint32 key, int32 extraInfo)` (0x49BF70, cdecl). The price item of the key (the inlined FindItem;
+/// -1 when absent, which reads the slot before the table) and the buyable index of that item's key (the inlined
+/// GetItemIndex, -1 when absent); the clothes description is the player's or, while stored, `gStoredClothesState`.
+/// The focus player pays `GetPrice(key)`, both stat modifiers are applied, `STAT_TOTAL_SHOPPING_BUDGET` (0x3E) grows
+/// by the price and the item is marked bought. Then by the loaded price section: car mods the car modification budget
+/// (0x37) and then the upgrade (0x49B0E0; gta-reversed adds the upgrade first); paint jobs that budget; clothes the
+/// fashion budget (0xE), the stats of the texture worn in the item's part taken off, the player's own description set
+/// to the key / model, and parole for a part whose texture depends on model 0, 1, 3, 7 or 8; haircuts the same with
+/// 0x1F and parole always; tattoos 0x1E and the texture set with model 0; gifts the flowers (weapon 0xE, no ammo);
+/// food the meals eaten (0xC8, +1.0) before the food budget (0x14); weapons 0xD, then body armour (0x30) sets the
+/// ped's armour to the player's maximum, any other weapon is given with the item's ammo and made current through its
+/// slot. `extraInfo` is not read.
+#[hook(addr = 0x49BF70, conv = cdecl, name = "CShopping::Buy", expect = "8B 15 CC A7 A9 00 83 EC 08",
+       unverified = "frontier2-a28", route = "L2", hazards = "heap-writes",
+       note = "clothes / weapons / vehicle upgrades of the player")]
+pub fn buy(key: u32, _extra_info: i32) {
+    let it = find_item_index(key);
+    let price_item = item(it);
+    let index = key_index(rd::<u32>(price_item, 0));
+    let player = PLAYERS + usize::from(PLAYER_IN_FOCUS.get()) * PLAYER_INFO_SIZE;
+    let ped = g::<GPtr<u8>>(player).read();
+    let worn = if CLOTHES_STORED.get() != 0 {
+        STORED_CLOTHES.ptr().cast::<u8>()
+    } else {
+        rd::<GPtr<u8>>(rd::<GPtr<u8>>(ped, 0x480), 4)
+    };
+    let price = get_price(key);
+    let money = g::<i32>(player + 0xB8);
+    money.write(money.read().wrapping_sub(price));
+    super::misc2::shopping_increment_stat(stat_modifier(index, 0), stat_modifier(index, 1));
+    super::misc2::shopping_increment_stat(stat_modifier(index, 2), stat_modifier(index, 3));
+    let budget = xi(price).to_f32().to_bits();
+    let modify = |stat: u32, v: u32| super::stats::modify_stat(stat, v);
+    modify(0x3E, budget);
+    g::<u8>(HAS_BOUGHT).byte_add(index as isize).write(1);
+    let own_clothes = || rd::<GPtr<u8>>(rd::<GPtr<u8>>(ped, 0x480), 4);
+    let ty = || rd::<i32>(price_item, 0xC);
+    let take_off_worn = || {
+        let worn_key = rd::<u32>(worn, 0x28 + ty() as isize * 4);
+        if worn_key != 0 {
+            update_stats_call(get_item_index(worn_key), 0);
+        }
+    };
+    match g::<i32>(SECTION_LOADED).read() {
+        1 => {
+            modify(0x37, budget);
+            buy_car_mod_call(key);
+        }
+        2 => modify(0x37, budget),
+        4 => {
+            modify(0xE, budget);
+            take_off_worn();
+            clothes_desc_set_texture_and_model(own_clothes(), key, rd::<u32>(price_item, 8), ty());
+            if matches!(get_texture_dependency(ty()), 0 | 1 | 3 | 7 | 8) {
+                clear_wanted_level_and_go_on_parole(find_player_wanted(-1));
+            }
+        }
+        5 => {
+            modify(0x1F, budget);
+            take_off_worn();
+            clothes_desc_set_texture_and_model(own_clothes(), key, rd::<u32>(price_item, 8), ty());
+            clear_wanted_level_and_go_on_parole(find_player_wanted(-1));
+        }
+        6 => {
+            modify(0x1E, budget);
+            clothes_desc_set_texture_and_model(own_clothes(), key, 0, rd::<i32>(price_item, 8));
+        }
+        7 => {
+            ped_give_weapon(ped, 0xE, 0, 0);
+        }
+        8 => {
+            modify(0xC8, 1.0f32.to_bits());
+            modify(0x14, budget);
+        }
+        9 => {
+            modify(0xD, budget);
+            if key == 0x30 {
+                let max_armour = g::<u8>(PLAYERS + usize::from(PLAYER_IN_FOCUS.get()) * PLAYER_INFO_SIZE + 0x150).read();
+                wr::<f32>(ped, 0x548, xi(i32::from(max_armour)).to_f32());
+            } else {
+                ped_give_weapon(ped, key, rd::<u32>(price_item, 8), 0);
+                let slot = ped_get_weapon_slot(ped, key);
+                ped_set_current_weapon_slot(ped, slot);
+            }
+        }
+        _ => {}
+    }
+}
+
+orig! {
+    /// `CShopping::UpdateStats(int32, bool)` (0x49BEF0)
+    fn update_stats_call(index: i32, increment: u8) = cdecl 0x49BEF0 => update_stats;
+    /// The car-mod part of `CShopping::Buy` (0x49B0E0, EDI = the upgrade's model index)
+    fn buy_car_mod_call(key: u32) = reg("args = edi") 0x49B0E0 => buy_car_mod;
+}
+use crate::bindings::{
+    add_vehicle_upgrade, clear_wanted_level_and_go_on_parole, clothes_desc_set_texture_and_model, find_player_wanted,
+    fix_door, fix_panel, fix_tyre, get_texture_dependency, ped_get_weapon_slot, ped_set_current_weapon_slot,
+};
+use sa_core::bindings::ped_give_weapon;
+
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_FIND_SECTION,
     HOOK_GET_NEXT_SECTION,
@@ -638,4 +793,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_IS_VALID_MOD_FOR_VEHICLE,
     HOOK_LOAD_PRICES,
     HOOK_LOAD_SHOP,
+    HOOK_UPDATE_STATS,
+    HOOK_BUY_CAR_MOD,
+    HOOK_BUY,
 ];

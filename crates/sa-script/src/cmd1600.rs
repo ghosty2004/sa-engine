@@ -66,13 +66,8 @@ use sa_world::bindings::get_stat_value;
 use sa_world::bindings::intel_clear_tasks as clear_tasks;
 use crate::bindings::global_index as get_index_of_global_variable;
 use sa_veh::bindings::node_from_panel;
+use sa_veh::bindings::{fix_door, fix_panel, fix_tyre};
 orig! {
-    /// `CAutomobile::FixTyre(eWheels)` (0x6A3580)
-    fn fix_tyre(v: GPtr<u8>, w: u32) = thiscall 0x6A3580 => unported;
-    /// `CAutomobile::FixDoor(int32 node, eDoors)` (0x6A35A0)
-    fn fix_door(v: GPtr<u8>, node: u32, d: u32) = thiscall 0x6A35A0 => unported;
-    /// `CAutomobile::FixPanel(int32 node, ePanels)` (0x6A3670)
-    fn fix_panel(v: GPtr<u8>, node: u32, p: u32) = thiscall 0x6A3670 => unported;
     /// Unnamed thiscall at 0x492CB0 (a `.HOODLUM` stub) on `CTheScripts::ScriptAttractors`... the 36-byte
     /// entry at 0xC3A200 + i * 36, taking the ped type (ADD_PEDTYPE_AS_ATTRACTOR_USER)
     fn attractor_492cb0(e: GPtr<u8>, ped_type: u32) = thiscall 0x492CB0 => unported;
@@ -469,13 +464,13 @@ pub fn process_commands_1600_to_1699(s: Scr, command: u32) -> i8 {
         0x068A => {
             collect(s, 2);
             let v = vehicle_at_ref(pool(VEHICLE_POOL), spi(0));
-            let n = node_from_door(sp(1)) as u32;
-            fix_door(v, n, sp(1));
+            let n = node_from_door(sp(1));
+            fix_door(v, n, sp(1) as i32);
         }
         0x0698 => {
             collect(s, 2);
             let v = vehicle_at_ref(pool(VEHICLE_POOL), spi(0));
-            let n = node_from_panel(sp(1)) as u32;
+            let n = node_from_panel(sp(1));
             fix_panel(v, n, sp(1));
         }
         // 0654 SET_OBJECT_RENDER_SCORCHED (0x4944A1): no null check; dword +0x40 bit 29 = P1 != 0. gr: unregistered.

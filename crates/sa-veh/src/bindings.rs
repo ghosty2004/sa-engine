@@ -154,13 +154,23 @@ orig! {
 }
 
 orig! {
-    /// `CCarEnterExit::GetNearestCarPassengerDoor` (0x650BB0)
-    pub fn get_nearest_car_passenger_door(ped: GPtr<u8>, v: GPtr<u8>, out: GPtr<u8>, door: GPtr<u8>, a: u32, b: u32, c: u32) -> u8 = cdecl 0x650BB0 => crate::car_door_positions::get_nearest_car_passenger_door;
+    /// `CAutomobile::ResetSuspension` (0x6A2AE0)
+    pub fn automobile_reset_suspension(car: GPtr<u8>) = thiscall 0x6A2AE0 => crate::automobile::reset_suspension;
 }
 
 orig! {
-    /// `CAutomobile::ResetSuspension` (0x6A2AE0)
-    pub fn automobile_reset_suspension(car: GPtr<u8>) = thiscall 0x6A2AE0 => crate::automobile::reset_suspension;
+    /// `CAutomobile::FixTyre` (0x6A3580)
+    pub fn fix_tyre(v: GPtr<u8>, w: u32) = thiscall 0x6A3580 => crate::automobile::fix_tyre;
+}
+
+orig! {
+    /// `CAutomobile::FixDoor` (0x6A35A0)
+    pub fn fix_door(v: GPtr<u8>, node: i32, d: i32) = thiscall 0x6A35A0 => crate::vehicle_part_damage::automobile_fix_door;
+}
+
+orig! {
+    /// `CAutomobile::FixPanel` (0x6A3670)
+    pub fn fix_panel(v: GPtr<u8>, node: i32, p: u32) = thiscall 0x6A3670 => crate::vehicle_part_damage::automobile_fix_panel;
 }
 
 orig! {
@@ -571,11 +581,6 @@ orig! {
 orig! {
     /// `CWeapon::DoTankDoomAiming` (0x73D1E0)
     pub fn weapon_do_tank_doom_aiming(v: GPtr<u8>, owner: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) = cdecl 0x73D1E0 => unported;
-}
-
-orig! {
-    /// `CVehicle::FireFixedMachineGuns` (0x73DF00)
-    pub fn fire_fixed_machine_guns(v: GPtr<u8>) = thiscall 0x73DF00 => crate::vehicle_guns::fire_fixed_machine_guns;
 }
 
 orig! {
