@@ -34,7 +34,7 @@ use sa_stream::bindings::get_animation_block_index;
 /// `g_furnitureMan` (0xBAB380).
 const FURNITURE_MAN: usize = 0xBA_B380;
 /// `1 / 32768` (0x858B14).
-const INV_32768: f32 = f32::from_bits(0x3800_0000);
+use super::interior_shop_furnishing::INV_32768;
 /// `CAnimManager::ms_aAnimBlocks[i].bLoaded` (0xB5D4B0 + i * 0x20).
 const ANIM_BLOCK_LOADED: usize = 0xB5_D4B0;
 /// The "office edge filler placed" latch (0xBB3DC8).
@@ -42,11 +42,7 @@ const OFFICE_LATCH: usize = 0xBB_3DC8;
 
 use sa_core::field::ptr_of as p;
 
-/// `ftol((rand() & 0xFFFF) * (1/32768) * k)` with `k` from memory (`fmul m32`).
-fn rand_scaled(site: u32, k: f32) -> i32 {
-    let r = at_site(site, rand) & 0xFFFF;
-    ftol32(xi(r).fmul_m(INV_32768).fmul_m(k))
-}
+use super::interior_shop_furnishing::rand_scaled;
 
 /// `ftol((rand() & 0xFFFF) * (1/32768) * n)` with an integer `n` (`fimul m32`).
 fn rand_times(site: u32, n: i32) -> i32 {

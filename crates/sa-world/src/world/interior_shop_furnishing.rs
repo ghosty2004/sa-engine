@@ -59,7 +59,7 @@ fn in_door_span(info: GPtr<u8>, a: isize, v: i32) -> bool {
 /// `g_furnitureMan` (0xBAB380).
 const FURNITURE_MAN: usize = 0xBA_B380;
 /// `1 / 32768` (0x858B14).
-const INV_32768: f32 = f32::from_bits(0x3800_0000);
+pub(crate) const INV_32768: f32 = f32::from_bits(0x3800_0000);
 /// The shop's shelf-type roll (0xBB3DE4), set by the shop furnishing code.
 const SHOP_ROLL: usize = 0xBB_3DE4;
 
@@ -69,8 +69,8 @@ fn wealth(this: GPtr<u8>) -> u32 {
     u32::from(rd::<u8>(rd::<GPtr<u8>>(this, 0x14), 0x1F))
 }
 
-/// `ftol((rand() & 0xFFFF) * (1/32768) * k)`.
-fn rand_scaled(site: u32, k: f32) -> i32 {
+/// `ftol((rand() & 0xFFFF) * (1/32768) * k)`, `k` a memory operand.
+pub(crate) fn rand_scaled(site: u32, k: f32) -> i32 {
     let r = at_site(site, rand) & 0xFFFF;
     ftol32(xi(r).fmul_m(INV_32768).fmul_m(k))
 }

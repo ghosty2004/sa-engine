@@ -2,22 +2,16 @@
 //! bytes; gta-reversed has it unreversed.
 
 use sa_core::abi::HookReg;
-use sa_core::crt::rand;
 use sa_core::mem::GPtr;
-use sa_core::orig::at_site;
 use sa_core::hook;
 
-use super::common::{ftol32, rd, x, xi};
+use super::common::{rd, x};
 use sa_core::field::ptr_of as p;
 
 use crate::bindings::get_num_empty_tiles;
 use crate::bindings::office_place_desk;
 
-/// `ftol((rand() & 0xFFFF) * (1/32768) * k)`.
-fn rand_scaled(site: u32, k: f32) -> i32 {
-    let r = at_site(site, rand) & 0xFFFF;
-    ftol32(xi(r).fmul_m(f32::from_bits(0x3800_0000)).fmul_m(k))
-}
+use super::interior_shop_furnishing::rand_scaled;
 
 /// `Interior_c::Office_PlaceEdgeDesks(int32 id, int32 x, int32 y, int32 dir, int32 wall)` (0x5995B0):
 /// rolls `r1 = rand() * 100 / 32768` and `limit = 30 - rand() * -40 / 32768`; with at most one

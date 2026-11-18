@@ -60,14 +60,10 @@ orig! {
 }
 
 /// `1 / 32768` (0x858B14), `CModelInfo::ms_modelInfoPtrs` (0xA9B0C8).
-const INV_32768: f32 = f32::from_bits(0x3800_0000);
+use super::interior_shop_furnishing::INV_32768;
 const MODEL_INFOS: usize = 0xA9_B0C8;
 
-/// `ftol((rand() & 0xFFFF) * (1/32768) * k)`.
-fn rand_scaled(site: u32, k: f32) -> i32 {
-    let r = at_site(site, rand) & 0xFFFF;
-    ftol32(xi(r).fmul_m(INV_32768).fmul_m(k))
-}
+use super::interior_shop_furnishing::rand_scaled;
 
 /// `ThePaths` (0x96F050), `ThePaths.m_pPathNodes[area]` (0x96F854).
 const THE_PATHS: usize = 0x96_F050;
