@@ -446,15 +446,13 @@ pub fn interior_group_update_office_peds(this: GPtr<u8>) {
 }
 
 orig! {
-    /// `CPopCycle::PickGangToCreateMembersOf()` (0x60F8D0)
-    fn pick_gang_to_create_members_of() -> i32 = cdecl 0x60F8D0 => unported;
     /// `CScriptsForBrains::StartOrRequestNewStreamedScriptBrainWithThisName(const char*, CEntity*, uint8)` (0x46CED0)
     fn start_brain_with_name(brains: GPtr<u8>, name: GPtr<u8>, ent: GPtr<u8>, ty: u32) = thiscall 0x46CED0 => unported;
     /// `CTaskInteriorBeInHouse::CTaskInteriorBeInHouse(InteriorGroup_c*)` (0x674FC0)
     fn be_in_house_ctor(t: GPtr<u8>, group: GPtr<u8>) -> GPtr<u8> = thiscall 0x674FC0 => unported;
 }
 use super::interior_group_update::ig_remove_ped;
-use crate::bindings::choose_gang_occupation;
+use crate::bindings::{choose_gang_occupation, pick_gang_to_create_members_of};
 
 /// `InteriorGroup_c::SetupHousePeds()` (0x5965E0, thiscall). `StreamPedsForInterior(0)`,
 /// `LoadAllRequestedModels(false)`, the ped count (+0x36) cleared, the position `GetMatrix(+8) * (0, 0, 0)` (the

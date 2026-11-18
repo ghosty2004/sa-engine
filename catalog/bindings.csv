@@ -2524,6 +2524,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x60B460,sa-world,make_changes_for_new_weapon,thiscall,,ped:GPtr<u8>;ty:i32,,unported,CPlayerPed::MakeChangesForNewWeapon-,sa_ped::player_ctrl::make_changes_for_new_weapon
 0x60C0C0,sa-world,does_target_have_to_be_broken_call,thiscall,,p:GPtr<u8>;t:GPtr<u8>;w:GPtr<u8>,u8,unported,CPlayerPed::DoesTargetHaveToBeBroken,sa_ped::player_target::does_target_have_to_be_broken
 0x60CD20,sa-world,player_ped_set_initial_state,thiscall,,p:GPtr<u8>;b:u32,,unported,CPlayerPed::SetInitialState,
+0x60F8D0,sa-world,pick_gang_to_create_members_of,cdecl,,,i32,unported,CPopCycle::PickGangToCreateMembersOf,sa_pop::population2::pick_gang_to_create_members_of
 0x610F20,sa-world,population_remove_ped,cdecl,,p:GPtr<u8>,,unported,CPopulation::RemovePed,sa_pop::population::remove_ped
 0x6110E0,sa-world,ped_mi_can_be_created_at_this_attractor,cdecl,,mi:i32;name:GPtr<u8>,u8,unported,CPopulation::PedMICanBeCreatedAtThisAttractor,
 0x611550,sa-world,choose_gang_occupation,cdecl,,gang:i32,i32,unported,CPopulation::ChooseGangOccupation,

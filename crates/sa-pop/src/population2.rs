@@ -1686,11 +1686,10 @@ pub fn pick_gang_to_create_members_of() -> i32 {
 }
 
 pub use sa_world::bindings::choose_gang_occupation;
+pub use crate::bindings::pick_gang_to_create_members_of as pick_gang_to_create_members_of_call;
 orig! {
     /// `CPopulation::ChoosePolicePedOccupation()` (0x610F40)
     pub fn choose_police_ped_occupation() -> i32 = cdecl 0x610F40 => unported;
-    /// `CPopCycle::PickGangToCreateMembersOf()` (0x60F8D0)
-    pub fn pick_gang_to_create_members_of_call() -> i32 = cdecl 0x60F8D0 => pick_gang_to_create_members_of;
 }
 
 /// `fcom m; fnstsw; test ah, 0x44; jp` not taken: ST0 == m (ordered).

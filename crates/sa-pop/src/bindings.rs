@@ -404,6 +404,11 @@ orig! {
 }
 
 orig! {
+    /// `CPopCycle::PickGangToCreateMembersOf` (0x60F8D0)
+    pub fn pick_gang_to_create_members_of() -> i32 = cdecl 0x60F8D0 => crate::population2::pick_gang_to_create_members_of;
+}
+
+orig! {
     /// `CPopulation::RemovePed` (0x610F20)
     pub fn population_remove_ped(p: GPtr<u8>) = cdecl 0x610F20 => crate::population::remove_ped;
 }
