@@ -4492,3 +4492,38 @@
 - Open (lane B): nothing outside RW / RENDER. The remaining non-RW/RENDER frontier rows are registered on other
   branches (CShopping 0x49B8D0 / 0x49BBE0 / 0x49BF70, WEAPON 0x73C1F0 / 0x73C710 / 0x73CDC0 / 0x73D720 / 0x73E800,
   CEscalator::Update 0x717D30) or the libjpeg class; the two-player cameras have no native scenario.
+
+## 2026-11-18 — MOD-2 M4: API 1.4 (sockets, storage, clock), mods/, SA:MP's core as a mod (agent, worktree)
+- Layout (user): top-level `mods/` for the first-party mods the project uses (`mods/resolution` moved there,
+  `mods/samp` new; `mods/build.sh`), `examples/mods/` for the SDK's examples and test mods; both build scripts share
+  `tools/mods/pack.sh`.
+- API 1.4 (ADR-004 §4.1c, docs/mods/api.md level 4): UDP sockets (`net = ["udp:HOST:PORT"]`, `*` wildcards, checked
+  on the target text) over sa-net's transports (UDP natively, WebSocket to sa-udp-proxy in the browser, `?proxy=`),
+  polled, status AGAIN (-6), 8 sockets / 1024 sends / 1 MiB per mod and iteration, closed with the mod; persistent
+  storage (`storage = true`; native folder per mod id under the data directory, browser IndexedDB loaded before the
+  boot); `clock`. Host: `net.rs` / `storage.rs` traits, backends in `backend/native.rs` / `backend/web.rs`; SDK
+  `sa_mod::net::Socket`, `storage`, `time`.
+- samp-rs split (core vs hosts): the transport (`NetConnector` / `DatagramTransport`), the clock (`samp_proto::time`,
+  `set_clock`) and the browser WebSocket (samp-client feature `websocket` -> sa-net `websocket`, samp-proto `web`) are
+  seams; samp-client without features builds for wasm32 with no JavaScript imports. Hosts: the DLL (`cfg(windows)`
+  modules, unchanged), engine-native (sa-game `samp` enables `websocket`), mod (`mods/samp`: NetClient + NetGame on
+  the mod's sockets, clock and storage; samp.wasm 249 KB, imports from "sa" only).
+- Example `examples/mods/net-ping` + `tools/mods/udp-echo.py`. Native (i686 release, offscreen, with the resolution
+  mod at 1920x1080): replies, rtt shown, count 42 -> 80 across two sessions in `$SA_MOD_DATA/net-ping/replies`.
+  Browser (FEATURES=mods, headless Chromium, sa-udp-proxy on 7782): net-ping replies through the proxy, the
+  resolution mod loads from the served `mods/` (800x600 canvas), the count comes back from IndexedDB in a new session
+  ("36 replies in earlier sessions"). A socket opened in `sa_init` on the web is closed by the proxy (no connect frame
+  in 10 s while the boot blocks the worker's event loop): the example opens from a frame and reopens (api.md).
+- samp mod natively against a loopback UDP listener: "Started", "Connecting to 127.0.0.1:7791...", the open-connection
+  requests arrive at the listener, "The server didn't respond. Retrying..".
+- Tests: sa-mod-api 8, sa-mod-host 18 (level-4 manifest, sockets over loopback, storage, refusals), sa-mod 1, net-ping
+  1, samp-proto `time` (host clock); samp-rs workspace tests all pass; samp-rs clippy host, i686 Windows (samp-client)
+  and wasm32; samp_client.dll builds (i686-pc-windows-gnu); sa-game `samp` checks natively and for wasm32 with
+  `samp,mods`.
+- Verified: writer gate (base 50cdea48) all PASS on 9eb20534 (clippy host + i686, wasm32 incl. net-ping and samp
+  mods, l1test); verify-all lanes 1-3 IDENTICAL 13/13, tag mod2m4, host sa-oracle rebuilt from this tree.
+- Left for M5: a `GameAdapter` over the mod API (levels 2-3) so samp-rs's game logic runs in `mods/samp`; its UI
+  through the overlay; joining a 0.3.7 / open.mp server natively and from the browser (auth table into the mod's
+  storage); a policy for user-chosen servers (`net` rules / host settings); then `crates/sa-samp`, sa-game's `samp`
+  feature and its SA:MP glue deleted. A crate-level split of samp-client (core crate vs the `cfg(windows)` DLL
+  modules) is not done: the seams are features and traits inside samp-client.
