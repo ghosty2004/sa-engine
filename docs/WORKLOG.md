@@ -4085,3 +4085,62 @@
 - Open (lane B): CReplay::TriggerPlayback 0x4600F0 (then StoreStuffInMem, CreatePlayerPed / DealWithNewPedPacket /
   ProcessPedUpdate), PlayBackThisFrameInterpolation 0x45F380, ProcessLookAroundCam 0x45D760 and a `replay` scenario;
   CAM 0x519810 / 0x525E50; CTrain::AddNearbyPedAsRandomPassenger 0x6F8170.
+
+## 2026-11-18 — FRONTIER-2 turn 14, lane B: CReplay::TriggerPlayback, StoreStuffInMem, the replay ped packets, the `replay` scenario (agent, branch worktree-agent-ab36dc6cae0387186)
+- Base (BASE = 9fea817f): lane B turn 13 (03b3643d..d9e516c5) rebased onto master 9ac62fcd (lane A's
+  RestoreStuffFromMem, the `conv` writer-gate step, lanes A12/A13/B11/B12/C11); conflicts only in the generated verify
+  queue (regenerated), the ROADMAP FRONTIER-2 row (both sides kept) and this file (both entries kept); bindings.csv
+  merged cleanly (`bindings.py`, `--check`, convcheck, gen checks, `cargo check -p sa-ports` clean before porting).
+  `tools/gen/inflight.py` checked first: no other branch registers any address ported here.
+- Batch `frontier2-b31` (WORLD, 7 hooks, plain `#[hook(`, no phase B native; no entry of them is read as a protection
+  key: no image reference to their first bytes), from the 1.0 US bytes (gta-reversed read as an aid):
+  - CReplay::RestoreClothesDesc 0x45C7D0, RetrievePedAnimation 0x45B4D0 (the second anim's anim-count check only for
+    ids above 3; the third blended at 1000 only with blend > 0, id != 3 and a loaded group, its blend amount / delta
+    stored directly), ProcessPedUpdate 0x45CA70 (entry `nop; jmp 0x403CF3`, a fragment that only loads fs:[0]).
+  - DealWithNewPedPacket 0x45CEA0 (.HOODLUM 0x156ED70): the RequestModel flags word is `rol([0x15605B4], [0x576AFB])`
+    = 0 on the image (STREAMING_DEFAULT); the civilian branch's `new` goes through the VM (vm_eval.py 156EE8B 156EEA8:
+    size 0x79C) and the computed call `rol([0x15605B8], [0x727253])` = CPed::operator new 0x5E4730. The original also
+    stores the pool ref / slot into its own argument slots (no caller reads them; not modelled).
+  - CreatePlayerPed 0x45D540: the walk starts at the playback slot (0x97FB6C) and wraps; null when no matching ped
+    update follows, even after a ped was created (gta-reversed returns the ped).
+  - StoreStuffInMem 0x45F180 (.HOODLUM 0x15689D0): the live player info's +4 / +8 / +0xC / +0x184 / +0x4C / +0x50
+    cleared after the copy; twenty population counters saved, eleven of them (0xC0EC38..) never restored. Its cell
+    tables are now shared with RestoreStuffFromMem.
+  - TriggerPlayback 0x4600F0 (.HOODLUM 0x156D320) with lane A's three fragments (GetCurrentRadioStationID 0x4E83F0,
+    TheCamera's matrix cell 0xB6F03C, ECX = gFireManager for DestroyAllFxSystems); the slot search starts after the
+    recording buffer (or at 9 & 7 = 1); the conversion tables are built directly (ped, then vehicle), not through
+    0x45F370; the camera position x / y / z go to 0x97FB2C / 0x97FB28 / 0x97FB24.
+- No duplicated code: the stack-matrix blend of the ped and vehicle updates is one helper (`blend_replay_matrix`, in
+  sa-world), which ExtractVehicleUpdateData 0x45BA90 (sa-veh, lane C) now calls; the buffer walk takes a start slot
+  (`scan_replay_buffers_from`) and the inlined `CPool::GetAt` is one helper (`pool_slot`). Bindings: AddWeaponModel
+  0x5E5ED0, GetCurrentRadioStationID 0x4E83F0 and CCamera::Restore 0x50B930 moved to sa-world (twins in sa-ped /
+  sa-audio / sa-cam; sa-ai imports AddWeaponModel from sa-world), new rows for CPlayerPed::ReApplyMoveAnims 0x609650,
+  CExplosion::ClearAllExplosions 0x736840 and CSkidmarks::Clear 0x720590 (the local declarations in sa-ped, sa-weapon
+  and sa-core replaced). CReplay::Update's TriggerPlayback declaration now targets the port. No rand / srand call.
+- frontier.py --no-branches: to port 59 -> 58 (TriggerPlayback gone; no new rows: every callee was ported or is part
+  of the batch).
+- New scenario `replay` (frontier.sh; sa-game's SA_GAME_KEYS now takes `f1`..`f12`): the cinema run's Greenwood driven
+  along Grove Street while CReplay records, F1 at iteration 900. gdb counts (frontier2-b31-counts.gdb): RecordThisFrame
+  866, TriggerPlayback 1, StoreStuffInMem 1, DealWithNewPedPacket 1, ProcessPedUpdate 1, RetrievePedAnimation 1
+  (CreatePlayerPed and the conversion tables are inlined in the release build), PlayBackThisFrame 497, no crash; it
+  then blocks every frame on lane B's own PlayBackThisFrameInterpolation 0x45F380 (so FinishPlayback /
+  RestoreStuffFromMem are not reached yet).
+- Scenarios (frontier.sh, i686 native, SA_ROOT=~/sa-engine, sa-game of this code; steps / blocked): pausemenu 416 / 0,
+  solicit 4016 / 0, crossing 1216 / 0, crossing-long 4016 / 0, roadblocks 2016 / 0, melee 2616 / 0, sniper / shootcar /
+  shootdriver / quad / heli / plane / boat / cinema / monster / tanker / nitro 1216 / 0, roadblock-script 1016 / 0,
+  roadblock-wanted 2016 / 0, gangwar 2016 / 0, jetpack 1016 / 0, copsf / coplv 2016 / 0, samsite 1616 / 0, postfx
+  1016 / 0, tank 1215 / 1 (0x4A0FA0, registered on worktree-agent-a21c8971e8e39097d), hunter 999 / 217
+  (DoDriveByAutoAiming 0x73D720, registered on worktree-agent-a184fe195bdd6cb32), replay 919 / 497 (lane B:
+  0x45F380); no crash. `hydra` is in frontier.sh's usage line but has no case (it exits with the usage).
+- Writer gate (base 9fea817f) on 14f83387 (the last code / catalog commit; only the roadmap and this worklog follow):
+  all 17 steps PASS, none skipped.
+- verify-all (lanes 4-5, shared by flock with other agents; fresh release sa-oracle + satool; DLL sha256 e0c92ceb… of
+  14f83387 = the final code): `lb14-u` (SA_UNVERIFIED=frontier2-b29,frontier2-b30,frontier2-b31,frontier2-c13, the last
+  for the refactored ExtractVehicleUpdateData) IDENTICAL 13/13; default set `lb14-def` (same DLL) IDENTICAL 13/13;
+  save-load identical except the SAVE-1 stack residue.
+- Resources: CARGO_BUILD_JOBS=4 / JOBS=4, one cargo build at a time; wine lanes 4-5; target/ kept under 5 GB.
+- Open (lane B): PlayBackThisFrameInterpolation 0x45F380 (935 instructions, read: a 20-way packet switch with a
+  6-way vehicle constructor switch whose other subtypes set up the stale EBP vehicle; the creation frame also runs the
+  update; it pulls in ProcessReplayCamera 0x45D060 and tReplayTrainBlock::ExtractTrainUpdateData 0x45CDB0, both
+  unported), ProcessLookAroundCam 0x45D760 (433 instructions), so the `replay` scenario's 0 lane B blockers; CAM
+  0x519810 / 0x525E50; CTrain::AddNearbyPedAsRandomPassenger 0x6F8170.
