@@ -6,23 +6,12 @@
 //! patches. This crate implements the same traits on the ported engine, for samp-rs linked into native
 //! `sa-game` ([`BackendKind::EngineNative`]).
 //!
-//! # How the engine's state is read
+//! # How the engine's state is read and changed
 //!
-//! Every port keeps the original's 32-bit layouts (ADR-001): native sa-game is a 32-bit process that maps
-//! the legacy address arena at the original addresses (`docs/arch/platform.md` §6), and the wasm32 build
-//! keeps the same layouts in linear memory (ROADMAP 2026-11-12). Globals therefore live at their 1.0 US
-//! addresses and objects in the engine's pools with the original field offsets, which is exactly how the
-//! ports themselves read them (`GPtr::from_addr`). The backend reads through a [`View`]: [`EngineView`]
-//! is the engine's memory, tests use a fake. Unlike the original backend, no raw address leaves this
-//! crate: handles are generational pool references (below) and reads of objects go through a handle that
-//! the pool's byte map validates first, so a stale handle is an error instead of a wild read.
-//!
-//! # Handles
-//!
-//! [`PedRef`], [`VehicleRef`] and [`ObjectRef`] hold the pool reference the game itself uses for script
-//! handles (`CPools::GetPedRef`: `slot << 8 | reuse counter`). A handle stays valid while the slot holds
-//! the same object and becomes invalid when the slot is freed or reused. The script handle of an entity is
-//! therefore its adapter handle.
+//! Through `sa-access`, the engine's own access layer (the mod host uses the same one): [`NativeGame`] holds an
+//! `sa_access::Game` and derefs to it, and the trait methods here map samp's calls onto its reads and changes.
+//! Handles are its generational pool references (`CPools::GetPedRef`: `slot << 8 | reuse counter`), so the
+//! script handle of an entity is its adapter handle.
 //!
 //! # Status
 //!
@@ -31,9 +20,9 @@
 //! state, screen size). Every write, typed script command and hook dispatch point still returns
 //! [`GameError::Unsupported`]; the order in which they come is `docs/samp/native-plan.md` §5.
 
-mod addr;
 mod audio;
 mod camera;
+mod commands;
 mod config;
 mod hud;
 mod input;
@@ -41,10 +30,8 @@ mod objects;
 pub mod overlay;
 mod peds;
 mod render;
-pub mod script;
 mod streaming;
 mod vehicles;
-mod view;
 
 #[cfg(any(test, feature = "fake"))]
 pub mod fake;
@@ -53,7 +40,8 @@ mod world;
 #[cfg(test)]
 mod tests;
 
-pub use view::{EngineView, View};
+pub(crate) use sa_access::{addr, script};
+pub use sa_access::{EngineView, View};
 
 use sa_samp_api::config::SampModeConfig;
 use sa_samp_api::hooks::{FramePhase, GameHooks};
@@ -64,12 +52,11 @@ use sa_samp_api::{
 
 /// The adapter over the native engine.
 pub struct NativeGame<V: View> {
-    view: V,
+    game: sa_access::Game<V>,
     config: SampModeConfig,
     hooks: Option<Box<dyn GameHooks>>,
     files: Option<Box<dyn files::FileProvider>>,
     installed: bool,
-    threads: script::Threads,
     /// The text `CMessages::AddBigMessage` points into (GTA keeps the pointer).
     big_message: Box<[u8; 0x200]>,
     overlay: overlay::Overlay,
@@ -88,13 +75,17 @@ impl<V: View> NativeGame<V> {
 
     /// An adapter whose script commands run through `exec` instead of the engine's interpreter (tests).
     pub fn with_executor(view: V, exec: script::CommandExecutor) -> Self {
+        Self::from_game(sa_access::Game::with_executor(view, exec))
+    }
+
+    /// An adapter over `game`.
+    pub fn from_game(game: sa_access::Game<V>) -> Self {
         Self {
-            view,
+            game,
             config: SampModeConfig::default(),
             hooks: None,
             files: None,
             installed: false,
-            threads: script::Threads::new(exec),
             big_message: Box::new([0; 0x200]),
             overlay: overlay::Overlay::default(),
         }
@@ -102,23 +93,7 @@ impl<V: View> NativeGame<V> {
 
     /// The memory the adapter reads.
     pub fn view(&self) -> &V {
-        &self.view
-    }
-
-    /// The handle of the pooled ped, vehicle or object that starts at `address` (an argument or result of a game
-    /// function the engine observed), if there is one.
-    pub fn entity_at(&self, address: u32) -> Option<sa_samp_api::EntityRef> {
-        use sa_samp_api::{EntityRef, ObjectRef};
-        if address == 0 {
-            return None;
-        }
-        if let Some(p) = self.ped_ref(address) {
-            return Some(EntityRef::Ped(p));
-        }
-        if let Some(v) = self.vehicle_ref(address) {
-            return Some(EntityRef::Vehicle(v));
-        }
-        addr::OBJECT_POOL.ref_of(&self.view, address).map(|r| EntityRef::Object(ObjectRef(r)))
+        &self.game.view
     }
 
     /// Whether [`SampHost::install`] ran.
@@ -159,6 +134,20 @@ impl<V: View> NativeGame<V> {
     }
 }
 
+impl<V: View> std::ops::Deref for NativeGame<V> {
+    type Target = sa_access::Game<V>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.game
+    }
+}
+
+impl<V: View> std::ops::DerefMut for NativeGame<V> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.game
+    }
+}
+
 impl<V: View> GameAdapter for NativeGame<V> {
     fn backend(&self) -> BackendInfo {
         BackendInfo {
@@ -172,18 +161,15 @@ impl<V: View> GameAdapter for NativeGame<V> {
     }
 
     fn game_state(&self) -> GameState {
-        GameState::from_raw(self.view.read_i32(addr::GAME_STATE))
+        self.game.game_state()
     }
 
     fn time_step(&self) -> TimeStep {
-        TimeStep {
-            clipped: self.view.read_f32(addr::TIME_STEP),
-            non_clipped: self.view.read_f32(addr::TIME_STEP_NON_CLIPPED),
-        }
+        self.game.time_step()
     }
 
     fn game_time_ms(&self) -> u32 {
-        self.view.read_u32(addr::TIME_IN_MS)
+        self.game.game_time_ms()
     }
 
     fn request_quit(&mut self) {

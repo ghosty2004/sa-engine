@@ -12,6 +12,7 @@ sa-render = { path = "../sa-render" }
 sa-hud = { path = "../sa-hud" }
 sa-rwcore = { path = "../sa-rwcore" }
 sa-core = { path = "../sa-core" }
+sa-access = { path = "../sa-access" }
 sa-samp-api = { path = "../sa-samp-api" }
 # samp-rs's renderer-independent UI logic (the engine backend uses its geometry, colour codes and font sizes).
 samp-ui = { path = "../../samp-rs/crates/samp-ui" }
@@ -21,7 +22,7 @@ ab_glyph = "0.2"
 
 [features]
 # `fake`: a fake engine memory for other crates' host tests
-fake = []
+fake = ["sa-access/fake"]
 
 [lints.rust]
 missing_docs = "warn"

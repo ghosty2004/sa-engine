@@ -6,25 +6,12 @@ use sa_samp_api::camera::*;
 use sa_samp_api::script::ScriptArg::{Float as F, Int as I};
 use sa_samp_api::*;
 
-use crate::addr;
 use crate::script::op;
 use crate::{NativeGame, View};
 
 impl<V: View> Camera for NativeGame<V> {
     fn camera(&self) -> CameraState {
-        use addr::camera as c;
-        let v = &self.view;
-        CameraState {
-            matrix: v.read_matrix(c::MATRIX),
-            front: v.read_vec3(c::FRONT),
-            source: v.read_vec3(c::SOURCE),
-            mode: v.read_u16(c::MODE),
-            fov: v.read_f32(c::FOV),
-            looking_left: v.read_u8(c::LOOKING_LEFT) != 0,
-            looking_right: v.read_u8(c::LOOKING_RIGHT) != 0,
-            aspect_ratio: v.read_f32(c::ASPECT_RATIO),
-            weapon_mode: v.read_u16(c::WEAPON_MODE),
-        }
+        self.game.camera()
     }
 
     fn world_to_screen(&self, _p: Vec3) -> Option<(Point2, f32)> {

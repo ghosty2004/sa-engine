@@ -10,35 +10,6 @@
 //! Text is bytes in the Windows ANSI code page (1252), like samp's. Colours are D3D `0xAARRGGBB` unless a
 //! name says otherwise. Changed at API v5 (replaces the engine-owned `SampUi` of v1..v4).
 
-use crate::Rgba;
-
-impl Rgba {
-    /// From samp's wire format `0xRRGGBBAA`.
-    pub const fn from_rgba_u32(v: u32) -> Self {
-        Self {
-            r: (v >> 24) as u8,
-            g: (v >> 16) as u8,
-            b: (v >> 8) as u8,
-            a: v as u8,
-        }
-    }
-
-    /// From D3D's `0xAARRGGBB`.
-    pub const fn from_argb_u32(v: u32) -> Self {
-        Self {
-            a: (v >> 24) as u8,
-            r: (v >> 16) as u8,
-            g: (v >> 8) as u8,
-            b: v as u8,
-        }
-    }
-
-    /// To D3D's `0xAARRGGBB`.
-    pub const fn to_argb_u32(self) -> u32 {
-        (self.a as u32) << 24 | (self.r as u32) << 16 | (self.g as u32) << 8 | self.b as u32
-    }
-}
-
 /// D3DX `DrawText` format flags.
 pub mod dt {
     /// `DT_CENTER`.

@@ -2,30 +2,13 @@
 //! Methods that return `Unsupported` (or a neutral value, for reads that cannot fail) are not served by the
 //! native engine yet (docs/samp/native-plan.md lists the order).
 
-use sa_samp_api::script::ScriptArg::{Float as F, Int as I, Local as L};
+use sa_samp_api::script::ScriptArg::Int as I;
 use sa_samp_api::vehicles::*;
 use sa_samp_api::*;
 
-use crate::addr::{self, off};
+use crate::addr;
 use crate::script::op;
 use crate::{NativeGame, View};
-
-impl<V: View> NativeGame<V> {
-    /// The address of a live vehicle, or `InvalidHandle`.
-    pub(crate) fn vehicle_addr(&self, v: VehicleRef) -> GameResult<u32> {
-        addr::VEHICLE_POOL
-            .at_ref(&self.view, v.0)
-            .ok_or(GameError::InvalidHandle)
-    }
-
-    /// The handle of the vehicle at `p` (a pointer read from game state), if it is a live pool vehicle.
-    pub(crate) fn vehicle_ref(&self, p: u32) -> Option<VehicleRef> {
-        if p == 0 {
-            return None;
-        }
-        addr::VEHICLE_POOL.ref_of(&self.view, p).map(VehicleRef)
-    }
-}
 
 impl<V: View> Vehicles for NativeGame<V> {
     fn vehicle_script_handle(&self, v: VehicleRef) -> GameResult<ScriptHandle> {
@@ -39,42 +22,7 @@ impl<V: View> Vehicles for NativeGame<V> {
     }
 
     fn vehicle_snapshot(&self, v: VehicleRef) -> GameResult<VehicleSnapshot> {
-        let p = self.vehicle_addr(v)?;
-        let m = &self.view;
-        let vtable = m.read_u32(p + off::VTABLE);
-        let class = addr::VEHICLE_VTABLES
-            .iter()
-            .find(|(vt, _)| *vt == vtable)
-            .map(|(_, c)| *c);
-        let mut passengers = [None; 8];
-        for (i, s) in passengers.iter_mut().enumerate() {
-            *s = self.ped_ref(m.read_u32(p + off::VEH_PASSENGERS + 4 * i as u32));
-        }
-        Ok(VehicleSnapshot {
-            matrix: self.entity_matrix(p),
-            move_speed: m.read_vec3(p + off::MOVE_SPEED),
-            turn_speed: m.read_vec3(p + off::TURN_SPEED),
-            health: m.read_f32(p + off::VEH_HEALTH),
-            model: ModelId(i32::from(m.read_i16(p + off::MODEL))),
-            class,
-            driver: self.ped_ref(m.read_u32(p + off::VEH_DRIVER)),
-            passengers,
-            max_passengers: m.read_u8(p + off::VEH_MAX_PASSENGERS),
-            colours: [
-                m.read_u8(p + off::VEH_COLOURS),
-                m.read_u8(p + off::VEH_COLOURS + 1),
-            ],
-            siren: m.read_u8(p + off::VEH_SIREN_BYTE) & 0x80 != 0,
-            // Landing gear and the special control value are not read yet (their fields differ per class).
-            gear_down: false,
-            area: AreaCode(m.read_u8(p + off::AREA)),
-            train_speed: if class == Some(VehicleClass::Train) {
-                m.read_f32(p + off::TRAIN_SPEED)
-            } else {
-                0.0
-            },
-            special: 0.0,
-        })
+        self.game.vehicle_snapshot(v)
     }
 
     fn vehicle_damage(&self, _v: VehicleRef) -> GameResult<VehicleDamage> {
@@ -86,45 +34,19 @@ impl<V: View> Vehicles for NativeGame<V> {
     }
 
     fn local_vehicle(&self) -> Option<VehicleRef> {
-        // `FindPlayerVehicle(-1, false)` for the local player: its ped's `m_pVehicle` while `bInVehicle`.
-        let ped = self.view.read_u32(addr::PLAYERS);
-        if ped == 0 || self.ped_ref(ped).is_none() {
-            return None;
-        }
-        if self.view.read_u32(ped + off::PED_FLAGS) & off::PED_IN_VEHICLE == 0 {
-            return None;
-        }
-        self.vehicle_ref(self.view.read_u32(ped + off::PED_VEHICLE))
+        self.game.local_vehicle()
     }
 
     fn vehicles(&self) -> Vec<VehicleRef> {
-        addr::VEHICLE_POOL.refs(&self.view).into_iter().map(VehicleRef).collect()
+        self.game.vehicles()
     }
 
     fn create_vehicle(&mut self, spawn: &VehicleSpawn) -> GameResult<VehicleRef> {
-        let p = spawn.pos;
-        let h = self.run_op_out(op::CREATE_CAR, &[I(spawn.model.0), F(p.x), F(p.y), F(p.z), L(0)])? as i32;
-        let v = self
-            .vehicle_from_script_handle(ScriptHandle(h))
-            .ok_or(GameError::NotLoaded)?;
-        self.run_op(op::SET_CAR_HEADING, &[I(h), F(spawn.heading_deg)])?;
-        self.run_op(
-            op::CHANGE_CAR_COLOUR,
-            &[
-                I(h),
-                I(i32::from(spawn.colours[0])),
-                I(i32::from(spawn.colours[1])),
-            ],
-        )?;
-        if spawn.area.0 != 0 {
-            self.run_op(op::SET_VEHICLE_AREA_VISIBLE, &[I(h), I(i32::from(spawn.area.0))])?;
-        }
-        Ok(v)
+        self.game.create_vehicle(spawn)
     }
 
     fn destroy_vehicle(&mut self, v: VehicleRef) -> GameResult<()> {
-        let h = self.vehicle_script_handle(v)?.0;
-        self.run_op(op::DELETE_CAR, &[I(h)]).map(drop)
+        self.game.destroy_vehicle(v)
     }
 
     fn set_vehicle_matrix(&mut self, _v: VehicleRef, _m: &Matrix) -> GameResult<()> {
@@ -136,9 +58,7 @@ impl<V: View> Vehicles for NativeGame<V> {
     }
 
     fn set_vehicle_heading(&mut self, v: VehicleRef, heading_deg: f32) -> GameResult<()> {
-        let h = self.vehicle_script_handle(v)?.0;
-        self.run_op(op::SET_CAR_HEADING, &[I(h), F(heading_deg)])
-            .map(drop)
+        self.game.set_vehicle_heading(v, heading_deg)
     }
 
     fn set_train_position(&mut self, _v: VehicleRef, _pos: Vec3) -> GameResult<()> {
@@ -150,9 +70,7 @@ impl<V: View> Vehicles for NativeGame<V> {
     }
 
     fn set_vehicle_health(&mut self, v: VehicleRef, health: f32) -> GameResult<()> {
-        let a = self.vehicle_addr(v)?;
-        self.view.write(a + off::VEH_HEALTH, &health.to_le_bytes());
-        Ok(())
+        self.game.set_vehicle_health(v, health)
     }
 
     fn set_vehicle_damage(&mut self, _v: VehicleRef, _d: VehicleDamage) -> GameResult<()> {
@@ -164,12 +82,7 @@ impl<V: View> Vehicles for NativeGame<V> {
     }
 
     fn set_vehicle_colours(&mut self, v: VehicleRef, colours: [u8; 2]) -> GameResult<()> {
-        let h = self.vehicle_script_handle(v)?.0;
-        self.run_op(
-            op::CHANGE_CAR_COLOUR,
-            &[I(h), I(i32::from(colours[0])), I(i32::from(colours[1]))],
-        )
-        .map(drop)
+        self.game.set_vehicle_colours(v, colours)
     }
 
     fn set_paintjob(&mut self, _v: VehicleRef, _paintjob: u8) -> GameResult<()> {

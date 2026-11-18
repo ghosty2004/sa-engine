@@ -1,6 +1,5 @@
-//! Addresses (1.0 US) and field offsets of the engine state the backend reads. The values are the ones the
-//! ports use (ADR-001 keeps them in phase B/C) and the ones samp-rs's original backend reads; names follow
-//! gta-reversed.
+//! Addresses (1.0 US) and field offsets of the engine state this layer reads and writes: the ones the ports use
+//! (they keep the original layouts); names follow gta-reversed.
 
 use crate::view::Pool;
 
@@ -25,8 +24,7 @@ pub const PLAYERS: u32 = 0xB7CD98;
 pub const PLAYER_INFO_SIZE: u32 = 0x190;
 /// `CWorld::Players[0].m_nMoney`.
 pub const PLAYER_MONEY: u32 = PLAYERS + 0xB8;
-/// Number of `CWorld::Players` slots in the unmodified game (samp relocates the array for its remote
-/// players; that is `Limits::player_slots`, SAMP-4).
+/// Number of `CWorld::Players` slots.
 pub const PLAYER_SLOTS: u8 = 2;
 /// `CWorld::PlayerInFocus` (u8).
 pub const PLAYER_IN_FOCUS: u32 = 0xB7CD74;
@@ -49,9 +47,7 @@ pub const OBJECT_POOL: Pool = Pool {
 
 /// `CModelInfo::ms_modelInfoPtrs` (20,000 entries).
 pub const MODEL_INFO_PTRS: u32 = 0xA9B0C8;
-/// Entries of [`MODEL_INFO_PTRS`]. samp-rs's original backend bounds the index by 20,001 (it reads one
-/// dword past the array for model 20,000); the engine's array has 20,000 entries, so model 20,000 is
-/// "not a ped model" here.
+/// Entries of [`MODEL_INFO_PTRS`].
 pub const MODEL_INFO_COUNT: u32 = 20_000;
 /// `CPedModelInfo` vtable.
 pub const VTBL_PED_MODEL_INFO: u32 = 0x85BDC0;
@@ -208,8 +204,8 @@ pub mod off {
 }
 
 /// Vehicle class vtables.
-pub const VEHICLE_VTABLES: [(u32, sa_samp_api::vehicles::VehicleClass); 10] = {
-    use sa_samp_api::vehicles::VehicleClass as C;
+pub const VEHICLE_VTABLES: [(u32, sa_types::vehicle::VehicleClass); 10] = {
+    use sa_types::vehicle::VehicleClass as C;
     [
         (0x871120, C::Automobile),
         (0x871360, C::Bike),

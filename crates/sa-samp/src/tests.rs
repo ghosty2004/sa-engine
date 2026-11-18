@@ -13,7 +13,7 @@ use sa_samp_api::*;
 
 use crate::addr::{self, off};
 use crate::fake::*;
-use crate::view::View;
+use crate::View;
 use crate::{NativeGame, script};
 
 #[test]
@@ -355,7 +355,7 @@ fn install_and_frame_dispatch() {
 
 /// The encoded instruction the backend issued last (`script::encode`'s format).
 fn issued(g: &NativeGame<FakeView>, back: usize) -> Vec<u8> {
-    let v = &g.threads.issued;
+    let v = &g.issued_commands();
     v[v.len() - 1 - back].clone()
 }
 
@@ -394,12 +394,12 @@ fn ped_writes_go_through_opcodes_and_fields() {
     g.set_player_money(5000).unwrap();
     assert_eq!(g.player_money(), 5000);
     // A stale ped issues nothing.
-    let n = g.threads.issued.len();
+    let n = g.issued_commands().len();
     assert_eq!(
         g.set_ped_position(PedRef(0x305), Vec3::default()),
         Err(GameError::InvalidHandle)
     );
-    assert_eq!(g.threads.issued.len(), n);
+    assert_eq!(g.issued_commands().len(), n);
 }
 
 #[test]
@@ -462,7 +462,7 @@ fn create_exec(s: sa_core::mem::GPtr<u8>) -> i8 {
 fn created_entities_come_back_as_handles() {
     use ScriptArg::{Float as F, Int as I, Local as L};
     let mut g = game();
-    g.threads.exec = create_exec;
+    g.set_executor(create_exec);
     put(&mut g, VEH_MAP + 3, 0x01u8);
     let spawn = sa_samp_api::vehicles::VehicleSpawn {
         model: ModelId(560),
@@ -561,9 +561,9 @@ fn skin_anim_and_task_effects_go_through_opcodes() {
     // The local player is player slot 0: 09C7 SET_PLAYER_MODEL.
     assert_eq!(issued(&g, 0), enc(0x09C7, &[I(0), I(105)]));
     // Not a ped model: nothing issued.
-    let n = g.threads.issued.len();
+    let n = g.issued_commands().len();
     assert!(g.set_ped_model(me, ModelId(400)).is_err());
-    assert_eq!(g.threads.issued.len(), n);
+    assert_eq!(g.issued_commands().len(), n);
     // An animation of a loaded block ("PED", matched case-insensitively): 0812 only.
     put(&mut g, addr::ANIM_BLOCK_COUNT, 1u32);
     g.view.write(addr::ANIM_BLOCKS, b"PED\0");
@@ -597,7 +597,7 @@ fn skin_anim_and_task_effects_go_through_opcodes() {
         )
     );
     // An unknown block is refused before any command.
-    let n = g.threads.issued.len();
+    let n = g.issued_commands().len();
     assert!(
         g.play_anim(
             me,
@@ -608,7 +608,7 @@ fn skin_anim_and_task_effects_go_through_opcodes() {
         )
         .is_err()
     );
-    assert_eq!(g.threads.issued.len(), n);
+    assert_eq!(g.issued_commands().len(), n);
     g.stop_anims(me).unwrap();
     assert_eq!(issued(&g, 0), enc(0x0687, &[I(h)]));
     g.start_task(me, PedTask::HandsUp { time_ms: -2 }).unwrap();

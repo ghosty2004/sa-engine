@@ -1,6 +1,4 @@
-//! Raw script (SCM) commands on the native engine: the native backend's `sa_samp_api::script` traits.
-//!
-//! Same mechanism as samp's ScriptCommand (samp-rs `script::Runner`): a private, zeroed `CRunningScript`
+//! Script (SCM) commands run outside the game's own scripts: a private, zeroed `CRunningScript`
 //! (0xE0 bytes) whose base and current IP point at one encoded instruction, run with
 //! `CRunningScript::ProcessOneCommand` (0x469EB0). Natively that resolves through `orig!`'s address registry to
 //! the sa-script port, so every opcode handler that is ported runs; an unported one panics with its name (the
@@ -8,10 +6,10 @@
 //! in native sa-game (i686) and wasm32.
 
 use sa_core::mem::GPtr;
-use sa_samp_api::script::*;
-use sa_samp_api::*;
+use sa_types::script::*;
+use sa_types::{GameError, GameResult};
 
-use crate::{NativeGame, View};
+use crate::{Game, View};
 
 sa_core::orig! {
     /// `CRunningScript::ProcessOneCommand()` (0x469EB0): returns the switch's AL.
@@ -19,7 +17,7 @@ sa_core::orig! {
 }
 
 /// `CRunningScript` layout (gta-reversed `Scripts/RunningScript.h`).
-pub(crate) mod layout {
+pub mod layout {
     /// `sizeof(CRunningScript)`.
     pub const SIZE: usize = 0xE0;
     /// `m_szName[8]`.
@@ -36,10 +34,15 @@ pub(crate) mod layout {
     pub const COND_RESULT: usize = 0xC5;
 }
 
-/// The opcodes the typed methods issue (gta-reversed `eScriptCommands.h`; samp-rs `script::op`).
-pub(crate) mod op {
+/// The opcodes the typed methods issue (gta-reversed `eScriptCommands.h`).
+#[allow(missing_docs)]
+pub mod op {
     pub const SET_TIME_OF_DAY: u16 = 0x00C0;
+    pub const CREATE_CHAR: u16 = 0x009A;
+    pub const DELETE_CHAR: u16 = 0x009B;
     pub const CREATE_CAR: u16 = 0x00A5;
+    pub const SET_CAR_COORDINATES: u16 = 0x00AB;
+    pub const ALTER_WANTED_LEVEL: u16 = 0x010D;
     pub const DELETE_CAR: u16 = 0x00A6;
     pub const CLEAR_PRINTS: u16 = 0x00BE;
     pub const ADD_ONE_OFF_SOUND: u16 = 0x018C;
@@ -106,7 +109,7 @@ const T_VARLEN_STRING: u8 = 0x0E;
 const PADDING: usize = 16;
 
 /// Encodes one instruction in the public SCM format: opcode (u16 LE), then one type byte + value per
-/// parameter (samp-rs `script::encode`).
+/// parameter.
 pub fn encode(op: Opcode, args: &[ScriptArg<'_>], out: &mut Vec<u8>) {
     out.clear();
     out.extend_from_slice(&op.0.to_le_bytes());
@@ -142,7 +145,7 @@ pub fn encode(op: Opcode, args: &[ScriptArg<'_>], out: &mut Vec<u8>) {
 pub type CommandExecutor = fn(thread: GPtr<u8>) -> i8;
 
 /// The engine's executor: the sa-script port through the address registry.
-pub(crate) fn engine_executor(thread: GPtr<u8>) -> i8 {
+pub fn engine_executor(thread: GPtr<u8>) -> i8 {
     process_one_command(thread)
 }
 
@@ -155,7 +158,7 @@ pub(crate) struct Thread {
 impl Thread {
     fn new() -> Self {
         let mut script = Box::new([0u8; layout::SIZE]);
-        script[layout::NAME..layout::NAME + 6].copy_from_slice(b"sa-smp");
+        script[layout::NAME..layout::NAME + 6].copy_from_slice(b"sa-ext");
         Self {
             script,
             code: Vec::with_capacity(64),
@@ -182,7 +185,7 @@ pub(crate) struct Threads {
     /// The backend's own thread for the typed methods that issue an opcode.
     backend: Option<ScriptThreadRef>,
     /// Every command issued (opcode and encoded instruction), for host tests.
-    #[cfg(test)]
+    #[cfg(any(test, feature = "fake"))]
     pub(crate) issued: Vec<Vec<u8>>,
     last: Opcode,
     in_command: bool,
@@ -195,7 +198,7 @@ impl Threads {
             threads: Vec::new(),
             one_shot: None,
             backend: None,
-            #[cfg(test)]
+            #[cfg(any(test, feature = "fake"))]
             issued: Vec::new(),
             last: Opcode(0),
             in_command: false,
@@ -239,7 +242,7 @@ impl Threads {
         let exec = self.exec;
         let th = self.get_mut(t)?;
         encode(op, args, &mut th.code);
-        #[cfg(test)]
+        #[cfg(any(test, feature = "fake"))]
         let issued = th.code.clone();
         th.code.extend_from_slice(&[0; PADDING]);
         let ip = th.code.as_ptr() as usize as u32;
@@ -247,7 +250,7 @@ impl Threads {
         th.script[layout::IP..layout::IP + 4].copy_from_slice(&ip.to_le_bytes());
         th.script[layout::COND_RESULT] = 0;
         let script = GPtr::from_raw(th.script.as_mut_ptr());
-        #[cfg(test)]
+        #[cfg(any(test, feature = "fake"))]
         self.issued.push(issued);
         self.last = op;
         self.in_command = true;
@@ -257,11 +260,9 @@ impl Threads {
     }
 }
 
-impl<V: View> NativeGame<V> {
-    /// Runs one command on the backend's own script thread (made on first use) and returns the condition
-    /// result: the typed methods that samp implements with an opcode run the same opcode through the ported
-    /// interpreter.
-    pub(crate) fn run_op(&mut self, op: u16, args: &[ScriptArg<'_>]) -> GameResult<bool> {
+impl<V: View> Game<V> {
+    /// Runs one command on the layer's own script thread (made on first use) and returns the condition result.
+    pub fn run_op(&mut self, op: u16, args: &[ScriptArg<'_>]) -> GameResult<bool> {
         let t = match self.threads.backend {
             Some(t) => t,
             None => {
@@ -273,22 +274,17 @@ impl<V: View> NativeGame<V> {
         self.threads.run(t, Opcode(op), args)
     }
 
-    /// Like [`NativeGame::run_op`], then reads local 0 of the backend thread (the output parameter of a
-    /// command whose last parameter is `ScriptArg::Local(0)`).
-    pub(crate) fn run_op_out(&mut self, op: u16, args: &[ScriptArg<'_>]) -> GameResult<u32> {
+    /// Like [`Game::run_op`], then reads local 0 of the thread (the output parameter of a command whose last
+    /// parameter is `ScriptArg::Local(0)`).
+    pub fn run_op_out(&mut self, op: u16, args: &[ScriptArg<'_>]) -> GameResult<u32> {
         self.run_op(op, args)?;
         let t = self.threads.backend.ok_or(GameError::InvalidHandle)?;
         Ok(self.threads.get(t)?.local(0))
     }
-}
 
-impl<V: View> ScriptCommands for NativeGame<V> {
-    fn run_command(
-        &mut self,
-        op: Opcode,
-        args: &[ScriptArg<'_>],
-        locals: &mut ScriptLocals,
-    ) -> GameResult<bool> {
+    /// Runs one command on a private thread whose locals are copied in from and out to `locals`; returns the
+    /// condition result.
+    pub fn run_command(&mut self, op: Opcode, args: &[ScriptArg<'_>], locals: &mut ScriptLocals) -> GameResult<bool> {
         let t = match self.threads.one_shot {
             Some(t) => t,
             None => {
@@ -308,31 +304,31 @@ impl<V: View> ScriptCommands for NativeGame<V> {
         Ok(cond)
     }
 
-    fn create_script_thread(&mut self) -> GameResult<ScriptThreadRef> {
-        Ok(self.threads.create())
+    /// A new private script thread with its own locals.
+    pub fn create_script_thread(&mut self) -> ScriptThreadRef {
+        self.threads.create()
     }
 
-    fn destroy_script_thread(&mut self, thread: ScriptThreadRef) {
+    /// Frees a thread of [`Game::create_script_thread`]; an unknown handle is ignored.
+    pub fn destroy_script_thread(&mut self, thread: ScriptThreadRef) {
         self.threads.destroy(thread);
     }
 
-    fn run_on_thread(
-        &mut self,
-        thread: ScriptThreadRef,
-        op: Opcode,
-        args: &[ScriptArg<'_>],
-    ) -> GameResult<bool> {
+    /// Runs one command on `thread`; returns the condition result.
+    pub fn run_on_thread(&mut self, thread: ScriptThreadRef, op: Opcode, args: &[ScriptArg<'_>]) -> GameResult<bool> {
         self.threads.run(thread, op, args)
     }
 
-    fn thread_local(&self, thread: ScriptThreadRef, i: usize) -> GameResult<u32> {
+    /// Local `i` of `thread`.
+    pub fn thread_local(&self, thread: ScriptThreadRef, i: usize) -> GameResult<u32> {
         if i >= layout::LOCALS {
             return Err(GameError::InvalidHandle);
         }
         Ok(self.threads.get(thread)?.local(i))
     }
 
-    fn set_thread_local(&mut self, thread: ScriptThreadRef, i: usize, value: u32) -> GameResult<()> {
+    /// Writes local `i` of `thread`.
+    pub fn set_thread_local(&mut self, thread: ScriptThreadRef, i: usize, value: u32) -> GameResult<()> {
         if i >= layout::LOCALS {
             return Err(GameError::InvalidHandle);
         }
@@ -340,7 +336,20 @@ impl<V: View> ScriptCommands for NativeGame<V> {
         Ok(())
     }
 
-    fn last_command(&self) -> (Opcode, bool) {
+    /// The last opcode run and whether a command is in progress.
+    pub fn last_command(&self) -> (Opcode, bool) {
         (self.threads.last, self.threads.in_command)
+    }
+
+    /// Runs the script commands through `exec` from now on (host tests).
+    #[cfg(any(test, feature = "fake"))]
+    pub fn set_executor(&mut self, exec: CommandExecutor) {
+        self.threads.exec = exec;
+    }
+
+    /// Every command issued so far, encoded (host tests).
+    #[cfg(any(test, feature = "fake"))]
+    pub fn issued_commands(&self) -> &[Vec<u8>] {
+        &self.threads.issued
     }
 }

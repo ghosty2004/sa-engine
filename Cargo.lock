@@ -2419,6 +2419,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
 
 [[package]]
+name = "sa-access"
+version = "0.1.0"
+dependencies = [
+ "sa-core",
+ "sa-types",
+]
+
+[[package]]
 name = "sa-ai"
 version = "0.1.0"
 dependencies = [
@@ -2505,6 +2513,7 @@ dependencies = [
  "libc",
  "png",
  "rustc-hash 2.1.3",
+ "sa-access",
  "sa-ai",
  "sa-anim",
  "sa-audio",
@@ -2525,6 +2534,7 @@ dependencies = [
  "sa-samp-api",
  "sa-script",
  "sa-stream",
+ "sa-types",
  "sa-veh",
  "sa-weapon",
  "sa-world",
@@ -2632,11 +2642,18 @@ dependencies = [
 name = "sa-mod-api"
 version = "0.1.0"
 dependencies = [
- "sa-samp-api",
+ "sa-types",
 ]
 
 [[package]]
 name = "sa-mod-broken"
+version = "0.1.0"
+dependencies = [
+ "sa-mod",
+]
+
+[[package]]
+name = "sa-mod-courier"
 version = "0.1.0"
 dependencies = [
  "sa-mod",
@@ -2654,10 +2671,10 @@ name = "sa-mod-host"
 version = "0.1.0"
 dependencies = [
  "font8x8",
+ "sa-access",
  "sa-mod-api",
  "sa-platform",
- "sa-samp",
- "sa-samp-api",
+ "sa-types",
  "toml",
  "wasm-bindgen",
  "wasm-encoder 0.261.0",
@@ -2840,6 +2857,7 @@ name = "sa-samp"
 version = "0.1.0"
 dependencies = [
  "ab_glyph",
+ "sa-access",
  "sa-core",
  "sa-hud",
  "sa-render",
@@ -2852,6 +2870,9 @@ dependencies = [
 [[package]]
 name = "sa-samp-api"
 version = "0.1.0"
+dependencies = [
+ "sa-types",
+]
 
 [[package]]
 name = "sa-script"
@@ -2891,6 +2912,10 @@ version = "0.1.0"
 dependencies = [
  "sa-core",
 ]
+
+[[package]]
+name = "sa-types"
+version = "0.1.0"
 
 [[package]]
 name = "sa-udp-proxy"

@@ -12,45 +12,28 @@ use crate::{NativeGame, View};
 
 impl<V: View> WorldState for NativeGame<V> {
     fn clock(&self) -> (u8, u8) {
-        (
-            self.view.read_u8(addr::CLOCK_HOURS),
-            self.view.read_u8(addr::CLOCK_MINUTES),
-        )
+        self.game.clock()
     }
 
     fn set_clock(&mut self, hour: u8, minute: u8) -> GameResult<()> {
         // samp's way: the clock bytes, then SET_TIME_OF_DAY (CClock::SetGameClock).
-        self.view.write(addr::CLOCK_HOURS, &[hour]);
-        self.view.write(addr::CLOCK_MINUTES, &[minute]);
-        self.run_op(op::SET_TIME_OF_DAY, &[I(i32::from(hour)), I(i32::from(minute))])
-            .map(drop)
+        self.game.set_clock(hour, minute)
     }
 
     fn weather(&self) -> (i16, i16, i16) {
-        let rd = |a| self.view.read_i16(a);
-        (
-            rd(addr::WEATHER_FORCED),
-            rd(addr::WEATHER_NEW),
-            rd(addr::WEATHER_OLD),
-        )
+        self.game.weather()
     }
 
     fn set_weather(&mut self, weather: u8) -> GameResult<()> {
-        let v = u32::from(weather).to_le_bytes();
-        for a in [addr::WEATHER_FORCED, addr::WEATHER_NEW, addr::WEATHER_OLD] {
-            self.view.write(a, &v);
-        }
-        Ok(())
+        self.game.set_weather(weather)
     }
 
     fn force_weather(&mut self, weather: u8) -> GameResult<()> {
-        self.view
-            .write(addr::WEATHER_FORCED, &u32::from(weather).to_le_bytes());
-        Ok(())
+        self.game.force_weather(weather)
     }
 
     fn gravity(&self) -> f32 {
-        self.view.read_f32(addr::GAME_GRAVITY)
+        self.game.gravity()
     }
 
     fn set_gravity(&mut self, g: f32) -> GameResult<()> {
@@ -69,7 +52,7 @@ impl<V: View> WorldState for NativeGame<V> {
     }
 
     fn area_raw(&self) -> i32 {
-        self.view.read_i32(addr::CURR_AREA)
+        self.game.area_raw()
     }
 
     fn set_area(&mut self, area: AreaCode) -> GameResult<()> {

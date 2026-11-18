@@ -8,62 +8,17 @@ use sa_samp_api::*;
 use sa_samp_api::script::ScriptArg::{Float as F, Int as I, Text as T};
 use sa_samp_api::streaming::Streaming;
 
-use crate::addr::{self, off};
+use crate::addr;
 use crate::script::op;
 use crate::{NativeGame, View};
 
-impl<V: View> NativeGame<V> {
-    /// The address of a live ped, or `InvalidHandle`.
-    pub(crate) fn ped_addr(&self, ped: PedRef) -> GameResult<u32> {
-        addr::PED_POOL
-            .at_ref(&self.view, ped.0)
-            .ok_or(GameError::InvalidHandle)
-    }
-
-    /// The handle of the ped at `p` (a pointer read from game state), if it is a live pool ped.
-    pub(crate) fn ped_ref(&self, p: u32) -> Option<PedRef> {
-        if p == 0 {
-            return None;
-        }
-        addr::PED_POOL.ref_of(&self.view, p).map(PedRef)
-    }
-
-    /// An entity's matrix: `m_matrix` when it has one, else the placement (position + heading about z).
-    pub(crate) fn entity_matrix(&self, e: u32) -> Matrix {
-        let m = self.view.read_u32(e + off::MATRIX);
-        if m != 0 {
-            return self.view.read_matrix(m);
-        }
-        let (s, c) = self.view.read_f32(e + off::PLACEMENT_HEADING).sin_cos();
-        Matrix {
-            right: Vec3::new(c, s, 0.0),
-            forward: Vec3::new(-s, c, 0.0),
-            up: Vec3::new(0.0, 0.0, 1.0),
-            pos: self.view.read_vec3(e + off::PLACEMENT_POS),
-        }
-    }
-
-    /// samp's "ped is live" test (samp.dll 0x1009F430, samp-rs `client::gta::ped_in_world`): the vtable is
-    /// not `CPlaceable`'s (a destroyed entity) and the ped is in the moving list.
-    fn ped_live(&self, p: u32) -> bool {
-        let vt = self.view.read_u32(p + off::VTABLE);
-        vt != 0 && vt != addr::VTBL_PLACEABLE && self.view.read_u32(p + off::MOVING_LIST) != 0
-    }
-}
-
 impl<V: View> Peds for NativeGame<V> {
     fn local_player(&self) -> Option<PedRef> {
-        self.ped_ref(self.view.read_u32(addr::PLAYERS))
+        self.game.local_player()
     }
 
     fn player_ped(&self, slot: PlayerSlot) -> Option<PedRef> {
-        if slot.0 >= addr::PLAYER_SLOTS {
-            return None;
-        }
-        self.ped_ref(
-            self.view
-                .read_u32(addr::PLAYERS + u32::from(slot.0) * addr::PLAYER_INFO_SIZE),
-        )
+        self.game.player_ped(slot.0)
     }
 
     fn player_in_focus(&self) -> PlayerSlot {
@@ -82,18 +37,11 @@ impl<V: View> Peds for NativeGame<V> {
     }
 
     fn ped_in_world(&self, ped: PedRef) -> bool {
-        self.ped_addr(ped).is_ok_and(|p| self.ped_live(p))
+        self.ped_addr(ped).is_ok_and(|p| self.game.ped_live(p))
     }
 
     fn is_ped_model(&self, model: ModelId) -> bool {
-        let Ok(m) = u32::try_from(model.0) else {
-            return false;
-        };
-        if m >= addr::MODEL_INFO_COUNT {
-            return false;
-        }
-        let info = self.view.read_u32(addr::MODEL_INFO_PTRS + 4 * m);
-        info != 0 && self.view.read_u32(info) == addr::VTBL_PED_MODEL_INFO
+        self.game.is_ped_model(model)
     }
 
     fn create_player_ped(&mut self, _slot: PlayerSlot, _model: ModelId, _pos: Vec3) -> GameResult<PedRef> {
@@ -135,51 +83,11 @@ impl<V: View> Peds for NativeGame<V> {
     }
 
     fn ped_snapshot(&self, ped: PedRef) -> GameResult<PedSnapshot> {
-        let p = self.ped_addr(ped)?;
-        let v = &self.view;
-        let flags = [v.read_u32(p + off::PED_FLAGS), v.read_u32(p + off::PED_FLAGS + 4)];
-        let weapon_slot = v.read_u8(p + off::PED_WEAPON_SLOT);
-        let weapon = if weapon_slot < 13 {
-            v.read_u32(p + off::PED_WEAPONS + u32::from(weapon_slot) * off::WEAPON_SIZE) as u8
-        } else {
-            0
-        };
-        let vehicle = if flags[0] & off::PED_IN_VEHICLE != 0 {
-            self.vehicle_ref(v.read_u32(p + off::PED_VEHICLE))
-        } else {
-            None
-        };
-        Ok(PedSnapshot {
-            matrix: self.entity_matrix(p),
-            move_speed: v.read_vec3(p + off::MOVE_SPEED),
-            health: v.read_f32(p + off::PED_HEALTH),
-            armour: v.read_f32(p + off::PED_ARMOUR),
-            heading: v.read_f32(p + off::PED_HEADING),
-            heading_goal: v.read_f32(p + off::PED_HEADING_GOAL),
-            ped_state: v.read_u32(p + off::PED_STATE),
-            model: ModelId(i32::from(v.read_i16(p + off::MODEL))),
-            weapon_slot,
-            weapon: WeaponType(weapon),
-            vehicle,
-            area: AreaCode(v.read_u8(p + off::AREA)),
-            flags,
-            in_world: self.ped_live(p),
-        })
+        self.game.ped_snapshot(ped)
     }
 
     fn ped_weapons(&self, ped: PedRef) -> GameResult<[WeaponSlot; 13]> {
-        let p = self.ped_addr(ped)?;
-        let mut out = [WeaponSlot::default(); 13];
-        for (i, w) in out.iter_mut().enumerate() {
-            let a = p + off::PED_WEAPONS + i as u32 * off::WEAPON_SIZE;
-            *w = WeaponSlot {
-                weapon: self.view.read_u32(a) as u8,
-                state: self.view.read_u32(a + 4),
-                ammo_in_clip: self.view.read_u32(a + 8),
-                ammo_total: self.view.read_u32(a + 0xC),
-            };
-        }
-        Ok(out)
+        self.game.ped_weapons(ped)
     }
 
     fn bone_position(&self, _ped: PedRef, _bone: BoneId, _transformed: bool) -> GameResult<Vec3> {
@@ -199,30 +107,19 @@ impl<V: View> Peds for NativeGame<V> {
     }
 
     fn player_money(&self) -> i32 {
-        self.view.read_i32(addr::PLAYER_MONEY)
+        self.game.player_money()
     }
 
     fn wanted_level(&self) -> GameResult<u8> {
-        let ped = self.view.read_u32(addr::PLAYERS);
-        if self.ped_ref(ped).is_none() {
-            return Err(GameError::InvalidHandle);
-        }
-        let data = self.view.read_u32(ped + off::PED_PLAYER_DATA);
-        let wanted = if data == 0 { 0 } else { self.view.read_u32(data + off::PLAYER_DATA_WANTED) };
-        if wanted == 0 {
-            return Err(GameError::InvalidHandle);
-        }
-        Ok(self.view.read_u32(wanted + off::WANTED_LEVEL).min(u32::from(u8::MAX)) as u8)
+        self.game.wanted_level()
     }
 
     fn peds(&self) -> Vec<PedRef> {
-        addr::PED_POOL.refs(&self.view).into_iter().map(PedRef).collect()
+        self.game.peds()
     }
 
     fn set_ped_position(&mut self, ped: PedRef, pos: Vec3) -> GameResult<()> {
-        let h = self.ped_script_handle(ped)?.0;
-        self.run_op(op::SET_CHAR_COORDINATES, &[I(h), F(pos.x), F(pos.y), F(pos.z)])
-            .map(drop)
+        self.game.set_ped_position(ped, pos)
     }
 
     fn set_ped_matrix(&mut self, _ped: PedRef, _m: &Matrix) -> GameResult<()> {
@@ -236,49 +133,22 @@ impl<V: View> Peds for NativeGame<V> {
     fn set_ped_heading(&mut self, ped: PedRef, heading: f32, raw: bool) -> GameResult<()> {
         if raw {
             // The raw current/goal heading fields in radians (samp's remote-player writes).
-            let p = self.ped_addr(ped)?;
-            self.view.write(p + off::PED_HEADING, &heading.to_le_bytes());
-            self.view.write(p + off::PED_HEADING_GOAL, &heading.to_le_bytes());
-            return Ok(());
+            return self.game.set_ped_heading_raw(ped, heading);
         }
-        let h = self.ped_script_handle(ped)?.0;
-        self.run_op(op::SET_CHAR_HEADING, &[I(h), F(heading)]).map(drop)
+        self.game.set_ped_heading(ped, heading)
     }
 
     fn set_ped_health(&mut self, ped: PedRef, health: f32) -> GameResult<()> {
-        let p = self.ped_addr(ped)?;
-        self.view.write(p + off::PED_HEALTH, &health.to_le_bytes());
-        Ok(())
+        self.game.set_ped_health(ped, health)
     }
 
     fn set_ped_armour(&mut self, ped: PedRef, armour: f32) -> GameResult<()> {
-        let p = self.ped_addr(ped)?;
-        self.view.write(p + off::PED_ARMOUR, &armour.to_le_bytes());
-        Ok(())
+        self.game.set_ped_armour(ped, armour)
     }
 
     fn give_weapon(&mut self, ped: PedRef, weapon: WeaponType, ammo: u32) -> GameResult<()> {
-        // samp (samp.dll 0x100AF7D0, samp-rs `client::ped::give_weapon`): the weapon's model loaded first (its
-        // `CWeaponInfo::m_nModelId1`, standard skill), so the ped holds it and the HUD has its icon; then the gift.
-        let h = self.ped_script_handle(ped)?.0;
-        let model = if weapon.0 < addr::WEAPON_INFO_STD_COUNT {
-            self.view
-                .read_i32(addr::WEAPON_INFO + u32::from(weapon.0) * addr::WEAPON_INFO_SIZE + 0xC)
-        } else {
-            -1
-        };
-        if model > 0 && !self.model_loaded(ModelId(model)) {
-            self.request_model(ModelId(model))?;
-            self.load_all_now()?;
-            if !self.model_loaded(ModelId(model)) {
-                return Err(GameError::NotLoaded);
-            }
-        }
-        self.run_op(
-            op::GIVE_WEAPON_TO_CHAR,
-            &[I(h), I(i32::from(weapon.0)), I(ammo as i32)],
-        )
-        .map(drop)
+        // samp (samp.dll 0x100AF7D0, samp-rs `client::ped::give_weapon`): the weapon's model loaded first.
+        self.game.give_weapon(ped, weapon, ammo)
     }
 
     fn set_current_weapon(&mut self, ped: PedRef, weapon: WeaponType) -> GameResult<()> {
@@ -333,10 +203,8 @@ impl<V: View> Peds for NativeGame<V> {
     }
 
     fn set_player_money(&mut self, money: i32) -> GameResult<()> {
-        // `CPlayerInfo::m_nMoney` and the HUD's `m_nDisplayMoney` (+4), as samp's money reset leaves them.
-        self.view.write(addr::PLAYER_MONEY, &money.to_le_bytes());
-        self.view.write(addr::PLAYER_MONEY + 4, &money.to_le_bytes());
-        Ok(())
+        // as samp's money reset leaves them
+        self.game.set_player_money(money)
     }
 
     fn set_player_control(&mut self, enabled: bool) -> GameResult<()> {

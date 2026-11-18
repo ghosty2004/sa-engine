@@ -1,28 +1,26 @@
-//! Errors returned by adapter calls.
+//! Errors of calls into the game.
 
 use core::fmt;
 
-/// Why an adapter call did not do what was asked.
+/// Why a call into the game did not do what was asked.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum GameError {
     /// The handle does not name a live entity (deleted, wrong generation, or never created).
     InvalidHandle,
     /// The model, collision, animation block or texture dictionary is not loaded yet.
     NotLoaded,
-    /// The pool is full (a samp limit from [`crate::config::Limits`] was reached).
+    /// The pool is full.
     PoolFull,
-    /// The call is not allowed in the current phase (for example entity creation from a mid-frame hook, or
-    /// a frame call before [`crate::SampHost::install`]).
+    /// The call is not allowed in the current phase (for example entity creation from a mid-frame hook).
     WrongPhase,
-    /// Game memory the call needed could not be read (null or freed pointer; original/phase A backends).
+    /// Game memory the call needed could not be read (null or freed pointer).
     Unreadable {
         /// Address that could not be read.
         address: u32,
     },
     /// This backend does not implement the call (yet). The string names the method.
     Unsupported(&'static str),
-    /// The original code faulted inside the call (original/phase A backends; samp's SEH guard). `code` is
-    /// the exception code, `address` where it happened.
+    /// Code faulted inside the call. `code` is the exception code, `address` where it happened.
     Fault {
         /// Exception code (for example 0xC0000005).
         code: u32,
@@ -56,5 +54,5 @@ impl fmt::Display for GameError {
 
 impl std::error::Error for GameError {}
 
-/// Result of an adapter call.
+/// Result of a call into the game.
 pub type GameResult<T> = Result<T, GameError>;

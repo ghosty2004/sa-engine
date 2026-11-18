@@ -8,41 +8,6 @@ use sa_samp_api::*;
 use crate::addr;
 use crate::{NativeGame, View};
 
-/// The `int16` of `CKeyboardState` (`CPad::NewKeyState`) that holds the key with Windows virtual-key code `vk`:
-/// `FKeys[12]`, `standardKeys[256]` (indexed by the upper-case character), then the named keys from `esc`.
-fn key_state_index(vk: u16) -> Option<u32> {
-    const NAMED: u32 = 12 + 256;
-    let vk32 = u32::from(vk);
-    Some(match vk {
-        0x70..=0x7B => vk32 - 0x70,
-        0x20 | 0x30..=0x39 | 0x41..=0x5A => 12 + vk32,
-        0x1B => NAMED,
-        0x2D => NAMED + 1,
-        0x2E => NAMED + 2,
-        0x24 => NAMED + 3,
-        0x23 => NAMED + 4,
-        0x21 => NAMED + 5,
-        0x22 => NAMED + 6,
-        0x26 => NAMED + 7,
-        0x28 => NAMED + 8,
-        0x25 => NAMED + 9,
-        0x27 => NAMED + 10,
-        0x0D => NAMED + 18,
-        0x61..=0x69 => NAMED + 20 + (vk32 - 0x61),
-        0x60 => NAMED + 29,
-        0x08 => NAMED + 30,
-        0x09 => NAMED + 31,
-        0x10 => NAMED + 36,
-        0xA0 => NAMED + 34,
-        0xA1 => NAMED + 35,
-        0xA2 => NAMED + 37,
-        0xA3 => NAMED + 38,
-        0xA4 => NAMED + 39,
-        0xA5 => NAMED + 40,
-        _ => return None,
-    })
-}
-
 impl<V: View> Input for NativeGame<V> {
     fn pad(&self) -> (PadState, PadState) {
         (
@@ -60,8 +25,7 @@ impl<V: View> Input for NativeGame<V> {
     }
 
     fn key_held(&self, vk: u16) -> bool {
-        // the keyboard state the game itself reads this frame, not the OS's
-        key_state_index(vk).is_some_and(|i| self.view.read_i16(addr::NEW_KEY_STATE + 2 * i) != 0)
+        self.game.key_held(vk)
     }
 
     fn mouse(&self) -> MouseState {

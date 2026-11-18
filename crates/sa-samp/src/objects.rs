@@ -3,21 +3,12 @@
 //! native engine yet (docs/samp/native-plan.md lists the order).
 
 use sa_samp_api::objects::*;
-use sa_samp_api::script::ScriptArg::{Float as F, Int as I, Local as L};
+use sa_samp_api::script::ScriptArg::{Float as F, Int as I};
 use sa_samp_api::*;
 
 use crate::addr::{self, off};
 use crate::script::op;
 use crate::{NativeGame, View};
-
-impl<V: View> NativeGame<V> {
-    /// The address of a live object, or `InvalidHandle`.
-    pub(crate) fn object_addr(&self, o: ObjectRef) -> GameResult<u32> {
-        addr::OBJECT_POOL
-            .at_ref(&self.view, o.0)
-            .ok_or(GameError::InvalidHandle)
-    }
-}
 
 impl<V: View> Objects for NativeGame<V> {
     fn object_script_handle(&self, o: ObjectRef) -> GameResult<ScriptHandle> {
@@ -52,17 +43,11 @@ impl<V: View> Objects for NativeGame<V> {
     }
 
     fn create_object(&mut self, model: ModelId, pos: Vec3) -> GameResult<ObjectRef> {
-        let h = self.run_op_out(
-            op::CREATE_OBJECT,
-            &[I(model.0), F(pos.x), F(pos.y), F(pos.z), L(0)],
-        )?;
-        self.object_from_script_handle(ScriptHandle(h as i32))
-            .ok_or(GameError::NotLoaded)
+        self.game.create_object(model, pos)
     }
 
     fn destroy_object(&mut self, o: ObjectRef, _fade: bool) -> GameResult<()> {
-        let h = self.object_script_handle(o)?.0;
-        self.run_op(op::DELETE_OBJECT, &[I(h)]).map(drop)
+        self.game.destroy_object(o)
     }
 
     fn set_object_transform(&mut self, o: ObjectRef, pos: Vec3, rot_deg: Vec3) -> GameResult<()> {

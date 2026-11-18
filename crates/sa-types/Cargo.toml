@@ -1,0 +1,13 @@
+[package]
+name = "sa-types"
+version = "0.1.0"
+description = "Plain value types of the game's state: vectors, matrices, entity handles, model and weapon ids, the game state machine, ped / vehicle / camera records, script command arguments, errors. No dependencies, no unsafe; builds for every target"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+
+[lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"

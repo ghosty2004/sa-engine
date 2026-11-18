@@ -1,6 +1,6 @@
-//! Memory access of the backend: the engine's memory ([`EngineView`]) or a fake in tests.
+//! Memory access: the engine's memory ([`EngineView`]) or a fake in tests.
 
-use sa_samp_api::{Matrix, Vec3};
+use sa_types::{Matrix, Vec3};
 
 use crate::addr;
 
@@ -63,6 +63,16 @@ pub trait View {
     }
 }
 
+impl<T: View + ?Sized> View for Box<T> {
+    fn read(&self, addr: u32, buf: &mut [u8]) {
+        (**self).read(addr, buf);
+    }
+
+    fn write(&mut self, addr: u32, data: &[u8]) {
+        (**self).write(addr, data);
+    }
+}
+
 /// The engine's memory in this process: globals in the legacy address arena, objects in the engine's pools
 /// (32-bit targets: native sa-game on i686, wasm32 with the layouts in linear memory).
 #[derive(Clone, Copy, Debug, Default)]
@@ -71,15 +81,15 @@ pub struct EngineView;
 impl View for EngineView {
     fn read(&self, addr: u32, buf: &mut [u8]) {
         // Callers never pass 0 (null objects are filtered before any field read); a wild address here would
-        // be a backend bug, as it would be in the port that owns the state.
-        debug_assert_ne!(addr, 0, "sa-samp read at address 0");
+        // be a bug here, as it would be in the port that owns the state.
+        debug_assert_ne!(addr, 0, "sa-access read at address 0");
         for (i, b) in buf.iter_mut().enumerate() {
             *b = sa_core::mem::GPtr::<u8>::from_addr(addr.wrapping_add(i as u32) as usize).read();
         }
     }
 
     fn write(&mut self, addr: u32, data: &[u8]) {
-        debug_assert_ne!(addr, 0, "sa-samp write at address 0");
+        debug_assert_ne!(addr, 0, "sa-access write at address 0");
         for (i, b) in data.iter().enumerate() {
             sa_core::mem::GPtr::<u8>::from_addr(addr.wrapping_add(i as u32) as usize).write(*b);
         }

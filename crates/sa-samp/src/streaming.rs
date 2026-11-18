@@ -2,7 +2,7 @@
 //! Methods that return `Unsupported` (or a neutral value, for reads that cannot fail) are not served by the
 //! native engine yet (docs/samp/native-plan.md lists the order).
 
-use sa_samp_api::script::ScriptArg::{Float as F, Int as I, Text as T};
+use sa_samp_api::script::ScriptArg::{Float as F, Text as T};
 use sa_samp_api::streaming::*;
 use sa_samp_api::*;
 
@@ -36,25 +36,19 @@ impl<V: View> Streaming for NativeGame<V> {
     }
 
     fn request_model(&mut self, model: ModelId) -> GameResult<()> {
-        self.run_op(op::REQUEST_MODEL, &[I(model.0)]).map(drop)
+        self.game.request_model(model)
     }
 
     fn model_loaded(&self, model: ModelId) -> bool {
-        // `CStreaming::ms_aInfoForModel[model].m_nLoadState == LOADSTATE_LOADED`.
-        (0..addr::STREAMING_MODELS as i32).contains(&model.0)
-            && self
-                .view
-                .read_u8(addr::STREAMING_INFO + model.0 as u32 * addr::STREAMING_INFO_SIZE + 0x10)
-                == 1
+        self.game.model_loaded(model)
     }
 
     fn release_model(&mut self, model: ModelId) -> GameResult<()> {
-        self.run_op(op::MARK_MODEL_AS_NO_LONGER_NEEDED, &[I(model.0)])
-            .map(drop)
+        self.game.release_model(model)
     }
 
     fn load_all_now(&mut self) -> GameResult<()> {
-        self.run_op(op::LOAD_ALL_MODELS_NOW, &[]).map(drop)
+        self.game.load_all_now()
     }
 
     fn request_collision(&mut self, at: Vec3) -> GameResult<()> {

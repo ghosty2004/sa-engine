@@ -43,7 +43,6 @@
 pub mod audio;
 pub mod camera;
 pub mod config;
-pub mod error;
 pub mod files;
 pub mod hooks;
 pub mod hud;
@@ -58,7 +57,8 @@ pub mod ui;
 pub mod vehicles;
 pub mod world;
 
-pub use error::{GameError, GameResult};
+pub use sa_types::error;
+pub use sa_types::{GameError, GameResult};
 pub use types::*;
 
 /// Version of this interface. Bumped on every incompatible change; samp-rs checks it at start-up.

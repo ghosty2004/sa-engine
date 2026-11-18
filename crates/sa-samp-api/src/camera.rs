@@ -1,30 +1,9 @@
 //! Camera. samp-rs today: `behaviourclient/camera.rs`, `camtarget.rs`, `client/*.rs`, `swap.rs`,
 //! `combathooks.rs`, `ui/render/world.rs`. Mapping: `docs/samp/game-adapter.md` §4.5.
 
-use crate::{GameResult, Matrix, PedRef, Point2, Vec3, VehicleRef};
+use crate::{GameResult, PedRef, Point2, Vec3, VehicleRef};
 
-/// What the camera looks like this frame (`TheCamera` 0xB6F028).
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
-pub struct CameraState {
-    /// Camera matrix (`TheCamera.m_mCameraMatrix`, position at 0xB6F9CC).
-    pub matrix: Matrix,
-    /// Active cam's front vector (`Cams[0].Front` 0xB6F32C).
-    pub front: Vec3,
-    /// Active cam's source (`Cams[0].Source` 0xB6F338, also samp's line-of-sight origin).
-    pub source: Vec3,
-    /// Active cam mode (`Cams[0].Mode` 0xB6F1A8).
-    pub mode: u16,
-    /// Field of view in degrees (`Cams[0].FOV` 0xB6F250).
-    pub fov: f32,
-    /// Looking left / right flags (0xB6F1A4 / 0xB6F1A5).
-    pub looking_left: bool,
-    /// Looking right.
-    pub looking_right: bool,
-    /// Aspect ratio (`CDraw::ms_fAspectRatio` 0xC3EFA4).
-    pub aspect_ratio: f32,
-    /// Player weapon mode (0xB6F858).
-    pub weapon_mode: u16,
-}
+pub use sa_types::camera::CameraState;
 
 /// Interpolation mode for scripted camera moves (`CAMERA_SET_VECTOR_MOVE` 0936, `..._TRACK` 0920).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

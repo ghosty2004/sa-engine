@@ -7,13 +7,14 @@ The order is the one the code has (measured 2026-11-14): `sa-pop` sits below `sa
 
 LAYERS = [
     # leaves: no engine dependency
-    ['sa-macros', 'sa-math', 'sa-platform', 'sa-oracle-format', 'sa-samp-api', 'sa-net',
+    ['sa-macros', 'sa-math', 'sa-platform', 'sa-oracle-format', 'sa-types', 'sa-net',
      'sa-launcher', 'sa-udp-proxy'],
-    # the mod API's interface definition, in the game adapter's types
-    ['sa-mod-api'],
+    # interfaces in the game's value types: the mod API's definition, the SA:MP game adapter's traits
+    ['sa-mod-api', 'sa-samp-api'],
     # sa-mod: the mod SDK (MOD-2), linked by mods, not by the game
     ['sa-core', 'sa-mod'],
-    ['sa-rwcore', 'sa-stream', 'sa-input', 'sa-anim', 'sa-testkit'],
+    # sa-access: the game's state read and changed from outside the ports (mod host, SA:MP adapter)
+    ['sa-rwcore', 'sa-stream', 'sa-input', 'sa-anim', 'sa-testkit', 'sa-access'],
     ['sa-world'],
     ['sa-pop'],
     ['sa-ped', 'sa-veh', 'sa-cam', 'sa-ai', 'sa-weapon', 'sa-render'],
