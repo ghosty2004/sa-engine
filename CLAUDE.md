@@ -20,8 +20,13 @@ also build for WebAssembly, and it hosts the Rust SA:MP client samp-rs, which li
 ## Rules
 - **SA:MP client (changed 2026-11-12, user):** the SA:MP client samp-rs now lives in this repository, in `samp-rs/` (its own Cargo workspace, imported as a plain copy of `sa-engine/adapter` at fb89010, game screenshots left out). All SA:MP work happens here; the separate `~/samp-rs` repository (public) is no longer worked on from this project.
 - **Code architecture (user, 2026-11-14):** `docs/arch/ADR-003-code-architecture.md`: no duplicated code anywhere, abstraction wherever it applies (one implementation behind a trait with per-platform backends), one definition per original function / global / helper in its owning crate, platform `cfg`s only in backends. Patterns go around the ports, never into their bodies (1:1 parity).
-- Never commit or ship Rockstar files (exe, assets). They are read from the user's install. `catalog/`
-  holds only addresses and names.
+- Never commit or ship Rockstar files (the exe itself, `.img` / `.dat` / `.scm` / audio and every other asset). They
+  are read from the user's install. `catalog/` holds only addresses and names. **One exception (user, 2026-11-18,
+  ADR-005 §6):** the data tables `tools/gen/image_rs.py` generates from the exe's data sections into the `sa-image`
+  crate (`crates/sa-image/image.bin`, `src/generated.rs`: the initial bytes of `.rdata` / `.data` / `_TEXT_HA` /
+  `_rwdseg` / `.rsrc`, the import table, the import call sites) are committed and compiled into sa-game, as are the
+  few code-byte constants the ports carry in place of switch byte tables and no-CD protection reads. No other
+  exe-derived data, no exe file and no other code bytes. The repository must stay private while it holds them.
 - Commits are made by the main session only: plain English messages, no attribution trailers, push only when
   the user asks.
 - **Commit messages (user, 2026-11-15): Conventional Commits.** `<type>(<scope>): <summary>`, the whole first line

@@ -1,6 +1,6 @@
 # ADR-005: the pure build (sa-game without gta_sa.exe)
 
-Status: **proposed** (2026-11-18). ROADMAP task: PURE-1. Related: ADR-001 (globals, `orig!`, `#[hook]`), ADR-003 §2.1
+Status: **accepted** (2026-11-18, user; proposed the same day). ROADMAP task: PURE-1. Related: ADR-001 (globals, `orig!`, `#[hook]`), ADR-003 §2.1
 (build flavours, pointer compression), ADR-004 (mods; `sa-access` / `sa-types` own the outside access to game state),
 STD-3 (64-bit), PLAN F10 / F11, `docs/arch/platform.md` §6 and §8. The measurements behind every number here are in
 `docs/arch/pure-build-census.md` (tools in `tools/pure/`).
