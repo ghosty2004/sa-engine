@@ -2,7 +2,7 @@
 # FRONTIER-1 scenarios: native sa-game runs (deterministic, --fixed-step 40, offscreen) that reach the blockers the
 # user hit. Each must end with an empty blocker list in OUT/report.md and no crash.
 #
-#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra|hunter|nitro|postfx OUTDIR [FRAMES]
+#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra|hunter|nitro|postfx|shotgun|flamer|driveby|camera OUTDIR [FRAMES]
 #
 # pausemenu (400)  Esc, down x3, Enter (pause-menu item 4: Stats), down, Enter, Enter: the Stats pages draw
 #                  (was a SIGSEGV at iteration ~171: CStats::GetStatValue's X87 result dispatched as cdecl)
@@ -91,6 +91,15 @@
 #                  0x7037C0 every frame (FRONTIER-2 turn 11 lane C)
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-a5-counts.gdb --args" counts the road block / gang war / jet pack
 # calls.
+# shotgun  (1200)  the shootdriver run with three `e` presses (the sawn-off shotgun of KJKSZPJ): the pellet hits on the
+#                  car (CWeapon::SetUpPelletCol 0x73C710, FRONTIER-2 turn 14 lane A)
+# flamer   (1200)  on foot at Grove Street, KJKSZPJ and seven `e` presses (the flamethrower), aimed and fired along the
+#                  street: CWeapon::FireAreaEffect 0x73E800 (the creeping fires of the flamethrower)
+# driveby  (1200)  the crossing run's Greenwood: KJKSZPJ typed in the car (the Tec-9 for drive-bys), then `q` held (look
+#                  left) with the fire button: the driver's drive-by, CWeapon::DoDriveByAutoAiming 0x73D720
+# camera   (1200)  on foot at Grove Street, KJKSZPJ, the special slot's extinguisher poked into the camera (type 43,
+#                  [0xB7CD98]+0x6B4), nine `e` presses, aimed (camera mode 46) and fired: CWeapon::TakePhotograph
+#                  0x73C1F0 and CPickups::PictureTaken 0x456A70
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-counts.gdb --args" counts the FRONTIER-2 ports' calls
 # (frontier2-3-counts.gdb: those of part 2).
 # Env: SA_ROOT (checkout holding wine/gta-sa; default ~/sa-engine), SA_GAME (binary; default this checkout's
@@ -266,7 +275,30 @@ monster)
     keys=; i=150; for k in a g b d l c i d; do keys="$keys${keys:+,}$k:$i:$((i + 2))"; i=$((i + 6)); done
     export SA_GAME_KEYS="$keys,f:260:263,w:400:1150,a:600:660,d:800:860"
     run "${3:-1200}" --start-in-world ;;
+shotgun|flamer|camera)
+    # on foot at Grove Street: the weapon cheat KJKSZPJ, then `e` presses to the slot (3 the sawn-off, 7 the
+    # flamethrower, 9 the special slot), aiming (right button) and firing (left button); the shotgun is fired at the
+    # nearest car with a driver (SA_GAME_JACK, as shootdriver)
+    export SA_GAME_SCRIPT_SKIP=1
+    keys=; i=150; for c in k j k s z p j; do keys="$keys${keys:+,}$c:$i:$((i + 2))"; i=$((i + 6)); done
+    case $NAME in shotgun) ne=3 ;; flamer) ne=7 ;; *) ne=9 ;; esac
+    i=240; k=0; while [ $k -lt $ne ]; do keys="$keys,e:$i:$((i + 2))"; i=$((i + 16)); k=$((k + 1)); done
+    export SA_GAME_KEYS="$keys"
+    if [ "$NAME" = shotgun ]; then
+        export SA_GAME_JACK="${SA_GAME_JACK:-420:7}" SA_GAME_MOUSE="${SA_GAME_MOUSE:--3:-4:445:465}"
+    fi
+    if [ "$NAME" = camera ]; then export SA_GAME_POKE="${SA_GAME_POKE:-230:[0xB7CD98]+0x6B4:43;230:[0xB7CD98]+0x6C0:50}"; fi
+    export SA_GAME_RMB="${SA_GAME_RMB:-440:1150}" SA_GAME_LMB="${SA_GAME_LMB:-470:1150}"
+    run "${3:-1200}" --start-in-world ;;
+driveby)
+    # the crossing scenario's Greenwood: `f` gets CJ in, KJKSZPJ is typed in the car, then `q` (look left) with the
+    # fire button, later `e` (look right)
+    export SA_GAME_TELEPORT="60:2505.0:-1666.4:13.4"
+    keys="f:100:103"; i=200; for c in k j k s z p j; do keys="$keys,$c:$i:$((i + 2))"; i=$((i + 6)); done
+    export SA_GAME_KEYS="$keys,q:300:700,e:800:1100"
+    export SA_GAME_LMB="${SA_GAME_LMB:-320:700,820:1100}"
+    run "${3:-1200}" --start-in-world ;;
 *)
-    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra|hunter|nitro|postfx OUTDIR [FRAMES]" >&2
+    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra|hunter|nitro|postfx|shotgun|flamer|driveby|camera OUTDIR [FRAMES]" >&2
     exit 2 ;;
 esac
