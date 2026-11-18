@@ -285,6 +285,29 @@ API 1.4 (reference `docs/mods/api.md`). Decisions:
   open.mp server natively and from the browser; then `crates/sa-samp`, `sa-game`'s `samp` feature and its SA:MP glue
   leave the engine.
 
+### 4.1d Level 5 (M5, 2026-11-18): SA:MP as a mod, the engine without SA:MP
+
+API 1.5 (reference `docs/mods/api.md` level 5). Decisions:
+
+- **The engine has no SA:MP code.** `crates/sa-samp`, sa-game's `samp` feature and its glue, sa-core's samp frame
+  points left; `sa-samp-api` (the adapter traits samp-rs's client is written against) lives in `samp-rs/crates`,
+  implemented by the DLL's original-exe backend and by the samp mod. samp mode's flags became `sa_core::options`:
+  switches of the game's own features (all on by default), exposed as `set_game_option`; the ports test them where
+  they tested the flags.
+- **What SA:MP needed became generic API**: the player's pad, entity transforms, the pause menu, player models,
+  the HUD, big messages, game options, text script arguments and the commands for tasks / animations / warps /
+  streaming, input capture (events before the game, keyboard / mouse / cursor taken), several mods on the command
+  line.
+- **Servers are the user's choice, approved by the host** (user, 2026-11-18): a manifest asks for
+  `net = ["udp:user-approved"]`; the first `net_open` to a target the user has not answered for shows the host's own
+  prompt (drawn over the mods' overlay, keys taken until the answer) and returns AGAIN; the answer is kept per mod
+  id in the host's storage area (`sa-engine-host`, natively a folder, in the browser IndexedDB) and asked once. Any
+  network mod can use it; explicit `udp:HOST:PORT` rules keep working.
+- **The samp mod** shows a connect screen (server, nickname, favourites in its storage), then runs
+  `samp_client::hosted` (the engine client moved out of sa-game, plus remote players) on its game adapter over the
+  mod API; the adapter answers `Unsupported` for what the API does not offer, as any backend lacking a feature.
+- Multiplayer starts with `--mods target/mods/resolution,target/mods/samp` (single player without the samp mod).
+
 ### 4.2 Data mods (added by the user, 2026-11-17)
 
 Code mods (levels 1–4) cannot add content on their own: a new vehicle, ped, weapon or building needs files (models,

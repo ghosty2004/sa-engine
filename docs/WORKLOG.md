@@ -4650,3 +4650,33 @@
 - Cost: ~3 h; builds i686 sa-game, wasm, sa-oracle, the hook DLL; 63 scenario runs (7-120 s), 2 web runs.
 - Remains: PURE-1f (third-party paths), PURE-2 (ownership / trimming of the image; typed declarations go to the
   owners then), the default image source (exe when present) could become builtin everywhere once the user agrees.
+## 2026-11-18 — MOD-2 M5 (part 1): API 1.5, SA:MP joins as a mod natively, the engine's SA:MP host removed (agent, worktree)
+- API 1.5 (ADR-004 §4.1d, docs/mods/api.md level 5), generic: `menu_active`, `pad_state`, `ped_matrix`,
+  `vehicle_matrix`; `set_ped_model` (player peds), `set_hud_visible`, `big_message`, `set_game_option` over
+  `sa_core::options` (the game's own feature switches, all on by default; they replace sa_core::samp's samp-mode flags
+  at the same port sites; the host turns a disabled mod's options back on); text script arguments (`s`) and 24 more
+  whitelisted commands; `input = "capture"` (`sa_input` export, `input_capture`), wired into sa-game's input path
+  natively and on the web; `net = ["udp:user-approved"]` (user decision 2026-11-18: the host asks in game, Y/N, once per
+  mod and server, answers kept in its storage area `sa-engine-host`; `net_open` returns AGAIN meanwhile); `--mods
+  DIR,DIR` in load order. Engine side in sa-access (`control.rs`: pad, menu, HUD, big message, player model, options).
+- samp-rs: sa-game's engine client moved to `samp_client::hosted` (git mv; host-independent: the host passes the
+  session, a log sink and the clock; remote players streamed in as peds placed by their on-foot sync);
+  `sa-samp-api` moved to `samp-rs/crates/` (its users: samp-client, the samp mod).
+- `mods/samp` (samp.wasm ~0.6 MB): the GameAdapter over the mod API (`game.rs`, `Unsupported` where the API has
+  nothing), a connect screen (server, nickname, favourites in storage; Tab / Up / Down / Insert / Delete / Enter), the
+  approval wait, then the hosted client; samp's disabled features through `set_game_option`; headless settings
+  `auto_connect` / `auto_spawn`.
+- Native join (i686 release `--features mods`, offscreen, our open.mp 1.6.7 copy, `tools/e2e/samp/mod-join.sh`):
+  connected, InitGame, class selection, spawn; the server's msg / game text / health 60 / armour 40 / money 5000 /
+  Desert Eagle / time / weather / position applied; NPC "Bot" (skin 105) streamed in and drawn beside the player;
+  vehicle 560 streamed in; 284 syncs sent (target/m5/join2: sa-game.log, server-events.txt, present/present-0024.png).
+  `UX=1` (target/m5/join-ux): the connect screen, Enter, the host's prompt (present-0005.png), Y: "the user allowed
+  mod samp to reach 127.0.0.1:7813", `sa-engine-host/net.samp` = `allow 127.0.0.1:7813`, joined and spawned.
+- Removed: crates/sa-samp (native backend and its CSprite2d/Im2D UI overlay), sa-game's `samp` feature, `--samp*`
+  options, samp_input / samp_assets / samp_saa / samp_ui_demo / samp_ui_scene, sa-core's samp frame points, the page's
+  `?samp=`, tools/web/samp-demo.sh, tools/e2e/samp/native-join.sh / native-handshake.sh; layers.py, Makefile
+  (`build-mods`, `run-samp` = the mod, `web-mods`), README, GETTING-STARTED, docs/samp/README.md (how to run SA:MP now).
+- Left: samp-rs's UI through the overlay (textured overlay quads and the font atlas over the mod API; the engine UI
+  backend's code is at 72ea67c0), the browser join (the auth table into the page's IndexedDB storage; tools/web/serve.py
+  still has its --samp-dir / --samp-auth options), the samp-rs e2e suite on the mod host, intermediate commit c202a426
+  does not build sa-samp (removed in the next commit).
