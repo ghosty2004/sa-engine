@@ -2,7 +2,7 @@
 # FRONTIER-1 scenarios: native sa-game runs (deterministic, --fixed-step 40, offscreen) that reach the blockers the
 # user hit. Each must end with an empty blocker list in OUT/report.md and no crash.
 #
-#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra|hunter|nitro|postfx|shotgun|flamer|driveby|camera|escalator|replay OUTDIR [FRAMES]
+#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hunter|nitro|postfx|shotgun|flamer|driveby|escalator|replay OUTDIR [FRAMES]
 #
 # pausemenu (400)  Esc, down x3, Enter (pause-menu item 4: Stats), down, Enter, Enter: the Stats pages draw
 #                  (was a SIGSEGV at iteration ~171: CStats::GetStatValue's X87 result dispatched as cdecl)
@@ -316,6 +316,6 @@ replay)
     export SA_GAME_KEYS="f:100:103,w:330:700,a:500:540,w:760:850,d:780:820,f1:900:903"
     run "${3:-1400}" --start-in-world ;;
 *)
-    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra|hunter|nitro|postfx|shotgun|flamer|driveby|camera|escalator|replay OUTDIR [FRAMES]" >&2
+    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hunter|nitro|postfx|shotgun|flamer|driveby|escalator|replay OUTDIR [FRAMES]" >&2
     exit 2 ;;
 esac
