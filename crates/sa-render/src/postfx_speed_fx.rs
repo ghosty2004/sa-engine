@@ -1,6 +1,5 @@
-//! STD-15 (batch `std15-render-1`): `CPostEffects::SpeedFX(float speed)` (0x7030A0, unreversed in gta-reversed) and
-//! `CPostEffects::DrawQuad` (0x700EC0), reached every frame the player drives. Ported from the 1.0 US bytes; the two
-//! `rand()` calls run at their original call sites. Unverified (docs/verify/HOWTO.md).
+//! `CPostEffects::SpeedFX(float speed)` (0x7030A0, unreversed in gta-reversed) and `CPostEffects::DrawQuad`
+//! (0x700EC0), reached every frame the player drives fast. The two `rand()` calls run at their original call sites.
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
@@ -63,13 +62,11 @@ pub fn draw_quad(px: f32, py: f32, w: f32, h: f32, r: u32, g: u32, b: u32, a: u3
 /// 0xB6F1C4 + 0x238 * the active index 0xB6F081) 1 or 2 halves the jitter and zeroes the shake. The speed picks the
 /// highest of the seven (speed, passes, jitter, shake) rows at 0x8D5190 whose speed it reaches; without passes it
 /// returns. Otherwise it stores and sets the immediate-mode render states; a shake (> 0) scales two `rand()` values
-/// by the screen size (0xC4016C, 0xC40170) as the UV offsets; the jitter (the stack slot the second `rand()`
-/// overwrote, when there was a shake) scales the per-pass UV steps. Each pass draws the full-screen quad (the
+/// by the UV extents (0xC4016C, 0xC40170) as the UV offsets; the jitter scales the per-pass UV steps. Each pass draws the full-screen quad (the
 /// raster 0xC402D8, alpha 0x8D5104) with UVs moved out from the screen centre, the mode-1 / mode-2 slots cleared
 /// every pass as the exe does. Afterwards the default UVs are restored and the render states restored (tail call).
 #[hook(addr = 0x7030A0, conv = cdecl, name = "CPostEffects::SpeedFX", expect = "83 EC 3C 0F B6 05 81 F0 B6 00",
-       unverified = "std15-render-1", route = "L2", hazards = "stack-residue", recs = "car-drive",
-       note = "the jitter reads the slot the shake's second rand() overwrote, as the exe")]
+       unverified = "std15-render-1", route = "L2", hazards = "none", recs = "car-drive")]
 pub fn speed_fx(speed: f32) {
     let active = u32::from(GPtr::<u8>::from_addr(0xB6F081).read());
     let mode = gu(0xB6F1C4 + (active * 0x238) as usize);
@@ -108,19 +105,21 @@ pub fn speed_fx(speed: f32) {
     s[0xC / 4] = 0;
     s[0x14 / 4] = 0;
     s[0x28 / 4] = 0;
+    // the shake block runs after `pop ebp`: its `[esp+0x44]` is the shake slot (B + 0x38), where both `rand()`
+    // results land, and the jitter (B + 0x34) is left as it was
     if shake > 0 {
-        let k = sa_math::x87::X87::from_i32(s[0x34 / 4] as i32).fmul_m(gf(0x859CE0));
+        let k = X87::from_i32(s[0x38 / 4] as i32).fmul_m(gf(0x859CE0));
         s[0x30 / 4] = x(gf(0xC4016C)).fmul(k).to_f32().to_bits();
         s[0x2C / 4] = x(gf(0xC40170)).fmul(k).to_f32().to_bits();
         let r1 = sa_core::orig::at_site(0x70_31A5, sa_core::crt::rand);
-        s[0x34 / 4] = r1 as u32;
+        s[0x38 / 4] = r1 as u32;
         s[0x10 / 4] = X87::from_i32(r1)
             .fmul_m(gf(0x858C7C))
             .fmul_m(f(&s, 0x30))
             .to_f32()
             .to_bits();
         let r2 = sa_core::orig::at_site(0x70_31C0, sa_core::crt::rand);
-        s[0x34 / 4] = r2 as u32;
+        s[0x38 / 4] = r2 as u32;
         s[0x14 / 4] = s[0x10 / 4];
         s[0xC / 4] = X87::from_i32(r2)
             .fmul_m(gf(0x858C7C))
