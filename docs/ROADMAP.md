@@ -257,9 +257,9 @@ Sections: *pending* (blocks "done") · *original UB, not reproducible* · *accep
   `__setjmp3(png_ptr)` and returns NULL after cleaning up when libpng reports an error (out of memory, an image
   depth other than 4 / 8 / 32 giving bit depth 0); a Rust frame cannot be re-entered by `longjmp`, so the port arms
   nothing and such an error jumps to the target `png_create_write_struct_2` left behind (a crash instead of NULL).
-  Successful writes are unaffected. Not reached by the corpus (PNG screenshots are not taken). The entry stays as
-  recorded for the parity build; the pure build replaces libpng with a Rust encoder later (PURE-1 step 1f), which
-  removes the longjmp.
+  Successful writes are unaffected. Not reached by the corpus (PNG screenshots are not taken). This holds for the
+  parity build (phase A); in phase B the libpng entry points are served by the `png` crate (PURE-1 step 1f, entry
+  "Third-party code in phase B"), so an error no longer jumps anywhere and only the NULL return differs.
 
 *original UB, not reproducible*
 - `CTheZones::AssignZoneInfoForThisZone` loops forever when index < count (port loops too; never hit). `CEntryExit::GetPositionRelativeToOutsideWorld` writes the z sum into its own unused stack argument slot (not reproduced). `CStuntJumpManager::Init` SEH frame around the pool constructor not reproduced. `FindPlayerCentreOfWorld_NoSniperShift` reads Players[-1] for id -1 and CShopping touches the byte before its bought-flags table for unknown keys (kept) (PORT-WORLD p1).
