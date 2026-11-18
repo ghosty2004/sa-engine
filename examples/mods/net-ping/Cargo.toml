@@ -1,0 +1,13 @@
+[package]
+name = "sa-mod-net-ping"
+version = "0.1.0"
+description = "Example mod: pings a UDP echo server once a second, shows the round trip in the overlay and keeps a reply count across sessions in its storage (docs/mods/getting-started.md)"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+sa-mod = { path = "../../../crates/sa-mod" }

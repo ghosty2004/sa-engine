@@ -1,0 +1,13 @@
+# The net-ping mod's manifest (docs/arch/ADR-004-mods.md section 3.3). examples/mods/build.sh puts it next to
+# net-ping.wasm.
+[mod]
+id = "net-ping"
+name = "UDP ping"
+version = "0.1.0"
+api_version = "1.4"
+entry = "net-ping.wasm"
+
+[permissions]
+render = true
+net = ["udp:127.0.0.1:7790"]   # a local echo server (tools/mods/udp-echo.py)
+storage = true                 # the reply count, kept across sessions

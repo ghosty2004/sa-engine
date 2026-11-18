@@ -6,6 +6,7 @@
 #   OUT/hello/{mod.toml,hello.wasm}               the hello overlay
 #   OUT/trainer-hud/{mod.toml,trainer-hud.wasm}  a read-only trainer overlay: live state, mini-map, events, hooks
 #   OUT/courier/{mod.toml,courier.wasm}          a gameplay mod: spawned cars, a timed run, a damage shield
+#   OUT/net-ping/{mod.toml,net-ping.wasm}        pings a UDP echo server (tools/mods/udp-echo.py), keeps a count
 #   OUT/broken-trap/{mod.toml,broken-trap.wasm}   traps after 30 frames (test of the host's error handling)
 #   OUT/broken-spin/{mod.toml,broken-spin.wasm}   loops forever after 30 frames (test of the fuel budget)
 #
@@ -20,6 +21,7 @@ cd "$root"
 pack sa-mod-hello hello examples/mods/hello/mod.toml
 pack sa-mod-trainer-hud trainer-hud examples/mods/trainer-hud/mod.toml
 pack sa-mod-courier courier examples/mods/courier/mod.toml
+pack sa-mod-net-ping net-ping examples/mods/net-ping/mod.toml
 pack sa-mod-broken broken-trap examples/mods/broken/mod-trap.toml
 pack sa-mod-broken broken-spin examples/mods/broken/mod-spin.toml --features spin
 ls -l "$out"/*/*.wasm
