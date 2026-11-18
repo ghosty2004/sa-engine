@@ -105,7 +105,7 @@ orig! {
     /// `CEntryExit::FindValidTeleportPoint(CVector*)` (0x43EAF0)
     fn entry_exit_find_valid_teleport_point(e: GPtr<u8>, p: GPtr<u8>) = thiscall 0x43EAF0 => unported;
     /// `CEntryExit::WarpGangWithPlayer(CPed*)` (0x43F1F0)
-    fn entry_exit_warp_gang_with_player(e: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x43F1F0 => unported;
+    fn entry_exit_warp_gang_with_player(e: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x43F1F0 => entry_exit_warp_gang_with_player_port;
     /// `CEntryExit::ProcessStealableObjects(CPed*)` (0x43E990)
     fn entry_exit_process_stealable_objects(e: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x43E990 => unported;
     /// `CEntryExit::GetEntryExitToDisplayNameOf()` (0x43E650)
@@ -556,4 +556,89 @@ fn transition_finish(this: GPtr<u8>, ped: GPtr<u8>, pos: &mut [u32; 3]) -> u8 {
 }
 
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_ENTRY_EXIT_TRANSITION_STARTED, HOOK_ENTRY_EXIT_TRANSITION_FINISHED];
+/// `CTaskComplexFollowLeaderInFormation::ms_offsets` (8 `CVector2D`)
+const FORMATION_OFFSETS: usize = 0xC1_96E8;
+
+/// `CEntryExit::WarpGangWithPlayer(CPed* player)` (0x43F1F0, thiscall, `ret 4`; `this` unused). Only for an active
+/// player group (`ms_activeGroups[playerData->m_nPlayerGroup]`) the player leads. One running formation offset index
+/// (8 entries) is shared by all members: for each of the 7 members other than the player (skipped once the index is
+/// spent), up to three tries `p = player pos + (offset, 0)` (the bytes start from the player's position, not the
+/// member's as gta-reversed; the third try through `CVector::operator+`) until `IsTeleportPointValid(player pos, p)`;
+/// a third failure, or running out of offsets before the second / third try, ends the whole warp. A placed member
+/// faces the player: `LimitRadianAngle(GetRadianAngleBetweenPoints(normalised (player - member).xy, 0, 0))` goes to
+/// both rotations (+0x558 / +0x55C) and the heading after `Teleport(p, false)` and `FlushImmediately(false)`; it
+/// takes the player's area code (+0x2F) and entry-exit (+0x78C).
+#[hook(addr = 0x43F1F0, conv = thiscall, name = "CEntryExit::WarpGangWithPlayer", this = "CEntryExit",
+       expect = "83 EC 50 53 55 8B 6C 24 5C", unverified = "frontier2-a19", route = "L2", hazards = "heap-writes",
+       note = "entering / leaving an interior with gang members (TransitionFinished)")]
+pub fn entry_exit_warp_gang_with_player_port(_this: GPtr<u8>, player: GPtr<u8>) {
+    use super::common::entity_pos;
+    use crate::bindings::{flush_immediately, membership_get_member, membership_is_leader};
+    use sa_core::bindings::{
+        general_get_radian_angle_between_points, general_limit_radian_angle, matrix_set_rotate_z_only, vector_normalise,
+    };
+    let group = rd::<i32>(rd::<GPtr<u8>>(player, 0x480), 0x38);
+    let ms = GPtr::<u8>::from_addr(0xC0_9928 + group as usize * 0x2D4);
+    if g::<u8>(0xC0_98E0 + group as usize).read() == 0 || membership_is_leader(ms, player) == 0 {
+        return;
+    }
+    let off = |k: usize, c: usize| g::<f32>(FORMATION_OFFSETS + k * 8 + c * 4).read();
+    let mut k = 0usize;
+    for i in 0..7 {
+        let mem = membership_get_member(ms, i);
+        if mem.is_null() || mem == player || k >= 8 {
+            continue;
+        }
+        let mut pt = [0u32; 3];
+        let mut placed = false;
+        for attempt in 0..3 {
+            if attempt > 0 && k >= 8 {
+                return;
+            }
+            let pp = entity_pos(player);
+            if attempt < 2 {
+                pt = [
+                    f32_of(x(off(k, 0)).fadd_m(rd::<f32>(pp, 0))).to_bits(),
+                    f32_of(x(off(k, 1)).fadd_m(rd::<f32>(pp, 4))).to_bits(),
+                    f32_of(x(rd::<f32>(pp, 8))).to_bits(),
+                ];
+            } else {
+                let mut o = [off(k, 0).to_bits(), sa_math::fpu::fld_fst(off(k, 1)).to_bits(), 0];
+                let mut out = [0u32; 3];
+                pt = vec_add(buf(&mut out), pp, buf(&mut o)).cast::<[u32; 3]>().read();
+            }
+            k += 1;
+            if super::entryexit::is_teleport_point_valid(entity_pos(player), buf(&mut pt)) != 0 {
+                placed = true;
+                break;
+            }
+        }
+        if !placed {
+            return;
+        }
+        let (mp, pp) = (entity_pos(mem), entity_pos(player));
+        let mut d = [
+            f32_of(x(rd::<f32>(pp, 0)).fsub_m(rd::<f32>(mp, 0))),
+            f32_of(x(rd::<f32>(pp, 4)).fsub_m(rd::<f32>(mp, 4))),
+            0.0f32,
+        ];
+        vector_normalise(GPtr::from_raw(&mut d));
+        let a = f32_of(general_get_radian_angle_between_points(d[0], d[1], 0.0, 0.0));
+        let a = f32_of(X87::from_f64_exact(general_limit_radian_angle(a)));
+        v_teleport(mem, pt[0], pt[1], pt[2], 0);
+        flush_immediately(rd::<GPtr<u8>>(mem, 0x47C), 0);
+        wr::<f32>(mem, 0x558, a);
+        wr::<f32>(mem, 0x55C, a);
+        let m = rd::<GPtr<u8>>(mem, 0x14);
+        if m.is_null() {
+            wr::<f32>(mem, 0x10, a);
+        } else {
+            matrix_set_rotate_z_only(m, a);
+        }
+        wr::<u8>(mem, 0x2F, rd::<u8>(player, 0x2F));
+        wr::<u32>(mem, 0x78C, rd::<u32>(player, 0x78C));
+    }
+}
+
+pub const HOOKS: &[HookReg] =
+    &[HOOK_ENTRY_EXIT_TRANSITION_STARTED, HOOK_ENTRY_EXIT_TRANSITION_FINISHED, HOOK_ENTRY_EXIT_WARP_GANG_WITH_PLAYER_PORT];
