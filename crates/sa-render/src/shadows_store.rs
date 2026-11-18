@@ -258,4 +258,28 @@ pub fn store_shadow_for_vehicle(veh: GPtr<u8>, ty: u32) {
 }
 
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_STORE_SHADOW_FOR_VEHICLE];
+/// `CShadows::StoreShadowToBeRendered(uint8 type, CVector* pos, float frontX, frontY, sideX, sideY, int16 intensity,
+/// uint8 r, g, b)` (0x707930, cdecl; floats and the narrow arguments passed on as the dwords pushed): the jump
+/// table 0x707B20 on the type byte picks the shadow type and texture: 1 → (1, gpShadowCarTex 0xC403E0), 2 → (1,
+/// 0xC403E4), 3 → (2, 0xC403F4), 4 → (1, gpShadowHeliTex 0xC403E8), 5 → (2, 0xC403F8), 6 → (1, 0xC40400); 0 and
+/// above 6 store nothing. `StoreShadowToBeRendered(type, tex, pos, front, side, intensity, r, g, b, 15.0, false,
+/// 1.0, NULL, false)`.
+#[hook(addr = 0x707930, conv = cdecl, name = "CShadows::StoreShadowToBeRendered-Type",
+       expect = "0F B6 44 24 04 83 F8 06", unverified = "frontier2-c20", route = "L2", hazards = "none")]
+#[allow(clippy::too_many_arguments)]
+pub fn store_shadow_to_be_rendered_type(ty: u32, pos: GPtr<u32>, fx: u32, fy: u32, sx: u32, sy: u32, intensity: u32,
+                                        r: u32, gg: u32, b: u32) {
+    let (kind, tex) = match ty as u8 {
+        1 => (1, 0xC4_03E0),
+        2 => (1, 0xC4_03E4),
+        3 => (2, 0xC4_03F4),
+        4 => (1, 0xC4_03E8),
+        5 => (2, 0xC4_03F8),
+        6 => (1, 0xC4_0400),
+        _ => return,
+    };
+    store_shadow_to_be_rendered_tex(kind, g::<GPtr<u8>>(tex).read(), pos.cast(), fx, fy, sx, sy, intensity, r, gg, b,
+                                    0x4170_0000, 0, 0x3F80_0000, GPtr::from_addr(0), 0);
+}
+
+pub const HOOKS: &[HookReg] = &[HOOK_STORE_SHADOW_FOR_VEHICLE, HOOK_STORE_SHADOW_TO_BE_RENDERED_TYPE];

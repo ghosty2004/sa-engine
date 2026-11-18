@@ -57,6 +57,14 @@ pub fn render_buffered_one_xlu_sprite_rotate_dimension(px: f32, py: f32, pz: f32
     if ys.iter().all(|&t| !x(t).fcom(x(hmax)).test_any(0x41)) {
         return;
     }
+    buffer_sprite(&xs, &ys, pz, r, gg, b, intensity, recip_z, alpha);
+}
+
+/// The buffered sprite's tail shared by the two rotated variants: the next of the 0x180 buffered sprites (0xC6A158)
+/// gets the four corners, z as in `RenderBufferedOneXLUSprite`, rhw = `recipNearZ`, colour `alpha << 24 | (rgb *
+/// intensity) >> 8`, uv (0,0), (0,1), (1,1), (1,0); then the index block (flush at 0x180).
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn buffer_sprite(xs: &[f32; 4], ys: &[f32; 4], pz: f32, r: u32, gg: u32, b: u32, intensity: u32, recip_z: u32, alpha: u32) {
     let idx = g::<u32>(0xC6A158).read();
     let v = g::<u8>(0xC5F958).byte_add(idx as isize * 0x70);
     let num = x(g::<f32>(0xC4B8D4).read()).fsub_m(g::<f32>(0xC4B8D8).read()).fmul(x(pz).fsub_m(g::<f32>(0xC3EFA0).read())).fmul_m(g::<f32>(0xC3EF9C).read());
@@ -87,6 +95,52 @@ pub fn render_buffered_one_xlu_sprite_rotate_dimension(px: f32, py: f32, pz: f32
     if (idx + 1) as i32 >= 0x180 {
         sprite_flush_sprite_buffer();
     }
+}
+
+
+/// `CSprite::RenderBufferedOneXLUSprite_Rotate_Aspect(CVector pos, float w, float h, uint8 r, g, b, int16
+/// intensity, float recipNearZ, float angle, uint8 alpha)` (0x70E780; every argument as the dword pushed): 3D mode
+/// (0xC6A15C = 0); with s / c of the angle, k1 = -c - s, k2 = s - c, k3 = c + s (f32 locals; k2 in the angle's
+/// slot) and k4 = c - s (kept on the stack): corners `(k1 w + x, k2 h + y)`, `(k2 w + x, k3 h + y)`, `(k3 w + x,
+/// k4 h + y)`, `(k4 w + x, k1 h + y)`. Nothing when all four x (or y) are below 0 or above the screen width
+/// (height); otherwise the buffered sprite as `RenderBufferedOneXLUSprite_Rotate_Dimension`'s.
+#[allow(clippy::too_many_arguments)]
+#[hook(addr = 0x70E780, conv = cdecl, name = "CSprite::RenderBufferedOneXLUSprite_Rotate_Aspect", expect = "83 EC 28 D9 44 24 54",
+       unverified = "frontier2-c20", route = "L2", hazards = "x87-transcendental,stack-residue",
+       note = "FSIN/FCOS; temporaries written into its own argument slots (angle, w, the w slot's byte 2)")]
+pub fn render_buffered_one_xlu_sprite_rotate_aspect(px: u32, py: u32, pz: u32, w: u32, h: u32, r: u32, gg: u32, b: u32, intensity: u32, recip_z: u32, angle: u32, alpha: u32) {
+    let (px, py, w, h) = (f32::from_bits(px), f32::from_bits(py), f32::from_bits(w), f32::from_bits(h));
+    let a = x(f32::from_bits(angle));
+    let s = a.fsin();
+    let c = a.fcos();
+    g::<u32>(0xC6A15C).write(0);
+    let k1 = c.fchs().fsub(s).to_f32();
+    let x0 = x(k1).fmul_m(w).fadd_m(px).to_f32();
+    let k2 = s.fsub(c).to_f32();
+    let x1 = x(k2).fmul_m(w).fadd_m(px).to_f32();
+    let k3 = c.fadd(s).to_f32();
+    let x2 = x(k3).fmul_m(w).fadd_m(px).to_f32();
+    let k4 = c.fsub(s);
+    let x3 = x(w).fmul(k4).fadd_m(px).to_f32();
+    let y0 = x(k2).fmul_m(h).fadd_m(py).to_f32();
+    let y1 = x(k3).fmul_m(h).fadd_m(py).to_f32();
+    let y2 = k4.fmul_m(h).fadd_m(py).to_f32();
+    let y3 = x(k1).fmul_m(h).fadd_m(py).to_f32();
+    let xs = [x0, x1, x2, x3];
+    let ys = [y0, y1, y2, y3];
+    let below = |v: &[f32; 4]| v.iter().all(|&t| !jp(x(t), X87::zero(), 5));
+    if below(&xs) || below(&ys) {
+        return;
+    }
+    let wmax = X87::from_i32(g::<i32>(0xC17044).read()).to_f32();
+    if xs.iter().all(|&t| !x(t).fcom(x(wmax)).test_any(0x41)) {
+        return;
+    }
+    let hmax = X87::from_i32(g::<i32>(0xC17048).read()).to_f32();
+    if ys.iter().all(|&t| !x(t).fcom(x(hmax)).test_any(0x41)) {
+        return;
+    }
+    buffer_sprite(&xs, &ys, f32::from_bits(pz), r, gg, b, intensity, recip_z, alpha);
 }
 
 use crate::bindings::transform_points;
@@ -308,4 +362,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_PLANT_PROCESS_ENTRY_COLLISION_DATA_SECTIONS,
     HOOK_PLANT_REMOVE_LOC_TRIS_PORT,
     HOOK_RENDER_ONE_XLU_SPRITE_ROTATE_ASPECT,
+    HOOK_RENDER_BUFFERED_ONE_XLU_SPRITE_ROTATE_ASPECT,
 ];

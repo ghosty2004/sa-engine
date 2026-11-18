@@ -105,7 +105,7 @@ orig! {
     fn car_generator_47c0e0(g: GPtr<u8>, count: u32) = thiscall 0x47C0E0 => unported;
     /// `CShadows::StoreShadowToBeRendered(uint8 type, CVector* pos, float frontX, float frontY, float
     /// sideX, float sideY, int16 intensity, uint8 r, uint8 g, uint8 b)` (0x707930); floats as raw dwords
-    fn store_shadow_to_be_rendered(ty: u32, pos: GPtr<u32>, fx: u32, fy: u32, sx: u32, sy: u32, intensity: u32, r: u32, g: u32, b: u32) = cdecl 0x707930 => unported;
+    fn store_shadow_to_be_rendered(ty: u32, pos: GPtr<u32>, fx: u32, fy: u32, sx: u32, sy: u32, intensity: u32, r: u32, g: u32, b: u32) = cdecl 0x707930 => sa_render::shadows_store::store_shadow_to_be_rendered_type;
 }
 
 /// The ped's vehicle when `m_nPedFlags` bit 8 (+0x46C) is set and `m_pVehicle` (+0x58C) != 0, else the

@@ -23,7 +23,7 @@ orig! {
     fn process_vertical_line_using_cache(px: f32, py: f32, pz: f32, out: GPtr<u32>) -> u8 = cdecl 0x6ffff0 => crate::pointlights::process_vertical_line_using_cache;
     /// `CSprite::RenderBufferedOneXLUSprite_Rotate_Aspect(x, y, z, w, h, r, g, b, intensity, recipZ,
     /// angle, alpha)` (0x70e780; every argument as the dword pushed)
-    fn render_buffered_one_xlu_sprite_rotate_aspect(px: u32, py: u32, pz: u32, w: u32, h: u32, r: u32, gg: u32, b: u32, intensity: u32, recip_z: u32, angle: u32, alpha: u32) = cdecl 0x70e780 => unported;
+    fn render_buffered_one_xlu_sprite_rotate_aspect(px: u32, py: u32, pz: u32, w: u32, h: u32, r: u32, gg: u32, b: u32, intensity: u32, recip_z: u32, angle: u32, alpha: u32) = cdecl 0x70e780 => crate::mvpd_r5::render_buffered_one_xlu_sprite_rotate_aspect;
 }
 
 const NUM_LIGHTS: usize = 0xc3_f0d0;
