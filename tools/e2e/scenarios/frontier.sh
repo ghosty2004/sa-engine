@@ -2,7 +2,7 @@
 # FRONTIER-1 scenarios: native sa-game runs (deterministic, --fixed-step 40, offscreen) that reach the blockers the
 # user hit. Each must end with an empty blocker list in OUT/report.md and no crash.
 #
-#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra|hunter|nitro|postfx|shotgun|flamer|driveby|camera|escalator OUTDIR [FRAMES]
+#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra|hunter|nitro|postfx|shotgun|flamer|driveby|camera|escalator|replay OUTDIR [FRAMES]
 #
 # pausemenu (400)  Esc, down x3, Enter (pause-menu item 4: Stats), down, Enter, Enter: the Stats pages draw
 #                  (was a SIGSEGV at iteration ~171: CStats::GetStatValue's X87 result dispatched as cdecl)
@@ -78,6 +78,10 @@
 # nitro    (1200)  the crossing run's Greenwood with the all-cars-have-nitro cheat SPEEDFREAK typed in it, driven with
 #                  the left button held (VEHICLE_FIREWEAPON fires the nitro): CAutomobile::NitrousControl and
 #                  DoNitroEffect 0x6A3BD0 (FRONTIER-2 turn 12 lane B; frontier2-b12-counts.gdb)
+# replay   (1400)  the cinema run's Greenwood driven along Grove Street (CReplay records every 26 ms), then F1:
+#                  CReplay::TriggerPlayback 0x4600F0 (StoreStuffInMem, the conversion tables, CreatePlayerPed), every
+#                  frame's PlayBackThisFrame / PlayBackThisFrameInterpolation, and RestoreStuffFromMem when the buffers
+#                  run out (FRONTIER-2 turn 14 lane B; frontier2-b31-counts.gdb counts them)
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-b10-counts.gdb --args" counts the turn 10 lane B ports' calls
 # (monster: SetupSuspensionLines 1, ProcessSuspension 282; tanker: TankerCheat 1, UpdateTrailerLink 1996,
 # UpdateTractorLink 1498; tank: TankControl 998).
@@ -305,7 +309,13 @@ escalator)
     # it facing south, then walked onto it
     export SA_GAME_SCRIPT_SKIP=1 SA_GAME_TELEPORT="60:1128.0:-1466.0:15.0:3.1416" SA_GAME_KEYS="w:300:420"
     run "${3:-800}" --start-in-world ;;
+replay)
+    # the cinema run's Greenwood driven along Grove Street while CReplay records, then F1 (CReplay::Update's
+    # rsF1 just-down) plays the buffers back until FinishPlayback
+    export SA_GAME_TELEPORT="60:2505.0:-1666.4:13.4"
+    export SA_GAME_KEYS="f:100:103,w:330:700,a:500:540,w:760:850,d:780:820,f1:900:903"
+    run "${3:-1400}" --start-in-world ;;
 *)
-    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra|hunter|nitro|postfx|shotgun|flamer|driveby|camera|escalator OUTDIR [FRAMES]" >&2
+    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra|hunter|nitro|postfx|shotgun|flamer|driveby|camera|escalator|replay OUTDIR [FRAMES]" >&2
     exit 2 ;;
 esac
