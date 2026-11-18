@@ -93,6 +93,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::matfx_dual::HOOKS,
     crate::palquant::HOOKS,
     crate::dds::HOOKS,
+    crate::rt_png::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

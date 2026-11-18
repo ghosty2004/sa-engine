@@ -108,3 +108,4 @@ pub mod matfx_env;
 pub mod matfx_dual;
 pub mod palquant;
 pub mod dds;
+pub mod rt_png;
