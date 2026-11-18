@@ -109,9 +109,10 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-b26 | 4 | VEH | aa4490ef | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
 | frontier2-b27 | 1 | CAM | 56a57841 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | frontier2-b28 | 2 | VEH | fe7e811e | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| frontier2-b29 | 3 | CAM | 834eb7fa | (no branch, rebasing worktree-agent-ab36dc6cae0387186) | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| frontier2-b29 | 3 | CAM | 834eb7fa | worktree-agent-ab36dc6cae0387186 | 3 | 0 | 0 | 0 | 0 | L2 3 |
 | frontier2-b3 | 7 | VEH | 221f09a0 | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
-| frontier2-b30 | 8 | RENDER, WORLD | dd81e971 | (no branch, rebasing worktree-agent-ab36dc6cae0387186) | 8 | 0 | 0 | 0 | 0 | L2 8 |
+| frontier2-b30 | 8 | RENDER, WORLD | dd81e971 | worktree-agent-ab36dc6cae0387186 | 8 | 0 | 0 | 0 | 0 | L2 8 |
+| frontier2-b31 | 7 | WORLD | 5bfcbc5f | worktree-agent-ab36dc6cae0387186 | 7 | 0 | 0 | 0 | 0 | L2 7 |
 | frontier2-b4 | 5 | RW, SAVE | 2f47ba34 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | frontier2-b5 | 25 | MATH, POP, VEH, WORLD | 1caf613f | master | 25 | 0 | 0 | 0 | 0 | L2 22, split 3 |
 | frontier2-b6 | 6 | VEH | c21bbc1e | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
@@ -3261,6 +3262,27 @@ SA_UNVERIFIED=frontier2-b30 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b30 
 | 0x45EFA0 | `CReplay::InitialiseVehiclePoolConversionTable` | written | L2 | none |
 | 0x45F370 | `CReplay::InitialisePoolConversionTables` | written | L2 | none |
 | 0x721D30 | `CSpecialFX::ReplayStarted` | written | L2 | none |
+
+## frontier2-b31
+
+7 hooks in sa-world; hazards: heap-writes (6); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-b31 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-b31 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b31 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-b31
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x45B4D0 | `CReplay::RetrievePedAnimation` | written | L2 | heap-writes |
+| 0x45C7D0 | `CReplay::RestoreClothesDesc` | written | L2 | none |
+| 0x45CA70 | `CReplay::ProcessPedUpdate` | written | L2 | heap-writes |
+| 0x45CEA0 | `CReplay::DealWithNewPedPacket` | written | L2 | heap-writes |
+| 0x45D540 | `CReplay::CreatePlayerPed` | written | L2 | heap-writes |
+| 0x45F180 | `CReplay::StoreStuffInMem` | written | L2 | heap-writes |
+| 0x4600F0 | `CReplay::TriggerPlayback` | written | L2 | heap-writes |
 
 ## frontier2-b4
 
