@@ -104,7 +104,7 @@ orig! {
     /// `CTask::GetTaskType()` (vtable slot 0x10, thiscall)
     pub fn task_get_type(task: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
     /// `CWeapon::TakePhotograph(CEntity* owner, CVector* point)` (0x73C1F0, thiscall)
-    pub fn take_photograph(this: GPtr<u8>, owner: GPtr<u8>, point: GPtr<u8>) -> u8 = thiscall 0x73C1F0 => unported;
+    pub fn take_photograph(this: GPtr<u8>, owner: GPtr<u8>, point: GPtr<u8>) -> u8 = thiscall 0x73C1F0 => crate::photograph::weapon_take_photograph;
     /// `CWeapon::FireSniper(CPed*, CEntity* targetEnt, CVector* target)` (0x73AAC0, thiscall)
     pub fn fire_sniper_call(this: GPtr<u8>, firer: GPtr<u8>, target_ent: GPtr<u8>, target: GPtr<u8>) -> u8 = thiscall 0x73AAC0 => fire_sniper;
     /// `CWeapon::FireAreaEffect(CEntity*, CVector* origin, CEntity* targetEnt, CVector* target)` (0x73E800, thiscall)
