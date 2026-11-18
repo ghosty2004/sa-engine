@@ -46,3 +46,4 @@ pub mod doom_aiming;
 pub mod photograph;
 pub mod aiming;
 pub mod pellet;
+pub mod area_effect;

@@ -108,7 +108,7 @@ orig! {
     /// `CWeapon::FireSniper(CPed*, CEntity* targetEnt, CVector* target)` (0x73AAC0, thiscall)
     pub fn fire_sniper_call(this: GPtr<u8>, firer: GPtr<u8>, target_ent: GPtr<u8>, target: GPtr<u8>) -> u8 = thiscall 0x73AAC0 => fire_sniper;
     /// `CWeapon::FireAreaEffect(CEntity*, CVector* origin, CEntity* targetEnt, CVector* target)` (0x73E800, thiscall)
-    pub fn fire_area_effect_call(this: GPtr<u8>, firer: GPtr<u8>, origin: GPtr<u8>, target_ent: GPtr<u8>, target: GPtr<u8>) -> u8 = thiscall 0x73E800 => unported;
+    pub fn fire_area_effect_call(this: GPtr<u8>, firer: GPtr<u8>, origin: GPtr<u8>, target_ent: GPtr<u8>, target: GPtr<u8>) -> u8 = thiscall 0x73E800 => crate::area_effect::fire_area_effect;
     /// `CBulletInfo::AddBullet(CEntity* creator, eWeaponType, CVector pos, CVector velocity)` (0x736010)
     pub fn add_bullet_call(creator: GPtr<u8>, ty: i32, px: f32, py: f32, pz: f32, vx: f32, vy: f32, vz: f32) -> u8 = cdecl 0x736010 => crate::bullet_shot::add_bullet;
     /// `CEventGunShotWhizzedBy::CEventGunShotWhizzedBy(CEntity*, const CVector&, const CVector&, bool)` (0x4B1FD0, thiscall)

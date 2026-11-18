@@ -33,6 +33,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::photograph::HOOKS,
     crate::aiming::HOOKS,
     crate::pellet::HOOKS,
+    crate::area_effect::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
