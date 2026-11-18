@@ -6352,6 +6352,14 @@ CPostEffects::Render@0xC4B958:0x2000:D
 CPostEffects::Render@0xC4D958:0x14000:D
 CPostEffects::Render@0xC97B80:0x2FC0:D
 CPostEffects::Render@0x8E2440:0x20:D
+CPostEffects::SpeedFX@0xC4B958:0x2000:D
+CPostEffects::SpeedFX@0xC4D958:0x14000:D
+CPostEffects::SpeedFX@0xC97B80:0x2FC0:D
+CPostEffects::SpeedFX@0x8E2440:0x20:D
+CPostEffects::DrawQuad@0xC4B958:0x2000:D
+CPostEffects::DrawQuad@0xC4D958:0x14000:D
+CPostEffects::DrawQuad@0xC97B80:0x2FC0:D
+CPostEffects::DrawQuad@0x8E2440:0x20:D
 RenderBuffer::StopStoring@0xC4B958:0x2000:D
 RenderBuffer::StopStoring@0xC4D958:0x14000:D
 RenderBuffer::StopStoring@0xC97B80:0x2FC0:D
