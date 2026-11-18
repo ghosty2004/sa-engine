@@ -367,6 +367,171 @@ pub fn setup_paths(this: GPtr<u8>) {
     wr::<u8>(this, 0xB8, 1);
 }
 
+orig! {
+    /// `InteriorGroup_c::GetNumInteriorInfos(int32 type)` (0x594920)
+    fn get_num_interior_infos(this: GPtr<u8>, ty: i32) -> i32
+        = thiscall 0x594920 => crate::world::misc2::interior_group_get_num_interior_infos;
+    /// `CTaskInteriorBeInOffice::CTaskInteriorBeInOffice(InteriorGroup_c*)` (0x675220)
+    fn be_in_office_ctor(t: GPtr<u8>, group: GPtr<u8>) -> GPtr<u8> = thiscall 0x675220 => unported;
+}
+use crate::bindings::{ped_is_pointer_valid, population_remove_ped};
+use sa_core::bindings::{general_random_int_in_range, matrix_mul_vec};
+use sa_stream::bindings::clock_get_is_time_in_range;
+
+/// `InteriorGroup_c::UpdateOfficePeds()` (0x594E90, thiscall). With +0x34 set and +0x35 clear: the group entity's
+/// (+8) position as `GetMatrix() * (0, 0, 0)` (the inlined GetMatrix), `n = GetNumInteriorInfos(6)`; from 9 to 18
+/// `GetRandomNumberInRange(n / 2, n)` peds, from 18 to 22 or 6 to 9 `GetRandomNumberInRange(0, n / 2)` (both capped
+/// at 16), otherwise none (`n / 2` rounds towards zero). Each one: a model from `FindMIPedSlotForInterior(ftol((rand()
+/// & 0xFFFF) / 32768 * 8))` (rand site 0x594F9C) added at that position with its model info's ped type (+0x28);
+/// a ped goes to slot +0x38 + 4 * count (+0x36, the slot written even with no ped), is created by 2 (mission-free),
+/// gets decision maker 7 and the primary task `CTaskInteriorBeInOffice(this)` (slot 4). With +0x34 clear and +0x35
+/// set: every valid ped of the 16 slots is removed from the population, the slots and the count cleared.
+#[hook(addr = 0x594E90, conv = thiscall, name = "InteriorGroup_c::UpdateOfficePeds", this = "InteriorGroup_c",
+       expect = "64 A1 00 00 00 00 6A FF",
+       unverified = "frontier2-a25", route = "L2", hazards = "heap-writes",
+       note = "creates / removes peds (pools); rand site 0x594F9C")]
+pub fn interior_group_update_office_peds(this: GPtr<u8>) {
+    if rd::<u8>(this, 0x34) == 0 {
+        if rd::<u8>(this, 0x35) == 0 {
+            return;
+        }
+        for k in 0..16isize {
+            let o = 0x38 + 4 * k;
+            let ped = rd::<GPtr<u8>>(this, o);
+            if !ped.is_null() {
+                if ped_is_pointer_valid(ped) != 0 {
+                    population_remove_ped(rd::<GPtr<u8>>(this, o));
+                }
+                wr::<u32>(this, o, 0);
+            }
+        }
+        wr::<u8>(this, 0x36, 0);
+        return;
+    }
+    if rd::<u8>(this, 0x35) != 0 {
+        return;
+    }
+    let ent = rd::<GPtr<u8>>(this, 8);
+    let mut origin = [0u32; 3];
+    let mut out = [0u32; 3];
+    let m = crate::world::entity::get_matrix(ent);
+    let r = matrix_mul_vec(p(&mut out).cast(), m, p(&mut origin).cast());
+    let mut pos = [rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8)];
+    let n = get_num_interior_infos(this, 6);
+    let half = n / 2;
+    let count = if clock_get_is_time_in_range(9, 18) != 0 {
+        general_random_int_in_range(half, n).min(16)
+    } else if clock_get_is_time_in_range(18, 22) != 0 || clock_get_is_time_in_range(6, 9) != 0 {
+        general_random_int_in_range(0, half).min(16)
+    } else {
+        0
+    };
+    for _ in 0..count.max(0) {
+        let model = find_mi_ped_slot_for_interior(rand_scaled(0x59_4F9C, 8.0));
+        let mi = g::<GPtr<u8>>(MODEL_INFOS + 4 * model as usize).read();
+        let slot = i32::from(rd::<i8>(this, 0x36));
+        let ped = add_ped(rd::<u32>(mi, 0x28), model as u32, p(&mut pos).cast(), 0);
+        let o = 0x38 + 4 * slot as isize;
+        wr::<GPtr<u8>>(this, o, ped);
+        if ped.is_null() {
+            continue;
+        }
+        wr::<u8>(this, 0x36, rd::<u8>(this, 0x36).wrapping_add(1));
+        set_char_created_by(rd::<GPtr<u8>>(this, o), 2);
+        set_ped_decision_maker_type(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, o), 0x47C), 7);
+        let t = task_new(0x18);
+        let task = if t.is_null() { GPtr::NULL } else { be_in_office_ctor(t, this) };
+        task_manager_set_task(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, o), 0x47C).byte_add(4), task, 4, 0);
+    }
+}
+
+orig! {
+    /// `CPopCycle::PickGangToCreateMembersOf()` (0x60F8D0)
+    fn pick_gang_to_create_members_of() -> i32 = cdecl 0x60F8D0 => unported;
+    /// `CScriptsForBrains::StartOrRequestNewStreamedScriptBrainWithThisName(const char*, CEntity*, uint8)` (0x46CED0)
+    fn start_brain_with_name(brains: GPtr<u8>, name: GPtr<u8>, ent: GPtr<u8>, ty: u32) = thiscall 0x46CED0 => unported;
+    /// `CTaskInteriorBeInHouse::CTaskInteriorBeInHouse(InteriorGroup_c*)` (0x674FC0)
+    fn be_in_house_ctor(t: GPtr<u8>, group: GPtr<u8>) -> GPtr<u8> = thiscall 0x674FC0 => unported;
+}
+use super::interior_group_update::ig_remove_ped;
+use crate::bindings::choose_gang_occupation;
+
+/// `InteriorGroup_c::SetupHousePeds()` (0x5965E0, thiscall). `StreamPedsForInterior(0)`,
+/// `LoadAllRequestedModels(false)`, the ped count (+0x36) cleared, the position `GetMatrix(+8) * (0, 0, 0)` (the
+/// inlined GetMatrix). `ftol((rand() & 0xFFFF) / 32768 * 100) <= 50` gives 2 peds, else 1 (rand site 0x59666A).
+/// With the gang byte 0xC0BC68 set: `PickGangToCreateMembersOf()`; a gang with `ChooseGangOccupation(gang - 7) >
+/// -1` makes a gang house when a second roll (0x5966CC) is at most 15, then with 3 peds, 4 when `rand()` (0x5966FA)
+/// >= 0x3FFF. Per ped k: the model is `ChooseGangOccupation(gang - 7)` in a gang house, else
+/// `FindMIPedSlotForInterior(rand() >= 0x3FFF)` (0x596742) for a single ped or `FindMIPedSlotForInterior(k)`; added at
+/// the position with its model info's ped type (+0x28), stored at slot +0x38 + 4 * count (also when null); a ped
+/// increments the count, gets the "house" brain (0x866D4C, type 3, `ScriptsForBrains` 0xA90CF0), created by 2,
+/// decision maker 7 and the primary task `CTaskInteriorBeInHouse(this)` (slot 4). When the slot flag 0xBB3D9C + k is
+/// clear, `RemovePed(slot)` (the slot's ped, null included).
+#[hook(addr = 0x5965E0, conv = thiscall, name = "InteriorGroup_c::SetupHousePeds", this = "InteriorGroup_c",
+       expect = "6A FF 68 CB D0 83 00",
+       unverified = "frontier2-a25", route = "L2", hazards = "heap-writes",
+       note = "creates peds (pools); rand sites 0x59666A, 0x5966CC, 0x5966FA, 0x596742")]
+pub fn interior_group_setup_house_peds(this: GPtr<u8>) {
+    stream_peds_for_interior(0);
+    load_all_requested_models(0);
+    wr::<u8>(this, 0x36, 0);
+    let ent = rd::<GPtr<u8>>(this, 8);
+    let mut origin = [0u32; 3];
+    let mut out = [0u32; 3];
+    let m = crate::world::entity::get_matrix(ent);
+    let r = matrix_mul_vec(p(&mut out).cast(), m, p(&mut origin).cast());
+    let mut pos = [rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8)];
+    // [esp+0x18]: the first roll's masked rand, overwritten by the picked gang
+    let mut gang = (at_site(0x59_666A, rand) & 0xFFFF) as i32;
+    let roll = ftol32(xi(gang).fmul_m(INV_32768).fmul_m(100.0));
+    let mut count = i32::from(roll <= 0x32) + 1;
+    let mut gang_house = false;
+    if g::<u32>(0xC0_BC68).read() != 0 {
+        gang = pick_gang_to_create_members_of();
+        if gang != 0 && choose_gang_occupation(gang - 7) > -1 {
+            gang_house = true;
+            if rand_scaled(0x59_66CC, 100.0) > 0xF {
+                gang_house = false;
+            } else {
+                count = i32::from(at_site(0x59_66FA, rand) >= 0x3FFF) + 3;
+            }
+        }
+    }
+    let mut k = 0i32;
+    while k < count {
+        let model = if gang_house {
+            choose_gang_occupation(gang - 7)
+        } else if count == 1 {
+            find_mi_ped_slot_for_interior(i32::from(at_site(0x59_6742, rand) >= 0x3FFF))
+        } else {
+            find_mi_ped_slot_for_interior(k)
+        };
+        let mi = g::<GPtr<u8>>(MODEL_INFOS + 4 * model as usize).read();
+        let slot = isize::from(rd::<i8>(this, 0x36));
+        let o = 0x38 + 4 * slot;
+        let ped = add_ped(rd::<u32>(mi, 0x28), model as u32, p(&mut pos).cast(), 0);
+        wr::<GPtr<u8>>(this, o, ped);
+        if !ped.is_null() {
+            wr::<u8>(this, 0x36, rd::<u8>(this, 0x36).wrapping_add(1));
+            start_brain_with_name(GPtr::from_addr(0xA9_0CF0), GPtr::from_addr(0x86_6D4C), rd::<GPtr<u8>>(this, o), 3);
+            set_char_created_by(rd::<GPtr<u8>>(this, o), 2);
+            set_ped_decision_maker_type(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, o), 0x47C), 7);
+            let t = task_new(0x18);
+            let task = if t.is_null() { GPtr::NULL } else { be_in_house_ctor(t, this) };
+            task_manager_set_task(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, o), 0x47C).byte_add(4), task, 4, 0);
+        }
+        if g::<u8>(0xBB_3D9C + k as usize).read() == 0 {
+            ig_remove_ped(this, rd::<GPtr<u8>>(this, o));
+        }
+        k += 1;
+    }
+}
+
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_SETUP_SHOP_PEDS, HOOK_SETUP_PATHS];
+pub const HOOKS: &[HookReg] = &[
+    HOOK_SETUP_SHOP_PEDS,
+    HOOK_SETUP_PATHS,
+    HOOK_INTERIOR_GROUP_UPDATE_OFFICE_PEDS,
+    HOOK_INTERIOR_GROUP_SETUP_HOUSE_PEDS,
+];
 

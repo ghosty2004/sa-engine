@@ -34,9 +34,11 @@ orig! {
     /// `InteriorGroup_c::ContainsInteriorType(int32)` (0x595250)
     fn ig_contains_interior_type(ig: GPtr<u8>, t: i32) -> u8 = thiscall 0x595250 => unported;
     /// `InteriorGroup_c::RemovePed(CPed*)` (0x594E30)
-    fn ig_remove_ped(ig: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x594E30 => unported;
+    pub(crate) fn ig_remove_ped(ig: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x594E30
+        => crate::world::misc2::interior_group_remove_ped;
     /// `InteriorGroup_c::UpdateOfficePeds()` (0x594E90)
-    fn ig_update_office_peds(ig: GPtr<u8>) = thiscall 0x594E90 => unported;
+    fn ig_update_office_peds(ig: GPtr<u8>) = thiscall 0x594E90
+        => crate::world::interior_group_setup::interior_group_update_office_peds;
     /// `Interior_c::Exit()` (0x592230)
     fn interior_exit(i: GPtr<u8>) = thiscall 0x592230 => unported;
     /// `CPathFind::RemoveInterior(uint32)` (0x44E1A0)
