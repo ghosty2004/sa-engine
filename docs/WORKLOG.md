@@ -3742,3 +3742,56 @@
   unported), CTrain::AddNearbyPedAsRandomPassenger 0x6F8170 (long, SEH frame, task creation), AddReplacementUpgrade
   0x6D3830 (VM fragment 0x408121), BladeColSectorList 0x6DAF00 (fragment 0x401589); CAM Process_WheelCam 0x512110,
   Process_Editor 0x50F3F0, the two-player cams 0x513510 / 0x513BE0 / 0x519810 / 0x525E50.
+
+## 2026-11-18 — FRONTIER-2 turn 12, lane B: plane guns, blade collisions, the wheel cam, replacement upgrades, the hunter / nitro scenarios (agent, branch worktree-agent-a6c11fd8492f5b4aa)
+- Base: lane B turn 11's head e6b4ee21. `tools/gen/inflight.py` checked first: no other branch registers any address
+  ported here.
+- Why the hydra / hunter runs never reached the weapon ports: CJ never got into the cheat heli (it spawns 12 m from
+  him, the `f` press finds no vehicle in range, the heli stays abandoned, status 4; the old heli scenario never flew
+  either), and the guns need VEHICLE_FIREWEAPON_ALT (left ctrl / pad insert, LeftShoulder1) held with ButtonCircle (the
+  left button) up: CPad::GetCarGunFired returns 2 only then. The old run held the left button throughout.
+- Batch `frontier2-b26` (VEH, 4 hooks), from the 1.0 US bytes (gta-reversed as reading aid):
+  - CVehicle::GetPlaneGunsPosition 0x6D4290: the gun dummy, else the model table (0x6D44C4 / 0x6D44EC, the Tornado's
+    static 0xC1CC2C); the Rustler (fragment 0x407A15's `cmp dx, 0x1DC`) adds (gunId - 1) * (0.2, 0, 0).
+  - CVehicle::DoPlaneGunFireFX 0x6D4AD0: the plane / heli gun flash arrays, "gunflash" systems, shell casing, light.
+  - CVehicle::FirePlaneGuns 0x6D4D30: shake frequencies 160 / 92 / 224 / 128 (gta-reversed 225 / 123); two-gun models
+    re-read the position with x negated for the second shot (gta-reversed reuses the first).
+  - CVehicle::BladeColSectorList 0x6DAF00 (entry `push -1; jmp 0x401589`, SEH frame not modelled): all six rotor types,
+    the ped push / run-over damage event / blood, the col points projected on the rotor plane, sparks, the automobile
+    rotor's soft collision / turn force / reversal, the damaged piece record, the rotor sound and 0xC1CC1C.
+  - Shared helpers: the gun dummy test and the player driver's pad (frontier_b2_veh2), the ped damage event
+    (mvpd_v5::ped_damage_event, with the drowning occupant); CPhysical::SetDamagedPieceRecord 0x5428C0 bound once in
+    sa-world.
+- Batch `frontier2-b27` (CAM, 1 hook): CCam::Process_WheelCam 0x512110 (docs/re/specs/CAM/CCam.md as reading aid): ped /
+  vehicle / heli-plane / boat / bike / train cases, the underwater blur (one helper with Process_AttachedCam), the roll,
+  the line of sight; .data tweak values read at run time; the sa-cam binding targets the port.
+- Batch `frontier2-b28` (VEH upgrades, 2 hooks): CVehicle::AddReplacementUpgrade 0x6D3830 (its VM fragment 0x408121
+  pushes RemoveObjectsCB 0x6D33B0 = `[0x15608C0] + [0x41FA94] + 1`, from the image) and CreateReplacementAtomic 0x6D3700
+  (revealed by it); the alpha render-callback tail shared with CreateUpgradeAtomic.
+- Protection: the no-CD code reads 0x6DAF02 (BladeColSectorList's entry jmp) with `adc eax, [0x6DAF02]` at 0x409AB1; the
+  reader joined sa-hook's keycells list (36c5a89b). Found by hooktest after a first verify-all `lb12-u` (DLL without it)
+  diverged on corpus-driving at frame 201 (stopped).
+- Divergence ledger: BladeColSectorList's rotor type 0 leaves the rotor-up locals uninitialised (0 in the port).
+- New scenarios (frontier.sh, frontier2-b12-counts.gdb): `hunter` (CJ put next to the Hunter before `f`, ctrl held alone,
+  then left button taps): FirePlaneGuns 217, GetPlaneGunsPosition 217, FireUnguidedMissile 10, GetPlaneWeaponFiringStatus
+  844, BladeColSectorList 4880 calls; blocks only on lane A's CWeapon::DoDriveByAutoAiming 0x73D720 (FireInstantHit of the
+  gun, so DoPlaneGunFireFX is not reached yet). `nitro` (the crossing Greenwood, SPEEDFREAK, left button held):
+  DoNitroEffect 796 calls, 0 blocked. Tow truck / harvester / RC bandit / water splash: no cheap set-up (no cheat spawns
+  them), not added.
+- frontier.py --no-branches: to port 108 -> 104 (VEH 4 -> 1, CAM 6 -> 5); no new rows (0x6D4290 / 0x6D4AD0 / 0x6D3700,
+  revealed, ported in the same batches).
+- Scenarios (i686 native sa-game of af634346, SA_ROOT=~/sa-engine; steps / blocked): pausemenu 416 / 0, solicit 4016 / 0,
+  crossing 1216 / 0, crossing-long 4016 / 0, melee 2616 / 0, sniper / shootcar / shootdriver / quad / heli / boat / cinema /
+  tanker / nitro 1216 / 0, roadblock-script 1016 / 0, gangwar 2016 / 0, jetpack 1016 / 0, roadblocks 2015 / 1 (lane C's
+  0x7CF240), roadblock-wanted 2015 / 1 (CObject::Explode 0x5A1340), plane 824 / 392 (lane C's 0x43E0E0), monster 1127 / 89
+  (ProcessColModels' disk path, lane A), tank 1215 / 1 (lane C's 0x4A0FA0), hunter 999 / 217 (lane A's 0x73D720); no
+  crash, 0 blocked on lane B.
+- verify-all (lanes 4-5, fresh release sa-oracle + satool): `lb12-u2` (SA_UNVERIFIED=frontier2-b26,frontier2-b27,frontier2-b28, DLL of
+  2f02835e = the final code) IDENTICAL 13/13; default set `lb12-def` (same DLL) IDENTICAL 13/13. The first `lb12-u` (DLL
+  without the keycell) was stopped after corpus-driving DIVERGED at frame 201.
+- Writer gate (base e6b4ee21, CARGO_TARGET_DIR=target/gate): a first run failed queue (regenerated) and hooktest (the 0x409AB1
+  protection reader); on 2f02835e (the last code / tools commit; only the roadmap and this worklog follow) all 16 steps
+  PASS, none skipped.
+- Resources: CARGO_BUILD_JOBS=4 / JOBS=4, one cargo build at a time; wine lanes 4-5.
+- Open (lane B): CTrain::AddNearbyPedAsRandomPassenger 0x6F8170; CAM Process_Editor 0x50F3F0 and the two-player cams
+  0x513510 / 0x513BE0 / 0x519810 / 0x525E50.
