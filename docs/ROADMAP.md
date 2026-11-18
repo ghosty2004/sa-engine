@@ -266,7 +266,6 @@ Sections: *pending* (blocks "done") · *original UB, not reproducible* · *accep
 - `CGeneral::LimitAngle` (0x53CB00) never returns for ±inf and |a| > 2^33 (2^33 itself returns, verifier V-3; `a - 360` rounds back to `a` under PC=24), so the game would hang. `limit_angle` panics there; `limit_angle_checked` returns `None` exactly for those inputs (L1-verified).
 - POP / HUD (FRONTIER-2 turn 11, the partial ports made whole): `CRoadBlocks::GenerateRoadBlockPedsForCar` (0x461170) with an offset index beyond its 12-entry stack table reads other locals of the original's frame; the port reads (0, 0, 0) (unreachable: the only writers of the vehicle's pair +0x4AD / count +0x4AE, 0x4623A7..0x462489, store 0..2 / 1..2). `CHud::DrawVehicleName` (0x58AEA0) with a state outside 0..=4 draws with its never-written alpha local (the caller's ECX, reserved by `push ecx`); the port uses 0 (no writer stores such a state). `CPopulation::AddPed` (0x612710) with a type < 4, 21 or > 31 uses its `makeWander` slot as the ped and faults on it, as the port does with the slot's dword (Rust callers pass it zero-extended).
 - SCRIPT (FRONTIER-2 turn 11): 0503 CREATE_SWAT_ROPE (ProcessCommands1200To1299 case 0x48C863) passes `ClearSpaceForMissionEntity` a stack vector the case never writes (`[esp+0x6C]`, residue of earlier calls); the port passes (0, 0, 0).
-<<<<<<< HEAD
 - VEH (FRONTIER-2 turn 10 lane B): `CCarEnterExit::GetNearestCarPassengerDoor` (0x650BB0) writes its door 8 position slot
   to `*outPos` even when no door was tried (uninitialised stack in the original; the port's frame model reads 0 there,
   only when it returns false). `CAutomobile::TankControl` (0x6AE850) without the turret node (+0x6A0) computes the
@@ -281,11 +280,9 @@ Sections: *pending* (blocks "done") · *original UB, not reproducible* · *accep
   (`winmain::skip_idle_spin_when_unlimited`), so the unchanged port's first test passes and it stores the real value as
   always. Applies only with the limiter off and outside the deterministic mode (`--fixed-step`); with the limiter on
   (the default) the rule runs 1:1, and phase A (sa-hook in the original exe, verify-all) is untouched.
-=======
 - STREAM (FRONTIER-2 turn 13): `CFileLoader::LoadPedPathNode` (0x5B41F0) passes the attached-node store
   `CPathFind::StoreNodeInfoPed` (0x44D2D0) a `last != 0` byte pushed as ECX with `setne cl`, ECX's upper bytes being
   whatever `sscanf` left there; the port passes 0 in them. The store is an empty `ret 0x30`, so nothing reads the word.
->>>>>>> 6f0a1e7 (docs(worklog): record FRONTIER-2 turn 13 lane A)
 
 ## Waiting for the user
 - Human playthrough recordings of the missions (PLAN §6.1) are needed for F4. Not needed before M17. The
