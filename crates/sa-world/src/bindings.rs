@@ -1474,6 +1474,11 @@ orig! {
 }
 
 orig! {
+    /// `CCamera::FindCamFOV` (0x50AD20)
+    pub fn camera_find_cam_fov(cam: GPtr<u8>) -> sa_math::x87::X87 = reg("args = ecx") 0x50AD20 => unported;
+}
+
+orig! {
     /// `CCamera::GetFading` (0x50ADE0)
     pub fn camera_get_fading(this: GPtr<u8>) -> u8 = thiscall 0x50ADE0 => unported;
 }

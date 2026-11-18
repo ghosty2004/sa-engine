@@ -2157,6 +2157,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x50A970,sa-world,cam_shake_no_pos,cdecl,,cam:GPtr<u8>;strength:f32,,unported,CCamera::CamShakeNoPos,
 0x50A9F0,sa-world,cam_shake,thiscall,,cam:GPtr<u8>;strength:f32;px:f32;py:f32;pz:f32,,unported,CCamera::CamShake,
 0x50AB10,sa-world,camera_clear_player_weapon_mode,thiscall,,c:GPtr<u8>,,unported,CCamera::ClearPlayerWeaponMode,sa_cam::camera::clear_player_weapon_mode
+0x50AD20,sa-world,camera_find_cam_fov,thiscall,,cam:GPtr<u8>,sa_math::x87::X87,unported,CCamera::FindCamFOV,sa_cam::camera::find_cam_fov
 0x50ADE0,sa-world,camera_get_fading,thiscall,,this:GPtr<u8>,u8,unported,CCamera::GetFading,
 0x50AE50,sa-world,camera_get_game_cam_position,thiscall,,c:GPtr<u8>,GPtr<u8>,unported,CCamera::GetGameCamPosition,
 0x50AE90,sa-world,camera_get_look_direction,thiscall,,c:GPtr<u8>,i32,unported,CCamera::GetLookDirection,

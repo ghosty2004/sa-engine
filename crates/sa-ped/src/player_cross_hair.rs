@@ -7,7 +7,7 @@
 
 use sa_core::mem::GPtr;
 use sa_core::abi::HookReg;
-use sa_core::{hook, orig};
+use sa_core::hook;
 
 use crate::common::*;
 
@@ -17,10 +17,7 @@ use sa_world::bindings::pad_get_steering_left_right;
 use sa_world::bindings::pad_get_steering_up_down;
 use sa_world::bindings::fire_instant_hit as weapon_fire_instant_hit;
 use sa_world::bindings::weapon_ctor;
-orig! {
-    /// `CCamera::FindCamFOV()` (0x50AD20, ST0)
-    fn camera_find_cam_fov(cam: GPtr<u8>) -> f64 = thiscall 0x50AD20 => unported;
-}
+use sa_world::bindings::camera_find_cam_fov;
 
 /// `CTimer::ms_fTimeStep` (0xB7CB5C)
 const TIME_STEP: usize = 0xB7CB5C;
@@ -91,14 +88,14 @@ pub fn player_cross_hair_process(this: GPtr<u8>, player: i32, pad: GPtr<u8>) {
     }
     let cam: GPtr<u8> = GPtr::from_addr(THE_CAMERA);
     camera_cam_shake_no_pos(cam, f32::from_bits(0x3E4C_CCCD));
-    let a = X87::from_f64_exact(camera_find_cam_fov(cam)).fmul_m(kf(K_FOV));
+    let a = camera_find_cam_fov(cam).fmul_m(kf(K_FOV));
     let t = tan(a).fdiv_m(kf(ASPECT)).fmul_m(rd::<f32>(this, 8));
     let u = [
         x(kf(CAM_UP)).fmul(t).to_f32(),
         x(kf(CAM_UP + 4)).fmul(t).to_f32(),
         x(kf(CAM_UP + 8)).fmul(t).to_f32(),
     ];
-    let a2 = X87::from_f64_exact(camera_find_cam_fov(cam)).fmul_m(kf(K_FOV));
+    let a2 = camera_find_cam_fov(cam).fmul_m(kf(K_FOV));
     let cx = x(rd::<f32>(this, 4));
     let r0 = x(kf(CAM_RIGHT)).fmul(cx).to_f32();
     let r1 = x(kf(CAM_RIGHT + 4)).fmul(cx).to_f32();

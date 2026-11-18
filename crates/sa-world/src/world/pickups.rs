@@ -434,19 +434,100 @@ pub fn remove(this: GPtr<u8>) {
 #[hook(addr = 0x456450, conv = cdecl, name = "CPickups::TestForPickupsInBubble", expect = "83 EC 1C B9 D2 88 97 00")]
 pub fn test_for_pickups_in_bubble(px: f32, py: f32, pz: f32, radius: f32) -> u8 {
     for i in 0..NUM_PICKUPS as u32 {
-        let p = pickup(i);
-        let c = |o: isize| xi(i32::from(rd::<i16>(p, o))).fmul_m(F1_8);
-        let (cx, cy) = (c(0x10), c(0x12));
-        let cz = c(0x14).to_f32();
-        let dxf = cx.fsub_m(px).to_f32();
-        let b = cy.fsub_m(py);
-        let cc = x(cz).fsub_m(pz);
-        let d = cc.fmul(cc).fadd(b.fmul(b)).fadd(x(dxf).fmul_m(dxf)).fsqrt();
+        let d = pickup_distance(pickup(i), [px, py, pz]);
         if !d.fcom(x(radius)).test_parity(0x05) {
             return 1;
         }
     }
     0
+}
+
+/// The inlined `DistanceBetweenPoints(GetPosn(), q)` of the pickup loops: the position words times 0.125
+/// (x87), `dx` stored f32, `sqrt((dz*dz + dy*dy) + dx*dx)` with `dz` from the stored f32 z.
+fn pickup_distance(p: GPtr<u8>, q: [f32; 3]) -> X87 {
+    let c = |o: isize| xi(i32::from(rd::<i16>(p, o))).fmul_m(F1_8);
+    let (cx, cy) = (c(0x10), c(0x12));
+    let cz = c(0x14).to_f32();
+    let dxf = cx.fsub_m(q[0]).to_f32();
+    let b = cy.fsub_m(q[1]);
+    let cc = x(cz).fsub_m(q[2]);
+    cc.fmul(cc).fadd(b.fmul(b)).fadd(x(dxf).fmul_m(dxf)).fsqrt()
+}
+
+use crate::bindings::{
+    camera_find_cam_fov, camera_is_sphere_visible_m, garages_trigger_message, get_stat_value, stats_increment_stat,
+};
+use sa_core::bindings::audio_report_frontend_event;
+
+/// `TheCamera` (0xB6F028), its view matrix (0xB6FA74), mirror matrix (0xB6FABC) and mirror flag (0xB6F998);
+/// `CWorld::Players[0].m_nMoney` (0xB7CE50), `CWorld::PlayerInFocus` (0xB7CD74, players 0x190 apart);
+/// `AudioEngine` (0xB6BC90).
+const THE_CAMERA: usize = 0xB6_F028;
+const CAM_VIEW_MATRIX: usize = 0xB6_FA74;
+const CAM_MIRROR_MATRIX: usize = 0xB6_FABC;
+const CAM_MIRROR_ACTIVE: usize = 0xB6_F998;
+const PLAYER0_MONEY: usize = 0xB7_CE50;
+const PLAYER_IN_FOCUS: usize = 0xB7_CD74;
+const AUDIO_ENGINE: usize = 0xB6_BC90;
+
+/// `CPickups::PictureTaken()` (0x456A70, cdecl). Of the snapshot pickups (type 20) with
+/// `90 / FindCamFOV() * 20 > d` (`d` the [`pickup_distance`] from the camera position, stored f32) whose
+/// position is visible (`IsSphereVisible(pos, 0.2, view matrix)`, or with the mirror active through the mirror
+/// matrix), the nearest (strict `d < best`, best from 999999.88; the visibility is tested before the distance)
+/// is taken: `CPickup::Remove` (inlined in the original, same order), player 0's money + 100 (gta-reversed:
+/// 100000), the frontend event 13, stat 0xE7 + 1. When stat 0xE7 then equals stat 0xE8: "SN_ALL" (0x859B7C)
+/// and + 100000 to the player in focus; else "SN_ONE" (0x859B74) with `ftol(0xE7)`, 5000, `ftol(0xE8)`.
+#[hook(addr = 0x456A70, conv = cdecl, name = "CPickups::PictureTaken", expect = "83 EC 30 55 56 57",
+       unverified = "frontier2-a26", route = "L2", hazards = "heap-writes",
+       note = "removes the photographed snapshot pickup (object deleted), money and stats")]
+pub fn picture_taken() {
+    let mut best_d = f32::from_bits(0x4974_23FE);
+    let mut best: i32 = -1;
+    for i in 0..NUM_PICKUPS as u32 {
+        let p = pickup(i);
+        if rd::<u8>(p, 0x1C) != 0x14 {
+            continue;
+        }
+        let cp = super::common::cam_pos();
+        let d = pickup_distance(p, [cp.read(), cp.byte_add(4).read(), cp.byte_add(8).read()]).to_f32();
+        let fov = camera_find_cam_fov(GPtr::from_addr(THE_CAMERA));
+        let lim = fov.fdivr_m(g::<f32>(0x85_991C).read()).fmul_m(g::<f32>(0x85_8BA4).read());
+        if lim.fcom(x(d)).test_any(0x41) {
+            continue;
+        }
+        let c = |o: isize| xi(i32::from(rd::<i16>(p, o))).fmul_m(F1_8).to_f32();
+        let mut pos = [c(0x10), c(0x12), c(0x14)];
+        let pp = GPtr::from_raw(pos.as_mut_ptr()).cast::<u8>();
+        let r = f32::from_bits(0x3E4C_CCCD);
+        let seen = camera_is_sphere_visible_m(GPtr::from_addr(THE_CAMERA), pp, r, GPtr::from_addr(CAM_VIEW_MATRIX)) != 0
+            || (g::<u8>(CAM_MIRROR_ACTIVE).read() != 0
+                && camera_is_sphere_visible_m(GPtr::from_addr(THE_CAMERA), pp, r, GPtr::from_addr(CAM_MIRROR_MATRIX))
+                    != 0);
+        if !seen || x(d).fcom(x(best_d)).test_parity(0x05) {
+            continue;
+        }
+        best = i as i32;
+        best_d = d;
+    }
+    if best < 0 {
+        return;
+    }
+    remove(pickup(best as u32));
+    let money = g::<i32>(PLAYER0_MONEY);
+    money.write(money.read().wrapping_add(100));
+    audio_report_frontend_event(GPtr::from_addr(AUDIO_ENGINE), 0xD, 0.0, 1.0);
+    stats_increment_stat(0xE7, 1.0);
+    let taken = X87::from_f64_exact(get_stat_value(0xE7)).to_f32();
+    let total = X87::from_f64_exact(get_stat_value(0xE8));
+    if !total.fcom(x(taken)).test_parity(0x44) {
+        garages_trigger_message(0x85_9B7C, -1, 5000, -1);
+        let m = g::<i32>(PLAYER0_MONEY + 0x190 * usize::from(g::<u8>(PLAYER_IN_FOCUS).read()));
+        m.write(m.read().wrapping_add(100_000));
+    } else {
+        let n2 = ftol32(X87::from_f64_exact(get_stat_value(0xE8)));
+        let n1 = ftol32(X87::from_f64_exact(get_stat_value(0xE7)));
+        garages_trigger_message(0x85_9B74, n1, 5000, n2);
+    }
 }
 
 /// `CPickups::GetNewUniquePickupIndex(int32 index)` (0x456A30): reference + 1 (wrapping to 1 from
@@ -853,4 +934,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_GET_NEW_UNIQUE_PICKUP_INDEX,
     HOOK_REMOVE_MISSION_PICK_UPS,
     HOOK_REMOVE_PICK_UP,
+    HOOK_PICTURE_TAKEN,
 ];

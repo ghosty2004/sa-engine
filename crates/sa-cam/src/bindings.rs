@@ -69,6 +69,11 @@ orig! {
 }
 
 orig! {
+    /// `CCamera::FindCamFOV` (0x50AD20)
+    pub fn camera_find_cam_fov(cam: GPtr<u8>) -> sa_math::x87::X87 = reg("args = ecx") 0x50AD20 => crate::camera::find_cam_fov;
+}
+
+orig! {
     /// `CCamera::GetArrPosForVehicleType` (0x50AF00)
     pub fn cc_get_arr_pos(this: GPtr<u8>, kind: i32, out: GPtr<i32>) -> u8 = thiscall 0x50AF00 => crate::camctl::get_arr_pos_for_vehicle_type;
 }
