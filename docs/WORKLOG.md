@@ -3795,3 +3795,70 @@
 - Resources: CARGO_BUILD_JOBS=4 / JOBS=4, one cargo build at a time; wine lanes 4-5.
 - Open (lane B): CTrain::AddNearbyPedAsRandomPassenger 0x6F8170; CAM Process_Editor 0x50F3F0 and the two-player cams
   0x513510 / 0x513BE0 / 0x519810 / 0x525E50.
+## 2026-11-18 — FRONTIER-2 turn 11 lane C: post effects, glass panes, sprites, mirrors, sand storm, the JPEG screenshot path, batches c20 / c21 (agent, branch worktree-agent-a0955e0f131af9578)
+- Base: lane C turn 10 head 6703b038. Every port address checked against `tools/gen/inflight.py` first (no RW /
+  RENDER address in flight).
+- Batch frontier2-c20 (RENDER, 13 hooks), from the 1.0 US bytes:
+  - `posteffects_filters.rs`: CPostEffects::Fog 0x704150 (the radius follows the player's speed; twenty quads at
+    `(36 i + angle)` degrees, the angle kept on the x87 stack for fsin / fcos), InfraredVision 0x703F80 (the colour
+    bytes passed as the dwords the original pushes, two of them reaching into the second argument; the loop counter
+    lives in the first argument slot) and its tail call SetFilterMainColour 0x703520 (new row), Grain 0x7037C0 (with
+    the first `srand(time + ms)` gta-reversed drops; the CRT `time()` 0x824106 got a sa-core binding and a sa-game
+    CRT table entry, the host's UTC seconds, like `_strdate`). RwIm2DRenderIndexedPrimitive's slot binding in
+    mvpd_r3 is shared.
+  - CShadows::StoreShadowToBeRendered-Type 0x707930 (`shadows_store.rs`; jump table 0x707B20; sa-script's binding
+    targets it).
+  - CSprite::RenderBufferedOneXLUSprite_Rotate_Aspect 0x70E780 (`mvpd_r5.rs`; k4 = c - s stays on the stack): the
+    buffered-sprite tail of `_Rotate_Dimension` became one helper, `buffer_sprite`, used by both.
+  - CMirrors::BuildCameraMatrixForScreens 0x7266B0 (byte table 0x7268D0: 0..3 pan, 10..13 fixed, 22..25 tilt, the
+    rest the z turn) and CMirrors::BuildCamMatrix 0x723150 (new row; writes (0, 0, 1) and the cross products into its
+    own argument slots).
+  - CSprite2d::DrawCircleAtNearClip 0x727D60 (the sine-table fan; step and loop index written over its own pos /
+    colour argument slots; sa-hud's binding targets it).
+  - CWeather::AddSandStormParticles 0x72A820: AddRain's camera-ahead wind particle tail became one helper,
+    `add_wind_particle`, used by both (wind x 15 / x 25).
+  - CFallingGlassPane::Update 0x71AA10 and Render 0x71B100 (`glass.rs`), Fx_c::AddGlass 0x49F970 (new row,
+    `fx_add_glass.rs`; its entry is a SecuROM fragment 0x4015E5 that only loads `TheCamera.m_matrix`: `~[0x156065C] ^
+    [0x546FF1]` = 0xB6F03C, decoded statically; the hook's pattern covers the instruction after the jmp so sa-hook
+    treats it as an inline entry, fa28eca1).
+- Batch frontier2-c21 (JPEG plugin, 2 hooks, `jpeg_plugin.rs`): JPegCompressScreen 0x5D0470 and
+  JPegCompressScreenToFile 0x5D0820.
+  - libjpeg classification: the project excludes statically linked third-party libraries
+    (tools/catalog/classify_unknowns.py THIRD_PARTY: d3dx9, libpng 1.0.12 + zlib 1.1.3, QuickTime; subsystems X-*,
+    state `excluded`, never ported, like the CRT). IJG libjpeg 6b (0x5C26B0-0x5D0260, JPEG_LIB_VERSION 62) was
+    identified by RE-SPEC-UNK and proposed as `excluded:thirdparty:libjpeg-6b` (catalog/unk-classification-proposal.csv,
+    194 rows, high confidence; docs/re/specs/RW/_unk-M.md), but the proposal was never applied: its rows are still
+    UNK-game in catalog/procedures.csv. Treated as out of scope like libpng: the ports call the seven entry points they
+    reach (jpeg_std_error 0x5CD810, jpeg_CreateCompress 0x5CF960, jpeg_set_defaults 0x5C7590, jpeg_start_compress
+    0x5C26B0, jpeg_write_scanlines 0x5C2730, jpeg_finish_compress 0x5CFAC0, jpeg_destroy_compress 0x5CFA30) through
+    `orig!` declarations. They show as 7 UNK-game rows on frontier.py until the catalogue applies the class (a
+    `('libjpeg-6b', 0x5C26B0, 0x5D0260, r'JPEGMEM')` THIRD_PARTY entry and run_all.sh, which needs the Ghidra project;
+    patterns.py generates bodies for 0x5CF800 / 0x5CF820 / 0x5D0260 in that range, to be rechecked then). Natively the
+    photo path stops at jpeg_std_error (no scenario takes a photo).
+- New scenario `postfx` (frontier.sh): the sand storm cheat CWJXUOC, then the fog / infrared / grain flags poked every
+  10 iterations from 300 (the infrared light calls run every frame in its report).
+- Gates: writer gate (base 6703b038) all PASS on fa28eca1 (hooks: 15 new, all unverified, batches frontier2-c20 /
+  c21); a first run on 067aae34 failed clippy (a redundant cast) and sa-hook's table test (AddGlass's five-byte
+  pattern read as a .HOODLUM stub), both fixed in fa28eca1; re-run on the final head (Grain's rand / srand site
+  fixes and docs after fa28eca1): see the end of this entry.
+- Scenarios (frontier.sh, i686 native sa-game of 067aae34 (fa28eca1 changes only a hook pattern and a cast),
+  SA_ROOT=~/sa-engine; target/lc11/scen): postfx 1016 / 0 blocked, pausemenu 416 / 0, solicit 4016 / 0, crossing
+  1216 / 0, crossing-long 4016 / 0, roadblocks 2016 / 0, melee 2616 / 0, sniper / shootcar / shootdriver 1216 / 0,
+  quad / heli / plane / boat 1216 / 0, roadblock-script 1016 / 0, gangwar 2016 / 0, jetpack 1016 / 0,
+  roadblock-wanted 2015 / 1 (CObject::Explode 0x5A1340, lane A's); no crash.
+- frontier.py --no-branches: "to port" 122 -> 118 (RENDER 16 -> 6, RW 26 -> 25; new rows: the 7 libjpeg entry
+  points above, UNK-game; 0x703520 / 0x723150 / 0x49F970 were revealed and ported in the same batch).
+- verify-all (lanes 6-7, host sa-oracle and satool rebuilt; lanes shared by flock with lanes A / B): `lanec11-c2021b`
+  (SA_UNVERIFIED=frontier2-c20,frontier2-c21; DLL of fa28eca1, sha256 8a5e7e6b…) IDENTICAL on 12 of 13, world-cheats
+  DIVERGED at frame 1521 in randcalls only (rand state identical): CPostEffects::Grain's refill (the rain grain) drew
+  rand and reseeded srand without the original call sites, and the trace hashes both by caller; fixed in b5828888 /
+  38d19fea (rand_at 0x703857, at_site for the three srand). `lanec11-c2021d` (same batches, DLL of 38d19fea, sha256
+  88aebff9…) world-cheats IDENTICAL; the other 12 recordings never run Grain (any unattributed call there would have
+  changed randcalls), so the batches are IDENTICAL 13/13 on the final code. `lanec11-defaultb` (default set; DLL of
+  fa28eca1, the later commits only change an unverified hook) IDENTICAL 13/13. (An early `lanec11-c20a` run and a
+  `lanec11-c2021` run with a stale host sa-oracle were stopped.)
+- Open (lane C): RENDER CGlass::CarWindscreenShatters 0x71C2B0 (read, 0x8C0 bytes), Fx_c::AddWheelSpray 0x49FB30,
+  CPostEffects::Radiosity 0x702080, the water triangle layer 0x6E8780 / SplitWaterTriangleAlongYLine 0x6EE5A0,
+  CWaterLevel::AddWaterLevelQuad 0x6E7EF0 (the peek model of the 1 / 3-vertex overflow); all RW rows (MatFX 0x810830 /
+  0x812AC0 / 0x812D40 / 0x813A10 / 0x814460, skin 0x7C8060 / 0x7C9DA0 / 0x7CA410 / 0x7CA850, the image / raster
+  helpers, 0x75A960, 0x763F20 / 0x7641C0, 0x7CF600, 0x81F360, 0x74A880 with 0x74CED0); the libjpeg catalogue class.
