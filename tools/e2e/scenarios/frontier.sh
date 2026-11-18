@@ -2,7 +2,7 @@
 # FRONTIER-1 scenarios: native sa-game runs (deterministic, --fixed-step 40, offscreen) that reach the blockers the
 # user hit. Each must end with an empty blocker list in OUT/report.md and no crash.
 #
-#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hunter|nitro|postfx|shotgun|flamer|driveby|escalator|replay OUTDIR [FRAMES]
+#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hunter|nitro|postfx|shotgun|flamer|driveby|escalator|replay|interior|streammem OUTDIR [FRAMES]
 #
 # pausemenu (400)  Esc, down x3, Enter (pause-menu item 4: Stats), down, Enter, Enter: the Stats pages draw
 #                  (was a SIGSEGV at iteration ~171: CStats::GetStatValue's X87 result dispatched as cdecl)
@@ -83,6 +83,15 @@
 #                  frame's PlayBackThisFrame / PlayBackThisFrameInterpolation with the replay cameras, and
 #                  FinishPlayback / RestoreStuffFromMem when the buffers run out near iteration 1770
 #                  (frontier2-b31-counts.gdb / frontier2-b32-counts.gdb count them)
+# interior (1200)  CJ put inside the VGSHS2 burglary house (interior 15, the enex exit at 328.5, 1480.6, 1083.5) with
+#                  his area and the current area poked to 15: the interior manager sees the house shell's interior
+#                  effects (gen_int2.ide model 14700: a bedroom, a kitchen and a lounge) and furnishes them
+#                  (Interior_c::Init, FurnishBedroom 0x593FC0, FurnishKitchen / Kitchen_FurnishEdges 0x596930,
+#                  FurnishLounge 0x597740 with Lounge_AddTV / AddSofaInfo); then walks through the rooms
+# streammem (1200) the cinema run's Greenwood driven along Grove Street with CStreaming::ms_memoryAvailable (0x8A5A80)
+#                  poked to 8 MB every 10 iterations: MakeSpaceFor runs out of least-used models and calls
+#                  CStreaming::DeleteRwObjectsBehindCamera 0x40D7C0
+# WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-b35-counts.gdb --args" counts the interior and streaming calls.
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-b10-counts.gdb --args" counts the turn 10 lane B ports' calls
 # (monster: SetupSuspensionLines 1, ProcessSuspension 282; tanker: TankerCheat 1, UpdateTrailerLink 1996,
 # UpdateTractorLink 1498; tank: TankControl 998).
@@ -316,7 +325,20 @@ replay)
     export SA_GAME_TELEPORT="60:2505.0:-1666.4:13.4"
     export SA_GAME_KEYS="f:100:103,w:330:700,a:500:540,w:760:850,d:780:820,f1:900:903"
     run "${3:-2400}" --start-in-world ;;
+interior)
+    export SA_GAME_SCRIPT_SKIP=1
+    t=; for i in 60 100 140 180; do t="$t${t:+;}$i:328.5:1480.6:1083.5:0.0"; done
+    export SA_GAME_TELEPORT="$t"
+    p=; for i in 50 60 100 140 180; do p="$p${p:+;}$i:[0xB7CD98]+0x2F:15:1;$i:0xB72914:15"; done
+    export SA_GAME_POKE="$p" SA_GAME_KEYS="w:400:470,a:500:540,w:560:640,d:700:760,w:800:900"
+    run "${3:-1200}" --start-in-world ;;
+streammem)
+    export SA_GAME_TELEPORT="60:2505.0:-1666.4:13.4"
+    export SA_GAME_KEYS="f:100:103,w:330:700,a:500:540,w:760:1150,d:900:940"
+    p=; i=200; while [ $i -le "${3:-1200}" ]; do p="$p${p:+;}$i:0x8A5A80:0x800000"; i=$((i + 10)); done
+    export SA_GAME_POKE="$p"
+    run "${3:-1200}" --start-in-world ;;
 *)
-    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hunter|nitro|postfx|shotgun|flamer|driveby|escalator|replay OUTDIR [FRAMES]" >&2
+    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hunter|nitro|postfx|shotgun|flamer|driveby|escalator|replay|interior|streammem OUTDIR [FRAMES]" >&2
     exit 2 ;;
 esac
