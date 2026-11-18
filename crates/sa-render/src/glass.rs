@@ -6,7 +6,7 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
 use crate::common::{ftol32, g, jne, jp, k, rd, wr, x};
-use sa_core::bindings::{cross_product, vector_normalise};
+use sa_core::bindings::{cross_product, matrix_mul_vec, vector_normalise};
 use sa_core::crt::rand_at;
 use sa_math::fpu::xi;
 use sa_math::x87::X87;
@@ -59,7 +59,7 @@ orig! {
     /// `CFallingGlassPane::Update()` (0x71AA10)
     pub fn pane_update(this: GPtr<u8>) = thiscall 0x71AA10 => pane_update_port;
     /// `CFallingGlassPane::Render()` (0x71B100)
-    pub fn pane_render(this: GPtr<u8>) = thiscall 0x71B100 => unported;
+    pub fn pane_render(this: GPtr<u8>) = thiscall 0x71B100 => pane_render_port;
     /// `CGlass::RenderHiLightPolys()` (0x71ADA0)
     pub fn call_render_hilight_polys() = cdecl 0x71ADA0 => render_hilight_polys;
     /// `CGlass::RenderShatteredPolys()` (0x71AE30)
@@ -645,6 +645,107 @@ pub fn pane_update_port(this: GPtr<u8>) {
     }
 }
 
+/// `CFallingGlassPane::Render()` (0x71B100, thiscall). `dist` = the camera's distance to the pane (`sqrt((dz² + dy²)
+/// + dx²)`, f32). The hi-light triangle: alpha = `ftol(clamp(now - start, 0, 500) * 0.002 * CalcAlphaWithNormal(
+/// normalised forward))` (at least 0x40 for a car pane), the hi-light buffers flushed first when full (indices >=
+/// 0x7F9 or vertices >= 0x3FC); its three vertices at `matrix * (corner - centre)` of the pane type's
+/// `PanePolyPositions` (+0x6C; the 2D offsets as `(x, 0, y)`), uv (0.5, 0.5), (0.5, 0.6), (0.6, 0.6), indices `c,
+/// c+1, c+2, c, c+2, c+1`. With +0x6E set also a shatter triangle at the same corners (buffers flushed at 0xBF9 /
+/// 0x5FC), alpha 140 or `ftol((1 - (dist - 30) * 0.1) * 140)` beyond 30, uv = corner * size (+0x68) * 4, indices
+/// relative to vertex 0x400.
+#[hook(addr = 0x71B100, conv = thiscall, name = "CFallingGlassPane::Render", this = "CFallingGlassPane",
+       expect = "83 EC 50 A1 3C F0 B6 00", unverified = "frontier2-c20", route = "L2", hazards = "none")]
+pub fn pane_render_port(this: GPtr<u8>) {
+    let (px, py, pz) = (rd::<f32>(this, 0x30), rd::<f32>(this, 0x34), rd::<f32>(this, 0x38));
+    let cm = g::<GPtr<u8>>(0xB6_F03C).read();
+    let cam = if cm.is_null() { g::<u8>(0xB6_F02C) } else { cm.byte_add(0x30) };
+    let dx = x(px).fsubr_m(rd::<f32>(cam, 0));
+    let dy = x(rd::<f32>(cam, 4)).fsub_m(py);
+    let dz = x(rd::<f32>(cam, 8)).fsub_m(pz);
+    let dist = dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx)).fsqrt().to_f32();
+    let mut n = [rd::<u32>(this, 0x10), rd::<u32>(this, 0x14), rd::<u32>(this, 0x18)];
+    let np = sa_core::field::ptr_of(&mut n);
+    vector_normalise(np.cast());
+    let alpha = calc_alpha_with_normal(np.cast()) as u8;
+    let d = g::<u32>(0xB7_CB84).read().wrapping_sub(rd::<u32>(this, 0x60)) as i32;
+    let d = if d > 500 { 500 } else { d.max(0) };
+    let mut a = ftol32(xi(d).fmul_m(k(0x3B03_126F)).fmul(xi(i32::from(alpha)))) as u8;
+    if POLY_INDICES.get()[5] >= 0x7F9 || POLY_INDICES.get()[4] >= 0x3FC {
+        render_hilight_polys();
+    }
+    if rd::<u8>(this, 0x6F) != 0 && a < 0x40 {
+        a = 0x40;
+    }
+    let vi = POLY_INDICES.get()[4];
+    let vb = g::<u8>(TEMP_VERTICES).byte_add(vi as isize * 0x24);
+    let col = u32::from_le_bytes([a; 4]);
+    for (i, (u, v)) in [(0x3F00_0000u32, 0x3F00_0000u32), (0x3F00_0000, 0x3F19_999A), (0x3F19_999A, 0x3F19_999A)].into_iter().enumerate() {
+        let e = vb.byte_add(i as isize * 0x24);
+        wr::<u32>(e, 0x18, col);
+        wr::<u32>(e, 0x1C, u);
+        wr::<u32>(e, 0x20, v);
+    }
+    let ty = rd::<u8>(this, 0x6C) as usize;
+    let corner = |c: usize, o: usize| g::<f32>(PANE_POLY_POSITIONS + ty * 0x18 + c * 8 + o).read();
+    let mut vs = [[0u32; 3]; 3];
+    for (c, out) in vs.iter_mut().enumerate() {
+        let ox = x(corner(c, 0)).fsub_m(PANE_POLY_CENTER_POSITIONS.get()[ty * 2]).to_f32();
+        let oy = x(corner(c, 4)).fsub_m(PANE_POLY_CENTER_POSITIONS.get()[ty * 2 + 1]).to_f32();
+        let mut off = [ox.to_bits(), 0, oy.to_bits()];
+        let mut res = [0u32; 3];
+        let r = matrix_mul_vec(sa_core::field::ptr_of(&mut res), this, sa_core::field::ptr_of(&mut off));
+        *out = [rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8)];
+    }
+    let put = |vb: GPtr<u8>| {
+        for (i, v) in vs.iter().enumerate() {
+            for (j, w) in v.iter().enumerate() {
+                wr::<u32>(vb, i as isize * 0x24 + j as isize * 4, *w);
+            }
+        }
+    };
+    put(vb);
+    let ii = POLY_INDICES.get()[5];
+    let c = vi as u16;
+    for (j, w) in [c, c + 1, c + 2, c, c + 2, c + 1].into_iter().enumerate() {
+        g::<u16>(TEMP_INDICES + (ii as usize + j) * 2).write(w);
+    }
+    set_poly_index(5, ii + 6);
+    set_poly_index(4, vi + 3);
+    if rd::<u8>(this, 0x6E) == 0 {
+        return;
+    }
+    if POLY_INDICES.get()[3] >= 0xBF9 || POLY_INDICES.get()[2] >= 0x5FC {
+        render_shattered_polys();
+    }
+    let (si, sv) = (POLY_INDICES.get()[3], POLY_INDICES.get()[2]);
+    let a = if x(dist).fcom(x(k(0x41F0_0000))).test_any(0x41) {
+        0x8C
+    } else {
+        ftol32(x(dist).fsub_m(k(0x41F0_0000)).fmul_m(k(0x3DCC_CCCD)).fsubr_m(k(0x3F80_0000)).fmul_m(k(0x430C_0000))) as u8
+    };
+    let vb = g::<u8>(TEMP_VERTICES).byte_add(sv as isize * 0x24);
+    let col = u32::from_le_bytes([a; 4]);
+    let size = rd::<f32>(this, 0x68);
+    for i in 0..3 {
+        let e = vb.byte_add(i as isize * 0x24);
+        wr::<u32>(e, 0x18, col);
+        wr::<f32>(e, 0x1C, x(corner(i, 0)).fmul_m(size).fmul_m(k(0x4080_0000)).to_f32());
+        wr::<f32>(e, 0x20, x(corner(i, 4)).fmul_m(size).fmul_m(k(0x4080_0000)).to_f32());
+    }
+    put(vb);
+    let c = sv.wrapping_sub(0x400) as u16;
+    for (j, w) in [c, c + 1, c + 2, c, c + 2, c + 1].into_iter().enumerate() {
+        g::<u16>(TEMP_INDICES + (si as usize + j) * 2).write(w);
+    }
+    set_poly_index(3, si + 6);
+    set_poly_index(2, sv + 3);
+}
+
+/// Writes one of `CGlass`'s six buffer indices (`POLY_INDICES`).
+fn set_poly_index(i: usize, v: u32) {
+    POLY_INDICES.ptr().cast::<u32>().wrapping_index(i as i32).write(v);
+}
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_IS_OBJECT_GLASS,
     HOOK_INIT,
@@ -664,4 +765,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_INIT_GLASS_PANES,
     HOOK_DTOR_GLASS_PANES,
     HOOK_PANE_UPDATE_PORT,
+    HOOK_PANE_RENDER_PORT,
 ];
