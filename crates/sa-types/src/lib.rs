@@ -6,6 +6,7 @@ pub mod error;
 pub mod input;
 pub mod ped;
 pub mod script;
+pub mod text;
 pub mod vehicle;
 mod values;
 

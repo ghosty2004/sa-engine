@@ -8,23 +8,24 @@ use std::rc::Rc;
 use sa_access::View;
 use sa_mod_api::state::{CameraInfo, MatrixInfo, PadInfo, PedInfo, PlayerInfo, VehicleInfo, Words, WorldInfo, to_bytes};
 use sa_mod_api::{
-    Call, IMPORTS, MAX_FILE, Permission, VIDEO_MODE_MAX, VIDEO_MODE_MIN, Val, event, hook, net, script, status, storage,
-    valid_file_name,
+    Call, IMPORTS, MAX_FILE, Permission, VIDEO_MODE_MAX, VIDEO_MODE_MIN, Val, event, hook, image, net, script, status,
+    storage, valid_file_name,
 };
-use sa_platform::gpu::OverlayRect;
+use sa_platform::gpu::OverlayQuad;
 use sa_types::script::{Opcode, ScriptArg, ScriptLocals};
 use sa_types::{EntityRef, GameError, GameOption, GameResult, ModelId, ObjectRef, PedRef, Vec3, VehicleRef, WeaponType};
 
 use crate::ModSource;
 use crate::approval::Approvals;
+use crate::images::{self, CreateError, Images};
 use crate::manifest::{NetRule, Permissions, split_target};
 use crate::net::{LinkState, Net, Sockets};
 use crate::storage::Store;
 
 /// The longest text a host function reads, in bytes.
 pub const MAX_TEXT: usize = 4096;
-/// Overlay rectangles one mod may emit per frame (text counts one per horizontal run of a glyph row).
-pub const MAX_RECTS: usize = 65_536;
+/// Overlay quads one mod may emit per frame (text counts one per horizontal run of a glyph row).
+pub const MAX_QUADS: usize = 65_536;
 /// Log lines one call may write.
 pub const MAX_LOG_LINES: usize = 64;
 
@@ -151,8 +152,14 @@ pub struct CallCtx {
     pub display: Rc<Display>,
     /// The mod's own folder (`None`: no file access).
     pub files: Option<Files>,
-    /// The overlay rectangles of this call.
-    pub rects: Vec<OverlayRect>,
+    /// The overlay quads of this call.
+    pub quads: Vec<OverlayQuad>,
+    /// The overlay's clip rectangle (`overlay_clip`): `[x, y, w, h]`.
+    pub clip: Option<[f32; 4]>,
+    /// The mod's overlay images.
+    pub images: Images,
+    /// The strings in the game's font this call queued (`game_text`).
+    pub game_texts: Vec<(sa_types::text::FontText, Vec<u8>)>,
     /// Log lines of this call: (level, text).
     pub logs: Vec<(i32, String)>,
     /// The video mode the call requested (the last request).
@@ -362,12 +369,10 @@ pub fn dispatch(ctx: &mut CallCtx, mem: &mut dyn Mem, index: usize, args: &[Val]
         Call::screen_width {} => ctx.screen.0 as i32,
         Call::screen_height {} => ctx.screen.1 as i32,
         Call::overlay_rect { x, y, w, h, rgba } => {
-            if !ctx.overlay || ![x, y, w, h].iter().all(|v| v.is_finite()) || ctx.rects.len() >= MAX_RECTS {
+            if !ctx.overlay || ![x, y, w, h].iter().all(|v| v.is_finite()) || ctx.quads.len() >= MAX_QUADS {
                 return Ok(status::BAD_ARG);
             }
-            if w > 0.0 && h > 0.0 {
-                ctx.rects.push(OverlayRect { x, y, w, h, rgba: rgba as u32 });
-            }
+            ctx.quads.extend(images::clip(OverlayQuad::rect(x, y, w, h, rgba as u32), ctx.clip));
             status::OK
         }
         Call::overlay_text { x, y, size, rgba, text_ptr, text_len } => {
@@ -375,13 +380,97 @@ pub fn dispatch(ctx: &mut CallCtx, mem: &mut dyn Mem, index: usize, args: &[Val]
                 return Ok(status::BAD_ARG);
             }
             let Some(s) = text(mem, text_ptr, text_len) else { return Ok(status::BAD_ARG) };
-            let mut rects = Vec::new();
-            let width = text_rects(x, y, size, rgba as u32, &s, &mut rects);
-            if ctx.rects.len() + rects.len() > MAX_RECTS {
+            let mut quads = Vec::new();
+            let width = text_rects(x, y, size, rgba as u32, &s, &mut quads);
+            if ctx.quads.len() + quads.len() > MAX_QUADS {
                 return Ok(status::BAD_ARG);
             }
-            ctx.rects.extend(rects);
+            let clip = ctx.clip;
+            ctx.quads.extend(quads.into_iter().filter_map(|q| images::clip(q, clip)));
             width.min(i32::MAX as f32) as i32
+        }
+        Call::image_create { width, height, flags, data_ptr, data_len } => {
+            if width <= 0 || height <= 0 || (width as u64) * (height as u64) * 4 != data_len as u64 {
+                return Ok(status::BAD_ARG);
+            }
+            if data_ptr < 0 {
+                return Ok(status::BAD_ARG);
+            }
+            let Some(data) = mem.read(data_ptr as u32, data_len as u32) else { return Ok(status::BAD_ARG) };
+            match ctx.images.create(width as u32, height as u32, flags & image::SMOOTH != 0, &data) {
+                Ok(h) => h as i32,
+                Err(CreateError::BadSize) => status::BAD_ARG,
+                Err(CreateError::Budget) => {
+                    ctx.logs.push((
+                        sa_mod_api::level::WARN,
+                        format!(
+                            "image_create: over the budget ({} images, {} MiB)",
+                            image::MAX_IMAGES,
+                            image::MAX_BYTES >> 20
+                        ),
+                    ));
+                    status::FAILED
+                }
+            }
+        }
+        Call::image_destroy { handle } => {
+            if ctx.images.destroy(handle) { status::OK } else { status::NOT_FOUND }
+        }
+        Call::overlay_quads { handle, quads_ptr, count } => {
+            if !ctx.overlay || !(0..=image::MAX_QUADS_PER_CALL as i32).contains(&count) {
+                return Ok(status::BAD_ARG);
+            }
+            let id = match handle {
+                image::NONE => 0,
+                h => match ctx.images.id(h) {
+                    Some(id) => id,
+                    None => return Ok(status::NOT_FOUND),
+                },
+            };
+            let words = image::QUAD_WORDS;
+            let Some(data) = mem.read(quads_ptr as u32, count as u32 * (words * 4) as u32) else {
+                return Ok(status::BAD_ARG);
+            };
+            if ctx.quads.len() + count as usize > MAX_QUADS {
+                return Ok(status::BAD_ARG);
+            }
+            let mut parsed = Vec::with_capacity(count as usize);
+            for q in data.chunks_exact(words * 4) {
+                let w = |i: usize| u32::from_le_bytes(q[i * 4..i * 4 + 4].try_into().expect("4 bytes"));
+                let f: [f32; 8] = std::array::from_fn(|i| f32::from_bits(w(i)));
+                if !f.iter().all(|v| v.is_finite()) {
+                    return Ok(status::BAD_ARG);
+                }
+                parsed.push(OverlayQuad { x: f[0], y: f[1], w: f[2], h: f[3], uv: [f[4], f[5], f[6], f[7]], rgba: w(8), image: id });
+            }
+            let before = ctx.quads.len();
+            let clip = ctx.clip;
+            ctx.quads.extend(parsed.into_iter().filter_map(|q| images::clip(q, clip)));
+            let drawn = (ctx.quads.len() - before) as i32;
+            drawn
+        }
+        Call::game_text { style_ptr, text_ptr, text_len } => {
+            if !ctx.overlay || ctx.game_texts.len() >= sa_mod_api::text::MAX_PER_FRAME || style_ptr < 0 || text_ptr < 0 {
+                return Ok(status::BAD_ARG);
+            }
+            if !(0..=sa_mod_api::text::MAX_TEXT as i32).contains(&text_len) {
+                return Ok(status::BAD_ARG);
+            }
+            let words = sa_mod_api::text::WORDS;
+            let Some(raw) = mem.read(style_ptr as u32, (words * 4) as u32) else { return Ok(status::BAD_ARG) };
+            let w: [u32; sa_mod_api::text::WORDS] =
+                std::array::from_fn(|i| u32::from_le_bytes(raw[i * 4..i * 4 + 4].try_into().expect("4 bytes")));
+            let Some(style) = sa_mod_api::text::decode(&w) else { return Ok(status::BAD_ARG) };
+            let Some(bytes) = mem.read(text_ptr as u32, text_len as u32) else { return Ok(status::BAD_ARG) };
+            ctx.game_texts.push((style, bytes));
+            status::OK
+        }
+        Call::overlay_clip { x, y, w, h } => {
+            if ![x, y, w, h].iter().all(|v| v.is_finite()) {
+                return Ok(status::BAD_ARG);
+            }
+            ctx.clip = (w >= 0.0 && h >= 0.0).then_some([x, y, w, h]);
+            status::OK
         }
         Call::display_mode_count {} => ctx.display.modes.len().min(i32::MAX as usize) as i32,
         Call::display_mode_width { index } => mode(ctx, index).map_or(status::BAD_ARG, |m| m.0 as i32),
@@ -1045,7 +1134,7 @@ pub fn destroy_entity(g: &mut GameAccess, e: EntityRef, logs: &mut Vec<(i32, Str
 
 /// Lays out `text` in the host's 8x8 font (`font8x8`, ASCII; other characters as `?`), `size` pixels per glyph
 /// cell, as one rectangle per horizontal run of set pixels in a glyph row. Returns the width in pixels.
-pub fn text_rects(x: f32, y: f32, size: f32, rgba: u32, text: &str, out: &mut Vec<OverlayRect>) -> f32 {
+pub fn text_rects(x: f32, y: f32, size: f32, rgba: u32, text: &str, out: &mut Vec<OverlayQuad>) -> f32 {
     let px = size / 8.0;
     let mut n = 0usize;
     for ch in text.chars() {
@@ -1063,13 +1152,7 @@ pub fn text_rects(x: f32, y: f32, size: f32, rgba: u32, text: &str, out: &mut Ve
                 while col < 8 && bits >> col & 1 != 0 {
                     col += 1;
                 }
-                out.push(OverlayRect {
-                    x: gx + start as f32 * px,
-                    y: y + row as f32 * px,
-                    w: (col - start) as f32 * px,
-                    h: px,
-                    rgba,
-                });
+                out.push(OverlayQuad::rect(gx + start as f32 * px, y + row as f32 * px, (col - start) as f32 * px, px, rgba));
             }
         }
         n += 1;
@@ -1095,7 +1178,7 @@ mod tests {
         let text = import_index("overlay_text").unwrap();
         let args = |p: i32, n: i32| [Val::F32(0.0), Val::F32(0.0), Val::F32(16.0), Val::I32(-1), Val::I32(p), Val::I32(n)];
         assert_eq!(dispatch(&mut ctx, m, text, &args(0, 2)), Ok(32));
-        assert!(!ctx.rects.is_empty());
+        assert!(!ctx.quads.is_empty());
         // out of bounds, not UTF-8
         assert_eq!(dispatch(&mut ctx, m, text, &args(2, 9)), Ok(status::BAD_ARG));
         assert_eq!(dispatch(&mut ctx, m, text, &args(2, 1)), Ok(status::BAD_ARG));
@@ -1109,6 +1192,42 @@ mod tests {
         ctx.overlay = false;
         let rect = [Val::F32(0.0), Val::F32(0.0), Val::F32(1.0), Val::F32(1.0), Val::I32(0)];
         assert_eq!(dispatch(&mut ctx, m, import_index("overlay_rect").unwrap(), &rect), Ok(status::BAD_ARG));
+    }
+
+    #[test]
+    fn images_quads_and_clip() {
+        // 0..16: a 2 x 2 image; 16..52: one quad; 52..88: a second quad
+        let mut data = vec![0u8; 88];
+        data[..16].fill(0xFF);
+        let quad = |x: f32, rgba: u32| -> Vec<u8> {
+            [x, 10.0, 20.0, 20.0, 0.0, 0.0, 1.0, 1.0].iter().flat_map(|f| f.to_le_bytes()).chain(rgba.to_le_bytes()).collect()
+        };
+        data[16..52].copy_from_slice(&quad(0.0, 0x1122_33FF));
+        data[52..88].copy_from_slice(&quad(f32::NAN, 0));
+        let m = &mut SliceMem(&mut data);
+        let mut ctx = CallCtx { permissions: Permissions { render: true, ..Default::default() }, ..Default::default() };
+        let create = import_index("image_create").unwrap();
+        let quads = import_index("overlay_quads").unwrap();
+        let clip = import_index("overlay_clip").unwrap();
+        let i = |v: i32| Val::I32(v);
+        assert_eq!(dispatch(&mut ctx, m, create, &[i(2), i(2), i(1), i(0), i(15)]), Ok(status::BAD_ARG));
+        assert_eq!(dispatch(&mut ctx, m, create, &[i(2), i(2), i(1), i(0), i(16)]), Ok(0));
+        // images are made in any phase, drawn only in the overlay phase
+        assert_eq!(dispatch(&mut ctx, m, quads, &[i(0), i(16), i(1)]), Ok(status::BAD_ARG));
+        ctx.overlay = true;
+        assert_eq!(dispatch(&mut ctx, m, quads, &[i(5), i(16), i(1)]), Ok(status::NOT_FOUND));
+        assert_eq!(dispatch(&mut ctx, m, quads, &[i(0), i(16), i(2)]), Ok(status::BAD_ARG));
+        assert_eq!(dispatch(&mut ctx, m, quads, &[i(0), i(16), i(1)]), Ok(1));
+        let f = |v: f32| Val::F32(v);
+        assert_eq!(dispatch(&mut ctx, m, clip, &[f(5.0), f(0.0), f(100.0), f(100.0)]), Ok(status::OK));
+        assert_eq!(dispatch(&mut ctx, m, quads, &[i(image::NONE), i(16), i(1)]), Ok(1));
+        assert_eq!(dispatch(&mut ctx, m, clip, &[f(100.0), f(0.0), f(1.0), f(1.0)]), Ok(status::OK));
+        assert_eq!(dispatch(&mut ctx, m, quads, &[i(0), i(16), i(1)]), Ok(0));
+        let id = ctx.images.id(0).unwrap();
+        let q: Vec<(f32, f32, u32, u32)> = ctx.quads.iter().map(|q| (q.x, q.w, q.rgba, q.image)).collect();
+        assert_eq!(q, [(0.0, 20.0, 0x1122_33FF, id), (5.0, 15.0, 0x1122_33FF, 0)]);
+        assert_eq!(dispatch(&mut ctx, m, import_index("image_destroy").unwrap(), &[i(0)]), Ok(status::OK));
+        assert_eq!(dispatch(&mut ctx, m, quads, &[i(0), i(16), i(1)]), Ok(status::NOT_FOUND));
     }
 
     /// A folder in memory.

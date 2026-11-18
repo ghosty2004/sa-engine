@@ -101,3 +101,32 @@ impl<V: View> Game<V> {
         set(feature, on);
     }
 }
+
+/// Prints `text` (one byte per character, the game font's code page; up to the first NUL) in the game's font with
+/// `t`'s `CFont` state, into `CFont`'s buffer, which the game's frame draws with the HUD's text. Only valid while
+/// the game draws its 2D phase (after `Render2dStuff`, before the frame's `DrawFonts`).
+pub fn print_text(t: &sa_types::text::FontText, text: &[u8]) {
+    use sa_core::bindings::*;
+    // CFont takes CRGBA by value: R, G, B, A in memory order
+    let crgba = |c: u32| c.swap_bytes();
+    font_set_scale(t.scale.0.to_bits(), t.scale.1.to_bits());
+    font_set_color(crgba(t.colour));
+    font_set_justify(0);
+    font_set_orientation(u32::from(t.orientation));
+    font_set_wrapx(t.wrap_x);
+    font_set_centre_size(t.centre_size);
+    font_set_background(u32::from(t.background), 0);
+    font_set_background_color(crgba(t.background_colour));
+    font_set_proportional(u32::from(t.proportional));
+    font_set_drop_color(crgba(t.drop_colour));
+    if t.edge != 0 {
+        font_set_edge(u32::from(t.edge));
+    } else {
+        font_set_drop_shadow_position(u32::from(t.shadow));
+    }
+    font_set_font_style(u32::from(t.style));
+    let mut buf: Vec<u8> = text.iter().copied().take_while(|&b| b != 0).collect();
+    buf.push(0);
+    font_print_string(t.x, t.y, GPtr::from_raw(buf.as_mut_ptr()));
+    font_set_edge(0);
+}

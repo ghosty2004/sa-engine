@@ -448,15 +448,54 @@ pub struct Caps {
     pub non_pow2_textures: bool,
 }
 
-/// A filled rectangle of a 2D overlay drawn over the presented image, outside the game's D3D9 call stream (the mod
-/// host's overlay phase, MOD-2): pixels from the top left of the back buffer, colour `0xRRGGBBAA`, alpha-blended.
+/// A quad of a 2D overlay drawn over the presented image, outside the game's D3D9 call stream (the mod host's
+/// overlay phase): pixels from the top left of the back buffer, filled with `image` (0: plain colour) between the
+/// texture coordinates `uv` (`[u0, v0, u1, v1]`, 0..=1), tinted by `rgba` (`0xRRGGBBAA`), alpha-blended.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct OverlayRect {
+pub struct OverlayQuad {
     pub x: f32,
     pub y: f32,
     pub w: f32,
     pub h: f32,
+    pub uv: [f32; 4],
     pub rgba: u32,
+    pub image: u32,
+}
+
+impl OverlayQuad {
+    /// A rectangle of plain colour `rgba`.
+    pub const fn rect(x: f32, y: f32, w: f32, h: f32, rgba: u32) -> OverlayQuad {
+        OverlayQuad { x, y, w, h, uv: [0.0, 0.0, 1.0, 1.0], rgba, image: 0 }
+    }
+}
+
+/// An image the overlay's quads may use: its id (never 0, never reused), size and RGBA8 pixels (straight alpha,
+/// rows from the top). `smooth`: linear filtering over a box-filtered mip chain when scaled, else nearest.
+#[derive(Debug, Clone, PartialEq)]
+pub struct OverlayImage {
+    pub id: u32,
+    pub width: u32,
+    pub height: u32,
+    pub smooth: bool,
+    pub rgba: std::rc::Rc<[u8]>,
+}
+
+/// What the overlay draws in one frame: images that appeared and were removed since the last frame (removals
+/// first), then the quads in order.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct OverlayFrame {
+    pub added: Vec<OverlayImage>,
+    pub removed: Vec<u32>,
+    pub quads: Vec<OverlayQuad>,
+}
+
+impl OverlayFrame {
+    /// Empties the frame, keeping its allocations.
+    pub fn clear(&mut self) {
+        self.added.clear();
+        self.removed.clear();
+        self.quads.clear();
+    }
 }
 
 /// The `IDirect3DDevice9` subset of the RW D3D9 driver, plus the swap-chain operations of

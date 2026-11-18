@@ -23,6 +23,7 @@ pub mod approval;
 mod backend;
 pub mod engine;
 pub mod events;
+pub mod images;
 pub mod manifest;
 pub mod module;
 pub mod net;
@@ -34,7 +35,7 @@ use sa_mod_api::{
     API_MAJOR, API_MINOR, EXPORT_API_VERSION, EXPORT_EVENT, EXPORT_HOOK, EXPORT_INIT, EXPORT_INPUT, EXPORT_OVERLAY, EXPORT_RESIZE,
     EXPORT_SETTINGS, Val, event, hook, level, unpack_version,
 };
-use sa_platform::gpu::OverlayRect;
+use sa_platform::gpu::{OverlayFrame, OverlayQuad};
 
 use sa_types::EntityRef;
 
@@ -66,6 +67,8 @@ pub struct LoadedMod {
     env: ModEnv,
     /// Its open sockets.
     sockets: Sockets,
+    /// Its overlay images.
+    images: images::Images,
     /// Why it was disabled (`None`: running).
     pub disabled: Option<String>,
     /// Overlay calls so far.
@@ -138,6 +141,8 @@ pub struct Host {
     storages: Option<Rc<dyn StorageProvider>>,
     /// The servers the user approved, and the question on screen.
     approvals: Rc<std::cell::RefCell<approval::Approvals>>,
+    /// The strings in the game's font the mods queued in the last overlay phase, in load order.
+    game_texts: Vec<(sa_types::text::FontText, Vec<u8>)>,
 }
 
 impl Host {
@@ -164,6 +169,7 @@ impl Host {
             network: None,
             storages: None,
             approvals: Rc::default(),
+            game_texts: Vec::new(),
         }
     }
 
@@ -297,6 +303,7 @@ impl Host {
             exports,
             env,
             sockets: std::mem::take(&mut ctx.sockets),
+            images: std::mem::take(&mut ctx.images),
             disabled: None,
             frames: 0,
             micros: 0,
@@ -360,6 +367,7 @@ impl Host {
         self.mods[i].disabled = Some(why.clone());
         self.mods[i].deferred.clear();
         self.mods[i].sockets = Sockets::default();
+        self.mods[i].images.clear();
         self.mods[i].capture = (false, false, false);
         let off = std::mem::take(&mut self.mods[i].options_off);
         if let Some(g) = &self.game {
@@ -405,6 +413,7 @@ impl Host {
         let m = &mut self.mods[i];
         ctx.owned = std::mem::take(&mut m.owned);
         ctx.sockets = std::mem::take(&mut m.sockets);
+        ctx.images = std::mem::take(&mut m.images);
         ctx.capture = m.capture;
         ctx.options_off = std::mem::take(&mut m.options_off);
         let t = web_time::Instant::now();
@@ -412,6 +421,7 @@ impl Host {
         m.micros += t.elapsed().as_micros() as u64;
         m.owned = std::mem::take(&mut ctx.owned);
         m.sockets = std::mem::take(&mut ctx.sockets);
+        m.images = std::mem::take(&mut ctx.images);
         m.capture = ctx.capture;
         m.options_off = std::mem::take(&mut ctx.options_off);
         m.deferred.append(&mut ctx.deferred);
@@ -483,15 +493,28 @@ impl Host {
     }
 
     /// The overlay phase of a frame: calls every running mod's `sa_overlay` in load order and appends what they
-    /// drew to `out`. A mod that fails is disabled (its drawing of this frame is dropped) and reported.
-    pub fn overlay(&mut self, screen: (u32, u32), out: &mut Vec<OverlayRect>) {
+    /// drew to `out`, with the images the mods created and deleted since the last overlay phase. A mod that fails is
+    /// disabled (its drawing of this frame is dropped, its images deleted) and reported.
+    pub fn overlay(&mut self, screen: (u32, u32), out: &mut OverlayFrame) {
+        let mut texts = Vec::new();
         let v = self.call_all(EXPORT_OVERLAY, screen, |m| vec![Val::I32(m.frames as i32)], |ctx| {
-            out.append(&mut ctx.rects)
+            out.quads.append(&mut ctx.quads);
+            texts.append(&mut ctx.game_texts);
         });
-        self.approval_prompt(screen, out);
+        self.game_texts = texts;
+        for m in &mut self.mods {
+            m.images.take_changes(&mut out.added, &mut out.removed);
+        }
+        self.approval_prompt(screen, &mut out.quads);
         if v.is_some() {
             self.video = v;
         }
+    }
+
+    /// The strings in the game's font the mods queued in the last overlay phase (`game_text`), for the game's next
+    /// 2D phase ([`sa_access::print_text`]).
+    pub fn game_texts(&self) -> &[(sa_types::text::FontText, Vec<u8>)] {
+        &self.game_texts
     }
 
     /// A platform input event ([`sa_mod_api::input`]) for the mods with `input = "capture"`, in load order, before
@@ -534,7 +557,7 @@ impl Host {
     }
 
     /// Draws the open approval question over the mods' overlay.
-    fn approval_prompt(&self, screen: (u32, u32), out: &mut Vec<OverlayRect>) {
+    fn approval_prompt(&self, screen: (u32, u32), out: &mut Vec<OverlayQuad>) {
         let Some(q) = self.approvals.borrow().pending.clone() else { return };
         let lines = [
             format!("{} wants to connect to {}", q.name, q.target),
@@ -543,7 +566,7 @@ impl Host {
         let size = 12.0;
         let w = lines.iter().map(|l| l.chars().count()).max().unwrap_or(0) as f32 * size + 32.0;
         let (x, y) = ((screen.0 as f32 - w).max(0.0) / 2.0, screen.1 as f32 / 3.0);
-        out.push(OverlayRect { x, y, w, h: 2.0 * size + 40.0, rgba: 0x0A0A_14E6 });
+        out.push(OverlayQuad::rect(x, y, w, 2.0 * size + 40.0, 0x0A0A_14E6));
         for (i, l) in lines.iter().enumerate() {
             api::text_rects(x + 16.0, y + 14.0 + i as f32 * (size + 6.0), size, 0xFFFF_FFFF, l, out);
         }
@@ -736,9 +759,9 @@ mod tests {
         h.load(src("spin", wat_mod("", "1", &spin))).unwrap();
         let mut counts = Vec::new();
         for _ in 0..4 {
-            let mut out = Vec::new();
+            let mut out = OverlayFrame::default();
             h.overlay((640, 480), &mut out);
-            counts.push(out.len());
+            counts.push(out.quads.len());
         }
         assert_eq!(counts, [3, 2, 1, 1]);
         let ms = h.mods();
@@ -753,14 +776,14 @@ mod tests {
         let (mut h, _) = host();
         // newer minor API version
         let mut s = src("new", wat_mod("", "1", DRAW));
-        s.0[0].1 = b"[mod]\nid = \"new\"\napi_version = \"1.6\"\n".to_vec();
-        assert!(h.load(s).unwrap_err().contains("API 1.6"));
+        s.0[0].1 = b"[mod]\nid = \"new\"\napi_version = \"1.7\"\n".to_vec();
+        assert!(h.load(s).unwrap_err().contains("API 1.7"));
         // memory above the cap (16 MiB default: 300 pages)
         assert!(h.load(src("big", wat_mod("", "300", DRAW))).unwrap_err().contains("cap"));
         // growth beyond the cap fails inside the mod (memory.grow returns -1), the mod goes on
         let grow = "i32.const 1000 memory.grow i32.const -1 i32.ne (if (then unreachable)) i32.const 0";
         h.load(src("grow", wat_mod("", "1", grow))).unwrap();
-        let mut out = Vec::new();
+        let mut out = OverlayFrame::default();
         h.overlay((640, 480), &mut out);
         assert!(h.mods()[0].disabled.is_none(), "{:?}", h.mods()[0].disabled);
         // duplicate id
@@ -769,9 +792,9 @@ mod tests {
         let mut s = src("norender", wat_mod("", "1", DRAW));
         s.0[0].1 = b"[mod]\nid = \"norender\"\napi_version = \"1.0\"\n".to_vec();
         h.load(s).unwrap();
-        let mut out = Vec::new();
+        let mut out = OverlayFrame::default();
         h.overlay((640, 480), &mut out);
-        assert!(out.is_empty());
+        assert!(out.quads.is_empty());
     }
 
     /// The registry of a test: one function, `CPed::Render`, id 7.
@@ -941,7 +964,7 @@ mod tests {
         while !log.borrow().iter().any(|l| l == "mod four: pong") {
             assert!(start.elapsed().as_secs() < 2, "{:?}", log.borrow());
             h.frame_begin();
-            h.overlay((640, 480), &mut Vec::new());
+            h.overlay((640, 480), &mut OverlayFrame::default());
         }
         assert_eq!(h.mods()[0].sockets.open(), 1);
         // disabling closes its sockets

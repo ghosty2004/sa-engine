@@ -46,8 +46,8 @@ use crate::display;
 thread_local! {
     /// The host (game thread only; `None` without mods).
     static HOST: RefCell<Option<Host>> = const { RefCell::new(None) };
-    /// The overlay rectangles of the current frame (kept to reuse the allocation).
-    static RECTS: RefCell<Vec<sa_platform::gpu::OverlayRect>> = const { RefCell::new(Vec::new()) };
+    /// The overlay of the current frame (kept to reuse the allocations).
+    static OVERLAY: RefCell<sa_platform::gpu::OverlayFrame> = RefCell::new(Default::default());
     /// The request of the settings phase and, for a size the original's list leaves out, the listed mode the menu
     /// shows instead ([`after_select`]).
     static SELECTED: Cell<Option<(VideoRequest, i32, Option<i32>)>> = const { Cell::new(None) };
@@ -141,8 +141,30 @@ fn decide(game: &GameAccess, o: &mut Observed<'_>, d: HookDecision) {
     }
 }
 
+/// `Game::Render2dStuff`: the mods' strings in the game's font are printed after it, into the buffer the frame's
+/// `DrawFonts` draws with the HUD's text.
+const RENDER_2D_STUFF: u32 = 0x53E230;
+
+thread_local! {
+    /// Whether `Render2dStuff` is watched for the mods' strings (from the first string on).
+    static TEXT_POINT: Cell<bool> = const { Cell::new(false) };
+}
+
+/// Prints the strings the mods queued in their last overlay phase.
+fn print_game_texts() {
+    HOST.with(|h| {
+        let Ok(h) = h.try_borrow() else { return };
+        for (style, text) in h.as_ref().map_or(&[][..], Host::game_texts) {
+            sa_access::print_text(style, text);
+        }
+    });
+}
+
 /// The observer of the hooked functions: hands the call to the mods hooked there and applies their decisions.
 fn observed(o: &mut Observed<'_>) {
+    if o.entry.addr == RENDER_2D_STUFF && matches!(o.phase, Phase::After) {
+        print_game_texts();
+    }
     let Some(game) = GAME.with_borrow(Clone::clone) else { return };
     // a hooked function that runs while the game is being changed for a mod is not reported
     let Ok(g) = game.0.try_borrow() else { return };
@@ -393,11 +415,15 @@ pub fn overlay(d: &mut WgpuDevice) {
         let Some(h) = h.as_mut() else { return };
         let _perf = crate::perf::scope(crate::perf::MODS);
         let size = d.back_buffer().size();
-        RECTS.with_borrow_mut(|rects| {
-            rects.clear();
-            h.overlay((size.width, size.height), rects);
-            d.draw_overlay(rects);
+        OVERLAY.with_borrow_mut(|frame| {
+            frame.clear();
+            h.overlay((size.width, size.height), frame);
+            d.draw_overlay(frame);
         });
+        if !h.game_texts().is_empty() && !TEXT_POINT.get() {
+            TEXT_POINT.set(true);
+            EngineRegistry.watch(RENDER_2D_STUFF, true);
+        }
         h.frame_end();
     });
 }

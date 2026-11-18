@@ -941,9 +941,9 @@ pub struct WgpuDevice {
     /// Writes alpha 1 into a rectangle of a colour target (the blit shader on the white texture, alpha
     /// writes only): `StretchRect` into a target without alpha.
     alpha_one_pipeline: Option<(wgpu::RenderPipeline, wgpu::BindGroup)>,
-    /// The 2D overlay's pipeline ([`WgpuDevice::draw_overlay`], feature `overlay`).
+    /// The 2D overlay's pipeline and images ([`WgpuDevice::draw_overlay`], feature `overlay`).
     #[cfg(feature = "overlay")]
-    overlay_pipeline: Option<wgpu::RenderPipeline>,
+    overlay: Option<overlay::Overlay>,
 
     errors: Arc<Mutex<Vec<String>>>,
     pub stats: D3d9Stats,
@@ -1182,7 +1182,7 @@ impl WgpuDevice {
             back_opaque: false,
             alpha_one_pipeline: None,
             #[cfg(feature = "overlay")]
-            overlay_pipeline: None,
+            overlay: None,
             target,
             depth_by_size,
             next_id: 1,

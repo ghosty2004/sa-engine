@@ -34,7 +34,7 @@ pub const EXPORT_MEMORY: &str = "memory";
 /// The API's major version.
 pub const API_MAJOR: u16 = 1;
 /// The API's minor version.
-pub const API_MINOR: u16 = 5;
+pub const API_MINOR: u16 = 6;
 
 /// `major << 16 | minor`, the value of the `sa_api_version` export.
 pub const fn pack_version(major: u16, minor: u16) -> i32 {
@@ -437,6 +437,84 @@ pub mod net {
     pub const MAX_SEND_BYTES_PER_FRAME: usize = 1 << 20;
 }
 
+/// Overlay images (API 1.6, `render = true`): RGBA8 pixels a mod uploads once and draws quads of.
+pub mod image {
+    /// Images one mod may hold at once.
+    pub const MAX_IMAGES: usize = 64;
+    /// The longest side of an image, in pixels.
+    pub const MAX_SIDE: u32 = 4096;
+    /// The pixel bytes (`width * height * 4`) one mod's images may hold together.
+    pub const MAX_BYTES: usize = 32 << 20;
+    /// `image_create` flag: linear filtering over a box-filtered mip chain when a quad scales the image (else the
+    /// nearest texel).
+    pub const SMOOTH: i32 = 1;
+    /// `overlay_quads`: the image handle of plain-colour quads.
+    pub const NONE: i32 = -1;
+    /// `overlay_quads`: words per quad (`x`, `y`, `w`, `h`, `u0`, `v0`, `u1`, `v1` as `f32`, then `rgba`).
+    pub const QUAD_WORDS: usize = 9;
+    /// Quads one `overlay_quads` call draws at most.
+    pub const MAX_QUADS_PER_CALL: usize = 16_384;
+}
+
+/// Text in the game's font (API 1.6, `game_text`): the [`sa_types::text::FontText`] record as words.
+pub mod text {
+    use sa_types::text::FontText;
+
+    /// Words of a [`FontText`]: `x`, `y`, `scale.0`, `scale.1` (`f32`), `colour`, `orientation`, `wrap_x`,
+    /// `centre_size` (`f32`), `background`, `background_colour`, `proportional`, `drop_colour`, `edge`, `shadow`,
+    /// `style`.
+    pub const WORDS: usize = 15;
+    /// The longest string, in bytes.
+    pub const MAX_TEXT: usize = 400;
+    /// Strings one mod may queue per frame.
+    pub const MAX_PER_FRAME: usize = 256;
+
+    /// `t` as words.
+    pub fn encode(t: &FontText) -> [u32; WORDS] {
+        let f = f32::to_bits;
+        [
+            f(t.x),
+            f(t.y),
+            f(t.scale.0),
+            f(t.scale.1),
+            t.colour,
+            u32::from(t.orientation),
+            f(t.wrap_x),
+            f(t.centre_size),
+            u32::from(t.background),
+            t.background_colour,
+            u32::from(t.proportional),
+            t.drop_colour,
+            u32::from(t.edge),
+            u32::from(t.shadow),
+            u32::from(t.style),
+        ]
+    }
+
+    /// The record of `w`; `None` for a float that is not finite or a value out of range (orientation 0..=2, style
+    /// 0..=3, edge and shadow 0..=8).
+    pub fn decode(w: &[u32; WORDS]) -> Option<FontText> {
+        let f = |i: usize| Some(f32::from_bits(w[i])).filter(|v| v.is_finite());
+        let small = |i: usize, max: u32| u8::try_from(w[i]).ok().filter(|&v| u32::from(v) <= max);
+        Some(FontText {
+            x: f(0)?,
+            y: f(1)?,
+            scale: (f(2)?, f(3)?),
+            colour: w[4],
+            orientation: small(5, 2)?,
+            wrap_x: f(6)?,
+            centre_size: f(7)?,
+            background: w[8] != 0,
+            background_colour: w[9],
+            proportional: w[10] != 0,
+            drop_colour: w[11],
+            edge: small(12, 8)?,
+            shadow: small(13, 8)?,
+            style: small(14, 3)?,
+        })
+    }
+}
+
 /// The persistent key / value storage (API 1.4, `storage = true`): one area per mod id, natively a folder under
 /// the user's data directory, in the browser the page's IndexedDB.
 pub mod storage {
@@ -685,6 +763,31 @@ macro_rules! for_each_import {
             /// and no held key), `mouse` (no mouse movement or buttons) and `cursor` (the platform shows its
             /// pointer: natively the window's, in the browser the page releases the pointer lock). Returns 0.
             [Capture] fn input_capture(keyboard: i32, mouse: i32, cursor: i32) -> i32;
+            /// (1.6) Creates an overlay image of `width` x `height` RGBA8 pixels (`data_len` = `width * height * 4`
+            /// bytes at `data_ptr`, rows from the top, straight alpha); `flags`: [`image::SMOOTH`]. Returns its
+            /// handle, `BAD_ARG` (a side of 0 or above [`image::MAX_SIDE`], a wrong length), `FAILED` (the mod holds
+            /// [`image::MAX_IMAGES`] images or [`image::MAX_BYTES`] bytes). Valid in every phase; the image can be
+            /// drawn from the next overlay phase on.
+            [Render] fn image_create(width: i32, height: i32, flags: i32, data_ptr: i32, data_len: i32) -> i32;
+            /// (1.6) Deletes image `handle`. Returns 0 or `NOT_FOUND`.
+            [Render] fn image_destroy(handle: i32) -> i32;
+            /// (1.6) Draws `count` quads of image `handle` ([`image::NONE`]: plain colour) in the 2D overlay, in
+            /// order: [`image::QUAD_WORDS`] little-endian words each at `quads_ptr` (`x`, `y`, `w`, `h` in pixels from
+            /// the top left, `u0`, `v0`, `u1`, `v1` the image's texture coordinates 0..=1, `rgba` `0xRRGGBBAA` tinting
+            /// the image), cut to the clip rectangle (`overlay_clip`). Returns the quads drawn (outside the clip
+            /// rectangle none), `NOT_FOUND` (no such image), `BAD_ARG` (outside the overlay phase, more than
+            /// [`image::MAX_QUADS_PER_CALL`], a value that is not finite, the frame's quad budget used up).
+            [Render] fn overlay_quads(handle: i32, quads_ptr: i32, count: i32) -> i32;
+            /// (1.6) Cuts the following overlay drawing of this phase (rectangles, text, quads) to the rectangle
+            /// (`x`, `y`, `w`, `h`); a negative `w` or `h` removes the clip. Every overlay phase starts without one.
+            /// Returns 0.
+            [Render] fn overlay_clip(x: f32, y: f32, w: f32, h: f32) -> i32;
+            /// (1.6) Prints `text` (`text_len` bytes at `text_ptr`, at most [`text::MAX_TEXT`]; the game font's
+            /// code page, its `~x~` codes) in the game's own font with the `CFont` state of the [`text::WORDS`]
+            /// words at `style_ptr` ([`text::encode`]). The game draws it in its next frame's 2D phase, with the HUD's
+            /// text (under the overlay). Returns 0, `BAD_ARG` (outside the overlay phase, a bad record, over
+            /// [`text::MAX_PER_FRAME`] strings this frame).
+            [Render] fn game_text(style_ptr: i32, text_ptr: i32, text_len: i32) -> i32;
         }
     };
 }

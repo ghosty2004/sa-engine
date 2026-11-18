@@ -24,6 +24,7 @@ use std::cell::RefCell;
 
 pub use sa_mod_api::event::Event;
 pub use sa_mod_api::hook::Value;
+pub use sa_mod_api::sa_types::text::FontText;
 pub use sa_mod_api::sa_types::{GameState, ObjectRef, PedRef, Vec3, VehicleRef};
 pub use sa_mod_api::state::{CameraInfo, MatrixInfo, PadInfo, PedInfo, PlayerInfo, VehicleInfo, WorldInfo};
 pub use sa_mod_api::{API_MAJOR, API_MINOR, event as event_kind, level, status};
@@ -121,6 +122,90 @@ impl Overlay {
         let (p, n) = ptr_len(text.as_bytes());
         // SAFETY: a host function call; the host reads `text` through a bounds-checked copy
         check(unsafe { ffi::overlay_text(x, y, size, colour.0 as i32, p, n) }).map(|w| w as u32)
+    }
+
+    /// Draws `quads` of `image` (`None`: plain colour), in order (API 1.6); returns how many were inside the clip
+    /// rectangle.
+    pub fn quads(&mut self, image: Option<&Image>, quads: &[Quad]) -> Result<u32, Error> {
+        let mut drawn = 0;
+        for chunk in quads.chunks(sa_mod_api::image::MAX_QUADS_PER_CALL) {
+            let words: Vec<u32> = chunk.iter().flat_map(Quad::words).collect();
+            let bytes: Vec<u8> = words.iter().flat_map(|w| w.to_le_bytes()).collect();
+            let handle = image.map_or(sa_mod_api::image::NONE, |i| i.handle);
+            // SAFETY: a host function call; the host reads the quads through a bounds-checked copy
+            drawn += check(unsafe { ffi::overlay_quads(handle, bytes.as_ptr() as usize as i32, chunk.len() as i32) })?;
+        }
+        Ok(drawn as u32)
+    }
+
+    /// Prints `text` in the game's own font with `style`'s `CFont` state; the game draws it in its next frame's 2D
+    /// phase, under the overlay (API 1.6).
+    pub fn game_text(&mut self, style: &sa_mod_api::sa_types::text::FontText, text: &[u8]) -> Result<(), Error> {
+        let words = sa_mod_api::text::encode(style);
+        let (t, n) = ptr_len(text);
+        // SAFETY: a host function call; the host reads the record and the text through bounds-checked copies
+        check(unsafe { ffi::game_text(words.as_ptr() as usize as i32, t, n) }).map(|_| ())
+    }
+
+    /// Cuts the following drawing of this overlay phase to a rectangle (`None`: no clip; API 1.6).
+    pub fn clip(&mut self, rect: Option<[f32; 4]>) -> Result<(), Error> {
+        let [x, y, w, h] = rect.unwrap_or([0.0, 0.0, -1.0, -1.0]);
+        // SAFETY: a host function call with plain values
+        check(unsafe { ffi::overlay_clip(x, y, w, h) }).map(|_| ())
+    }
+}
+
+/// A quad of an overlay image ([`Overlay::quads`]): the screen rectangle, the image's texture coordinates
+/// `[u0, v0, u1, v1]` (0..=1) and a tint.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Quad {
+    /// Left, top, width, height in pixels.
+    pub rect: [f32; 4],
+    /// Texture coordinates.
+    pub uv: [f32; 4],
+    /// Tint (multiplies the image).
+    pub colour: Rgba,
+}
+
+impl Quad {
+    fn words(&self) -> [u32; sa_mod_api::image::QUAD_WORDS] {
+        let [x, y, w, h] = self.rect;
+        let [u0, v0, u1, v1] = self.uv;
+        let f = [x, y, w, h, u0, v0, u1, v1].map(f32::to_bits);
+        [f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7], self.colour.0]
+    }
+}
+
+/// An overlay image (API 1.6): RGBA8 pixels kept by the host and drawn with [`Overlay::quads`]; deleted when
+/// dropped.
+#[derive(Debug)]
+pub struct Image {
+    handle: i32,
+    size: (u32, u32),
+}
+
+impl Image {
+    /// Uploads `width` x `height` RGBA8 pixels (`rgba`: rows from the top, straight alpha); `smooth`: linear
+    /// filtering over a box-filtered mip chain when scaled, else the nearest texel. `Failed` beyond the host's
+    /// budget (`sa_mod_api::image`).
+    pub fn new(width: u32, height: u32, smooth: bool, rgba: &[u8]) -> Result<Image, Error> {
+        let (p, n) = ptr_len(rgba);
+        let flags = if smooth { sa_mod_api::image::SMOOTH } else { 0 };
+        // SAFETY: a host function call; the host reads the pixels through a bounds-checked copy
+        let handle = check(unsafe { ffi::image_create(width as i32, height as i32, flags, p, n) })?;
+        Ok(Image { handle, size: (width, height) })
+    }
+
+    /// Its size in pixels.
+    pub fn size(&self) -> (u32, u32) {
+        self.size
+    }
+}
+
+impl Drop for Image {
+    fn drop(&mut self) {
+        // SAFETY: a host function call with a plain value
+        let _ = unsafe { ffi::image_destroy(self.handle) };
     }
 }
 

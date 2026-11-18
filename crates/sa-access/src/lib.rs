@@ -37,6 +37,7 @@ mod view;
 mod world;
 
 pub use sa_types::{EntityRef, GameError, GameResult, ObjectRef, PedRef, VehicleRef};
+pub use control::print_text;
 pub use view::{EngineView, Pool, View};
 
 /// The game, through a [`View`] of its memory.
