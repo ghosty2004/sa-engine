@@ -990,6 +990,13 @@ pub fn time_step() -> f32 {
     g::<f32>(0xB7CB5C).read()
 }
 
+/// `SteerAICarWithPhysics`' switch byte table at 0x4382E4 (MSVC put it in `.text`): missions 0x0F..0x37 ->
+/// 0 (fall back to mission 0 without a target), 1 (to 0x2A), 2 (keep).
+const MISSION_WITHOUT_TARGET: [u8; 0x29] = [
+    0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 2,
+    1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0,
+];
+
 /// `CCarCtrl::SteerAICarWithPhysics(CVehicle*)` (0x437C20; its first block continues at 0x4013E0 and jumps
 /// back): vehicles whose +0x424 index (>= 0) has a zero byte in 0x97D6C0 are skipped. Otherwise:
 /// `SwitchBetweenPhysicsAndGhost`; +0x420 = 0; missions 0x15..0x1D/0x22..0x23 etc. (byte table 0x4382E4,
@@ -1010,7 +1017,7 @@ pub fn steer_ai_car_with_physics(veh: GPtr<u8>) {
     let m = i32::from(rd::<i8>(veh, 0x3BA)) - 15;
     wr::<u32>(veh, 0x420, 0);
     if (m as u32) <= 0x28 {
-        match g::<u8>(0x4382E4 + m as usize).read() {
+        match MISSION_WITHOUT_TARGET[m as usize] {
             0 if rd::<u32>(veh, 0x41C) == 0 => wr::<u8>(veh, 0x3BA, 0),
             1 if rd::<u32>(veh, 0x41C) == 0 => wr::<u8>(veh, 0x3BA, 0x2A),
             _ => {}
@@ -4247,4 +4254,14 @@ pub fn steer_ai_car_towards_point_in_escort(
         brake.write(if ge5(x_(0.5), b) { b.to_f32() } else { 0.5 });
     }
     steer.write(turn);
+}
+
+#[cfg(test)]
+mod image_constant_tests {
+    use super::*;
+
+    #[test]
+    fn constants_equal_the_original_bytes() {
+        sa_testkit::check_image_bytes(0x4382E4, &MISSION_WITHOUT_TARGET);
+    }
 }

@@ -44,6 +44,23 @@ pub fn exe() -> Option<Vec<u8>> {
     std::fs::read(path).ok()
 }
 
+/// A constant a port carries in place of bytes of the original image equals them (checked when the exe is
+/// available).
+pub fn check_image_bytes(va: u32, bytes: &[u8]) {
+    let Some(exe) = exe() else {
+        eprintln!("note: gta_sa.exe not found, {va:#x} not checked");
+        return;
+    };
+    let img = exe_image_bytes(&exe, va, bytes.len()).unwrap_or_else(|| panic!("{va:#x} not in the image"));
+    assert_eq!(img, bytes, "{va:#x}");
+}
+
+/// The dword of the original image at `va`, if the exe is available.
+pub fn image_u32(va: u32) -> Option<u32> {
+    let b = exe_image_bytes(&exe()?, va, 4)?;
+    Some(u32::from_le_bytes([b[0], b[1], b[2], b[3]]))
+}
+
 /// Phase B/C storage starts with the original image's initial values (checked when the exe is available).
 pub fn check_global_initial_values(globals: &[&[GlobalDesc]]) {
     let Some(exe) = exe() else {

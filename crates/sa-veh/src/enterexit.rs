@@ -296,13 +296,16 @@ pub fn remove_get_in_anims(ped: GPtr<u8>) {
     blend_out_associations(rd::<GPtr<u8>>(ped, 0x18), 0x10, 0x10);
 }
 
+/// `~[0x1560910] ^ [0x4D4314]`.
+const REMOVE_CAR_SIT_ANIM_FLAGS: u32 = 0x1000;
+
 /// `CCarEnterExit::RemoveCarSitAnim(const CPed*)` (0x64F680): blends out the associations with flag
 /// 0x1000, then `BlendAnimation(clump, ped->m_nAnimGroup (+0x4D4), 3 (car sit), 1000.0)`. The first
 /// flags argument is computed by the .HOODLUM fragment at 0x40A1FD as `~[0x1560910] ^ [0x4D4314]`
-/// (0x1000 with the image bytes); it is read the same way here. EAX is BlendAnimation's result.
+/// (0x1000 with the image bytes, both static: nothing writes them). EAX is BlendAnimation's result.
 #[hook(addr = 0x64F680, conv = cdecl, name = "CCarEnterExit::RemoveCarSitAnim", expect = "53 8B 5C 24 08")]
 pub fn remove_car_sit_anim(ped: GPtr<u8>) -> GPtr<u8> {
-    let first_flags = !g::<u32>(0x1560910).read() ^ g::<u32>(0x4D4314).read();
+    let first_flags = REMOVE_CAR_SIT_ANIM_FLAGS;
     blend_out_associations(rd::<GPtr<u8>>(ped, 0x18), first_flags, 0x1000);
     blend_animation(
         rd::<GPtr<u8>>(ped, 0x18),
@@ -335,3 +338,13 @@ pub const HOOKS: &[HookReg] = &[
 
 /// This module's globals (replace with a `sa_core::globals! { list GLOBALS; ... }` block when it gets some).
 pub const GLOBALS: &[sa_core::mem::GlobalDesc] = &[];
+
+#[cfg(test)]
+mod image_constant_tests {
+    #[test]
+    fn protection_value_equals_the_original_derivation() {
+        if let (Some(a), Some(b)) = (sa_testkit::image_u32(0x1560910), sa_testkit::image_u32(0x4D4314)) {
+            assert_eq!(!a ^ b, super::REMOVE_CAR_SIT_ANIM_FLAGS);
+        }
+    }
+}

@@ -214,6 +214,13 @@ pub fn knock_off_bike_calc_forces_and_anims(this: GPtr<u8>, ped: GPtr<u8>) -> u3
     }
 }
 
+/// `ComputeDeathAnim`'s weapon class per weapon type 0..0x36 (its switch byte table at 0x4B3F3C, in `.text`).
+const DEATH_ANIM_WEAPON_CLASS: [u8; 0x37] = [
+    0, 0, 1, 0, 2, 1, 1, 1, 1, 0, 1, 2, 2, 2, 2, 2, 3, 4, 4, 12, 12, 12, 5, 5,
+    6, 7, 7, 7, 5, 5, 8, 8, 5, 5, 5, 3, 3, 4, 7, 3, 12, 4, 4, 12, 12, 12, 0, 12,
+    12, 9, 9, 3, 5, 10, 11,
+];
+
 /// `CEventDamage::ComputeDeathAnim(CPed*, bool makeActiveTaskAbortable)` (0x4B3A60, `ret 8`). Defaults: group 0,
 /// anim 0xF, delta 4.0, speed 1.0. A ped in a vehicle, or (with the flag) whose active task refuses an urgent
 /// abort, gets anim 0xBF. Drowning (weapon 0x35) or a ped in water (+0x40 bit 8) that is not standing gets 0x8C.
@@ -275,7 +282,7 @@ pub fn damage_compute_death_anim(this: GPtr<u8>, ped: GPtr<u8>, make_abortable: 
         wr::<u32>(this, 0x30, 0x4180_0000);
         force = 1.0;
     } else if weapon <= 0x36 {
-        let class = g::<u8>(0x4B3F3C + weapon as usize).read();
+        let class = DEATH_ANIM_WEAPON_CLASS[weapon as usize];
         let by_dir = |a: [u32; 4]| if dir <= 3 { Some(a[dir as usize]) } else { None };
         match class {
             0..=2 => {
@@ -490,3 +497,13 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_DAMAGE_COMPUTE_DEATH_ANIM,
     HOOK_KNOCK_OFF_BIKE_SET_PED_SAFE_POSITION,
 ];
+
+#[cfg(test)]
+mod image_constant_tests {
+    use super::*;
+
+    #[test]
+    fn constants_equal_the_original_bytes() {
+        sa_testkit::check_image_bytes(0x4B3F3C, &DEATH_ANIM_WEAPON_CLASS);
+    }
+}

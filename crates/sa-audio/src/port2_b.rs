@@ -333,8 +333,11 @@ pub fn speech_is_global_context_important_for_widescreen(this: GPtr<u8>, ctx: u3
 use crate::bindings::sound_stop_and_forget;
 use crate::bindings::twin_loop_stop_sound_and_forget;
 
-/// `GetVehicleTypeForAudio` jump-table index bytes (`.text`, 0x27 entries, read in place): 0 / 1 / 2.
-const VEHICLE_TYPE_FOR_AUDIO_INDEX: usize = 0x4F4F48;
+/// `GetVehicleTypeForAudio` jump-table index bytes (0x4F4F48 in `.text`, 0x27 entries): 0 / 1 / 2.
+const VEHICLE_TYPE_FOR_AUDIO_INDEX: [u8; 0x27] = [
+    0, 0, 0, 2, 0, 0, 2, 2, 2, 0, 0, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2, 0, 0,
+    2, 1, 2, 2, 2, 1, 1, 0, 2, 2, 2, 2, 2, 2, 0,
+];
 
 /// `CAEVehicleAudioEntity::GetVehicleTypeForAudio()` (0x4F4F00): AX = 2 unless initialised (+0xA4) with
 /// an entity (+4); then the byte at 0x4F4F48 indexed by the signed audio type byte +0x9C (> 0x26 -> 2).
@@ -348,7 +351,7 @@ pub fn vehicle_get_vehicle_type_for_audio(this: GPtr<u8>) -> u16 {
     if ty > 0x26 {
         return 2;
     }
-    g::<u8>(VEHICLE_TYPE_FOR_AUDIO_INDEX + ty as usize).read() as u16
+    u16::from(VEHICLE_TYPE_FOR_AUDIO_INDEX[ty as usize])
 }
 
 /// `CAEWeatherAudioEntity::StaticReset()` (0x5052B0; entry `nop nop nop jmp` into a `.text` chunk at
@@ -1577,9 +1580,16 @@ pub fn speech_get_voice(name: GPtr<u8>, ty: u32) -> u16 {
 
 // ---- pass 3: collision (2) -----------------------------------------------------------------------
 
-/// `ReportObjectDestruction` jump-table index bytes (`.text`, 0x85 entries for surfaces 0x2A..0xAE, read
-/// in place): 0 = random glass sfx 0x29..0x2C, 1 = sfx 0xB, 2 = nothing.
-const OBJECT_DESTRUCTION_INDEX: usize = 0x4DADAC;
+/// `ReportObjectDestruction` jump-table index bytes (0x4DADAC in `.text`, 0x85 entries for surfaces
+/// 0x2A..0xAE): 0 = random glass sfx 0x29..0x2C, 1 = sfx 0xB, 2 = nothing.
+const OBJECT_DESTRUCTION_INDEX: [u8; 0x85] = [
+    0, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0,
+];
 
 /// `CAECollisionAudioEntity::ReportObjectDestruction(CEntity*)` (0x4DAB60): nothing for a null entity.
 /// Model 0x158 uses surface 0x2D. The model in the word at 0x8CD6F4 plays two temp sounds (+8): (slot 2,
@@ -1673,7 +1683,7 @@ pub fn collision_report_object_destruction(this: GPtr<u8>, entity: u32) {
     if idx > 0x84 {
         return;
     }
-    let sfx = match g::<u8>(OBJECT_DESTRUCTION_INDEX + idx as usize).read() {
+    let sfx = match OBJECT_DESTRUCTION_INDEX[idx as usize] {
         0 => {
             let r = crate::common::ae_random_int(0x29, 0x2C);
             if (r as i16) < 0 {
@@ -1708,8 +1718,11 @@ pub fn collision_report_object_destruction(this: GPtr<u8>, entity: u32) {
 
 // ---- pass 3: ped (2) -----------------------------------------------------------------------------
 
-/// `HandlePedSwing` weapon-type jump-table index bytes (`.text`, types 0..0x2D, read in place).
-const PED_SWING_WEAPON_INDEX: usize = 0x4E1C7C;
+/// `HandlePedSwing` weapon-type jump-table index bytes (0x4E1C7C in `.text`, types 0..0x2D).
+const PED_SWING_WEAPON_INDEX: [u8; 0x2e] = [
+    0, 0, 1, 2, 3, 4, 4, 2, 3, 0, 5, 5, 5, 5, 0, 1, 0, 0, 0, 6, 6, 6, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+];
 
 /// `CAEPedAudioEntity::HandlePedSwing(eAudioEvents, int32 animSfx, uint32 delayMs)` (0x4E1A40): bank
 /// 0x8F must be in slot 5 (else loaded unless the loading tune plays; return). From the ped's current
@@ -1743,7 +1756,7 @@ pub fn ped_handle_ped_swing(this: GPtr<u8>, event: u32, anim_sfx: u32, delay: u3
     let mut offset: f32 = 0.0;
     let mut speed: u32 = FLT_ONE_BITS;
     if wtype <= 0x2D {
-        match g::<u8>(PED_SWING_WEAPON_INDEX + wtype as usize).read() {
+        match PED_SWING_WEAPON_INDEX[wtype as usize] {
             0 => (sfx, offset, speed) = (0x57, g::<f32>(0x85A5C0).read(), SPEED_084),
             1 => sfx = 0x2F,
             2 => (sfx, speed) = (0x56, SPEED_084),
@@ -2904,8 +2917,10 @@ fn vehicle_speed_ratio(params: GPtr<u8>) -> f32 {
     if one < r { one } else { r }
 }
 
-/// `ProcessDummyVehicleEngine` jump-table index bytes (`.text`, dummy states 0..10, read in place).
-const DUMMY_ENGINE_STATE_INDEX: usize = 0x501640;
+/// `ProcessDummyVehicleEngine` jump-table index bytes (0x501640 in `.text`, dummy states 0..10).
+const DUMMY_ENGINE_STATE_INDEX: [u8; 0xb] = [
+    0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 0,
+];
 
 /// `CAEVehicleAudioEntity::ProcessDummyVehicleEngine(cVehicleParams&)` (0x501480): no bank slot (+0xE0 ==
 /// -1) requests one for the engine bank (+0xDC) and stops if none. A bank not yet loaded in the slot:
@@ -2948,7 +2963,7 @@ pub fn vehicle_process_dummy_vehicle_engine(this: GPtr<u8>, params: GPtr<u8>) {
         }
         let ds = rd::<u8>(this, 0xA9) as i8 as i32 as u32;
         if ds <= 10 {
-            let limit = match g::<u8>(DUMMY_ENGINE_STATE_INDEX + ds as usize).read() {
+            let limit = match DUMMY_ENGINE_STATE_INDEX[ds as usize] {
                 0 => Some(0x8CBBF0),
                 1 => Some(0x8CBBF4),
                 _ => None,
@@ -3326,9 +3341,16 @@ pub fn fire_play_fire_sounds(this: GPtr<u8>, event: u32, posn: u32) {
 
 use sa_veh::bindings::uses_siren as vehicle_uses_siren;
 
-/// `CAEVehicleAudioEntity::Initialise` model jump-table index bytes (models 0x1C0..0x247, read in place):
-/// 0 -> +0xB0 = 1, 1 -> 0.
-const VEHICLE_INIT_MODEL_INDEX: usize = 0x4F7998;
+/// `CAEVehicleAudioEntity::Initialise` model jump-table index bytes (0x4F7998 in `.text`, models
+/// 0x1C0..0x247): 0 -> +0xB0 = 1, 1 -> 0.
+const VEHICLE_INIT_MODEL_INDEX: [u8; 0x88] = [
+    0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+];
 
 /// `CAEVehicleAudioEntity::Initialise(CEntity*)` (0x4F7670): resets the entity's state (in the bytes'
 /// store order), the 12 engine sound slots (+0xE4 type word = index, +0xE8 sound = 0), copies the
@@ -3393,7 +3415,7 @@ pub fn vehicle_initialise(this: GPtr<u8>, entity: u32) {
     }
     wr::<f32>(e, 0xD8, event_volume(0x4D));
     let m = (rd::<i16>(g(entity as usize), 0x22) as i32).wrapping_sub(0x1C0) as u32;
-    let b0 = m <= 0x87 && g::<u8>(VEHICLE_INIT_MODEL_INDEX + m as usize).read() == 0;
+    let b0 = m <= 0x87 && VEHICLE_INIT_MODEL_INDEX[m as usize] == 0;
     wr::<u8>(e, 0xB0, b0 as u8);
     let ty = rd::<u8>(e, 0x80) as i8;
     let lower_volume = || wr::<f32>(e, 0xD8, rd::<f32>(e, 0xD8) - g::<f32>(0x8CBD50).read());
@@ -4407,4 +4429,18 @@ fn speech_get_speech_context_volume_offset_call(this: GPtr<u8>, ctx: u32) -> cra
 #[allow(dead_code)]
 fn speech_get_speech_context_volume_offset_target_f64(this: GPtr<u8>, ctx: u32) -> f64 {
     speech_get_speech_context_volume_offset(this, ctx).to_f64()
+}
+
+#[cfg(test)]
+mod image_constant_tests {
+    use super::*;
+
+    #[test]
+    fn constants_equal_the_original_bytes() {
+        sa_testkit::check_image_bytes(0x4F4F48, &VEHICLE_TYPE_FOR_AUDIO_INDEX);
+        sa_testkit::check_image_bytes(0x4DADAC, &OBJECT_DESTRUCTION_INDEX);
+        sa_testkit::check_image_bytes(0x4E1C7C, &PED_SWING_WEAPON_INDEX);
+        sa_testkit::check_image_bytes(0x501640, &DUMMY_ENGINE_STATE_INDEX);
+        sa_testkit::check_image_bytes(0x4F7998, &VEHICLE_INIT_MODEL_INDEX);
+    }
 }

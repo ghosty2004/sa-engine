@@ -136,12 +136,16 @@ pub fn floor_of_float(v: u32) -> f64 {
     libm::floor(f32::from_bits(v) as f64)
 }
 
+/// `~[0x15607EC] ^ [0x727253]`.
+const PLAYER_VEHICLE_AUDIO_SETTINGS: u32 = 0xB6_B99C;
+
 /// `CAEVehicleAudioEntity::StaticGetPlayerVehicleAudioSettingsForRadio()` (0x4F4ED0): the entry
 /// jumps into the protection chunk 0x405B0E, which returns `*(~[0x15607EC] ^ [0x727253])` (a
-/// `.HOODLUM` dword and a `.text` dword: the address of the player's vehicle settings). `#[native]`.
+/// `.HOODLUM` dword and a `.text` dword, both static: the address of the player's vehicle settings,
+/// 0xB6B99C). `#[native]`.
 #[sa_core::native(addr = 0x4F4ED0, conv = cdecl, name = "CAEVehicleAudioEntity::StaticGetPlayerVehicleAudioSettingsForRadio")]
 pub fn vehicle_get_player_settings_for_radio() -> u32 {
-    r32(!r32(0x15607EC) ^ r32(0x727253))
+    r32(PLAYER_VEHICLE_AUDIO_SETTINGS)
 }
 
 /// `CAEAudioHardware::SetChannelVolume(int16 slot, uint16 channel, float volume, int8)` (0x4D8870,
@@ -751,8 +755,11 @@ pub fn sound_manager_service(this: u32) {
 
 // ------------------------------------------------------------------ CAudioEngine::Service --------
 
+/// `[0x1560628] + [0x563470]` (the bits of 1.0f).
+const SERVICE_FIRST_EVENT_SPEED: u32 = 0x3F80_0000;
+
 /// `CAudioEngine::Service()` (0x507750, entry `push esi; push edi; mov esi, ecx; jmp` into the
-/// protection chunk 0x40139B, which leaves `[0x1560628] + [0x563470]` on the stack as the speed
+/// protection chunk 0x40139B, which leaves `[0x1560628] + [0x563470]` (static: 1.0) on the stack as the speed
 /// argument of the first `AddAudioEvent`). Frontend events 0x1F (volume 0) and, unpaused, 0x24
 /// (speed 1.0); the track play time; the radio channel's play times; cutscene track finished
 /// (+0 set, play time -4) -> +1; a finished one (-6) restarts a vehicle radio; cutscene / ambience /
@@ -761,7 +768,7 @@ pub fn sound_manager_service(this: u32) {
 /// and police scanner services. `#[native]`.
 #[sa_core::native(addr = 0x507750, conv = thiscall, name = "CAudioEngine::Service")]
 pub fn audio_engine_service(this: u32) {
-    let hidden = r32(0x1560628).wrapping_add(r32(0x563470));
+    let hidden = SERVICE_FIRST_EVENT_SPEED;
     frontend_add_audio_event_call(this + 0xB4, 0x1F, 0, hidden);
     if !game_paused() {
         frontend_add_audio_event_call(this + 0xB4, 0x24, 0, 0x3F80_0000);
@@ -1201,4 +1208,17 @@ fn li_commit(l: u32) -> i32 {
 #[inline]
 fn entity_update_parameters(ent: u32, s: u32, pt: u32) {
     entity_update_parameters_raw(GPtr::from_addr(ent as usize), s, pt)
+}
+
+#[cfg(test)]
+mod image_constant_tests {
+    #[test]
+    fn protection_values_equal_the_original_derivations() {
+        if let (Some(a), Some(b)) = (sa_testkit::image_u32(0x15607EC), sa_testkit::image_u32(0x727253)) {
+            assert_eq!(!a ^ b, super::PLAYER_VEHICLE_AUDIO_SETTINGS);
+        }
+        if let (Some(a), Some(b)) = (sa_testkit::image_u32(0x1560628), sa_testkit::image_u32(0x563470)) {
+            assert_eq!(a.wrapping_add(b), super::SERVICE_FIRST_EVENT_SPEED);
+        }
+    }
 }
