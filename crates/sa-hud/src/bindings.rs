@@ -39,6 +39,11 @@ orig! {
 }
 
 orig! {
+    /// `CLocalisation::ShootLimbs` (0x56D280)
+    pub fn localisation_shoot_limbs() -> u8 = cdecl 0x56D280 => crate::hud::localisation_shoot_limbs;
+}
+
+orig! {
     /// `CLocalisation::KnockDownPeds` (0x56D290)
     pub fn localisation_knock_down_peds() -> u8 = cdecl 0x56D290 => crate::hud::localisation_knock_down_peds;
 }

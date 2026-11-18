@@ -59,6 +59,11 @@ orig! {
 }
 
 orig! {
+    /// `FxPrtMult_c::SetUp` (0x4AB2D0)
+    pub fn fx_prt_mult_set_up(p: GPtr<u8>, r: f32, g: f32, b: f32, a: f32, size: f32, rot: f32, life: f32) = thiscall 0x4AB2D0 => unported;
+}
+
+orig! {
     /// `FUN_004afe70` (0x4AFE70)
     pub fn kob_dtor(e: GPtr<u8>) = thiscall 0x4AFE70 => crate::bike_knock_off_rider::event_knock_off_bike_destructor;
 }

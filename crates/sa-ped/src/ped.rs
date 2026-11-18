@@ -66,9 +66,8 @@ orig! {
     pub fn speech_enable(e: GPtr<u8>) = thiscall 0x4E3F70 => unported;
     /// `CAEPedSpeechAudioEntity::EnablePedSpeechForScriptSpeech` (0x4E3F90)
     pub fn speech_enable_script(e: GPtr<u8>) = thiscall 0x4E3F90 => unported;
-    /// `CLocalisation::ShootLimbs` (0x56D280)
-    pub fn shoot_limbs() -> u8 = cdecl 0x56D280 => unported;
 }
+use sa_world::bindings::localisation_shoot_limbs as shoot_limbs;
 
 /// The ped pool handle of `ped` (`CPool::GetRef`): `(index << 8) + flags[index]`, index as the
 /// original's signed magic-number division by 0x7C4.

@@ -749,6 +749,11 @@ orig! {
 }
 
 orig! {
+    /// `thunk_FUN_015658a0` (0x45AFB0)
+    pub fn physical_45afb0(p: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x45AFB0 => unported;
+}
+
+orig! {
     /// `tReplayVehicleBlock::MakeVehicleUpdateData` (0x45B730)
     pub fn make_vehicle_update_data(b: GPtr<u8>, v: GPtr<u8>, i: i32) = thiscall 0x45B730 => unported;
 }
@@ -1036,6 +1041,11 @@ orig! {
 orig! {
     /// `FxSystem_c::SetLocalParticles` (0x4AA910)
     pub fn fx_set_local_particles(f: GPtr<u8>, b: u32) = thiscall 0x4AA910 => unported;
+}
+
+orig! {
+    /// `FxPrtMult_c` (0x4AB270)
+    pub fn fx_prt_mult_default_ctor(p: u32) -> u32 = thiscall 0x4AB270 => unported;
 }
 
 orig! {
@@ -2376,6 +2386,11 @@ orig! {
 orig! {
     /// `CLocalisation::KickingWhenDown` (0x56D270)
     pub fn localisation_kicking_when_down() -> u8 = cdecl 0x56D270 => unported;
+}
+
+orig! {
+    /// `CLocalisation::ShootLimbs` (0x56D280)
+    pub fn localisation_shoot_limbs() -> u8 = cdecl 0x56D280 => unported;
 }
 
 orig! {

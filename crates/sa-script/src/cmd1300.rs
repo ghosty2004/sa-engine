@@ -49,7 +49,7 @@ const TIME_STEP: usize = 0xB7CB5C;
 
 pub use sa_world::bindings::clear_drunk_blur;
 use sa_weapon::bindings::add_explosion;
-use crate::bindings::physical_45afb0;
+use sa_world::bindings::physical_45afb0;
 use crate::bindings::set_ammo;
 use crate::bindings::vehicle_get_ref;
 use sa_core::bindings::text_get;

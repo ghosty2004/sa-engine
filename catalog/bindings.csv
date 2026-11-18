@@ -1333,7 +1333,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x4A9CA0,sa-render,pool_get_mem,thiscall,,this:GPtr<u8>;size:u32;align:u32,GPtr<u8>,sa_render::fx::fx_memory_pool_get_mem,FxMemoryPool_c::GetMem,
 0x4A9F70,sa-render,frustum_info_ctor,thiscall,,this:GPtr<u8>,GPtr<u8>,unported,FxSphere_c,
 0x4AA030,sa-render,frustum_is_collision,thiscall,,this:GPtr<u8>;s:GPtr<u8>,u32,sa_render::mvpa_render3::fx_frustum_is_collision,FxFrustumInfo_c::IsCollision,
-0x4AB270,sa-render,fx_prt_mult_default_ctor,thiscall,,p:u32,u32,sa_render::generated::generated_setters::g_fx_prt_mult_c_4ab270,FxPrtMult_c,
+0x4AB270,sa-world,fx_prt_mult_default_ctor,thiscall,,p:u32,u32,unported,FxPrtMult_c,sa_render::generated::generated_setters::g_fx_prt_mult_c_4ab270
 0x54EEF0,sa-render,transform_points,cdecl,,out:GPtr<u8>;n:u32;m:GPtr<u8>;inp:GPtr<u8>,,sa_render::mvpb_r1::transform_points,TransformPoints,
 0x553260,sa-render,render_one_non_road,cdecl,,e:GPtr<u8>,,sa_render::renderer::render_one_non_road,CRenderer::RenderOneNonRoad,
 0x5A3F20,sa-render,proc_object_process_triangle_added,thiscall,,this:GPtr<u8>;t:GPtr<u8>,u8,unported,ProcObjectMan_c::ProcessTriangleAdded,
@@ -1554,7 +1554,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x45A980,sa-script,start_playback_recorded_car,cdecl,,v:GPtr<u8>;n:u32;a:u32;b:u32,,unported,CVehicleRecording::StartPlaybackRecordedCar,
 0x45AB10,sa-script,give_player_remote_controlled_car,cdecl,,x:f32;y:f32;z:f32;angle:f32;model:u32,,crate::frontier_c::give_player_remote_controlled_car,CRemote::GivePlayerRemoteControlledCar,
 0x45AD40,sa-script,take_remote_control_of_car,cdecl,,veh:GPtr<u8>,,crate::frontier_c::take_remote_control_of_car,thunk_FUN_0156e620,
-0x45AFB0,sa-script,physical_45afb0,thiscall,,p:GPtr<u8>;x:u32;y:u32;z:u32,,unported,thunk_FUN_015658a0,
+0x45AFB0,sa-world,physical_45afb0,thiscall,,p:GPtr<u8>;x:u32;y:u32;z:u32,,unported,thunk_FUN_015658a0,
 0x460EC0,sa-script,clear_script_road_blocks,cdecl,,,,unported,CRoadBlocks::ClearScriptRoadBlocks,
 0x4639E0,sa-script,stuck_car_check_init,thiscall,,s:GPtr<u8>,,unported,CStuckCarCheck::Init,
 0x463D50,sa-script,read_label,thiscall,,s:GPtr<u8>;buf:GPtr<u8>;len:u32,,sa_script::vm::read_text_label_from_script,CRunningScript::ReadTextLabelFromScript,
@@ -1862,6 +1862,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x732260,sa-veh,vis_get_model_info,cdecl,,atomic:GPtr<u8>,GPtr<u8>,unported,CVisibilityPlugins::GetModelInfo,
 0x73AF00,sa-veh,weapon_fire_one_instant_hit_round,cdecl,,a:GPtr<u32>;b:GPtr<u32>;dmg:u32,,unported,CWeapon::FireOneInstantHitRound,
 0x73D1E0,sa-veh,weapon_do_tank_doom_aiming,cdecl,,v:GPtr<u8>;owner:GPtr<u8>;start:GPtr<u8>;end:GPtr<u8>,,unported,CWeapon::DoTankDoomAiming,
+0x4AB2D0,sa-veh,fx_prt_mult_set_up,thiscall,,p:GPtr<u8>;r:f32;g:f32;b:f32;a:f32;size:f32;rot:f32;life:f32,,unported,FxPrtMult_c::SetUp,
 0x741FD0,sa-veh,do_drive_by_shootings,thiscall,,v:GPtr<u8>,,unported,CVehicle::DoDriveByShootings,
 0x49F300,sa-weapon,fx_add_tyre_burst,thiscall,,fx:GPtr<u8>;pos:GPtr<u8>;vel:GPtr<u8>,,unported,Fx_c::AddTyreBurst,
 0x49F3D0,sa-weapon,fx_add_bullet_impact,thiscall,,fx:GPtr<u8>;pos:GPtr<u8>;dir:GPtr<u8>;surface:u32;n:u32;b:f32,,unported,Fx_c::AddBulletImpact,
@@ -2327,6 +2328,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x56D200,sa-world,german_game,cdecl,,,u8,unported,CLocalisation::GermanGame,
 0x56D220,sa-world,metric,cdecl,,,u8,unported,CLocalisation::Metric,
 0x56D230,sa-world,localisation_blood,cdecl,,,u8,unported,CLocalisation::Blood,sa_ai::fight_ground_target::localisation_blood_native
+0x56D280,sa-world,localisation_shoot_limbs,cdecl,,,u8,unported,CLocalisation::ShootLimbs,sa_hud::hud::localisation_shoot_limbs
 0x56D270,sa-world,localisation_kicking_when_down,cdecl,,,u8,unported,CLocalisation::KickingWhenDown,sa_ai::fight_ground_target::localisation_kicking_when_down_native
 0x56DAB0,sa-world,is_player_in_remote_mode,thiscall,,this:GPtr<u8>,u8,unported,CPlayerInfo::IsPlayerInRemoteMode,
 0x56DFB0,sa-world,player_info_get_pos,thiscall,,pi:GPtr<u8>;out:GPtr<u32>,GPtr<u32>,unported,CPlayerInfo::GetPos_Hook,sa_ped::player_info::get_pos

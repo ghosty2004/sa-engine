@@ -111,7 +111,7 @@ use crate::bindings::add_counter;
 use sa_world::bindings::clump_get_association;
 use sa_world::bindings::find_node_coors_for_script;
 use sa_world::bindings::find_node_orientation_for_car_placement;
-use crate::bindings::physical_45afb0;
+use sa_world::bindings::physical_45afb0;
 use sa_world::bindings::set_entity_blip;
 use sa_world::bindings::find_player_ped;
 use sa_stream::bindings::pop_current_txd;
