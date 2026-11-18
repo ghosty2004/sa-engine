@@ -9,7 +9,8 @@ use sa_math::x87::X87;
 use crate::common::{f32_of, ftol32, g, rd, wr, x};
 use crate::mvpd_v5::ped_damage_event;
 use sa_core::bindings::{cross_product, entity_get_is_on_screen, general_random_int_in_range, matrix_mul_vec as mat_mul_vec, vector2d_normalise, vector_normalise, vector_normalise_and_mag};
-use sa_core::field::gf;
+use sa_core::field::{gf, ptr_of as vp};
+use crate::mvpd_v1::read_vec as rv;
 use sa_math::fpu::fbits as k;
 use sa_math::vector::CVector;
 use sa_stream::bindings::animate_ped_col_model_skinned;
@@ -151,14 +152,6 @@ const SCAN_CODE: usize = 0xB7_CD78;
 const TIME_MS: usize = 0xB7_CB84;
 const ROTOR_DMG_TIME: usize = 0xC1_CC1C;
 
-/// A local vector as its game pointer.
-fn vp(v: &mut CVector) -> GPtr<u8> {
-    GPtr::from_raw(v as *mut CVector).cast()
-}
-
-fn rv(p: GPtr<u8>) -> CVector {
-    CVector::new(rd::<f32>(p, 0), rd::<f32>(p, 4), rd::<f32>(p, 8))
-}
 
 /// The blades against a ped: the 2D direction from the ped to this vehicle (normalised), its local direction; a ped
 /// not attached loses +0x46C bit 0 and gets `ApplyMoveForce(dir * -5.0, 5.0)`; the run-over damage event (weapon
