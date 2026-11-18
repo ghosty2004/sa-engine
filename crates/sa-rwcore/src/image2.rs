@@ -11,7 +11,7 @@ use sa_core::abi::HookReg;
 use sa_core::mem::{GPtr, GlobalDesc};
 use sa_core::{hook, orig};
 
-use crate::common::{RwError, g, module, p8, rd, rw_error_set, rw_free, rw_memory_alloc, rw_memory_free, wr};
+use crate::common::{RwError, copy_bytes, error2, g, module, p8, rd, rw_error_set, rw_free, rw_malloc, rw_memory_alloc, rw_memory_free, rw_realloc, wr};
 use crate::raster::D3D9_RASTER_EXT_OFFSET;
 use sa_math::x87::X87;
 use crate::texture::{TEXTURE_MODULE, TEXTURE_REGISTRY};
@@ -81,8 +81,12 @@ orig! {
     fn rw_strrchr(s: GPtr<u8>, c: u32) -> GPtr<u8> = cdecl table 0xC97B24 0x108 => unported;
     /// `G->stringFuncs.rwstrcmp(a, b)` (G+0x114)
     pub(crate) fn rw_strcmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl table 0xC97B24 0x114 => unported;
-    /// `_rwImageFindFileAndCall(name, mode, cb, data)` (0x8030C0): path search, file open, `cb`
-    fn image_find_file_and_call(name: GPtr<u8>, mode: u32, cb: u32, data: GPtr<u8>) -> u32 = cdecl 0x8030C0 => unported;
+    /// `_rwImageFindFileAndCall(name, extra, cb, data)` (0x8030C0)
+    fn image_find_file_and_call(name: GPtr<u8>, extra: u32, cb: u32, data: GPtr<u8>) -> GPtr<u8> = cdecl 0x8030C0 => image_find_file_and_call_port;
+    /// The search callback `cb(path, data)` of `_rwImageFindFileAndCall`: 0 stops the search
+    fn call_find_file_cb(f: u32, path: GPtr<u8>, data: GPtr<u8>) -> u32 = cdecl dyn => unported;
+    /// An image reader `RwImage* reader(const RwChar* path)` (the `RwImageRead` block's first field)
+    fn call_image_reader(f: u32, path: GPtr<u8>) -> u32 = cdecl dyn => unported;
     /// `RwImageMakeMask(image)` (0x802A20)
     fn rw_image_make_mask(img: GPtr<u8>) -> GPtr<u8> = cdecl 0x802A20 => crate::image::rw_image_make_mask;
     /// `RwImageApplyMask(image, mask)` (0x802AF0)
@@ -647,6 +651,93 @@ fn find_image_reader(name: GPtr<u8>) -> u32 {
     0
 }
 
+/// The scratch buffer's memory hint.
+const SCRATCH_HINT: u32 = 0x0104_0018;
+use crate::image::IMAGE_MODULE;
+
+/// `_rwImageGrowScratchBuffer(size)` (0x803210): the image module's scratch buffer (M+0x210) grows to `size` bytes
+/// when `size` is larger than its size (M+0x214, signed): `G->rwrealloc` of the old buffer, or `G->rwmalloc` without
+/// one (hint 0x1040018); a failure sets `_rwerror(E_RW_NOMEM, size)` and returns null, the old buffer kept. Returns
+/// the buffer.
+#[hook(addr = 0x803210, conv = cdecl, name = "_rwImageGrowScratchBuffer", expect = "8B 0D 5C A6 C9 00",
+       unverified = "frontier2-c23", route = "L2", hazards = "heap-writes")]
+pub fn image_grow_scratch_buffer(size: i32) -> GPtr<u8> {
+    if size > rd::<i32>(module(IMAGE_MODULE), 0x214) {
+        let old: GPtr<u8> = rd(module(IMAGE_MODULE), 0x210);
+        let p = if old.is_null() {
+            rw_malloc(size as u32, SCRATCH_HINT)
+        } else {
+            rw_realloc(old, size as u32, SCRATCH_HINT)
+        };
+        if p.is_null() {
+            error2(0x8000_0013, size as u32);
+            return GPtr::NULL;
+        }
+        wr(module(IMAGE_MODULE), 0x210, p);
+        wr(module(IMAGE_MODULE), 0x214, size);
+    }
+    rd(module(IMAGE_MODULE), 0x210)
+}
+
+/// `_rwImageFindFileAndCall(name, extra, cb, data)` (0x8030C0): `cb(path, data)` for the name itself when it is
+/// absolute or the image path (M+4, read once) is null or empty; otherwise for every `;`-separated entry of the
+/// path (an empty rest ends the search), `entry + name`, until `cb` returns 0 or the entries run out. Each path is
+/// built in the scratch buffer, grown to `strlen(name) (+ entry length) + extra`; a failed growth returns null.
+/// Returns `name`. (`strchr(entry, ';')` runs twice per entry, as in the original.)
+#[hook(addr = 0x8030C0, conv = cdecl, name = "_rwImageFindFileAndCall", expect = "51 A1 24 7B C9 00",
+       unverified = "frontier2-c23", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn image_find_file_and_call_port(name: GPtr<u8>, extra: u32, cb: u32, data: GPtr<u8>) -> GPtr<u8> {
+    let paths: GPtr<u8> = rd(module(IMAGE_MODULE), 4);
+    if path_is_absolute(name) != 0 || paths.is_null() || paths.read() == 0 {
+        let buf = image_grow_scratch_buffer(rw_strlen(name).wrapping_add(extra) as i32);
+        if buf.is_null() {
+            return GPtr::NULL;
+        }
+        rw_strcpy(buf, name);
+        call_find_file_cb(cb, buf, data);
+        return name;
+    }
+    let mut cur = paths;
+    loop {
+        if cur.read() == 0 {
+            return name;
+        }
+        rw_strchr(cur, u32::from(b';'));
+        let semi = rw_strchr(cur, u32::from(b';'));
+        let (len, next) = if semi.is_null() {
+            (rw_strlen(cur), GPtr::NULL)
+        } else {
+            ((semi.addr() as u32).wrapping_sub(cur.addr() as u32), semi.byte_add(1))
+        };
+        let buf = image_grow_scratch_buffer(rw_strlen(name).wrapping_add(len).wrapping_add(extra) as i32);
+        if buf.is_null() {
+            return GPtr::NULL;
+        }
+        copy_bytes(buf, cur, len);
+        rw_strcpy(buf.byte_add(len as isize), name);
+        if call_find_file_cb(cb, buf, data) == 0 || next.is_null() {
+            return name;
+        }
+        cur = next;
+    }
+}
+
+/// `_rwImageReadFileCB(path, data)` (0x8032D0; the `RwImageRead` callback of `_rwImageFindFileAndCall`): when
+/// `G->rwfexist(path)`, `data->image = data->reader(path)`; a read image stops the search (returns 0), anything
+/// else returns `path` (go on).
+#[hook(addr = 0x8032D0, conv = cdecl, name = "_rwImageReadFileCB", expect = "A1 24 7B C9 00 57",
+       unverified = "frontier2-c23", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn image_read_file_cb(path: GPtr<u8>, data: GPtr<u8>) -> GPtr<u8> {
+    if rw_fexist(path) != 0 {
+        let img = call_image_reader(rd(data, 0), path);
+        wr(data, 4, img);
+        if img != 0 {
+            return GPtr::NULL;
+        }
+    }
+    path
+}
+
 /// `RwImageRead(name)` (0x802FD0): finds the reader of the file's extension (see
 /// [`find_image_reader`]; none -> NULL) and returns the image `_rwImageFindFileAndCall(name, 5,
 /// _rwImageReadFileCB (0x8032D0), &{reader, NULL})` (0x8030C0) leaves in the block.
@@ -991,6 +1082,9 @@ fn dds_not_found(name: GPtr<u8>) -> GPtr<u8> {
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_RW_TEXTURE_DEFAULT_READ_CALLBACK,
+    HOOK_IMAGE_GROW_SCRATCH_BUFFER,
+    HOOK_IMAGE_FIND_FILE_AND_CALL_PORT,
+    HOOK_IMAGE_READ_FILE_CB,
     HOOK_D3D9_IMAGE_GET_RASTER,
     HOOK_D3D9_RASTER_SET_IMAGE,
     HOOK_RW_IMAGE_APPLY_MASK,

@@ -53,6 +53,17 @@ orig! {
     pub fn rw_error2(code: u32, a: u32) -> u32 = cdecl 0x8088D0 => unported;
 }
 
+/// Byte copy `n` bytes (`rep movs` dword part, then the byte tail; no overlap in the callers).
+pub fn copy_bytes(dst: GPtr<u8>, src: GPtr<u8>, n: u32) {
+    let dw = n >> 2;
+    for k in 0..dw as isize {
+        wr::<u32>(dst, k * 4, rd::<u32>(src, k * 4));
+    }
+    for k in (dw * 4) as isize..n as isize {
+        wr::<u8>(dst, k, rd::<u8>(src, k));
+    }
+}
+
 /// `RwError` {pluginID, errorCode}.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]

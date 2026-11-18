@@ -17,7 +17,7 @@ use sa_core::abi::HookReg;
 use sa_core::mem::{GPtr, GlobalDesc};
 use sa_core::{hook, orig};
 
-use crate::common::{f32_of, g, p8, rd, rw_free, rw_malloc, rw_memory_alloc, rw_memory_free, wr, x};
+use crate::common::{copy_bytes, f32_of, g, p8, rd, rw_free, rw_malloc, rw_memory_alloc, rw_memory_free, wr, x};
 
 /// Engine plugin offset.
 const SKIN_ENGINE_OFFSET: usize = 0xC978A0;
@@ -105,17 +105,6 @@ fn freelist() -> GPtr<u8> {
 
 fn geom_skin_slot(geom: GPtr<u8>) -> GPtr<u8> {
     geom.byte_add(g::<i32>(SKIN_GEOMETRY_OFFSET).read() as isize)
-}
-
-/// Byte copy `n` bytes (`rep movs` dword part, then the byte tail; no overlap in the callers).
-fn copy_bytes(dst: GPtr<u8>, src: GPtr<u8>, n: u32) {
-    let dw = n >> 2;
-    for k in 0..dw as isize {
-        wr::<u32>(dst, k * 4, rd::<u32>(src, k * 4));
-    }
-    for k in (dw * 4) as isize..n as isize {
-        wr::<u8>(dst, k, rd::<u8>(src, k));
-    }
 }
 
 /// `RpSkinSetFreeListCreateParams(blockSize, numBlocksToPrealloc)` (0x7C67F0). EAX = blockSize.
