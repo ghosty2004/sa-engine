@@ -274,7 +274,7 @@ pub(crate) fn scan_rect(pos: GPtr<u8>, r: f32) -> (i32, i32, i32, i32) {
 
 /// `CWorld::AdvanceCurrentScanCode()` as the scans inline it: the scan code (0xB7CD78) incremented, or the codes
 /// cleared and restarted at 1 when it is 0xFFFF.
-pub(crate) fn advance_scan_code() {
+pub fn advance_scan_code() {
     let sc = CURRENT_SCAN_CODE.get();
     if sc < 0xFFFF {
         CURRENT_SCAN_CODE.set(sc + 1);

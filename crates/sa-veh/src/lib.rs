@@ -162,3 +162,4 @@ pub mod vehicle_tow_link;
 pub mod vehicle_guns;
 pub mod tank_control;
 pub mod harvester;
+pub mod rcbandit;

@@ -52,7 +52,7 @@ orig! {
     /// `CCarAI::GetCarToParkAtCoors(CVehicle*, CVector*)` (0x41D350), ST0 (dropped)
     fn get_car_to_park_at_coors(v: GPtr<u8>, p: GPtr<u8>) -> f64 = cdecl 0x41D350 => unported;
     /// `CAutomobile::RcbanditCheckHitWheels()` (0x6B45E0): the caller tests AX
-    fn rcbandit_check_hit_wheels(v: GPtr<u8>) -> u32 = thiscall 0x6B45E0 => unported;
+    fn rcbandit_check_hit_wheels(v: GPtr<u8>) -> u32 = thiscall 0x6B45E0 => crate::rcbandit::rcbandit_check_hit_wheels;
     /// `CWorld::FindPlayerSlotWithRemoteVehiclePointer(CEntity*)` (0x563FD0)
     fn find_player_slot_with_remote_vehicle_pointer(v: GPtr<u8>) -> i32 = cdecl 0x563FD0 => sa_world::world::cworld::find_player_slot_with_remote_vehicle_pointer;
     /// `CAutomobile::DoSoftGroundResistance(uint32&)` (0x6A4AF0)
