@@ -128,8 +128,13 @@ pub fn furnish_kitchen(this: GPtr<u8>) {
     let id = get_random_id(GPtr::from_addr(0xBA_B380), 4, 0, wealth(this));
     wr::<u8>(this, 0x791, id as u8);
     kitchen_furnish_edges(this);
-    let f = get_furniture(GPtr::from_addr(0xBA_B380), 8, 1, -1, wealth(this));
-    let i = info();
+    place_centred(this, get_furniture(GPtr::from_addr(0xBA_B380), 8, 1, -1, wealth(this)));
+}
+
+/// `f` placed on the tile that centres it in the room: `ftol(D * 0.5 - f.d * 0.5)` (computed first), likewise
+/// x with the widths; rotation 0, its size outputs discarded.
+pub(crate) fn place_centred(this: GPtr<u8>, f: GPtr<u8>) {
+    let i = rd::<GPtr<u8>>(this, 0x14);
     let ty = ftol32(xi(i32::from(rd::<u8>(i, 3))).fmul_m(F_0_5).fsub(xi(i32::from(rd::<u8>(f, 0xD))).fmul_m(F_0_5)));
     let tx = ftol32(xi(i32::from(rd::<u8>(i, 2))).fmul_m(F_0_5).fsub(xi(i32::from(rd::<u8>(f, 0xC))).fmul_m(F_0_5)));
     let (mut ow, mut od) = (0i32, 0i32);

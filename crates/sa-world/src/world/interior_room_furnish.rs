@@ -7,13 +7,17 @@ use sa_core::mem::GPtr;
 use sa_core::orig::at_site;
 use sa_core::{hook, orig};
 
-use super::common::{rd, x, xi};
-use super::interior_room_items::place_object;
+use super::common::{rd, wr, x, xi};
+use super::interior_room_items::{place_centred, place_object};
 use super::interior_shop_furnishing::rand_scaled;
 
-use crate::bindings::{add_interior_info, get_furniture, place_furniture, set_tiles_status};
+use crate::bindings::{add_interior_info, get_furniture, get_random_id, place_furniture, set_tiles_status};
 
 orig! {
+    /// `Interior_c::FindEmptyTiles(int32 w, int32 d, int32* outX, int32* outY)` (0x591C50)
+    fn find_empty_tiles(this: GPtr<u8>, w: i32, d: i32, out_x: GPtr<i32>, out_y: GPtr<i32>) -> u8 = thiscall 0x591C50 => super::interior_furnish_lookup::find_empty_tiles;
+    /// `Interior_c::Bedroom_AddTableItem(group, subGroup, dir, x, y, rot)` (0x593F10)
+    fn bedroom_add_table_item(this: GPtr<u8>, group: i32, sub: i32, dir: i32, tx: i32, ty: i32, rot: i32) -> GPtr<u8> = thiscall 0x593F10 => super::interior_room_items::bedroom_add_table_item;
     /// `Interior_c::PlaceFurnitureOnWall(group, subGroup, id, float z, a5, wall, offset, depth, int32* outWall,
     /// int32* outOffset, int32* outX, int32* outY, int32* outW, int32* outD)` (0x593120)
     pub(crate) fn place_furniture_on_wall(this: GPtr<u8>, group: i32, sub: i32, id: i32, z: u32, a5: i32, wall: i32, offset: i32, depth: i32, out_wall: GPtr<i32>, out_offset: GPtr<i32>, out_x: GPtr<i32>, out_y: GPtr<i32>, out_w: GPtr<i32>, out_d: GPtr<i32>) -> i32 = thiscall 0x593120 => super::interior_wall_fillers::place_furniture_on_wall;
@@ -26,6 +30,8 @@ const F_1_5: f32 = 1.5;
 /// The worktop clutter height (immediate 0x3F866666).
 const WORKTOP_Z: f32 = f32::from_bits(0x3F86_6666);
 const ONE_BITS: u32 = 0x3F80_0000;
+/// The floor clutter height (immediate 0x3D4CCCCD).
+const CLUTTER_Z: f32 = f32::from_bits(0x3D4C_CCCD);
 
 fn man() -> GPtr<u8> {
     GPtr::from_addr(FURNITURE_MAN)
@@ -236,4 +242,123 @@ pub fn kitchen_furnish_edges(this: GPtr<u8>) {
     }
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_KITCHEN_FURNISH_EDGES];
+/// The clutter threshold of a bedroom: >= 75: 0..19, >= 50: 20..49, else `GetRandomNumberInRange(50, 100)`.
+fn bedroom_clutter_chance(wl: u8) -> i32 {
+    if wl >= 75 {
+        rand_scaled(0x5943CE, 20.0)
+    } else if wl >= 50 {
+        20 - rand_scaled(0x5943F7, -30.0)
+    } else {
+        sa_core::bindings::general_random_int_in_range(50, 100)
+    }
+}
+
+/// A bedside table's info and blocked tile by the wall it stands against:
+/// `(info type, dir, info x, info y, tile x, tile y)`.
+type Bedside = (i32, i32, i32, i32, i32, i32);
+
+/// `Interior_c::FurnishBedroom()` (0x593FC0, thiscall, no arguments). The style id (+0x791) = a random id of
+/// group 3 / 1; the door tiles 2 x 2 get status 7. The bed (3 / 0) goes anywhere on a wall; bedside tables
+/// (3 / 1) are tried beside it at `pos - 1` (only when `pos > 0`) and `pos + 2`, each placed one adding an
+/// info towards the bed and blocking its front tile. Two wall units (3 / 3, 3 / 2); on a percent roll below 75
+/// one or two wall tables (2 / 6) with a table item (2 / 8 below 25 or from 50, 2 / 3 from 25); five clutter
+/// items (8 / 2, 5, 4, 3, 6, the first and last needing 2 x 2 free tiles) each by the wealth's chance; then
+/// the rug (8 / 1) centred. When the bed finds no wall, the wall / position (and the two coordinate locals
+/// the info cases share) are the original's uninitialised stack words, 0 here.
+#[hook(addr = 0x593FC0, conv = thiscall, name = "Interior_c::FurnishBedroom", this = "Interior_c",
+       expect = "83 EC 20 53 55 56 8B F1",
+       unverified = "frontier2-b35", route = "L2", hazards = "uninit-locals,heap-writes",
+       note = "rand at_site 0x5942B0, 0x5943CE / 0x5943F7, 0x594431, 0x5944D2, 0x59456F, 0x59460C, 0x5946A9")]
+pub fn furnish_bedroom(this: GPtr<u8>) {
+    use sa_core::field::ptr_of as p;
+    let id = get_random_id(man(), 3, 1, wealth(this));
+    wr::<u8>(this, 0x791, id as u8);
+    set_tiles_status(this, i32::from(rd::<i8>(info(this), 5)) - 1, 0, 2, 2, 7, 0);
+    let (mut wall, mut pos, mut a, mut b, mut tx, mut ty) = (0i32, 0i32, 0i32, 0i32, 0i32, 0i32);
+    let null = GPtr::<i32>::NULL;
+    let bed = place_furniture_on_wall(this, 3, 0, -1, 0, 1, -1, -1, 0, p(&mut wall).cast(), p(&mut pos).cast(),
+                                      null, null, null, null);
+    let bedside = |wall: i32, offset: i32| {
+        place_furniture_on_wall(this, 3, 1, style(this), 0, 1, wall, offset, 0, null, null, null, null, null, null) != 0
+    };
+    let size = |o: isize| i32::from(rd::<u8>(info(this), o));
+    let add_bedside = |(ty_, dir, ix, iy, tile_x, tile_y): Bedside| {
+        add_interior_info(this, ty_, xi(ix).to_f32(), xi(iy).to_f32(), dir as u32, bed as u32);
+        set_tiles_status(this, tile_x, tile_y, 1, 1, 2, 0);
+    };
+    if pos > 0 && bedside(wall, pos - 1) {
+        let q = pos - 1;
+        match wall {
+            1 => (b, a) = (1, q),
+            3 => (b, a) = (size(2) - 2, q),
+            0 => (a, b) = (size(3) - 2, q),
+            2 => (a, b) = (1, q),
+            _ => {}
+        }
+        let (ty_, dir, tile_x, tile_y) = match wall {
+            1 => (3, 2, 2, q),
+            3 => (4, 2, size(2) - 3, q),
+            0 => (3, 1, q, size(3) - 3),
+            2 => (4, 1, q, 2),
+            _ => (b, b, b, b),
+        };
+        add_bedside((ty_, dir, b, a, tile_x, tile_y));
+    }
+    if bedside(wall, pos + 2) {
+        let q = pos + 2;
+        match wall {
+            1 => (a, b) = (1, q),
+            3 => (a, b) = (size(2) - 2, q),
+            0 => (b, a) = (size(3) - 2, q),
+            2 => (b, a) = (1, q),
+            _ => {}
+        }
+        let (ty_, dir, tile_x, tile_y) = match wall {
+            1 => (4, 0, 2, q),
+            3 => (3, 0, size(2) - 3, q),
+            0 => (4, 3, q, size(3) - 3),
+            2 => (3, 3, q, 2),
+            _ => (b, b, b, b),
+        };
+        add_bedside((ty_, dir, a, b, tile_x, tile_y));
+    }
+    for sub in [3, 2] {
+        place_furniture_on_wall(this, 3, sub, style(this), 0, 1, -1, -1, 0, null, null, null, null, null, null);
+    }
+
+    let roll = rand_scaled(0x5942B0, 100.0);
+    let mut table = |item: i32| {
+        if place_furniture_on_wall(this, 2, 6, -1, 0, 1, -1, -1, 0, p(&mut wall).cast(), null, p(&mut tx).cast(),
+                                   p(&mut ty).cast(), null, null) != 0
+        {
+            bedroom_add_table_item(this, 2, item, wall, tx, ty, wall);
+        }
+    };
+    if roll < 25 {
+        table(8);
+    } else if roll < 50 {
+        table(3);
+    } else if roll < 75 {
+        table(8);
+        table(3);
+    }
+
+    let chance = bedroom_clutter_chance(wealth(this) as u8);
+    for (site, k, size, sub, mark) in [
+        (0x594431, 60.0, 2, 2, 2),
+        (0x5944D2, 100.0, 1, 5, 1),
+        (0x59456F, 100.0, 1, 4, 1),
+        (0x59460C, 100.0, 1, 3, 1),
+        (0x5946A9, 100.0, 2, 6, 1),
+    ] {
+        if rand_scaled(site, k) < chance && find_empty_tiles(this, size, size, p(&mut a).cast(), p(&mut b).cast()) != 0 {
+            let f = get_furniture(man(), 8, sub, -1, wealth(this));
+            let py = tile_mid(b);
+            place_object(this, 0, f, tile_mid(a), py, CLUTTER_Z, 0.0);
+            set_tiles_status(this, a, b, mark, mark, 2, 0);
+        }
+    }
+    place_centred(this, get_furniture(man(), 8, 1, -1, wealth(this)));
+}
+
+pub const HOOKS: &[HookReg] = &[HOOK_KITCHEN_FURNISH_EDGES, HOOK_FURNISH_BEDROOM];
