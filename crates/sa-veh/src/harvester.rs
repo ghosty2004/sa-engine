@@ -186,7 +186,7 @@ pub fn process_harvester(this: GPtr<u8>) {
         world_add(limb);
     }
     wr::<u8>(this, 0x980, rd::<u8>(this, 0x980).wrapping_sub(1));
-    if localisation_blood() != 0 && rd::<u8>(this, 0x980) % 3 == 0 {
+    if localisation_blood() != 0 && rd::<u8>(this, 0x980).is_multiple_of(3) {
         let mut prt = [0u32; 7];
         let pp = GPtr::from_raw(prt.as_mut_ptr()).cast::<u8>();
         fx_prt_mult_default_ctor(pp.addr() as u32);
