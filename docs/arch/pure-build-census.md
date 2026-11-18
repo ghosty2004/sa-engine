@@ -201,13 +201,13 @@ Referenced from ports (`orig!` / values) and how phase B handles them today:
 | library / class | referenced | phase B today |
 |---|---|---|
 | MSVC CRT (510 catalogued) | 56 addresses | ~60 native replacements in sa-game `crt.rs` (allocation, strings, stdio, `sscanf` / `sprintf`, maths, `qsort`, `eh vector` iterators, `atexit`) |
-| D3DX9 (955) | 11 | `D3DXAssembleShader` native (`d3d9_shader.rs`, `sa_rw_wgpu::sm::asm`); the five matrix / vector helpers RW's vertex-shader path calls (0x7672E1, 0x7676C7, 0x7675EE, 0x766AB7, 0x766A32) are not, the path runs only with `SA_GAME_SHADERS=1` |
-| libjpeg 6b (204) | 11 | not served: the gallery photo (`JPegCompressScreen`) would stop with an unported call |
-| libpng 1.0.12 + zlib 1.1.3 (197) | 0 | not reached |
-| QuickTime / Media Foundation (39) | 2 | `MFStartup` loader returns the original's failure value (`crt.rs`) |
+| D3DX9 (955) | 11 | `D3DXAssembleShader` native (`d3d9_shader.rs`, `sa_rw_wgpu::sm::asm`); the five matrix / vector helpers RW's vertex-shader path calls (0x7672E1, 0x7676C7, 0x7675EE, 0x766AB7, 0x766A32) native (`d3dx_math.rs`); the path runs only with `SA_GAME_SHADERS=1` |
+| libjpeg 6b (204) | 11 | the seven calls of `JPegCompressScreen` native over `jpeg-encoder` (`libjpeg.rs`): the gallery photo is written |
+| libpng 1.0.12 + zlib 1.1.3 (197) | 12 | `RtPNGImageWrite`'s eleven calls and `png_error` native over `png` (`libpng.rs`) |
+| QuickTime / Media Foundation (39) | 2 | the loader and `MFStartup` succeed and `CAEMFDecoder`'s methods decode MP3 over `symphonia` (`mfdecoder.rs`) |
 | `CAEAudioChannel` / `CAEStaticChannel` / `CAEStreamingChannel`, `CAEStreamThread`, `CAESmoothFadeThread` | stays original | DirectSound itself is native (`dsound.rs`: buffers, 3D, software mixer into `sa_platform::audio`); only the class destructors are unported (shutdown) |
 | `CAEVorbisDecoder` / `CAEDataStream` | stays original | decoding goes through the `ov_*` imports, native via `lewton` (`vorbisfile.rs`); the IStream stubs are unreached |
-| `CAEWaveDecoder`, `CAEMFDecoder`, `CAEWMADecoder` (user tracks) | stays original | not served (user tracks off) |
+| `CAEWaveDecoder`, `CAEMFDecoder`, `CAEWMADecoder` (user tracks) | stays original | `CAEMFDecoder` served (MP3); `CAEWaveDecoder` is game code still to port; WMA unavailable (wmvcore.dll); the track scan thread is not ported |
 | `std::logic_error` / `length_error` (3) | stays original | unreachable (the vector `_Xlen` natives stop first) |
 | bug-report writer (2), Winsock client `vt_866db0` (8) | stays original | development tooling / unused |
 

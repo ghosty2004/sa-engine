@@ -162,6 +162,20 @@ None of them needs the exe's bytes; they need native implementations where a pat
 - **C++ exception classes, the bug-report writer, the Winsock class**: unreachable or development tooling; stay
   unported with their loud `unported` panic.
 
+As built (PURE-1f, 2026-11-18): sa-game registers the third-party entry points at their original addresses, never the
+libraries' internals. `libjpeg.rs`: the seven libjpeg calls of `JPegCompressScreen` over `jpeg-encoder`, writing through
+the game's destination manager (its `empty_output_buffer` 0x5D0400 is now ported in sa-render). `libpng.rs`: the eleven
+libpng calls of `RtPNGImageWrite` and `png_error` over the `png` crate, the file passed to the game's
+`_rtPNGWriteData` (0x7CF980, ported in sa-rwcore); errors no longer jump anywhere (ROADMAP divergence ledger).
+`d3dx_math.rs`: the five D3DX helpers. `mfdecoder.rs`: the media library start-up succeeds and `CAEMFDecoder`'s
+QuickTime-backed methods decode MP3 with `symphonia` (its constructor and `GetStreamID` are ported in sa-audio); WMA
+stays unavailable (no pure-Rust decoder). `CAEWaveDecoder` is game code (a RIFF reader over `CAEDataStream`, no
+library), so it is a port for PORT-AUDIO, not a replacement. User tracks still need the scan (`WriteUserTracksThread`
+0x4F4A20, not ported; `ScanUserTracks` starts no thread in phase B) to build `sa-utrax.dat`. The gallery photo stops
+before libjpeg: `psGrabScreen` (0x7452B0) reads the front buffer through `IDirect3DDevice9::GetDisplayMode`,
+`CreateOffscreenPlainSurface`, `GetFrontBufferData` and the surface's `LockRect`, which the native D3D9 device does
+not implement yet (a read-back of the presented frame; platform work, not third-party code).
+
 ### 3.8 Web
 
 The page stops asking for `gta_sa.exe` (`web/main.js`, `web/loader.js`, `platform/web.rs`); the folder import copies

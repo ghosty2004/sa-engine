@@ -4738,3 +4738,33 @@
   it change no code): `lanec16-default` IDENTICAL 13/13 (save-load: save files identical except the SAVE-1 residue).
   So both sets are IDENTICAL 13/13 on the final code's DLL. Writer gate (base 910ace63) all 16 steps PASS on 52193f63;
   only docs commits after it.
+
+## 2026-11-18 — PURE-1f: the third-party code paths without the exe (agent, branch worktree-agent-a3fa81da5646bc619)
+- Natives in sa-game for the statically linked libraries the ports call, at their original addresses, never their
+  internals: `libjpeg.rs` (the seven libjpeg 6b calls of `JPegCompressScreen`, jpeg-encoder, written through the
+  game's destination manager), `libpng.rs` (the eleven libpng 1.0.12 calls of `RtPNGImageWrite` plus `png_error`,
+  png crate, the file passed to `_rtPNGWriteData`; errors become no-ops instead of a longjmp), `d3dx_math.rs` (the
+  five D3DX helpers of the vertex-shader path, in d3d9_shader's entry table), `mfdecoder.rs` (the media library
+  start-up succeeds; `CAEMFDecoder`'s Initialise / FillBuffer / lengths / SetCursor / GetSampleRate / destructors over
+  symphonia's MP3 decoder). `native.rs` now owns the cdecl / thiscall entry wrappers (vorbisfile's moved there).
+- Glue ports (game code the paths need): `JPegPlugin` empty_output_buffer 0x5D0400 (sa-render), `_rtPNGWriteData`
+  0x7CF980 (sa-rwcore `rt_png.rs`), `CAEMFDecoder` constructor 0x4E7770 and `GetStreamID` 0x4E77B0 (sa-audio); state
+  implemented, L2 runs to do.
+- Dependencies: jpeg-encoder 0.7, symphonia 0.5 (`mp3` only), jpeg-decoder 0.3 (tests). zune-jpeg 0.5.15 was tried
+  for the test and decodes jpeg-encoder's output wrongly (PIL and jpeg-decoder read it correctly).
+- Not done, found on the way: the gallery photo stops in `psGrabScreen` before libjpeg (D3D9 `GetDisplayMode`,
+  `CreateOffscreenPlainSurface`, `GetFrontBufferData`, surface `LockRect` not native: a front-buffer read-back). A
+  scenario poking `CWeapon::ms_bTakePhoto` 0xC8A7C1 and the menu's save-photos byte 0xBA6830 at Grove Street showed it
+  (every frame blocked there, an empty gallery file per attempt), so it is not added. User tracks also need the scan
+  thread (`WriteUserTracksThread` 0x4F4A20) and a `CAEWaveDecoder` port (game code, a RIFF reader: a port, not a
+  replacement); WMA has no pure-Rust decoder. `RtPNGImageWrite` itself is FRONTIER-2 lane C's port (not on this base);
+  the libpng natives serve it once both are merged.
+- Tests: unit tests per native (JPEG encode → decode, PNG RGBA and 4-bit palette round trips, D3DX products and
+  transforms, generated silent MPEG-1 Layer III frames decoded / measured / seeked, non-MP3 rejected).
+- FRONTIER scenarios, `--image builtin`, e31b4bb6's binary against this branch's: pausemenu, crossing, melee, quad,
+  heli, boat, jetpack, escalator, nitro report identically except the media library lines (the loader entry's name,
+  `MFStartup` 0x819820 now dispatched once, one more registry function and call); postfx differs as it does between
+  two runs of one binary.
+- verify-all (phase A) at ceb51635, lanes 1-3, host sa-oracle and the hook DLL rebuilt from this tree (DLL sha256
+  46d04a06…): IDENTICAL 13/13 (tag pure1f-ceb51635).
+- Cost: ~4.5 h; builds: host tests, i686 sa-game, sa-oracle, the hook DLL; 20 scenario runs (base and new).
