@@ -302,6 +302,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | popw4-gang-1 | 11 | POP | c4428cec | master | 0 | 0 | 0 | 11 | 0 | L2 7, split 4 |
 | popw4-partial-1 | 3 | POP | c4428cec | master | 0 | 0 | 0 | 3 | 0 | L2 2, split 1 |
 | popw4-pop-1 | 6 | POP | c4428cec | master | 0 | 0 | 0 | 6 | 0 | split 6 |
+| pure1f-1 | 4 | AUDIO, RW, UNK-game | 255a0679 | worktree-agent-a3fa81da5646bc619 | 4 | 0 | 0 | 0 | 0 | L2 4 |
 | regconv-ped-1 | 3 | PED, UNK-game | 5917e4e2 | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
 | regconv-render-1 | 5 | RENDER | 5917e4e2 | master | 0 | 0 | 2 | 3 | 0 | L2 5 |
 | regconv-rw-1 | 11 | RW, UNK-game | 5917e4e2 | master | 0 | 0 | 3 | 8 | 0 | L2 11 |
@@ -7014,6 +7015,24 @@ SA_UNVERIFIED=popw4-pop-1 LANE=$LANE tools/e2e/port-l2.sh batch:popw4-pop-1 $SA_
 | 0x6133F0 | `CPopulation::CreateWaitingCoppers` | L3-batch | split | heap-writes,x87-transcendental,stack-residue |
 | 0x613D60 | `CPopulation::PlaceCouple` | L3-batch | split | heap-writes,x87-transcendental |
 | 0x616470 | `CPopulation::PopulateInterior` | L3-batch | split | heap-writes,uninit-locals,stack-residue |
+
+## pure1f-1
+
+4 hooks in sa-audio, sa-render, sa-rwcore; hazards: heap-writes (3); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh pure1f-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=pure1f-1 LANE=$LANE tools/e2e/port-l2.sh batch:pure1f-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag pure1f-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4E7770 | `CAEMFDecoder::Constructor` | written | L2 | heap-writes |
+| 0x4E77B0 | `CAEMFDecoder::GetStreamID` | written | L2 | none |
+| 0x5D0400 | `(missed by ghidra: data-code-immediate)` | written | L2 | heap-writes |
+| 0x7CF980 | `_rtPNGWriteData` | written | L2 | heap-writes |
 
 ## regconv-ped-1
 
