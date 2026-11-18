@@ -19,7 +19,7 @@ use sa_core::field::ptr_of as lp;
 /// x and y and `rand() / 32767 * 0.15 * 20 + 2` in z go to `g_fx`'s glass system (0xA9AE40) at `pos` (AddParticle
 /// time 0, rotation -1, light 1.2 / 0.6). The original uses its `pos` argument slot as the integer scratch of the
 /// colour and spin conversions.
-#[hook(addr = 0x49F970, conv = thiscall, name = "Fx_c::AddGlass", this = "Fx_c", expect = "E9 70 1C F6 FF",
+#[hook(addr = 0x49F970, conv = thiscall, name = "Fx_c::AddGlass", this = "Fx_c", expect = "E9 70 1C F6 FF 83 EC 28",
        unverified = "frontier2-c20", route = "L2", hazards = "heap-writes,stack-residue,entry-protection-read",
        note = "entry is a SecuROM fragment jump (loads the camera matrix); rand sites 0x49FA2F / 0x49FA70 / 0x49FA99 / 0x49FAC2; its pos argument slot is scratch")]
 pub fn fx_add_glass(_this: GPtr<u8>, pos: GPtr<u8>, colour: GPtr<u8>, size: f32, count: i32) {
@@ -34,7 +34,7 @@ pub fn fx_add_glass(_this: GPtr<u8>, pos: GPtr<u8>, colour: GPtr<u8>, size: f32,
     let p = lp(&mut prt);
     fx_prt_mult_default_ctor(p.addr() as u32);
     for i in 0..4 {
-        let c = i32::from(rd::<u8>(colour, i as isize));
+        let c = i32::from(rd::<u8>(colour, i));
         wr::<f32>(p, i * 4, xi(c).fmul_m(k(0x3B80_8081)).to_f32());
     }
     wr::<f32>(p, 0x10, size);
