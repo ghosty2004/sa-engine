@@ -783,8 +783,8 @@ fn d3d_res_release(count_cell: usize) {
 #[hook(addr = 0x730900, conv = cdecl, name = "D3DResourceSystem::CancelBuffering", expect = "A1 60 7C C8 00 53 55",
        unverified = "frontier2-a20", route = "L2", hazards = "heap-writes", note = "CGame::ShutdownRenderWare")]
 pub fn d3d_resource_system_cancel_buffering() {
-    let mut i = 0;
-    while (i as i32) < D3D_RES_C87C60.get() as i32 {
+    let mut i: i32 = 0;
+    while i < D3D_RES_C87C60.get() as i32 {
         d3d_res_release(0xC8_7C7C + i as usize * 0x1C);
         i += 1;
     }
