@@ -4556,3 +4556,55 @@
   third-party paths (2-3); PURE-2 ownership / trimming (8-12); 64-bit stays STD-3 (2-4 agent-weeks).
 - Cost: ~2.5 h; 16 + 16 + 3 traced runs (22-121 s each), 22 untraced runs; target/pure1 ~0.5 GB (scratch, not
   committed).
+## 2026-11-18 — FRONTIER-2 turn 15 lane C: raster / image converters, world sector native data, RtPNGImageWrite, the MatFX env and dual renders, RwPalQuant and the palettised texture read path, batches c29 to c34 (agent, branch worktree-agent-a5b666a80ce99c8bc)
+- Base: lane C turn 14 head 64c1331d. Every address checked against `frontier.py --no-branches` first (no RW / RENDER
+  row registered on another branch). Reading aids under target/lc15 (not committed): the Ghidra decompilations of
+  every target (tools/specs/decomp.sh), a callee-closure walker (what porting a row would reveal), a push / call
+  folder for long texture-stage-state sequences.
+- Batch frontier2-c29 (RW, 13 hooks + 2 natives, `raster_to_image.rs`): `_rwD3D9ImageGetRasterBody` 0x7FF450, the
+  converter path 0x7FF8C0 (its pixel-to-RGBA converter called through the selected address, as the original) and the
+  nine converters nothing registered (0x7FFC10 / C70 / CB0 / D00 / D30 / D60 / E50 / E70 / E90 as hooks, 0x7FFBE0 /
+  0x7FFC40 as `#[native]`: catalog/code-data-reads.csv lists readers of their entry bytes), the 24/32-bit raster
+  upload 0x801390 (the converter table is lane B's 0x800810 port, called directly).
+- Batch frontier2-c30 (RW, 2): `_rpD3D9NativeDataWorldSectorStreamWrite` 0x763F20 / `...Read` 0x7641C0. The geometry
+  versions (0x7637F0 / 0x763A80) became the shared entry writer / reader; the sector differences are parameters (entry
+  slot +0x34, the world's material list, a vertex buffer that fails to lock is skipped by the writer, managed vertex
+  buffers only in the reader).
+- Batch frontier2-c31 (RW, 1, `png_write.rs`): RtPNGImageWrite 0x7CF600 calling the statically linked libpng 1.0.12
+  where it lies. The original's `__setjmp3(png_ptr)` cannot be reproduced for a Rust frame: a libpng error crashes
+  instead of returning NULL; ledger (pending).
+- Batch frontier2-c32 (RW, 3): the MatFX env render 0x813A10 and its env texture / transform setup 0x814270
+  (`matfx_env.rs`; the frame path's matrix pads are stack residue the transform cache copies: `peek = 0xC0`, ledger),
+  the dual render 0x812D40 (`matfx_dual.rs`; the blend pairs in texture stages incl. the one-time ValidateDevice, else
+  the blended second draw). Shared: the flush-and-draw tail of 0x812C90 and 0x812AC0's UV-transform setup.
+- Batch frontier2-c33 (RW, 17, `palquant.rs`): RwPalQuantInit / AddImage / ResolvePalette / MatchImage / Term and the
+  helpers 0x80AED0, 0x80AD90, 0x80B910, 0x80BCA0, 0x80BE60, 0x80BEB0, 0x80B490, 0x80B730, 0x80B5D0, 0x80BA30 (X87
+  return), 0x80C430, 0x80C5A0; x87 (PC=24) in the bytes' operand order, register / stored temporaries as the bytes
+  keep them, the truncating fistp of 0x80B490 through image2's helper.
+- Batch frontier2-c34 (RW, 5 + 0x800C80): 0x7F44C0 (shared palette), 0x7F4690 (image read and mask, resample,
+  re-palettise), `_rwImageFindFileType` 0x803310 with its callback 0x803340, `_rwTextureReadAutoMipmap` 0x7F4AE0, the
+  4/8-bit raster upload 0x800C80. 0x7F40F0's name copy and inline texture creation became helpers shared with 0x7F4AE0.
+  The 0x4008-byte quantiser locals start zeroed in the ports (ledger).
+- Fixes during the turn: the dupes step flagged palquant's `cmp_less` as a copy of sa-ai's `lt` (inlined, 9f18d54c);
+  sa-hook's table tests failed on seventeen expects that ended inside an instruction (f6bfcad2; the first verify-all
+  attempt `lanec15-c2434` on the earlier DLL was stopped after 3 recordings, all IDENTICAL, and re-run).
+- Not done (looked at): the tristrip builder 0x75A960 (2.9 KB, qsort with a code-label comparator), the MatFX bump
+  render 0x814460 with the 4.7 KB x87 bump-env 0x8149E0, RwD3D9RasterStreamReadDDS 0x81F360 (5.8 KB, plus the DXT3 /
+  DXT5 decompressors 0x81EA70 / 0x81EDC0 / 0x81F0C0), CPostEffects::Radiosity 0x702080 (3.7 KB, 4x-unrolled vertex
+  loops): time; the code was frozen for verification.
+- convcheck (master's tools/verify/convcheck.py on this tree): 9 FAIL, the same nine base declarations as turns 13 /
+  14; none on this turn's declarations.
+- Scenarios (frontier.sh, i686 native sa-game of f6bfcad2 = the final code, SA_ROOT=~/sa-engine; target/lc15/scen):
+  postfx 1016 / 0 blocked, pausemenu 416 / 0, solicit 4016 / 0, crossing 1216 / 0, crossing-long 4016 / 0, roadblocks
+  2016 / 0, melee 2616 / 0, sniper / shootcar / shootdriver 1216 / 0, quad / heli / plane / boat 1216 / 0,
+  roadblock-script 1016 / 0, gangwar 2016 / 0, jetpack 1016 / 0, roadblock-wanted 2015 / 1 (CObject::Explode 0x5A1340,
+  lane A's); no crash; unchanged from turn 14.
+- frontier.py --no-branches: "to port" 95 -> 84 (direct 81 -> 70; RW / RENDER 15 -> 4: 0x75A960, 0x814460, 0x81F360,
+  0x702080; no new rows: every callee the ports revealed was ported in the same batch). With branches: direct 4 (+66
+  registered on other branches), virtual 0 (+7), partial 7, "to port" 11: the four lane C rows above and the seven
+  ADR-002 partials (0x4185C0, 0x461170, 0x47A760, 0x48B590, 0x58AEA0, 0x612710, 0x6F34D0).
+- Gates: writer gate (base 64c1331d) all 16 steps PASS on 47bc26d5 (hooks: 41 new, all unverified, batches
+  frontier2-c29 .. c34); a first run on 0cb2268b failed dupes and hooktest (the two fixes above).
+- verify-all (lanes 6-7, host sa-oracle and satool rebuilt from this tree): `lanec15-c2434f`
+  (SA_UNVERIFIED=frontier2-c24 .. frontier2-c34, DLL of f6bfcad2, sha256 1d95caa6…; later commits change no code)
+  IDENTICAL 13/13 (save-load: save files identical except the SAVE-1 residue). Default set: see the last line.
