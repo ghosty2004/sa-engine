@@ -560,7 +560,12 @@ impl WorldState for ModGame {
     }
     fn ground_z(&self, _pos: Vec3) -> f32 { Default::default() }
     fn line_of_sight(&self, _from: Vec3, _to: Vec3, _filter: LineFilter) -> Option<LineHit> { None }
-    fn line_clear(&self, _from: Vec3, _to: Vec3, _filter: LineFilter) -> bool { false }
+    fn line_clear(&self, from: Vec3, to: Vec3, f: LineFilter) -> bool {
+        let (x, i) = (Arg::Float, |b: bool| Arg::Int(i32::from(b)));
+        let args = [x(from.x), x(from.y), x(from.z), x(to.x), x(to.y), x(to.z)];
+        let flags = [i(f.buildings), i(f.vehicles), i(f.peds), i(f.objects), i(f.dummies)];
+        cond(0x06BD, &[args.as_slice(), flags.as_slice()].concat()).unwrap_or(false)
+    }
     fn add_explosion(&mut self, _pos: Vec3, _kind: i32, _radius: f32, _shake: f32) -> GameResult<()> { Err(GameError::Unsupported("WorldState::add_explosion")) }
     fn create_fx(&mut self, _name: &str, _on: Option<PedRef>, _offset: Vec3, _dir: Vec3) -> GameResult<FxRef> { Err(GameError::Unsupported("WorldState::create_fx")) }
     fn kill_fx(&mut self, _fx: FxRef) -> GameResult<()> { Err(GameError::Unsupported("WorldState::kill_fx")) }

@@ -18,6 +18,7 @@ use crate::footsync::{self, FootSender, KeyContext, LocalSample, Rotation};
 use crate::lifecycle::{self, NetGame};
 use crate::netclient::{Event, NetClient, NetPacket};
 use crate::ui::host::UiHost;
+use crate::ui::render::TagDraw;
 use samp_proto::raknet::Reliability;
 use samp_proto::rpcs::{Incoming, player, vehicle};
 use samp_proto::sync::player::StatsSync;
@@ -27,7 +28,8 @@ use samp_ui::text::NoExpansion;
 use sa_samp_api::camera::CameraCut;
 use sa_samp_api::hooks::{FramePhase, GameHooks};
 use sa_samp_api::input::{EventResult, WindowEvent};
-use sa_samp_api::peds::{AnimRequest, PedTask};
+use sa_samp_api::peds::{AnimRequest, BoneId, PedTask};
+use sa_samp_api::world::LineFilter;
 use sa_samp_api::vehicles::VehicleSpawn;
 use sa_samp_api::{AreaCode, GameAdapter, ModelId, PedRef, Vec3, VehicleRef, WeaponType};
 
@@ -64,6 +66,9 @@ pub struct HostedClient {
     vehicles: HashMap<u16, VehicleRef>,
     /// Server player id → the ped standing in for that player (streamed in by RPC 32).
     players: HashMap<u16, PedRef>,
+    /// What the nametags show of the other players: NPC (RPC 137), health, armour and the time of the last
+    /// on-foot sync.
+    remotes: HashMap<u16, RemoteTag>,
     last_car_sync: Option<Instant>,
     car_rotation: Option<samp_proto::types::Quat>,
     /// samp's netgame state and connect timer (`Connecting to` 3 s after `Started`).
@@ -117,6 +122,7 @@ impl HostedClient {
             world_set_up: false,
             vehicles: HashMap::new(),
             players: HashMap::new(),
+            remotes: HashMap::new(),
             last_car_sync: None,
             car_rotation: None,
             netgame: NetGame::new(0),
@@ -473,7 +479,13 @@ impl HostedClient {
                 self.remove_player(p.player_id, game);
                 self.note(format!("player {} streamed out", p.player_id));
             }
-            R::PlayerQuit(p) => self.remove_player(p.player_id, game),
+            R::PlayerQuit(p) => {
+                self.remove_player(p.player_id, game);
+                self.remotes.remove(&p.player_id);
+            }
+            R::PlayerJoin(j) => {
+                self.remotes.insert(j.player_id, RemoteTag { npc: j.is_npc != 0, ..RemoteTag::default() });
+            }
             _ => {}
         }
     }
@@ -489,6 +501,8 @@ impl HostedClient {
         let samp_proto::sync::IncomingSync::Foot { sync, .. } = sync else { return };
         let Some(&ped) = self.players.get(&sync.player_id) else { return };
         let f = crate::remote::FootData::from_sync(&sync);
+        let tag = self.remotes.entry(sync.player_id).or_default();
+        (tag.health, tag.armour, tag.synced) = (f.health, f.armour, Some(Instant::now()));
         let forward = crate::remote::rows_from_quat(f.rotation).forward;
         let heading = crate::remote::heading_from_forward(forward).to_degrees();
         let [x, y, z] = f.position;
@@ -879,10 +893,72 @@ fn report(h: &HostedClient, what: &str, r: sa_samp_api::GameResult<()>) {
     }
 }
 
+/// What a nametag shows of another player.
+#[derive(Clone, Copy, Debug, Default)]
+struct RemoteTag {
+    npc: bool,
+    health: f32,
+    armour: f32,
+    synced: Option<Instant>,
+}
+
+/// The head's height above a ped's root where the adapter has no bones.
+const HEAD_ABOVE_ROOT: f32 = 0.7;
+
+impl HostedClient {
+    /// Nametags to draw this frame (docs/re/subsystems/ui-rendering.md, "16.1 Who gets one"): the streamed-in
+    /// players that are no NPC, nearer to the camera than the server's distance, anchored at the head (bone 8),
+    /// in sight when the server asks for it.
+    fn nametags(&self, game: &dyn GameAdapter) -> Vec<TagDraw> {
+        let core = &self.ui.core;
+        if !core.show_name_tags {
+            return Vec::new();
+        }
+        let cam = game.camera().matrix.pos;
+        let mut out = Vec::new();
+        for (&id, &ped) in &self.players {
+            let tag = self.remotes.get(&id).copied().unwrap_or_default();
+            if tag.npc || core.hidden_tags.contains(&id) {
+                continue;
+            }
+            let Ok(s) = game.ped_snapshot(ped) else { continue };
+            let p = s.matrix.pos;
+            let d = ((p.x - cam.x).powi(2) + (p.y - cam.y).powi(2) + (p.z - cam.z).powi(2)).sqrt();
+            if d >= core.name_tag_distance {
+                continue;
+            }
+            let head = game
+                .bone_position(ped, BoneId(8), true)
+                .unwrap_or_else(|_| Vec3::new(p.x, p.y, p.z + HEAD_ABOVE_ROOT));
+            let filter = LineFilter { buildings: true, objects: true, ..LineFilter::default() };
+            if core.name_tag_los && !game.line_clear(head, cam, filter) {
+                continue;
+            }
+            let Some(name) = core.name(id) else { continue };
+            let mut text = name.to_vec();
+            text.extend_from_slice(format!(" ({id})").as_bytes());
+            let afk = tag.synced.is_none_or(|t| t.elapsed().as_millis() >= u128::from(samp_ui::nametags::AFK_AFTER_MS));
+            out.push(TagDraw {
+                anchor: [head.x, head.y, head.z],
+                distance: d,
+                name: text,
+                colour: core.colours.chat_argb(id) | 0xFF00_0000,
+                health: tag.health,
+                armour: tag.armour,
+                afk,
+            });
+        }
+        out
+    }
+}
+
 impl GameHooks for HostedClient {
     fn frame(&mut self, phase: FramePhase, game: &mut dyn GameAdapter) {
         if phase == FramePhase::BeforeGameProcess {
             self.tick(game);
+        }
+        if phase == FramePhase::Present {
+            self.ui.world.tags = self.nametags(game);
         }
         self.ui.frame(phase, game);
     }

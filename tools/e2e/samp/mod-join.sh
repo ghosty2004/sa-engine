@@ -16,7 +16,8 @@
 # game's gtaweap3.ttf; third-party, never committed) are copied into the samp mod's folder when they exist.
 # EXTRA_CMDS: more server commands after the scripted ones, `;`-separated (`sleep|S` waits), e.g.
 # 'td|~y~textdraw;dialog|1|0|Welcome|Hello;sleep|8'; SA_GAME_KEYS adds scripted keys (`tab:1500:1502`
-# opens the scoreboard).
+# opens the scoreboard). BOT=1: samp-rs's samp-bot (SAMP_BOT, default samp-rs/target/release/samp-bot) joins as
+# a second, real player once ours spawned and stands at the spawn point, ahead of our player (its nametag).
 # SA_GAME = the sa-game binary (default target/i686-unknown-linux-gnu/release/sa-game), MODS = the built mods
 # (default target/mods). FRAMES (default 1800). Port SAMP_PORT (default 7813).
 # Output: server.log, sa-game.log, report.md, present/*.png (every 20th in-game frame), server-events.txt.
@@ -86,8 +87,10 @@ PY
 (cd "$SRV" && exec ./omp-server > "$SLOG" 2>&1) &
 SRV_PID=$!
 GAME_PID=
+BOT_PID=
 cleanup() {
     [ -n "$GAME_PID" ] && kill "$GAME_PID" 2> /dev/null
+    [ -n "$BOT_PID" ] && kill "$BOT_PID" 2> /dev/null
     kill "$SRV_PID" 2> /dev/null
     wait "$SRV_PID" 2> /dev/null || true
 }
@@ -125,6 +128,12 @@ cmd() {
 if wait_log '\[cov\] connect id=[0-9]+ name=ModCJ' 150; then say "connected"; else say "FAIL: no connect"; fi
 if wait_log '\[cov\] spawn id=' 150; then
     say "spawned"
+    if [ "${BOT:-0}" = 1 ]; then
+        "${SAMP_BOT:-$ROOT/samp-rs/target/release/samp-bot}" "127.0.0.1:$PORT" --name BotPlayer --mode idle \
+            --seconds 300 --auth-table "$AUTH" > "$OUT/samp-bot.log" 2>&1 &
+        BOT_PID=$!
+        say "samp-bot pid $BOT_PID"
+    fi
     sleep 4
     cmd "msg|Welcome, the SA:MP mod: chat from open.mp"
     cmd "gametext|3|6000|~g~SA:MP ~w~mod"
@@ -135,7 +144,8 @@ if wait_log '\[cov\] spawn id=' 150; then
     cmd "time|22"
     cmd "weather|4"
     sleep 3
-    cmd "pos|2495|-1680|13.5|180"
+    # facing north: the scripted walk goes up the street, not into the safe house (its save marker opens a menu)
+    cmd "pos|2495|-1680|13.5|0"
     sleep 3
     cmd "npc|Bot|2492|-1684|13.5|105|0"
     sleep 3
