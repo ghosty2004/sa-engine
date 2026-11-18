@@ -94,6 +94,9 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-b23 | 5 | VEH, WORLD | 5ded8c55 | worktree-agent-a69756e3b0e81185d | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | frontier2-b24 | 1 | WEAPON | 2129e2c1 | worktree-agent-a69756e3b0e81185d | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | frontier2-b25 | 7 | VEH | 8f3a5cde | worktree-agent-a69756e3b0e81185d | 7 | 0 | 0 | 0 | 0 | L2 7 |
+| frontier2-b26 | 4 | VEH | baa008cc | worktree-agent-a6c11fd8492f5b4aa | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| frontier2-b27 | 1 | CAM | e89e3a46 | worktree-agent-a6c11fd8492f5b4aa | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| frontier2-b28 | 2 | VEH | af634346 | worktree-agent-a6c11fd8492f5b4aa | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | frontier2-b3 | 7 | VEH | 221f09a0 | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
 | frontier2-b4 | 5 | RW, SAVE | 2f47ba34 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | frontier2-b5 | 25 | MATH, POP, VEH, WORLD | 1caf613f | master | 25 | 0 | 0 | 0 | 0 | L2 22, split 3 |
@@ -2928,6 +2931,55 @@ SA_UNVERIFIED=frontier2-b25 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b25 
 | 0x6B45E0 | `CAutomobile::RcbanditCheckHitWheels` | written | L2 | none |
 | 0x6D5110 | `CVehicle::FireUnguidedMissile` | written | L2 | heap-writes |
 | 0x6DDF60 | `CVehicle::AddWaterSplashParticles` | written | L2 | heap-writes |
+
+## frontier2-b26
+
+4 hooks in sa-veh; hazards: heap-writes (3); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-b26 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-b26 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b26 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-b26
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6D4290 | `CVehicle::GetPlaneGunsPosition` | written | L2 | none |
+| 0x6D4AD0 | `CVehicle::DoPlaneGunFireFX` | written | L2 | heap-writes |
+| 0x6D4D30 | `CVehicle::FirePlaneGuns` | written | L2 | heap-writes |
+| 0x6DAF00 | `CVehicle::BladeColSectorList<CPtrListSingleLink<CEntity*>>` | written | L2 | heap-writes |
+
+## frontier2-b27
+
+1 hooks in sa-cam; hazards: none; recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-b27 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-b27 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b27 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-b27
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x512110 | `CCam::Process_WheelCam` | written | L2 | none |
+
+## frontier2-b28
+
+2 hooks in sa-veh; hazards: heap-writes (2), stack-residue (2); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier2-b28 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier2-b28 LANE=$LANE tools/e2e/port-l2.sh batch:frontier2-b28 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier2-b28
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6D3700 | `CVehicle::CreateReplacementAtomic` | written | L2 | heap-writes,stack-residue |
+| 0x6D3830 | `CVehicle::AddReplacementUpgrade` | written | L2 | heap-writes,stack-residue |
 
 ## frontier2-b3
 
