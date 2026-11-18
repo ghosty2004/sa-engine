@@ -78,10 +78,11 @@
 # nitro    (1200)  the crossing run's Greenwood with the all-cars-have-nitro cheat SPEEDFREAK typed in it, driven with
 #                  the left button held (VEHICLE_FIREWEAPON fires the nitro): CAutomobile::NitrousControl and
 #                  DoNitroEffect 0x6A3BD0 (FRONTIER-2 turn 12 lane B; frontier2-b12-counts.gdb)
-# replay   (1400)  the cinema run's Greenwood driven along Grove Street (CReplay records every 26 ms), then F1:
+# replay   (2400)  the cinema run's Greenwood driven along Grove Street (CReplay records every 26 ms), then F1:
 #                  CReplay::TriggerPlayback 0x4600F0 (StoreStuffInMem, the conversion tables, CreatePlayerPed), every
-#                  frame's PlayBackThisFrame / PlayBackThisFrameInterpolation, and RestoreStuffFromMem when the buffers
-#                  run out (FRONTIER-2 turn 14 lane B; frontier2-b31-counts.gdb counts them)
+#                  frame's PlayBackThisFrame / PlayBackThisFrameInterpolation with the replay cameras, and
+#                  FinishPlayback / RestoreStuffFromMem when the buffers run out near iteration 1770
+#                  (frontier2-b31-counts.gdb / frontier2-b32-counts.gdb count them)
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-b10-counts.gdb --args" counts the turn 10 lane B ports' calls
 # (monster: SetupSuspensionLines 1, ProcessSuspension 282; tanker: TankerCheat 1, UpdateTrailerLink 1996,
 # UpdateTractorLink 1498; tank: TankControl 998).
@@ -314,7 +315,7 @@ replay)
     # rsF1 just-down) plays the buffers back until FinishPlayback
     export SA_GAME_TELEPORT="60:2505.0:-1666.4:13.4"
     export SA_GAME_KEYS="f:100:103,w:330:700,a:500:540,w:760:850,d:780:820,f1:900:903"
-    run "${3:-1400}" --start-in-world ;;
+    run "${3:-2400}" --start-in-world ;;
 *)
     echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hunter|nitro|postfx|shotgun|flamer|driveby|escalator|replay OUTDIR [FRAMES]" >&2
     exit 2 ;;
