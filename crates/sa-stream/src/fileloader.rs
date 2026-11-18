@@ -349,7 +349,7 @@ pub fn load_ped_path_node(line: GPtr<u8>, model: i32, entry: i32) {
 /// _ftol(rate * 15), 0, last)`, else `ThePaths.StoreNodeInfoCar(model, entry, type, next, _ftol(x), _ftol(y),
 /// _ftol(z), width, lanesIn, lanesOut, flags & .., (flags >> 2) & .., speed, (flags >> 1) & .., a4, _ftol(rate * 15),
 /// last)`. Both stores are empty in 1.0 US (`ret 0x44`). `a4` is the caller's whole argument dword.
-#[hook(addr = 0x5B4380, conv = cdecl, name = "CFileLoader::LoadCarPathNode", expect = "83 EC 34 56 8D",
+#[hook(addr = 0x5B4380, conv = cdecl, name = "CFileLoader::LoadCarPathNode", expect = "83 EC 34 56 8D 44 24 04",
        unverified = "frontier2-a24", route = "L2", hazards = "none", note = "IDE/IPL path sections; empty callees")]
 pub fn load_car_path_node(line: GPtr<u8>, model: i32, entry: i32, a4: u32) {
     let mut v = [0u32; 13];
