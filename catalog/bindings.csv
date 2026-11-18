@@ -2222,6 +2222,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x542560,sa-world,physical_remove_and_add,thiscall,,v:GPtr<u8>,,sa_world::physical::base::remove_and_add,CPhysical::RemoveAndAdd,
 0x542800,sa-world,physical_add_to_moving_list,thiscall,,p:GPtr<u8>,,sa_world::physical::base::add_to_moving_list,CPhysical::AddToMovingList,
 0x542860,sa-world,remove_from_moving_list,thiscall,,e:GPtr<u8>,,sa_world::physical::base::remove_from_moving_list,CPhysical::RemoveFromMovingList,
+0x5428C0,sa-world,physical_set_damaged_piece_record,thiscall,,e:GPtr<u8>;intensity:u32;other:GPtr<u8>;cp:GPtr<u8>;dist:f32,,sa_world::physical::forces::set_damaged_piece_record,CPhysical::SetDamagedPieceRecord,
 0x5429F0,sa-world,physical_apply_move_force_5429f0,thiscall,,p:GPtr<u8>;force:sa_math::vector::CVector,,sa_world::physical::forces::apply_move_force,CPhysical::ApplyMoveForce-vec,
 0x542A50,sa-world,physical_apply_turn_force,thiscall,,e:GPtr<u8>;force:sa_math::vector::CVector;point:sa_math::vector::CVector,,sa_world::physical::forces::apply_turn_force,CPhysical::ApplyTurnForce,
 0x542B50,sa-world,apply_force,thiscall,,e:GPtr<u8>;force:sa_math::vector::CVector;point:sa_math::vector::CVector;update_turn:u8,,sa_world::physical::forces::apply_force,CPhysical::ApplyForce,

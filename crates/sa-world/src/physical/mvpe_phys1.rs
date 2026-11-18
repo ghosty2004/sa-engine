@@ -755,13 +755,10 @@ fn process_collision_ghost(this: Ent) {
 pub use crate::bindings::get_adhesive_limit as get_adhesive_limit_call;
 pub use crate::bindings::placeable_allocate_matrix as allocate_matrix_call;
 pub use sa_stream::bindings::simple_transform_update_matrix as simple_transform_update_matrix_call;
+pub use crate::bindings::physical_set_damaged_piece_record as set_damaged_piece_record_call;
 orig! {
     /// `CPhysical::ApplyCollision(CEntity*, CColPoint&, float&, float&)` (0x548680, AL)
     pub fn apply_collision_2(e: Ent, other: Ent, cp: Ent, d1: GPtr<f32>, d2: GPtr<f32>) -> u8 = thiscall 0x548680 => crate::physical::pair_collision::apply_collision_2;
-    /// `CPhysical::SetDamagedPieceRecord(float, CEntity*, CColPoint&, float)` (0x5428C0; the
-    /// intensity as the dword the original pushes)
-    pub fn set_damaged_piece_record_call(e: Ent, intensity: u32, other: Ent, cp: Ent, dist: f32)
-        = thiscall 0x5428C0 => super::forces::set_damaged_piece_record;
     /// `CPhysical::ApplyFriction(CPhysical*, float, CColPoint&)` (0x545980, AL)
     pub fn apply_friction_other(e: Ent, other: Ent, adhesive: f32, cp: Ent) -> u8 = thiscall 0x545980 => unported;
 }

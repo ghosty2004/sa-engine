@@ -89,19 +89,27 @@ pub(crate) fn drown_occupant(this: GPtr<u8>, ped: GPtr<u8>) {
         player_handle_breath(ped, 1, 0x3F80_0000);
         return;
     }
+    ped_damage_event(this, ped, g::<u32>(TIME_STEP).read(), 0x35, 0, 1, || {});
+}
+
+/// The inlined damage event of a ped (torso, piece 3): `CPedDamageResponseCalculator(src, damage, weapon, 3, false)`,
+/// `CEventDamage(src, now, weapon, 3, direction, false, b)`; the response computed when the event affects the ped
+/// (else marked calculated, +0x42); added to the ped's event group; `then` runs before the two destructors.
+pub(crate) fn ped_damage_event(src: GPtr<u8>, ped: GPtr<u8>, damage: u32, weapon: u32, dir: u32, b: u32, then: impl FnOnce()) {
     let group = |p: GPtr<u8>| rd::<GPtr<u8>>(p, 0x47C).byte_add(0x68);
     let mut calc = [0u32; 8];
     let cp = GPtr::from_raw(calc.as_mut_ptr()).cast::<u8>();
-    damage_calc_ctor(cp, this.addr() as u32, f32::from_bits(g::<u32>(TIME_STEP).read()).to_bits(), 0x35, 3, 0);
+    damage_calc_ctor(cp, src.addr() as u32, damage, weapon, 3, 0);
     let mut ev = [0u32; 0x20];
     let evp = GPtr::from_raw(ev.as_mut_ptr()).cast::<u8>();
-    event_damage_ctor(evp, this, g::<u32>(0xB7_CB84).read(), 0x35, 3, 0, 0, 1);
+    event_damage_ctor(evp, src, g::<u32>(0xB7_CB84).read(), weapon, 3, dir, 0, b);
     if event_damage_affects_ped(evp, ped) != 0 {
         damage_calc_compute_damage_response(cp, ped, evp.byte_add(0x38), 1);
     } else {
         wr::<u8>(evp, 0x42, 1);
     }
     event_group_add(group(ped), evp, 0);
+    then();
     event_damage_dtor(evp);
     damage_calc_dtor(cp);
 }

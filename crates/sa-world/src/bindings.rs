@@ -1814,6 +1814,11 @@ orig! {
 }
 
 orig! {
+    /// `CPhysical::SetDamagedPieceRecord` (0x5428C0)
+    pub fn physical_set_damaged_piece_record(e: GPtr<u8>, intensity: u32, other: GPtr<u8>, cp: GPtr<u8>, dist: f32) = thiscall 0x5428C0 => crate::physical::forces::set_damaged_piece_record;
+}
+
+orig! {
     /// `CPhysical::ApplyMoveForce-vec` (0x5429F0)
     pub fn physical_apply_move_force_5429f0(p: GPtr<u8>, force: sa_math::vector::CVector) = thiscall 0x5429F0 => crate::physical::forces::apply_move_force;
 }
