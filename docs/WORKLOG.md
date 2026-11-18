@@ -3684,3 +3684,61 @@
   ProcessLookAroundCam 0x45D760), CStreaming::DeleteRwObjectsBehindCamera 0x40D7C0, CShopping (LoadPrices / LoadShop /
   Buy), Interior_c FurnishBedroom / FurnishLounge / Kitchen_FurnishEdges, CEscalator::Update 0x717D30, WEAPON (5:
   DoDriveByAutoAiming, TakePhotograph, SetUpPelletCol, DoDoomAiming, FireAreaEffect).
+## 2026-11-18 — FRONTIER-2 turn 11, lane B: DoTankDoomAiming, nitro / tow truck / harvester / RC bandit, unguided missiles, water splashes (agent, branch worktree-agent-a69756e3b0e81185d)
+- Base: lane B turn 10's head 4ecf616d. `tools/gen/inflight.py` checked first: no other branch registers any address
+  ported here.
+- Binding fix first: CCollision::DistToLine 0x417610 returns ST0; its catalog/bindings.csv row now returns
+  `sa_math::x87::X87` (reg form) and the callers in sa-pop / sa-ped / sa-render / sa-veh / sa-weapon drop their f64
+  round trips (1cb19118).
+- Batch `frontier2-b24` (WEAPON, 1 hook): CWeapon::DoTankDoomAiming 0x73D1E0 (`sa-weapon/src/doom_aiming.rs`, entry
+  `nop; jmp 0x40A181`): candidates from FindObjectsInRange (2D, 15 vehicles), inlined GetMatrix on both, the
+  |height error| * 3 < 2D distance test, the bounding radius against DistToLine of the 2D shot line, the closest under
+  9000 lifts end.z; the range keeps the y difference unrounded as the bytes leave it on the stack.
+- Batch `frontier2-b25` (VEH, 7 hooks), from the 1.0 US bytes (specs / gta-reversed as reading aids):
+  - CAutomobile::DoNitroEffect 0x6A3BD0 (`automobile_nitrous.rs`): the mirror exhaust's water test only while
+    bTouchingWater (gta-reversed: when clear); the second fx system created on the first exhaust's flag, as the bytes.
+  - CAutomobile::TowTruckControl 0x6A40F0 (`vehicle_tow_link.rs`): the truncated i16 hoist step, the limits as signed
+    ints, the 16-entry candidate list not zeroed (gta-reversed zeroes it), 2D sqrt < 0.5 then fabsf height < 1.0.
+  - CAutomobile::ProcessHarvester 0x6A9680 (`harvester.rs`): the object branch tests the object's own model plus
+    +0x1C bits 7 / 9 (gta-reversed: the harvester's model, no flags); the limb gets SetMatrix (not the harvester), the
+    bytes' jitter and the (C, B, A) turn speed; SEH frame not modelled. Bindings: ShootLimbs 0x56D280 once in sa-world
+    (sa-ped imports it, twin sa-hud), FxPrtMult_c 0x4AB270 moved to sa-world (twin sa-render), 0x45AFB0 to sa-world,
+    FxPrtMult_c::SetUp 0x4AB2D0 in sa-veh.
+  - CAutomobile::RcbanditCheckHitWheels 0x6B45E0 and RcbanditCheck1CarWheels 0x6B3F70 (revealed by it; `rcbandit.rs`):
+    each sector bound's floor is tested on the unrounded value, the f32 one taken inside 0..119; the wheel spheres in
+    this car's frame through the static matrix 0xC1C220 (guard 0xC1C268) against the col model's box. sa-world's
+    advance_scan_code made pub for it.
+  - CVehicle::FireUnguidedMissile 0x6D5110 (`vehicle_guns.rs`): two rockets (the ordnance position and its recomputed
+    x mirror) through a CWeapon(ROCKET, 5000) and FireProjectile; CWeapon::FireProjectile 0x741360 bound once in sa-world
+    (twin in sa-weapon, weapon_fire imports it).
+  - CVehicle::AddWaterSplashParticles 0x6DDF60 (`automobile_render.rs`): the second edge's factor is t2 * t1 (the
+    product of both rand() fractions; gta-reversed draws two independent ones).
+- Declarations retargeted to the ports (automobile_control 0x6A40F0, automobile_ai 0x6B45E0, vehicle2 0x6D5110,
+  NitrousControl calls DoNitroEffect directly).
+- Scenarios: `tools/e2e/scenarios/frontier2-b11-counts.gdb` counts the turn 11 ports. A `hunter` scenario (the heli
+  run firing once airborne, left button held and ctrl tapped) was tried and dropped: FireUnguidedMissile 0 calls (as
+  the hydra run in turn 10). No scenario reaches the nitro / tow truck / harvester / RC bandit / splash ports (they
+  need a nitro car, a tow truck, the harvester, an RC bandit or a car in water near the camera); the tank run now
+  passes DoTankDoomAiming (no longer a blocker).
+- Protection: the no-CD code reads 0x73D1E2 (DoTankDoomAiming's entry rel32) at 0x1562CBB; the reader joined
+  sa-hook's keycells list (bc3ae90a; hooktest found it).
+- frontier.py --no-branches: to port 115 -> 108 (VEH 10 -> 4, WEAPON DoTankDoomAiming done, CAM 6); no new rows
+  (0x6B3F70, the one callee revealed, is ported in the same batch).
+- Scenarios (i686 native sa-game of c22d99a6 = the port code before the keycell fix, SA_ROOT=~/sa-engine; steps /
+  blocked): pausemenu 416 / 0, solicit 4016 / 0, crossing 1216 / 0, crossing-long 4016 / 0, melee 2616 / 0, sniper /
+  shootcar / shootdriver / quad / heli / boat / cinema / tanker 1216 / 0, roadblock-script 1016 / 0, gangwar 2016 / 0,
+  jetpack 1016 / 0, roadblocks 2015 / 1 (lane C's 0x7CF240), roadblock-wanted 2015 / 1 (CObject::Explode 0x5A1340,
+  elsewhere), plane 824 / 392 (lane C's 0x43E0E0), monster 1127 / 89 (ProcessColModels' disk path, lane A), tank
+  1215 / 1 (FxManager_c::TriggerTankFire 0x4A0FA0, lane C; DoTankDoomAiming no longer blocks); no crash, 0 blocked on
+  lane B.
+- verify-all (lanes 4-5, fresh release sa-oracle + satool, DLL of 4476b5c9 = the final code): `lb11-u`
+  (SA_UNVERIFIED=frontier2-b24,frontier2-b25) IDENTICAL 13/13; default set `lb11-def` (same DLL) IDENTICAL 13/13. An earlier
+  `lb11-u` on the DLL before the keycell fix was stopped after 5/13 PASS (no satool on the very first try).
+- Writer gate (base 4ecf616d): the first run failed clippy / i686clip (manual is_multiple_of) and hooktest (the
+  0x73D1E2 protection reader); after 4476b5c9 rerun on 54cf0d36 (the roadmap commit; only this worklog follows): all
+  16 steps PASS, none skipped.
+- Resources: CARGO_BUILD_JOBS=4 / JOBS=4, one cargo build at a time; wine lanes 4-5.
+- Open (lane B): VEH FirePlaneGuns 0x6D4D30 (reveals GetPlaneGunsPosition 0x6D4290 and DoPlaneGunFireFX 0x6D4AD0, both
+  unported), CTrain::AddNearbyPedAsRandomPassenger 0x6F8170 (long, SEH frame, task creation), AddReplacementUpgrade
+  0x6D3830 (VM fragment 0x408121), BladeColSectorList 0x6DAF00 (fragment 0x401589); CAM Process_WheelCam 0x512110,
+  Process_Editor 0x50F3F0, the two-player cams 0x513510 / 0x513BE0 / 0x519810 / 0x525E50.
