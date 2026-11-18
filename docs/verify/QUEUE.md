@@ -90,8 +90,8 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-b18 | 3 | CAM | b822823d | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
 | frontier2-b19 | 1 | WEAPON | e1c8801f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | frontier2-b2 | 23 | RW | 2f47ba34 | master | 23 | 0 | 0 | 0 | 0 | L2 23 |
-| frontier2-b20 | 3 | CAM, UNK-game | 8c7a7627 | worktree-agent-ab3b10b20eff4ec65 | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| frontier2-b21 | 5 | VEH | f608b470 | worktree-agent-ab3b10b20eff4ec65 | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| frontier2-b20 | 3 | CAM, UNK-game | f693428f | int-b9 | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| frontier2-b21 | 5 | VEH | cb231692 | int-b9 | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | frontier2-b3 | 7 | VEH | 221f09a0 | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
 | frontier2-b4 | 5 | RW, SAVE | 2f47ba34 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | frontier2-b5 | 25 | MATH, POP, VEH, WORLD | 1caf613f | master | 25 | 0 | 0 | 0 | 0 | L2 22, split 3 |
@@ -107,7 +107,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-c14 | 6 | RW | 165c184e | master | 6 | 0 | 0 | 0 | 0 | L2 4, L3-only 2 |
 | frontier2-c15 | 1 | WORLD | 7cfa0894 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | frontier2-c16 | 1 | RENDER | 725610d8 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| frontier2-c17 | 16 | RW | 942a0021 | int-c9 | 16 | 0 | 0 | 0 | 0 | L2 16 |
+| frontier2-c17 | 16 | RW | 942a0021 | master | 16 | 0 | 0 | 0 | 0 | L2 16 |
 | frontier2-c2 | 35 | AI, MATH, SCRIPT, UNK-game, VEH | 49bdb6d2 | master | 35 | 0 | 0 | 0 | 0 | L2 35 |
 | frontier2-c3 | 11 | AI, SCRIPT, UNK-game | 49bdb6d2 | master | 11 | 0 | 0 | 0 | 0 | L2 11 |
 | frontier2-c4 | 10 | AUDIO, CALLED-ONLY, SCRIPT, UNK-game | d18327f1 | master | 10 | 0 | 0 | 0 | 0 | L2 9, split 1 |
