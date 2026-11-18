@@ -2,7 +2,7 @@
 # FRONTIER-1 scenarios: native sa-game runs (deterministic, --fixed-step 40, offscreen) that reach the blockers the
 # user hit. Each must end with an empty blocker list in OUT/report.md and no crash.
 #
-#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra|hunter OUTDIR [FRAMES]
+#   tools/e2e/scenarios/frontier.sh pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra|hunter|nitro OUTDIR [FRAMES]
 #
 # pausemenu (400)  Esc, down x3, Enter (pause-menu item 4: Stats), down, Enter, Enter: the Stats pages draw
 #                  (was a SIGSEGV at iteration ~171: CStats::GetStatValue's X87 result dispatched as cdecl)
@@ -75,6 +75,9 @@
 #                  (CVehicle::FirePlaneGuns 0x6D4D30, GetPlaneGunsPosition 0x6D4290, DoPlaneGunFireFX 0x6D4AD0), then
 #                  left button taps (CarGunJustDown 1: ordnance 1) fire its rockets (FireUnguidedMissile 0x6D5110)
 #                  (FRONTIER-2 turn 12 lane B; frontier2-b12-counts.gdb counts them)
+# nitro    (1200)  the crossing run's Greenwood with the all-cars-have-nitro cheat SPEEDFREAK typed in it, driven with
+#                  the left button held (VEHICLE_FIREWEAPON fires the nitro): CAutomobile::NitrousControl and
+#                  DoNitroEffect 0x6A3BD0 (FRONTIER-2 turn 12 lane B; frontier2-b12-counts.gdb)
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-b10-counts.gdb --args" counts the turn 10 lane B ports' calls
 # (monster: SetupSuspensionLines 1, ProcessSuspension 282; tanker: TankerCheat 1, UpdateTrailerLink 1996,
 # UpdateTractorLink 1498; tank: TankControl 998).
@@ -207,6 +210,12 @@ plane)
     keys=; i=150; for c in u r k q s r k; do keys="$keys${keys:+,}$c:$i:$((i + 2))"; i=$((i + 6)); done
     export SA_GAME_KEYS="$keys,f:260:263,w:400:1150,a:800:840"
     run "${3:-1200}" --start-in-world ;;
+nitro)
+    export SA_GAME_TELEPORT="60:2505.0:-1666.4:13.4"
+    keys="f:100:103"; i=150; for c in s p e e d f r e a k; do keys="$keys,$c:$i:$((i + 2))"; i=$((i + 6)); done
+    export SA_GAME_KEYS="$keys,w:300:1150,a:700:740"
+    export SA_GAME_LMB="${SA_GAME_LMB:-400:1100}"
+    run "${3:-1200}" --start-in-world ;;
 cinema)
     export SA_GAME_TELEPORT="60:2505.0:-1666.4:13.4"
     export SA_GAME_KEYS="f:100:103,w:330:700,a:500:540,w:760:1150,d:900:940"
@@ -247,6 +256,6 @@ monster)
     export SA_GAME_KEYS="$keys,f:260:263,w:400:1150,a:600:660,d:800:860"
     run "${3:-1200}" --start-in-world ;;
 *)
-    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra|hunter OUTDIR [FRAMES]" >&2
+    echo "usage: $0 pausemenu|solicit|crossing|crossing-long|roadblocks|melee|sniper|shootcar|shootdriver|quad|heli|plane|roadblock-script|roadblock-wanted|gangwar|boat|jetpack|copsf|coplv|samsite|cinema|monster|tanker|tank|hydra|hunter|nitro OUTDIR [FRAMES]" >&2
     exit 2 ;;
 esac

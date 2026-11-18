@@ -1,6 +1,6 @@
 # gdb command file for tools/e2e/scenarios/frontier.sh (WRAP="gdb -q -batch -x THIS --args"): counts the calls of
 # the FRONTIER-2 turn 12 lane B ports (the Rust functions themselves) under any frontier.sh scenario (hunter: the
-# heli's guns and rockets), and prints the hit counts at the end.
+# heli's guns and rockets; nitro: DoNitroEffect), and prints the hit counts at the end.
 set pagination off
 set breakpoint pending on
 handle SIGSEGV stop nopass
@@ -14,7 +14,9 @@ rbreak ^sa_veh::vehicle_guns::fire_unguided_missile$
 rbreak ^sa_veh::vehicle_plane_weapons::vehicle_get_plane_weapon_firing_status$
 rbreak ^sa_cam::cammodes::process_wheel_cam$
 rbreak ^sa_veh::vehicle_blade_collision::blade_col_sector_list$
-commands 1-7
+rbreak ^sa_veh::automobile_nitrous::do_nitro_effect$
+rbreak ^sa_veh::frontier_b2_veh::vehicle_add_replacement_upgrade$
+commands 1-9
 silent
 continue
 end
