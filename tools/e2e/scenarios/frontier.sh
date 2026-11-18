@@ -69,6 +69,12 @@
 #                  in, driven: CVehicle::UpdateTrailerLink 0x6DFC50 / UpdateTractorLink 0x6E0050 (FRONTIER-2 turn 10)
 # tank     (1200)  on foot at Grove Street, the Rhino cheat AIWPRTON, `f` to get in, driven with the turret turned
 #                  (mouse) and fired (left button): CAutomobile::TankControl 0x6AE850
+# hunter   (1200)  the heli run with CJ put next to the Hunter first (the plain heli run's `f` never gets him in:
+#                  it spawns 12 m away), firing once airborne: left ctrl held alone (VEHICLE_FIREWEAPON_ALT, the
+#                  LeftShoulder1 with ButtonCircle up: CPad::GetCarGunFired returns 2) fires the Hunter's gun
+#                  (CVehicle::FirePlaneGuns 0x6D4D30, GetPlaneGunsPosition 0x6D4290, DoPlaneGunFireFX 0x6D4AD0), then
+#                  left button taps (CarGunJustDown 1: ordnance 1) fire its rockets (FireUnguidedMissile 0x6D5110)
+#                  (FRONTIER-2 turn 12 lane B; frontier2-b12-counts.gdb counts them)
 # WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier2-b10-counts.gdb --args" counts the turn 10 lane B ports' calls
 # (monster: SetupSuspensionLines 1, ProcessSuspension 282; tanker: TankerCheat 1, UpdateTrailerLink 1996,
 # UpdateTractorLink 1498; tank: TankControl 998).
@@ -181,11 +187,18 @@ quad)
     keys=; i=150; for c in a k j j y g l c; do keys="$keys${keys:+,}$c:$i:$((i + 2))"; i=$((i + 6)); done
     export SA_GAME_KEYS="$keys,f:260:263,w:400:900,a:600:640,d:750:790"
     run "${3:-1200}" --start-in-world ;;
-heli)
+heli|hunter)
     # the Hunter cheat OHDUDE (CCheat::VehicleCheat, model info type 3: a CHeli in front of CJ), `f` to get in, w held
-    # (the rotor spins up and the heli lifts), then a left and a right turn
+    # (the rotor spins up and the heli lifts), then a left and a right turn; hunter: CJ put next to the heli, ctrl
+    # held alone (the gun), then left button taps (the rockets)
     export SA_GAME_SCRIPT_SKIP=1
     keys=; i=150; for c in o h d u d e; do keys="$keys${keys:+,}$c:$i:$((i + 2))"; i=$((i + 6)); done
+    if [ "$NAME" = hunter ]; then
+        # CJ stands 12 m from the cheat Hunter (2485.7, -1678.7): put next to its left side before `f`
+        export SA_GAME_TELEPORT="${SA_GAME_TELEPORT:-240:2486.6:-1674.5:13.4:2.93}"
+        export SA_GAME_LMB="${SA_GAME_LMB:-$(i=860; s=; while [ $i -lt 1150 ]; do s="$s${s:+,}$i:$((i + 4))"; i=$((i + 30)); done; echo "$s")}"
+    fi
+    if [ "$NAME" = hunter ]; then keys="$keys,ctrl:600:820"; fi
     export SA_GAME_KEYS="$keys,f:260:263,w:400:1150,a:700:760,d:850:910"
     run "${3:-1200}" --start-in-world ;;
 plane)
