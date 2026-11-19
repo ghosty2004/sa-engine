@@ -20,6 +20,7 @@ use samp_proto::time::Instant;
 
 use crate::classsel::{self, ClassSelection};
 use crate::footsync::{self, FootSender, KeyContext, LocalSample, Rotation};
+use crate::hostedobjects::{HostedObjects, PlayerPeds};
 use crate::lifecycle::{self, NetGame};
 use crate::netclient::{Event, NetClient};
 use crate::serverworld::ServerWorld;
@@ -96,6 +97,8 @@ pub struct HostedClient {
     world: ServerWorld,
     /// samp-rs's UI: chat, dialogs, textdraws, game text, scoreboard, class-selection panel.
     pub ui: UiHost,
+    /// The server's objects and the buildings it removed.
+    objects: HostedObjects,
 }
 
 /// The keys class selection polls (Windows virtual-key codes): left, right, and either Shift key (samp asks for
@@ -143,6 +146,7 @@ impl HostedClient {
             name: config.name,
             world: ServerWorld::default(),
             ui: UiHost::new(None),
+            objects: HostedObjects::default(),
         }
     }
 
@@ -202,6 +206,8 @@ impl HostedClient {
         }
         self.ui.core.class_selection = self.class_sel.is_active();
         self.ui_events();
+        let peds = PlayerPeds { local_id: self.net.player_id(), remote: &self.players };
+        self.objects.process(game, &self.vehicles, &peds);
         if self.spawned {
             self.sync(game, now);
         }
@@ -233,6 +239,9 @@ impl HostedClient {
                     game.pad().0.left_y,
                     s.flags[0],
                 ));
+            }
+            if self.objects.count() > 0 {
+                self.note(self.objects.status(game));
             }
         }
     }
@@ -290,6 +299,7 @@ impl HostedClient {
                     Incoming::Vehicle(v) => self.on_vehicle_rpc(v, game),
                     Incoming::Ui(u) => self.note(format!("ui rpc {}", u.id())),
                     Incoming::Remote(r) => self.on_remote_rpc(r, game),
+                    Incoming::World(w) if is_object_rpc(&w) => self.on_object_rpc(w, game),
                     Incoming::World(w) => self.on_world_rpc(w, game),
                     Incoming::Session(s) => self.on_session_rpc(s, game),
                     other => self.note(format!("rpc {} (not applied natively yet)", other_id(&other))),
@@ -364,12 +374,12 @@ impl HostedClient {
         self.info_line(lifecycle::msg::RESTARTING);
     }
 
-    /// The pools samp deletes and recreates on a reset, in samp's order (vehicles, then the world's records); the
-    /// server's objects belong here as well.
+    /// The pools samp deletes and recreates on a reset: vehicles, the server's objects, then the world's records.
     fn clear_server_entities(&mut self, game: &mut dyn GameAdapter) {
         for (_, v) in std::mem::take(&mut self.vehicles) {
             report(self, "destroy_vehicle", game.destroy_vehicle(v));
         }
+        self.objects.clear(game);
         self.world.clear(game);
     }
 
@@ -596,6 +606,11 @@ impl HostedClient {
                     report(self, "stop_anims", game.stop_anims(me));
                 }
             }
+            P::RemoveBuildingForPlayer(b) => {
+                let centre = Vec3::new(b.pos.x, b.pos.y, b.pos.z);
+                let line = self.objects.remove_building(b.model_id as i32, centre, b.radius, game);
+                self.note(line);
+            }
             // RPC 60: the game time follows the server's while the clock is off
             P::SendGameTimeUpdate(t) if !self.clock.clock_enabled => {
                 report(self, "set_game_time_ms", game.set_game_time_ms((t.time as u32) & 0x3FFF_FFFF));
@@ -607,6 +622,14 @@ impl HostedClient {
             P::SetPlayerColor(_) => {}
             other => self.note(format!("player rpc {} (not applied natively yet)", other.id())),
         }
+    }
+
+    /// The server's objects (`hostedobjects`).
+    fn on_object_rpc(&mut self, rpc: samp_proto::rpcs::world::Incoming, game: &mut dyn GameAdapter) {
+        let id = rpc.id();
+        let peds = PlayerPeds { local_id: self.net.player_id(), remote: &self.players };
+        let line = self.objects.on_rpc(rpc, game, &peds);
+        self.note(line.unwrap_or_else(|| format!("object rpc {id}: no such object or player")));
     }
 
     /// The other players: a ped stands in for each player the server streams in, placed by its on-foot sync.
@@ -1030,6 +1053,24 @@ impl HostedClient {
 /// SA:MP text (code page 1252 bytes) as a `String`, byte for byte (Latin-1 view, the UI's font covers it).
 fn text(b: &[u8]) -> String {
     b.iter().map(|&c| char::from(c)).collect()
+}
+
+/// The world RPCs of the server's objects (`hostedobjects`).
+fn is_object_rpc(w: &samp_proto::rpcs::world::Incoming) -> bool {
+    use samp_proto::rpcs::world::Incoming as W;
+    matches!(
+        w,
+        W::CreateObject(_)
+            | W::SetObjectPosition(_)
+            | W::SetObjectRotation(_)
+            | W::DestroyObject(_)
+            | W::MoveObject(_)
+            | W::StopObject(_)
+            | W::AttachObjectToPlayer(_)
+            | W::SetPlayerObjectMaterial(_)
+            | W::SetObjectNoCameraCollision(_)
+            | W::SetPlayerAttachedObject(_)
+    )
 }
 
 fn other_id(i: &Incoming) -> String {

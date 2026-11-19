@@ -3,7 +3,7 @@
 //! What the mod API does not offer is `Unsupported`, as on any backend that lacks a feature.
 
 use sa_mod::script::Arg;
-use sa_mod::{Error, audio, entities, game, markers, radar, script, state, world};
+use sa_mod::{Error, audio, entities, game, markers, models, objects, radar, script, state, world};
 use sa_samp_api::audio::*;
 use sa_samp_api::camera::*;
 use sa_samp_api::config::*;
@@ -216,23 +216,72 @@ impl Input for ModGame {
 impl Objects for ModGame {
     fn object_script_handle(&self, _o: ObjectRef) -> GameResult<ScriptHandle> { Err(GameError::Unsupported("Objects::object_script_handle")) }
     fn object_from_script_handle(&self, _h: ScriptHandle) -> Option<ObjectRef> { None }
-    fn object_matrix(&self, _o: ObjectRef) -> GameResult<Matrix> { Err(GameError::Unsupported("Objects::object_matrix")) }
-    fn object_has_rw(&self, _o: ObjectRef) -> GameResult<bool> { Err(GameError::Unsupported("Objects::object_has_rw")) }
-    fn object_attached(&self, _o: ObjectRef) -> GameResult<bool> { Err(GameError::Unsupported("Objects::object_attached")) }
-    fn object_bounds(&self, _o: ObjectRef) -> GameResult<(Vec3, f32)> { Err(GameError::Unsupported("Objects::object_bounds")) }
+    fn object_matrix(&self, o: ObjectRef) -> GameResult<Matrix> {
+        objects::matrix(o).map(Into::into).ok_or(GameError::InvalidHandle)
+    }
+    fn object_has_rw(&self, o: ObjectRef) -> GameResult<bool> {
+        objects::info(o).map(|i| i.has_rw).ok_or(GameError::InvalidHandle)
+    }
+    fn object_attached(&self, o: ObjectRef) -> GameResult<bool> {
+        objects::info(o).map(|i| i.attached).ok_or(GameError::InvalidHandle)
+    }
+    fn object_bounds(&self, o: ObjectRef) -> GameResult<(Vec3, f32)> {
+        objects::info(o).map(|i| (i.bound_centre, i.bound_radius)).ok_or(GameError::InvalidHandle)
+    }
     fn object_ray_test(&self, _o: ObjectRef, _from: Vec3, _to: Vec3) -> GameResult<Option<ObjectHit>> { Err(GameError::Unsupported("Objects::object_ray_test")) }
-    fn create_object(&mut self, _model: ModelId, _pos: Vec3) -> GameResult<ObjectRef> { Err(GameError::Unsupported("Objects::create_object")) }
-    fn destroy_object(&mut self, _o: ObjectRef, _fade: bool) -> GameResult<()> { Err(GameError::Unsupported("Objects::destroy_object")) }
-    fn set_object_transform(&mut self, _o: ObjectRef, _pos: Vec3, _rot_deg: Vec3) -> GameResult<()> { Err(GameError::Unsupported("Objects::set_object_transform")) }
-    fn set_object_matrix(&mut self, _o: ObjectRef, _m: &Matrix) -> GameResult<()> { Err(GameError::Unsupported("Objects::set_object_matrix")) }
-    fn set_object_scale(&mut self, _o: ObjectRef, _scale: f32) -> GameResult<()> { Err(GameError::Unsupported("Objects::set_object_scale")) }
-    fn set_object_visible(&mut self, _o: ObjectRef, _visible: bool) -> GameResult<()> { Err(GameError::Unsupported("Objects::set_object_visible")) }
-    fn set_object_collision(&mut self, _o: ObjectRef, _on: bool) -> GameResult<()> { Err(GameError::Unsupported("Objects::set_object_collision")) }
-    fn attach_object( &mut self, _o: ObjectRef, _to: AttachTarget, _offset: Vec3, _rot_deg: Vec3, ) -> GameResult<()> { Err(GameError::Unsupported("Objects::attach_object")) }
-    fn detach_object(&mut self, _o: ObjectRef) -> GameResult<()> { Err(GameError::Unsupported("Objects::detach_object")) }
+    fn create_object(&mut self, model: ModelId, pos: Vec3) -> GameResult<ObjectRef> {
+        entities::create_object(model.0, pos).map_err(failed("create_object"))
+    }
+    fn destroy_object(&mut self, o: ObjectRef, _fade: bool) -> GameResult<()> {
+        entities::destroy_object(o).map_err(failed("destroy_object"))
+    }
+    fn set_object_transform(&mut self, o: ObjectRef, pos: Vec3, rot_deg: Vec3) -> GameResult<()> {
+        objects::set_position(o, pos).map_err(failed("set_object_transform"))?;
+        objects::set_rotation(o, rot_deg).map_err(failed("set_object_transform"))
+    }
+    fn set_object_matrix(&mut self, o: ObjectRef, m: &Matrix) -> GameResult<()> {
+        objects::set_matrix(o, &m.into()).map_err(failed("set_object_matrix"))
+    }
+    fn set_object_speed(&mut self, o: ObjectRef, move_speed: Vec3, turn_speed: Vec3) -> GameResult<()> {
+        objects::set_speed(o, move_speed, turn_speed).map_err(failed("set_object_speed"))
+    }
+    fn set_object_scale(&mut self, o: ObjectRef, scale: f32) -> GameResult<()> {
+        objects::set_scale(o, scale).map_err(failed("set_object_scale"))
+    }
+    fn set_object_visible(&mut self, o: ObjectRef, visible: bool) -> GameResult<()> {
+        objects::set_visible(o, visible).map_err(failed("set_object_visible"))
+    }
+    fn set_object_collision(&mut self, o: ObjectRef, on: bool) -> GameResult<()> {
+        objects::set_collision(o, on).map_err(failed("set_object_collision"))
+    }
+    fn attach_object(&mut self, o: ObjectRef, to: AttachTarget, offset: Vec3, rot_deg: Vec3) -> GameResult<()> {
+        let target = match to {
+            AttachTarget::Vehicle(v) => objects::Target::Vehicle(v),
+            AttachTarget::Object(t) => objects::Target::Object(t),
+            AttachTarget::Ped(p) => objects::Target::Ped(p),
+            AttachTarget::PedBone { .. } => return Err(GameError::Unsupported("Objects::attach_object (bone)")),
+        };
+        objects::attach(o, target, offset, rot_deg).map_err(failed("attach_object"))
+    }
+    fn detach_object(&mut self, o: ObjectRef) -> GameResult<()> {
+        objects::detach(o).map_err(failed("detach_object"))
+    }
     fn play_object_anim( &mut self, _o: ObjectRef, _anim: &str, _block: &str, _delta: f32, _looped: bool, ) -> GameResult<()> { Err(GameError::Unsupported("Objects::play_object_anim")) }
-    fn set_object_material(&mut self, _o: ObjectRef, _index: u8, _m: Option<MaterialOverride>) -> GameResult<()> { Err(GameError::Unsupported("Objects::set_object_material")) }
-    fn remove_buildings(&mut self, _model: ModelId, _center: Vec3, _radius: f32) -> GameResult<u32> { Err(GameError::Unsupported("Objects::remove_buildings")) }
+    fn set_object_material(&mut self, o: ObjectRef, index: u8, m: Option<MaterialOverride>) -> GameResult<()> {
+        let rgba = |c: Rgba| sa_mod::Rgba(u32::from_be_bytes([c.r, c.g, c.b, c.a]));
+        let r = match &m {
+            None => objects::set_material(o, index, None, sa_mod::Rgba(0)),
+            Some(MaterialOverride::Colour(c)) => objects::set_material(o, index, None, rgba(*c)),
+            Some(MaterialOverride::Texture { model, txd, texture, colour }) => {
+                objects::set_material(o, index, Some((model.0, txd, texture)), rgba(*colour))
+            }
+            Some(MaterialOverride::Rendered(_)) => return Err(GameError::Unsupported("Objects::set_object_material (rendered)")),
+        };
+        r.map_err(failed("set_object_material"))
+    }
+    fn remove_buildings(&mut self, model: ModelId, center: Vec3, radius: f32) -> GameResult<u32> {
+        objects::remove_buildings(model.0, center, radius).map_err(failed("remove_buildings"))
+    }
     fn camera_ignore(&mut self, _e: EntityRef) -> GameResult<()> { Err(GameError::Unsupported("Objects::camera_ignore")) }
 }
 
@@ -283,6 +332,9 @@ impl Peds for ModGame {
     }
     fn ped_weapons(&self, _ped: PedRef) -> GameResult<[WeaponSlot; 13]> { Err(GameError::Unsupported("Peds::ped_weapons")) }
     fn bone_position(&self, _ped: PedRef, _bone: BoneId, _transformed: bool) -> GameResult<Vec3> { Err(GameError::Unsupported("Peds::bone_position")) }
+    fn node_matrix(&self, ped: PedRef, node: u8) -> GameResult<Matrix> {
+        objects::ped_bone_matrix(ped, node).map(Into::into).ok_or(GameError::NotLoaded)
+    }
     fn weapon_skill(&self, _ped: PedRef) -> GameResult<u8> { Err(GameError::Unsupported("Peds::weapon_skill")) }
     fn ped_on_fire(&self, _ped: PedRef) -> GameResult<bool> { Err(GameError::Unsupported("Peds::ped_on_fire")) }
     fn anim_playing(&self, _ped: PedRef, _block: &str, _name: &str) -> GameResult<bool> { Err(GameError::Unsupported("Peds::anim_playing")) }
@@ -437,23 +489,21 @@ impl ScriptCommands for ModGame {
 
 
 impl Streaming for ModGame {
-    /// Ped models as such; any other model the game defines as `Atomic` (the client only asks whether it exists).
     fn model_kind(&self, model: ModelId) -> ModelKind {
-        if PED_MODELS.contains(&model.0) {
-            ModelKind::Ped
-        } else if markers::model_exists(model.0) {
-            ModelKind::Atomic
-        } else {
-            ModelKind::None
-        }
+        models::info(model.0).map_or(ModelKind::None, |i| i.0)
     }
     fn request_model(&mut self, model: ModelId) -> GameResult<()> {
-        cmd(0x0247, &[Arg::Int(model.0)])
+        models::request(model.0, false).map(drop).map_err(failed("request_model"))
     }
     fn model_loaded(&self, model: ModelId) -> bool {
-        cond(0x0248, &[Arg::Int(model.0)]).unwrap_or(false)
+        models::info(model.0).is_some_and(|i| i.1)
     }
-    fn release_model(&mut self, _model: ModelId) -> GameResult<()> { Err(GameError::Unsupported("Streaming::release_model")) }
+    fn release_model(&mut self, model: ModelId) -> GameResult<()> {
+        models::release(model.0).map_err(failed("release_model"))
+    }
+    fn set_model_draw_distance(&mut self, model: ModelId, distance: f32) -> GameResult<()> {
+        models::set_draw_distance(model.0, distance).map_err(failed("set_model_draw_distance"))
+    }
     fn load_all_now(&mut self) -> GameResult<()> {
         cmd(0x038B, &[])
     }

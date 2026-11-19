@@ -3,14 +3,14 @@
 id = "samp"
 name = "SA:MP"
 version = "0.2.0"
-api_version = "1.8"
+api_version = "1.9"
 entry = "samp.wasm"
 
 [permissions]
 render = true
 state = "write"             # the local player, the camera, the HUD, the clock and weather the server sets
 input = "capture"           # the connect screen, chat typing and dialogs take the keyboard
-entities = true             # the server's vehicles and the other players
+entities = true             # the server's vehicles, objects and models, and the other players
 scripts = true              # tasks, animations, camera and world commands
 audio = true                # the sounds the server plays
 net = ["udp:user-approved"]  # the servers the user approves (the host asks once per server)
