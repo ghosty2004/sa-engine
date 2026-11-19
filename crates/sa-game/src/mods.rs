@@ -199,6 +199,7 @@ fn address(r: Option<Raw>) -> Option<u32> {
 
 /// The observer of the hooked functions: hands the call to the mods hooked there and applies their decisions.
 fn observed(o: &mut Observed<'_>) {
+    crate::data_mods::observed(o);
     if o.entry.addr == RENDER_2D_STUFF && matches!(o.phase, Phase::After) {
         draw_game_2d();
     }
@@ -314,6 +315,9 @@ pub fn install(spec: &str) -> Result<(), String> {
             println!("sa-game: mod not loaded: {e}");
             crate::crash::note(&format!("mod not loaded: {e}"));
         }
+    }
+    for f in crate::data_mods::install(&mut host) {
+        EngineRegistry.watch(f, true);
     }
     HOST.with_borrow_mut(|h| *h = Some(host));
     Ok(())

@@ -35,6 +35,8 @@ pub mod crt_fmt;
 pub mod d3d9;
 pub mod d3d9_shader;
 pub mod d3dx_math;
+#[cfg(feature = "mods")]
+pub mod data_mods;
 pub mod det;
 pub mod detheap;
 pub mod dsound;
