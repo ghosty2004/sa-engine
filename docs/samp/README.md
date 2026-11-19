@@ -37,8 +37,8 @@ the answer per mod (queries go only to servers the user allowed before or asks f
 the page's IndexedDB). The mod's settings are keys of its storage (natively `.../sa-engine/mods/samp/`, in the browser
 IndexedDB), each also read from a file of the same name in the mod's folder when the storage lacks it (how a page,
 whose storage starts empty, gets them): `server`, `name`, `favourites`, `recent`, `server_list_url` (another list in
-the open.mp format), `query_allowed` (servers the screen may query), the servers' `auth_table.txt` (third-party data
-the user provides; without it servers refuse the join at their auth check), and for headless runs `auto_connect` /
+the open.mp format), `query_allowed` (servers the screen may query), an `auth_table.txt` replacing the built-in auth
+table, and for headless runs `auto_connect` /
 `auto_spawn` (`1`). `ui_scene` = `ref` shows samp-rs's reference UI scene without a server
 (`samp_client::ui::scene`, for comparisons with screenshots).
 

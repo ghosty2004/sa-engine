@@ -7,7 +7,7 @@
 #   tools/e2e/samp/mod-join.sh [OUT_DIR]       (default target/samp-mod-join)
 #
 # Inputs (gitignored, never committed): $SA_ROOT/re/samp/server (open.mp), $SA_ROOT/wine/gta-sa (the game data),
-# the auth table AUTH_TABLE (default $SA_ROOT/re/samp/auth_table.txt, third-party data, read only), which goes into
+# an auth table AUTH_TABLE replacing the built-in one (optional), which goes into
 # the mod's storage (OUT/moddata/samp/, `SA_MOD_DATA`) with the server and the player name.
 # By default the mod joins at once (`auto_connect`) and the server is already approved in the host's list
 # (OUT/moddata/sa-engine-host/net.samp). UX=1 goes through the connect screen and the host's approval prompt
@@ -47,7 +47,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/../../.." && pwd)"
 SA_ROOT="${SA_ROOT:-$ROOT}"
 OUT="$(mkdir -p "${1:-$ROOT/target/samp-mod-join}" && cd "${1:-$ROOT/target/samp-mod-join}" && pwd)"
-AUTH="${AUTH_TABLE:-$SA_ROOT/re/samp/auth_table.txt}"
+AUTH="${AUTH_TABLE:-}"
 PORT="${SAMP_PORT:-7813}"
 GAME_BIN="${SA_GAME:-$ROOT/target/i686-unknown-linux-gnu/release/sa-game}"
 MODS="${MODS:-$ROOT/target/mods}"
@@ -59,7 +59,7 @@ SERVER_SRC="$SA_ROOT/re/samp/server"
 SRV="$OUT/server"
 SLOG="$OUT/server.log"
 [ -x "$SERVER_SRC/omp-server" ] || { echo "mod-join: $SERVER_SRC/omp-server missing" >&2; exit 1; }
-[ -f "$AUTH" ] || { echo "mod-join: auth table $AUTH missing" >&2; exit 1; }
+[ -z "$AUTH" ] || [ -f "$AUTH" ] || { echo "mod-join: auth table $AUTH missing" >&2; exit 1; }
 WEB="${WEB:-0}"
 PROXY_BIN="${UDP_PROXY:-$ROOT/target/release/sa-udp-proxy}"
 if [ "$WEB" = 1 ]; then
@@ -98,7 +98,7 @@ else
     mkdir -p "$OUT/moddata/sa-engine-host"
     printf 'allow 127.0.0.1:%s\n' "$PORT" > "$OUT/moddata/sa-engine-host/net.samp"
 fi
-cp "$AUTH" "$OUT/moddata/samp/auth_table.txt"
+[ -z "$AUTH" ] || cp "$AUTH" "$OUT/moddata/samp/auth_table.txt"
 CLIENT="${SAMP_CLIENT:-$SA_ROOT/re/samp/client}"
 rm -rf "$OUT/mods"
 mkdir -p "$OUT/mods" "$OUT/list"
@@ -268,7 +268,7 @@ elif wait_log '\[cov\] spawn id=' 150; then
     say "spawned"
     if [ "${BOT:-0}" = 1 ]; then
         "${SAMP_BOT:-$ROOT/samp-rs/target/release/samp-bot}" "127.0.0.1:$PORT" --name BotPlayer --mode idle \
-            --seconds "${BOT_SECONDS:-30}" --auth-table "$AUTH" > "$OUT/samp-bot.log" 2>&1 &
+            --seconds "${BOT_SECONDS:-30}" ${AUTH:+--auth-table "$AUTH"} > "$OUT/samp-bot.log" 2>&1 &
         BOT_PID=$!
         say "samp-bot pid $BOT_PID"
     fi

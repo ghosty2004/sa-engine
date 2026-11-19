@@ -2,9 +2,8 @@
 //!
 //! The server sends `0x0c, u8 len, len bytes` (open.mp counts the trailing NUL in `len`); the
 //! client answers in the same shape with a 40-char uppercase hex string. Servers check the answer
-//! against a fixed table of 256 challenge → response pairs. That table is third-party data and not
-//! part of this repository: it is loaded at runtime from a text file with one
-//! `CHALLENGE RESPONSE` pair per line (generate it with tools/extract_auth_table.py).
+//! against a fixed table of 256 challenge → response pairs ([`AuthTable::builtin`]); a text file with
+//! one `CHALLENGE RESPONSE` pair per line can replace it ([`AuthTable::parse`]).
 
 use std::collections::HashMap;
 
@@ -21,6 +20,11 @@ pub struct ParseError {
 }
 
 impl AuthTable {
+    /// The servers' table ([`crate::auth_table::PAIRS`]).
+    pub fn builtin() -> Self {
+        Self { pairs: crate::auth_table::PAIRS.iter().map(|(c, r)| ((*c).to_owned(), (*r).to_owned())).collect() }
+    }
+
     /// Parse `CHALLENGE RESPONSE` lines; blank lines and `#` comments are ignored.
     pub fn parse(text: &str) -> Result<Self, ParseError> {
         let mut pairs = HashMap::new();
@@ -72,6 +76,13 @@ pub fn build_response(response: &str) -> Vec<u8> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn builtin_table_has_every_challenge() {
+        let t = AuthTable::builtin();
+        assert_eq!(t.len(), 256);
+        assert_eq!(t.response("6C407EC29DE59E2"), Some("D9412F235647BAA582089C6F66817F8B8811C057"));
+    }
+
     use super::*;
 
     #[test]

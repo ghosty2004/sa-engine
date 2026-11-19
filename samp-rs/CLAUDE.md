@@ -85,7 +85,7 @@ REA MCP server (`rea`, Ghidra provider) — open a DLL with `open_binary`
 See `docs/ROADMAP.md` (task board, decisions) and `docs/PLAN.md` (definition of done F1–F9). F1–F7 are met
 on main (proof scripts under `tools/diff/` and `tools/e2e/soak.sh`); open: other client versions (needs
 their binaries), Windows validation, the code cleanup and the rename to sandrust-mp.
-Auth: servers check the `0x0c` answer against a fixed 256-entry table (open.mp `SAMPRakNet.cpp`). It is
-third-party data: generate `data/auth_table.txt` with `tools/extract_auth_table.py` (gitignored), never
-commit it. Our server copy has `announce: false` so tests don't hit the public list. SA:MP's own assets
+Auth: servers check the `0x0c` answer against a fixed 256-entry table (open.mp `SAMPRakNet.cpp`, MPL-2.0). It
+is built in (`samp-proto/src/auth_table.rs`, user decision 2026-11-19; the repository stays private); a
+`CHALLENGE RESPONSE` text file (`tools/extract_auth_table.py`) can still replace it. Our server copy has `announce: false` so tests don't hit the public list. SA:MP's own assets
 are read at runtime from the user's SA:MP install (samp.saa, bass.dll), never redistributed.

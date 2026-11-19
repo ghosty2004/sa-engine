@@ -16,7 +16,7 @@ const USAGE: &str = "\
 usage: samp-bot [HOST:PORT] [options]
   --name NAME          nickname (default RustBot)
   --seconds N          session length (default 15); a seated bot leaves its vehicle first
-  --auth-table PATH    default data/auth_table.txt
+  --auth-table PATH    a table replacing the built-in one
   --class N            class to request (default 0)
   --mode MODE          walk (default) | idle | drive | passenger | shoot
   --sync-ms MS         fixed foot/in-car sync interval instead of rate + N (measurements)
@@ -46,7 +46,7 @@ usage: samp-bot [HOST:PORT] [options]
 struct Args {
     target: String,
     seconds: u64,
-    auth_table: String,
+    auth_table: Option<String>,
     cfg: Config,
 }
 
@@ -54,7 +54,7 @@ fn parse_args() -> std::result::Result<Args, String> {
     let mut a = Args {
         target: "127.0.0.1:7777".into(),
         seconds: 15,
-        auth_table: "data/auth_table.txt".into(),
+        auth_table: None,
         cfg: Config::default(),
     };
     let mut path = "circle".to_owned();
@@ -68,7 +68,7 @@ fn parse_args() -> std::result::Result<Args, String> {
         match arg.as_str() {
             "--name" => c.name = it.next().ok_or("--name needs a value")?,
             "--seconds" => a.seconds = num("--seconds", it.next())?,
-            "--auth-table" => a.auth_table = it.next().ok_or("--auth-table needs a path")?,
+            "--auth-table" => a.auth_table = Some(it.next().ok_or("--auth-table needs a path")?),
             "--class" => c.class = num("--class", it.next())?,
             "--mode" => c.mode = it.next().ok_or("--mode needs a value")?.parse()?,
             "--sync-ms" => c.sync_ms = Some(num("--sync-ms", it.next())?),
@@ -143,10 +143,13 @@ fn main() -> Result<()> {
             std::process::exit(2);
         }
     };
-    let table = AuthTable::parse(&std::fs::read_to_string(&args.auth_table).map_err(|e| {
-        format!("cannot read auth table {}: {e} (generate it with tools/extract_auth_table.py)", args.auth_table)
-    })?)
-    .map_err(|e| format!("auth table parse error at line {}", e.line))?;
+    let table = match &args.auth_table {
+        Some(path) => AuthTable::parse(
+            &std::fs::read_to_string(path).map_err(|e| format!("cannot read auth table {path}: {e}"))?,
+        )
+        .map_err(|e| format!("auth table parse error at line {}", e.line))?,
+        None => AuthTable::builtin(),
+    };
 
     let mut client = Client::connect(&args.target, &args.cfg.name, table)?;
     let start = Instant::now();

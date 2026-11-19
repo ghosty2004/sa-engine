@@ -11,8 +11,7 @@
 //!
 //! * `server`, `name`, `favourites`, `recent`, `server_list_url`, `query_allowed`: the connect screen's
 //!   ([`connect`]);
-//! * `auth_table.txt`: the servers' auth table (third-party data the user provides; without it the server refuses
-//!   the join at its auth check);
+//! * `auth_table.txt`: a servers' auth table replacing the built-in one;
 //! * `auto_connect`: `1` joins `server` as `name` without the screen, `auto_spawn`: `1` presses Shift in class
 //!   selection by itself (headless runs);
 //! * `ui_scene`: `ref` shows the UI's fixed reference scene instead (no server; comparisons with screenshots);
@@ -73,14 +72,11 @@ fn serial_seed() -> String {
     s
 }
 
-/// The servers' auth table ([`setting`] `auth_table.txt`).
+/// The servers' auth table: the built-in one, or an `auth_table.txt` ([`setting`]) that replaces it.
 fn auth_table() -> Result<AuthTable, String> {
     match setting("auth_table.txt") {
         Some(t) => AuthTable::parse(&t).map_err(|e| format!("auth_table.txt: {e:?}")),
-        None => {
-            sa_mod::log(sa_mod::level::WARN, "samp: no auth_table.txt in the mod's storage or folder: joins fail at auth");
-            AuthTable::parse("").map_err(|e| format!("{e:?}"))
-        }
+        None => Ok(AuthTable::builtin()),
     }
 }
 

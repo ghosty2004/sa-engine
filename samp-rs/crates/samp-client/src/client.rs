@@ -36,7 +36,7 @@ use crate::script::Runner;
 
 pub(crate) use gta::{load_model, ped_in_world, set_hud, set_ped_skin};
 
-/// Environment variable with the (Windows) path of `auth_table.txt`.
+/// Environment variable with the (Windows) path of an `auth_table.txt` that replaces the built-in table.
 pub const AUTH_TABLE_ENV: &str = "SAMP_RS_AUTH_TABLE";
 
 /// Ped state `PEDSTATE_IDLE` (gta-reversed `Enums/ePedState.h`, like the other `PEDSTATE_*`).
@@ -120,10 +120,15 @@ impl Client {
         let host = args.host.clone().unwrap_or_else(|| "127.0.0.1".into());
         let port = args.port.unwrap_or(7777);
         let name = args.name.clone().unwrap_or_else(|| "RustClient".into());
-        let path = std::env::var(AUTH_TABLE_ENV)
-            .map_err(|_| format!("{AUTH_TABLE_ENV} is not set (path of data/auth_table.txt)"))?;
-        let text = std::fs::read_to_string(&path).map_err(|e| format!("cannot read auth table {path}: {e}"))?;
-        let auth = AuthTable::parse(&text).map_err(|e| format!("auth table {path}: parse error at line {}", e.line))?;
+        let (auth, path) = match std::env::var(AUTH_TABLE_ENV) {
+            Ok(path) => {
+                let text = std::fs::read_to_string(&path).map_err(|e| format!("cannot read auth table {path}: {e}"))?;
+                let auth =
+                    AuthTable::parse(&text).map_err(|e| format!("auth table {path}: parse error at line {}", e.line))?;
+                (auth, path)
+            }
+            Err(_) => (AuthTable::builtin(), "built in".to_owned()),
+        };
         let server = crate::netclient::resolve(&host, port).map_err(|e| format!("resolve {host}:{port}: {e}"))?;
         crate::log!("client: connecting to {server} as {name:?} (auth table {path}, {} entries)", auth.len());
         let mut net = NetClient::new(server, &name, auth).map_err(|e| format!("udp socket: {e}"))?;

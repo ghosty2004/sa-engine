@@ -8,6 +8,7 @@
 //! Implemented from the specs in `docs/re/` (start at docs/re/README.md); never from decompiled code.
 
 pub mod auth;
+pub mod auth_table;
 pub mod bitstream;
 pub mod cipher;
 pub mod connection;
