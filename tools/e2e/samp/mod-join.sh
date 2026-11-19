@@ -21,6 +21,8 @@
 # game's gtaweap3.ttf; third-party, never committed) are copied into the samp mod's folder when they exist, and so is
 # samp.saa (its main.scm and script.img become the game's main script; SAMP_SAA=0 leaves it out: samp-rs's minimal
 # one).
+# SA:MP's data files (SAMP_CLIENT/SAMP/: SAMP.img, SAMP.ide, ...; the manifest's [data]) are linked there too
+# (SAMP_DATA=0: not, the mod then runs without SA:MP's own models).
 # EXTRA_CMDS: more server commands after the scripted ones, `;`-separated (`sleep|S` waits, `shot|NAME` copies the
 # newest complete presented frame to OUT/shots/NAME.png), then the lines of the file CMDS (tools/e2e/samp/objects.cmds), e.g.
 # 'td|~y~textdraw;dialog|1|0|Welcome|Hello;sleep|8'; SA_GAME_KEYS adds scripted keys (`tab:1500:1502`
@@ -125,6 +127,12 @@ for f in "$CLIENT/sampgui.png" "$CLIENT/mouse.png" "$CLIENT/sampaux3.ttf" "$SA_R
     [ -f "$f" ] && cp "$f" "$OUT/mods/samp/"
 done
 [ "${SAMP_SAA:-1}" = 1 ] && [ -f "$CLIENT/samp.saa" ] && cp "$CLIENT/samp.saa" "$OUT/mods/samp/"
+# SA:MP's data files (its own models, collision, cull zones, animations), linked from the install's SAMP folder
+if [ "${SAMP_DATA:-1}" = 1 ]; then
+    for f in "$CLIENT"/SAMP/*; do
+        [ -f "$f" ] && ln -sf "$f" "$OUT/mods/samp/"
+    done
+fi
 python3 -I - "$OUT/list/servers.json" "$PORT" << 'PY'
 import json, sys
 rows = [

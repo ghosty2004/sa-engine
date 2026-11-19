@@ -18,6 +18,15 @@ files = "own"               # SA:MP's UI files the user copies in: sampgui.png, 
 storage = true              # server, name, favourites, recent, auth_table.txt, auto_connect, auto_spawn; the serial seed
 http = ["https://api.open.mp/"]  # the Internet tab's server list
 
+# SA:MP's own models (ids 18631..19999), collision, cull zones, the "SAMP" animation block (SAMP.ifp inside SAMP.img)
+# and texture dictionaries, from the user's SA:MP install (its SAMP folder, copied into the mod's folder). Without
+# them the mod runs and the server's objects with SA:MP's models are refused.
+[data]
+img = ["custom.img", "SAMP.img", "SAMPCOL.img"]
+ide = ["SAMP.ide", "CUSTOM.ide"]
+ipl = ["SAMP.ipl"]
+txd = ["samaps.txd", "blanktex.txd"]
+
 [limits]
 memory_mib = 64
 fuel = 200000000

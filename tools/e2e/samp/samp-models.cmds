@@ -1,0 +1,36 @@
+# SA:MP's own models and animations (sampcov.pwn commands, one per line; `sleep|S` waits, `shot|NAME` takes a
+# screenshot): objects, a pickup and an attached object with models 18631..19999 from SAMP.img / SAMP.ide, and an
+# animation of the "SAMP" library (SAMP.ifp inside SAMP.img). Run after the spawn by samp-rs-ab.sh (CMDS=...) on the
+# DLL client and by mod-join.sh (CMDS=...) on the samp mod, which needs SA:MP's data files in its folder.
+clearnpcs
+clearvehs
+time|12
+weather|10
+pos|2495|-1680|13.5|0
+sleep|3
+obj|19128|2495|-1668|12.55
+obj|18766|2484|-1668|13.5
+obj|19353|2506|-1668|14.5
+obj|19054|2491|-1673|13.0
+obj|19122|2499|-1673|13.3
+obj|18647|2495|-1665|13.2
+pickup|18631|1|2493|-1676|13.4
+pickup|19054|1|2497|-1676|13.4
+attach|19100|2
+sleep|6
+campos|2512|-1688|17|2495|-1668|13
+sleep|4
+shot|models
+campos|2492|-1676|14.5|2495|-1680|14.2
+sleep|3
+shot|attached
+# the first call only requests the animation block (samp.dll gives up when it is not loaded within ~15 ms)
+anim|SAMP|FISHINGIDLE
+sleep|2
+anim|SAMP|FISHINGIDLE
+sleep|3
+campos|2491|-1683|14.6|2495|-1680|14
+sleep|2
+shot|anim
+clranim
+camback

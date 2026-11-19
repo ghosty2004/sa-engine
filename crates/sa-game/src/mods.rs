@@ -274,8 +274,12 @@ fn mod_display(d: &display::Display) -> Display {
     Display { desktop: (d.desktop.0, d.desktop.1), modes: d.modes.iter().map(|m| (m.0, m.1)).collect() }
 }
 
-/// The platform's file redirect: the script files a mod provides ([`sa_access::setup::script_file`]) in place of
-/// the install's.
+/// The platform's file redirect: the script files a mod provides and the level file with the mods' data lines.
+fn redirected_file(path: &str) -> Option<std::sync::Arc<Vec<u8>>> {
+    script_files(path).or_else(|| crate::data_mods::level_file(path))
+}
+
+/// The script files a mod provides ([`sa_access::setup::script_file`]) in place of the install's.
 fn script_files(path: &str) -> Option<std::sync::Arc<Vec<u8>>> {
     let n = sa_platform::vfs::GAME_ROOT.len();
     let (root, rel) = (path.get(..n)?, path.get(n..)?.strip_prefix('\\')?);
@@ -299,7 +303,7 @@ pub fn install(spec: &str) -> Result<(), String> {
     GAME.with_borrow_mut(|g| *g = Some(game));
     host.set_registry(Registry(Rc::new(EngineRegistry)));
     observe::set_handler(observed);
-    sa_platform::vfs::set_redirect(Some(script_files));
+    sa_platform::vfs::set_redirect(Some(redirected_file));
     host.set_network(sa_mod_host::platform_network(crate::env::var_os("SA_MODS_PROXY").as_deref()));
     host.set_http(sa_mod_host::platform_http());
     match sa_mod_host::platform_storage(None) {

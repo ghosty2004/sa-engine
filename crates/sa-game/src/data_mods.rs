@@ -44,8 +44,8 @@ struct Pending {
 /// Where the mods' folders appear in the game folder (`mods\<id>`).
 const MODS_DIR: &str = "mods";
 
-/// The file layer's redirect: the level file with the mods' lines.
-fn level_file(path: &str) -> Option<Arc<Vec<u8>>> {
+/// The level file with the mods' lines (part of the mod host's file redirect, [`crate::mods`]).
+pub(crate) fn level_file(path: &str) -> Option<Arc<Vec<u8>>> {
     let (root, rel) = (
         path.get(..GAME_ROOT.len())?,
         path.get(GAME_ROOT.len()..)?.strip_prefix('\\')?,
@@ -92,7 +92,6 @@ pub fn install(host: &mut sa_mod_host::Host) -> Vec<u32> {
         }
     });
     let _ = LEVEL.set(Arc::new(plan.level_file));
-    sa_platform::vfs::set_redirect(Some(level_file));
     PENDING.with_borrow_mut(|p| {
         *p = Pending {
             needs: Some(plan.needs),

@@ -6,6 +6,7 @@
 #   OUT/resolution/{mod.toml,resolution.wasm}     the game at the desktop / a chosen resolution, with its
 #                                                 config.toml (copied only when missing: the mod rewrites it)
 #   OUT/samp/{mod.toml,samp.wasm}                 SA:MP: samp-rs's client core on the mod API (settings in its storage)
+#                                                 and, copied in by the user, SA:MP's data files (its [data])
 #
 # Run natively with `sa-game ... --mods OUT/resolution` (sa-game built with --features mods), in the browser with
 # `tools/web/serve.sh --mods OUT` and the page's `?mods=resolution`. The SDK examples: examples/mods/build.sh.
@@ -18,3 +19,10 @@ pack sa-mod-resolution resolution mods/resolution/mod.toml
 pack sa-mod-samp samp mods/samp/mod.toml
 [ -e "$out/resolution/config.toml" ] || cp mods/resolution/config.toml "$out/resolution/config.toml"
 ls -l "$out"/*/*.wasm
+# SA:MP's own data files (the samp manifest's [data]) are the user's: say which ones the mod's folder still lacks
+missing=""
+for f in $(sed -n '/^\[data\]/,/^\[limits\]/p' mods/samp/mod.toml | grep -o '"[^"]*"' | tr -d '"'); do
+    [ -e "$out/samp/$f" ] || missing="$missing $f"
+done
+[ -z "$missing" ] || echo "mods/build.sh: copy from the SA:MP install's SAMP folder into $out/samp/:$missing" \
+    "(SA:MP's own models and animations, docs/samp/README.md)"
