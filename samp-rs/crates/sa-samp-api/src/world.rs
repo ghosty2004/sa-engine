@@ -139,6 +139,10 @@ pub trait WorldState {
     fn kill_fx(&mut self, fx: FxRef) -> GameResult<()>;
     /// Loads a shop's data (`CShopping::LoadShop` 0x49BBE0; mod shop and clothes).
     fn load_shop(&mut self, name: &str) -> GameResult<()>;
+    /// Takes every entry-exit's access away: the flags word (+0x30) of each `CEntryExitManager::mp_poolEntryExits`
+    /// (0x96A7D8) entry becomes 0, so no marker shows and no ped enters or leaves through them, until the game
+    /// rebuilds them.
+    fn disable_entry_exits(&mut self) -> GameResult<()>;
     /// Sets a float statistic (`CStats::StatTypesFloat` 0xB79380; 69..=79 are the weapon skills).
     fn set_float_stat(&mut self, _stat: u16, _value: f32) -> GameResult<()> {
         Err(GameError::Unsupported("WorldState::set_float_stat"))

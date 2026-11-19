@@ -116,9 +116,12 @@ impl Client {
         crate::ui::set_remotes(self.players.ui_snapshot(now));
     }
 
-    /// The local tick: spectating unspawned, class selection, or death / respawn, the spawned frame and its sync,
-    /// or the connecting scene.
+    /// The local tick: the shop unload of disabled entry-exits while connected, then spectating unspawned, class
+    /// selection, or death / respawn, the spawned frame and its sync, or the connecting scene.
     fn local_tick(&mut self, now: Instant) {
+        if self.enter_exits_disabled && self.netgame.connected() {
+            crate::behaviourclient::unload_unnamed_shop();
+        }
         if self.behaviour.spectate.on && !self.spawned && matches!(self.net.phase(), Phase::Connected) {
             // Spectating without being spawned: class selection is left, then the spectator tick.
             self.behaviour.drunk_not_spawned(&mut self.runner);

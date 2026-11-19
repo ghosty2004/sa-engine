@@ -8,6 +8,7 @@ docs/re/data/gta-patches-r4.csv.
 | `CAMERA_MATRIX_POS` | — | 0x1009FF92 | samp's camera object +4 points at `TheCamera` matrix 0xB6F99C | player-state.md (camera RPCs) |
 | `GRAVITY`, `set_gravity` | — | 0x100A1410 | global gravity write (row 358) | player-state.md "146 SetPlayerGravity" |
 | `LOAD_SHOP`, `PED_SHOP_NAME`, `shop_name` | — | 0x10017E00 → 0x100AE390 / 0x100AE310; shop-name field read at 0x100AE43E | RPC 33 handler → shop-name setter / `LoadShop` caller | player-state.md "33 SetPlayerShopName" |
+| `unload_unnamed_shop` | 0x10008BC7 | 0x10008BB7 | connected-state frame: settings +0x1A set, no ped shop name, a shop loaded → `LoadShop("")` | session-misc.md, "Disable enter/exits" |
 | `ADD_BIG_MESSAGE` | — | 0x100A0D55 | call to `CMessages::AddBigMessage` | player-state.md "17 SetWorldBounds" |
 | `big_message` | — | 0x100A0D10 | CLEAR_PRINTS + AddBigMessage wrapper | player-state.md "17 SetWorldBounds" |
 | `GET_UPPERCASE_KEY`, `hash_table` | — | 0x1009CF30 (called from 0x100A091F) → 0x100B4490 | start-up hashing of the animation table | remote-control-onfoot.md §4.1 |

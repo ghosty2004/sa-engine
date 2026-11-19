@@ -87,6 +87,21 @@ impl<M: Memory> WorldState for OriginalGame<M> {
         AreaCode::default()
     }
 
+    /// Every slot of the pool up to its size, used or free, as samp does. Mirrors samp.dll B 0x100A1570.
+    fn disable_entry_exits(&mut self) -> GameResult<()> {
+        let read = |a| self.mem.read_u32(a).map_err(write_error);
+        let pool = read(game::ENTRY_EXIT_POOL)?;
+        if pool == 0 {
+            return Err(GameError::Other("no entry-exit pool".into()));
+        }
+        let (objects, size) = (read(pool)?, read(pool + 8)? as i32);
+        for slot in 0..size.max(0) as u32 {
+            let at = objects + slot * game::ENTRY_EXIT_SIZE + game::ENTRY_EXIT_FLAGS;
+            self.mem.write_data(at, &[0, 0]).map_err(write_error)?;
+        }
+        Ok(())
+    }
+
     /// `CStats::StatTypesFloat[stat]`, written directly as samp does.
     fn set_float_stat(&mut self, stat: u16, value: f32) -> GameResult<()> {
         self.mem.write_data(game::FLOAT_STATS + 4 * u32::from(stat), &value.to_le_bytes()).map_err(write_error)

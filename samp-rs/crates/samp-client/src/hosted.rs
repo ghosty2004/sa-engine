@@ -287,12 +287,13 @@ impl HostedClient {
                 self.on_foot_rate = g.on_foot_rate.clamp(10, 1000);
                 self.manual_engine = g.manual_engine_and_lights;
                 self.note(format!(
-                    "InitGame: server {:?}, our id {:?}, hour {}, weather {}, gravity {}",
+                    "InitGame: server {:?}, our id {:?}, hour {}, weather {}, gravity {}, entry-exits disabled {}",
                     g.server_name,
                     self.net.player_id(),
                     g.world_time,
                     g.weather,
-                    g.gravity
+                    g.gravity,
+                    g.disable_enter_exits
                 ));
                 self.clock.hour = g.world_time;
                 self.clock.weather = g.weather;
@@ -301,6 +302,7 @@ impl HostedClient {
                 report(self, "set_gravity", game.set_gravity(g.gravity));
                 report(self, "set_stunt_bonus", game.set_stunt_bonus(g.stunt_bonus));
                 report(self, "set_zone_names", game.set_zone_names(false));
+                report(self, "disable_entry_exits", crate::world::apply_enter_exits(game, &g));
                 self.netgame.on_init_game();
                 self.note(format!("chat (debug): Connected to {{B9C9BF}}{}", g.server_name));
                 self.ui.core.on_init_game(&g);

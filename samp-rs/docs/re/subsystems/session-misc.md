@@ -98,6 +98,43 @@ pool, +8 pickup pool, +0xc object pool, +0x1c textdraw pool.
   handler must be re-entrant (it is in the client: it just overwrites settings and sets
   state 5).
 
+#### "Disable enter/exits" (settings +0x1A) — static, B build read in full, A checked at the same sites
+The server's `DisableInteriorEnterExits()` arrives as InitGame field #8. The settings byte has
+exactly four users in each build:
+
+| site | A | B | what it does with the byte |
+|---|---|---|---|
+| netgame constructor | 0x1000BA4C | 0x1000BA3F | stores 0 |
+| RPC 40 reset (settings defaults) | 0x1000A61E | 0x1000A60B | stores 0 |
+| InitGame handler, after the fields are read and the gravity is applied | 0x10010A35 | 0x10010A15 | if set: one call to the routine below |
+| connected-state frame routine (B 0x10008B10, every frame in netgame state 5) | 0x10008BC7 | 0x10008BB7 | if set: the shop check below |
+
+- **The InitGame routine** (A 0x100A15A0, B 0x100A1570) reads GTA's
+  `CEntryExitManager::mp_poolEntryExits` (0x96A7D8), takes the pool's size (+0x8) and writes a
+  zero 16-bit word at +0x30 (`CEntryExit::m_nFlags`) of every slot from 0 to size − 1, in steps of
+  0x3C, without looking at the byte map (free slots are cleared too). With `ENABLE_ACCESS`
+  (0x4000) gone, `CEntryExitManager::Update` neither draws the yellow cone nor starts a transition
+  for any entry-exit; the interior side of each pair is cleared as well, so a player already
+  inside cannot leave through its exit marker. All other flag bits are lost at the same time.
+  The byte `CEntryExitManager::ms_bDisabled` (0x96A7C8) and the script command
+  `SWITCH_ENTRY_EXIT` are not used.
+- **Once only.** The flags are never written back: the RPC 40 reset and the constructor only
+  clear the settings byte, so after a gmx into a gamemode that does not disable them the
+  entry-exits stay closed until GTA rebuilds them (`CEntryExitManager::ShutdownForRestart` sets
+  `ENABLE_ACCESS` again on a new game / load; SA:MP does not reach it). A later InitGame with the
+  bit set clears the words again (harmless).
+- **The per-frame shop check** (connected-state routine, also during class selection, since the
+  custom-model manager that would take the other branch never exists in R4): with the byte set,
+  a local GTA ped that exists and has no shop-name pointer (`CPed` +0x78C, the pointer RPC 33
+  SetPlayerShopName sets, see player-state.md "33 SetPlayerShopName"), and a non-empty
+  `CShopping::ms_shopLoaded` (0xA9A7D8), the client calls `CShopping::LoadShop` (0x49BBE0) with an
+  empty name. A shop loaded by a server-placed interior therefore lasts only while the server keeps
+  a shop name on the player.
+- Ours: `samp_client::world::apply_enter_exits` (both hosts; the DLL client clears the pool as
+  above, the mod through the mod API's `set_entry_exits_enabled(0)`), the shop check in
+  `behaviourclient::unload_unnamed_shop` (DLL client only: the hosted client keeps no shop-name
+  pointer on the ped, so it has nothing to test).
+
 ---------------------------------------------------------------------------------------
 
 ## Connection / session control

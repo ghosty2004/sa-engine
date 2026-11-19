@@ -15,3 +15,4 @@ Clock and weather state (`crates/samp-client/src/world.rs`). A = 2021 build, B =
 | `World::time_of_day` | 0x1000B5B0 | — | netgame tick: clock bytes + `SET_TIME_OF_DAY` while the server holds the time | player-state.md, "60 SendGameTimeUpdate" |
 | `World::on_toggle_clock_rpc` | 0x1000F500 | — | RPC 30 handler (calls 0x100A14A0) | player-state.md, "30 TogglePlayerClock" |
 | `TIMER_MS` | — | 0x100A1760 | RPC 60 handler writing `CTimer::m_snTimeInMilliseconds` while the HUD clock is off | player-state.md, "60 SendGameTimeUpdate" |
+| `apply_enter_exits` | 0x10010A35 | 0x10010A15 | InitGame: settings +0x1A set → the entry-exit clear (A 0x100A15A0, B 0x100A1570) | session-misc.md, "Disable enter/exits" |

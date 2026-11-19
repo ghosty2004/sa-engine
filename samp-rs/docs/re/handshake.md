@@ -367,7 +367,7 @@ Fields read in this exact order (bit = 1-bit bool; u32 values that are floats ar
 | 5 | u32 | +0x34 | chat radius (float) |
 | 6 | bit | local → later applied | stunt bonus |
 | 7 | u32 | +0x27 | name-tag distance (float; default 60.0) |
-| 8 | bit | +0x1a | disable enter/exits |
+| 8 | bit | +0x1a | disable enter/exits (verified: session-misc.md "139 PlayerInit", "Disable enter/exits") |
 | 9 | bit | +0x2f (then forced to 1 by the client) | name-tag LOS |
 | 10 | bit | +0x2b | manual vehicle engine/lights |
 | 11 | u32 | +0x23 | spawns available |

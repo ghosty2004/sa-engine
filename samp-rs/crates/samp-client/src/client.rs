@@ -75,6 +75,8 @@ pub struct Client {
     /// InitGame "zone names" (settings +0x21): DISPLAY_ZONE_NAMES every frame from 1000 ms after the spawn.
     zone_names: bool,
     zone_names_from: Option<Instant>,
+    /// InitGame "disable enter/exits" (settings +0x1A): a shop left loaded is unloaded every frame.
+    enter_exits_disabled: bool,
     /// Last interior reported with RPC 118 (local player +0x1cf, starts at 0).
     last_interior: u8,
     /// Phone special action active (local ped object +0x48).
@@ -154,6 +156,7 @@ impl Client {
             world: crate::world::World::default(),
             zone_names: false,
             zone_names_from: None,
+            enter_exits_disabled: false,
             last_interior: 0,
             phone: false,
             surf: Default::default(),

@@ -101,6 +101,16 @@ impl World {
     }
 }
 
+/// InitGame's "disable enter/exits" setting (netgame settings +0x1A), once on the InitGame that carries it.
+/// Nothing gives the entry-exits back: neither RPC 40's reset nor a later InitGame without it. Mirrors samp.dll
+/// B 0x10010A15.
+pub fn apply_enter_exits<G: sa_samp_api::world::WorldState + ?Sized>(
+    game: &mut G,
+    init: &samp_proto::session::InitGame,
+) -> sa_samp_api::GameResult<()> {
+    if init.disable_enter_exits { game.disable_entry_exits() } else { Ok(()) }
+}
+
 #[cfg(windows)]
 pub use apply::{apply, set_weather};
 

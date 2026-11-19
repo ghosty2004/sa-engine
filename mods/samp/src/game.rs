@@ -863,6 +863,9 @@ impl WorldState for ModGame {
     fn load_shop(&mut self, name: &str) -> GameResult<()> {
         cmd(0x075E, &[Arg::Text(name.as_bytes())])
     }
+    fn disable_entry_exits(&mut self) -> GameResult<()> {
+        world::set_entry_exits_enabled(false).map_err(failed("set_entry_exits_enabled"))
+    }
     fn set_float_stat(&mut self, stat: u16, value: f32) -> GameResult<()> {
         world::set_float_stat(stat, value).map_err(failed("set_float_stat"))
     }

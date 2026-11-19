@@ -369,5 +369,5 @@ pub use animation::{install, remote_anim};
 pub use bounds::{bounds_jump, publish_bounds};
 pub use rpcs::{
     fighting_style, give_money, reset_money, set_gravity, set_interior, set_stunt_bonus, set_velocity, set_wanted,
-    shop_name, widescreen,
+    shop_name, unload_unnamed_shop, widescreen,
 };

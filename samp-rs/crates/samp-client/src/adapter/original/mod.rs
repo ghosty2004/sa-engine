@@ -206,6 +206,25 @@ mod tests {
     }
 
     #[test]
+    fn disables_every_entry_exit_slot() {
+        use sa_samp_api::world::WorldState;
+        let mut game = fake();
+        assert!(game.disable_entry_exits().is_err());
+        let (pool, objects) = (0x0100_0000u32, 0x0100_1000u32);
+        game.mem.set(game::ENTRY_EXIT_POOL, &pool.to_le_bytes());
+        game.mem.set(pool, &objects.to_le_bytes());
+        game.mem.set(pool + 8, &3i32.to_le_bytes());
+        for slot in 0..4 {
+            game.mem.set(objects + slot * 0x3C + 0x2E, &[0xAA; 4]);
+        }
+        assert_eq!(game.disable_entry_exits(), Ok(()));
+        for slot in 0..3 {
+            assert_eq!(game.mem.get(objects + slot * 0x3C + 0x2E, 4), [0xAA, 0xAA, 0, 0]);
+        }
+        assert_eq!(game.mem.get(objects + 3 * 0x3C + 0x2E, 4), [0xAA; 4]);
+    }
+
+    #[test]
     fn reads_ped_models_and_keys() {
         use sa_samp_api::ModelId;
         use sa_samp_api::input::Input;

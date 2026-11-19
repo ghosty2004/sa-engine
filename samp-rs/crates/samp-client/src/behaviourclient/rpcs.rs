@@ -60,12 +60,28 @@ pub fn shop_name(name: &[u8]) {
         poke(ped + PED_SHOP_NAME, SHOP_NAME.set(name));
     }
     if loads {
-        let c = CString::new(name).unwrap_or_default();
-        // SAFETY: GTA's cdecl shop loader with a NUL-terminated name, main thread.
-        unsafe {
-            let f: extern "C" fn(*const u8) = std::mem::transmute(LOAD_SHOP as usize);
-            f(c.as_ptr() as *const u8);
-        }
+        load_shop(name);
+    }
+}
+
+/// While the server keeps the entry-exits disabled, every frame: a shop the game still has loaded is unloaded
+/// (`CShopping::LoadShop("")`) as long as the local ped has no shop name. Mirrors samp.dll B 0x10008BB7.
+pub fn unload_unnamed_shop() {
+    let ped = local_ped();
+    if ped == 0 || process().ped_script_handle(PedRef(ped)).ok().map(|h| h.0).is_none() {
+        return;
+    }
+    if rd::<u32>(ped + PED_SHOP_NAME) == 0 && rd::<u8>(game::SHOP_LOADED) != 0 {
+        load_shop(b"");
+    }
+}
+
+fn load_shop(name: &[u8]) {
+    let c = CString::new(name).unwrap_or_default();
+    // SAFETY: GTA's cdecl shop loader with a NUL-terminated name, main thread.
+    unsafe {
+        let f: extern "C" fn(*const u8) = std::mem::transmute(LOAD_SHOP as usize);
+        f(c.as_ptr() as *const u8);
     }
 }
 

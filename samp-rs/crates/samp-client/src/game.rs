@@ -107,6 +107,14 @@ pub const PED_POOL: u32 = 0xB74490;
 pub const PED_POOL_ELEMENT: u32 = 0x7C4;
 /// `GAME_GRAVITY` (f32), gta-reversed `Physical.h`.
 pub const GAME_GRAVITY: u32 = 0x863984;
+/// `CEntryExitManager::mp_poolEntryExits` (CPool*: objects +0, size +8), gta-reversed `EntryExitManager.h`.
+pub const ENTRY_EXIT_POOL: u32 = 0x96A7D8;
+/// `sizeof(CEntryExit)`.
+pub const ENTRY_EXIT_SIZE: u32 = 0x3C;
+/// `CEntryExit::m_nFlags` (u16).
+pub const ENTRY_EXIT_FLAGS: u32 = 0x30;
+/// `CShopping::ms_shopLoaded` (char[24]): the name of the shop whose data is loaded.
+pub const SHOP_LOADED: u32 = 0xA9A7D8;
 /// `CWorld::Players[0].m_nMoney` (docs/re/subsystems/player-state.md, "20 ResetPlayerMoney").
 pub const PLAYER_MONEY: u32 = CWORLD_PLAYERS + 0xB8;
 /// `FrontEndMenuManager.m_bHudOn` (+0x21), gta-reversed `MenuManager.h`.

@@ -72,7 +72,8 @@ impl Client {
         }
     }
 
-    /// InitGame: rates, hour, weather (applied), zone names, CJ walk, the pools' settings, then class selection.
+    /// InitGame: rates, hour, weather (applied), zone names, CJ walk, entry-exits, the pools' settings, then class
+    /// selection.
     fn on_init_game(&mut self, g: &InitGame, now: Instant) {
         self.on_foot_rate = g.on_foot_rate.clamp(10, 1000);
         self.world.hour = g.world_time;
@@ -81,13 +82,18 @@ impl Client {
         self.zone_names = g.zone_names;
         crate::pedhooks::set_cj_walk(g.cj_walk);
         self.behaviour.on_init_game(g.gravity, g.stunt_bonus);
+        self.enter_exits_disabled = g.disable_enter_exits;
+        if let Err(e) = crate::world::apply_enter_exits(&mut crate::adapter::original::process(), g) {
+            crate::log!("client: InitGame: entry-exits: {e}");
+        }
         self.behaviour.hash_table();
         crate::log!(
-            "client: InitGame: server {:?}, our id {}, {} class(es), on-foot rate {} ms",
+            "client: InitGame: server {:?}, our id {}, {} class(es), on-foot rate {} ms, entry-exits disabled {}",
             g.server_name,
             g.player_id,
             g.spawns_available,
-            g.on_foot_rate
+            g.on_foot_rate,
+            g.disable_enter_exits
         );
         self.players.set_init_game(g.player_id, g.death_drop_money, g.player_marker_mode);
         self.combat.on_init_game(g);
@@ -201,6 +207,7 @@ impl Client {
         self.world.weather = 1;
         self.zone_names = false;
         self.zone_names_from = None;
+        self.enter_exits_disabled = false;
         crate::pedhooks::set_cj_walk(false);
     }
 
