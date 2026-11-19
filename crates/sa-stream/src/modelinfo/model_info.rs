@@ -21,6 +21,8 @@
 //!   whole array, the count untouched; `docs/re/specs/STREAM/_static-init.md`).
 
 use sa_core::abi::HookReg;
+use core::sync::atomic::{AtomicUsize, Ordering};
+
 use sa_core::mem::{GPtr, GameData};
 use sa_core::{hook, orig};
 
@@ -91,35 +93,142 @@ macro_rules! store_ref {
     ($g:ident, $s:expr) => {
         StoreRef { count: $g.ptr().cast(), items: $g.ptr().cast::<u8>().byte_add(4), size: $s }
     };
+    ($g:ident, $s:expr, $raised:expr) => {{
+        let p = $raised.get().map_or($g.ptr().cast::<u8>(), GPtr::from_addr);
+        StoreRef { count: p.cast(), items: p.byte_add(4), size: $s }
+    }};
 }
 
 pub fn atomic_store() -> StoreRef {
-    store_ref!(ATOMIC_STORE, 0x20)
+    store_ref!(ATOMIC_STORE, 0x20, RAISED_ATOMIC)
 }
 pub fn damage_atomic_store() -> StoreRef {
-    store_ref!(DAMAGE_ATOMIC_STORE, 0x24)
+    store_ref!(DAMAGE_ATOMIC_STORE, 0x24, RAISED_DAMAGE_ATOMIC)
 }
 pub fn lod_atomic_store() -> StoreRef {
     store_ref!(LOD_ATOMIC_STORE, 0x24)
 }
 pub fn time_store() -> StoreRef {
-    store_ref!(TIME_STORE, 0x24)
+    store_ref!(TIME_STORE, 0x24, RAISED_TIME)
 }
 pub fn lod_time_store() -> StoreRef {
     store_ref!(LOD_TIME_STORE, 0x28)
 }
 pub fn weapon_store() -> StoreRef {
-    store_ref!(WEAPON_STORE, 0x28)
+    store_ref!(WEAPON_STORE, 0x28, RAISED_WEAPON)
 }
 pub fn clump_store() -> StoreRef {
-    store_ref!(CLUMP_STORE, 0x24)
+    store_ref!(CLUMP_STORE, 0x24, RAISED_CLUMP)
 }
 pub fn vehicle_store() -> StoreRef {
-    store_ref!(VEHICLE_STORE, 0x308)
+    store_ref!(VEHICLE_STORE, 0x308, RAISED_VEHICLE)
 }
 pub fn ped_store() -> StoreRef {
-    store_ref!(PED_STORE, 0x44)
+    store_ref!(PED_STORE, 0x44, RAISED_PED)
 }
+
+/// Where a store a host made larger lives instead of its global (0: the global) and its capacity
+/// ([`raise_capacity`]).
+struct Raised {
+    at: AtomicUsize,
+    capacity: AtomicUsize,
+}
+
+impl Raised {
+    const fn none() -> Raised {
+        Raised { at: AtomicUsize::new(0), capacity: AtomicUsize::new(0) }
+    }
+
+    fn get(&self) -> Option<usize> {
+        Some(self.at.load(Ordering::Relaxed)).filter(|&a| a != 0)
+    }
+}
+
+static RAISED_ATOMIC: Raised = Raised::none();
+static RAISED_DAMAGE_ATOMIC: Raised = Raised::none();
+static RAISED_TIME: Raised = Raised::none();
+static RAISED_WEAPON: Raised = Raised::none();
+static RAISED_CLUMP: Raised = Raised::none();
+static RAISED_VEHICLE: Raised = Raised::none();
+static RAISED_PED: Raised = Raised::none();
+
+/// The model-info stores a host can make larger, for the definitions its data adds.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ModelStore {
+    /// `ms_atomicModelInfoStore`.
+    Atomic,
+    /// `ms_damageAtomicModelInfoStore`.
+    DamageAtomic,
+    /// `ms_timeModelInfoStore`.
+    Time,
+    /// `ms_weaponModelInfoStore`.
+    Weapon,
+    /// `ms_clumpModelInfoStore`.
+    Clump,
+    /// `ms_vehicleModelInfoStore`.
+    Vehicle,
+    /// `ms_pedModelInfoStore`.
+    Ped,
+}
+
+impl ModelStore {
+    /// The original store (address, element size, capacity) and its larger copy.
+    fn layout(self) -> (GPtr<u8>, u32, u32, &'static Raised) {
+        match self {
+            ModelStore::Atomic => (ATOMIC_STORE.ptr().cast(), 0x20, 14000, &RAISED_ATOMIC),
+            ModelStore::DamageAtomic => (DAMAGE_ATOMIC_STORE.ptr().cast(), 0x24, 70, &RAISED_DAMAGE_ATOMIC),
+            ModelStore::Time => (TIME_STORE.ptr().cast(), 0x24, 169, &RAISED_TIME),
+            ModelStore::Weapon => (WEAPON_STORE.ptr().cast(), 0x28, 51, &RAISED_WEAPON),
+            ModelStore::Clump => (CLUMP_STORE.ptr().cast(), 0x24, 92, &RAISED_CLUMP),
+            ModelStore::Vehicle => (VEHICLE_STORE.ptr().cast(), 0x308, 212, &RAISED_VEHICLE),
+            ModelStore::Ped => (PED_STORE.ptr().cast(), 0x44, 278, &RAISED_PED),
+        }
+    }
+
+    /// The number of elements the store holds.
+    pub fn capacity(self) -> u32 {
+        let (_, _, n, raised) = self.layout();
+        raised.get().map_or(n, |_| raised.capacity.load(Ordering::Relaxed) as u32)
+    }
+
+    /// The number of elements in use.
+    pub fn count(self) -> i32 {
+        let (orig, _, _, raised) = self.layout();
+        raised.get().map_or(orig, GPtr::from_addr).cast::<i32>().read()
+    }
+}
+
+/// Makes `store` hold `extra` more elements than the original's: a copy of the store (its count and its
+/// constructed elements, in memory from the game's `operator new`) with `extra` more elements carrying the class's
+/// vtable, used in place of the global from then on. Call once per store, after the CRT's static initialisers
+/// constructed the stores and before `CModelInfo::Initialise` fills them; the parity build never calls it. False
+/// when the store was raised already or the memory is not there.
+pub fn raise_capacity(store: ModelStore, extra: u32) -> bool {
+    let (orig, size, n, raised) = store.layout();
+    if raised.get().is_some() {
+        return false;
+    }
+    let total = n + extra;
+    let p = crate::txdstore::operator_new(4 + size * total);
+    if p.is_null() {
+        return false;
+    }
+    for k in 0..(4 + size * n) as isize {
+        p.byte_add(k).write(orig.byte_add(k).read());
+    }
+    let vtable = orig.byte_add(4).cast::<u32>().read();
+    for i in n..total {
+        let e = p.byte_add((4 + size * i) as isize);
+        for k in 0..size as isize {
+            e.byte_add(k).write(0);
+        }
+        e.cast::<u32>().write(vtable);
+    }
+    raised.capacity.store(total as usize, Ordering::Relaxed);
+    raised.at.store(p.addr(), Ordering::Relaxed);
+    true
+}
+
 pub fn two_d_effect_store() -> StoreRef {
     store_ref!(TWO_D_EFFECT_STORE, 0x40)
 }
