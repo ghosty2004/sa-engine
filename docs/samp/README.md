@@ -24,20 +24,27 @@ SA:MP's own UI files are the user's (never shipped): copy `sampgui.png`, `mouse.
 install and `gtaweap3.ttf` from the GTA folder into the mod's folder (`target/mods/samp/`; `arialbd.ttf` too for the
 original UI font, else Liberation Sans Bold). Without them the controls are flat and the cursor the platform's.
 
-Joining: once the world runs the mod shows its connect screen: the server (`HOST:PORT`), the nickname and the
-favourite servers (Tab: next field, Up / Down: a favourite, Insert: add the server, Delete: remove it, Enter:
-connect). The manifest asks for `net = ["udp:user-approved"]`: the first time the mod connects to a server the game
+Joining: once the world runs the mod covers it with its connect screen, a server browser, until the server accepted
+the join (backdrop: the game's own loading screens). Tabs: Internet (the open.mp list, `https://api.open.mp/servers/`,
+fetched through the mod API's HTTP requests; search, hide full / empty / locked, order by players / ping / name),
+Favourites, Recent (servers joined, newest first) and Direct connect (`HOST:PORT`); the selected server's ping, rules
+and players come from SA:MP's UDP query. Keys: Left / Right tabs, Up / Down / Page Up / Page Down select, Tab the next
+field, Enter connect, Insert / Delete add / remove a favourite, Space query the selected server, F2-F4 filters, F5
+refresh, F6 order, Esc cancels a join; the mouse clicks tabs, rows (double click: connect), fields and buttons, the
+wheel scrolls. The manifest asks for `net = ["udp:user-approved"]`: the first time the mod connects to a server the game
 (the mod host, not the mod) asks "SA:MP wants to connect to HOST:PORT. Allow it?" (Y / Enter, N / Esc) and remembers
-the answer per mod (natively `$SA_MOD_DATA` or `~/.local/share/sa-engine/mods/sa-engine-host/net.samp`, in the browser
+the answer per mod (queries go only to servers the user allowed before or asks for; natively `$SA_MOD_DATA` or `~/.local/share/sa-engine/mods/sa-engine-host/net.samp`, in the browser
 the page's IndexedDB). The mod's settings are keys of its storage (natively `.../sa-engine/mods/samp/`, in the browser
 IndexedDB), each also read from a file of the same name in the mod's folder when the storage lacks it (how a page,
-whose storage starts empty, gets them): `server`, `name`, `favourites`, the servers' `auth_table.txt` (third-party data
+whose storage starts empty, gets them): `server`, `name`, `favourites`, `recent`, `server_list_url` (another list in
+the open.mp format), `query_allowed` (servers the screen may query), the servers' `auth_table.txt` (third-party data
 the user provides; without it servers refuse the join at their auth check), and for headless runs `auto_connect` /
 `auto_spawn` (`1`). `ui_scene` = `ref` shows samp-rs's reference UI scene without a server
 (`samp_client::ui::scene`, for comparisons with screenshots).
 
 Tests with our own open.mp server copy: `tools/e2e/samp/mod-join.sh` (native; `UX=1`: through the connect screen and
-the approval prompt with scripted keys; `BOT=1`: samp-bot joins as a second player; `EXTRA_CMDS`: textdraws, dialogs)
+the approval prompt with scripted keys, `UX_APPROVED=1` without the prompt, `RESOLUTION=WxH` with the resolution mod;
+the Internet tab reads a local fixture list, never the public one; `BOT=1`: samp-bot joins as a second player; `EXTRA_CMDS`: textdraws, dialogs)
 and `WEB=1 tools/e2e/samp/mod-join.sh` (headless Chromium through sa-udp-proxy).
 
 On the original `gta_sa.exe` samp-rs stays a DLL (`samp_client.dll`, samp-rs's own build and tests).

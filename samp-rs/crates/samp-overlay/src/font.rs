@@ -12,6 +12,8 @@ use sa_samp_api::ui::UiFont;
 
 /// The committed UI font.
 pub const FONT_TTF: &[u8] = include_bytes!("../fonts/LiberationSans-Bold.ttf");
+/// Its regular weight (same family and licence), for hosts that draw their own screens with the atlas.
+pub const FONT_REGULAR_TTF: &[u8] = include_bytes!("../fonts/LiberationSans-Regular.ttf");
 
 /// Whether `ttf` is a TrueType / OpenType font the atlas can use.
 pub fn parses(ttf: &[u8]) -> bool {

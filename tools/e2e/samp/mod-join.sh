@@ -11,7 +11,12 @@
 # the mod's storage (OUT/moddata/samp/, `SA_MOD_DATA`) with the server and the player name.
 # By default the mod joins at once (`auto_connect`) and the server is already approved in the host's list
 # (OUT/moddata/sa-engine-host/net.samp). UX=1 goes through the connect screen and the host's approval prompt
-# instead, with scripted keys (Enter on the screen at iteration UX_ENTER, default 400; Y at UX_ENTER + 40).
+# instead, with scripted keys (Enter on the screen at iteration UX_ENTER, default 400; Y at UX_ENTER + 40): the
+# server is the one favourite, so Enter joins it. UX_APPROVED=1 approves it beforehand (no prompt; the screen
+# queries it from the start). The Internet tab's list is a fixture served on 127.0.0.1:LIST_PORT (default 7820,
+# OUT/list/servers.json: our server and a few rows at documentation addresses that are never contacted), never the
+# public list: the mod's copy in OUT/mods/samp gets that prefix in its `http` permission. RESOLUTION=WxH also loads
+# the resolution mod (from MODS) at that video mode.
 # SA:MP's UI files (sampgui.png, mouse.png, sampaux3.ttf from SAMP_CLIENT, default $SA_ROOT/re/samp/client, and the
 # game's gtaweap3.ttf; third-party, never committed) are copied into the samp mod's folder when they exist.
 # EXTRA_CMDS: more server commands after the scripted ones, `;`-separated (`sleep|S` waits), e.g.
@@ -73,9 +78,17 @@ mkdir -p "$SRV" "$OUT/present" "$OUT/moddata/samp"
 printf '127.0.0.1:%s' "$PORT" > "$OUT/moddata/samp/server"
 printf 'ModCJ' > "$OUT/moddata/samp/name"
 printf '1' > "$OUT/moddata/samp/auto_spawn"
+LIST_PORT="${LIST_PORT:-7820}"
+printf 'http://127.0.0.1:%s/servers.json' "$LIST_PORT" > "$OUT/moddata/samp/server_list_url"
 if [ "${UX:-0}" = 1 ]; then
     E="${UX_ENTER:-400}"
     export SA_GAME_KEYS="enter:$E:$((E + 2)),y:$((E + 40)):$((E + 42))${SA_GAME_KEYS:+,$SA_GAME_KEYS}"
+    printf '127.0.0.1:%s' "$PORT" > "$OUT/moddata/samp/favourites"
+    if [ "${UX_APPROVED:-0}" = 1 ]; then
+        mkdir -p "$OUT/moddata/sa-engine-host"
+        printf 'allow 127.0.0.1:%s\n' "$PORT" > "$OUT/moddata/sa-engine-host/net.samp"
+        printf '127.0.0.1:%s' "$PORT" > "$OUT/moddata/samp/query_allowed"
+    fi
 else
     printf '1' > "$OUT/moddata/samp/auto_connect"
     mkdir -p "$OUT/moddata/sa-engine-host"
@@ -83,9 +96,33 @@ else
 fi
 cp "$AUTH" "$OUT/moddata/samp/auth_table.txt"
 CLIENT="${SAMP_CLIENT:-$SA_ROOT/re/samp/client}"
+rm -rf "$OUT/mods"
+mkdir -p "$OUT/mods" "$OUT/list"
+cp -r "$MODS/samp" "$OUT/mods/samp"
+sed -i "s|^http = \[|http = [\"http://127.0.0.1:$LIST_PORT/\", |" "$OUT/mods/samp/mod.toml"
+MOD_DIRS="$OUT/mods/samp"
+if [ -n "${RESOLUTION:-}" ]; then
+    cp -r "$MODS/resolution" "$OUT/mods/resolution"
+    printf 'resolution = "%s"\nfullscreen = false\nfollow_resize = false\n' "$RESOLUTION" > "$OUT/mods/resolution/config.toml"
+    MOD_DIRS="$OUT/mods/resolution,$MOD_DIRS"
+fi
 for f in "$CLIENT/sampgui.png" "$CLIENT/mouse.png" "$CLIENT/sampaux3.ttf" "$SA_ROOT/wine/gta-sa/gtaweap3.ttf"; do
-    [ -f "$f" ] && cp "$f" "$MODS/samp/"
+    [ -f "$f" ] && cp "$f" "$OUT/mods/samp/"
 done
+python3 -I - "$OUT/list/servers.json" "$PORT" << 'PY'
+import json, sys
+rows = [
+    {"ip": f"127.0.0.1:{sys.argv[2]}", "hn": "sa-engine test server (open.mp)", "pc": 0, "pm": 50, "gm": "sampcov",
+     "la": "English", "pa": False, "vn": "omp 1.6.7", "omp": True, "pr": False},
+]
+names = [("Los Santos Roleplay", "Roleplay", "English", True), ("San Fierro Freeroam", "Freeroam", "English", False),
+         ("Las Venturas Stunts", "Stunt/DM", "Romana", False), ("Grove Street Families", "Gang wars", "English", False),
+         ("Drift Kings", "Drift", "Polski", False), ("Old school DM", "Deathmatch", "Espanol", True)]
+for i, (hn, gm, la, pa) in enumerate(names):
+    rows.append({"ip": f"192.0.2.{10 + i}:7777", "hn": hn, "pc": (i * 37) % 180, "pm": 200, "gm": gm, "la": la,
+                 "pa": pa, "vn": "0.3.7-R2", "omp": i % 2 == 0, "pr": False})
+json.dump(rows, open(sys.argv[1], "w"), indent=1)
+PY
 rsync -a --delete --exclude log.txt "$SERVER_SRC/" "$SRV/"
 ( cd "$SRV" && LD_LIBRARY_PATH=qawno ./qawno/pawncc "$HERE/sampcov.pwn" -iqawno/include \
     -ogamemodes/sampcov.amx -d0 > "$OUT/pawncc.log" 2>&1 ) || { cat "$OUT/pawncc.log"; exit 1; }
@@ -108,6 +145,16 @@ json.dump(d, open(p, "w"), indent=4)
 PY
 (cd "$SRV" && exec ./omp-server > "$SLOG" 2>&1) &
 SRV_PID=$!
+# the fixture list, with the CORS header a page's fetch needs
+python3 -I - "$OUT/list" "$LIST_PORT" > "$OUT/list.log" 2>&1 << 'PY' &
+import functools, http.server, sys
+class H(http.server.SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header("Access-Control-Allow-Origin", "*")
+        super().end_headers()
+http.server.ThreadingHTTPServer(("127.0.0.1", int(sys.argv[2])), functools.partial(H, directory=sys.argv[1])).serve_forever()
+PY
+LIST_PID=$!
 GAME_PID=
 BOT_PID=
 WEB_PIDS=
@@ -115,6 +162,7 @@ cleanup() {
     [ -n "$GAME_PID" ] && kill "$GAME_PID" 2> /dev/null
     [ -n "$BOT_PID" ] && kill "$BOT_PID" 2> /dev/null
     for p in $WEB_PIDS; do kill "$p" 2> /dev/null; done
+    kill "$LIST_PID" 2> /dev/null
     kill "$SRV_PID" 2> /dev/null
     wait "$SRV_PID" 2> /dev/null || true
 }
@@ -140,7 +188,7 @@ if [ "$WEB" = 1 ]; then
     WEB_PORT="${WEB_PORT:-8655}"
     rm -rf "$OUT/webmods" "$OUT/web"
     mkdir -p "$OUT/webmods" "$OUT/web"
-    cp -r "$MODS/samp" "$OUT/webmods/samp"
+    cp -r "$OUT/mods/samp" "$OUT/webmods/samp"
     cp "$OUT/moddata/samp/"* "$OUT/webmods/samp/"
     "$PROXY_BIN" "127.0.0.1:$PORT" --bind "127.0.0.1:$PROXY_PORT" > "$OUT/proxy.log" 2>&1 &
     WEB_PIDS="$!"
@@ -157,7 +205,7 @@ if [ "$WEB" = 1 ]; then
 else
     SA_MOD_DATA="$OUT/moddata" SA_GAME_STUB="${SA_GAME_STUB:-$STUBS}" SA_GAME_SCRIPT_SKIP=1 SA_GAME_PRESENT_GAME=1 \
         SA_GAME_PRESENT_EVERY="${SA_GAME_PRESENT_EVERY:-20}" \
-        "$GAME_BIN" --game "$SA_ROOT/wine/gta-sa" --frames "$FRAMES" --start-in-world --mods "$MODS/samp" \
+        "$GAME_BIN" --game "$SA_ROOT/wine/gta-sa" --frames "$FRAMES" --start-in-world --mods "$MOD_DIRS" \
         --present-dir "$OUT/present" --report "$OUT/report.md" > "$OUT/sa-game.log" 2>&1 &
     GAME_PID=$!
     say "sa-game pid $GAME_PID ($FRAMES frames)"

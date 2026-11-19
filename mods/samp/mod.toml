@@ -3,7 +3,7 @@
 id = "samp"
 name = "SA:MP"
 version = "0.2.0"
-api_version = "1.6"
+api_version = "1.7"
 entry = "samp.wasm"
 
 [permissions]
@@ -15,7 +15,8 @@ scripts = true              # tasks, animations, camera and world commands
 audio = true                # the sounds the server plays
 net = ["udp:user-approved"]  # the servers the user approves (the host asks once per server)
 files = "own"               # SA:MP's UI files the user copies in: sampgui.png, mouse.png, gtaweap3.ttf, sampaux3.ttf
-storage = true              # server, name, favourites, auth_table.txt, auto_connect, auto_spawn; the serial seed
+storage = true              # server, name, favourites, recent, auth_table.txt, auto_connect, auto_spawn; the serial seed
+http = ["https://api.open.mp/"]  # the Internet tab's server list
 
 [limits]
 memory_mib = 64

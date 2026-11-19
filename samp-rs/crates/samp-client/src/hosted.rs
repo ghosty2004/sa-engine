@@ -144,6 +144,11 @@ impl HostedClient {
         &self.net
     }
 
+    /// Whether the server accepted the join (InitGame arrived): class selection or the game from here on.
+    pub fn connected(&self) -> bool {
+        self.connected
+    }
+
     fn note(&self, line: String) {
         (self.log)(&format!("{:>6} ms  {line}", self.start.elapsed().as_millis()));
     }

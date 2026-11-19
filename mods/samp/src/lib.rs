@@ -3,12 +3,14 @@
 //! ([`transport::ModConnector`]; in the browser the host relays them through the page's UDP proxy) and runs on the
 //! host's clock.
 //!
-//! Once the game runs its world the mod shows its connect screen ([`connect::Screen`]): the server, the nickname and
-//! the favourite servers. The manifest asks for the servers the user approves (`net = ["udp:user-approved"]`): the
-//! first connection to a server makes the host ask the user, and the mod waits for the answer. Its storage holds (a
-//! file of the same name in the mod's folder stands in for a missing key: a page's storage starts empty):
+//! Once the game runs its world the mod covers it with its connect screen ([`connect::Screen`]), a server browser,
+//! until the server accepted the join. The manifest asks for the servers the user approves
+//! (`net = ["udp:user-approved"]`): the first connection to a server makes the host ask the user, and the mod waits
+//! for the answer; the Internet list comes over HTTP (`http = [...]`). Its storage holds (a file of the same name in
+//! the mod's folder stands in for a missing key: a page's storage starts empty):
 //!
-//! * `server`, `name`, `favourites`: the connect screen's fields and favourites;
+//! * `server`, `name`, `favourites`, `recent`, `server_list_url`, `query_allowed`: the connect screen's
+//!   ([`connect`]);
 //! * `auth_table.txt`: the servers' auth table (third-party data the user provides; without it the server refuses
 //!   the join at its auth check);
 //! * `auto_connect`: `1` joins `server` as `name` without the screen, `auto_spawn`: `1` presses Shift in class
@@ -31,6 +33,8 @@ use sa_mod::{Error, Event, GameState, Mod, Overlay, Vec3, event_kind, events, st
 use sa_samp_api::hooks::{FramePhase, GameHooks};
 use sa_samp_api::input::{EventResult, WindowEvent};
 use sa_samp_api::world::WorldState;
+
+use connect::Tone;
 use samp_client::hosted::{HostedClient, HostedConfig};
 use samp_client::ui::host::UiHost;
 use samp_client::ui::render::LabelDraw;
@@ -100,8 +104,14 @@ enum Stage {
     Screen,
     /// The user chose a server; the host may be asking the user about it.
     Approval { server: String, name: String },
-    /// The client runs.
-    Client(Box<HostedClient>),
+    /// The client runs; the screen covers the world until the server accepted the join.
+    Client {
+        client: Box<HostedClient>,
+        server: String,
+        /// When it started and when the join was accepted (host microseconds).
+        since: u64,
+        joined: Option<u64>,
+    },
     /// The UI's fixed reference scene, without a server (`ui_scene` = `ref`).
     Scene(Box<Scene>),
 }
@@ -183,8 +193,8 @@ impl Samp {
         if state::game_state() != Some(GameState::Playing) {
             return;
         }
-        if let Stage::Client(c) = &mut self.stage {
-            c.frame(phase, &mut self.game);
+        if let Stage::Client { client, .. } = &mut self.stage {
+            client.frame(phase, &mut self.game);
         }
     }
 
@@ -194,20 +204,27 @@ impl Samp {
         match Socket::open(server) {
             Ok(probe) => {
                 drop(probe);
+                self.screen.joining(server);
                 match start(server, name) {
-                    Ok(c) => self.stage = Stage::Client(Box::new(c)),
+                    Ok(c) => {
+                        let server = server.clone();
+                        self.stage = Stage::Client { client: Box::new(c), server, since: time::now().monotonic_us, joined: None };
+                    }
                     Err(e) => {
-                        self.screen.status = Some(e);
+                        self.screen.status = Some((Tone::Error, e));
                         self.stage = Stage::Screen;
                     }
                 }
             }
-            Err(Error::Again) => self.screen.status = Some(format!("Waiting for the permission to reach {server}")),
+            Err(Error::Again) => {}
             Err(e) => {
-                self.screen.status = Some(match e {
-                    Error::Denied => format!("{server}: not allowed (the game's approved servers)"),
-                    e => format!("{server}: {e:?}"),
-                });
+                self.screen.status = Some((
+                    Tone::Error,
+                    match e {
+                        Error::Denied => format!("{server}: not allowed (you denied it in the game's question)"),
+                        e => format!("{server}: {e:?}"),
+                    },
+                ));
                 self.stage = Stage::Screen;
             }
         }
@@ -217,17 +234,38 @@ impl Samp {
     /// cursor while samp's UI shows its cursor (a dialog, the scoreboard).
     fn capture(&self) {
         let (keyboard, mouse, cursor) = match &self.stage {
-            Stage::Screen | Stage::Approval { .. } => (true, true, false),
-            Stage::Client(c) => {
+            // the platform's pointer for the screen's mouse
+            Stage::Screen => (true, true, true),
+            Stage::Approval { .. } => (true, true, false),
+            Stage::Client { client, joined: None, .. } if !client.connected() => (true, true, false),
+            Stage::Client { client, .. } => {
                 let (_, mouse, cursor) = self.game.ui.input_state();
-                (c.ui.wants_keyboard(), mouse, cursor)
+                (client.ui.wants_keyboard(), mouse, cursor)
             }
             Stage::Scene(_) => (false, false, false),
         };
         // samp's own cursor (mouse.png) when the skin is there, else the platform's
-        let platform_cursor = cursor && !self.game.ui.draws_cursor();
+        let platform_cursor = cursor && (matches!(self.stage, Stage::Screen) || !self.game.ui.draws_cursor());
         let _ = sa_mod::input::capture(keyboard, mouse || keyboard, platform_cursor);
     }
+}
+
+/// How long the screen takes to fade out once the server accepted the join.
+const COVER_FADE_US: u64 = 700_000;
+
+/// A chat line without samp's `{RRGGBB}` colour codes.
+fn strip_colours(text: &[u8]) -> String {
+    let mut out = String::new();
+    let mut i = 0;
+    while i < text.len() {
+        if text[i] == b'{' && text.get(i + 7) == Some(&b'}') && text[i + 1..i + 7].iter().all(u8::is_ascii_hexdigit) {
+            i += 8;
+            continue;
+        }
+        out.push(char::from(text[i]));
+        i += 1;
+    }
+    out
 }
 
 /// A platform event as the window event samp's UI reads.
@@ -249,7 +287,9 @@ impl Mod for Samp {
         assets::install(&mut self.game.ui);
         // the fonts are rasterised here, where the host allows the most work (the game's default video mode and
         // the desktop's)
-        self.game.ui.prepare(&[800, sa_mod::display::desktop().0 as i32]);
+        let desktop = sa_mod::display::desktop();
+        self.game.ui.prepare(&[800, desktop.0 as i32]);
+        self.screen.prepare(&[(800, 600), desktop]);
         // the reference scene is the UI alone, over the unchanged single-player world
         if setting("ui_scene").is_some_and(|v| v == "ref") {
             self.stage = Stage::Scene(Box::new(Scene { ui: UiHost::new(None), frames: 0, label: None }));
@@ -311,7 +351,14 @@ impl Mod for Samp {
                 !matches!(event, Input::MouseMove { .. } | Input::Focus(_))
             }
             Stage::Approval { .. } => false,
-            Stage::Client(c) => c.window_event(window_event(event), &self.game) == EventResult::Consumed,
+            Stage::Client { client, joined: None, .. } if !client.connected() => {
+                if matches!(event, Input::KeyDown { vk: 0x1B, .. }) {
+                    self.screen.status = Some((Tone::Warning, "Cancelled".into()));
+                    self.stage = Stage::Screen;
+                }
+                !matches!(event, Input::Focus(_))
+            }
+            Stage::Client { client, .. } => client.window_event(window_event(event), &self.game) == EventResult::Consumed,
             Stage::Scene(_) => false,
         };
         self.capture();
@@ -326,15 +373,39 @@ impl Mod for Samp {
             return;
         }
         match &mut self.stage {
-            Stage::Screen | Stage::Approval { .. } => self.screen.draw(o),
+            Stage::Screen => {
+                let _ = sa_mod::game::set_hud_visible(false);
+                self.screen.draw(o);
+            }
+            Stage::Approval { server, .. } => {
+                let _ = sa_mod::game::set_hud_visible(false);
+                self.screen.draw_progress(o, &connect::Progress::Approval { server }, 1.0);
+            }
             Stage::Scene(s) => {
                 s.frame(&mut self.game);
                 let hide = state::menu_active();
                 self.game.ui.flush(&mut canvas::ModCanvas { overlay: o, images: &mut self.images }, hide);
             }
-            Stage::Client(_) => {
-                let hide = state::menu_active();
+            Stage::Client { client, server, since, joined } => {
+                let now = time::now().monotonic_us;
+                if client.connected() && joined.is_none() {
+                    *joined = Some(now);
+                }
+                let alpha = joined.map_or(1.0, |t| 1.0 - now.saturating_sub(t) as f32 / COVER_FADE_US as f32);
+                // samp's UI only once the cover fades: under the cover it would show through the veil
+                let hide = state::menu_active() || alpha >= 1.0;
                 self.game.ui.flush(&mut canvas::ModCanvas { overlay: o, images: &mut self.images }, hide);
+                if alpha > 0.0 {
+                    let message = client
+                        .ui
+                        .core
+                        .chat
+                        .last()
+                        .map(|e| strip_colours(&e.text))
+                        .filter(|m| !m.ends_with("Started"));
+                    let p = connect::Progress::Joining { server, since_us: *since, message };
+                    self.screen.draw_progress(o, &p, alpha);
+                }
             }
         }
     }
