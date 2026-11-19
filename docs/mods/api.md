@@ -1,4 +1,4 @@
-# Mod API reference (API 1.13)
+# Mod API reference (API 1.14)
 
 The interface is defined once, in `crates/sa-mod-api/src/lib.rs` (`for_each_import!`, `for_each_export!`); this page
 explains it. The Rust SDK (`crates/sa-mod`) wraps every function; other languages import the functions from module
@@ -564,7 +564,7 @@ What a multiplayer client needs to show the server's vehicles and the player's s
 | `set_ped_speed(handle, x, y, z)` | `world::set_ped_speed(p, v)` | the move speed; a standing ped has its two standing flags toggled so it leaves the ground |
 | `set_gravity(g)` | `world::set_gravity(g)` | `GAME_GRAVITY` (0.008 in the game's data; constant data the engine writes through its image writer); restored when the host disables the mod |
 | `set_float_stat(stat, value)` | `world::set_float_stat(stat, value)` | `CStats::StatTypesFloat[stat]` (0..=81; 69..=79 the weapon skills) without the on-screen notice |
-| `set_entry_exits_enabled(on)` | `world::set_entry_exits_enabled(on)` | 0: every entry-exit (`CEntryExitManager::mp_poolEntryExits`) gets a flags word of 0, so `ENABLE_ACCESS` is gone: no yellow marker, no way into an interior or out of one, also for a player already inside. 1: each gets back the flags it had before the first switch off; the host does that too when it disables the mod |
+| `set_entry_exits_enabled(on)` (1.14) | `world::set_entry_exits_enabled(on)` | 0: every entry-exit (`CEntryExitManager::mp_poolEntryExits`) gets a flags word of 0, so `ENABLE_ACCESS` is gone: no yellow marker, no way into an interior or out of one, also for a player already inside. 1: each gets back the flags it had before the first switch off; the host does that too when it disables the mod |
 
 ### Script commands
 
