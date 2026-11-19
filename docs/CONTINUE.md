@@ -1,18 +1,16 @@
-# Where to continue (state at 2026-11-19)
+# Where to continue (state at 2026-11-19, evening)
 
-**master** (`git log -1`): every catalogued function runs in Rust natively but the MatFX bump render
-(0x814460 / 0x8149E0); the game runs without gta_sa.exe (`--image builtin`, ADR-005); the mod API is at 1.11
-(ADR-004, docs/mods/api.md); SA:MP is the `mods/samp` mod (server browser, join, sync, world entities, objects,
-restart / reconnect, samp.dll's pool sizes, built-in auth table). sa-game writes `crashes/crash-SECS.txt` on a fault.
+**master** (`git log -1`): the SA:MP mod (`mods/samp`, mod API 1.16) now has the server browser, world entities,
+objects and SA:MP's own models (data mods), death / respawn, menus, trains, remote players' syncs and markers, keys in
+sync, samp.dll's game patches as game options (docs/samp/patch-parity.md: all 384 rows classified), the server's
+disable enter/exits, the object-floor speed clamp, samp's weapon skills, gun-move step and frame limit; sa-game maps
+the original's whole image and writes crash reports (`crashes/`); the access layer refuses arguments the game's
+handlers trust. `target/play` is built from master. No agents running.
 
-Waiting (worktrees under `.claude/worktrees/`, work uncommitted unless noted):
-- SA:MP game adapter (vehicles, peds, camera, world): committed, rebased as branch `int-ad` (API 1.11); merges after
-  its verify-all and gate.
-- Crash hunt: the original's address space for harmless reads, validation of every mod-reachable command, soak runs.
-- samp.dll patch parity: game options for samp's remaining patches (stunt bonus, SP pickups, HUD, story script).
-- Data mods: a mod's own IMG / IDE / IPL / TXD / IFP files (SA:MP's models 18631+ and the SAMP anim library).
-Open beyond those: the wasted sequence's fades (samp's CCamera::Fade patch), a paintjob texture difference, MatFX bump,
-the photo front-buffer read-back, user tracks / WAV, verification promotion.
+Open (docs/ROADMAP.md, MOD-2 row and divergence ledger): remote peds' aim pose and in-car keys, RPC 118 interior
+change, textdraw model previews, audio streams, material text and colour slots, object editor, respawn fade time,
+the remaining C-bug pace gap, landing after SetPlayerPos, the 66 / 130 vehicles case, the 66 patches still to switch,
+web build tests of the new features; engine: MatFX bump, photo read-back, user tracks / WAV, verification promotion.
 
 ---
 
