@@ -36,6 +36,12 @@
 # SCENARIO=world: instead of the commands above, the world scenario of world-scenario.sh (pickups, checkpoints, map
 # icons, a gang zone, an actor, then gmx and a server restart), as samp-rs-ab.sh SCENARIO=world runs it on the DLL
 # client; screenshots (the newest present frame at each step) in OUT/shots/. Give it FRAMES for about 4 minutes.
+# GAMEMODE=NAME runs the server's gamemode NAME (re/samp/server/gamemodes: gungame, derby, simpletdm) with sampcov.pwn
+# as a filterscript beside it (its command channel and "[cov]" lines, no classes of its own); FILTERSCRIPTS adds the
+# server's filterscripts (comma-separated, e.g. npc_trains). Two more commands for EXTRA_CMDS / CMDS: `restart|S` kills
+# the server (SIGKILL), waits S seconds and starts it again; SOAK_SECONDS stops the command list after that many
+# seconds and KILL_AFTER=1 then ends the game instead of waiting for FRAMES (tools/e2e/samp/soak.sh uses both).
+# Crash reports of sa-game go to OUT/crashes (SA_GAME_CRASH_DIR).
 # SA_GAME = the sa-game binary (default target/i686-unknown-linux-gnu/release/sa-game), MODS = the built mods
 # (default target/mods). FRAMES (default 1800). Port SAMP_PORT (default 7813).
 # Output: server.log, sa-game.log, report.md, present/*.png (every 20th in-game frame), server-events.txt, and
@@ -48,6 +54,7 @@ ROOT="$(cd "$HERE/../../.." && pwd)"
 SA_ROOT="${SA_ROOT:-$ROOT}"
 OUT="$(mkdir -p "${1:-$ROOT/target/samp-mod-join}" && cd "${1:-$ROOT/target/samp-mod-join}" && pwd)"
 AUTH="${AUTH_TABLE:-}"
+export SA_GAME_CRASH_DIR="${SA_GAME_CRASH_DIR:-$OUT/crashes}"
 PORT="${SAMP_PORT:-7813}"
 GAME_BIN="${SA_GAME:-$ROOT/target/i686-unknown-linux-gnu/release/sa-game}"
 MODS="${MODS:-$ROOT/target/mods}"
@@ -128,11 +135,18 @@ for i, (hn, gm, la, pa) in enumerate(names):
 json.dump(rows, open(sys.argv[1], "w"), indent=1)
 PY
 rsync -a --delete --exclude log.txt "$SERVER_SRC/" "$SRV/"
-( cd "$SRV" && LD_LIBRARY_PATH=qawno ./qawno/pawncc "$HERE/sampcov.pwn" -iqawno/include \
-    -ogamemodes/sampcov.amx -d0 > "$OUT/pawncc.log" 2>&1 ) || { cat "$OUT/pawncc.log"; exit 1; }
-python3 -I - "$SRV/config.json" "$PORT" "$WEB" << 'PY'
+if [ -n "${GAMEMODE:-}" ]; then
+    [ -f "$SRV/gamemodes/$GAMEMODE.amx" ] || { echo "mod-join: gamemode $GAMEMODE missing in $SERVER_SRC/gamemodes" >&2; exit 1; }
+    ( cd "$SRV" && LD_LIBRARY_PATH=qawno ./qawno/pawncc "$HERE/sampcov.pwn" -iqawno/include \
+        -ofilterscripts/sampcov.amx -d0 FILTERSCRIPT=1 > "$OUT/pawncc.log" 2>&1 ) || { cat "$OUT/pawncc.log"; exit 1; }
+else
+    ( cd "$SRV" && LD_LIBRARY_PATH=qawno ./qawno/pawncc "$HERE/sampcov.pwn" -iqawno/include \
+        -ogamemodes/sampcov.amx -d0 > "$OUT/pawncc.log" 2>&1 ) || { cat "$OUT/pawncc.log"; exit 1; }
+fi
+python3 -I - "$SRV/config.json" "$PORT" "$WEB" "${GAMEMODE:-}" "${FILTERSCRIPTS:-}" << 'PY'
 import json, sys
 p, port, web = sys.argv[1], int(sys.argv[2]), sys.argv[3] == "1"
+gamemode, filterscripts = sys.argv[4], [f for f in sys.argv[5].split(",") if f]
 d = json.load(open(p))
 d["announce"] = False
 d["max_bots"] = 4
@@ -143,8 +157,8 @@ if web:
     d["network"]["player_timeout"] = 60000
 d["artwork"]["enable"] = False
 d["rcon"]["enable"] = False
-d["pawn"]["main_scripts"] = ["sampcov 1"]
-d["pawn"]["side_scripts"] = []
+d["pawn"]["main_scripts"] = [f"{gamemode or 'sampcov'} 1"]
+d["pawn"]["side_scripts"] = (["filterscripts/sampcov"] if gamemode else []) + [f"filterscripts/{f}" for f in filterscripts]
 json.dump(d, open(p, "w"), indent=4)
 PY
 : > "$SLOG"
@@ -297,8 +311,11 @@ elif wait_log '\[cov\] spawn id=' 150; then
     IFS=';' read -ra EXTRA <<< "${EXTRA_CMDS:-}"
     [ -n "${CMDS:-}" ] && mapfile -t -O "${#EXTRA[@]}" EXTRA < <(grep -vE '^(#|$)' "$CMDS")
     for c in "${EXTRA[@]}"; do
+        [ -n "${SOAK_SECONDS:-}" ] && [ "$SECONDS" -ge "$SOAK_SECONDS" ] && { say "soak time over"; break; }
+        kill -0 "$GAME_PID" 2> /dev/null || { say "the game is gone"; break; }
         case "$c" in
             sleep\|*) sleep "${c#sleep|}" ;;
+            restart\|*) say "server restart"; server_kill; sleep "${c#restart|}"; server_start ;;
             shot\|*) shot="$(ls -t "$OUT/present" | grep -E '^present-[0-9]+[.]png$' | sed -n 2p)"
                 [ -n "$shot" ] && cp "$OUT/present/$shot" "$OUT/shots/${c#shot|}.png" && say "shot ${c#shot|} ($shot)" ;;
             ?*) cmd "$c" ;;
@@ -309,6 +326,7 @@ elif wait_log '\[cov\] spawn id=' 150; then
         BOT_PID=
         say "samp-bot left"
     fi
+    [ "${KILL_AFTER:-0}" = 1 ] && kill "$GAME_PID" 2> /dev/null
 else
     say "FAIL: no spawn"
 fi

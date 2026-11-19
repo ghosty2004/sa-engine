@@ -19,6 +19,8 @@
 //   NPCs (open.mp NPC component; remote players for the client):
 //   npc|name|x|y|z|skin|weapon  npcmove|id|x|y|z  npcfollow|id  npcaim|id|shoot  npcstop|id  npcmelee|id
 //   npcanim|id|lib|name  npcveh|id|vehid|seat  npcenter|id|vehid|seat  npckill|id  npcdel|id  clearnpcs  clearvehs (all but the train)
+//   More (tools/e2e/samp/chaos.py): actoranim|id|lib|name  actordel|id  vcolour|vehid|c1|c2  paintjob|vehid|n
+//   tune|vehid|component  iconoff|id  objdel|id
 #include <open.mp>
 
 new gLast = 0;
@@ -30,6 +32,15 @@ new gVehs[16];
 new gVehCount = 0;
 new gObj[8] = { INVALID_OBJECT_ID, ... };
 
+// Built with FILTERSCRIPT=1 it is a filterscript beside another gamemode (the soak runs of soak.sh): the command
+// channel and the "[cov]" lines without the classes, the train and the class-selection camera.
+#if defined FILTERSCRIPT
+public OnFilterScriptInit()
+{
+    CovStart();
+    return 1;
+}
+#else
 main() {}
 
 public OnGameModeInit()
@@ -42,19 +53,26 @@ public OnGameModeInit()
     // Trains can only be added statically.
     printf("[cov] static train %d", AddStaticVehicle(538, 1700.7551, -1953.6531, 14.8756, 200.0, 1, 1));
     UsePlayerPedAnims();
+    CovStart();
+    return 1;
+}
+#endif
+
+CovStart()
+{
     new File:f = fopen("sampcov.txt", io_write);
     if (f) fclose(f);
+    gLast = 0;
     SetTimer("CovPoll", 100, true);
     SetTimer("CovState", 1000, true);
     print("[cov] loaded");
-    return 1;
 }
 
 public OnPlayerConnect(playerid)
 {
     new name[MAX_PLAYER_NAME + 1];
     GetPlayerName(playerid, name, sizeof name);
-    if (gLocal == INVALID_PLAYER_ID) gLocal = playerid;
+    if (gLocal == INVALID_PLAYER_ID && !IsPlayerNPC(playerid)) gLocal = playerid;
     printf("[cov] connect id=%d name=%s", playerid, name);
     return 1;
 }
@@ -68,10 +86,12 @@ public OnPlayerDisconnect(playerid, reason)
 
 public OnPlayerRequestClass(playerid, classid)
 {
+#if !defined FILTERSCRIPT
     SetPlayerPos(playerid, 2495.0, -1674.0, 13.4);
     SetPlayerFacingAngle(playerid, 180.0);
     SetPlayerCameraPos(playerid, 2495.0, -1680.0, 14.9);
     SetPlayerCameraLookAt(playerid, 2495.0, -1674.0, 13.9);
+#endif
     printf("[cov] class id=%d class=%d", playerid, classid);
     return 1;
 }
@@ -210,6 +230,13 @@ Run(seq, const line[])
     }
     else if (!strcmp(cmd, "icon")) SetPlayerMapIcon(p, in(line, 1), fl(line, 2), fl(line, 3), fl(line, 4), in(line, 5), 0, MAPICON_GLOBAL);
     else if (!strcmp(cmd, "actor")) printf("[cov] %d actor %d", seq, CreateActor(in(line, 1), fl(line, 2), fl(line, 3), fl(line, 4), fl(line, 5)));
+    else if (!strcmp(cmd, "actoranim")) { field(line, 2, a); field(line, 3, b); ApplyActorAnimation(in(line, 1), a, b, 4.1, true, false, false, false, 0); }
+    else if (!strcmp(cmd, "actordel")) DestroyActor(in(line, 1));
+    else if (!strcmp(cmd, "vcolour")) ChangeVehicleColours(in(line, 1), in(line, 2), in(line, 3));
+    else if (!strcmp(cmd, "paintjob")) ChangeVehiclePaintjob(in(line, 1), in(line, 2));
+    else if (!strcmp(cmd, "tune")) AddVehicleComponent(in(line, 1), in(line, 2));
+    else if (!strcmp(cmd, "iconoff")) RemovePlayerMapIcon(p, in(line, 1));
+    else if (!strcmp(cmd, "objdel")) DestroyObject(in(line, 1));
     else if (!strcmp(cmd, "explode")) CreateExplosion(fl(line, 1), fl(line, 2), fl(line, 3), in(line, 4), fl(line, 5));
     else if (!strcmp(cmd, "time")) SetPlayerTime(p, in(line, 1), 0);
     else if (!strcmp(cmd, "weather")) SetPlayerWeather(p, in(line, 1));

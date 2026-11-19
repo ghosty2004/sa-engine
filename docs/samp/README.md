@@ -51,6 +51,21 @@ on a bone, a removed house, a far teleport and back) runs on both hosts: `CMDS=t
 tools/e2e/samp/mod-join.sh` and `LANE=2 CMDS=... tools/e2e/samp/samp-rs-ab.sh DLL_DIR NAME` (the DLL under Wine,
 screenshots and the client's object table at each `shot|`).
 
+Soak and crash hunt: `tools/e2e/samp/soak.sh [OUT]` (default `target/samp-soak`) runs the samp mod headless against
+the same private server copy for `MINUTES` (default 15) per run, one run per gamemode in `RUNS` (default `sampcov
+gungame derby simpletdm`: our coverage gamemode, then the server's own with `sampcov.pwn` as a filterscript beside
+them, plus the `npc_trains` filterscript). Beside each gamemode `tools/e2e/samp/chaos.py SEED` drives a random
+command list (`SEED`, default 1, run k uses SEED + k): teleports over the whole map (Los Santos, San Fierro, Las
+Venturas, countryside, sea, sky, interiors and other virtual worlds, far outside the map), bursts of vehicles, objects
+(also SA:MP's own and invalid ids), pickups, checkpoints, map icons (also past the 64 radar sprites), actors and
+animations (also unknown libraries and names), weapons, skins, weather and time (also out of range), text draws,
+dialogs, menus, NPCs (open.mp's NPC component), `gmx` and server kills and restarts. sa-game writes its crash
+reports (fault, Rust call chain, the last mod log lines) to `OUT/RUN/crashes/`; `OUT/summary.txt` has one line per
+run (CLEAN, or CRASH with the reports' first lines). Ports: `SAMP_PORT` (default 7923), `LIST_PORT` (7924), the lock
+`SAMP_LOCK` (`crashhunt.lock`); in a worktree set `SA_ROOT` to the checkout with `re/` and `wine/`. The pieces are
+mod-join.sh options and work alone too: `GAMEMODE=NAME`, `FILTERSCRIPTS=a,b`, the commands `restart|S` (server
+SIGKILL, S seconds, start), `SOAK_SECONDS` and `KILL_AFTER=1`; crash reports go to `OUT/crashes` in every mod-join run.
+
 The mod's objects (`samp_client::hostedobjects`, API 1.9): RPC 44 / 45 / 46 / 47 / 99 / 122 / 75 / 84 / 169 / 113 and
 RemoveBuildingForPlayer (43) run the DLL client's rules (`worldents`: create order, MoveObject motion, the bone
 placement of attached objects) on the mod API's objects. Not on the mod: material text, the blank material texture
