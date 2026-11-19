@@ -3,7 +3,8 @@
 //! Layers, bottom up: [`cipher`] and [`unconnected`] (pre-connection handshake), [`raknet`] framing
 //! and the sans-IO reliability layer in [`connection`], [`auth`] and [`session`] (join, InitGame,
 //! client serial), [`rpc`] framing with typed payloads for every RPC in [`rpcs`], and the sync
-//! packets 200–212 in [`sync`]. [`bitstream`], [`strcomp`] and [`types`] are the shared encodings.
+//! packets 200–212 in [`sync`]; [`query`] is the server browsers' query protocol. [`bitstream`], [`strcomp`] and
+//! [`types`] are the shared encodings.
 //! Implemented from the specs in `docs/re/` (start at docs/re/README.md); never from decompiled code.
 
 pub mod auth;
@@ -17,6 +18,7 @@ mod sbox;
 pub mod session;
 pub mod strcomp;
 pub mod sync;
+pub mod query;
 pub mod time;
 pub mod types;
 pub mod unconnected;
