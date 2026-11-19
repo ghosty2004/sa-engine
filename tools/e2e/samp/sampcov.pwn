@@ -25,6 +25,9 @@ new gLast = 0;
 new gLocal = INVALID_PLAYER_ID;
 new Text:gTd = Text:INVALID_TEXT_DRAW;
 new Menu:gMenu = Menu:INVALID_MENU;
+// The vehicles `vehc` created since the last `clearvehs`; the vehicle commands below name them 1, 2, ...
+new gVehs[16];
+new gVehCount = 0;
 new gObj[8] = { INVALID_OBJECT_ID, ... };
 
 main() {}
@@ -142,6 +145,7 @@ field(const line[], n, dest[], size = sizeof dest)
 }
 
 in(const line[], n) { new b[32]; field(line, n, b); return strval(b); }
+vs(const line[], n) { new k = in(line, n); return (k >= 1 && k <= gVehCount) ? gVehs[k - 1] : INVALID_VEHICLE_ID; }
 Float:fl(const line[], n) { new b[32]; field(line, n, b); return floatstr(b); }
 
 Run(seq, const line[])
@@ -271,6 +275,40 @@ Run(seq, const line[])
         ShowMenuForPlayer(gMenu, p);
     }
     else if (!strcmp(cmd, "sound")) PlayerPlaySound(p, in(line, 1), 0.0, 0.0, 0.0);
+    else if (!strcmp(cmd, "vehc"))
+    {
+        new v = CreateVehicle(in(line, 1), fl(line, 2), fl(line, 3), fl(line, 4), fl(line, 5), in(line, 6), in(line, 7), -1);
+        if (gVehCount < sizeof gVehs) gVehs[gVehCount++] = v;
+        printf("[cov] %d veh %d", seq, v);
+    }
+    else if (!strcmp(cmd, "vcol")) ChangeVehicleColor(vs(line, 1), in(line, 2), in(line, 3));
+    else if (!strcmp(cmd, "vpaint")) ChangeVehiclePaintjob(vs(line, 1), in(line, 2));
+    else if (!strcmp(cmd, "vmod")) AddVehicleComponent(vs(line, 1), in(line, 2));
+    else if (!strcmp(cmd, "vunmod")) RemoveVehicleComponent(vs(line, 1), in(line, 2));
+    else if (!strcmp(cmd, "vdmg"))
+        UpdateVehicleDamageStatus(vs(line, 1), VEHICLE_PANEL_STATUS:in(line, 2), VEHICLE_DOOR_STATUS:in(line, 3), VEHICLE_LIGHT_STATUS:in(line, 4), VEHICLE_TYRE_STATUS:in(line, 5));
+    else if (!strcmp(cmd, "vrepair")) RepairVehicle(vs(line, 1));
+    else if (!strcmp(cmd, "vparams")) SetVehicleParamsEx(vs(line, 1), in(line, 2), in(line, 3), in(line, 4), in(line, 5), in(line, 6), in(line, 7), in(line, 8));
+    else if (!strcmp(cmd, "vdoors")) SetVehicleParamsCarDoors(vs(line, 1), in(line, 2), in(line, 3), in(line, 4), in(line, 5));
+    else if (!strcmp(cmd, "vwindows")) SetVehicleParamsCarWindows(vs(line, 1), in(line, 2), in(line, 3), in(line, 4), in(line, 5));
+    else if (!strcmp(cmd, "vpos")) SetVehiclePos(vs(line, 1), fl(line, 2), fl(line, 3), fl(line, 4));
+    else if (!strcmp(cmd, "vangle")) SetVehicleZAngle(vs(line, 1), fl(line, 2));
+    else if (!strcmp(cmd, "vvel")) SetVehicleVelocity(vs(line, 1), fl(line, 2), fl(line, 3), fl(line, 4));
+    else if (!strcmp(cmd, "vlink")) LinkVehicleToInterior(vs(line, 1), in(line, 2));
+    else if (!strcmp(cmd, "vplate")) { field(line, 2, a); SetVehicleNumberPlate(vs(line, 1), a); }
+    else if (!strcmp(cmd, "trailer")) AttachTrailerToVehicle(vs(line, 1), vs(line, 2));
+    else if (!strcmp(cmd, "untrailer")) DetachTrailerFromVehicle(vs(line, 1));
+    else if (!strcmp(cmd, "campath"))
+        InterpolateCameraPos(p, fl(line, 1), fl(line, 2), fl(line, 3), fl(line, 4), fl(line, 5), fl(line, 6), in(line, 7), CAM_MOVE:in(line, 8));
+    else if (!strcmp(cmd, "camlookpath"))
+        InterpolateCameraLookAt(p, fl(line, 1), fl(line, 2), fl(line, 3), fl(line, 4), fl(line, 5), fl(line, 6), in(line, 7), CAM_MOVE:in(line, 8));
+    else if (!strcmp(cmd, "widescreen")) TogglePlayerWidescreen(p, in(line, 1) != 0);
+    else if (!strcmp(cmd, "pgravity")) SetPlayerGravity(p, fl(line, 1));
+    else if (!strcmp(cmd, "shop")) { field(line, 1, a); SetPlayerShopName(p, a); }
+    else if (!strcmp(cmd, "skill")) SetPlayerSkillLevel(p, WEAPONSKILL:in(line, 1), in(line, 2));
+    else if (!strcmp(cmd, "fstyle")) SetPlayerFightingStyle(p, FIGHT_STYLE:in(line, 1));
+    else if (!strcmp(cmd, "vel")) SetPlayerVelocity(p, fl(line, 1), fl(line, 2), fl(line, 3));
+    else if (!strcmp(cmd, "findz")) SetPlayerPosFindZ(p, fl(line, 1), fl(line, 2), fl(line, 3));
     else if (!strcmp(cmd, "gravity")) SetGravity(fl(line, 1));
     else if (!strcmp(cmd, "control")) TogglePlayerControllable(p, in(line, 1) != 0);
     else if (!strcmp(cmd, "rcon")) { field(line, 1, a); SendRconCommand(a); }
@@ -285,7 +323,7 @@ Run(seq, const line[])
         NPC_SetWeapon(n, WEAPON:in(line, 6));
         printf("[cov] %d npc %d", seq, n);
     }
-    else if (!strcmp(cmd, "clearvehs")) { for (new v = 1; v <= MAX_VEHICLES; v++) if (GetVehicleModel(v) != 0 && GetVehicleModel(v) != 538) DestroyVehicle(v); }
+    else if (!strcmp(cmd, "clearvehs")) { gVehCount = 0; for (new v = 1; v <= MAX_VEHICLES; v++) if (GetVehicleModel(v) != 0 && GetVehicleModel(v) != 538) DestroyVehicle(v); }
     else if (!strcmp(cmd, "clearnpcs")) { for (new i = 0; i < MAX_PLAYERS; i++) if (IsPlayerConnected(i) && IsPlayerNPC(i)) NPC_Destroy(i); }
     else if (!strcmp(cmd, "npcmove")) NPC_Move(in(line, 1), fl(line, 2), fl(line, 3), fl(line, 4), NPC_MOVE_TYPE_AUTO);
     else if (!strcmp(cmd, "npcfollow")) NPC_MoveToPlayer(in(line, 1), p, NPC_MOVE_TYPE_WALK);

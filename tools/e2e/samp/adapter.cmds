@@ -1,0 +1,66 @@
+# The game adapter scenario (sampcov.pwn commands, one per line; `sleep|S` waits, `shot|NAME` takes a screenshot):
+# vehicle colours, paintjob, components, damage, params, a trailer, an explosion, camera moves, widescreen,
+# gravity, the jetpack, the player's velocity and a menu. Run after the spawn by samp-rs-ab.sh (CMDS=...) on the DLL
+# client and by mod-join.sh (CMDS=...) on the samp mod. Vehicle ids: the cars mod-join.sh adds are removed first, so
+# the ones created here are 1..5 on both clients.
+clearnpcs
+clearvehs
+time|12
+weather|1
+pos|2495|-1682|13.5|0
+sleep|3
+vehc|562|2492|-1668|13.4|90|1|1
+vehc|560|2502|-1668|13.4|90|3|3
+vehc|515|2484|-1650|14.2|180|-1|-1
+vehc|435|2484|-1636|14.2|180|-1|-1
+vehc|522|2508|-1676|13.4|0|-1|-1
+sleep|4
+campos|2486|-1690|19|2497|-1666|13
+sleep|3
+shot|created
+vcol|1|6|6
+vpaint|2|1
+vmod|1|1080
+vmod|2|1080
+vdmg|1|0|67372036|5|15
+sleep|3
+shot|tuned
+trailer|4|3
+vparams|2|1|1|0|1|1|1|0
+vwindows|2|0|0|0|0
+sleep|3
+shot|params
+explode|2500|-1660|13.5|2|5.0
+sleep|1
+shot|explosion
+vrepair|1
+vunmod|2|1080
+sleep|3
+shot|repaired
+campath|2470|-1700|30|2520|-1700|30|3000|1
+sleep|2
+shot|campath
+camlookpath|2495|-1670|13|2505|-1660|13|3000|1
+sleep|4
+shot|camlook
+camback
+widescreen|1
+sleep|2
+shot|widescreen
+widescreen|0
+pgravity|0.004
+special|2
+sleep|4
+shot|jetpack
+special|0
+pgravity|0.008
+fstyle|5
+skill|0|999
+vel|0|0|0.6
+sleep|1
+shot|velocity
+findz|2495|-1682|60
+sleep|3
+menu
+sleep|3
+shot|menu
