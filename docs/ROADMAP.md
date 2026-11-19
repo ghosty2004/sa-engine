@@ -260,6 +260,24 @@ Sections: *pending* (blocks "done") · *original UB, not reproducible* · *accep
   Successful writes are unaffected. Not reached by the corpus (PNG screenshots are not taken). This holds for the
   parity build (phase A); in phase B the libpng entry points are served by the `png` crate (PURE-1 step 1f, entry
   "Third-party code in phase B"), so an error no longer jumps anywhere and only the NULL return differs.
+- MOD-2 SA:MP mod, world RPCs and the connection lifecycle (API 1.9; reference: the DLL client on the original exe under
+  Wine, `tools/e2e/samp/samp-rs-ab.sh SCENARIO=world` against `mod-join.sh SCENARIO=world`, same server events up to
+  timing): (1) samp's pickup collision path is its hook in `CPickup::Update` (0x4579C6); the mod tests the same
+  condition between frames (`pickup_touched`), so a report can come a frame earlier or later, and while the player
+  keeps standing on a pickup the number of repeated reports (cooldown 15 polls of 7 frames) follows the frame rate; the
+  bribe model's in-vehicle sphere test and the jetpack exception of the pick-up test are not modelled (no SA:MP pickup
+  uses them). (2) Actors are `create_ped` peds (ped type 4); samp's are ped type 5. (3) `SetActorFacingAngle` turns the
+  actor at once (`SET_CHAR_HEADING`), samp writes only the heading goal (+0x55C) and the ped turns over the next frames.
+  (4) Blip colours: samp patches `CRadar::GetRadarTraceColour` and passes its colour values through; the mod passes the
+  resolved RGBA (`worldents::radar_trace_colour`, the same table), which the game's own function returns unchanged.
+  (5) The gang zone flash alternates on period boundaries of the host's clock; samp toggles 500 ms after its last
+  toggle (same period, another phase). (6) The RPC 40 reset on the mod does not reset the weapon skills, extinguish
+  fires or set `CWorld::PlayerInFocus` around `EXPLODE_CHAR_HEAD`; the server's objects are the objects lane's
+  (`HostedClient::clear_server_entities`). (7) Not applied on the mod yet: RPC 103 ClientCheckRequest, 150 drunk
+  handling, 98 tyre status, 161 old vehicle params; there is no audio stream to stop. (8) Measured, not a lifecycle
+  difference: after a SIGKILL of the server the connection loss came 11 s later on the mod and 23 s later on the DLL
+  client (samp-rs's RakNet layer on both: 10 s without an ack once a reliable message is pending, so it depends on the
+  client's next reliable send); from there both print the same lines, reset and reconnect at once.
 
 *original UB, not reproducible*
 - `CTheZones::AssignZoneInfoForThisZone` loops forever when index < count (port loops too; never hit). `CEntryExit::GetPositionRelativeToOutsideWorld` writes the z sum into its own unused stack argument slot (not reproduced). `CStuntJumpManager::Init` SEH frame around the pool constructor not reproduced. `FindPlayerCentreOfWorld_NoSniperShift` reads Players[-1] for id -1 and CShopping touches the byte before its bought-flags table for unknown keys (kept) (PORT-WORLD p1).

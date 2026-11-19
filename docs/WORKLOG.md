@@ -4815,3 +4815,32 @@
 - Verified: tools/e2e/samp/mod-join.sh 4/4 (standard 800x600; UX at 1280x720 through the approval prompt; UX at
   1920x1080 with mouse), unit tests of sa-mod-api, sa-mod-host (incl. a local HTTP GET), the samp mod and samp-proto.
   The test list is a local fixture; no public server contacted.
+
+## 2026-11-19 — MOD-2: the samp mod's world RPCs, server restart and reconnect (API 1.9) (agent, worktree)
+- API 1.9 (ADR-004 §4.1e, docs/mods/api.md level 9): owned pickups (`create_pickup` / `destroy_pickup`,
+  `pickup_collected`, `pickup_touched`: the pick-up test of `CPickup::Update` read between frames), checkpoint markers
+  (`create_checkpoint` / `destroy_checkpoint`, `CREATE_CHECKPOINT`), coordinate and entity blips with colour, scale and
+  display, radar areas (`set_radar_area` / `flash_radar_area` / `remove_radar_area`, drawn by the host with
+  `CRadar::DrawAreaOnRadar` after an observed `CRadar::DrawRadarGangOverlay`; the binding moved to sa-core with a
+  twin in sa-hud), `model_exists`, and the commands 00FE, 0248, 0321, 060B, 0792. sa-access `markers.rs`; the host's
+  ownership list covers pickups, checkpoints and blips (deleted with the mod).
+- samp-rs: `serverworld.rs` holds the server's pickups, actors, checkpoints, gang zones and map icons on any
+  `GameAdapter`; the DLL's `entities.rs` keeps the hooks and 3D labels and delegates the rest, the original backend
+  gained the adapter methods it needs (pickup, checkpoint and blip commands, actor creation / deletion / health /
+  proofs / decision maker / animation / heading goal / task flush, the radar-area records its hook draws, model
+  existence) moved from `entities.rs`; the collision hook now queues the touched pickup index and the cooldown lives
+  with the records. `hosted.rs` applies the world RPCs through the same module (collision path: `pickup_touched`),
+  RPC 40 and the drunk visuals, runs `lifecycle::NetGame`'s actions for every connection packet and rejection (samp's
+  lines, reset, deleting the players, reconnect), resets like samp.dll B 0x1000A530 on the adapter
+  (`clear_server_entities` is where the objects lane's teardown goes), and re-applies the server's time every frame
+  through `world::World` as the DLL's `world_frame` does (without it the death on a reconnect moved the clock to 0:00).
+- Verification: DLL refactor A/B on Wine lane 3 (`tools/e2e/samp/samp-rs-ab.sh`, the master build vs this one):
+  the join scenario 336 = 336 lines, identical; the new world scenario (`SCENARIO=world`, `world-scenario.sh`) 336 =
+  336 lines, identical. DLL vs mod (`mod-join.sh SCENARIO=world`): the same server events (connect, spawn, both
+  pickups, checkpoint, race checkpoint, gmx with class selection and spawn, the reconnect after a SIGKILL of the
+  server and its spawn) except the number of repeated pickup reports while standing on one (frame-rate timing);
+  screenshots side by side show the same markers, actor, blips, radar area (red / blue flash in the mod's frames) and
+  the cleared world after gmx. `mod-join.sh` (the join goal) PASS. samp-rs workspace tests, sa-mod-api / sa-mod-host
+  tests (new: markers and radar areas), clippy (samp-client host and i686-pc-windows-gnu, the mod for wasm32, the
+  host crates), `tools/lib/layers.py check`, `tools/gen/bindings.py --check`, `cargo check -p sa-game --features mods`.
+- Differences recorded in the divergence ledger (MOD-2 SA:MP mod, world RPCs and the connection lifecycle).
