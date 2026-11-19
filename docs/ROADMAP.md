@@ -258,7 +258,8 @@ Sections: *pending* (blocks "done") · *original UB, not reproducible* · *accep
     either way);
   - samp.saa's other game data (gta.dat, the IDE files, handling.cfg, weapon.dat, stream.ini's `vehicles 20` and
     `dontbuildpaths`, ...) is not served: that needs the data-mod file overlay (ADR-004 §4.2);
-  - the remote-player patches (rows 167, 173-176, 183, 193, 206, 213-215, 217) stay unapplied while other players
+  - the remote-player patches (rows 167, 173-176, 183, 193, 213-215, 217; row 206 is the game option
+    `StandingSpeedClamp` now, as it changes the local player too) stay unapplied while other players
     are actors, not `CPlayerPed`s;
   - gravity (InitGame, RPC 146) is still not written (`GAME_GRAVITY` is read-only image data natively).
 - SA:MP mod, all 384 patch sites of samp.dll (docs/samp/patch-parity.md, every row of gta-patches-r4-annotated.csv):
@@ -277,6 +278,12 @@ Sections: *pending* (blocks "done") · *original UB, not reproducible* · *accep
   between the key and the exit task's start, which the two clients sample at different points of the frame (the
   DLL after `CGame::Process`, the mod at the start of the next iteration). The mod sends no aim sync (203) yet, so
   the server's aim data (camera mode, aim vector) of the local player stays empty.
+- SA:MP mod, the player on server objects (`tools/e2e/samp/floor.cmds`, mod-join.sh vs LANE=6 samp-rs-ab.sh,
+  2026-11-19): with `StandingSpeedClamp` off the player picks up and loses speed on objects as on the street, like the
+  DLL client (standing still: no drift on either). Left, on every surface: after `SetPlayerPos` the mod's player
+  lands 0.36 m forward of the target (`SET_CHAR_COORDINATES` lifts it ~1.2 m; samp.dll calls the entity's
+  `Teleport`, the DLL client's player does not move), and after `ClearAnimations` of a sprint it comes to rest about
+  1 m later than on the DLL client (server view 1.4 m vs 0.4 m).
 - SA:MP mod, objects (API 1.9, `samp_client::hostedobjects`), compared with samp-rs's DLL client on the original exe
   (objects scenario `tools/e2e/samp/objects.cmds`, mod-join.sh vs LANE=2 samp-rs-ab.sh, 2026-11-19): object
   positions, rotations, moves, StopObject, SetObjectPos/Rot, DestroyObject, the object on the player, the bone-attached

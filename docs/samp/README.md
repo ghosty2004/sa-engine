@@ -58,7 +58,11 @@ and `WEB=1 tools/e2e/samp/mod-join.sh` (headless Chromium through sa-udp-proxy).
 (`tools/e2e/samp/objects.cmds`: a mapping with materials, moving and turning objects, an object on the player and one
 on a bone, a removed house, a far teleport and back) runs on both hosts: `CMDS=tools/e2e/samp/objects.cmds
 tools/e2e/samp/mod-join.sh` and `LANE=2 CMDS=... tools/e2e/samp/samp-rs-ab.sh DLL_DIR NAME` (the DLL under Wine,
-screenshots and the client's object table at each `shot|`).
+screenshots and the client's object table at each `shot|`). The floor scenario (`tools/e2e/samp/floor.cmds`: the
+player stands, walks and sprints on floors of SA:MP's and stock models high above the street) runs the same way;
+`tools/e2e/samp/floor-drift.py SERVER_LOG...` tabulates from the server's logs how far the player drifts standing,
+moves, and slides after stopping on each floor, and `--frames` checks from the mod's own per-frame dump that the
+player picks up and loses speed on the objects as on the street (the game option `StandingSpeedClamp` off).
 
 Soak and crash hunt: `tools/e2e/samp/soak.sh [OUT]` (default `target/samp-soak`) runs the samp mod headless against
 the same private server copy for `MINUTES` (default 15) per run, one run per gamemode in `RUNS` (default `sampcov

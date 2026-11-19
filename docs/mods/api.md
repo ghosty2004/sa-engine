@@ -627,7 +627,9 @@ idle animations), 25 `GunAimedAtResponse` (`CEventHandler::ComputeGunAimedAtResp
 controls test of `CPad::GetHandBrake`). `GET_CHAR_IN_CAR_PASSENGER_SEAT` (0432) joins the script commands, refused for a
 seat outside 0..=7 or an empty one. `AmbientPeds` off now also skips the two callers that would use the NULL
 `AddPed` returns: the seating in `CPopulation::AddPedInCar` and `CEntryExit::GenerateAmbientPeds` when an interior is
-entered.
+entered. 29 `StandingSpeedClamp` (the ground-entity branch of the clamp at the end of `CPed::UpdatePosition`: a ped
+standing on a vehicle or object takes up a change of speed at most `0.01 * timestep` a frame; off, it walks, stops and
+turns there as on the ground).
 
 ## Level 13: a ped's last damage, text entries, script menus, mission trains (1.13)
 

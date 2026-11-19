@@ -430,7 +430,7 @@ thread, so without samp.saa the switch has no effect, as with samp-rs's DLL with
 | 183 | 0x60d64e | CPlayerPed ctor: no ped group | not wanted | - | `patches` | remote players as CPlayerPeds; the mod streams other players in as actors (`create_actor`), no extra player peds |
 | 193 | 0x60f2c4 | CPlayerPed::ProcessControl: no FindPlayerSlotWithPedPointer | not wanted | - | `patches` | as row 183 (Players[-1] for remote player peds) |
 | 204 | 0x63adc8 | CTaskComplexEnterCarAsDriverTimed::Constructor: NOPs 'push eax; call CEntity::RegisterReference' in the CTaskComplexEnterCarAsDriverTimed ... | not wanted | - | `vehpatches` | a reference samp's own enter-car tasks must not register |
-| 206 | 0x5e1e70 | CPed::UpdatePosition: ignore m_standingOnEntity | not wanted | - | `patches` | remote players' sync (standing-on-entity ignored for every ped); needs player peds first, as row 183 |
+| 206 | 0x5e1e70 | CPed::UpdatePosition: ignore m_standingOnEntity | new option or limit | `StandingSpeedClamp` | `patches` | the speed clamp for a ped standing on a vehicle or object; it applies to the local player too (object floors) |
 | 213 | 0x6884c4 | PlayerControlZelda: no m_fAimingRotation store | not wanted | - | `patches`, `swap` | remote players' aiming (restored around the local player only); as row 183 |
 | 214 | 0x688200 | PlayerControlDucked: no m_fAimingRotation store | not wanted | - | `patches`, `swap` | as row 213 |
 | 215 | 0x570535 | CPlayerInfo::Process: no hold/fight test | not wanted | - | `patches` | a CPlayerInfo::Process block samp's own sync replaces (hold / fight test) (row 183) |

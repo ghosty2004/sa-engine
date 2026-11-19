@@ -5016,3 +5016,30 @@
   driver (ROADMAP ledger); the freeze scenario; an options run (police car, kill: no shotgun, no "wasted").
   Unit tests (samp-client 213, sa-access, sa-core, sa-mod-api, sa-mod-host), clippy host + i686-pc-windows-gnu,
   verify-all IDENTICAL 13/13 on lane 4 (tag keyspar), the writer gate (queue regenerated: line numbers).
+## 2026-11-19 — MOD-2: the player slides on server objects in the samp mod (agent, worktree)
+- Cause: `CPed::UpdatePosition` (0x5E1B10) clamps the change of a standing ped's move speed to `0.01 * timestep` a
+  frame while its ground entity is a vehicle or object (the ground-entity branch 0x5E1E70 of the clamp at its end).
+  samp.dll patches that branch away for every ped (patch row 206, `test eax,eax` -> `xor eax,eax`), so on the DLL
+  client the local player starts, stops and turns on server objects as on the street; the samp mod kept the clamp,
+  so on a floor of objects the player lagged behind its animation and skated on after every stop or turn. Row 206
+  was classed as remote-player only in the parity inventory. The objects themselves are not at fault: idle server
+  objects are not written per frame (hostedobjects only drives moving or attached ones), standing still drifts
+  0.00 m on both hosts.
+- Engine: game option `StandingSpeedClamp` (`sa_core::options::Feature`, `sa_types::GameOption`, mod API option
+  22), on by default; off, the clamp runs as for a ped without a ground entity, as samp.dll's patch does. The samp
+  mod switches it off (`setup.rs`). docs/mods/api.md, docs/samp/patch-parity.md (row 206: new option), ROADMAP ledger.
+- Scenario `tools/e2e/samp/floor.cmds` (floors 19377, 19379 laid flat, 18766, 3095 at z 40, then the street: stand
+  6 s, walk 2 s, sprint 0.8 s, animations cleared by a server timer) with new sampcov commands `objr`, `animfor`,
+  `track`; `tools/e2e/samp/floor-drift.py` (server logs; `--frames` reads the mod's `SA_GAME_DUMP` per-frame view).
+- Verified: DLL client on the original exe (LANE=6 samp-rs-ab.sh, port 7975) vs the mod (mod-join.sh, port 7973),
+  before and after. Largest per-frame change of the move speed per time step while sprinting and stopping, mod:
+  before 0.0103 / 0.0102 / 0.0103 / 0.0103 on the four objects (the clamp) vs 0.0301 on the street; after 0.0394 /
+  0.0322 / 0.0313 / 0.0247 vs 0.0246. Sprint stop distance (mod, per frame): before 1.64-2.38 m on objects vs 1.41
+  m on the street, after 0.97-1.75 vs 1.39. Server view, sprint slide after the clear: DLL 0.19-0.37 m (objects =
+  street), mod before 1.96-2.38 (street 1.41), after 1.28-1.79 (street 1.39). Again on master 1b1cc106: `floor-drift.py
+  --frames --min-change 0.015` passes (0.0301 / 0.0451 / 0.0246 / 0.0369 vs street 0.0442). Unit tests sa-types /
+  sa-core; writer gate; verify-all on lane 6 (tag floor-clamp).
+- Left (not object-specific, on the street too, ROADMAP ledger): the mod's player moves 0.36 m forward after every
+  `SetPlayerPos` (it is placed with `SET_CHAR_COORDINATES`, which lifts it ~1.2 m so it falls and lands; samp.dll
+  uses the entity's `Teleport`), and it stops later than on the DLL client after `ClearAnimations` (1.4 m vs 0.4 m in
+  the server's view after a sprint).
