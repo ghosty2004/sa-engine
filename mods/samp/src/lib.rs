@@ -166,8 +166,6 @@ struct Samp {
     screen: connect::Screen,
     game: game::ModGame,
     images: canvas::Images,
-    /// Ped and car densities are 0 (as samp's main.scm sets them in the world's first frame).
-    densities_zeroed: bool,
 }
 
 impl Default for Samp {
@@ -181,7 +179,6 @@ impl Default for Samp {
             screen: connect::Screen::load(DEFAULT_SERVER, DEFAULT_NAME),
             game,
             images: Default::default(),
-            densities_zeroed: false,
         }
     }
 }
@@ -326,11 +323,12 @@ impl Mod for Samp {
     fn event(&mut self, event: Event) {
         if let Event::FrameBegin(_) = event {
             if state::game_state() == Some(GameState::Playing) {
-                // With ambient peds off the game's population code still runs and dereferences the NULL
-                // `AddPed` returns unless the ped density is 0, so zero it before the user connects.
-                if !self.densities_zeroed {
-                    self.densities_zeroed = self.game.set_densities(0.0, 0.0).is_ok();
-                }
+                // samp's own main.scm keeps the densities and the wanted level cap at 0. Here the game's story
+                // script still runs and raises the cap (a locked city then gives wanted level 4), and with
+                // ambient peds off the population code dereferences the NULL `AddPed` returns for every cop or
+                // pedestrian it tries to create, so both are forced back every frame.
+                let _ = self.game.set_densities(0.0, 0.0);
+                let _ = self.game.set_max_wanted_level(0);
                 self.approval();
             }
             self.frame(FramePhase::BeforeGameProcess);
