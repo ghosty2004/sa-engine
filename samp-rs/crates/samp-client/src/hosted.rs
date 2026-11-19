@@ -27,7 +27,7 @@ use crate::serverworld::ServerWorld;
 use crate::ui::host::UiHost;
 use crate::ui::render::TagDraw;
 use samp_proto::raknet::Reliability;
-use samp_proto::rpcs::{Incoming, player, session, vehicle, world};
+use samp_proto::rpcs::{Incoming, player, session, world};
 use samp_proto::sync::player::StatsSync;
 use samp_ui::classpanel::ClassButton;
 use samp_ui::text::NoExpansion;
@@ -37,8 +37,9 @@ use sa_samp_api::hooks::{FramePhase, GameHooks};
 use sa_samp_api::input::{EventResult, WindowEvent};
 use sa_samp_api::peds::{AnimRequest, BoneId, PedTask};
 use sa_samp_api::world::LineFilter;
-use sa_samp_api::vehicles::VehicleSpawn;
 use sa_samp_api::{AreaCode, GameAdapter, ModelId, PedRef, Vec3, VehicleRef, WeaponType};
+
+mod vehicles;
 
 /// Where a hosted client's lines go (the host's log).
 pub type Log = Box<dyn Fn(&str)>;
@@ -71,6 +72,12 @@ pub struct HostedClient {
     world_set_up: bool,
     /// Server vehicle id → the game's vehicle (streamed in by RPC 164).
     vehicles: HashMap<u16, VehicleRef>,
+    /// What the client keeps of each of those vehicles.
+    vehicle_state: HashMap<u16, vehicles::HostedVehicle>,
+    /// InitGame's manual engine and lights mode.
+    manual_engine: bool,
+    /// The local player has spawned once (SCM events apply from then on).
+    spawned_once: bool,
     /// Server player id → the ped standing in for that player (streamed in by RPC 32).
     players: HashMap<u16, PedRef>,
     /// What the nametags show of the other players: NPC (RPC 137), health, armour and the time of the last
@@ -85,6 +92,8 @@ pub struct HostedClient {
     clock: crate::world::World,
     /// The local player uses the mobile phone (special action 11 until 0 / 13).
     phone: bool,
+    /// The local player wears the jetpack (special action 2 until 0).
+    jetpack: bool,
     /// samp's class selection (arrows, Shift; RPC 128 / 129).
     class_sel: ClassSelection,
     /// `HOST:PORT` for the `Connecting to` line.
@@ -132,6 +141,9 @@ impl HostedClient {
             last_report: None,
             world_set_up: false,
             vehicles: HashMap::new(),
+            vehicle_state: HashMap::new(),
+            manual_engine: false,
+            spawned_once: false,
             players: HashMap::new(),
             remotes: HashMap::new(),
             last_car_sync: None,
@@ -139,6 +151,7 @@ impl HostedClient {
             netgame: NetGame::new(0),
             clock: crate::world::World::default(),
             phone: false,
+            jetpack: false,
             class_sel: ClassSelection::new(now),
             server_text: (config.host, config.port),
             auto_spawn: config.auto_spawn,
@@ -198,6 +211,7 @@ impl HostedClient {
         }
         if self.netgame.connected() {
             self.world_tick(game);
+            self.vehicle_params_tick(game);
         }
         if !self.netgame.connected() {
             self.connecting_scene(game);
@@ -261,6 +275,7 @@ impl HostedClient {
             Event::InitGame(g) => {
                 self.connected = true;
                 self.on_foot_rate = g.on_foot_rate.clamp(10, 1000);
+                self.manual_engine = g.manual_engine_and_lights;
                 self.note(format!(
                     "InitGame: server {:?}, our id {:?}, hour {}, weather {}, gravity {}",
                     g.server_name,
@@ -346,6 +361,7 @@ impl HostedClient {
         self.class_sel.leave();
         self.spawned = false;
         self.phone = false;
+        self.jetpack = false;
         self.clear_server_entities(game);
         self.ui.core.on_reset();
         self.ui.core.colours = crate::ui::colours::PlayerColours::new();
@@ -379,6 +395,7 @@ impl HostedClient {
         for (_, v) in std::mem::take(&mut self.vehicles) {
             report(self, "destroy_vehicle", game.destroy_vehicle(v));
         }
+        self.vehicle_state.clear();
         self.objects.clear(game);
         self.world.clear(game);
     }
@@ -423,6 +440,8 @@ impl HostedClient {
                     report(self, "set_drunkenness", game.set_drunkenness(v.value as i32));
                 }
             }
+            S::SetVehicleTyreStatus(t) => self.set_vehicle_tyres(t.vehicle_id, t.tyres, game),
+            S::SetVehicleParamsForPlayerOld(o) => self.set_vehicle_doors_old(o.vehicle_id, o.doors_locked, game),
             other => self.note(format!("session rpc {} (not applied natively yet)", other.id())),
         }
     }
@@ -520,30 +539,73 @@ impl HostedClient {
             P::SetPlayerInterior(i) => {
                 report(self, "set_area", game.set_area(AreaCode(i.interior)));
                 report(self, "set_ped_area", game.set_ped_area(me, AreaCode(i.interior)));
+                if let Ok(s) = game.ped_snapshot(me) {
+                    report(self, "request_collision", game.request_collision(s.matrix.pos));
+                }
                 self.note(format!("SetPlayerInterior {}", i.interior));
             }
+            P::SetPlayerPositionFindZ(p) => {
+                let z = game.ground_z(v3(p.pos)) + crate::behaviour::FIND_Z_ABOVE;
+                report(self, "set_ped_position", game.set_ped_position(me, Vec3::new(p.pos.x, p.pos.y, z)));
+                self.note(format!("SetPlayerPositionFindZ ({:.2},{:.2},{z:.2})", p.pos.x, p.pos.y));
+            }
+            P::CreateExplosion(e) => {
+                let shake = f32::from_bits(crate::combat::explosion_shake_bits(e.radius));
+                report(self, "add_explosion", game.add_explosion(v3(e.pos), e.kind as i32, e.radius, shake));
+                self.note(format!("CreateExplosion type {} radius {}", e.kind, e.radius));
+            }
+            P::InterpolateCamera(c) => {
+                if let Some(cut) = crate::behaviour::interpolation_cut(c.time, c.cut) {
+                    let cut = if cut == 2 { CameraCut::Cut } else { CameraCut::Smooth };
+                    let r = game.interpolate(!c.is_position, v3(c.from), v3(c.to), c.time, cut);
+                    report(self, "interpolate", r);
+                }
+                self.note(format!("InterpolateCamera position={} {} ms", c.is_position, c.time));
+            }
+            P::ToggleWidescreen(w) => {
+                self.debug_line(&crate::behaviour::widescreen_line(w.enable));
+                report(self, "set_widescreen", game.set_widescreen(w.enable != 0));
+            }
+            P::SetPlayerGravity(g) => {
+                report(self, "set_gravity", game.set_gravity(g.gravity));
+                self.note(format!("SetPlayerGravity {}", g.gravity));
+            }
+            P::SetPlayerVelocity(v) => report(self, "set_ped_move_speed", game.set_ped_move_speed(me, v3(v.velocity))),
+            P::SetPlayerSkillLevel(k) if self.is_me(u32::from(k.player_id)) => {
+                if let Some(stat) = crate::combat::weapon_skill_stat(k.skill_type) {
+                    report(self, "set_float_stat", game.set_float_stat(stat, f32::from(k.level)));
+                }
+            }
+            P::SetPlayerFightingStyle(f) => {
+                let ped = if self.is_me(u32::from(f.player_id)) { Some(me) } else { self.players.get(&f.player_id).copied() };
+                if let Some(ped) = ped {
+                    let r = game.set_fighting_style(ped, f.style, crate::behaviour::FIGHTING_STYLE_MOVES);
+                    report(self, "set_fighting_style", r);
+                }
+            }
+            P::SetPlayerShopName(n) => {
+                let (name, loads) = crate::behaviour::shop_name(&n.name);
+                if loads {
+                    report(self, "load_shop", game.load_shop(&text(name)));
+                }
+                self.note(format!("SetPlayerShopName {:?}", text(name)));
+            }
+            // RPC 48: stored in the custom-model manager, which R4 never creates; nothing happens
+            P::SetPlayerVirtualWorld(w) => self.note(format!("SetPlayerVirtualWorld {} (no effect in R4)", w.world_id)),
             P::TogglePlayerControllable(c) => {
                 report(self, "set_player_control", game.set_player_control(c.enable != 0));
                 self.note(format!("TogglePlayerControllable {}", c.enable));
             }
             P::SetPlayerCameraPosition(c) => {
-                report(
-                    self,
-                    "set_fixed_position",
-                    game.set_fixed_position(v3(c.pos), Vec3::default()),
-                );
+                report(self, "camera position", crate::camops::fixed_position(game, v3(c.pos)));
                 self.note("SetPlayerCameraPosition".into());
             }
             P::SetPlayerCameraLookAt(c) => {
-                let cut = if c.cut == 2 {
-                    CameraCut::Cut
-                } else {
-                    CameraCut::Smooth
-                };
-                report(self, "point_at", game.point_at(v3(c.pos), cut));
+                let cut = if crate::behaviour::camera_cut(c.cut) == 2 { CameraCut::Cut } else { CameraCut::Smooth };
+                report(self, "camera look-at", crate::camops::look_at(game, v3(c.pos), cut));
                 self.note("SetPlayerCameraLookAt".into());
             }
-            P::SetPlayerCameraBehindPlayer(_) => report(self, "behind_player", game.behind_player()),
+            P::SetPlayerCameraBehindPlayer(_) => report(self, "camera behind", crate::camops::behind_player(game)),
             P::SetPlayerSpecialAction(a) => {
                 // samp.dll 0x100030F0 (samp-rs `on_special_action`) for the phone and hands up: 0 / 13 stop the
                 // phone, 11 starts it and 10 raises the hands (TASK_HANDS_UP for ever), both on foot only.
@@ -561,6 +623,15 @@ impl HostedClient {
                     }
                     10 if !in_vehicle && game.ped_in_world(me) => {
                         report(self, "start_task", game.start_task(me, PedTask::HandsUp { time_ms: -2 }));
+                    }
+                    2 if !in_vehicle => {
+                        let r = game.set_jetpack(me, true);
+                        self.jetpack = r.is_ok();
+                        report(self, "set_jetpack", r);
+                    }
+                    0 if self.jetpack => {
+                        self.jetpack = false;
+                        report(self, "set_jetpack", game.set_jetpack(me, false));
                     }
                     _ => {}
                 }
@@ -695,66 +766,6 @@ impl HostedClient {
         }
     }
 
-    fn on_vehicle_rpc(&mut self, rpc: vehicle::Incoming, game: &mut dyn GameAdapter) {
-        use vehicle::Incoming as V;
-        match rpc {
-            V::StreamInVehicle(v) => {
-                let model = ModelId(v.model as i32);
-                report(self, "request_model", game.request_model(model));
-                report(self, "load_all_now", game.load_all_now());
-                let colour = |c: u8| if c == 0xFF { 0 } else { c };
-                let spawn = VehicleSpawn {
-                    model,
-                    pos: Vec3::new(v.position.x, v.position.y, v.position.z),
-                    heading_deg: v.angle,
-                    colours: [colour(v.colour1), colour(v.colour2)],
-                    paintjob: 3,
-                    area: AreaCode(v.interior),
-                };
-                match game.create_vehicle(&spawn) {
-                    Ok(r) => {
-                        report(self, "set_vehicle_health", game.set_vehicle_health(r, v.health));
-                        self.vehicles.insert(v.vehicle_id, r);
-                        self.note(format!(
-                            "vehicle {} (model {}) streamed in at ({:.1},{:.1},{:.1}) as {:#x}",
-                            v.vehicle_id, v.model, v.position.x, v.position.y, v.position.z, r.0
-                        ));
-                    }
-                    Err(e) => self.note(format!("vehicle {} (model {}): {e}", v.vehicle_id, v.model)),
-                }
-            }
-            V::StreamOutVehicle(v) => {
-                if let Some(r) = self.vehicles.remove(&v.vehicle_id) {
-                    report(self, "destroy_vehicle", game.destroy_vehicle(r));
-                    self.note(format!("vehicle {} streamed out", v.vehicle_id));
-                }
-            }
-            V::PutPlayerInVehicle(p) => {
-                let (Some(me), Some(&v)) = (game.local_player(), self.vehicles.get(&p.vehicle_id)) else {
-                    self.note(format!("PutPlayerInVehicle {}: unknown vehicle", p.vehicle_id));
-                    return;
-                };
-                let seat = (p.seat != 0).then(|| i32::from(p.seat) - 1);
-                report(self, "warp_into_vehicle", game.warp_into_vehicle(me, v, seat));
-                self.note(format!("PutPlayerInVehicle {} seat {}", p.vehicle_id, p.seat));
-            }
-            V::RemovePlayerFromVehicle(_) => {
-                if let Some(me) = game.local_player()
-                    && let Ok(s) = game.ped_snapshot(me)
-                {
-                    let p = s.matrix.pos;
-                    report(
-                        self,
-                        "warp_out_of_vehicle",
-                        game.warp_out_of_vehicle(me, Vec3::new(p.x + 2.0, p.y, p.z)),
-                    );
-                    self.note("RemovePlayerFromVehicle".into());
-                }
-            }
-            other => self.note(format!("vehicle rpc {} (not applied natively yet)", other.id())),
-        }
-    }
-
     /// Driver sync (200) while the local player drives a vehicle the server streamed in.
     fn car_sync(
         &mut self,
@@ -849,6 +860,7 @@ impl HostedClient {
         );
         self.set_skin(game, s.skin as i32);
         self.spawned = true;
+        self.spawned_once = true;
         // The spawn ends class selection: its mode-0 request restores input only after 10 frames.
         self.ui.spawn_release = true;
         self.sender.reset();
