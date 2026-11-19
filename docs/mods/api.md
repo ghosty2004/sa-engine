@@ -1,4 +1,4 @@
-# Mod API reference (API 1.10)
+# Mod API reference (API 1.11)
 
 The interface is defined once, in `crates/sa-mod-api/src/lib.rs` (`for_each_import!`, `for_each_export!`); this page
 explains it. The Rust SDK (`crates/sa-mod`) wraps every function; other languages import the functions from module

@@ -1,4 +1,4 @@
-//! The vehicle damage and class, speed, gravity and statistics host functions (API 1.10).
+//! The vehicle damage and class, speed, gravity and statistics host functions (API 1.11).
 
 use sa_mod_api::{Call, status, vehicle};
 use sa_types::{EntityRef, PedRef, Vec3, VehicleRef};

@@ -402,7 +402,7 @@ Reference `docs/mods/api.md` level 9. What SA:MP's objects needed, in GTA terms:
   `RwTextureRead`, the hierarchy lookups) through `sa-core`'s bindings and a `vslot`; the host keeps the session
   state the render and IPL observers need (`sa_access::objects` thread-locals) and per mod what it must give back.
 
-### 4.1h Vehicle damage, speeds, gravity, statistics; more script commands (API 1.10, 2026-11-19)
+### 4.1h Vehicle damage, speeds, gravity, statistics; more script commands (API 1.11, 2026-11-19)
 
 Reference `docs/mods/api.md` level 10. What SA:MP's vehicle, player and camera RPCs needed, in GTA terms:
 
