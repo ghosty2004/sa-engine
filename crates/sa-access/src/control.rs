@@ -164,26 +164,41 @@ pub(crate) fn c_str(s: &[u8]) -> Vec<u8> {
     v
 }
 
+/// The slot of the game's texture dictionary `name`.
+pub fn txd_slot(name: &[u8]) -> Option<i32> {
+    let mut n = c_str(name);
+    Some(sa_core::bindings::find_txd_slot(GPtr::from_raw(n.as_mut_ptr()))).filter(|&s| s != -1)
+}
+
+/// Loads the texture dictionary file `path` (a game path) into a new slot `name` and keeps it loaded (a reference
+/// the game never drops), as the game loads its own loose dictionaries (`CGame::Init1`'s "particle"). The slot, or
+/// `None` when the file cannot be opened.
+pub fn load_txd_slot(name: &[u8], path: &[u8]) -> Option<i32> {
+    use sa_core::bindings::*;
+    let mut slot_name = c_str(name);
+    let mut path = c_str(path);
+    // `LoadTxd` retries forever on a missing file, as the original does: look first
+    let mut mode = c_str(b"rb");
+    let f = open_file(GPtr::from_raw(path.as_mut_ptr()), GPtr::from_raw(mode.as_mut_ptr()));
+    if f.is_null() {
+        return None;
+    }
+    file_close(f);
+    let slot = add_txd_slot(GPtr::from_raw(slot_name.as_mut_ptr()));
+    load_txd(slot, GPtr::from_raw(path.as_mut_ptr()));
+    txd_add_ref(slot);
+    Some(slot)
+}
+
 /// The texture `name` of the game's texture dictionary `dict` (an `RwTexture*`, as `CSprite2d::SetTexture` finds it
 /// with the dictionary current). Without a dictionary of that name, `file` (a path in the game folder) is loaded into
 /// a new one, which stays loaded. `None` when the file or the texture is not there.
 pub fn load_texture(dict: &[u8], file: Option<&[u8]>, name: &[u8]) -> Option<u32> {
     use sa_core::bindings::*;
-    let mut slot_name = c_str(dict);
-    let mut slot = find_txd_slot(GPtr::from_raw(slot_name.as_mut_ptr()));
-    if slot == -1 {
-        let mut path = c_str(file?);
-        // `LoadTxd` retries forever on a missing file, as the original does: look first
-        let mut mode = c_str(b"rb");
-        let f = open_file(GPtr::from_raw(path.as_mut_ptr()), GPtr::from_raw(mode.as_mut_ptr()));
-        if f.is_null() {
-            return None;
-        }
-        file_close(f);
-        slot = add_txd_slot(GPtr::from_raw(slot_name.as_mut_ptr()));
-        load_txd(slot, GPtr::from_raw(path.as_mut_ptr()));
-        txd_add_ref(slot);
-    }
+    let slot = match txd_slot(dict) {
+        Some(s) => s,
+        None => load_txd_slot(dict, file?)?,
+    };
     let mut sprite: u32 = 0;
     let mut tex = c_str(name);
     push_current_txd();
