@@ -682,3 +682,30 @@ Every call but `create_menu` takes only the mod's own menus (DENIED otherwise).
 ### Determinism
 
 Nothing of level 12 runs without a mod that asks for it; `CText::Get` is observed only while some text entry exists.
+
+## Other players' peds and vehicles: matrices, motion, shots (1.14)
+
+What a multiplayer client needs to show the other players driving, towing, pushing, aiming and shooting, in GTA terms.
+
+| function | permission | SDK | what |
+|---|---|---|---|
+| `vehicle_motion(handle, buf, len)` | `state` | `state::vehicle_motion(v)` | `VehicleMotion`: turn speed, whether its physics runs (in the moving list), the cab towing it (`m_pTractor`), its trailer (`m_pTrailer`), its passenger seats |
+| `set_vehicle_matrix(handle, ptr)` | `state = "write"` | `world::set_vehicle_matrix(v, &MatrixInfo)` | the vehicle's matrix (12 `f32`: right, forward, up, position) written as it is, no teleport: speeds, suspension and collision state stay, the vehicle moves into its new world sectors as its physics runs. BAD_ARG for values that are not finite; FAILED for rows that are not unit vectors (lengths 0.9..=1.1) or a position outside x, y ±20000, z -10000..=100000 |
+| `fire_ped_weapon(handle, x, y, z)` | `state = "write"` | `world::fire_ped_weapon(p, target)` | the ped's current weapon fires one instant-hit shot at the point: `CWeapon::FireInstantHit` from the muzzle (the weapon's fire offset transformed by the right-hand bone, as `CTaskSimpleUseGun` fires), forced aim, muzzle flash, sound and shell; the game's line test decides what it hits and the damage response what that takes, with the ped as the one who dealt it (`ped_damage`). Ammo and the weapon's state stay. FAILED for a weapon whose fire type is not instant hit or a ped not streamed in; BAD_ARG for a point that is not finite |
+
+The changes are not allowed inside a hook (WRONG_PHASE). A shot goes where the ped's accuracy lets it: a client
+replaying another player's shots sets `SET_CHAR_ACCURACY` 100 (no spread) first.
+
+### Script commands
+
+`SET_CHAR_ACCURACY` (02E2; accuracy 0..=100, else FAILED: the handler computes the spread from `100 - accuracy`) and
+`TASK_AIM_GUN_AT_COORD` (0667: ped, point, time in ms; `CTaskSimpleGunControl` aiming without firing).
+
+### Hook decisions
+
+`CAutomobile::BreakTowLink` is controllable: a mod that skips it (result 0) keeps a tow the game would break (the cab
+and trailer drifting apart under synced positions); `CTrailer::BreakTowLink` stays the game's.
+
+### Determinism
+
+Nothing of this runs without a mod that asks for it.

@@ -5043,3 +5043,29 @@
   `SetPlayerPos` (it is placed with `SET_CHAR_COORDINATES`, which lifts it ~1.2 m so it falls and lands; samp.dll
   uses the entity's `Teleport`), and it stops later than on the DLL client after `ClearAnimations` (1.4 m vs 0.4 m in
   the server's view after a sprint).
+## 2026-11-19 — MOD-2: the other players' syncs on the SA:MP mod (agent, worktree)
+- samp-rs, shared rules (both hosts): `markers.rs` (player markers: InitGame mode, the blip on a streamed ped,
+  208 coordinate blips for players not streamed in, removal on stream-out / quit, recolouring; the DLL client's
+  `players.rs` now uses it, its blip colour index = player id, the hosted client passes the RGBA); `vehicle.rs`
+  gained `correct_trailer` (210), `seat_allowed`, `car_jacked`, `unoccupied_applies`, `tow_link_kept`,
+  `remote_exit_applies`, `kind_from_class` and the car-jacked text (the DLL's `vehicles/*` and `vehhooks.rs` use them);
+  `combat::REMOTE_WEAPON_AMMO`.
+- Hosted client (`hosted/remotes.rs`): 200 (store with the timestamp rule, seat, car jacked, per-frame correction /
+  teleport, slerp, turn clamp, siren, health, weapon, trains' path, trailer detach), 211 (seat, weapon), 203 / aim key
+  (gun-aim task), 206 (shooter armed, `fire_weapon_at` toward the redirect point), 208, 209, 210 (attach, nudge /
+  teleport), relayed RPC 26 / 154 (enter / leave tasks), RPC 72 recolours, RPC 115 on the local player's health loss
+  to a remote's ped, `BreakTowLink` decision; foot sync leaves the vehicle and arms the synced weapon.
+- Mod API (1.14, no minor bump): imports `set_vehicle_matrix`, `vehicle_motion`, `fire_ped_weapon`; script commands
+  `SET_CHAR_ACCURACY` (02E2, 0..=100 checked) and `TASK_AIM_GUN_AT_COORD` (0667); `CAutomobile::BreakTowLink`
+  controllable. sa-access: `set_vehicle_matrix` (finite, unit rows, world range), `fire_ped_weapon` (instant-hit
+  weapons, streamed-in ped), the vehicle snapshot's tractor / trailer / moving. The bindings of
+  `CWeapon::FireInstantHit` and `CPed::GetTransformedBonePosition` moved to sa-core (their callers now include
+  sa-access). sa-samp-api: `PedTask::AimGunAt`, `Peds::fire_weapon_at` / `set_accuracy`, `Vehicles::teleport_vehicle`
+  (SetVehiclePosition keeps the teleport; `set_vehicle_matrix` is a plain write). The samp mod hooks BreakTowLink.
+- Tests: samp-bot `--mode push` (209 for an unoccupied car it walks behind); sampcov `npcdrive`, `npcammo`, `color`,
+  `markerfor`, "N" / "V" ids; `tools/e2e/samp/bot.sh` (`bot|ARGS`, `botwait` in the CMDS of both hosts);
+  `tools/e2e/samp/remote-sync.cmds`. Run on both hosts (mod-join.sh SAMP_PORT=7983 SAMP_LOCK=remote.lock; samp-rs-ab.sh
+  LANE=7): radar blips identical (far, red, hidden, car seated / driving / driven, the pusher, the trucker), the
+  cars move with their drivers, the shooter NPC and samp-bot kill the local player with three Desert Eagle hits on
+  both (OnPlayerTakeDamage 46.2 each, OnPlayerDeath killer = shooter). Unit tests: samp-client (markers 2, vehicle 2,
+  remotes 1), samp-bot (1). Differences in the divergence ledger ("remote syncs").
