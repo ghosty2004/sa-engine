@@ -156,9 +156,9 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | frontier2-c32 | 3 | RW | 066572a3 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
 | frontier2-c33 | 17 | RW | 36345de8 | master | 17 | 0 | 0 | 0 | 0 | L2 17 |
 | frontier2-c34 | 6 | RW | 6054ab03 | master | 6 | 0 | 0 | 0 | 0 | L2 4, split 2 |
-| frontier2-c35 | 4 | RW | f018e48c | int-g7 | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| frontier2-c36 | 1 | RENDER | e769bf9d | int-g7 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| frontier2-c37 | 1 | RW | e9a057b5 | int-g7 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| frontier2-c35 | 4 | RW | f018e48c | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| frontier2-c36 | 1 | RENDER | e769bf9d | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| frontier2-c37 | 1 | RW | e9a057b5 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | frontier2-c4 | 10 | AUDIO, CALLED-ONLY, SCRIPT, UNK-game | d18327f1 | master | 10 | 0 | 0 | 0 | 0 | L2 9, split 1 |
 | frontier2-c5 | 22 | AI, ANIM, AUDIO, CALLED-ONLY, MATH, SCRIPT, UNK-game, WORLD | 749ddded | master | 22 | 0 | 0 | 0 | 0 | L2 21, split 1 |
 | frontier2-c6 | 12 | AI, UNK-game, WORLD | 749ddded | master | 12 | 0 | 0 | 0 | 0 | L2 12 |
@@ -335,7 +335,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | popw4-gang-1 | 10 | POP | c4428cec | master | 0 | 0 | 0 | 10 | 0 | L2 7, split 3 |
 | popw4-partial-1 | 2 | POP | c4428cec | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
 | popw4-pop-1 | 6 | POP | c4428cec | master | 0 | 0 | 0 | 6 | 0 | split 6 |
-| pure1f-1 | 4 | AUDIO, RW, UNK-game | c3345cdf | int-g7b | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| pure1f-1 | 4 | AUDIO, RW, UNK-game | c3345cdf | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
 | regconv-ped-1 | 3 | PED, UNK-game | 5917e4e2 | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
 | regconv-render-1 | 5 | RENDER | 5917e4e2 | master | 0 | 0 | 2 | 3 | 0 | L2 5 |
 | regconv-rw-1 | 11 | RW, UNK-game | 5917e4e2 | master | 0 | 0 | 3 | 8 | 0 | L2 11 |
