@@ -45,7 +45,18 @@ the user provides; without it servers refuse the join at their auth check), and 
 Tests with our own open.mp server copy: `tools/e2e/samp/mod-join.sh` (native; `UX=1`: through the connect screen and
 the approval prompt with scripted keys, `UX_APPROVED=1` without the prompt, `RESOLUTION=WxH` with the resolution mod;
 the Internet tab reads a local fixture list, never the public one; `BOT=1`: samp-bot joins as a second player; `EXTRA_CMDS`: textdraws, dialogs)
-and `WEB=1 tools/e2e/samp/mod-join.sh` (headless Chromium through sa-udp-proxy).
+and `WEB=1 tools/e2e/samp/mod-join.sh` (headless Chromium through sa-udp-proxy). The objects scenario
+(`tools/e2e/samp/objects.cmds`: a mapping with materials, moving and turning objects, an object on the player and one
+on a bone, a removed house, a far teleport and back) runs on both hosts: `CMDS=tools/e2e/samp/objects.cmds
+tools/e2e/samp/mod-join.sh` and `LANE=2 CMDS=... tools/e2e/samp/samp-rs-ab.sh DLL_DIR NAME` (the DLL under Wine,
+screenshots and the client's object table at each `shot|`).
+
+The mod's objects (`samp_client::hostedobjects`, API 1.9): RPC 44 / 45 / 46 / 47 / 99 / 122 / 75 / 84 / 169 / 113 and
+RemoveBuildingForPlayer (43) run the DLL client's rules (`worldents`: create order, MoveObject motion, the bone
+placement of attached objects) on the mod API's objects. Not on the mod: material text, the blank material texture
+(SA:MP's own file), samp's own far-object pass (draw distance above 300), the object editor and selection (RPC 27 / 28
+/ 116 / 117), SA:MP's own object models (18631..19999, a data mod's job, ADR-004 §4.2); 0.3.DL's custom models
+(RPC 179 / 183 / 184) are dormant in 0.3.7 R4 and ignored by both clients (docs/ROADMAP.md, divergence ledger).
 
 On the original `gta_sa.exe` samp-rs stays a DLL (`samp_client.dll`, samp-rs's own build and tests).
 

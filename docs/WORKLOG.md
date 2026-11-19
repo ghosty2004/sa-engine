@@ -4844,3 +4844,25 @@
   tests (new: markers and radar areas), clippy (samp-client host and i686-pc-windows-gnu, the mod for wasm32, the
   host crates), `tools/lib/layers.py check`, `tools/gen/bindings.py --check`, `cargo check -p sa-game --features mods`.
 - Differences recorded in the divergence ledger (MOD-2 SA:MP mod, world RPCs and the connection lifecycle).
+## 2026-11-19 — MOD-2: objects, building removal and models for the SA:MP mod (API 1.9) (agent, worktree)
+- API 1.9 (`sa-mod-api`, one bump: `API_MINOR`): object state / transform / pool list, ped skeleton node matrices,
+  model info / request / release / draw distance, object position (teleport), matrix, rotation, scale, visibility,
+  collision, speeds, attach / detach, material slots (texture of a model's dictionary, colour), building removal.
+  `sa-access/src/objects.rs` does the work through the game's own code (`CObject::Teleport` by vslot, script
+  commands, `RwTextureRead`, the skin hierarchy); `sa-mod-host/src/objects.rs` the host side (per-mod changes given
+  back on disable); sa-game observes `CFileLoader::LoadObjectInstance` (removals of streamed IPL instances) and
+  `CObject::Render` (material slots, applied from an RW object's third draw: from the first the D3D9 pipeline
+  re-instanced the geometry every draw and every other frame failed in an unported `vb_lock`). SDK
+  `sa_mod::{objects, models}`; docs/mods/api.md level 9; ADR-004 §4.1g.
+- samp-rs: the DLL client's object rules moved into `worldents` (`begin_move`, `motion_frame`,
+  `attached_transform`), used by the DLL's `objects/motion.rs` and `worldhooks/peds.rs` and by the new
+  `hostedobjects.rs` (RPC 44 / 45 / 46 / 47 / 99 / 122 / 75 / 84 / 169 / 113 and 43 in `hosted.rs`). sa-samp-api:
+  `Peds::node_matrix`, `Objects::set_object_speed`, `Streaming::set_model_draw_distance`, `ModelKind` from sa-types.
+  The mod's adapter implements Objects and the model calls on the API.
+- Verified: the objects scenario (`tools/e2e/samp/objects.cmds`, sampcov.pwn `objscene` / `objscene2` / `objwhere`)
+  on the mod (`CMDS=... tools/e2e/samp/mod-join.sh target/objects-mod`: goal PASS, `building removals: 1, entities
+  removed as the world loaded them: 1`) and on the DLL client under Wine (`LANE=2 CMDS=... samp-rs-ab.sh`,
+  target/e2e/lane-2/samp-ab/objects-dll): the client object tables agree (positions, rotations, the move's end and
+  turn, the stop, the deletion, the object on the player at z 16.34, the rifle on the spine 0.2-0.3 behind the
+  player), the screenshots match but for the colour material slots (black on the mod; divergence ledger). Unit tests:
+  sa-access, sa-mod-api, sa-mod-host (objects_and_models), samp-client worldents (motion, bone placement).

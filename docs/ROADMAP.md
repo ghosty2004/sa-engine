@@ -233,6 +233,30 @@ Sections: *pending* (blocks "done") · *original UB, not reproducible* · *accep
 - FSIN/FCOS/FPATAN modelled at 53 bits vs the CPU's 64 (sa_math::x87): every stored/product result matched on the 17 CPU-decided specs; the authority is one Intel CPU (an AMD CPU may differ) (MATH-2).
 - Aliased output pointers are not modelled for IntersectRay, IntersectEdge, CRect::GetCenter, ConvertToEulerAngles and matrix ops whose result aliases an operand; explicit in-place variants exist; L2 must confirm the call sites (MATH-2).
 - `CGeneral::GetATanOfXY` (0x53CC70) (state set back to `implemented` after verifier V-1: 35 call sites feed the full ST0 into x87 arithmetic; with the f32 API, 4,579/200k differ, while the `_x87` API has 0), path x > 0, y > 0, |x| ≥ |y|: the original returns the raw FPATAN value in ST0 (64-bit significand); `sa_math` has it to 53 bits. The stored f32 matched in all 1,003,364 cases on the CPU; ST0 beyond f32 differs in 78,162. Resolve by an x87-exact atan or by showing every caller stores ST0 to f32 first (call graph).
+- SA:MP mod, objects (API 1.9, `samp_client::hostedobjects`), compared with samp-rs's DLL client on the original exe
+  (objects scenario `tools/e2e/samp/objects.cmds`, mod-join.sh vs LANE=2 samp-rs-ab.sh, 2026-11-19): object
+  positions, rotations, moves, StopObject, SetObjectPos/Rot, DestroyObject, the object on the player, the bone-attached
+  object and the removed house (now and after the world reloaded it) agree. Left:
+  - colour material slots (`SetObjectMaterial` with a colour, the colours of `SetPlayerAttachedObject`) draw black in
+    the engine where the original draws them lit (red fence, white-modulated marble): the slot clears the geometry's
+    prelit flag as samp.dll does, and the engine's D3D9 pipeline lights the unprelit, colour-modulated atomic to
+    black. A renderer divergence (texture-only slots and unmodified objects match);
+  - material text (RPC 44 / 84 kind 2) and the blank material texture (model 0, `SAMP\blanktex.txd`, SA:MP's own file)
+    are not drawn (their colour is);
+  - samp's own far-object pass (objects with materials or a draw distance above 300 that samp.dll streams and draws
+    itself, `samp_pass` in the DLL's table): the mod sets the model's draw distance and leaves drawing to the game;
+  - SA:MP's object models (18631..=19999, `samp.img` / `samp.ide`, including the "?" model 18631 and the removed-IPL
+    model 19300) do not exist without a data mod (ADR-004 §4.2): such objects are not created; removed IPL instances
+    are moved away (area 1, 2000 down) instead of becoming model 19300;
+  - objects on ped bones (RPC 113) are placed at the mod's frame start from the skeleton of the frame before; samp.dll
+    places them after `CWorld::ProcessPedsAfterPreRender` of the same frame (one frame later in the mod);
+  - SetObjectNoCameraCollision only changes samp.dll's own camera test outside the map's sector grid (|x| or |y| >
+    3000), which the mod does not have: there the mod's camera ignores client objects altogether;
+  - the object editor and selection (RPC 27 / 28 / 116 / 117, the DLL's D3D gizmo) are not on the mod;
+  - 0.3.DL custom models (RPC 179 / 183 / 184) are dormant in 0.3.7 R4 and ignored by both clients (parity).
+- sa-game (mods build): a teleport from Grove Street to Las Venturas (2027, 1544, 10.8) ends the run with SIGSEGV at
+  0x476 (a null game pointer in a main-loop step) without any object or removal (`EXTRA_CMDS='pos|2027|1544|10.8|0'`,
+  target/teleport-mod); the objects scenario teleports to Los Santos city hall instead. Not investigated.
 - SA:MP UI GUI font 0 (DXUT button / edit / list labels, e.g. the class-selection panel's `<<` `>>` `Spawn`): the engine's
   glyphs are about 12 % narrower than the original's under Wine (cell 20 → 17 ppem by the main-font rule); everything
   else of the class-selection panel matches to the pixel (SAMP-CLASSPANEL, docs/samp/overlay.md §6.2, §8 item 9).
