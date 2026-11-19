@@ -1,4 +1,4 @@
-//! The object, model and building-removal host functions (API 1.8).
+//! The object, model and building-removal host functions (API 1.9).
 
 use sa_mod_api::state::{MatrixInfo, ObjectInfo};
 use sa_mod_api::{Call, attach, material, model, status};

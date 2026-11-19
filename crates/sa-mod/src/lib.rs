@@ -1035,7 +1035,7 @@ pub mod input {
     }
 }
 
-/// Objects (API 1.8): their state (permission `state = "read"`), and changing any object (`state = "write"`; the
+/// Objects (API 1.9): their state (permission `state = "read"`), and changing any object (`state = "write"`; the
 /// mod creates and deletes its own through [`entities`]). Plain changes made inside a hook are queued for the next
 /// frame boundary; the ones that read the mod's memory (a matrix, speeds, offsets, names) are refused there.
 pub mod objects {
@@ -1192,7 +1192,7 @@ pub mod objects {
     }
 }
 
-/// Models (API 1.8): what a model is (`state = "read"`), requesting and releasing it (`entities = true`), its draw
+/// Models (API 1.9): what a model is (`state = "read"`), requesting and releasing it (`entities = true`), its draw
 /// distance (`state = "write"`).
 pub mod models {
     use super::*;

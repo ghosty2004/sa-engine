@@ -592,6 +592,8 @@ pub mod blip {
 pub mod radar {
     /// Radar area ids one mod may use (`0 .. MAX_AREAS`).
     pub const MAX_AREAS: i32 = 1024;
+}
+
 /// Models (API 1.9): `model_info`'s answer.
 pub mod model {
     use sa_types::ModelKind;
