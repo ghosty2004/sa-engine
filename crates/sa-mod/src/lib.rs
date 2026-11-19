@@ -605,6 +605,12 @@ pub mod state {
         // SAFETY: as in `player`
         record(|p, n| unsafe { ffi::vehicle_matrix(vehicle.0 as i32, p, n) })
     }
+
+    /// How a vehicle moves and what it tows (API 1.14).
+    pub fn vehicle_motion(vehicle: VehicleRef) -> Option<sa_mod_api::state::VehicleMotion> {
+        // SAFETY: as in `player`
+        record(|p, n| unsafe { ffi::vehicle_motion(vehicle.0 as i32, p, n) })
+    }
 }
 
 /// Before / after hooks on game functions (API 1.2, permission `hooks = [...]`): subscribe in [`Mod::init`],
@@ -795,6 +801,20 @@ pub mod world {
     /// Writes `ped`'s move speed; a standing ped leaves the ground (API 1.11).
     pub fn set_ped_speed(ped: PedRef, speed: Vec3) -> Result<(), Error> {
         done(unsafe { ffi::set_ped_speed(ped.0 as i32, speed.x, speed.y, speed.z) })
+    }
+    /// Writes `vehicle`'s matrix as it is, without a teleport (API 1.14).
+    pub fn set_vehicle_matrix(vehicle: VehicleRef, m: &MatrixInfo) -> Result<(), Error> {
+        let w = [
+            m.right.x, m.right.y, m.right.z, m.forward.x, m.forward.y, m.forward.z, m.up.x, m.up.y, m.up.z, m.pos.x,
+            m.pos.y, m.pos.z,
+        ]
+        .map(f32::to_bits);
+        // SAFETY: the host reads the 12 words of `w`
+        done(unsafe { ffi::set_vehicle_matrix(vehicle.0 as i32, w.as_ptr() as usize as i32) })
+    }
+    /// `ped` fires one instant-hit shot of its current weapon at `target` (API 1.14).
+    pub fn fire_ped_weapon(ped: PedRef, target: Vec3) -> Result<(), Error> {
+        done(unsafe { ffi::fire_ped_weapon(ped.0 as i32, target.x, target.y, target.z) })
     }
 }
 

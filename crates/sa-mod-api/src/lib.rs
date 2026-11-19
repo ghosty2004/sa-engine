@@ -282,6 +282,7 @@ pub mod hook {
         "CPed::ProcessControl",
         "CPlayerPed::ProcessControl",
         "CAutomobile::ProcessControl",
+        "CAutomobile::BreakTowLink",
         "CTaskComplexEnterCar::CreateFirstSubTask",
         "CPed::Render",
         "CObject::Render",
@@ -404,6 +405,7 @@ pub mod script {
         (0x02AC, "SET_CAR_PROOFS", "viiiii"),
         (0x02BF, "IS_CAR_IN_WATER", "v"),
         (0x02CE, "GET_GROUND_Z_FOR_3D_COORD", "fffo"),
+        (0x02E2, "SET_CHAR_ACCURACY", "pi"),
         (0x02EB, "RESTORE_CAMERA_JUMPCUT", ""),
         (0x0321, "EXPLODE_CHAR_HEAD", "p"),
         (0x0326, "START_CHAR_FIRE", "po"),
@@ -435,6 +437,7 @@ pub mod script {
         (0x05CD, "TASK_LEAVE_CAR", "pv"),
         (0x060B, "SET_CHAR_DECISION_MAKER", "pi"),
         (0x0611, "IS_CHAR_PLAYING_ANIM", "ps"),
+        (0x0667, "TASK_AIM_GUN_AT_COORD", "pfffi"),
         (0x067F, "FORCE_CAR_LIGHTS", "vi"),
         (0x0687, "CLEAR_CHAR_TASKS", "p"),
         (0x06A9, "TASK_LOOK_AT_COORD", "pfffi"),
@@ -1259,6 +1262,24 @@ macro_rules! for_each_import {
             /// in or out, also for a player already inside. On gives each the flags it had before the first switch
             /// off; the host does that too when it disables the mod. Not inside a hook.
             [Write] fn set_entry_exits_enabled(on: i32) -> i32;
+            /// (1.14) Writes vehicle `handle`'s matrix: right, forward, up and position (12 little-endian `f32` at
+            /// `matrix_ptr`) as they are, the way a physics step leaves it (no teleport: the speeds, the suspension
+            /// and the collision state stay; the game files the vehicle under its new world sectors as its physics
+            /// runs). `BAD_ARG` for values that are not finite, rows that are not unit vectors or a position
+            /// outside the world. Not inside a hook.
+            [Write] fn set_vehicle_matrix(handle: i32, matrix_ptr: i32) -> i32;
+            /// (1.14) Writes how vehicle `handle` moves and what it tows ([`state::VehicleMotion`]: turn speed,
+            /// whether its physics runs, the cab towing it, its trailer, its passenger seats) to the buffer, as
+            /// `vehicle_info`.
+            [State] fn vehicle_motion(handle: i32, buf_ptr: i32, buf_len: i32) -> i32;
+            /// (1.14) Ped `handle` fires one shot of its current weapon, an instant-hit one (pistols, shotguns,
+            /// sub-machine guns, rifles, the minigun), at the point (`x`, `y`, `z`): `CWeapon::FireInstantHit` from
+            /// the muzzle at its right hand toward the point, aimed whatever its tasks, with the muzzle flash, the
+            /// sound and the shell; the game's line test decides what it hits and its damage response what that
+            /// takes (with the ped as the one who dealt it). The weapon's ammo and state stay. `FAILED` for a weapon
+            /// that fires no instant hits or a ped whose model is not streamed in, `BAD_ARG` for a point that is not
+            /// finite. Not inside a hook.
+            [Write] fn fire_ped_weapon(handle: i32, x: f32, y: f32, z: f32) -> i32;
         }
     };
 }

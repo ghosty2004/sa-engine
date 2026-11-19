@@ -1,14 +1,17 @@
-//! The vehicle damage and class, speed, gravity, statistics and entry-exit host functions (API 1.11).
+//! The vehicle damage and class, speed, gravity, statistics and entry-exit host functions (API 1.11), vehicle
+//! matrices and motion, and a ped's shot (1.14).
 
+use sa_mod_api::state::VehicleMotion;
 use sa_mod_api::{Call, status, vehicle};
-use sa_types::{EntityRef, PedRef, Vec3, VehicleRef};
+use sa_types::{EntityRef, Matrix, PedRef, Vec3, VehicleRef};
 
-use crate::api::{CallCtx, Mem, guarded};
+use crate::api::{CallCtx, Mem, guarded, write_record};
 use crate::objects::floats;
 
 /// The calls of this module: `None` for any other call.
 pub fn calls(ctx: &mut CallCtx, mem: &mut dyn Mem, call: Call) -> Option<i32> {
-    let reads = matches!(call, Call::vehicle_class { .. } | Call::vehicle_damage { .. });
+    let reads =
+        matches!(call, Call::vehicle_class { .. } | Call::vehicle_damage { .. } | Call::vehicle_motion { .. });
     let writes = matches!(
         call,
         Call::set_gravity { .. }
@@ -17,6 +20,8 @@ pub fn calls(ctx: &mut CallCtx, mem: &mut dyn Mem, call: Call) -> Option<i32> {
             | Call::set_ped_speed { .. }
             | Call::set_float_stat { .. }
             | Call::set_entry_exits_enabled { .. }
+            | Call::set_vehicle_matrix { .. }
+            | Call::fire_ped_weapon { .. }
     );
     if !reads && !writes {
         return None;
@@ -58,6 +63,33 @@ pub fn calls(ctx: &mut CallCtx, mem: &mut dyn Mem, call: Call) -> Option<i32> {
             done(guarded(&mut ctx.logs, "set_vehicle_speed", || {
                 g.set_physical_speed(EntityRef::Vehicle(veh(handle)), mv, Some(turn))
             }))
+        }
+        Call::vehicle_motion { handle, buf_ptr, buf_len } => match g.vehicle_snapshot(veh(handle)) {
+            Ok(s) => write_record(
+                mem,
+                buf_ptr,
+                buf_len,
+                &VehicleMotion {
+                    turn_speed: s.turn_speed,
+                    moving: s.moving,
+                    tractor: s.tractor,
+                    trailer: s.trailer,
+                    max_passengers: s.max_passengers,
+                },
+            ),
+            Err(_) => status::NOT_FOUND,
+        },
+        Call::set_vehicle_matrix { handle, matrix_ptr } => {
+            let Some(w) = floats::<12>(mem, matrix_ptr) else { return Some(status::BAD_ARG) };
+            let v = |i: usize| Vec3::new(w[i], w[i + 1], w[i + 2]);
+            let m = Matrix { right: v(0), forward: v(3), up: v(6), pos: v(9) };
+            done(guarded(&mut ctx.logs, "set_vehicle_matrix", || g.set_vehicle_matrix(veh(handle), &m)))
+        }
+        Call::fire_ped_weapon { handle, x, y, z } => {
+            if ![x, y, z].iter().all(|v| v.is_finite()) {
+                return Some(status::BAD_ARG);
+            }
+            done(guarded(&mut ctx.logs, "fire_ped_weapon", || g.fire_ped_weapon(PedRef(handle as u32), Vec3::new(x, y, z))))
         }
         Call::set_ped_speed { handle, x, y, z } => {
             if ![x, y, z].iter().all(|v| v.is_finite()) {

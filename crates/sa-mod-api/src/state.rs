@@ -459,6 +459,22 @@ impl WorldInfo {
 }
 
 record! {
+    /// How a vehicle moves and what it tows (`vehicle_motion`).
+    pub struct VehicleMotion {
+        /// Turn speed (radians per 1/50 s about each axis).
+        pub turn_speed: Vec3,
+        /// In the world's moving list: its physics runs.
+        pub moving: bool,
+        /// The cab towing it.
+        pub tractor: Option<VehicleRef>,
+        /// The trailer it tows.
+        pub trailer: Option<VehicleRef>,
+        /// Its passenger seats (`CVehicle::m_nMaxPassengers`).
+        pub max_passengers: u8,
+    }
+}
+
+record! {
     /// What last damaged a ped (`ped_damage`): at most one of `ped`, `vehicle` and `other`.
     pub struct DamageInfo {
         /// The weapon type the game recorded (`eWeaponType`, or 49 rammed, 50 helicopter blades, 51 explosion, 53
