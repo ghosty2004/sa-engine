@@ -29,6 +29,8 @@ pub mod bind;
 pub mod boot;
 pub mod cinit;
 pub mod com;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod crash;
 pub mod crt;
 pub mod crt_fmt;
 pub mod d3d9;

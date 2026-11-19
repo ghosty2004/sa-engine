@@ -276,7 +276,11 @@ fn mod_display(d: &display::Display) -> Display {
 /// Loads the mods of `spec` (a folder natively, a list of mod names on the web). A mod that cannot be loaded is
 /// reported and skipped; an unreadable `spec` is an error.
 pub fn install(spec: &str) -> Result<(), String> {
-    let mut host = Host::new(Box::new(|s| println!("sa-game: {s}")));
+    let mut host = Host::new(Box::new(|s| {
+        println!("sa-game: {s}");
+        #[cfg(not(target_arch = "wasm32"))]
+        crate::crash::note(s);
+    }));
     host.set_display(mod_display(&display::reported()));
     let game = Game::new(sa_access::engine());
     host.set_game(game.clone());
@@ -296,6 +300,8 @@ pub fn install(spec: &str) -> Result<(), String> {
     for s in sources {
         if let Err(e) = host.load(s) {
             println!("sa-game: mod not loaded: {e}");
+            #[cfg(not(target_arch = "wasm32"))]
+            crate::crash::note(&format!("mod not loaded: {e}"));
         }
     }
     HOST.with_borrow_mut(|h| *h = Some(host));

@@ -513,6 +513,23 @@ extern "C" fn on_fault(sig: libc::c_int, info: *mut libc::siginfo_t, ctx: *mut l
         write_err(unsafe { std::slice::from_raw_parts(p, n) });
     }
     write_err(b"`: a ported function dereferenced memory phase B does not provide (see docs/arch/platform.md, Legacy address arena)\n");
+    let step = if p.is_null() {
+        ""
+    } else {
+        // SAFETY: as above.
+        std::str::from_utf8(unsafe { std::slice::from_raw_parts(p, n) }).unwrap_or("")
+    };
+    let header = format!(
+        "{} at {addr:#x} [{}] at eip {eip:#x} (on_fault at {:#x}) during step `{step}`",
+        if sig == libc::SIGBUS { "SIGBUS" } else { "SIGSEGV" },
+        section_of(addr),
+        on_fault as *const () as usize,
+    );
+    if let Some(path) = crate::crash::write_report(&header) {
+        write_err(b"sa-game: crash report written to ");
+        write_err(path.as_os_str().as_encoded_bytes());
+        write_err(b"\n");
+    }
     // SAFETY: _exit is async-signal-safe.
     unsafe { libc::_exit(3) };
 }
