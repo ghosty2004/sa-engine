@@ -1,0 +1,75 @@
+# Standing, walking and sprinting on a floor of server objects (sampcov.pwn commands, one per line; `sleep|S` waits,
+# `shot|NAME` takes a screenshot), high above Grove Street so that only the objects carry the player: SA:MP's 10 m
+# wall panels 19377 and 19379 and the 10 x 5 m concrete slab 18766 laid flat, and the stock platform 3095; then the
+# street, for reference. On each the player stands still, walks 2 s, and from the same spot sprints 0.8 s, both with
+# an animation that moves it and that the server clears on a timer; `track|250` logs the server's view of the player's
+# position four times a second. A player standing still must not drift, and one that stops must stop on the objects
+# as it does on the street. Run after the spawn by samp-rs-ab.sh (CMDS=...) on the DLL client and by mod-join.sh
+# (CMDS=...) on the samp mod, which needs SA:MP's data files in its folder; tools/e2e/samp/floor-drift.py tabulates
+# the server logs, and with --frames the mod's frame-by-frame view (its regression check: on the objects the move
+# speed changes as fast as on the street):
+#   SA_GAME_DUMP='B7CD98>14>30:c,B7CD98>44:c,B7CD98>568:4,B7CB5C:4' FRAMES=12000 SA_GAME_WALK=0:0 \
+#     CMDS=tools/e2e/samp/floor.cmds tools/e2e/samp/mod-join.sh OUT
+#   tools/e2e/samp/floor-drift.py --frames --min-change 0.015 OUT/sa-game.log
+clearnpcs
+clearvehs
+time|12
+weather|10
+objr|19377|2470|-1700|40|0|90|0
+objr|19379|2485|-1700|40|0|90|0
+objr|18766|2500|-1700|40|90|0|0
+obj|3095|2515|-1700|40
+pos|2495|-1680|13.5|90
+sleep|4
+track|250
+msg|floor 19377
+hp|100
+pos|2474|-1700|41.2|90
+sleep|6
+animfor|PED|WALK_civi|2000
+sleep|5
+pos|2474|-1700|41.2|90
+sleep|4
+animfor|PED|sprint_civi|800
+sleep|5
+msg|floor 19379
+hp|100
+pos|2489|-1700|41.2|90
+sleep|6
+animfor|PED|WALK_civi|2000
+sleep|5
+pos|2489|-1700|41.2|90
+sleep|4
+animfor|PED|sprint_civi|800
+sleep|5
+msg|floor 18766
+hp|100
+pos|2504|-1700|41.6|90
+sleep|6
+animfor|PED|WALK_civi|2000
+sleep|5
+pos|2504|-1700|41.6|90
+sleep|4
+animfor|PED|sprint_civi|800
+sleep|5
+msg|floor 3095
+hp|100
+pos|2519|-1700|41.5|90
+sleep|6
+animfor|PED|WALK_civi|2000
+sleep|5
+pos|2519|-1700|41.5|90
+sleep|4
+animfor|PED|sprint_civi|800
+sleep|5
+msg|floor street
+hp|100
+pos|2499|-1680|13.5|90
+sleep|6
+animfor|PED|WALK_civi|2000
+sleep|5
+pos|2499|-1680|13.5|90
+sleep|4
+animfor|PED|sprint_civi|800
+sleep|5
+track|0

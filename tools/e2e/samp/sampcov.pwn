@@ -9,15 +9,17 @@
 //   pos|x|y|z|angle  interior|i  vw|world  hp|value  armour|value  kill  weapon|weapon|ammo  skin|skin
 //   veh|model|x|y|z|angle  vehs|model|count|x|y|z (a grid, 6 m apart)  putin|vehid|seat  eject  vhp|vehid|health
 //   vdel|vehid  stunt|1/0
-//   obj|model|x|y|z  objmove|id|x|y|z|speed  pickup|model|type|x|y|z  label|text|x|y|z
+//   obj|model|x|y|z  objr|model|x|y|z|rx|ry|rz  objmove|id|x|y|z|speed  pickup|model|type|x|y|z  label|text|x|y|z
 //   cp|x|y|z|size  rcp|type|x|y|z|nx|ny|nz|size  cpoff  gz|minx|miny|maxx|maxy  icon|id|x|y|z|type
 //   actor|skin|x|y|z|angle  explode|x|y|z|type|radius  time|h  weather|w  money|n  wanted|n
 //   anim|lib|name  clranim  special|action  campos|x|y|z|lx|ly|lz  camback  spec|1/0  drunk|level  attach|model|bone
+//   animfor|lib|name|ms (an animation that moves the player, cleared after ms: "[cov] anim-end pos=...")
 //   menu  hidemenu  forceclass  sound|id  gravity|g  control|0/1  rcon|command  spawnp (SpawnPlayer)  freezeonspawn|0/1
 //   (control off in OnPlayerSpawn, as login scripts do)
 //   Objects (tools/e2e/samp/objects.cmds): objscene (a small mapping with materials, a moving and turning object,
 //   an object on the player and one on a bone, a removed house)  objscene2 (moves, stops, rotations, a deletion)
 //   objwhere (every scene object's position)  rmbuild|model|x|y|z|radius
+//   track|ms (the "where" line every ms besides the once a second one; 0 stops it)
 //   NPCs (open.mp NPC component; remote players for the client):
 //   npc|name|x|y|z|skin|weapon  npcmove|id|x|y|z  npcfollow|id  npcaim|id|shoot  npcstop|id  npcmelee|id
 //   npcanim|id|lib|name  npcveh|id|vehid|seat  npcenter|id|vehid|seat  npckill|id  npcdel|id  clearnpcs  clearvehs (all but the train)
@@ -36,6 +38,7 @@ new gObj[8] = { INVALID_OBJECT_ID, ... };
 // The local player's last polled GetPlayerKeys (keys, up/down, left/right): the arrow keys raise no key-change event.
 new gKeys[3];
 new bool:gFreezeOnSpawn = false;
+new gTrack = 0;
 
 // Built with FILTERSCRIPT=1 it is a filterscript beside another gamemode (the soak runs of soak.sh): the command
 // channel and the "[cov]" lines without the classes, the train and the class-selection camera.
@@ -150,6 +153,17 @@ public OnPlayerKeyStateChange(playerid, KEY:newkeys, KEY:oldkeys)
     return 1;
 }
 
+forward CovAnimEnd();
+public CovAnimEnd()
+{
+    if (gLocal == INVALID_PLAYER_ID) return 1;
+    new Float:x, Float:y, Float:z;
+    ClearAnimations(gLocal, SYNC_ALL);
+    GetPlayerPos(gLocal, x, y, z);
+    printf("[cov] anim-end pos=%.2f,%.2f,%.2f", x, y, z);
+    return 1;
+}
+
 forward CovState();
 public CovState()
 {
@@ -247,6 +261,12 @@ Run(seq, const line[])
     else if (!strcmp(cmd, "vhp")) SetVehicleHealth(in(line, 1), fl(line, 2));
     else if (!strcmp(cmd, "vdel")) DestroyVehicle(in(line, 1));
     else if (!strcmp(cmd, "obj")) printf("[cov] %d obj %d", seq, CreateObject(in(line, 1), fl(line, 2), fl(line, 3), fl(line, 4), 0.0, 0.0, 0.0));
+    else if (!strcmp(cmd, "objr")) printf("[cov] %d obj %d", seq, CreateObject(in(line, 1), fl(line, 2), fl(line, 3), fl(line, 4), fl(line, 5), fl(line, 6), fl(line, 7)));
+    else if (!strcmp(cmd, "track"))
+    {
+        if (gTrack) KillTimer(gTrack);
+        gTrack = in(line, 1) > 0 ? SetTimer("CovState", in(line, 1), true) : 0;
+    }
     else if (!strcmp(cmd, "objmove")) MoveObject(in(line, 1), fl(line, 2), fl(line, 3), fl(line, 4), fl(line, 5));
     else if (!strcmp(cmd, "pickup")) printf("[cov] %d pickup %d", seq, CreatePickup(in(line, 1), in(line, 2), fl(line, 3), fl(line, 4), fl(line, 5)));
     else if (!strcmp(cmd, "label")) { field(line, 1, a); Create3DTextLabel(a, 0x00FF00FF, fl(line, 2), fl(line, 3), fl(line, 4), 50.0, 0); }
@@ -274,6 +294,13 @@ Run(seq, const line[])
     else if (!strcmp(cmd, "money")) GivePlayerMoney(p, in(line, 1));
     else if (!strcmp(cmd, "wanted")) SetPlayerWantedLevel(p, in(line, 1));
     else if (!strcmp(cmd, "anim")) { field(line, 1, a); field(line, 2, b); ApplyAnimation(p, a, b, 4.1, true, false, false, false, 0, SYNC_ALL); }
+    else if (!strcmp(cmd, "animfor"))
+    {
+        field(line, 1, a);
+        field(line, 2, b);
+        ApplyAnimation(p, a, b, 4.1, true, true, true, false, 0, SYNC_ALL);
+        SetTimer("CovAnimEnd", in(line, 3), false);
+    }
     else if (!strcmp(cmd, "clranim")) ClearAnimations(p, SYNC_ALL);
     else if (!strcmp(cmd, "special")) SetPlayerSpecialAction(p, SPECIAL_ACTION:in(line, 1));
     else if (!strcmp(cmd, "campos")) { SetPlayerCameraPos(p, fl(line, 1), fl(line, 2), fl(line, 3)); SetPlayerCameraLookAt(p, fl(line, 4), fl(line, 5), fl(line, 6)); }
