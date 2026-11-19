@@ -23,7 +23,7 @@ pub(super) struct HostedVehicle {
 }
 
 impl HostedVehicle {
-    fn new(model: u32) -> Self {
+    pub(super) fn new(model: u32) -> Self {
         Self { model, engine: -1, lights: -1, ..Self::default() }
     }
 }
@@ -38,6 +38,9 @@ impl HostedClient {
         match rpc {
             V::StreamInVehicle(v) => self.stream_in_vehicle(&v, game),
             V::StreamOutVehicle(v) => {
+                if self.stream_out_train(v.vehicle_id, game) {
+                    return;
+                }
                 if let Some(r) = self.vehicles.remove(&v.vehicle_id) {
                     for cab in self.cabs_of(v.vehicle_id) {
                         self.detach_trailer(cab, game);
@@ -140,14 +143,16 @@ impl HostedClient {
         if s.vehicle_id >= vm::MAX_VEHICLES || !(vm::MODEL_MIN..=vm::MODEL_MAX).contains(&s.model) {
             return;
         }
-        if let Some(old) = self.vehicles.remove(&s.vehicle_id) {
+        if self.vehicles.contains_key(&s.vehicle_id) {
             self.debug_line(&format!("Warning: vehicle {} was not deleted", s.vehicle_id));
-            report(self, "destroy_vehicle", game.destroy_vehicle(old));
+            if !self.stream_out_train(s.vehicle_id, game)
+                && let Some(old) = self.vehicles.remove(&s.vehicle_id)
+            {
+                report(self, "destroy_vehicle", game.destroy_vehicle(old));
+            }
         }
-        if vm::is_rail(s.model) {
-            // samp creates trains as mission trains, which the adapter has no way to create
-            self.note(format!("vehicle {} (model {}): trains are not created on this host", s.vehicle_id, s.model));
-            return;
+        if vm::train_type(s.model).is_some() {
+            return self.stream_in_train(s, game);
         }
         let model = ModelId(s.model as i32);
         report(self, "request_model", game.request_model(model));

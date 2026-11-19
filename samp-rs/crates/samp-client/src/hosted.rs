@@ -39,6 +39,8 @@ use sa_samp_api::peds::{AnimRequest, BoneId, PedTask};
 use sa_samp_api::world::LineFilter;
 use sa_samp_api::{AreaCode, GameAdapter, ModelId, PedRef, Vec3, VehicleRef, WeaponType};
 
+mod death;
+mod trains;
 mod vehicles;
 
 /// Where a hosted client's lines go (the host's log).
@@ -108,6 +110,10 @@ pub struct HostedClient {
     pub ui: UiHost,
     /// The server's objects and the buildings it removed.
     objects: HostedObjects,
+    /// The local player's death and respawn.
+    life: death::LocalLife,
+    /// The server's trains.
+    trains: trains::Trains,
 }
 
 /// The keys class selection polls (Windows virtual-key codes): left, right, and either Shift key (samp asks for
@@ -160,6 +166,8 @@ impl HostedClient {
             world: ServerWorld::default(),
             ui: UiHost::new(None),
             objects: HostedObjects::default(),
+            life: death::LocalLife::default(),
+            trains: trains::Trains::default(),
         }
     }
 
@@ -217,6 +225,8 @@ impl HostedClient {
             self.connecting_scene(game);
         } else if self.class_sel.is_active() {
             self.class_selection_tick(game, now);
+        } else if self.alive_or_dead() {
+            self.death_tick(game, now);
         }
         self.ui.core.class_selection = self.class_sel.is_active();
         self.ui_events();
@@ -393,6 +403,7 @@ impl HostedClient {
 
     /// The pools samp deletes and recreates on a reset: vehicles, the server's objects, then the world's records.
     fn clear_server_entities(&mut self, game: &mut dyn GameAdapter) {
+        self.clear_trains(game);
         for (_, v) in std::mem::take(&mut self.vehicles) {
             report(self, "destroy_vehicle", game.destroy_vehicle(v));
         }
@@ -462,13 +473,14 @@ impl HostedClient {
                 ));
                 if r.selectable != 0 {
                     // samp: the spawn info is stored, the ped loses its weapons and shows the class skin.
-                    self.spawn = Some(r.spawn);
+                    self.store_spawn_info(r.spawn);
                     report(self, "clear_weapons", game.clear_weapons(me));
                     self.set_skin(game, r.spawn.skin as i32);
                 }
                 self.class_sel.on_class_response(r.selectable != 0);
             }
-            P::SetSpawnInfo(s) => self.spawn = Some(s.spawn),
+            P::SetSpawnInfo(s) => self.store_spawn_info(s.spawn),
+            P::ForcePlayerClassSelection(_) => self.force_class_selection(),
             P::PlayerRequestSpawnResponse(r) => {
                 self.note(format!("spawn response {}", r.response));
                 if self.class_sel.on_spawn_response(r.response) {
@@ -841,11 +853,7 @@ impl HostedClient {
             "request_collision",
             game.request_collision(Vec3::new(s.pos.x, s.pos.y, s.pos.z)),
         );
-        report(
-            self,
-            "set_restart_point",
-            game.set_restart_point(Vec3::new(s.pos.x, s.pos.y, s.pos.z), s.rotation),
-        );
+        self.restart_at(game, Vec3::new(s.pos.x, s.pos.y, s.pos.z), s.rotation);
         report(self, "clear_weapons", game.clear_weapons(me));
         for (w, a) in s.weapons.iter().zip(s.ammo) {
             if *w > 0 && *w < 47 {
@@ -865,6 +873,7 @@ impl HostedClient {
         );
         self.set_skin(game, s.skin as i32);
         self.spawned = true;
+        self.life.dead = false;
         self.spawned_once = true;
         // The spawn ends class selection: its mode-0 request restores input only after 10 frames.
         self.ui.spawn_release = true;

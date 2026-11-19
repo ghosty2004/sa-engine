@@ -16,6 +16,7 @@ use samp_ui::keys::{Event, Vk};
 
 use super::core::{CursorRequest, Outgoing, UiCore, tick_ms};
 use super::inputlock::InputLock;
+use super::menuwork::{AdapterMenus, MenuWork};
 use super::render::{BubbleDraw, CursorReq, LabelDraw, TagDraw};
 use super::session::{PassInput, UiSession};
 use crate::netclient::NetClient;
@@ -68,6 +69,10 @@ pub struct UiHost {
     row_h: i32,
     /// The `WM_CHAR` a key-down of Backspace, Enter or Esc still owes ([`Self::window_event`]).
     pending_char: Option<u8>,
+    /// The GTA menu of the current server menu.
+    menus: MenuWork,
+    /// The text keys the current GTA menu registered.
+    menu_keys: Vec<&'static str>,
 }
 
 impl UiHost {
@@ -83,6 +88,8 @@ impl UiHost {
             mods: Mods::default(),
             row_h: 0,
             pending_char: None,
+            menus: MenuWork::default(),
+            menu_keys: Vec::new(),
         }
     }
 
@@ -111,6 +118,8 @@ impl UiHost {
             self.lock.request_mode2();
         }
         self.session.class_selection_frame(core);
+        let pad = game.pad().0;
+        self.menus.frame(core, &mut AdapterMenus { game, keys: &mut self.menu_keys }, (pad.face[2] != 0, pad.face[1] != 0));
         let (rebuild, send) = core.scoreboard.frame(u64::from(tick_ms()), core.remote_ids().count());
         if rebuild {
             core.rebuild_scoreboard();

@@ -224,9 +224,33 @@ impl Text2d for ModGame {
 }
 
 impl Menus for ModGame {
-    fn show_menu(&mut self, _menu: &MenuSpec) -> GameResult<MenuRef> { Err(GameError::Unsupported("Menus::show_menu")) }
-    fn menu_selection(&self, _menu: MenuRef) -> GameResult<i32> { Err(GameError::Unsupported("Menus::menu_selection")) }
-    fn delete_menu(&mut self, _menu: MenuRef) -> GameResult<()> { Err(GameError::Unsupported("Menus::delete_menu")) }
+    fn set_text_entry(&mut self, key: &str, text: &[u8]) -> GameResult<()> {
+        sa_mod::gxt::set(key, text).map_err(failed("set_text_entry"))
+    }
+    fn remove_text_entry(&mut self, key: &str) -> GameResult<()> {
+        sa_mod::gxt::remove(key).map_err(failed("remove_text_entry"))
+    }
+    fn create_menu(&mut self, m: &MenuSpec<'_>) -> GameResult<MenuRef> {
+        use sa_mod::menus::{BACKGROUND, INTERACTIVE};
+        let flags = if m.interactive { INTERACTIVE } else { 0 } | if m.background { BACKGROUND } else { 0 };
+        sa_mod::menus::create(m.title, m.pos.x, m.pos.y, m.width, m.columns, flags, i32::from(m.alignment))
+            .map_err(failed("create_menu"))
+    }
+    fn set_menu_column(&mut self, menu: MenuRef, column: u8, header: &str, rows: &[&str]) -> GameResult<()> {
+        sa_mod::menus::set_column(menu, column, header, rows).map_err(failed("set_menu_column"))
+    }
+    fn set_menu_column_width(&mut self, menu: MenuRef, column: u8, width: u16) -> GameResult<()> {
+        sa_mod::menus::set_column_width(menu, column, width).map_err(failed("set_menu_column_width"))
+    }
+    fn set_menu_row_enabled(&mut self, menu: MenuRef, row: u8, on: bool) -> GameResult<()> {
+        sa_mod::menus::set_row_enabled(menu, row, on).map_err(failed("set_menu_row_enabled"))
+    }
+    fn menu_selection(&self, menu: MenuRef) -> GameResult<i32> {
+        sa_mod::menus::selected_row(menu).map_err(failed("menu_selection"))
+    }
+    fn delete_menu(&mut self, menu: MenuRef) -> GameResult<()> {
+        sa_mod::menus::destroy(menu).map_err(failed("delete_menu"))
+    }
 }
 
 impl Input for ModGame {
@@ -543,6 +567,9 @@ impl Peds for ModGame {
     fn peds(&self) -> Vec<PedRef> {
         state::peds()
     }
+    fn ped_damage(&self, ped: PedRef) -> GameResult<PedDamage> {
+        sa_mod::damage::last(ped).ok_or(GameError::InvalidHandle)
+    }
 }
 
 impl Overlay for ModGame {
@@ -743,6 +770,15 @@ impl Vehicles for ModGame {
     fn vehicles(&self) -> Vec<VehicleRef> {
         state::vehicles()
     }
+    fn create_train(&mut self, kind: i32, pos: Vec3, clockwise: bool) -> GameResult<VehicleRef> {
+        sa_mod::trains::create(kind, pos, clockwise).map_err(failed("create_train"))
+    }
+    fn destroy_train(&mut self, first: VehicleRef) -> GameResult<()> {
+        sa_mod::trains::destroy(first).map_err(failed("destroy_train"))
+    }
+    fn train_carriages(&self, first: VehicleRef) -> GameResult<Vec<VehicleRef>> {
+        sa_mod::trains::carriages(first).map_err(failed("train_carriages"))
+    }
 }
 
 impl WorldState for ModGame {
@@ -804,6 +840,10 @@ impl WorldState for ModGame {
     fn ground_z(&self, pos: Vec3) -> f32 {
         let f = Arg::Float;
         script::run(0x02CE, &[f(pos.x), f(pos.y), f(pos.z), Arg::Out]).map_or(0.0, |o| f32::from_bits(o.outputs[0]))
+    }
+    fn override_restart(&mut self, pos: Vec3, heading_deg: f32) -> GameResult<()> {
+        let f = Arg::Float;
+        cmd(0x016E, &[f(pos.x), f(pos.y), f(pos.z), f(heading_deg)])
     }
     fn line_of_sight(&self, _from: Vec3, _to: Vec3, _filter: LineFilter) -> Option<LineHit> { None }
     fn line_clear(&self, from: Vec3, to: Vec3, f: LineFilter) -> bool {
