@@ -1,4 +1,4 @@
-# Mod API reference (API 1.9)
+# Mod API reference (API 1.10)
 
 The interface is defined once, in `crates/sa-mod-api/src/lib.rs` (`for_each_import!`, `for_each_export!`); this page
 explains it. The Rust SDK (`crates/sa-mod`) wraps every function; other languages import the functions from module
@@ -490,3 +490,34 @@ models a mod requested when it disables the mod. Models without a model info are
 
 Nothing of level 9 runs without a mod that asks for it: `CFileLoader::LoadObjectInstance` is observed only after a
 removal, `CObject::Render` only while an object has material slots.
+
+## Level 10: the game's limits (1.10)
+
+`set_game_limit(limit, value)` (`state = "write"`; SDK `sa_mod::game::set_limit`) raises one of the game's limits
+before the game sizes it: only in `sa_init` and `sa_settings` (WRONG_PHASE later); a disabled mod's limits stay, the
+game was sized with them. The numbers are `sa_types::GameLimit`'s order:
+
+| limit | original | at most | sized in |
+|---|---:|---:|---|
+| 0 `PtrNodesSingle` | 70000 | 1048576 | `CPools::Initialise` |
+| 1 `PtrNodesDouble` | 3200 | 1048576 | `CPools::Initialise` |
+| 2 `EntryInfoNodes` | 500 | 1048576 | `CPools::Initialise` |
+| 3 `Peds` | 140 | 32767 | `CPools::Initialise` |
+| 4 `Vehicles` | 110 | 32767 | `CPools::Initialise` |
+| 5 `Buildings` | 13000 | 32767 | `CPools::Initialise` |
+| 6 `Objects` | 350 | 32767 | `CPools::Initialise` |
+| 7 `Dummies` | 2500 | 32767 | `CPools::Initialise` |
+| 8 `ColModels` | 10150 | 32767 | `CPools::Initialise` |
+| 9 `Tasks` | 500 | 32767 | `CPools::Initialise` |
+| 10 `Events` | 200 | 32767 | `CPools::Initialise` |
+| 11 `PedIntelligence` | 140 | 32767 | `CPools::Initialise` |
+| 12 `Matrices` | 900 | 65536 | `CPlaceable::InitMatrixArray` |
+| 13 `TextureDictionaries` | 5000 | 32767 | `CTxdStore::Initialise` |
+| 14 `StreamingMemory` (bytes) | 0x3200000 | 0x40000000 | `CStreaming::Init2` |
+
+A value below the original's or above the maximum is BAD_ARG. The pools come from the game heap (natively the fixed
+896 MiB region at 0x18000000, docs/arch/platform.md §21; in the browser linear memory): samp's sizes add about 6 MiB of
+pool slots. The streaming budget is how much model data the game keeps loaded before it frees some, so a large one
+fills the same heap. Some slot indices are 16-bit in the game (collision models, texture dictionaries), so the pools
+stay below 0x8000. Ports read a limit where the original sizes from its constant (`sa_core::options::limit`); with
+nothing raised the game is the original (verify-all unchanged).

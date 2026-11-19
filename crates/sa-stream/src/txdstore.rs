@@ -419,8 +419,8 @@ pub fn remove_txd(i: i32) {
 }
 
 /// `CTxdStore::Initialise()` (0x731F20, cdecl): creates the pool when null (`operator new(0x14)`,
-/// `CPool<TxdDef>(5000, "TexDictionary")`), adds four `"*"` slots into `defaultTxds` (AddTxdSlot
-/// inlined), installs the RW texture callbacks.
+/// `CPool<TxdDef>(5000, "TexDictionary")`, or the size a host raised it to), adds four `"*"` slots into
+/// `defaultTxds` (AddTxdSlot inlined), installs the RW texture callbacks.
 #[hook(addr = 0x731F20, conv = cdecl, name = "CTxdStore::Initialise", expect = "6A FF 68 9B 8D 84 00")]
 pub fn initialise() {
     if TXD_POOL.get().is_null() {
@@ -428,7 +428,7 @@ pub fn initialise() {
         let p = if m.is_null() {
             GPtr::NULL
         } else {
-            txd_pool_ctor(m, 5000, image(NAME_TEX_DICTIONARY))
+            txd_pool_ctor(m, sa_core::options::limit(sa_core::options::Limit::TextureDictionaries) as i32, image(NAME_TEX_DICTIONARY))
         };
         TXD_POOL.set(p);
     }

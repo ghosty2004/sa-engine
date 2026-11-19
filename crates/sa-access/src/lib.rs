@@ -35,6 +35,7 @@ mod markers;
 pub mod fake;
 pub mod objects;
 pub mod script;
+pub mod setup;
 mod view;
 mod world;
 

@@ -4125,7 +4125,7 @@ pub fn init2() {
     bufs.write(b0);
     STREAMING_BUFFER_SIZE.set(((STREAMING_BUFFER_SIZE.get() as i32) / 2) as u32);
     bufs.wrapping_index(1).write(b0.byte_add((STREAMING_BUFFER_SIZE.get() as i32).wrapping_mul(0x800) as isize));
-    MEMORY_AVAILABLE.set(0x0320_0000);
+    MEMORY_AVAILABLE.set(sa_core::options::limit(sa_core::options::Limit::StreamingMemory));
     DESIRED_NUM_VEHICLES_LOADED.set(0x16);
     // ms_rwObjectInstances.Init(1000)
     let l = rw_instances();

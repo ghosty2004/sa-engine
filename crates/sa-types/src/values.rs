@@ -311,3 +311,60 @@ impl GameOption {
         GameOption::StartScreens,
     ];
 }
+
+/// A limit of the game a host may raise before the game sizes it (all the original's by default). The mod API's
+/// limit numbers are the declaration order ([`GameLimit::ALL`]).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum GameLimit {
+    /// Single-link list nodes (the entity lists of the world sectors), 70000.
+    PtrNodesSingle,
+    /// Double-link list nodes, 3200.
+    PtrNodesDouble,
+    /// Entry info nodes (an entity's sector entries), 500.
+    EntryInfoNodes,
+    /// Peds, 140.
+    Peds,
+    /// Vehicles, 110.
+    Vehicles,
+    /// Buildings, 13000.
+    Buildings,
+    /// Objects, 350.
+    Objects,
+    /// Dummies, 2500.
+    Dummies,
+    /// Collision models, 10150.
+    ColModels,
+    /// Ped tasks, 500.
+    Tasks,
+    /// Ped events, 200.
+    Events,
+    /// Ped intelligences (one per ped), 140.
+    PedIntelligence,
+    /// The matrices entities borrow, 900.
+    Matrices,
+    /// Texture dictionaries, 5000.
+    TextureDictionaries,
+    /// The streaming memory budget in bytes, 50 MiB.
+    StreamingMemory,
+}
+
+impl GameLimit {
+    /// Every limit, in declaration order.
+    pub const ALL: [GameLimit; 15] = [
+        GameLimit::PtrNodesSingle,
+        GameLimit::PtrNodesDouble,
+        GameLimit::EntryInfoNodes,
+        GameLimit::Peds,
+        GameLimit::Vehicles,
+        GameLimit::Buildings,
+        GameLimit::Objects,
+        GameLimit::Dummies,
+        GameLimit::ColModels,
+        GameLimit::Tasks,
+        GameLimit::Events,
+        GameLimit::PedIntelligence,
+        GameLimit::Matrices,
+        GameLimit::TextureDictionaries,
+        GameLimit::StreamingMemory,
+    ];
+}

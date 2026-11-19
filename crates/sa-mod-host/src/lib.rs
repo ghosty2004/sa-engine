@@ -279,6 +279,7 @@ impl Host {
             storage,
         };
         let mut ctx = self.ctx(&manifest, &env, 0);
+        ctx.boot = true;
         let init_fuel = manifest.limits.fuel.saturating_mul(INIT_FUEL_FACTOR);
         let v = instance.call(EXPORT_API_VERSION, &[], init_fuel, &mut ctx).map_err(|e| format!("mod {id}: {e}"))?;
         // a mod rebuilt with a newer SDK may keep the older minor version its manifest asks for
@@ -439,6 +440,7 @@ impl Host {
         let mut ctx = self.ctx(&m.manifest, &m.env, m.hooks.len());
         ctx.screen = screen;
         ctx.overlay = export == EXPORT_OVERLAY;
+        ctx.boot = export == EXPORT_SETTINGS;
         prep(&mut ctx);
         let m = &mut self.mods[i];
         ctx.owned = std::mem::take(&mut m.owned);

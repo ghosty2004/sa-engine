@@ -54,6 +54,51 @@ impl Entry {
     }
 }
 
+/// The pool and table sizes samp sets (gta-patches.md, "4.1 Pool capacities"); the table's entries write them.
+pub mod limits {
+    /// `CPools::ms_pPtrNodeSingleLinkPool`.
+    pub const PTR_NODES_SINGLE: u32 = 100_000;
+    /// `CPools::ms_pPtrNodeDoubleLinkPool`.
+    pub const PTR_NODES_DOUBLE: u32 = 8000;
+    /// `CPools::ms_pEntryInfoNodePool`.
+    pub const ENTRY_INFO_NODES: u32 = 5000;
+    /// `CPools::ms_pPedPool` and `ms_pPedIntelligencePool`.
+    pub const PEDS: u32 = 240;
+    /// `CPools::ms_pTaskPool`.
+    pub const TASKS: u32 = 1524;
+    /// `CPools::ms_pEventPool`.
+    pub const EVENTS: u32 = 456;
+    /// `CPlaceable::InitMatrixArray`'s matrices.
+    pub const MATRICES: u32 = 6000;
+    /// `CPools::ms_pVehiclePool`.
+    pub const VEHICLES: u32 = 710;
+    /// `CPools::ms_pBuildingPool`.
+    pub const BUILDINGS: u32 = 20_000;
+    /// `CPools::ms_pDummyPool`.
+    pub const DUMMIES: u32 = 4000;
+    /// `CPools::ms_pColModelPool`.
+    pub const COL_MODELS: u32 = 32_511;
+    /// `CTxdStore::ms_pTxdPool`.
+    pub const TEXTURE_DICTIONARIES: u32 = 20_000;
+
+    /// Little-endian bytes of `v`.
+    pub(super) const fn le(v: u32) -> [u8; 4] {
+        v.to_le_bytes()
+    }
+
+    /// `push v`.
+    pub(super) const fn push(v: u32) -> [u8; 5] {
+        let b = v.to_le_bytes();
+        [0x68, b[0], b[1], b[2], b[3]]
+    }
+
+    /// `push 0; push v`.
+    pub(super) const fn push_null_push(v: u32) -> [u8; 7] {
+        let b = v.to_le_bytes();
+        [0x6a, 0x00, 0x68, b[0], b[1], b[2], b[3]]
+    }
+}
+
 const TIMER_QPC_BYPASS: [u8; 29] = {
     let mut b = [0x90u8; 29];
     b[0] = 0x33; // xor eax,eax
@@ -231,7 +276,7 @@ pub const TABLE: &[Entry] = &[
     Entry {
         addr: 0x550F46,
         phase: Phase::Main,
-        write: Write::Bytes(&[0xa0, 0x86, 0x01, 0x00]),
+        write: Write::Bytes(&limits::le(limits::PTR_NODES_SINGLE)),
         original: &[0x70, 0x11, 0x01, 0x00],
         csv_row: 110,
         what: "CPools::Initialise: PtrNode Single 100000",
@@ -239,7 +284,7 @@ pub const TABLE: &[Entry] = &[
     Entry {
         addr: 0x550F82,
         phase: Phase::Main,
-        write: Write::Bytes(&[0x40, 0x1f, 0x00, 0x00]),
+        write: Write::Bytes(&limits::le(limits::PTR_NODES_DOUBLE)),
         original: &[0x80, 0x0c, 0x00, 0x00],
         csv_row: 111,
         what: "CPools::Initialise: PtrNode Double 8000",
@@ -247,7 +292,7 @@ pub const TABLE: &[Entry] = &[
     Entry {
         addr: 0x550FBA,
         phase: Phase::Main,
-        write: Write::Bytes(&[0x88, 0x13, 0x00, 0x00]),
+        write: Write::Bytes(&limits::le(limits::ENTRY_INFO_NODES)),
         original: &[0xf4, 0x01, 0x00, 0x00],
         csv_row: 112,
         what: "CPools::Initialise: EntryInfoNode 5000",
@@ -255,7 +300,8 @@ pub const TABLE: &[Entry] = &[
     Entry {
         addr: 0x550FF2,
         phase: Phase::Main,
-        write: Write::Bytes(&[0xF0]),
+        // the low byte of the 32-bit immediate (140 -> 240)
+        write: Write::Bytes(&[limits::PEDS as u8]),
         original: &[0x8c],
         csv_row: 114,
         what: "CPools::Initialise: Peds 240",
@@ -263,7 +309,7 @@ pub const TABLE: &[Entry] = &[
     Entry {
         addr: 0x551283,
         phase: Phase::Main,
-        write: Write::Bytes(&[0xF0]),
+        write: Write::Bytes(&[limits::PEDS as u8]),
         original: &[0x8c],
         csv_row: 115,
         what: "CPools::Initialise: PedIntelligence 240",
@@ -271,7 +317,8 @@ pub const TABLE: &[Entry] = &[
     Entry {
         addr: 0x551140,
         phase: Phase::Main,
-        write: Write::Bytes(&[0x05]),
+        // the second byte of the immediate (500 -> 1524)
+        write: Write::Bytes(&[(limits::TASKS >> 8) as u8]),
         original: &[0x01],
         csv_row: 116,
         what: "CPools::Initialise: Task 1524",
@@ -279,7 +326,8 @@ pub const TABLE: &[Entry] = &[
     Entry {
         addr: 0x551178,
         phase: Phase::Main,
-        write: Write::Bytes(&[0x01]),
+        // the second byte of the immediate (200 -> 456)
+        write: Write::Bytes(&[(limits::EVENTS >> 8) as u8]),
         original: &[0x00],
         csv_row: 117,
         what: "CPools::Initialise: Event 456",
@@ -287,7 +335,7 @@ pub const TABLE: &[Entry] = &[
     Entry {
         addr: 0x54F3A1,
         phase: Phase::Main,
-        write: Write::Bytes(&[0x70, 0x17, 0x00, 0x00]),
+        write: Write::Bytes(&limits::le(limits::MATRICES)),
         original: &[0x84, 0x03, 0x00, 0x00],
         csv_row: 118,
         what: "CPlaceable::InitMatrixArray: 6000 matrices",
@@ -401,7 +449,7 @@ pub const TABLE: &[Entry] = &[
     Entry {
         addr: 0x551024,
         phase: Phase::Main,
-        write: Write::Bytes(&[0x6a, 0x00, 0x68, 0xc6, 0x02, 0x00, 0x00]),
+        write: Write::Bytes(&limits::push_null_push(limits::VEHICLES)),
         original: &[0x68, 0xdc, 0x3c, 0x86, 0x00, 0x6a, 0x6e],
         csv_row: 107,
         what: "CPools::Initialise: vehicle pool 710",
@@ -410,7 +458,7 @@ pub const TABLE: &[Entry] = &[
     Entry {
         addr: 0x55105F,
         phase: Phase::Main,
-        write: Write::Bytes(&[0x20, 0x4e, 0x00, 0x00]),
+        write: Write::Bytes(&limits::le(limits::BUILDINGS)),
         original: &[0xc8, 0x32, 0x00, 0x00],
         csv_row: 108,
         what: "CPools::Initialise: building pool 20000",
@@ -419,7 +467,7 @@ pub const TABLE: &[Entry] = &[
     Entry {
         addr: 0x5510CF,
         phase: Phase::Main,
-        write: Write::Bytes(&[0xa0, 0x0f, 0x00, 0x00]),
+        write: Write::Bytes(&limits::le(limits::DUMMIES)),
         original: &[0xc4, 0x09, 0x00, 0x00],
         csv_row: 109,
         what: "CPools::Initialise: dummy pool 4000",
@@ -428,7 +476,7 @@ pub const TABLE: &[Entry] = &[
     Entry {
         addr: 0x551106,
         phase: Phase::Main,
-        write: Write::Bytes(&[0x68, 0xff, 0x7e, 0x00, 0x00]),
+        write: Write::Bytes(&limits::push(limits::COL_MODELS)),
         original: &[0x68, 0xa6, 0x27, 0x00, 0x00],
         csv_row: 119,
         what: "CPools::Initialise: col-model pool 32511",
@@ -437,7 +485,7 @@ pub const TABLE: &[Entry] = &[
     Entry {
         addr: 0x731F60,
         phase: Phase::Early,
-        write: Write::Bytes(&[0x20, 0x4e, 0x00, 0x00]),
+        write: Write::Bytes(&limits::le(limits::TEXTURE_DICTIONARIES)),
         original: &[0x88, 0x13, 0x00, 0x00],
         csv_row: 131,
         what: "CTxdStore::Initialise: txd pool 20000",

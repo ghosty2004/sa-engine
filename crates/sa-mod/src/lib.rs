@@ -960,6 +960,15 @@ pub mod game {
         check(unsafe { ffi::set_game_option(sa_mod_api::option::number(option), i32::from(on)) }).map(drop)
     }
 
+    pub use sa_mod_api::sa_types::GameLimit;
+
+    /// Raises one of the game's limits to `value` (from the original's value up to the limit's maximum). Only in
+    /// `init` and `settings`, before the game sizes them.
+    pub fn set_limit(limit: GameLimit, value: u32) -> Result<(), Error> {
+        let v = i32::try_from(value).map_err(|_| Error::BadArg)?;
+        check(unsafe { ffi::set_game_limit(sa_mod_api::limit::number(limit), v) }).map(drop)
+    }
+
     /// Shows `text` as the game's big message in `style` (0..=6) for `time_ms`.
     pub fn big_message(text: &str, time_ms: u32, style: u8) -> Result<(), Error> {
         check(unsafe {

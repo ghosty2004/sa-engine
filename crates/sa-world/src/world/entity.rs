@@ -945,10 +945,10 @@ pub fn placeable_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0x14, 0xB74240);
 }
 
-/// `CPlaceable::InitMatrixArray` (0x54F3A0): `gMatrixList.Init(900)`.
+/// `CPlaceable::InitMatrixArray` (0x54F3A0): `gMatrixList.Init(900)` (or the count a host raised it to).
 #[hook(addr = 0x54F3A0, conv = cdecl, name = "CPlaceable::InitMatrixArray", expect = "68 84 03 00 00")]
 pub fn init_matrix_array() {
-    matrix_link_list_init(g(MATRIX_STATIC_HEAD), 900);
+    matrix_link_list_init(g(MATRIX_STATIC_HEAD), sa_core::options::limit(sa_core::options::Limit::Matrices) as i32);
 }
 
 /// `CPlaceable::AllocateMatrix` (0x54F560): takes the first free link (moved after the head at

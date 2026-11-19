@@ -708,26 +708,28 @@ pub fn ctor_ipl_def(p: PoolPtr<IplDefSlot>, size: i32, _name: GPtr<u8>) -> PoolP
 // ------------------------------------------------------------------------------- CPools ---------
 
 /// `CPools::Initialise` (0x550F10): the 17 pools in this order, each `new(0x14)` + constructor (null
-/// stored when `new` fails). Sizes and name strings (`.rdata`) as pushed by the original.
+/// stored when `new` fails). Sizes and name strings (`.rdata`) as pushed by the original; the sizes a host may
+/// raise come from [`crate::options::limit`].
 #[hook(addr = 0x550F10, conv = cdecl, name = "CPools::Initialise", expect = "6A FF 68 0B CC 83 00")]
 pub fn initialise() {
+    use crate::options::{Limit, limit};
     use pool::{OBJECT_POOL, PED_POOL, VEHICLE_POOL};
-    init_pool(&PTR_NODE_SINGLE_POOL, call::ctor_ptr_node_single, 70000, 0x863D10);
-    init_pool(&PTR_NODE_DOUBLE_POOL, call::ctor_ptr_node_double, 3200, 0x863D00);
-    init_pool(&ENTRY_INFO_NODE_POOL, call::ctor_entry_info_node, 500, 0x863CF0);
-    init_pool(&PED_POOL, call::ctor_ped, 140, 0x863CE8);
-    init_pool(&VEHICLE_POOL, call::ctor_vehicle, 110, 0x863CDC);
-    init_pool(&BUILDING_POOL, call::ctor_building, 13000, 0x863CD0);
-    init_pool(&OBJECT_POOL, call::ctor_object, 350, 0x863CC8);
-    init_pool(&DUMMY_POOL, call::ctor_dummy, 2500, 0x863CC0);
-    init_pool(&COL_MODEL_POOL, call::ctor_col_model, 10150, 0x863CB4);
-    init_pool(&TASK_POOL, call::ctor_task, 500, 0x863CAC);
-    init_pool(&EVENT_POOL, call::ctor_event, 200, 0x863CA4);
+    init_pool(&PTR_NODE_SINGLE_POOL, call::ctor_ptr_node_single, limit(Limit::PtrNodesSingle) as i32, 0x863D10);
+    init_pool(&PTR_NODE_DOUBLE_POOL, call::ctor_ptr_node_double, limit(Limit::PtrNodesDouble) as i32, 0x863D00);
+    init_pool(&ENTRY_INFO_NODE_POOL, call::ctor_entry_info_node, limit(Limit::EntryInfoNodes) as i32, 0x863CF0);
+    init_pool(&PED_POOL, call::ctor_ped, limit(Limit::Peds) as i32, 0x863CE8);
+    init_pool(&VEHICLE_POOL, call::ctor_vehicle, limit(Limit::Vehicles) as i32, 0x863CDC);
+    init_pool(&BUILDING_POOL, call::ctor_building, limit(Limit::Buildings) as i32, 0x863CD0);
+    init_pool(&OBJECT_POOL, call::ctor_object, limit(Limit::Objects) as i32, 0x863CC8);
+    init_pool(&DUMMY_POOL, call::ctor_dummy, limit(Limit::Dummies) as i32, 0x863CC0);
+    init_pool(&COL_MODEL_POOL, call::ctor_col_model, limit(Limit::ColModels) as i32, 0x863CB4);
+    init_pool(&TASK_POOL, call::ctor_task, limit(Limit::Tasks) as i32, 0x863CAC);
+    init_pool(&EVENT_POOL, call::ctor_event, limit(Limit::Events) as i32, 0x863CA4);
     init_pool(&POINT_ROUTE_POOL, call::ctor_point_route, 64, 0x863C98);
     init_pool(&PATROL_ROUTE_POOL, call::ctor_patrol_route, 32, 0x863C8C);
     init_pool(&NODE_ROUTE_POOL, call::ctor_node_route, 64, 0x863C80);
     init_pool(&TASK_ALLOCATOR_POOL, call::ctor_task_allocator, 16, 0x863C70);
-    init_pool(&PED_INTELLIGENCE_POOL, call::ctor_ped_intelligence, 140, 0x863C60);
+    init_pool(&PED_INTELLIGENCE_POOL, call::ctor_ped_intelligence, limit(Limit::PedIntelligence) as i32, 0x863C60);
     init_pool(&PED_ATTRACTOR_POOL, call::ctor_ped_attractor, 64, 0x863C50);
 }
 

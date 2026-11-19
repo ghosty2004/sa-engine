@@ -21,6 +21,7 @@ mod assets;
 mod canvas;
 mod connect;
 mod game;
+mod setup;
 mod transport;
 
 use std::time::Duration;
@@ -309,6 +310,8 @@ impl Mod for Samp {
         ] {
             set_option(o, false).map_err(|e| format!("game option {o:?}: {e:?}"))?;
         }
+        // samp.saa's map, the server's vehicles and objects and the other players need samp's pool sizes
+        setup::raise_limits()?;
         if setting("auto_connect").is_some_and(|v| v == "1") {
             self.stage = Stage::Approval { server: self.screen.server.clone(), name: self.screen.name.clone() };
         }

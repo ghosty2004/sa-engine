@@ -218,6 +218,8 @@ pub struct CallCtx {
     pub screen: (u32, u32),
     /// True while the overlay phase runs (overlay drawing is valid).
     pub overlay: bool,
+    /// True in `sa_init` and `sa_settings`, before the game starts (its limits may be raised).
+    pub boot: bool,
     /// The display the platform reports.
     pub display: Rc<Display>,
     /// The mod's own folder (`None`: no file access).
@@ -430,6 +432,9 @@ pub fn dispatch(ctx: &mut CallCtx, mem: &mut dyn Mem, index: usize, args: &[Val]
         return Ok(r);
     }
     if let Some(r) = crate::objects::calls(ctx, mem, call) {
+        return Ok(r);
+    }
+    if let Some(r) = boot_setup(ctx, call) {
         return Ok(r);
     }
     if let Some(r) = services(ctx, mem, call) {
@@ -1067,6 +1072,26 @@ fn storage_key(mem: &dyn Mem, ptr: i32, len: i32) -> Option<String> {
     text(mem, ptr, len).filter(|k| storage::valid_key(k))
 }
 
+/// The calls that set the game up before it starts (raised limits): `None` for any other call. They are refused once
+/// the game runs, and a disabled mod's setup stays (the game was sized with it).
+fn boot_setup(ctx: &mut CallCtx, call: Call) -> Option<i32> {
+    let Call::set_game_limit { limit, value } = call else { return None };
+    let Some(l) = sa_mod_api::limit::from_number(limit) else { return Some(status::BAD_ARG) };
+    if !ctx.boot {
+        return Some(status::WRONG_PHASE);
+    }
+    let Ok(v) = u32::try_from(value) else { return Some(status::BAD_ARG) };
+    let Some(g) = ctx.game.clone() else { return Some(status::WRONG_PHASE) };
+    let r = g.0.borrow_mut().set_limit(l, v);
+    Some(match r {
+        Ok(()) => status::OK,
+        Err(e) => {
+            ctx.log_error(format!("set_game_limit: {e}"));
+            status::BAD_ARG
+        }
+    })
+}
+
 /// The calls that create or delete entities or run a script command: `None` for any other call.
 fn entities_and_scripts(ctx: &mut CallCtx, mem: &mut dyn Mem, call: Call) -> Option<i32> {
     let game = ctx.game.clone();
@@ -1696,6 +1721,24 @@ mod tests {
         assert_eq!(dispatch(&mut ctx, m, i("hook_value"), &[Val::I32(-1), Val::I32(8)]), Ok(0));
         assert_eq!(&m.0[8..12], &(-4i32).to_le_bytes());
         assert_eq!(dispatch(&mut ctx, m, i("hook_value"), &[Val::I32(1), Val::I32(8)]), Ok(status::NOT_FOUND));
+    }
+
+    #[test]
+    fn limits_only_before_the_game_starts() {
+        use sa_types::GameLimit;
+        let game = Game::new(sa_access::fake::game());
+        let m = &mut SliceMem(&mut []);
+        let permissions = Permissions { state: true, write: true, ..Default::default() };
+        let mut ctx = CallCtx { game: Some(game), permissions, ..Default::default() };
+        let i = import_index("set_game_limit").unwrap();
+        let limit = |l: GameLimit, v: i32| [Val::I32(sa_mod_api::limit::number(l)), Val::I32(v)];
+        assert_eq!(dispatch(&mut ctx, m, i, &limit(GameLimit::Vehicles, 710)), Ok(status::WRONG_PHASE));
+        ctx.boot = true;
+        assert_eq!(dispatch(&mut ctx, m, i, &limit(GameLimit::Vehicles, 100)), Ok(status::BAD_ARG));
+        assert_eq!(dispatch(&mut ctx, m, i, &[Val::I32(99), Val::I32(1)]), Ok(status::BAD_ARG));
+        assert_eq!(dispatch(&mut ctx, m, i, &limit(GameLimit::Vehicles, 0x8000)), Ok(status::BAD_ARG));
+        ctx.permissions.write = false;
+        assert_eq!(dispatch(&mut ctx, m, i, &limit(GameLimit::Vehicles, 710)), Ok(status::DENIED));
     }
 
     #[test]

@@ -34,7 +34,7 @@ pub const EXPORT_MEMORY: &str = "memory";
 /// The API's major version.
 pub const API_MAJOR: u16 = 1;
 /// The API's minor version.
-pub const API_MINOR: u16 = 9;
+pub const API_MINOR: u16 = 10;
 
 /// `major << 16 | minor`, the value of the `sa_api_version` export.
 pub const fn pack_version(major: u16, minor: u16) -> i32 {
@@ -1080,6 +1080,11 @@ macro_rules! for_each_import {
             /// and the ones the world streams in later are removed as they load. Returns the entities removed now. Not
             /// inside a hook.
             [Write] fn remove_buildings(model: i32, x: f32, y: f32, z: f32, radius: f32) -> i32;
+            /// (1.10) Raises the game's limit `limit` ([`limit`]: a pool's size, the matrices, the texture dictionaries,
+            /// the streaming budget) to `value`, from the original's value up to the limit's maximum
+            /// (`docs/mods/api.md`). The game sizes them as it starts: only in `sa_init` and `sa_settings`
+            /// (`WRONG_PHASE` later). Returns 0, `BAD_ARG` (no such limit, a value outside the range).
+            [Write] fn set_game_limit(limit: i32, value: i32) -> i32;
         }
     };
 }
@@ -1252,6 +1257,21 @@ pub mod option {
     /// The number of `o`.
     pub fn number(o: GameOption) -> i32 {
         GameOption::ALL.iter().position(|x| *x == o).map_or(-1, |i| i as i32)
+    }
+}
+
+/// The game's limits a mod may raise (`set_game_limit`): the numbers are [`sa_types::GameLimit::ALL`]'s order.
+pub mod limit {
+    use sa_types::GameLimit;
+
+    /// The limit numbered `n`.
+    pub fn from_number(n: i32) -> Option<GameLimit> {
+        usize::try_from(n).ok().and_then(|i| GameLimit::ALL.get(i).copied())
+    }
+
+    /// The number of `l`.
+    pub fn number(l: GameLimit) -> i32 {
+        GameLimit::ALL.iter().position(|x| *x == l).map_or(-1, |i| i as i32)
     }
 }
 
