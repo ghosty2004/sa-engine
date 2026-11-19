@@ -417,6 +417,7 @@ pub mod script {
         (0x03DE, "SET_PED_DENSITY_MULTIPLIER", "f"),
         (0x041E, "SET_RADIO_CHANNEL", "i"),
         (0x0430, "WARP_CHAR_INTO_CAR_AS_PASSENGER", "pvi"),
+        (0x0432, "GET_CHAR_IN_CAR_PASSENGER_SEAT", "vio"),
         (0x0446, "SET_CHAR_SUFFERS_CRITICAL_HITS", "pi"),
         (0x048F, "REMOVE_ALL_CHAR_WEAPONS", "p"),
         (0x04B8, "GET_CHAR_WEAPON_IN_SLOT", "piooo"),

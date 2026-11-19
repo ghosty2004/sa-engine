@@ -80,6 +80,7 @@ pub mod op {
     pub const CLEAR_CHAR_TASKS: u16 = 0x0687;
     pub const TASK_PLAY_ANIM_NON_INTERRUPTABLE: u16 = 0x0812;
     pub const WARP_CHAR_INTO_CAR_AS_PASSENGER: u16 = 0x0430;
+    pub const GET_CHAR_IN_CAR_PASSENGER_SEAT: u16 = 0x0432;
     pub const SET_CHAR_SUFFERS_CRITICAL_HITS: u16 = 0x0446;
     pub const SET_OBJECT_ROTATION: u16 = 0x0453;
     pub const SET_OBJECT_COLLISION: u16 = 0x0382;

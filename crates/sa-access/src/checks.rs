@@ -31,6 +31,9 @@ enum Rule {
     /// A passenger seat of the vehicle handle at the given argument, below its `m_nMaxPassengers` (-1, any seat,
     /// too when the flag is set): a ped put into a seat the vehicle refuses stays half inside it.
     Seat(usize, bool),
+    /// An occupied passenger seat (0..=7) of the vehicle handle at the given argument: the handler turns the seat's
+    /// ped into a handle without a check.
+    OccupiedSeat(usize),
     /// A text of at most this many bytes: the handler copies the whole text into a buffer one byte longer.
     Text(usize),
     /// A model the game can load now: a vehicle model takes a `CVehicleStructure` while it is loaded, and with the
@@ -80,6 +83,7 @@ const RULES: &[(u16, usize, Rule)] = &[
     (op::REMOVE_PICKUP, 0, Rule::Slot(addr::PICKUP_COUNT)),
     (op::WARP_CHAR_INTO_CAR_AS_PASSENGER, 2, Rule::Seat(1, false)),
     (op::TASK_ENTER_CAR_AS_PASSENGER, 3, Rule::Seat(1, true)),
+    (op::GET_CHAR_IN_CAR_PASSENGER_SEAT, 1, Rule::OccupiedSeat(0)),
     (op::REQUEST_MODEL, 0, Rule::Loadable),
     (op::REQUEST_ANIMATION, 0, Rule::Text(15)),
     (op::HAS_ANIMATION_LOADED, 0, Rule::Text(15)),
@@ -163,6 +167,13 @@ impl<V: View> Game<V> {
                 let ok = (0..seats).contains(&v) || (any && v == -1);
                 (!ok).then(|| format!("not a passenger seat of a vehicle with {seats}"))
             }
+            Rule::OccupiedSeat(vehicle) => {
+                let Some(&ScriptArg::Int(h)) = args.get(vehicle) else { return Some("no vehicle".into()) };
+                let a = self.vehicle_addr(VehicleRef(h as u32)).ok()?;
+                let occupied =
+                    (0..8).contains(&v) && self.view.read_u32(a + off::VEH_PASSENGERS + 4 * v as u32) != 0;
+                (!occupied).then(|| "not an occupied passenger seat".into())
+            }
             Rule::Text(_) => None,
             Rule::Menu => self.menu_slot(MenuRef(v as u32)).err().map(|_| "not a menu in use".into()),
             Rule::TrainHead => self.train_head(VehicleRef(v as u32)).err().map(|e| e.to_string()),
@@ -243,6 +254,11 @@ mod tests {
         assert!(warp(&g, -1).is_some());
         let task = |seat| g.unchecked_argument(Opcode(op::TASK_ENTER_CAR_AS_PASSENGER), &[I(0x205), I(0x301), I(-1), I(seat)]);
         assert_eq!(task(-1), None);
+        let occupant = |g: &Game<_>, seat| g.unchecked_argument(Opcode(op::GET_CHAR_IN_CAR_PASSENGER_SEAT), &[I(0x301), I(seat), I(0)]);
+        assert!(occupant(&g, 0).is_some());
+        assert!(occupant(&g, 8).is_some());
+        put(&mut g, fake::VEHS + 3 * addr::VEHICLE_POOL.element + off::VEH_PASSENGERS, 0x1234u32);
+        assert_eq!(occupant(&g, 0), None);
         let restart = [F(0.0), F(0.0), F(0.0), F(0.0), I(0)];
         assert_eq!(g.unchecked_argument(Opcode(op::ADD_HOSPITAL_RESTART), &restart), None);
         put(&mut g, addr::HOSPITAL_RESTART_COUNT, 10u16);
