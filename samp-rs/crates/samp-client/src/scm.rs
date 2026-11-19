@@ -16,6 +16,10 @@ pub const GLOBAL_SPACE: u32 = 46268;
 pub const VAR_PLAYER: u16 = 8;
 /// Global variable that receives the player's char handle.
 pub const VAR_PLAYER_CHAR: u16 = 12;
+/// Global variable samp's own main script reads as the stunt bonus switch (InitGame, RPC 104).
+pub const VAR_STUNT_BONUS: u16 = 709;
+/// `CTheScripts::ScriptSpace`: the loaded main script, its global variables first (`$n` at `4 * n`).
+pub const SCRIPT_SPACE: u32 = 0xA49960;
 
 const GOTO: u16 = 0x0002;
 const WAIT: u16 = 0x0001;

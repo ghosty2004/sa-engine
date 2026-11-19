@@ -289,6 +289,7 @@ impl HostedClient {
                 report(self, "set_clock", game.set_clock(g.world_time, 0));
                 report(self, "set_weather", game.set_weather(g.weather));
                 report(self, "set_gravity", game.set_gravity(g.gravity));
+                report(self, "set_stunt_bonus", game.set_stunt_bonus(g.stunt_bonus));
                 report(self, "set_zone_names", game.set_zone_names(false));
                 self.netgame.on_init_game();
                 self.note(format!("chat (debug): Connected to {{B9C9BF}}{}", g.server_name));
@@ -635,6 +636,10 @@ impl HostedClient {
                     }
                     _ => {}
                 }
+            }
+            P::EnableStuntBonusForPlayer(e) => {
+                report(self, "set_stunt_bonus", game.set_stunt_bonus(e.enable));
+                self.note(format!("EnableStuntBonusForPlayer {}", e.enable));
             }
             P::TogglePlayerClock(c) => {
                 use sa_samp_api::config::RuntimeToggle;

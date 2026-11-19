@@ -2860,6 +2860,7 @@ dependencies = [
  "samp-client",
  "samp-overlay",
  "samp-proto",
+ "samp-saa",
  "samp-ui",
  "serde_json",
 ]

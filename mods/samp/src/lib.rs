@@ -28,11 +28,9 @@ use std::time::Duration;
 
 use sa_mod::input::Input;
 use sa_mod::net::Socket;
-use sa_mod::game::{GameOption, set_option};
 use sa_mod::{Error, Event, GameState, Mod, Overlay, Vec3, event_kind, events, state, storage, time};
 use sa_samp_api::hooks::{FramePhase, GameHooks};
 use sa_samp_api::input::{EventResult, WindowEvent};
-use sa_samp_api::world::WorldState;
 
 use connect::Tone;
 use samp_client::hosted::{HostedClient, HostedConfig};
@@ -290,28 +288,7 @@ impl Mod for Samp {
             events::subscribe(&[event_kind::FRAME_BEGIN]);
             return Ok(());
         }
-        // What samp.dll switches off in the game (its start-up skips the logos, the intro movie and the main menu);
-        // RPC 30 TogglePlayerClock turns the clock back on.
-        for o in [
-            GameOption::StartScreens,
-            GameOption::TypedCheats,
-            GameOption::Clock,
-            GameOption::AmbientPeds,
-            GameOption::RandomTraffic,
-            GameOption::CarGenerators,
-            GameOption::AmbientPlanes,
-            GameOption::Cutscenes,
-            GameOption::Replay,
-            GameOption::Plants,
-            GameOption::SunAndMoon,
-            GameOption::IdleCamera,
-            GameOption::HelpMessages,
-            GameOption::ZoneNames,
-        ] {
-            set_option(o, false).map_err(|e| format!("game option {o:?}: {e:?}"))?;
-        }
-        // samp.saa's map, the server's vehicles and objects and the other players need samp's pool sizes
-        setup::raise_limits()?;
+        setup::apply()?;
         if setting("auto_connect").is_some_and(|v| v == "1") {
             self.stage = Stage::Approval { server: self.screen.server.clone(), name: self.screen.name.clone() };
         }
@@ -322,12 +299,6 @@ impl Mod for Samp {
     fn event(&mut self, event: Event) {
         if let Event::FrameBegin(_) = event {
             if state::game_state() == Some(GameState::Playing) {
-                // samp's own main.scm keeps the densities and the wanted level cap at 0. Here the game's story
-                // script still runs and raises the cap (a locked city then gives wanted level 4), and with
-                // ambient peds off the population code dereferences the NULL `AddPed` returns for every cop or
-                // pedestrian it tries to create, so both are forced back every frame.
-                let _ = self.game.set_densities(0.0, 0.0);
-                let _ = self.game.set_max_wanted_level(0);
                 self.approval();
             }
             self.frame(FramePhase::BeforeGameProcess);

@@ -779,7 +779,9 @@ impl WorldState for ModGame {
     fn set_area(&mut self, area: AreaCode) -> GameResult<()> {
         cmd(0x04BB, &[Arg::Int(i32::from(area.0))])
     }
-    fn set_stunt_bonus(&mut self, _on: bool) -> GameResult<()> { Err(GameError::Unsupported("WorldState::set_stunt_bonus")) }
+    fn set_stunt_bonus(&mut self, on: bool) -> GameResult<()> {
+        script::set_global(samp_client::scm::VAR_STUNT_BONUS, i32::from(on)).map_err(failed("set_stunt_bonus"))
+    }
     fn set_max_wanted_level(&mut self, level: u8) -> GameResult<()> {
         cmd(0x01F0, &[Arg::Int(i32::from(level))])
     }

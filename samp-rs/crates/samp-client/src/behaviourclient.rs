@@ -35,8 +35,8 @@ use crate::script::{Arg, Runner, op};
 const CAMERA_MATRIX_POS: u32 = 0xB6F9CC;
 /// Immediate operand in GTA's HUD code: the displayed wanted level (RPC 133).
 const WANTED_HUD: u32 = 0x58DB60;
-/// GTA's stunt-bonus enable dword (RPC 104).
-const STUNT_BONUS: u32 = 0xA4A474;
+/// The main script's stunt-bonus switch (RPC 104), 0xA4A474.
+const STUNT_BONUS: u32 = crate::scm::SCRIPT_SPACE + 4 * crate::scm::VAR_STUNT_BONUS as u32;
 /// `CShopping::LoadShop(const char*)` (cdecl; RPC 33).
 const LOAD_SHOP: u32 = 0x49BBE0;
 /// `CKeyGen::GetUppercaseKey(const char*)` (cdecl; samp hashes its animation table with it).
