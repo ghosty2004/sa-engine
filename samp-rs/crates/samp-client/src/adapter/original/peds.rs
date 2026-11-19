@@ -164,6 +164,10 @@ impl<M: Memory> Peds for OriginalGame<M> {
         Err(GameError::Unsupported("Peds::bone_position"))
     }
 
+    fn node_matrix(&self, _ped: PedRef, _node: u8) -> GameResult<Matrix> {
+        Err(GameError::Unsupported("Peds::node_matrix"))
+    }
+
     fn weapon_skill(&self, _ped: PedRef) -> GameResult<u8> {
         Err(GameError::Unsupported("Peds::weapon_skill"))
     }

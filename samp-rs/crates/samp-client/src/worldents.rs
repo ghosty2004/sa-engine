@@ -2,13 +2,14 @@
 //!
 //! The GTA-side work lives in `objects.rs` (objects), `entities.rs` (pickups, actors, checkpoints, gang zones,
 //! map icons, 3D labels, building removal) and `worldhooks.rs` (the hooks); this file holds the constants and the
-//! arithmetic they share. Spec: docs/re/subsystems/world-entities.md; the original client's measured behaviour is
+//! arithmetic they share, also with the hosted client's objects (`hostedobjects.rs`). Spec: docs/re/subsystems/world-entities.md; the original client's measured behaviour is
 //! in docs/phase3/trace-notes.md ("World entities"). "Patch table row N" is line N of
 //! docs/re/data/gta-patches-r4-annotated.csv (header = line 1); samp.dll addresses: docs/re/addresses/worldents.md.
 
 use samp_proto::types::Quat;
 
-use crate::footsync::Rotation;
+use crate::footsync::{Rotation, quat_from_matrix};
+use crate::remote::{normalise, rows_from_quat, slerp};
 
 /// Object ids the client accepts. The original tests `id < 1001` against 1000-entry arrays; we accept 0…999
 /// (docs/re/subsystems/world-entities.md, "Client entity pools").
@@ -260,6 +261,92 @@ impl Motion {
     }
 }
 
+
+/// An object's transform: its rotation rows and its position.
+pub type Transform = (Rotation, [f32; 3]);
+
+/// MoveObject on an object at `current`: a move in progress (`prev`) first snaps to its target (and its target
+/// rotation), which the caller writes (with both speeds zeroed) before the new move starts from there. Returns the
+/// snap and the new move. Mirrors samp.dll 0x100A9C10.
+pub fn begin_move(
+    prev: Option<&Motion>,
+    current: Transform,
+    target: [f32; 3],
+    speed: f32,
+    rotation: [f32; 3],
+    now_ms: u32,
+) -> (Option<Transform>, Motion) {
+    let snap = prev.map(|m| (m.rotation.map(rotation_rows).unwrap_or(current.0), m.target));
+    let (rows, pos) = snap.unwrap_or(current);
+    let rotation = rotation.iter().all(|c| *c > NO_ROTATION).then_some(rotation);
+    let from = quat_from_matrix(&rows);
+    let to = rotation.map(|t| quat_from_matrix(&rotation_rows(t))).unwrap_or(from);
+    (snap, Motion { target, speed, start_ms: now_ms, total: dist3(target, pos), rotation, from, to })
+}
+
+/// What one frame of a move writes to the object.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum MotionFrame {
+    /// The move ends: both speeds 0, the transform written; the object's rotation becomes the target rotation (if
+    /// the move had one).
+    Arrive { at: Transform, rotation: Option<[f32; 3]> },
+    /// The move speed, the turn speed when the move rotates, and the transform advanced by move speed × time step
+    /// (samp advances the matrix itself) with the rotation slerped by the progress.
+    Move { move_speed: [f32; 3], turn_speed: Option<[f32; 3]>, at: Transform },
+    /// Nothing this frame.
+    Idle,
+}
+
+/// One frame of move `m` for an object at `current`: `dt` seconds since the previous object pass, `now_ms` samp's
+/// millisecond clock, `time_step` the game's `CTimer::ms_fTimeStep`. Mirrors samp.dll's per-frame object process.
+pub fn motion_frame(m: &Motion, current: Transform, dt: f32, now_ms: u32, time_step: f32) -> MotionFrame {
+    let (rows, pos) = current;
+    match m.step(pos, dt, now_ms) {
+        MotionStep::Arrive { pos, rotation } => {
+            MotionFrame::Arrive { at: (rotation.unwrap_or(rows), pos), rotation: m.rotation }
+        }
+        MotionStep::Move { move_speed, turn_z, progress } => {
+            let next = [0, 1, 2].map(|i| pos[i] + move_speed[i] * time_step);
+            let rows = match turn_z {
+                Some(_) => rows_from_quat(normalise(slerp(m.from, m.to, progress.clamp(0.0, 1.0)))),
+                None => rows,
+            };
+            MotionFrame::Move { move_speed, turn_speed: turn_z.map(|z| [0.0, 0.0, z]), at: (rows, next) }
+        }
+        MotionStep::Idle => MotionFrame::Idle,
+    }
+}
+
+/// Rotation about the rows' own axis `axis` (0 = right / X, 1 = forward / Y, 2 = up / Z).
+pub fn rotate_local(r: [[f32; 3]; 3], axis: usize, a: f32) -> [[f32; 3]; 3] {
+    let (s, c) = a.sin_cos();
+    let (i, j) = match axis {
+        0 => (1, 2),
+        1 => (2, 0),
+        _ => (0, 1),
+    };
+    let mut out = r;
+    out[i] = [0, 1, 2].map(|k| r[i][k] * c + r[j][k] * s);
+    out[j] = [0, 1, 2].map(|k| r[j][k] * c - r[i][k] * s);
+    out
+}
+
+/// Where an object attached to a ped bone goes (RPC 113): the bone's transform times the offset, then rotated about
+/// its own X, Y and Z axes in turn (zero angles skipped), then each row scaled.
+pub fn attached_transform(bone: Transform, offset: [f32; 3], rotation_deg: [f32; 3], scale: [f32; 3]) -> Transform {
+    let (b, bpos) = bone;
+    let mut rows = [b.right, b.forward, b.up];
+    let pos = [0, 1, 2].map(|i| bpos[i] + rows[0][i] * offset[0] + rows[1][i] * offset[1] + rows[2][i] * offset[2]);
+    for (axis, deg) in rotation_deg.iter().enumerate() {
+        if *deg != 0.0 {
+            rows = rotate_local(rows, axis, deg.to_radians());
+        }
+    }
+    for (row, s) in rows.iter_mut().zip(scale) {
+        *row = row.map(|c| c * s);
+    }
+    (Rotation { right: rows[0], forward: rows[1], up: rows[2] }, pos)
+}
 /// The turn speed only drives GTA's own (unused) rotation integration; samp clamps it to ±0.001 almost
 /// always. The z of the start rotation is the reference.
 fn current_heading_hint(m: &Motion) -> f32 {
@@ -537,6 +624,45 @@ mod tests {
         match m.step([0.0, 0.0, 1.0], 0.02, 500) {
             MotionStep::Move { turn_z, .. } => assert_eq!(turn_z, Some(TURN_CLAMP)),
             s => panic!("{s:?}"),
+        }
+    }
+
+    #[test]
+    fn a_new_move_snaps_the_old_one_to_its_target() {
+        let id = rotation_rows([0.0; 3]);
+        let (snap, m) = begin_move(None, (id, [0.0; 3]), [0.0, 0.0, 10.0], 2.0, [-1000.0; 3], 0);
+        assert_eq!((snap, m.total, m.rotation), (None, 10.0, None));
+        let (snap, m2) = begin_move(Some(&m), (id, [0.0, 0.0, 4.0]), [3.0, 4.0, 10.0], 1.0, [0.0, 0.0, 90.0], 50);
+        assert_eq!(snap.map(|s| s.1), Some([0.0, 0.0, 10.0]));
+        assert_eq!((m2.total, m2.start_ms, m2.rotation), (5.0, 50, Some([0.0, 0.0, 90.0])));
+        // on schedule: the move speed, the matrix advanced by move speed x time step
+        match motion_frame(&m, (id, [0.0, 0.0, 1.0]), 0.02, 500, 1.0) {
+            MotionFrame::Move { move_speed, turn_speed: None, at } => {
+                assert!((move_speed[2] - 0.04).abs() < 1e-6);
+                assert!((at.1[2] - 1.04).abs() < 1e-6);
+            }
+            f => panic!("{f:?}"),
+        }
+        assert_eq!(
+            motion_frame(&m, (id, [0.0, 0.0, 9.99]), 0.02, 4990, 1.0),
+            MotionFrame::Arrive { at: (id, [0.0, 0.0, 10.0]), rotation: None }
+        );
+    }
+
+    #[test]
+    fn attached_objects_follow_the_bone() {
+        let bone = (rotation_rows([0.0, 0.0, 90.0]), [1.0, 2.0, 3.0]);
+        let (r, pos) = attached_transform(bone, [1.0, 0.0, 0.0], [0.0; 3], [2.0, 1.0, 1.0]);
+        // the offset along the bone's right axis (world +y), the right row scaled by 2
+        for (a, b) in pos.iter().zip([1.0, 3.0, 3.0]) {
+            assert!((a - b).abs() < 1e-6, "{pos:?}");
+        }
+        for (a, b) in r.right.iter().zip([0.0, 2.0, 0.0]) {
+            assert!((a - b).abs() < 1e-6, "{r:?}");
+        }
+        let (r, _) = attached_transform((rotation_rows([0.0; 3]), [0.0; 3]), [0.0; 3], [0.0, 0.0, 90.0], [1.0; 3]);
+        for (a, b) in r.right.iter().zip([0.0, 1.0, 0.0]) {
+            assert!((a - b).abs() < 1e-6, "{r:?}");
         }
     }
 

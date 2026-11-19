@@ -4,22 +4,7 @@
 
 use crate::{GameResult, ModelId, Vec3};
 
-/// Model category, from the model-info vtable (samp-rs compares 0x85BBF0 … 0x85BDC0).
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum ModelKind {
-    /// Atomic / damage atomic / LOD atomic / time / LOD time (0x85BBF0…0x85BCF0).
-    Atomic,
-    /// Clump (non-ped, non-vehicle).
-    Clump,
-    /// Ped (0x85BDC0).
-    Ped,
-    /// Vehicle.
-    Vehicle,
-    /// Weapon.
-    Weapon,
-    /// Not defined.
-    None,
-}
+pub use sa_types::ModelKind;
 
 /// Streaming operations.
 pub trait Streaming {
@@ -31,6 +16,8 @@ pub trait Streaming {
     fn model_loaded(&self, model: ModelId) -> bool;
     /// `MARK_MODEL_AS_NO_LONGER_NEEDED` (0249).
     fn release_model(&mut self, model: ModelId) -> GameResult<()>;
+    /// Draw distance of an atomic model (`CBaseModelInfo::m_fDrawDistance` +0x18).
+    fn set_model_draw_distance(&mut self, model: ModelId, distance: f32) -> GameResult<()>;
     /// `LOAD_ALL_MODELS_NOW` (038B).
     fn load_all_now(&mut self) -> GameResult<()>;
     /// `REQUEST_COLLISION` (04E4).

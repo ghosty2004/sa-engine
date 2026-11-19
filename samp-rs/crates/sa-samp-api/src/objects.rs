@@ -80,6 +80,8 @@ pub trait Objects {
     fn set_object_transform(&mut self, o: ObjectRef, pos: Vec3, rot_deg: Vec3) -> GameResult<()>;
     /// Writes the matrix directly (MoveObject interpolation, attached objects).
     fn set_object_matrix(&mut self, o: ObjectRef, m: &Matrix) -> GameResult<()>;
+    /// Move and turn speed (`CPhysical` +0x44 / +0x50): what peds standing on the object move with.
+    fn set_object_speed(&mut self, o: ObjectRef, move_speed: Vec3, turn_speed: Vec3) -> GameResult<()>;
     /// `SET_OBJECT_SCALE` (08D2).
     fn set_object_scale(&mut self, o: ObjectRef, scale: f32) -> GameResult<()>;
     /// `SET_OBJECT_VISIBLE` (0750).

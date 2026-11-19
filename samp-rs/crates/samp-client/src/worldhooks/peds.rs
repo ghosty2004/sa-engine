@@ -69,19 +69,10 @@ fn place_attached(a: Attached, animated: &mut Vec<u32>) {
         animated.push(ped);
     }
     let Some(bone) = bone_matrix(ped, a.bone) else { return };
-    // bone × offset, then rotate X, Y, Z (zero components skipped), then scale.
-    let mut rows = [[bone[0], bone[1], bone[2]], [bone[4], bone[5], bone[6]], [bone[8], bone[9], bone[10]]];
-    let bpos = [bone[12], bone[13], bone[14]];
-    let pos =
-        [0, 1, 2].map(|i| bpos[i] + rows[0][i] * a.offset[0] + rows[1][i] * a.offset[1] + rows[2][i] * a.offset[2]);
-    for (axis, deg) in a.rotation.iter().enumerate() {
-        if *deg != 0.0 {
-            rows = rotate_local(rows, axis, deg.to_radians());
-        }
-    }
-    for (i, s) in a.scale.iter().enumerate() {
-        rows[i] = rows[i].map(|c| c * s);
-    }
+    let at = |i: usize| [bone[i], bone[i + 1], bone[i + 2]];
+    let bone = (crate::footsync::Rotation { right: at(0), forward: at(4), up: at(8) }, at(12));
+    let (r, pos) = world::attached_transform(bone, a.offset, a.rotation, a.scale);
+    let rows = [r.right, r.forward, r.up];
     vcall0(obj, 0x0C); // Remove()
     let m: u32 = rd(obj + g::ENTITY_MATRIX);
     if m != 0 {
@@ -96,20 +87,6 @@ fn place_attached(a: Attached, animated: &mut Vec<u32>) {
         update_rw(obj);
     }
     vcall0(obj, 0x08); // Add()
-}
-
-/// Rotation about the matrix's own axis `axis` (0 = right/X, 1 = forward/Y, 2 = up/Z).
-fn rotate_local(r: [[f32; 3]; 3], axis: usize, a: f32) -> [[f32; 3]; 3] {
-    let (s, c) = a.sin_cos();
-    let (i, j) = match axis {
-        0 => (1, 2),
-        1 => (2, 0),
-        _ => (0, 1),
-    };
-    let mut out = r;
-    out[i] = [0, 1, 2].map(|k| r[i][k] * c + r[j][k] * s);
-    out[j] = [0, 1, 2].map(|k| r[j][k] * c - r[i][k] * s);
-    out
 }
 
 /// LTM of the ped bone `bone` (SA:MP bone id 1…18 = `ePedNode`): the frame data in `CPed::m_apBones` (+0x488)

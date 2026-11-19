@@ -112,6 +112,10 @@ impl<M: Memory> Objects for OriginalGame<M> {
         Err(GameError::Unsupported("Objects::set_object_matrix"))
     }
 
+    fn set_object_speed(&mut self, _o: ObjectRef, _move_speed: Vec3, _turn_speed: Vec3) -> GameResult<()> {
+        Err(GameError::Unsupported("Objects::set_object_speed"))
+    }
+
     /// `SET_OBJECT_SCALE` (08D2).
     fn set_object_scale(&mut self, o: ObjectRef, scale: f32) -> GameResult<()> {
         let h = self.object_script_handle(o)?.0;

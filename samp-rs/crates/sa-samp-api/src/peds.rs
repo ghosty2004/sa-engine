@@ -148,6 +148,9 @@ pub trait Peds {
     fn ped_weapons(&self, ped: PedRef) -> GameResult<[WeaponSlot; 13]>;
     /// Bone position (`CPed::GetBonePosition` 0x5E4280; `transformed` = `GetTransformedBonePosition` 0x5E01C0).
     fn bone_position(&self, ped: PedRef, bone: BoneId, transformed: bool) -> GameResult<Vec3>;
+    /// World matrix of ped node `node` (`ePedNode` 1..=18, what samp numbers the bones of attached objects): the
+    /// skin hierarchy's matrix of the node's bone after `CEntity::UpdateRpHAnim` 0x532B20.
+    fn node_matrix(&self, ped: PedRef, node: u8) -> GameResult<Matrix>;
     /// Current weapon skill level (`CPed::GetWeaponSkill` 0x5E6580).
     fn weapon_skill(&self, ped: PedRef) -> GameResult<u8>;
     /// Fire attached to the ped (`CPed::m_pFire` +0x730).

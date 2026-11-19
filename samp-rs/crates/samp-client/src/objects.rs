@@ -15,14 +15,13 @@ use samp_proto::rpcs::OutgoingRpc;
 use samp_proto::rpcs::world::{self as rw, ObjectMaterial};
 use samp_proto::types::Vec3;
 
-use crate::footsync::{Rotation, quat_from_matrix};
+use crate::footsync::Rotation;
 use crate::netclient::NetClient;
 use crate::objedit;
 use crate::players::Players;
-use crate::remote::{normalise, rows_from_quat, slerp};
 use crate::script::{Arg, Runner};
 use crate::vehicles::Vehicles;
-use crate::worldents::{self as world, MATERIAL_SLOTS, Motion, MotionStep, op};
+use crate::worldents::{self as world, MATERIAL_SLOTS, Motion, op};
 use crate::worldhooks::{self as wh, MatSlot, ObjInfo, g, rd, wr};
 
 /// Vtables of `CAtomicModelInfo` and its derived classes (samp's "is atomic model" test checks these).

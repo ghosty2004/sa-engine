@@ -79,6 +79,10 @@ impl<M: Memory> Streaming for OriginalGame<M> {
         self.run_op(op::MARK_MODEL_AS_NO_LONGER_NEEDED, &[ScriptArg::Int(model.0)]).map(|_| ())
     }
 
+    fn set_model_draw_distance(&mut self, _model: ModelId, _distance: f32) -> GameResult<()> {
+        Err(GameError::Unsupported("Streaming::set_model_draw_distance"))
+    }
+
     /// `LOAD_ALL_MODELS_NOW` (038B).
     fn load_all_now(&mut self) -> GameResult<()> {
         self.run_op(op::LOAD_ALL_MODELS_NOW, &[]).map(|_| ())
