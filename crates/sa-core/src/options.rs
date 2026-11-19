@@ -4,7 +4,7 @@
 //! when it is off, and one that sizes something by a limit takes the original's constant unless it was raised.
 
 
-use core::sync::atomic::{AtomicU32, Ordering};
+use core::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 
 /// A switchable feature of the game; the bit of [`set`] / [`enabled`] is its declaration order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -90,14 +90,18 @@ pub enum Feature {
     /// `CPad::UpdatePads` (the keys still reach the game's key state, so a key held when it comes back counts).
     /// The host turns it off while a mod takes the keyboard.
     KeyboardControls,
+    /// The limit on how fast a ped standing on a vehicle or object takes up a change of speed: the ground-entity
+    /// branch 0x5E1E70 of the clamp at the end of `CPed::UpdatePosition` (off, the clamp runs as for a ped without a
+    /// ground entity).
+    StandingSpeedClamp,
 }
 
 /// The features turned off, as bits.
-static OFF: AtomicU32 = AtomicU32::new(0);
+static OFF: AtomicU64 = AtomicU64::new(0);
 
 /// Turns `feature` on or off.
 pub fn set(feature: Feature, on: bool) {
-    let bit = 1u32 << feature as u8;
+    let bit = 1u64 << feature as u8;
     if on {
         OFF.fetch_and(!bit, Ordering::Relaxed);
     } else {
@@ -108,7 +112,7 @@ pub fn set(feature: Feature, on: bool) {
 /// Whether `feature` is on.
 #[inline]
 pub fn enabled(feature: Feature) -> bool {
-    OFF.load(Ordering::Relaxed) & (1u32 << feature as u8) == 0
+    OFF.load(Ordering::Relaxed) & (1u64 << feature as u8) == 0
 }
 
 /// The "playidles" anim block name (`.rdata`, 9 characters) the `CPlayerPed` and `CTaskSimplePlayerOnFoot`

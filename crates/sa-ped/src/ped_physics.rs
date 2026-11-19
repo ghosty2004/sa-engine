@@ -323,7 +323,11 @@ pub fn update_position(this: GPtr<u8>) {
         }
     }
 
-    let ge = rd::<GPtr<u8>>(this, 0x568);
+    let ge = if sa_core::options::enabled(sa_core::options::Feature::StandingSpeedClamp) {
+        rd::<GPtr<u8>>(this, 0x568)
+    } else {
+        GPtr::NULL
+    };
     let len = || x(dy).fmul_m(dy).fadd(x(dx).fmul_m(dx)).fsqrt();
     // (limit, |d| as compared): None = no clamp
     let mut clamp: Option<(X87, f32)> = None;

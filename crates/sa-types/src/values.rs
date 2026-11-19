@@ -322,11 +322,14 @@ pub enum GameOption {
     StatChanges,
     /// The handbrake does nothing while the player's controls are disabled.
     HandbrakeNeedsControl,
+    /// A ped standing on a vehicle or object takes up a change of speed only gradually (off, at once, as on the
+    /// ground).
+    StandingSpeedClamp,
 }
 
 impl GameOption {
     /// Every option, in declaration order.
-    pub const ALL: [GameOption; 29] = [
+    pub const ALL: [GameOption; 30] = [
         GameOption::TypedCheats,
         GameOption::Clock,
         GameOption::AmbientPeds,
@@ -356,6 +359,7 @@ impl GameOption {
         GameOption::FireFailSounds,
         GameOption::StatChanges,
         GameOption::HandbrakeNeedsControl,
+        GameOption::StandingSpeedClamp,
     ];
 }
 

@@ -113,6 +113,7 @@ impl<V: View> Game<V> {
             GameOption::FireFailSounds => F::FireFailSounds,
             GameOption::StatChanges => F::StatChanges,
             GameOption::HandbrakeNeedsControl => F::HandbrakeNeedsControl,
+            GameOption::StandingSpeedClamp => F::StandingSpeedClamp,
         };
         set(feature, on);
     }
