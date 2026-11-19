@@ -2,6 +2,8 @@
 
 use sa_samp_api::PedRef;
 
+use sa_samp_api::camera::CameraCut;
+
 use super::*;
 use crate::adapter::original::process;
 
@@ -11,11 +13,9 @@ impl Behaviour {
     /// RPC 82 (InterpolateCamera): a time ≤ 0 is ignored; the camera counts as "applied" for the spectator tick.
     /// Mirrors samp.dll B 0x1001A0A0.
     pub fn interpolate(&mut self, runner: &mut Runner, position: bool, from: [f32; 3], to: [f32; 3], ms: i32, cut: u8) {
-        if ms <= 0 {
-            return;
-        }
+        let Some(cut) = bh::interpolation_cut(ms, cut) else { return };
         self.spectate.applied = true;
-        let cut = i32::from(bh::camera_cut(cut));
+        let cut = i32::from(cut);
         if position {
             vector_move(runner, from, to, ms, cut);
         } else {
@@ -146,8 +146,8 @@ impl Behaviour {
                         &[Arg::Int(h), Arg::Float(w[0]), Arg::Float(w[1]), Arg::Float(w[2])],
                     );
                 }
-                self.camera_position(runner, bh::SPEC_NO_TARGET_POS);
-                self.camera_look_at(runner, bh::SPEC_NO_TARGET_LOOK, 2);
+                self.camera_position(bh::SPEC_NO_TARGET_POS);
+                self.camera_look_at(bh::SPEC_NO_TARGET_LOOK, 2);
                 self.spectate.applied = true;
             }
             SpecTarget::Player(id) => {
@@ -171,17 +171,16 @@ impl Behaviour {
     }
 
     /// RPC 157: opcode 0x0925, attachment off, then 0x015F. Mirrors samp.dll B 0x1009D7B0.
-    pub fn camera_position(&mut self, runner: &mut Runner, p: [f32; 3]) {
-        runner.run(op::CAMERA_RESET_NEW_SCRIPTABLES, &[]);
+    pub fn camera_position(&mut self, p: [f32; 3]) {
         self.attached = None;
-        crate::adapter::original::cam::fixed_position(p[0], p[1], p[2]);
+        let _ = crate::camops::fixed_position(&mut process(), sa_samp_api::Vec3::new(p[0], p[1], p[2]));
     }
 
     /// RPC 158: opcode 0x0925, attachment off, then 0x0160 with the cut. Mirrors samp.dll B 0x1009D810.
-    pub fn camera_look_at(&mut self, runner: &mut Runner, p: [f32; 3], cut: u8) {
-        runner.run(op::CAMERA_RESET_NEW_SCRIPTABLES, &[]);
+    pub fn camera_look_at(&mut self, p: [f32; 3], cut: u8) {
         self.attached = None;
-        crate::adapter::original::cam::point_at(p[0], p[1], p[2], i32::from(bh::camera_cut(cut)));
+        let cut = if bh::camera_cut(cut) == 2 { CameraCut::Cut } else { CameraCut::Smooth };
+        let _ = crate::camops::look_at(&mut process(), sa_samp_api::Vec3::new(p[0], p[1], p[2]), cut);
     }
 }
 

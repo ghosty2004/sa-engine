@@ -5,7 +5,7 @@
 //! `docs/samp/game-adapter.md` §4.1.
 
 use crate::{
-    AreaCode, GameResult, Matrix, ModelId, PedRef, PlayerSlot, ScriptHandle, TaskRef, Vec3, VehicleRef,
+    AreaCode, GameError, GameResult, Matrix, ModelId, PedRef, PlayerSlot, ScriptHandle, TaskRef, Vec3, VehicleRef,
     WeaponType,
 };
 
@@ -210,6 +210,10 @@ pub trait Peds {
     fn set_player_control(&mut self, enabled: bool) -> GameResult<()>;
     /// `SET_PLAYER_DRUNKENNESS` (052C).
     fn set_drunkenness(&mut self, level: i32) -> GameResult<()>;
+    /// The ped's fighting style and the moves it may use (`GIVE_MELEE_ATTACK_TO_CHAR` 07FE).
+    fn set_fighting_style(&mut self, _ped: PedRef, _style: u8, _moves: u8) -> GameResult<()> {
+        Err(GameError::Unsupported("Peds::set_fighting_style"))
+    }
     /// Writes ped flag words (the first-frame ped flags and per-frame bits samp sets).
     fn set_ped_flags(&mut self, ped: PedRef, mask: [u32; 2], value: [u32; 2]) -> GameResult<()>;
     /// Extinguishes the ped (`CFire::Extinguish` 0x5393F0 on `m_pFire`).

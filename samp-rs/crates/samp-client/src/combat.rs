@@ -531,6 +531,24 @@ pub mod pad {
     pub const OLD_STATE: usize = 0x30;
 }
 
+/// The first weapon-skill statistic (`CStats::StatTypesFloat[69]`, the pistol skill); RPC 34's skill types follow in
+/// order.
+pub const WEAPON_SKILL_FIRST_STAT: u16 = 69;
+/// Weapon-skill types RPC 34 sets.
+pub const WEAPON_SKILL_TYPES: u32 = 11;
+
+/// RPC 34 for the local player: the float statistic of `skill`, if samp sets one. Mirrors samp.dll 0x1000F5E0.
+pub fn weapon_skill_stat(skill: u32) -> Option<u16> {
+    (skill < WEAPON_SKILL_TYPES).then(|| WEAPON_SKILL_FIRST_STAT + skill as u16)
+}
+
+/// RPC 79's last parameter of `ADD_EXPLOSION_VARIABLE_SHAKE`: samp pushes the radius as a double while the
+/// command reads one dword, so the command gets the double's low half (0 for every radius with few mantissa bits,
+/// e.g. 2.0). Mirrors samp.dll 0x1001BD10.
+pub fn explosion_shake_bits(radius: f32) -> u32 {
+    f64::from(radius).to_bits() as u32
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -758,5 +776,14 @@ mod tests {
         assert_eq!(c.masks(), PadMasks { jump: true, crouch: true, sprint: true });
         let c = LocalHandcuffs { carry: false, cuffed: true };
         assert_eq!(c.masks(), PadMasks { jump: false, crouch: false, sprint: true });
+    }
+
+    #[test]
+    fn skill_stats_and_explosion_shake() {
+        assert_eq!(weapon_skill_stat(0), Some(69));
+        assert_eq!(weapon_skill_stat(10), Some(79));
+        assert_eq!(weapon_skill_stat(11), None);
+        assert_eq!(explosion_shake_bits(2.0), 0);
+        assert_eq!(explosion_shake_bits(0.1), f64::from(0.1f32).to_bits() as u32);
     }
 }

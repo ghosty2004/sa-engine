@@ -3,7 +3,7 @@
 //! `behaviourclient*.rs`, `client.rs`, `scm.rs`, `combatclient.rs`. Mapping: `docs/samp/game-adapter.md` §4.4.
 
 use crate::{
-    AreaCode, BlipRef, CheckpointRef, EntityRef, FxRef, GameResult, ModelId, PedRef, PickupRef, Vec3,
+    AreaCode, BlipRef, CheckpointRef, EntityRef, FxRef, GameError, GameResult, ModelId, PedRef, PickupRef, Vec3,
     VehicleRef,
 };
 
@@ -135,6 +135,10 @@ pub trait WorldState {
     fn kill_fx(&mut self, fx: FxRef) -> GameResult<()>;
     /// Loads a shop's data (`CShopping::LoadShop` 0x49BBE0; mod shop and clothes).
     fn load_shop(&mut self, name: &str) -> GameResult<()>;
+    /// Sets a float statistic (`CStats::StatTypesFloat` 0xB79380; 69..=79 are the weapon skills).
+    fn set_float_stat(&mut self, _stat: u16, _value: f32) -> GameResult<()> {
+        Err(GameError::Unsupported("WorldState::set_float_stat"))
+    }
 }
 
 /// Pickups, checkpoints, blips and radar areas.

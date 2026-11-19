@@ -87,6 +87,11 @@ impl<M: Memory> WorldState for OriginalGame<M> {
         AreaCode::default()
     }
 
+    /// `CStats::StatTypesFloat[stat]`, written directly as samp does.
+    fn set_float_stat(&mut self, stat: u16, value: f32) -> GameResult<()> {
+        self.mem.write_data(game::FLOAT_STATS + 4 * u32::from(stat), &value.to_le_bytes()).map_err(write_error)
+    }
+
     fn area_raw(&self) -> i32 {
         0
     }

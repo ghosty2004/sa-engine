@@ -9,6 +9,7 @@ use samp_proto::time::Instant;
 
 use sa_samp_api::PedRef;
 use sa_samp_api::peds::Peds as _;
+use sa_samp_api::world::WorldState as _;
 use samp_proto::raknet::Reliability;
 use samp_proto::rpcs::{player, world};
 use samp_proto::sync::player::{RemoteBulletSync, hit_type};
@@ -417,8 +418,8 @@ pub fn set_ammo(ped: u32, weapon: u8, ammo: u16) {
 /// RPC 34 for the local player: the GTA stat (samp also keeps a local copy, which we do not need).
 /// Mirrors samp.dll 0x1000F5E0.
 pub fn set_local_skill(skill: u32, level: u16) {
-    if skill < 11 {
-        wr(crate::game::WEAPON_SKILL_STATS + 4 * skill, f32::from(level));
+    if let Some(stat) = crate::combat::weapon_skill_stat(skill) {
+        let _ = process().set_float_stat(stat, f32::from(level));
     }
 }
 
@@ -432,9 +433,7 @@ pub fn create_explosion(runner: &mut Runner, e: &player::CreateExplosion) {
             Arg::Float(e.pos.y),
             Arg::Float(e.pos.z),
             Arg::Int(e.kind as i32),
-            // samp pushes the radius as a double, but the descriptor "fffii" reads one dword: the low half of
-            // the double (0 for every radius with few mantissa bits, e.g. 2.0).
-            Arg::Int(f64::from(e.radius).to_bits() as u32 as i32),
+            Arg::Int(crate::combat::explosion_shake_bits(e.radius) as i32),
         ],
     );
 }

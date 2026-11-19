@@ -23,10 +23,10 @@ impl Vehicles {
         let Some(v) = self.get(id) else { return };
         let (h, kind) = (v.handle, v.kind);
         match e.event_type {
-            1 if kind == Kind::Automobile && e.arg1 < 4 => {
+            1 if kind == Kind::Automobile && e.arg1 < u32::from(vm::PAINTJOBS) => {
                 runner.run(op::GIVE_VEHICLE_PAINTJOB, &[Arg::Int(h), Arg::Int(e.arg1 as i32)]);
             }
-            2 if kind == Kind::Automobile => add_component(runner, h, e.arg1 as i32),
+            2 if kind == Kind::Automobile => add_component(h, e.arg1 as i32),
             3 => self.set_colours(id, e.arg1 as u8, e.arg2 as u8),
             4 => self.mod_shop_follow(runner, players, e),
             _ => {}
@@ -101,21 +101,13 @@ impl Vehicles {
     }
 }
 
-/// Add-component (samp's vehicle method, used by stream-in and SCM event 2): not loaded → `REQUEST_MODEL`,
-/// `LOAD_ALL_MODELS_NOW`, `REQUEST_VEHICLE_MOD`, then up to 20 polls with `Sleep(1)`; if loaded, `ADD_VEHICLE_MOD`.
-pub(super) fn add_component(runner: &mut Runner, handle: i32, component: i32) {
-    if !crate::adapter::original::stream::component_loaded(component) {
-        crate::adapter::original::stream::request_model(component);
-        crate::adapter::original::stream::load_all_now();
-        crate::adapter::original::stream::request_component(component);
-        for _ in 0..20 {
-            if crate::adapter::original::stream::component_loaded(component) {
-                break;
-            }
-            std::thread::sleep(Duration::from_millis(1));
-        }
-    }
-    if crate::adapter::original::stream::component_loaded(component) {
-        runner.run(op::ADD_VEHICLE_MOD, &[Arg::Int(handle), Arg::Int(component), Arg::Local(0)]);
+/// Add-component (samp's vehicle method, used by stream-in and SCM event 2) on the vehicle of script handle
+/// `handle`: [`crate::vehops::add_component`], `Sleep(1)` between the polls.
+pub(super) fn add_component(handle: i32, component: i32) {
+    use sa_samp_api::vehicles::Vehicles as _;
+    let mut game = crate::adapter::original::process();
+    if let Some(v) = game.vehicle_from_script_handle(sa_samp_api::ScriptHandle(handle)) {
+        let wait = || std::thread::sleep(Duration::from_millis(1));
+        let _ = crate::vehops::add_component(&mut game, v, sa_samp_api::ModelId(component), &wait);
     }
 }

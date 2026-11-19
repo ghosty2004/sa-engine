@@ -128,24 +128,24 @@ impl Vehicles {
     fn set_params(&mut self, id: u16, p: &rv::VehicleParams) {
         let Some(v) = self.pool.get_mut(&id).filter(|v| v.ptr != 0) else { return };
         let ptr = v.ptr;
-        if let Some(on) = param_bit(p.engine) {
+        if let Some(on) = vm::param_bit(p.engine) {
             v.engine = i32::from(on);
         }
-        if let Some(on) = param_bit(p.lights) {
+        if let Some(on) = vm::param_bit(p.lights) {
             v.lights = i32::from(on);
         }
-        if let Some(on) = param_bit(p.alarm) {
+        if let Some(on) = vm::param_bit(p.alarm) {
             set_bits_u8(ptr + g::VEH_SIREN_BYTE, g::VEH_SIREN_ON, on);
-            poke(ptr + g::VEH_ALARM, if on { 20000u16 } else { 0 });
+            poke(ptr + g::VEH_ALARM, if on { vm::ALARM_MS } else { 0 });
         }
-        if let Some(on) = param_bit(p.doors) {
+        if let Some(on) = vm::param_bit(p.doors) {
             poke(ptr + g::VEH_DOOR_LOCK, if on { 2u32 } else { 0 });
             v.locked = on;
         }
-        if let Some(on) = param_bit(p.objective) {
+        if let Some(on) = vm::param_bit(p.objective) {
             v.objective = on;
         }
-        if let Some(on) = param_bit(p.siren) {
+        if let Some(on) = vm::param_bit(p.siren) {
             set_bits_u8(ptr + g::VEH_SIREN_BYTE, g::VEH_SIREN_ON, on);
         }
         if v.kind == Kind::Automobile {
@@ -155,30 +155,16 @@ impl Vehicles {
     }
 }
 
-/// A SetVehicleParams byte: 0 / 1 set the state, anything else leaves it.
-fn param_bit(b: u8) -> Option<bool> {
-    matches!(b, 0 | 1).then_some(b == 1)
-}
-
 /// The bonnet, boot and door states of SetVehicleParams (automobiles).
 fn open_doors(ptr: u32, p: &rv::VehicleParams) {
-    // (wire byte, node, door index)
-    let doors = [
-        (p.bonnet, 0x10, 0),
-        (p.boot, 0x11, 1),
-        (p.door_driver, 10, 2),
-        (p.door_passenger, 8, 3),
-        (p.door_back_left, 11, 4),
-        (p.door_back_right, 9, 5),
-    ];
-    for (b, node, door) in doors {
-        if let Some(open) = param_bit(b) {
+    for (b, node, door) in vm::param_doors(p) {
+        if let Some(open) = vm::param_bit(b) {
             // SAFETY: CAutomobile::OpenDoor(CPed*, node, door, ratio, playSound) on a live automobile.
             // The ped / sound arguments samp passes are not documented: null / false here.
             unsafe {
                 let f: extern "thiscall" fn(u32, u32, i32, i32, f32, u8) =
                     std::mem::transmute(g::AUTOMOBILE_OPEN_DOOR as usize);
-                f(ptr, 0, node, door, if open { 1.0 } else { 0.0 }, 0);
+                f(ptr, 0, node as i32, i32::from(door), if open { 1.0 } else { 0.0 }, 0);
             }
         }
     }
@@ -186,10 +172,8 @@ fn open_doors(ptr: u32, p: &rv::VehicleParams) {
 
 /// The window states of SetVehicleParams.
 fn set_windows(ptr: u32, p: &rv::VehicleParams) {
-    for (b, node) in
-        [(p.window_driver, 10u32), (p.window_passenger, 8), (p.window_back_left, 11), (p.window_back_right, 9)]
-    {
-        if let Some(closed) = param_bit(b) {
+    for (b, node) in vm::param_windows(p) {
+        if let Some(closed) = vm::param_bit(b) {
             let f = if closed { g::CLEAR_WINDOW_OPEN } else { g::SET_WINDOW_OPEN };
             // SAFETY: CVehicle::Set/ClearWindowOpenFlag(uint8 node) on a live vehicle.
             unsafe {

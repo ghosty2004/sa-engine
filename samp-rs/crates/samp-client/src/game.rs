@@ -145,8 +145,10 @@ pub const VTBL_PED_MODEL_INFO: u32 = 0x85BDC0;
 pub const VTBL_PLACEABLE: u32 = 0x863C40;
 /// `CWorld::PlayerInFocus` (u8).
 pub const PLAYER_IN_FOCUS: u32 = 0xB7CD74;
+/// `CStats::StatTypesFloat` (82 floats).
+pub const FLOAT_STATS: u32 = 0xB79380;
 /// `CStats::StatTypesFloat[69..79]` (weapon skills, 11 floats).
-pub const WEAPON_SKILL_STATS: u32 = 0xB79380 + 0x114;
+pub const WEAPON_SKILL_STATS: u32 = FLOAT_STATS + 4 * crate::combat::WEAPON_SKILL_FIRST_STAT as u32;
 
 /// samp's valid-ped-model test: a model-info pointer with the ped vtable. Mirrors samp.dll 0x100B3E10.
 pub fn is_ped_model<M: Memory>(mem: &M, model: u32) -> bool {

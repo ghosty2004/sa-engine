@@ -1,7 +1,7 @@
 //! Camera. samp-rs today: `behaviourclient/camera.rs`, `camtarget.rs`, `client/*.rs`, `swap.rs`,
 //! `combathooks.rs`, `ui/render/world.rs`. Mapping: `docs/samp/game-adapter.md` §4.5.
 
-use crate::{GameResult, PedRef, Point2, Vec3, VehicleRef};
+use crate::{GameError, GameResult, PedRef, Point2, Vec3, VehicleRef};
 
 pub use sa_types::camera::CameraState;
 
@@ -50,6 +50,14 @@ pub trait Camera {
     ) -> GameResult<()>;
     /// `SWITCH_WIDESCREEN` (02A3).
     fn set_widescreen(&mut self, on: bool) -> GameResult<()>;
+    /// Ends the scripted camera moves and their persistence (`CAMERA_RESET_NEW_SCRIPTABLES` 0925).
+    fn reset_scripted_moves(&mut self) -> GameResult<()> {
+        Err(GameError::Unsupported("Camera::reset_scripted_moves"))
+    }
+    /// Whether the camera keeps the end position of a scripted move (`CAMERA_PERSIST_POS` 0930).
+    fn persist_position(&mut self, _on: bool) -> GameResult<()> {
+        Err(GameError::Unsupported("Camera::persist_position"))
+    }
     /// Camera shake (`CCamera::CamShakeNoPos` 0x50A970).
     fn shake(&mut self, strength: f32) -> GameResult<()>;
     /// Overrides the aspect ratio and FOV the player code sees (samp's per-player context; see

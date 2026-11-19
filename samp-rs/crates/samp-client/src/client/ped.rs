@@ -99,11 +99,8 @@ impl Client {
 
     /// RPC 162 behaviour: the attachment ends too. Mirrors samp.dll 0x1009D7A0.
     pub(super) fn camera_behind_player(&mut self) {
-        self.runner.run(op::CAMERA_PERSIST_POS, &[Arg::Int(0)]);
-        self.runner.run(op::CAMERA_RESET_NEW_SCRIPTABLES, &[]);
         self.behaviour.attached = None;
-        crate::adapter::original::cam::behind_player();
-        crate::adapter::original::cam::restore();
+        let _ = crate::camops::behind_player(&mut crate::adapter::original::process());
     }
 
     fn load_model(&mut self, model: i32) -> bool {

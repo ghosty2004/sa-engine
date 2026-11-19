@@ -83,6 +83,16 @@ impl<M: Memory> Camera for OriginalGame<M> {
         self.run_op(op::RESTORE_CAMERA_JUMPCUT, &[]).map(|_| ())
     }
 
+    /// `CAMERA_RESET_NEW_SCRIPTABLES` (0925).
+    fn reset_scripted_moves(&mut self) -> GameResult<()> {
+        self.run_op(op::CAMERA_RESET_NEW_SCRIPTABLES, &[]).map(|_| ())
+    }
+
+    /// `CAMERA_PERSIST_POS` (0930).
+    fn persist_position(&mut self, on: bool) -> GameResult<()> {
+        self.run_op(op::CAMERA_PERSIST_POS, &[ScriptArg::Int(i32::from(on))]).map(|_| ())
+    }
+
     fn interpolate(
         &mut self,
         _look_at: bool,

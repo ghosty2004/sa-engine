@@ -765,6 +765,51 @@ pub fn heading_deg(forward: [f32; 3]) -> f32 {
     if d >= 359.95 { 0.0 } else { d }
 }
 
+/// Paintjobs a vehicle takes (RPC 164's paintjob and SCM event 1): 0..PAINTJOBS.
+pub const PAINTJOBS: u8 = 4;
+/// SetVehicleParams' alarm: how long it sounds.
+pub const ALARM_MS: u16 = 20000;
+
+/// A SetVehicleParams byte: 0 / 1 set the state, anything else leaves it.
+pub fn param_bit(b: u8) -> Option<bool> {
+    matches!(b, 0 | 1).then_some(b == 1)
+}
+
+/// The bonnet, boot and door bytes of SetVehicleParams (automobiles), each with the car node and the door index
+/// samp opens.
+pub fn param_doors(p: &samp_proto::rpcs::vehicle::VehicleParams) -> [(u8, u32, u8); 6] {
+    [
+        (p.bonnet, 0x10, 0),
+        (p.boot, 0x11, 1),
+        (p.door_driver, 10, 2),
+        (p.door_passenger, 8, 3),
+        (p.door_back_left, 11, 4),
+        (p.door_back_right, 9, 5),
+    ]
+}
+
+/// The window bytes of SetVehicleParams with their car node (a set byte closes the window).
+pub fn param_windows(p: &samp_proto::rpcs::vehicle::VehicleParams) -> [(u8, u32); 4] {
+    [(p.window_driver, 10), (p.window_passenger, 8), (p.window_back_left, 11), (p.window_back_right, 9)]
+}
+
+/// RPC 164's colours: written unless both are the default (the model's random colours stay).
+pub fn stream_in_colours(c1: u8, c2: u8) -> Option<[u8; 2]> {
+    let d = samp_proto::rpcs::vehicle::StreamInVehicle::COLOUR_DEFAULT;
+    (c1 != d || c2 != d).then_some([c1, c2])
+}
+
+/// RPC 164's body colours: written unless both are unset.
+pub fn body_colours(b1: u32, b2: u32) -> Option<[u8; 2]> {
+    let u = samp_proto::rpcs::vehicle::StreamInVehicle::BODY_COLOUR_UNSET;
+    (b1 != u || b2 != u).then_some([b1 as u8, b2 as u8])
+}
+
+/// The damage setter's rule: all-zero panels, doors and lights repair a damaged vehicle instead.
+pub fn damage_repairs(panels: u32, doors: u32, lights: u8) -> bool {
+    panels == 0 && doors == 0 && lights == 0
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -978,5 +1023,20 @@ mod tests {
         assert!((heading_deg([-1.0, 0.0, 0.0]) - 90.0).abs() < 1e-4);
         assert!((heading_deg([1.0, 0.0, 0.0]) - 270.0).abs() < 1e-4);
         assert_eq!(heading_deg([1e-7, 1.0, 0.0]), 0.0);
+    }
+
+    #[test]
+    fn params_colours_and_damage_rules() {
+        use samp_proto::rpcs::vehicle::{StreamInVehicle, VehicleParams};
+        assert_eq!((param_bit(0), param_bit(1), param_bit(0xFF)), (Some(false), Some(true), None));
+        let p = VehicleParams { bonnet: 1, window_driver: 0, ..VehicleParams::default() };
+        assert_eq!(param_doors(&p)[0], (1, 0x10, 0));
+        assert_eq!(param_windows(&p)[0], (0, 10));
+        let d = StreamInVehicle::COLOUR_DEFAULT;
+        assert_eq!(stream_in_colours(d, d), None);
+        assert_eq!(stream_in_colours(3, d), Some([3, d]));
+        assert_eq!(body_colours(StreamInVehicle::BODY_COLOUR_UNSET, StreamInVehicle::BODY_COLOUR_UNSET), None);
+        assert_eq!(body_colours(0x106, 7), Some([6, 7]));
+        assert!(damage_repairs(0, 0, 0) && !damage_repairs(0, 4, 0));
     }
 }

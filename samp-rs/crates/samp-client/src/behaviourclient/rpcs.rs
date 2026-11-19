@@ -37,15 +37,13 @@ pub fn reset_money(runner: &mut Runner) {
 
 /// RPC 111: the debug chat line, then `SWITCH_WIDESCREEN`. Mirrors samp.dll B 0x10018A70.
 pub fn widescreen(runner: &mut Runner, on: u8) {
-    crate::ui::print_debug(&format!("Widescreen = {on}"));
+    crate::ui::print_debug(&bh::widescreen_line(on));
     runner.run(op::SWITCH_WIDESCREEN, &[Arg::Int(i32::from(on))]);
 }
 
 /// RPC 89: `GIVE_MELEE_ATTACK_TO_CHAR(ped, style, 6)`. Mirrors samp.dll B 0x100AE0E0.
-pub fn fighting_style(runner: &mut Runner, ped: u32, style: u8) {
-    if let Some(h) = process().ped_script_handle(PedRef(ped)).ok().map(|h| h.0) {
-        runner.run(op::GIVE_MELEE_ATTACK_TO_CHAR, &[Arg::Int(h), Arg::Int(i32::from(style)), Arg::Int(6)]);
-    }
+pub fn fighting_style(ped: u32, style: u8) {
+    let _ = process().set_fighting_style(PedRef(ped), style, bh::FIGHTING_STYLE_MOVES);
 }
 
 /// RPC 33: the ped's shop-name pointer (an empty name clears only its low byte, like samp), then
@@ -55,14 +53,13 @@ pub fn shop_name(name: &[u8]) {
     if ped == 0 || process().ped_script_handle(PedRef(ped)).ok().map(|h| h.0).is_none() {
         return;
     }
-    let end = name.iter().position(|&b| b == 0).unwrap_or(name.len());
-    let name = &name[..end];
+    let (name, loads) = bh::shop_name(name);
     if name.is_empty() {
         poke(ped + PED_SHOP_NAME, 0u8);
     } else if name.len() <= 31 {
         poke(ped + PED_SHOP_NAME, SHOP_NAME.set(name));
     }
-    if name.len() <= 8 {
+    if loads {
         let c = CString::new(name).unwrap_or_default();
         // SAFETY: GTA's cdecl shop loader with a NUL-terminated name, main thread.
         unsafe {

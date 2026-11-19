@@ -178,6 +178,30 @@ pub fn client_check_time_arg(ms: u64) -> u32 {
     (ms as u32 & 0x0FFF_FFFF) | 0x3000_0000
 }
 
+/// RPC 89's moves argument of `GIVE_MELEE_ATTACK_TO_CHAR`. Mirrors samp.dll B 0x100AE0E0.
+pub const FIGHTING_STYLE_MOVES: u8 = 6;
+
+/// RPC 82: the cut argument of the camera move, or `None` when the move is ignored (a time <= 0). Mirrors samp.dll
+/// B 0x1001A0A0.
+pub fn interpolation_cut(time_ms: i32, cut: u8) -> Option<u8> {
+    (time_ms > 0).then(|| camera_cut(cut))
+}
+
+/// RPC 13: the height above the ground the player is put at.
+pub const FIND_Z_ABOVE: f32 = 1.5;
+
+/// RPC 33: the shop name up to its NUL, and whether the game loads that shop (names of at most 8 characters, the
+/// empty one included). Mirrors samp.dll B 0x10017E00.
+pub fn shop_name(raw: &[u8]) -> (&[u8], bool) {
+    let name = &raw[..raw.iter().position(|&b| b == 0).unwrap_or(raw.len())];
+    (name, name.len() <= 8)
+}
+
+/// RPC 111's debug chat line. Mirrors samp.dll B 0x10018A70.
+pub fn widescreen_line(on: u8) -> String {
+    format!("Widescreen = {on}")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -249,5 +273,16 @@ mod tests {
         assert_eq!(client_check_sum(&[0x33, 0x33]), 0);
         assert!(client_check_exe_range(0x40_0000) && client_check_exe_range(0x85_6E00));
         assert!(!client_check_exe_range(0x3F_FFFF) && !client_check_exe_range(0x85_6E01));
+    }
+
+    #[test]
+    fn camera_shop_and_widescreen_rules() {
+        assert_eq!(interpolation_cut(0, 1), None);
+        assert_eq!(interpolation_cut(3000, 1), Some(1));
+        assert_eq!(interpolation_cut(3000, 0), Some(2));
+        assert_eq!(shop_name(b"AMMUN1\0junk"), (&b"AMMUN1"[..], true));
+        assert_eq!(shop_name(b"TOOLONGNAME"), (&b"TOOLONGNAME"[..], false));
+        assert_eq!(shop_name(b""), (&b""[..], true));
+        assert_eq!(widescreen_line(1), "Widescreen = 1");
     }
 }

@@ -36,10 +36,8 @@ impl Vehicles {
         if kind == Kind::Automobile {
             apply_stream_in_mods(runner, handle, s);
         }
-        if s.body_colour1 != rv::StreamInVehicle::BODY_COLOUR_UNSET
-            || s.body_colour2 != rv::StreamInVehicle::BODY_COLOUR_UNSET
-        {
-            self.set_colours(s.vehicle_id, s.body_colour1 as u8, s.body_colour2 as u8);
+        if let Some([c1, c2]) = vm::body_colours(s.body_colour1, s.body_colour2) {
+            self.set_colours(s.vehicle_id, c1, c2);
         }
     }
 
@@ -189,16 +187,16 @@ fn apply_stream_in_state(_runner: &mut Runner, v: &mut Veh, s: &rv::StreamInVehi
         }
     }
     v.siren = s.siren != 0;
-    if s.colour1 != rv::StreamInVehicle::COLOUR_DEFAULT || s.colour2 != rv::StreamInVehicle::COLOUR_DEFAULT {
-        poke(ptr + g::VEH_PRIMARY_COLOUR, s.colour1);
-        poke(ptr + g::VEH_SECONDARY_COLOUR, s.colour2);
-        v.colours = Some((s.colour1, s.colour2));
+    if let Some([c1, c2]) = vm::stream_in_colours(s.colour1, s.colour2) {
+        poke(ptr + g::VEH_PRIMARY_COLOUR, c1);
+        poke(ptr + g::VEH_SECONDARY_COLOUR, c2);
+        v.colours = Some((c1, c2));
     }
     poke(ptr + g::VEH_HEALTH, s.health);
     if s.interior != 0 {
         crate::adapter::original::veh_calls::set_area(handle, s.interior);
     }
-    if s.panel_damage != 0 || s.door_damage != 0 || s.light_damage != 0 {
+    if !vm::damage_repairs(s.panel_damage, s.door_damage, s.light_damage) {
         apply_damage(ptr, v.kind, s.panel_damage, s.door_damage, s.light_damage);
     }
     apply_tyres(ptr, v.kind, s.tyre_damage);
@@ -208,11 +206,11 @@ fn apply_stream_in_state(_runner: &mut Runner, v: &mut Veh, s: &rv::StreamInVehi
 fn apply_stream_in_mods(runner: &mut Runner, handle: i32, s: &rv::StreamInVehicle) {
     for slot in 0..s.mods.len() {
         if let Some(c) = s.component(slot) {
-            add_component(runner, handle, i32::from(c));
+            add_component(handle, i32::from(c));
         }
     }
     if let Some(p) = s.paintjob()
-        && p < 4
+        && p < vm::PAINTJOBS
     {
         runner.run(op::GIVE_VEHICLE_PAINTJOB, &[Arg::Int(handle), Arg::Int(i32::from(p))]);
     }

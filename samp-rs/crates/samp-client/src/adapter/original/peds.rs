@@ -308,6 +308,13 @@ impl<M: Memory> Peds for OriginalGame<M> {
         self.run_op(op::SET_PLAYER_DRUNKENNESS, &[ScriptArg::Int(0), ScriptArg::Int(level)]).map(|_| ())
     }
 
+    /// `GIVE_MELEE_ATTACK_TO_CHAR` (07FE).
+    fn set_fighting_style(&mut self, ped: PedRef, style: u8, moves: u8) -> GameResult<()> {
+        let h = self.ped_script_handle(ped)?.0;
+        let args = [ScriptArg::Int(h), ScriptArg::Int(i32::from(style)), ScriptArg::Int(i32::from(moves))];
+        self.run_op(op::GIVE_MELEE_ATTACK_TO_CHAR, &args).map(|_| ())
+    }
+
     fn set_ped_flags(&mut self, _ped: PedRef, _mask: [u32; 2], _value: [u32; 2]) -> GameResult<()> {
         Err(GameError::Unsupported("Peds::set_ped_flags"))
     }

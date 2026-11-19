@@ -8,7 +8,7 @@ pub(super) fn apply_damage(ptr: u32, kind: Kind, panels: u32, doors: u32, lights
     if !matches!(kind, Kind::Automobile | Kind::Plane) {
         return;
     }
-    if panels == 0 && doors == 0 && lights == 0 {
+    if vm::damage_repairs(panels, doors, lights) {
         let has = rd::<u32>(ptr + g::DMG_PANELS) != 0
             || rd::<u32>(ptr + g::DMG_DOORS) != 0
             || rd::<u8>(ptr + g::DMG_LIGHTS) != 0;

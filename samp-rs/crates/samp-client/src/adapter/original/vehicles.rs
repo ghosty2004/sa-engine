@@ -196,8 +196,10 @@ impl<M: Memory> Vehicles for OriginalGame<M> {
         Err(GameError::Unsupported("Vehicles::set_paintjob"))
     }
 
-    fn add_component(&mut self, _v: VehicleRef, _component: ModelId) -> GameResult<()> {
-        Err(GameError::Unsupported("Vehicles::add_component"))
+    /// `ADD_VEHICLE_MOD` (06E7).
+    fn add_component(&mut self, v: VehicleRef, component: ModelId) -> GameResult<()> {
+        let h = self.vehicle_script_handle(v)?.0;
+        self.run_op(op::ADD_VEHICLE_MOD, &[ScriptArg::Int(h), ScriptArg::Int(component.0), ScriptArg::Local(0)]).map(|_| ())
     }
 
     fn remove_component(&mut self, _v: VehicleRef, _component: ModelId) -> GameResult<()> {

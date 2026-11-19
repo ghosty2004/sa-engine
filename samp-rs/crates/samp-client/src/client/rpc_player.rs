@@ -46,10 +46,10 @@ impl Client {
             P::SetPlayerArmour(a) => self.poke_local_ped(off::PED_ARMOUR, a.armour),
             P::TogglePlayerControllable(t) => self.set_controllable(t.enable != 0),
             P::SetPlayerCameraPosition(c) => {
-                self.behaviour.camera_position(&mut self.runner, [c.pos.x, c.pos.y, c.pos.z])
+                self.behaviour.camera_position([c.pos.x, c.pos.y, c.pos.z])
             }
             P::SetPlayerCameraLookAt(c) => {
-                self.behaviour.camera_look_at(&mut self.runner, [c.pos.x, c.pos.y, c.pos.z], c.cut)
+                self.behaviour.camera_look_at([c.pos.x, c.pos.y, c.pos.z], c.cut)
             }
             P::SetPlayerCameraBehindPlayer(_) => self.camera_behind_player(),
             P::InterpolateCamera(c) => self.on_interpolate_camera(&c),
@@ -164,7 +164,7 @@ impl Client {
                 op::GET_GROUND_Z_FOR_3D_COORD,
                 &[Arg::Float(pos.x), Arg::Float(pos.y), Arg::Float(pos.z), Arg::Local(0)],
             );
-            let z = self.runner.local_f32(0) + 1.5;
+            let z = self.runner.local_f32(0) + crate::behaviour::FIND_Z_ABOVE;
             self.teleport(pos.x, pos.y, z);
         }
     }
@@ -195,7 +195,7 @@ impl Client {
         } else {
             self.players.get(player_id).map(|p| p.ped).unwrap_or(0)
         };
-        crate::behaviourclient::fighting_style(&mut self.runner, ped, style)
+        crate::behaviourclient::fighting_style(ped, style)
     }
 
     fn on_give_weapon(&mut self, weapon: u32, ammo: u32) {
