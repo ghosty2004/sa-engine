@@ -278,7 +278,6 @@ fn mod_display(d: &display::Display) -> Display {
 pub fn install(spec: &str) -> Result<(), String> {
     let mut host = Host::new(Box::new(|s| {
         println!("sa-game: {s}");
-        #[cfg(not(target_arch = "wasm32"))]
         crate::crash::note(s);
     }));
     host.set_display(mod_display(&display::reported()));
@@ -300,7 +299,6 @@ pub fn install(spec: &str) -> Result<(), String> {
     for s in sources {
         if let Err(e) = host.load(s) {
             println!("sa-game: mod not loaded: {e}");
-            #[cfg(not(target_arch = "wasm32"))]
             crate::crash::note(&format!("mod not loaded: {e}"));
         }
     }

@@ -1,7 +1,8 @@
 //! Crash reports: when the game faults, a file with the fault, the Rust call chain and the last lines the mods
 //! logged, so a crash in play can be looked at without reproducing it.
 //!
-//! The reports go to `SA_GAME_CRASH_DIR`, else to `crashes/` next to the executable.
+//! The reports go to `SA_GAME_CRASH_DIR`, else to `crashes/` next to the executable (the browser build has neither,
+//! so it keeps only the lines).
 
 use std::collections::VecDeque;
 use std::io::Write;
