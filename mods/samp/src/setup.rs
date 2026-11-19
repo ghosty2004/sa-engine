@@ -9,7 +9,7 @@ use samp_client::patches::{limits, streaming_budget};
 const STREAMING_BUDGET_RAM_MB: u64 = 1500;
 
 /// The limits samp.dll raises, with its values.
-fn raised_limits() -> [(GameLimit, u32); 13] {
+fn raised_limits() -> [(GameLimit, u32); 14] {
     [
         (GameLimit::PtrNodesSingle, limits::PTR_NODES_SINGLE),
         (GameLimit::PtrNodesDouble, limits::PTR_NODES_DOUBLE),
@@ -21,6 +21,7 @@ fn raised_limits() -> [(GameLimit, u32); 13] {
         (GameLimit::Matrices, limits::MATRICES),
         (GameLimit::Vehicles, limits::VEHICLES),
         (GameLimit::Buildings, limits::BUILDINGS),
+        (GameLimit::Objects, limits::OBJECTS),
         (GameLimit::Dummies, limits::DUMMIES),
         (GameLimit::ColModels, limits::COL_MODELS),
         (GameLimit::TextureDictionaries, limits::TEXTURE_DICTIONARIES),

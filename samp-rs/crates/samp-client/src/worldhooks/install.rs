@@ -73,7 +73,7 @@ type IndirectRow = (u32, u32, u32, u32, &'static [u8], &'static str);
 const BYTE_ROWS: &[ByteRow] = &[(
     113,
     0x551097,
-    &[0xB8, 0x0B, 0x00, 0x00],
+    &crate::patches::limits::OBJECTS.to_le_bytes(),
     &[0x5E, 0x01, 0x00, 0x00],
     "CPools::Initialise object pool 350 -> 3000",
 )];

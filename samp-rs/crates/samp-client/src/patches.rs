@@ -80,6 +80,8 @@ pub mod limits {
     pub const COL_MODELS: u32 = 32_511;
     /// `CTxdStore::ms_pTxdPool`.
     pub const TEXTURE_DICTIONARIES: u32 = 20_000;
+    /// `CPools::ms_pObjectPool` (patched with samp's world hooks, worldhooks/install.rs).
+    pub const OBJECTS: u32 = 3000;
 
     /// `push v`.
     pub(super) const fn push(v: u32) -> [u8; 5] {
