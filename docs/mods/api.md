@@ -1,4 +1,4 @@
-# Mod API reference (API 1.8)
+# Mod API reference (API 1.9)
 
 The interface is defined once, in `crates/sa-mod-api/src/lib.rs` (`for_each_import!`, `for_each_export!`); this page
 explains it. The Rust SDK (`crates/sa-mod`) wraps every function; other languages import the functions from module
@@ -445,3 +445,48 @@ heading, proofs, a decision maker, animations and health) need beyond level 3.
 
 Nothing of level 8 runs without a mod that asks for it; the gang overlay is observed only from a mod's first radar
 area on.
+## Level 9: objects, models, building removal (1.9)
+
+Objects are the pool's entities by handle, as peds and vehicles are; a mod creates and deletes its own with
+`create_object` / `destroy_object` (level 3) and may change any live object.
+
+### Reads (`state = "read"`)
+
+| function | SDK | what |
+|---|---|---|
+| `object_info(handle, buf, len)` | `objects::info(o)` | `ObjectInfo`: model, position, area, streamed in (RenderWare object), visible, collides, attached, scale, move and turn speed, the collision model's bounding sphere in the world |
+| `object_matrix(handle, buf, len)` | `objects::matrix(o)` | its transform (`MatrixInfo`) |
+| `object_list(buf, len)` | `objects::list()` | the object pool's handles |
+| `ped_bone_matrix(handle, node, buf, len)` | `objects::ped_bone_matrix(ped, node)` | the world transform of a node of the ped's skeleton (`ePedNode` 1..=18) after the game's animation update (`CEntity::UpdateRpHAnim`); FAILED while the ped is not streamed in |
+| `model_info(model)` | `models::info(model)` | the model's kind (none, atomic, clump, ped, vehicle, weapon) plus `model::LOADED`; BAD_ARG outside `0..20000` |
+
+### Changes (`state = "write"`)
+
+Plain-value changes (`set_object_position`, `_rotation`, `_scale`, `_visible`, `_collision`, `detach_object`) are
+queued inside a hook like those of level 3; the ones that read the mod's memory or return a count are WRONG_PHASE
+there.
+
+| function | SDK | what |
+|---|---|---|
+| `set_object_position(handle, x, y, z)` | `objects::set_position` | `CObject::Teleport`: out of the world, the position, the RenderWare matrix and frame, back in; the rotation stays |
+| `set_object_matrix(handle, ptr)` | `objects::set_matrix` | 12 `f32` (right, forward, up, position) as they are, then the teleport |
+| `set_object_rotation(handle, x, y, z)` | `objects::set_rotation` | `SET_OBJECT_ROTATION` (degrees) |
+| `set_object_scale` / `set_object_visible` / `set_object_collision` | `objects::set_scale` / `set_visible` / `set_collision` | `SET_OBJECT_SCALE`, `SET_OBJECT_VISIBLE`, `SET_OBJECT_COLLISION` |
+| `set_object_speed(handle, ptr)` | `objects::set_speed` | move and turn speed (6 `f32`): what peds standing on it move with; a mod moving an object writes both every frame |
+| `attach_object(handle, kind, target, ptr)` | `objects::attach(o, Target, offset, rot)` | `ATTACH_OBJECT_TO_CHAR` / `_CAR` / `_OBJECT` with an offset and a rotation (6 `f32`); the game places it every frame |
+| `detach_object(handle)` | `objects::detach` | `DETACH_OBJECT` where it is, with collision |
+| `set_object_material(handle, slot, model, dict, name, rgba)` | `objects::set_material(o, slot, Some((model, dict, name)), colour)` | material `slot` (0..16, geometry order) drawn with texture `name` of dictionary `dict` that `model` loads (loaded first) and / or modulated by `rgba` (prelighting off, surface properties 1, 0, 1), around `CObject::Render`; `model` -1 and colour 0 gives the slot back. Atomic and clump objects |
+| `remove_buildings(model, x, y, z, radius)` | `objects::remove_buildings` | the buildings, dummies and objects of `model` (-1: any) within `radius`: into an interior area and 2000 units down, the occluders within 500 units cleared; the instances of IPLs streamed in later get the same as they load (`CFileLoader::LoadObjectInstance`). For the session; returns the count removed now |
+| `set_model_draw_distance(model, distance)` | `models::set_draw_distance` | an atomic model's draw distance; restored when the host disables the mod |
+
+### Models (`entities = true`)
+
+`model_request(model, now)` (`models::request`): `REQUEST_MODEL`, with `now` 1 also `LOAD_ALL_MODELS_NOW`; returns 1
+when loaded. `model_release(model)` (`models::release`): `MARK_MODEL_AS_NO_LONGER_NEEDED`. The host releases the
+models a mod requested when it disables the mod. Models without a model info are BAD_ARG (the original's limit of
+20,000 model ids and its definition files decide what exists).
+
+### Determinism
+
+Nothing of level 9 runs without a mod that asks for it: `CFileLoader::LoadObjectInstance` is observed only after a
+removal, `CObject::Render` only while an object has material slots.

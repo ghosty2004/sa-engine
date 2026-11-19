@@ -274,6 +274,8 @@ pub struct CallCtx {
     pub capture: (bool, bool, bool),
     /// The game options the mod switched off (turned back on when the host disables it).
     pub options_off: Vec<GameOption>,
+    /// What the mod changed in the game's data (given back when it is disabled).
+    pub changes: crate::objects::GameChanges,
     /// The value the mod's entry point returned.
     pub result: i32,
     /// The mod's id and name.
@@ -330,7 +332,7 @@ impl CallCtx {
 }
 
 /// Writes `record` into the buffer (`ptr`, `len` bytes): its size, or `BAD_ARG`.
-fn write_record<T: Words>(mem: &mut dyn Mem, ptr: i32, len: i32, record: &T) -> i32 {
+pub(crate) fn write_record<T: Words>(mem: &mut dyn Mem, ptr: i32, len: i32, record: &T) -> i32 {
     let bytes = to_bytes(record);
     if ptr < 0 || len < 0 || (len as usize) < bytes.len() || !mem.write(ptr as u32, &bytes) {
         return status::BAD_ARG;
@@ -339,7 +341,7 @@ fn write_record<T: Words>(mem: &mut dyn Mem, ptr: i32, len: i32, record: &T) -> 
 }
 
 /// Writes the handles into the buffer, as many as fit: their number, or `BAD_ARG`.
-fn write_handles(mem: &mut dyn Mem, ptr: i32, len: i32, handles: impl ExactSizeIterator<Item = u32>) -> i32 {
+pub(crate) fn write_handles(mem: &mut dyn Mem, ptr: i32, len: i32, handles: impl ExactSizeIterator<Item = u32>) -> i32 {
     if ptr < 0 || len < 0 {
         return status::BAD_ARG;
     }
@@ -391,7 +393,7 @@ impl Mem for SliceMem<'_> {
 }
 
 /// Reads UTF-8 text of at most [`MAX_TEXT`] bytes.
-fn text(mem: &dyn Mem, ptr: i32, len: i32) -> Option<String> {
+pub(crate) fn text(mem: &dyn Mem, ptr: i32, len: i32) -> Option<String> {
     if ptr < 0 || len < 0 || len as usize > MAX_TEXT {
         return None;
     }
@@ -410,7 +412,7 @@ pub fn dispatch(ctx: &mut CallCtx, mem: &mut dyn Mem, index: usize, args: &[Val]
     if !ctx.grants(IMPORTS[index].permission) {
         return Ok(status::DENIED);
     }
-    if is_change(&call) {
+    if is_change(&call) || crate::objects::is_change(&call) {
         if ctx.in_hook() {
             if ctx.deferred.len() >= MAX_DEFERRED {
                 return Ok(status::FAILED);
@@ -425,6 +427,9 @@ pub fn dispatch(ctx: &mut CallCtx, mem: &mut dyn Mem, index: usize, args: &[Val]
         return Ok(r);
     }
     if let Some(r) = markers(ctx, call) {
+        return Ok(r);
+    }
+    if let Some(r) = crate::objects::calls(ctx, mem, call) {
         return Ok(r);
     }
     if let Some(r) = services(ctx, mem, call) {
@@ -1337,7 +1342,7 @@ fn is_change(call: &Call) -> bool {
 
 /// Runs `f` (a call into the game's code); a panic (game code that is not ported yet) becomes `FAILED` with a log
 /// line instead of ending the game.
-fn guarded<R>(logs: &mut Vec<(i32, String)>, what: &str, f: impl FnOnce() -> GameResult<R>) -> Result<R, i32> {
+pub(crate) fn guarded<R>(logs: &mut Vec<(i32, String)>, what: &str, f: impl FnOnce() -> GameResult<R>) -> Result<R, i32> {
     match std::panic::catch_unwind(std::panic::AssertUnwindSafe(f)) {
         Ok(Ok(r)) => Ok(r),
         Ok(Err(GameError::InvalidHandle)) => Err(status::NOT_FOUND),
@@ -1359,6 +1364,9 @@ fn guarded<R>(logs: &mut Vec<(i32, String)>, what: &str, f: impl FnOnce() -> Gam
 
 /// Applies a change ([`is_change`]) to the game: its status.
 pub fn apply(g: &mut GameAccess, call: Call, logs: &mut Vec<(i32, String)>) -> i32 {
+    if crate::objects::is_change(&call) {
+        return crate::objects::apply(g, call, logs);
+    }
     let ped = |h: i32| PedRef(h as u32);
     let veh = |h: i32| VehicleRef(h as u32);
     let byte = |v: i32, max: i32| u8::try_from(v).ok().filter(|&b| i32::from(b) <= max);
@@ -1784,5 +1792,54 @@ mod tests {
         // a stale pickup handle
         ctx.permissions.state = true;
         assert_eq!(dispatch(&mut ctx, m, i("pickup_touched"), &[Val::I32(0x0001_0005)]), Ok(status::NOT_FOUND));
+    }
+
+    #[test]
+    fn objects_and_models() {
+        use sa_access::fake;
+        let mut g = fake::game();
+        let obj = fake::OBJS + 2 * sa_access::addr::OBJECT_POOL.element;
+        fake::put(&mut g, fake::OBJ_MAP + 2, 0x03u8);
+        fake::put(&mut g, obj + sa_access::addr::off::MODEL, 1337u16);
+        let game = Game::new(g);
+        let mut data = vec![0u8; 512];
+        let m = &mut SliceMem(&mut data);
+        let mut ctx = CallCtx { game: Some(game.clone()), ..Default::default() };
+        let i = |n| import_index(n).unwrap();
+        let info = [Val::I32(0x203), Val::I32(0), Val::I32(512)];
+        assert_eq!(dispatch(&mut ctx, m, i("object_info"), &info), Ok(status::DENIED));
+        ctx.permissions = Permissions { state: true, write: true, ..Default::default() };
+        let n = dispatch(&mut ctx, m, i("object_info"), &info).unwrap();
+        assert_eq!(n as usize, 4 * <sa_mod_api::state::ObjectInfo as Words>::WORDS);
+        let read = sa_mod_api::state::from_bytes::<sa_mod_api::state::ObjectInfo>(&m.0[..n as usize]).unwrap();
+        assert_eq!(read.model, ModelId(1337));
+        assert_eq!(dispatch(&mut ctx, m, i("object_info"), &[Val::I32(0x204), Val::I32(0), Val::I32(512)]), Ok(status::NOT_FOUND));
+        assert_eq!(dispatch(&mut ctx, m, i("object_list"), &[Val::I32(0), Val::I32(512)]), Ok(1));
+        assert_eq!(m.0[..4], 0x203u32.to_le_bytes());
+        assert_eq!(dispatch(&mut ctx, m, i("model_info"), &[Val::I32(20_000)]), Ok(status::BAD_ARG));
+        assert_eq!(dispatch(&mut ctx, m, i("model_info"), &[Val::I32(1337)]), Ok(sa_mod_api::model::NONE));
+        // a model without a model info is refused before the streamer sees it
+        ctx.permissions.entities = true;
+        assert_eq!(dispatch(&mut ctx, m, i("model_request"), &[Val::I32(1337), Val::I32(0)]), Ok(status::BAD_ARG));
+        assert_eq!(dispatch(&mut ctx, m, i("set_model_draw_distance"), &[Val::I32(1337), Val::F32(300.0)]), Ok(status::BAD_ARG));
+        // changes: at once, deferred in a hook, or refused there when they read the mod's memory
+        let rot = [Val::I32(0x203), Val::F32(0.0), Val::F32(0.0), Val::F32(90.0)];
+        assert_eq!(dispatch(&mut ctx, m, i("set_object_rotation"), &rot), Ok(0));
+        assert_eq!(game.0.borrow().issued_commands().last().unwrap()[..2], 0x0453u16.to_le_bytes());
+        let stale = [Val::I32(0x204), Val::F32(0.0), Val::F32(0.0), Val::F32(90.0)];
+        assert_eq!(dispatch(&mut ctx, m, i("set_object_rotation"), &stale), Ok(status::NOT_FOUND));
+        let bad = [Val::I32(0x203), Val::F32(f32::NAN), Val::F32(0.0), Val::F32(0.0)];
+        assert_eq!(dispatch(&mut ctx, m, i("set_object_position"), &bad), Ok(status::BAD_ARG));
+        ctx.hook_call = Some(HookCall { args: Vec::new(), result: None });
+        assert_eq!(dispatch(&mut ctx, m, i("set_object_scale"), &[Val::I32(0x203), Val::F32(2.0)]), Ok(0));
+        assert_eq!(ctx.deferred, [Call::set_object_scale { handle: 0x203, scale: 2.0 }]);
+        assert_eq!(dispatch(&mut ctx, m, i("set_object_matrix"), &[Val::I32(0x203), Val::I32(0)]), Ok(status::WRONG_PHASE));
+        ctx.hook_call = None;
+        let remove = [Val::I32(1337), Val::F32(0.0), Val::F32(0.0), Val::F32(0.0), Val::F32(-1.0)];
+        assert_eq!(dispatch(&mut ctx, m, i("remove_buildings"), &remove), Ok(status::BAD_ARG));
+        let material = [0x203, 16, -1, 0, 0, 0, 0, 0].map(Val::I32);
+        assert_eq!(dispatch(&mut ctx, m, i("set_object_material"), &material), Ok(status::BAD_ARG));
+        let attach = [0x203, 3, 0x205, 0].map(Val::I32);
+        assert_eq!(dispatch(&mut ctx, m, i("attach_object"), &attach), Ok(status::BAD_ARG));
     }
 }

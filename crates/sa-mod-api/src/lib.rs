@@ -34,7 +34,7 @@ pub const EXPORT_MEMORY: &str = "memory";
 /// The API's major version.
 pub const API_MAJOR: u16 = 1;
 /// The API's minor version.
-pub const API_MINOR: u16 = 8;
+pub const API_MINOR: u16 = 9;
 
 /// `major << 16 | minor`, the value of the `sa_api_version` export.
 pub const fn pack_version(major: u16, minor: u16) -> i32 {
@@ -592,6 +592,68 @@ pub mod blip {
 pub mod radar {
     /// Radar area ids one mod may use (`0 .. MAX_AREAS`).
     pub const MAX_AREAS: i32 = 1024;
+/// Models (API 1.9): `model_info`'s answer.
+pub mod model {
+    use sa_types::ModelKind;
+
+    /// Model ids (`CModelInfo::ms_modelInfoPtrs`).
+    pub const COUNT: i32 = 20_000;
+    /// `model_info`: no model info.
+    pub const NONE: i32 = 0;
+    /// `model_info`: an atomic model (buildings and most objects).
+    pub const ATOMIC: i32 = 1;
+    /// `model_info`: a clump model.
+    pub const CLUMP: i32 = 2;
+    /// `model_info`: a ped.
+    pub const PED: i32 = 3;
+    /// `model_info`: a vehicle.
+    pub const VEHICLE: i32 = 4;
+    /// `model_info`: a weapon.
+    pub const WEAPON: i32 = 5;
+    /// `model_info` bit: the model is loaded.
+    pub const LOADED: i32 = 0x100;
+
+    /// The kind's number.
+    pub fn kind_number(k: ModelKind) -> i32 {
+        match k {
+            ModelKind::None => NONE,
+            ModelKind::Atomic => ATOMIC,
+            ModelKind::Clump => CLUMP,
+            ModelKind::Ped => PED,
+            ModelKind::Vehicle => VEHICLE,
+            ModelKind::Weapon => WEAPON,
+        }
+    }
+
+    /// The kind of a `model_info` answer.
+    pub fn kind(info: i32) -> ModelKind {
+        match info & 0xFF {
+            ATOMIC => ModelKind::Atomic,
+            CLUMP => ModelKind::Clump,
+            PED => ModelKind::Ped,
+            VEHICLE => ModelKind::Vehicle,
+            WEAPON => ModelKind::Weapon,
+            _ => ModelKind::None,
+        }
+    }
+}
+
+/// `attach_object`'s target kinds (API 1.9).
+pub mod attach {
+    /// A ped.
+    pub const PED: i32 = 0;
+    /// A vehicle.
+    pub const VEHICLE: i32 = 1;
+    /// An object.
+    pub const OBJECT: i32 = 2;
+}
+
+/// Object materials (API 1.9, `set_object_material`).
+pub mod material {
+    /// Material slots of an object.
+    pub const SLOTS: i32 = 16;
+    /// The longest dictionary or texture name, in bytes.
+    pub const MAX_NAME: usize = 31;
 }
 
 /// The persistent key / value storage (API 1.4, `storage = true`): one area per mod id, natively a folder under
@@ -950,6 +1012,72 @@ macro_rules! for_each_import {
             [Render] fn remove_radar_area(id: i32) -> i32;
             /// (1.8) 1 when the game defines model `model` (it has model info), else 0.
             [State] fn model_exists(model: i32) -> i32;
+            /// (1.9) Writes object `handle`'s state ([`state::ObjectInfo`]) to the buffer, as `ped_info`; `NOT_FOUND`
+            /// when the handle names no live object.
+            [State] fn object_info(handle: i32, buf_ptr: i32, buf_len: i32) -> i32;
+            /// (1.9) Writes object `handle`'s transform ([`state::MatrixInfo`]) to the buffer, as `object_info`.
+            [State] fn object_matrix(handle: i32, buf_ptr: i32, buf_len: i32) -> i32;
+            /// (1.9) The objects in the object pool, as `ped_list`.
+            [State] fn object_list(buf_ptr: i32, buf_len: i32) -> i32;
+            /// (1.9) Writes the world transform ([`state::MatrixInfo`]) of node `node` (`ePedNode`, 1..=18: 1 upper
+            /// torso, 2 head, 3 left arm, 4 right arm, 5 left hand, 6 right hand, 7 left thigh, 8 right thigh, 9 left
+            /// foot, 10 right foot, 11 right calf, 12 left calf, 13 left forearm, 14 right forearm, 15 left clavicle,
+            /// 16 right clavicle, 17 neck, 18 jaw) of ped `handle`'s skeleton, as the game's animation left it, to the
+            /// buffer. `NOT_FOUND` for a stale handle, `BAD_ARG` for another node, `FAILED` while the ped has no
+            /// skeleton (not streamed in).
+            [State] fn ped_bone_matrix(handle: i32, node: i32, buf_ptr: i32, buf_len: i32) -> i32;
+            /// (1.9) What model `model` is ([`model`]: its kind, plus [`model::LOADED`] while it is loaded); `BAD_ARG`
+            /// outside `0 .. model::COUNT`.
+            [State] fn model_info(model: i32) -> i32;
+            /// (1.9) Requests model `model` from the streamer (`REQUEST_MODEL`), and with `now` 1 loads every requested
+            /// model at once (`LOAD_ALL_MODELS_NOW`, a stall). Returns 1 when it is loaded, else 0 (it loads in the
+            /// coming frames). The host releases the mod's requests when it disables the mod. `BAD_ARG` for a model
+            /// without a model info, `WRONG_PHASE` inside a hook.
+            [Entities] fn model_request(model: i32, now: i32) -> i32;
+            /// (1.9) Marks model `model` as no longer needed (`MARK_MODEL_AS_NO_LONGER_NEEDED`): the streamer may unload
+            /// it once no entity uses it.
+            [Entities] fn model_release(model: i32) -> i32;
+            /// (1.9) Sets the draw distance of atomic model `model` (the distance its instances are drawn up to, as its
+            /// definition file sets it); the host restores the old one when it disables the mod. `BAD_ARG` for a
+            /// model that is not an atomic one or a distance that is not positive.
+            [Write] fn set_model_draw_distance(model: i32, distance: f32) -> i32;
+            /// (1.9) Moves object `handle` to (`x`, `y`, `z`) keeping its rotation, as the game teleports an object
+            /// (`CObject::Teleport`: out of the world, the position, its RenderWare frame, back in).
+            [Write] fn set_object_position(handle: i32, x: f32, y: f32, z: f32) -> i32;
+            /// (1.9) Gives object `handle` the transform of the 12 little-endian `f32` at `matrix_ptr` (right, forward,
+            /// up, position; rows as they are, so scaled rows scale it), as `set_object_position` moves it. Not inside
+            /// a hook (`WRONG_PHASE`).
+            [Write] fn set_object_matrix(handle: i32, matrix_ptr: i32) -> i32;
+            /// (1.9) Turns object `handle` to the Euler angles (`x`, `y`, `z`) in degrees (`SET_OBJECT_ROTATION`).
+            [Write] fn set_object_rotation(handle: i32, x: f32, y: f32, z: f32) -> i32;
+            /// (1.9) Draws object `handle` scaled by `scale` (`SET_OBJECT_SCALE`).
+            [Write] fn set_object_scale(handle: i32, scale: f32) -> i32;
+            /// (1.9) Shows (1) or hides (0) object `handle` (`SET_OBJECT_VISIBLE`).
+            [Write] fn set_object_visible(handle: i32, on: i32) -> i32;
+            /// (1.9) Switches object `handle`'s collision on (1) or off (0) (`SET_OBJECT_COLLISION`).
+            [Write] fn set_object_collision(handle: i32, on: i32) -> i32;
+            /// (1.9) Writes object `handle`'s move speed and turn speed (6 little-endian `f32` at `speeds_ptr`, units
+            /// per 1/50 s): what peds standing on it move with. It does not move the object. Not inside a hook.
+            [Write] fn set_object_speed(handle: i32, speeds_ptr: i32) -> i32;
+            /// (1.9) Attaches object `handle` to entity `target` of kind `kind` ([`attach`]) with the offset and the
+            /// rotation in degrees of the 6 little-endian `f32` at `offsets_ptr` (`ATTACH_OBJECT_TO_CHAR` / `_CAR` /
+            /// `_OBJECT`): the game then places it every frame. `NOT_FOUND` for a stale handle. Not inside a hook.
+            [Write] fn attach_object(handle: i32, kind: i32, target: i32, offsets_ptr: i32) -> i32;
+            /// (1.9) Detaches object `handle` where it is, with collision (`DETACH_OBJECT`).
+            [Write] fn detach_object(handle: i32) -> i32;
+            /// (1.9) Draws material `slot` (0 .. [`material::SLOTS`], the materials of the object's model in geometry
+            /// order) of object `handle` with the texture `name` of texture dictionary `dict` (UTF-8, `(ptr, len)`
+            /// each, at most [`material::MAX_NAME`] bytes) that model `model` loads (the model is loaded first;
+            /// `model` -1: keep the material's texture) and modulated by colour `rgba` (`0xRRGGBBAA`; 0: the
+            /// material's own colour). `model` -1 with `rgba` 0 gives the slot back its own material. `NOT_FOUND`: a
+            /// stale handle, or no such dictionary or texture. Not inside a hook.
+            [Write] fn set_object_material(handle: i32, slot: i32, model: i32, dict_ptr: i32, dict_len: i32, name_ptr: i32, name_len: i32, rgba: i32) -> i32;
+            /// (1.9) Removes the world's buildings (and the dummies and objects of the map) of model `model` (-1: any)
+            /// whose position is within `radius` of (`x`, `y`, `z`) for the rest of the session: they move into an
+            /// interior area and below the world, the occluders within 500 units of the point stop hiding anything,
+            /// and the ones the world streams in later are removed as they load. Returns the entities removed now. Not
+            /// inside a hook.
+            [Write] fn remove_buildings(model: i32, x: f32, y: f32, z: f32, radius: f32) -> i32;
         }
     };
 }
@@ -1268,6 +1396,23 @@ mod tests {
         assert_eq!(IMPORTS[import_index("pickup_touched").unwrap()].permission, Permission::State);
         assert_eq!(IMPORTS[import_index("set_radar_area").unwrap()].permission, Permission::Render);
         assert_eq!(script::params(0x00FE), Some("pffffffi"));
+    }
+
+    #[test]
+    fn objects_and_models() {
+        assert_eq!(IMPORTS[import_index("set_object_matrix").unwrap()].permission, Permission::Write);
+        assert_eq!(IMPORTS[import_index("object_info").unwrap()].permission, Permission::State);
+        assert_eq!(IMPORTS[import_index("model_request").unwrap()].permission, Permission::Entities);
+        for k in [
+            sa_types::ModelKind::None,
+            sa_types::ModelKind::Atomic,
+            sa_types::ModelKind::Clump,
+            sa_types::ModelKind::Ped,
+            sa_types::ModelKind::Vehicle,
+            sa_types::ModelKind::Weapon,
+        ] {
+            assert_eq!(model::kind(model::kind_number(k) | model::LOADED), k);
+        }
     }
 
     #[test]

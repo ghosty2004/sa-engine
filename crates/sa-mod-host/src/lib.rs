@@ -29,6 +29,7 @@ pub mod images;
 pub mod manifest;
 pub mod module;
 pub mod net;
+pub mod objects;
 pub mod storage;
 
 use std::rc::Rc;
@@ -100,6 +101,8 @@ pub struct LoadedMod {
     pub capture: (bool, bool, bool),
     /// The game options it switched off.
     options_off: Vec<sa_types::GameOption>,
+    /// What it changed in the game's data.
+    changes: objects::GameChanges,
 }
 
 /// What a mod's calls may reach besides the game.
@@ -337,6 +340,7 @@ impl Host {
             deferred: std::mem::take(&mut ctx.deferred),
             capture: ctx.capture,
             options_off: std::mem::take(&mut ctx.options_off),
+            changes: std::mem::take(&mut ctx.changes),
         });
         let i = self.mods.len() - 1;
         self.take_subscriptions(i, &mut ctx);
@@ -394,10 +398,12 @@ impl Host {
         self.mods[i].radar_areas.clear();
         self.mods[i].capture = (false, false, false);
         let off = std::mem::take(&mut self.mods[i].options_off);
+        let changes = std::mem::take(&mut self.mods[i].changes);
         if let Some(g) = &self.game {
             for o in off {
                 g.0.borrow_mut().set_option(o, true);
             }
+            changes.undo(&mut g.0.borrow_mut());
         }
         let owned = std::mem::take(&mut self.mods[i].owned);
         let n = owned.len();
@@ -442,6 +448,7 @@ impl Host {
         ctx.images = std::mem::take(&mut m.images);
         ctx.capture = m.capture;
         ctx.options_off = std::mem::take(&mut m.options_off);
+        ctx.changes = std::mem::take(&mut m.changes);
         let t = web_time::Instant::now();
         let r = m.instance.call(export, args, m.manifest.limits.fuel, &mut ctx);
         m.micros += t.elapsed().as_micros() as u64;
@@ -452,6 +459,7 @@ impl Host {
         m.images = std::mem::take(&mut ctx.images);
         m.capture = ctx.capture;
         m.options_off = std::mem::take(&mut ctx.options_off);
+        m.changes = std::mem::take(&mut ctx.changes);
         m.deferred.append(&mut ctx.deferred);
         let frame = m.frames;
         if export == EXPORT_OVERLAY {
@@ -838,7 +846,7 @@ mod tests {
         let (mut h, _) = host();
         // newer minor API version
         let mut s = src("new", wat_mod("", "1", DRAW));
-        let newer = format!("1.{}", sa_mod_api::API_MINOR + 1);
+        let newer = format!("{}.{}", sa_mod_api::API_MAJOR, sa_mod_api::API_MINOR + 1);
         s.0[0].1 = format!("[mod]\nid = \"new\"\napi_version = \"{newer}\"\n").into_bytes();
         assert!(h.load(s).unwrap_err().contains(&format!("API {newer}")));
         // memory above the cap (16 MiB default: 300 pages)

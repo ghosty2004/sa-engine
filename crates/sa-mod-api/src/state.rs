@@ -7,7 +7,7 @@ use sa_types::camera::CameraState;
 use sa_types::ped::PedSnapshot;
 use sa_types::vehicle::VehicleSnapshot;
 use sa_types::input::PadState;
-use sa_types::{AreaCode, GameState, Matrix, ModelId, PedRef, TimeStep, Vec3, VehicleRef, WeaponType};
+use sa_types::{AreaCode, GameState, Matrix, ModelId, ObjectSnapshot, PedRef, TimeStep, Vec3, VehicleRef, WeaponType};
 
 /// A value that travels as a fixed number of 32-bit words.
 pub trait Words: Sized {
@@ -307,6 +307,55 @@ record! {
         pub chat_indicated: i16,
         /// The walk key.
         pub ped_walk: i16,
+    }
+}
+
+record! {
+    /// An object (`object_info`, API 1.8).
+    pub struct ObjectInfo {
+        /// Model.
+        pub model: ModelId,
+        /// Position.
+        pub pos: Vec3,
+        /// Area / interior.
+        pub area: AreaCode,
+        /// Streamed in: its RenderWare object exists.
+        pub has_rw: bool,
+        /// Drawn.
+        pub visible: bool,
+        /// Collides.
+        pub collision: bool,
+        /// Attached to another entity (the game places it).
+        pub attached: bool,
+        /// Scale.
+        pub scale: f32,
+        /// Move speed (units per 1/50 s).
+        pub move_speed: Vec3,
+        /// Turn speed.
+        pub turn_speed: Vec3,
+        /// Centre of its collision model's bounding sphere in the world.
+        pub bound_centre: Vec3,
+        /// Radius of that sphere (0 without a collision model).
+        pub bound_radius: f32,
+    }
+}
+
+impl From<&ObjectSnapshot> for ObjectInfo {
+    fn from(s: &ObjectSnapshot) -> ObjectInfo {
+        ObjectInfo {
+            model: s.model,
+            pos: s.matrix.pos,
+            area: s.area,
+            has_rw: s.has_rw,
+            visible: s.visible,
+            collision: s.collision,
+            attached: s.attached,
+            scale: s.scale,
+            move_speed: s.move_speed,
+            turn_speed: s.turn_speed,
+            bound_centre: s.bound_centre,
+            bound_radius: s.bound_radius,
+        }
     }
 }
 

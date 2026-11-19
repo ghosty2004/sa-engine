@@ -1035,6 +1035,195 @@ pub mod input {
     }
 }
 
+/// Objects (API 1.8): their state (permission `state = "read"`), and changing any object (`state = "write"`; the
+/// mod creates and deletes its own through [`entities`]). Plain changes made inside a hook are queued for the next
+/// frame boundary; the ones that read the mod's memory (a matrix, speeds, offsets, names) are refused there.
+pub mod objects {
+    use sa_mod_api::state::{Words, from_bytes};
+
+    use super::*;
+    pub use sa_mod_api::state::ObjectInfo;
+
+    fn done(r: i32) -> Result<(), Error> {
+        check(r).map(drop)
+    }
+
+    fn record<T: Words>(f: impl FnOnce(i32, i32) -> i32) -> Option<T> {
+        let mut buf = vec![0u8; 4 * T::WORDS];
+        let (p, n) = (buf.as_mut_ptr() as usize as i32, buf.len() as i32);
+        check(f(p, n)).ok()?;
+        from_bytes(&buf)
+    }
+
+    fn words(v: &[f32]) -> Vec<u32> {
+        v.iter().map(|f| f.to_bits()).collect()
+    }
+
+    /// What an object is attached to.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum Target {
+        /// A ped.
+        Ped(PedRef),
+        /// A vehicle.
+        Vehicle(VehicleRef),
+        /// Another object.
+        Object(ObjectRef),
+    }
+
+    /// An object's state; `None` when the handle names no live object.
+    pub fn info(o: ObjectRef) -> Option<ObjectInfo> {
+        // SAFETY: the host writes at most `n` bytes at `p`, inside the record's buffer
+        record(|p, n| unsafe { ffi::object_info(o.0 as i32, p, n) })
+    }
+
+    /// An object's transform; `None` when the handle names no live object.
+    pub fn matrix(o: ObjectRef) -> Option<MatrixInfo> {
+        // SAFETY: as in `info`
+        record(|p, n| unsafe { ffi::object_matrix(o.0 as i32, p, n) })
+    }
+
+    /// Every object in the object pool.
+    pub fn list() -> Vec<ObjectRef> {
+        let mut buf = vec![0u8; 4 * 512];
+        loop {
+            let (p, n) = (buf.as_mut_ptr() as usize as i32, buf.len() as i32);
+            // SAFETY: the host writes at most `n` bytes at `p`, inside the buffer
+            let Ok(count) = check(unsafe { ffi::object_list(p, n) }) else { return Vec::new() };
+            let count = count as usize;
+            if 4 * count <= buf.len() {
+                return buf.as_chunks::<4>().0.iter().take(count).map(|c| ObjectRef(u32::from_le_bytes(*c))).collect();
+            }
+            buf.resize(4 * count, 0);
+        }
+    }
+
+    /// The world transform of node `node` (`ePedNode`, 1..=18) of `ped`'s skeleton; `None` for a stale handle,
+    /// another node or a ped that is not streamed in.
+    pub fn ped_bone_matrix(ped: PedRef, node: u8) -> Option<MatrixInfo> {
+        // SAFETY: as in `info`
+        record(|p, n| unsafe { ffi::ped_bone_matrix(ped.0 as i32, i32::from(node), p, n) })
+    }
+
+    /// Moves `o` to `pos`, keeping its rotation.
+    pub fn set_position(o: ObjectRef, pos: Vec3) -> Result<(), Error> {
+        // SAFETY: a host function call with plain values
+        done(unsafe { ffi::set_object_position(o.0 as i32, pos.x, pos.y, pos.z) })
+    }
+
+    /// Gives `o` the transform `m` (scaled rows scale it).
+    pub fn set_matrix(o: ObjectRef, m: &MatrixInfo) -> Result<(), Error> {
+        let w = words(&[
+            m.right.x, m.right.y, m.right.z, m.forward.x, m.forward.y, m.forward.z, m.up.x, m.up.y, m.up.z, m.pos.x,
+            m.pos.y, m.pos.z,
+        ]);
+        // SAFETY: the host reads the 12 words of `w`
+        done(unsafe { ffi::set_object_matrix(o.0 as i32, w.as_ptr() as usize as i32) })
+    }
+
+    /// Turns `o` to the Euler angles `deg` (degrees, the game's `SET_OBJECT_ROTATION` order).
+    pub fn set_rotation(o: ObjectRef, deg: Vec3) -> Result<(), Error> {
+        // SAFETY: a host function call with plain values
+        done(unsafe { ffi::set_object_rotation(o.0 as i32, deg.x, deg.y, deg.z) })
+    }
+
+    /// Draws `o` scaled by `scale`.
+    pub fn set_scale(o: ObjectRef, scale: f32) -> Result<(), Error> {
+        // SAFETY: a host function call with plain values
+        done(unsafe { ffi::set_object_scale(o.0 as i32, scale) })
+    }
+
+    /// Shows or hides `o`.
+    pub fn set_visible(o: ObjectRef, on: bool) -> Result<(), Error> {
+        // SAFETY: a host function call with plain values
+        done(unsafe { ffi::set_object_visible(o.0 as i32, i32::from(on)) })
+    }
+
+    /// Switches `o`'s collision.
+    pub fn set_collision(o: ObjectRef, on: bool) -> Result<(), Error> {
+        // SAFETY: a host function call with plain values
+        done(unsafe { ffi::set_object_collision(o.0 as i32, i32::from(on)) })
+    }
+
+    /// Writes `o`'s move and turn speed (units per 1/50 s), what peds standing on it move with.
+    pub fn set_speed(o: ObjectRef, move_speed: Vec3, turn_speed: Vec3) -> Result<(), Error> {
+        let w = words(&[move_speed.x, move_speed.y, move_speed.z, turn_speed.x, turn_speed.y, turn_speed.z]);
+        // SAFETY: the host reads the 6 words of `w`
+        done(unsafe { ffi::set_object_speed(o.0 as i32, w.as_ptr() as usize as i32) })
+    }
+
+    /// Attaches `o` to `to` with `offset` and the rotation `rot_deg` in degrees; the game places it every frame.
+    pub fn attach(o: ObjectRef, to: Target, offset: Vec3, rot_deg: Vec3) -> Result<(), Error> {
+        let (kind, target) = match to {
+            Target::Ped(p) => (sa_mod_api::attach::PED, p.0),
+            Target::Vehicle(v) => (sa_mod_api::attach::VEHICLE, v.0),
+            Target::Object(t) => (sa_mod_api::attach::OBJECT, t.0),
+        };
+        let w = words(&[offset.x, offset.y, offset.z, rot_deg.x, rot_deg.y, rot_deg.z]);
+        // SAFETY: the host reads the 6 words of `w`
+        done(unsafe { ffi::attach_object(o.0 as i32, kind, target as i32, w.as_ptr() as usize as i32) })
+    }
+
+    /// Detaches `o` where it is.
+    pub fn detach(o: ObjectRef) -> Result<(), Error> {
+        // SAFETY: a host function call with plain values
+        done(unsafe { ffi::detach_object(o.0 as i32) })
+    }
+
+    /// Draws material `slot` of `o` with the texture `name` of dictionary `dict` that `model` loads (`None`: the
+    /// material's own texture), modulated by `colour` (`Rgba(0)`: the material's own colour). `None` with
+    /// `Rgba(0)` gives the slot back its own material.
+    pub fn set_material(
+        o: ObjectRef,
+        slot: u8,
+        texture: Option<(i32, &str, &str)>,
+        colour: Rgba,
+    ) -> Result<(), Error> {
+        let (model, dict, name) = texture.unwrap_or((-1, "", ""));
+        let ((dp, dl), (np, nl)) = (ptr_len(dict.as_bytes()), ptr_len(name.as_bytes()));
+        // SAFETY: the host reads the two names in the mod's memory
+        done(unsafe { ffi::set_object_material(o.0 as i32, i32::from(slot), model, dp, dl, np, nl, colour.0 as i32) })
+    }
+
+    /// Removes the world's buildings of `model` (-1: any) within `radius` of `centre` for the session (also the
+    /// ones streamed in later). Returns how many were removed now.
+    pub fn remove_buildings(model: i32, centre: Vec3, radius: f32) -> Result<u32, Error> {
+        // SAFETY: a host function call with plain values
+        check(unsafe { ffi::remove_buildings(model, centre.x, centre.y, centre.z, radius) }).map(|n| n as u32)
+    }
+}
+
+/// Models (API 1.8): what a model is (`state = "read"`), requesting and releasing it (`entities = true`), its draw
+/// distance (`state = "write"`).
+pub mod models {
+    use super::*;
+    pub use sa_mod_api::sa_types::ModelKind;
+
+    /// What `model` is and whether it is loaded; `None` outside the model ids.
+    pub fn info(model: i32) -> Option<(ModelKind, bool)> {
+        // SAFETY: a host function call with a plain value
+        let r = check(unsafe { ffi::model_info(model) }).ok()?;
+        Some((sa_mod_api::model::kind(r), r & sa_mod_api::model::LOADED != 0))
+    }
+
+    /// Requests `model`; with `now` loads every requested model at once. Returns whether it is loaded.
+    pub fn request(model: i32, now: bool) -> Result<bool, Error> {
+        // SAFETY: a host function call with plain values
+        check(unsafe { ffi::model_request(model, i32::from(now)) }).map(|r| r == 1)
+    }
+
+    /// Lets the streamer unload `model` once no entity uses it.
+    pub fn release(model: i32) -> Result<(), Error> {
+        // SAFETY: a host function call with a plain value
+        check(unsafe { ffi::model_release(model) }).map(drop)
+    }
+
+    /// Sets the draw distance of atomic model `model` (restored when the mod is disabled).
+    pub fn set_draw_distance(model: i32, distance: f32) -> Result<(), Error> {
+        // SAFETY: a host function call with plain values
+        check(unsafe { ffi::set_model_draw_distance(model, distance) }).map(drop)
+    }
+}
+
 /// Game sounds (permission `audio = true`; API 1.3).
 pub mod audio {
     use super::*;

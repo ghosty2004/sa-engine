@@ -372,6 +372,35 @@ API 1.8 (reference `docs/mods/api.md`). What SA:MP's world RPCs need, as GTA SA'
   `DrawAreaOnRadar` through a binding in sa-core (`catalog/bindings.csv`, twin in sa-hud).
 - **Actors** need nothing new: `create_ped` plus the whitelisted commands (heading, proofs, decision maker, animations,
   task flush, health). samp's actors are ped type 5, `create_ped` makes type 4 (ledger).
+### 4.1g Objects, models and building removal (API 1.9, 2026-11-19)
+
+Reference `docs/mods/api.md` level 9. What SA:MP's objects needed, in GTA terms:
+
+- **Objects by handle**, like peds and vehicles: their state (`object_info`: model, area, streamed in, visible,
+  collides, attached, scale, speeds, bounding sphere), transform and pool list (`state = "read"`); changes on any
+  live object (`state = "write"`): the position as the game teleports an object (`CObject::Teleport`, a `vslot`
+  call, so the RenderWare frame and the sector lists follow), a whole matrix (rows written, then that teleport), the
+  rotation, scale, visibility and collision through their script commands, the move and turn speed (what peds
+  standing on a moving object move with), attaching to a ped, vehicle or object and detaching through the game's
+  attach commands. A mod that moves an object interpolates it itself every frame (the API has no "move to"): one
+  matrix write per object and frame, as samp.dll does.
+- **The skeleton**: `ped_bone_matrix` (an `ePedNode`'s world matrix from the skin hierarchy after
+  `CEntity::UpdateRpHAnim`), so a mod can place an object on a bone.
+- **Materials**: a slot (geometry order, as the original's material list) drawn with a texture of a model's
+  dictionary (`RwTextureRead` with the dictionary current, a reference the slot holds) and / or modulated by a
+  colour (prelighting off, surface properties 1, 0, 1), applied around `CObject::Render` and restored after it. The
+  host observes `CObject::Render` only while some object has slots; deleting the object releases them.
+- **Building removal**: buildings, dummies and objects of a model (or any) in a sphere go into interior area 1 and
+  2000 units down and the occluders within 500 units are cleared (their list links kept); the session's removals
+  apply to every instance a streamed IPL loads later (`CFileLoader::LoadObjectInstance` observed after the first
+  removal). Removals last for the session: the host cannot give a removed building back.
+- **Models**: `model_info` (kind from the model info's class, loaded flag), `model_request` / `model_release`
+  (`entities = true`; released when the mod is disabled), `set_model_draw_distance` (atomic models; restored when the
+  mod is disabled). The id range and what exists are the original's (20,000 model infos, its definition files):
+  models SA:MP adds (`samp.img`, ids 18631..=19999) exist only once data mods (§4.2) can register them.
+- **Layer**: everything lives in `sa-access` (`objects.rs`), which calls the game's own functions (teleport,
+  `RwTextureRead`, the hierarchy lookups) through `sa-core`'s bindings and a `vslot`; the host keeps the session
+  state the render and IPL observers need (`sa_access::objects` thread-locals) and per mod what it must give back.
 
 ### 4.2 Data mods (added by the user, 2026-11-17)
 

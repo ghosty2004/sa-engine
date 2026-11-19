@@ -166,6 +166,37 @@ fn draw_game_2d() {
     });
 }
 
+/// `CFileLoader::LoadObjectInstance(CFileObjectInstance*, const char*)`: the world's streamed-in IPL instances,
+/// which get the buildings removals of the session.
+const LOAD_OBJECT_INSTANCE: u32 = 0x538090;
+/// `CObject::Render`: objects drawn with other materials get them around it.
+const OBJECT_RENDER: u32 = 0x59F180;
+
+thread_local! {
+    /// What the materials of the object being drawn replaced.
+    static DRAWN_MATERIALS: RefCell<Vec<Option<sa_access::SavedMaterials>>> = const { RefCell::new(Vec::new()) };
+}
+
+/// Watches the game functions the session's building removals and object materials need, once they exist (a mod's
+/// hook that goes away may unwatch a shared function, so this runs every iteration).
+fn watch_world_points() {
+    if sa_access::objects::removals_active() {
+        EngineRegistry.watch(LOAD_OBJECT_INSTANCE, true);
+    }
+    if sa_access::objects::materials_active() {
+        EngineRegistry.watch(OBJECT_RENDER, true);
+    }
+}
+
+/// The address an argument or result holds.
+fn address(r: Option<Raw>) -> Option<u32> {
+    match r? {
+        Raw::Address(a) => Some(a),
+        Raw::Int(v) => u32::try_from(v).ok(),
+        _ => None,
+    }
+}
+
 /// The observer of the hooked functions: hands the call to the mods hooked there and applies their decisions.
 fn observed(o: &mut Observed<'_>) {
     if o.entry.addr == RENDER_2D_STUFF && matches!(o.phase, Phase::After) {
@@ -180,6 +211,25 @@ fn observed(o: &mut Observed<'_>) {
                 h.draw_radar_areas(in_menu);
             }
         });
+    }
+    if o.entry.addr == LOAD_OBJECT_INSTANCE
+        && matches!(o.phase, Phase::After)
+        && let Some(e) = address(o.result())
+    {
+        sa_access::objects::apply_removals(e);
+    }
+    if o.entry.addr == OBJECT_RENDER {
+        match o.phase {
+            Phase::Before => {
+                let saved = address(o.arg(0)).and_then(sa_access::objects::materials_before_render);
+                DRAWN_MATERIALS.with_borrow_mut(|d| d.push(saved));
+            }
+            Phase::After => {
+                if let Some(Some(s)) = DRAWN_MATERIALS.with_borrow_mut(Vec::pop) {
+                    sa_access::objects::materials_after_render(s);
+                }
+            }
+        }
     }
     let Some(game) = GAME.with_borrow(Clone::clone) else { return };
     // a hooked function that runs while the game is being changed for a mod is not reported
@@ -329,6 +379,7 @@ pub fn after_select() {
 /// A video mode requested after the settings phase, applied at the start of a main-loop iteration as the menu's
 /// resolution change, when the adapter lists the size (the RW mode list is built once, when RW opens).
 pub fn frame_boundary() {
+    watch_world_points();
     let Some(req) = with_host(|h| {
         let _perf = crate::perf::scope(crate::perf::MODS);
         h.frame_begin();
@@ -461,7 +512,14 @@ pub fn overlay(d: &mut WgpuDevice) {
 
 /// The mods' state and cost, for the end of a run.
 pub fn summary() -> Option<String> {
-    HOST.with_borrow(|h| h.as_ref().map(Host::summary))
+    let (removals, on_load) = sa_access::objects::removal_counts();
+    HOST.with_borrow(|h| h.as_ref().map(Host::summary)).map(|s| {
+        if removals == 0 {
+            s
+        } else {
+            format!("{s}\nbuilding removals: {removals}, entities removed as the world loaded them: {on_load}")
+        }
+    })
 }
 
 #[cfg(test)]
