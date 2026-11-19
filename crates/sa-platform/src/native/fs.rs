@@ -1,12 +1,11 @@
 //! `std::fs` game folder with case-insensitive path resolution.
 
 use std::collections::HashMap;
-use std::fs::File;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
-use crate::fs::{GameFs, RandomRead, components};
+use crate::fs::{GameFs, RandomRead, StdFile, components};
 
 /// The game folder on a native file system. Every path component is matched
 /// case-insensitively (directory listings are cached).
@@ -66,38 +65,12 @@ impl NativeFs {
     }
 }
 
-struct NativeFile {
-    file: File,
-    len: u64,
-}
-
-impl RandomRead for NativeFile {
-    fn read_at(&mut self, offset: u64, buf: &mut [u8]) -> io::Result<()> {
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::FileExt;
-            self.file.read_exact_at(buf, offset)
-        }
-        #[cfg(not(unix))]
-        {
-            use std::io::{Read, Seek, SeekFrom};
-            self.file.seek(SeekFrom::Start(offset))?;
-            self.file.read_exact(buf)
-        }
-    }
-    fn len(&self) -> u64 {
-        self.len
-    }
-}
-
 impl GameFs for NativeFs {
     fn read(&self, path: &str) -> io::Result<Vec<u8>> {
         std::fs::read(self.resolve(path)?)
     }
     fn open(&self, path: &str) -> io::Result<Box<dyn RandomRead>> {
-        let file = File::open(self.resolve(path)?)?;
-        let len = file.metadata()?.len();
-        Ok(Box::new(NativeFile { file, len }))
+        Ok(Box::new(StdFile::open(&self.resolve(path)?)?))
     }
     fn exists(&self, path: &str) -> bool {
         self.resolve(path).is_ok_and(|p| p.exists())

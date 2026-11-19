@@ -73,6 +73,42 @@ pub fn components(path: &str) -> Vec<&str> {
         .collect()
 }
 
+/// A file of the host's own file system, read at offsets.
+#[cfg(not(target_arch = "wasm32"))]
+pub struct StdFile {
+    file: std::fs::File,
+    len: u64,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl StdFile {
+    pub fn open(path: &std::path::Path) -> io::Result<StdFile> {
+        let file = std::fs::File::open(path)?;
+        let len = file.metadata()?.len();
+        Ok(StdFile { file, len })
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl RandomRead for StdFile {
+    fn read_at(&mut self, offset: u64, buf: &mut [u8]) -> io::Result<()> {
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::FileExt;
+            self.file.read_exact_at(buf, offset)
+        }
+        #[cfg(not(unix))]
+        {
+            use std::io::{Read, Seek, SeekFrom};
+            self.file.seek(SeekFrom::Start(offset))?;
+            self.file.read_exact(buf)
+        }
+    }
+    fn len(&self) -> u64 {
+        self.len
+    }
+}
+
 type FileMap = HashMap<String, Arc<Vec<u8>>>;
 
 /// An in-memory file system (tests, and a base for the web implementation's OPFS cache).
@@ -106,7 +142,8 @@ impl MemFs {
     }
 }
 
-pub(crate) struct MemFile(pub(crate) Arc<Vec<u8>>);
+/// A file held in memory.
+pub struct MemFile(pub Arc<Vec<u8>>);
 
 impl RandomRead for MemFile {
     fn read_at(&mut self, offset: u64, buf: &mut [u8]) -> io::Result<()> {
