@@ -397,7 +397,7 @@ Reference `docs/mods/api.md` level 9. What SA:MP's objects needed, in GTA terms:
 - **Models**: `model_info` (kind from the model info's class, loaded flag), `model_request` / `model_release`
   (`entities = true`; released when the mod is disabled), `set_model_draw_distance` (atomic models; restored when the
   mod is disabled). The id range and what exists are the original's (20,000 model infos, its definition files):
-  models SA:MP adds (`samp.img`, ids 18631..=19999) exist only once data mods (§4.2) can register them.
+  models SA:MP adds (`SAMP.img`, ids 18631..=19999) exist when the SA:MP mod's data files are there (§4.2).
 - **Layer**: everything lives in `sa-access` (`objects.rs`), which calls the game's own functions (teleport,
   `RwTextureRead`, the hierarchy lookups) through `sa-core`'s bindings and a `vslot`; the host keeps the session
   state the render and IPL observers need (`sa_access::objects` thread-locals) and per mod what it must give back.
@@ -450,9 +450,41 @@ data only, with no `.wasm`):
 - **New behaviour on top** comes from levels 2–3 (hooks and state), e.g. a vehicle class with custom physics. A new
   vehicle on an existing class (car, bike, boat, plane, heli, quad, monster truck) needs data only.
 - **SA:MP:** 0.3.7 has no custom models (0.3.DL added them), so on 0.3.7 servers custom content is single-player or
-  needs a server that supports it explicitly; the SA:MP mod decides.
-- Permission: `data = true` in `mod.toml` (`[permissions]`); a data mod that adds model IDs also declares them
-  (`[content]` section: kind, name, base class, files).
+  needs a server that supports it explicitly; the SA:MP mod decides. SA:MP's *own* data (its models 18631..19999,
+  collision, cull zones, the "SAMP" animation block, its texture dictionaries) is what the first data mod step loads.
+- Declaration: a `[data]` table in `mod.toml` (no separate permission; the table is the declaration). A data mod that
+  registers new model IDs through the API declares them (`[content]` section: kind, name, base class, files; later).
+
+**Done (2026-11-19): the files the game loads with its own data** (`sa-mod-host/src/data.rs`, `sa-game`'s
+`data_mods.rs`, `docs/mods/api.md` "Game data"). `[data]` lists `img`, `ide`, `col`, `ipl` and `txd` files of the mod's
+folder (plain names, checked). They are loaded where the game loads its own, with no port changed:
+
+- the mod's declared files are mounted in the platform file layer at `mods\<id>\` of the game folder (natively the
+  folder, on the web the mod's files fetched through the same source as its `.wasm`);
+- the level file `DATA\GTA.DAT` the game reads gets the mods' lines through the file layer's redirect: `IMG`,
+  `COLFILE 0` and `IDE` before its first `IPL` line (where `CFileLoader::LoadLevel` has registered every image and
+  read every definition, before the first placement runs `MatchAllModelStrings`, `CStreaming::Init2` with the image
+  directories and `ConvertAnimFileIndex`), `IPL` after its own. An image's directory registers models, texture
+  dictionaries, collision and IPL slots and every `.ifp` as an animation block (`CStreaming::LoadCdDirectory`), so a
+  mod's animation files come inside its archives as the game's own do (only `PED.IFP` is loose in the game);
+- texture dictionaries go into slots named after their files, loaded and kept before `CGame::Init2` (as `CGame::Init1`
+  loads "particle");
+- a mod's image archives are joined into one archive file (`archives.all.img`: one directory, each archive's bytes
+  after it at a sector boundary, the entries' offsets moved), so a mod takes one image slot whatever it ships;
+- limits: eight image archives in all (the stock level files and `InitImageList` / `CClothes::Init` take six: two
+  mods with archives), the image path within the 40-byte name, model ids below 20,000, no `2dfx` entries (a model's
+  effects are indices into the fixed 2d-effect store). The model-info stores (atomic, damage atomic, time, weapon, clump, vehicle, ped) grow by
+  what the mods' definitions add: a copy with the extra elements, made before `CModelInfo::Initialise`, replaces the
+  global behind the stores' accessors; mods-only, recorded in the divergence ledger. The pools are the game limits'
+  (`sa_core::options`, a mod's `set_game_limit`): the collision-model and texture dictionary pools get at least their
+  original size plus the data's collision models and dictionaries (the stock data stays within the original sizes;
+  with SA:MP's data 11,391 collision models and 3,803 dictionaries are in use after the level data);
+- a mod's data loads completely or not at all (a missing file or a limit is a log line); the mod still runs.
+
+Differences from samp.dll, which registers `SAMP\CUSTOM.IMG` and `SAMP\SAMP.IMG` before `MODELS\GTA3.IMG` (its own
+`default.dat`, `CStreaming::InitImageList` made RET): a mod's archives come after the game's, so the nine entries of
+`SAMP.img` that replace game models (two peds' and a few map pieces' models and dictionaries) keep the game's. Open:
+replacing the game's own files and entries (the overlay above), loose `.ifp` files, `[content]` registration.
 
 ## 5. SA:MP as a mod (MOD-2 level 4)
 

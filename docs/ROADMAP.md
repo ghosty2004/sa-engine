@@ -354,6 +354,15 @@ Sections: *pending* (blocks "done") · *original UB, not reproducible* · *accep
   (special action 2 on, 0 off) is applied on the mod as samp.dll does; the DLL client has no jetpack, so the A/B shows
   it on the mod only. (11) `bone_position` reads the head and neck nodes only (nametag anchors); other bones are
   Unsupported.
+- MOD-2 data mods (`mods` build with a mod declaring `[data]` only; ADR-004 §4.2): (1) the model-info stores (atomic,
+  damage atomic, time, weapon, clump, vehicle, ped) grow by what the mods' definitions add: copies made before
+  `CModelInfo::Initialise` replace the originals (the original stores stay unused); the collision-model and texture
+  dictionary pools get at least their original size plus the data's collision models and dictionaries (game limits). (2) A mod's image archives are joined into one archive file and
+  come after the game's own (samp.dll registers `SAMP\CUSTOM.IMG` / `SAMP\SAMP.IMG` before `MODELS\GTA3.IMG` and drops
+  `DATA\PATHS\CARREC.IMG` with its own `gta.dat`): the nine `SAMP.img` entries that replace game files (`bmyboun`,
+  `bmymib`, `wmomib`, `wmyboun` models, `wmomib.txd`, `ltsrec01_lawn`, `skyscrapn203`, `mine.txd`,
+  `skyscrapelan2.txd`) keep the game's on the mod; `CARREC.IMG` stays registered. (3) `DATA\GTA.DAT` is read with the
+  mods' lines (the file layer's redirect), not samp.saa's `gta.dat`. Without a data mod nothing changes.
 
 *original UB, not reproducible*
 - `CTheZones::AssignZoneInfoForThisZone` loops forever when index < count (port loops too; never hit). `CEntryExit::GetPositionRelativeToOutsideWorld` writes the z sum into its own unused stack argument slot (not reproduced). `CStuntJumpManager::Init` SEH frame around the pool constructor not reproduced. `FindPlayerCentreOfWorld_NoSniperShift` reads Players[-1] for id -1 and CShopping touches the byte before its bought-flags table for unknown keys (kept) (PORT-WORLD p1).

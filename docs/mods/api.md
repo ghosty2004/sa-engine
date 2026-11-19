@@ -29,6 +29,28 @@ optional and the host skips them.
 
 `ui` belongs to a later level. A function without its permission returns DENIED; the mod keeps running.
 
+## Game data (`mod.toml`, `[data]`)
+
+Not an API function: game data files in the mod's folder that the game loads at start-up with its own (ADR-004
+§4.2, `crates/sa-mod-host/src/data.rs`). Each key is a list of plain file names (letters, digits, `_`, `-`, the
+key's extension, at most 23 characters), matched without case:
+
+| key | the game loads it | as |
+|---|---|---|
+| `img` | registered as an image archive (an `IMG` line of `DATA\GTA.DAT`) | its directory registers models by name, texture dictionaries, collision and IPL slots, and each `.ifp` as an animation block, as the game's own archives do; an entry the game's archives already hold keeps the game's |
+| `ide` | read as a definition file (`IDE` line) | model ids 0..19999 |
+| `col` | read as a collision file (`COLFILE 0` line) | |
+| `ipl` | read as a placement file (`IPL` line, after the game's own) | |
+| `txd` | loaded into a texture dictionary slot named after the file (`blanktex.txd`: `"blanktex"`), kept loaded | e.g. `load_texture("blanktex", ...)` |
+
+The files appear to the game at `mods\<id>\`; a mod's image archives (`VER2`) are joined into one,
+`mods\<id>\archives.all.img` (one directory, the archives' bytes after it), so each mod with archives takes one of
+the game's eight image slots (the stock data takes six: two are left). Limits: model ids below 20,000, definitions
+without `2dfx` entries; the model-info stores grow by what the definitions add (the `mods` build only), and the
+collision-model and texture dictionary pools are at least their original size plus what the data adds (the game
+limits, `set_game_limit`; at most 32,767). A mod's data loads completely or not at all: a missing file or a limit leaves it out with a log line, and the mod still runs (models it would have defined do not exist then).
+`mods/samp/mod.toml` is the example: SA:MP's own models, collision, cull zones and its "SAMP" animation block.
+
 ## Entry points (exports)
 
 | export | SDK | since | when |

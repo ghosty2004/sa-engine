@@ -4919,3 +4919,26 @@
   limits, sa-access setup, sa-mod-host boot calls, samp-client patch table), clippy, wasm32 mods build.
   Writer gate 17/17 (queue regenerated: line numbers), verify-all IDENTICAL 13/13 on lanes 5-7 (tag
   parity-options).
+## 2026-11-19 — MOD-2: data mods, SA:MP's own models and animations for the SA:MP mod (agent, worktree)
+- `mod.toml` `[data]` (`img`, `ide`, `col`, `ipl`, `txd`; plain names checked): `sa-mod-host/src/data.rs` (manifest
+  table, the level-file merge, the definitions' store needs, the image-slot and id limits, the joined image archive),
+  `ModSource::files` (natively the folder, on the web the mod's files fetched through its source, each once),
+  `sa-game/src/data_mods.rs`: the declared files mounted at `mods\<id>\`, `DATA\GTA.DAT` through the file layer's
+  redirect with `IMG` / `COLFILE 0` / `IDE` lines before its first `IPL` line and `IPL` lines after its own, the
+  model-info stores grown before `CModelInfo::Initialise` (`sa-stream` `raise_capacity`, behind the stores'
+  accessors), the collision-model and texture dictionary pools through the game limits, texture dictionaries into named slots before
+  `CGame::Init2` (`sa_access::load_txd_slot`, shared with `load_texture`). A mod's archives are joined into one image
+  (the stock data leaves two of the eight image slots; SA:MP ships three archives). `sa-platform`: `StdFile`
+  (shared by NativeFs and the mod folders), `MemFile` public, the redirect gets the absolute path (the same change
+  as the patch-parity lane's vfs.rs). No API function added (API_MINOR unchanged).
+- The samp mod's manifest declares SA:MP's `SAMP` folder files; mod-join.sh links them from `SAMP_CLIENT/SAMP`
+  (`SAMP_DATA=0`: not); mods/build.sh names the missing ones; docs/samp/README.md, docs/mods/api.md "Game data",
+  ADR-004 §4.2.
+- Verified: `tools/e2e/samp/samp-models.cmds` (objects 19128, 18766, 19353, 19054, 19122, 18647, pickups 18631 and
+  19054, `attach|19100|2`, ApplyAnimation SAMP/FISHINGIDLE) on the mod (`mod-join.sh`, goal PASS 4/4; the log:
+  definitions add 1433 atomic, 2 clump, 12 ped, 1457 collision, 211 texture dictionaries; stores Atomic
+  15417/15433, Ped 288/290; pools after the level data with the mod's limits: buildings 9211/20000, collision
+  models 11391/32511, texture dictionaries 3803/20000) and on the DLL
+  client under Wine (`LANE=5 samp-rs-ab.sh`, port 7903): the same objects, pickup, cap and the fishing pose in the
+  screenshots; without the files (`SAMP_DATA=0`) the objects are refused and the mod runs. Unit tests sa-mod-host
+  (data: manifest, merge, needs, joined archive, declared files; host: all-or-nothing data).

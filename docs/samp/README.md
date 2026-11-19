@@ -26,6 +26,13 @@ original UI font, else Liberation Sans Bold). Without them the controls are flat
 `samp.saa` from the SA:MP install in the same folder gives the game samp's own `main.scm` and `script.img` (its stunt
 bonus, garages, ...); without it the mod runs samp-rs's minimal main script.
 
+SA:MP's own game data is the user's too: copy the files of the SA:MP install's `SAMP` folder (`SAMP.img`,
+`custom.img`, `SAMPCOL.img`, `SAMP.ide`, `CUSTOM.ide`, `SAMP.ipl`, `samaps.txd`, `blanktex.txd`) into the mod's folder.
+The manifest's `[data]` (docs/mods/api.md, "Game data") has the game load them with its own data at start-up: SA:MP's
+object models 18631..19999, their collision, its cull zones, its "SAMP" animation library (`SAMP.ifp` inside
+`SAMP.img`) and the `samaps` / `blanktex` texture dictionaries. Without them the mod runs and the server's objects,
+pickups and attachments with those models are refused (the log names the missing files).
+
 Joining: once the world runs the mod covers it with its connect screen, a server browser, until the server accepted
 the join (backdrop: the game's own loading screens). Tabs: Internet (the open.mp list, `https://api.open.mp/servers/`,
 fetched through the mod API's HTTP requests; search, hide full / empty / locked, order by players / ping / name),
@@ -71,8 +78,8 @@ SIGKILL, S seconds, start), `SOAK_SECONDS` and `KILL_AFTER=1`; crash reports go 
 The mod's objects (`samp_client::hostedobjects`, API 1.9): RPC 44 / 45 / 46 / 47 / 99 / 122 / 75 / 84 / 169 / 113 and
 RemoveBuildingForPlayer (43) run the DLL client's rules (`worldents`: create order, MoveObject motion, the bone
 placement of attached objects) on the mod API's objects. Not on the mod: material text, the blank material texture
-(SA:MP's own file), samp's own far-object pass (draw distance above 300), the object editor and selection (RPC 27 / 28
-/ 116 / 117), SA:MP's own object models (18631..19999, a data mod's job, ADR-004 §4.2); 0.3.DL's custom models
+(SA:MP's `blanktex.txd`, which the mod's data loads into its slot, is not used by it yet), samp's own far-object
+pass (draw distance above 300), the object editor and selection (RPC 27 / 28 / 116 / 117). SA:MP's own object models (18631..19999) come from the mod's `[data]` (above); 0.3.DL's custom models
 (RPC 179 / 183 / 184) are dormant in 0.3.7 R4 and ignored by both clients (docs/ROADMAP.md, divergence ledger).
 
 On the original `gta_sa.exe` samp-rs stays a DLL (`samp_client.dll`, samp-rs's own build and tests).
