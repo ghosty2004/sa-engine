@@ -1,4 +1,4 @@
-# Mod API reference (API 1.6)
+# Mod API reference (API 1.7)
 
 The interface is defined once, in `crates/sa-mod-api/src/lib.rs` (`for_each_import!`, `for_each_export!`); this page
 explains it. The Rust SDK (`crates/sa-mod`) wraps every function; other languages import the functions from module
@@ -7,7 +7,7 @@ status (`-1` DENIED: the manifest does not grant it, `-2` BAD_ARG, `-3` NOT_FOUN
 inside a hook, `-5` FAILED: the game could not do it, the log says why, `-6` AGAIN: nothing now, try again later,
 1.4).
 
-A mod built for an older minor version (`api_version = "1.0"` ... `"1.5"`), or rebuilt with a newer SDK while
+A mod built for an older minor version (`api_version = "1.0"` ... `"1.6"`), or rebuilt with a newer SDK while
 its manifest keeps the older version, runs unchanged: entry points added later are
 optional and the host skips them.
 
@@ -25,6 +25,7 @@ optional and the host skips them.
 | `audio` | `true` / `false` | game sounds (1.3) |
 | `net` | a list of `"udp:HOST:PORT"` rules, `*` for any host or port | UDP sockets to the targets a rule allows (1.4) |
 | `storage` | `true` / `false` | the mod's persistent key / value storage (1.4) |
+| `http` | a list of URL prefixes, `"https://HOST/PATH/"` | GET requests to URLs under these prefixes (1.7) |
 
 `ui` belongs to a later level. A function without its permission returns DENIED; the mod keeps running.
 
@@ -359,3 +360,31 @@ depth in front of the camera (three `f32`) and returns 1, or 0 off screen or beh
 
 Nothing of level 6 runs without a mod that asks for it; the game's 2D phase is observed (`Render2dStuff` watched)
 only from the first queued string, sprite or texture lookup on.
+
+## Level 7: HTTP requests (1.7)
+
+### Requests (`http = ["https://HOST/PATH/", ...]`)
+
+| function | SDK (`sa_mod::http::Request`) | what |
+|---|---|---|
+| `http_get(url_ptr, url_len)` | `Request::get(url)` | starts a GET request in the background; returns its handle |
+| `http_status(h)` | `status()` | AGAIN while it runs, then the HTTP status (100..=599), or FAILED |
+| `http_body(h, ptr, len)` | `body()` | copies the body into the buffer; returns its whole size (AGAIN / FAILED as `http_status`) |
+| `http_close(h)` | drop | forgets it (a running request is abandoned) |
+
+A prefix is `http://` or `https://`, a host (and port) and a path that starts with `/`: `"https://api.open.mp/"`
+allows every URL under it and no other host (`https://api.open.mp.example/` does not start with it). A URL with
+whitespace, a backslash, a fragment, `..` or `%2e` is BAD_ARG, one no prefix allows DENIED. The manifest is the whole
+consent: there is no prompt per request.
+
+A mod holds at most 4 requests (`http::MAX_REQUESTS`, running or finished until closed). A request fails (FAILED, the
+reason in the log once) without a connection, on a TLS error, with a body over 16 MiB (`http::MAX_BODY`) or after
+30 s (`http::TIMEOUT_MS`); a 4xx / 5xx answer is a status like any other. Natively each request runs on its own
+thread (ureq with rustls and the Mozilla root certificates; no system TLS library); in the browser it is the worker's
+`fetch` without credentials, so a cross-origin URL needs the server's `Access-Control-Allow-Origin` (api.open.mp sends
+`*`). Poll `http_status` once per frame. When the host disables a mod it drops its requests.
+
+### Determinism
+
+Requests run only for a mod that starts them; their timing is the network's, so a mod that waits for one is not
+deterministic across runs (as with sockets).

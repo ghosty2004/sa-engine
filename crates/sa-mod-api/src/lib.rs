@@ -34,7 +34,7 @@ pub const EXPORT_MEMORY: &str = "memory";
 /// The API's major version.
 pub const API_MAJOR: u16 = 1;
 /// The API's minor version.
-pub const API_MINOR: u16 = 6;
+pub const API_MINOR: u16 = 7;
 
 /// `major << 16 | minor`, the value of the `sa_api_version` export.
 pub const fn pack_version(major: u16, minor: u16) -> i32 {
@@ -143,6 +143,8 @@ pub enum Permission {
     Net,
     /// `storage = true`: the mod's persistent key / value storage (API 1.4).
     Storage,
+    /// `http = ["https://host/path/", ...]`: GET requests to URLs under these prefixes (API 1.7).
+    Http,
     /// `input = "capture"`: the platform's input events before the game sees them, and taking the keyboard and
     /// the mouse from the game (API 1.5).
     Capture,
@@ -436,6 +438,43 @@ pub mod net {
     pub const MAX_SENDS_PER_FRAME: u32 = 1024;
     /// Bytes one mod may send per main-loop iteration, over all its sockets.
     pub const MAX_SEND_BYTES_PER_FRAME: usize = 1 << 20;
+}
+
+/// HTTP requests (API 1.7, `http = [...]`): GET only, run by the host in the background (natively a thread per
+/// request, in the browser `fetch`).
+pub mod http {
+    /// Requests one mod may hold at once (running or finished, until `http_close`).
+    pub const MAX_REQUESTS: usize = 4;
+    /// The longest URL.
+    pub const MAX_URL: usize = 2048;
+    /// The largest response body; a longer one fails the request.
+    pub const MAX_BODY: usize = 16 << 20;
+    /// How long a request may take, from `http_get` to the whole body.
+    pub const TIMEOUT_MS: u64 = 30_000;
+
+    /// Whether `prefix` is a valid `http` permission entry: a [`valid_url`] whose path starts with `/` (so that
+    /// `https://example.org/` cannot be stretched to `https://example.org.evil/`).
+    pub fn valid_prefix(prefix: &str) -> bool {
+        let rest = prefix.strip_prefix("https://").or_else(|| prefix.strip_prefix("http://")).unwrap_or("");
+        rest.find('/').is_some_and(|i| i > 0) && valid_url(prefix)
+    }
+
+    /// Whether `url` is a URL the host requests: `http://` or `https://` with a host, at most [`MAX_URL`] bytes, no
+    /// whitespace, control characters, backslash or fragment, and no `..` or `%2e` (a path cannot climb out of the
+    /// prefix that allowed it).
+    pub fn valid_url(url: &str) -> bool {
+        let rest = url.strip_prefix("https://").or_else(|| url.strip_prefix("http://"));
+        rest.is_some_and(|r| !r.is_empty() && !r.starts_with('/'))
+            && url.len() <= MAX_URL
+            && url.bytes().all(|b| b.is_ascii_graphic() && b != b'#' && b != b'\\')
+            && !url.contains("..")
+            && !url.to_ascii_lowercase().contains("%2e")
+    }
+
+    /// Whether the `http` list `prefixes` allows `url`.
+    pub fn allows(prefixes: &[String], url: &str) -> bool {
+        valid_url(url) && prefixes.iter().any(|p| url.starts_with(p.as_str()))
+    }
 }
 
 /// Overlay images (API 1.6, `render = true`): RGBA8 pixels a mod uploads once and draws quads of.
@@ -811,6 +850,22 @@ macro_rules! for_each_import {
             /// (1.6) Sets the game's millisecond timer (`CTimer::m_snTimeInMilliseconds`, 0..=0x3FFFFFFF): the time
             /// the game's timed events count in.
             [Write] fn set_game_time(ms: i32) -> i32;
+            /// (1.7) Starts a GET request of `url` (UTF-8, `url_len` bytes at `url_ptr`, at most [`http::MAX_URL`],
+            /// `http://` or `https://`), which must start with a prefix of the manifest's `http` list; it runs in
+            /// the background. Returns the request's handle (`0 .. http::MAX_REQUESTS`), `DENIED` (no prefix allows
+            /// the URL), `BAD_ARG` (not such a URL), `FAILED` (the mod holds [`http::MAX_REQUESTS`] requests, the host
+            /// has no HTTP client; the log says why).
+            [Http] fn http_get(url_ptr: i32, url_len: i32) -> i32;
+            /// (1.7) Where request `handle` stands: `AGAIN` while it runs, the response's HTTP status (100..=599) once
+            /// the whole body is there, `FAILED` when it failed (no connection, TLS, over [`http::MAX_BODY`] bytes, over
+            /// [`http::TIMEOUT_MS`]; the log says why, once), `NOT_FOUND` for a handle the mod does not hold.
+            [Http] fn http_status(handle: i32) -> i32;
+            /// (1.7) Copies `min(size, buf_len)` bytes of request `handle`'s response body into the buffer and
+            /// returns the body's size; `AGAIN` while it runs, `FAILED`, `NOT_FOUND` as `http_status`.
+            [Http] fn http_body(handle: i32, buf_ptr: i32, buf_len: i32) -> i32;
+            /// (1.7) Forgets request `handle` (a running one is abandoned; the host drops every request of a mod it
+            /// disables). Returns 0 or `NOT_FOUND`.
+            [Http] fn http_close(handle: i32) -> i32;
         }
     };
 }
@@ -1107,6 +1162,20 @@ mod tests {
         let ops: Vec<u16> = script::COMMANDS.iter().map(|c| c.0).collect();
         assert!(ops.windows(2).all(|w| w[0] < w[1]), "sorted, no duplicates");
         assert!(script::COMMANDS.iter().all(|c| c.2.len() <= script::MAX_ARGS && c.2.chars().all(|k| "ifpvPos".contains(k))));
+    }
+
+    #[test]
+    fn level_seven() {
+        assert_eq!(IMPORTS[import_index("http_get").unwrap()].permission, Permission::Http);
+        assert!(http::valid_prefix("https://api.open.mp/") && http::valid_prefix("http://127.0.0.1:8080/list/"));
+        for p in ["https://api.open.mp", "ftp://a/", "https:///x", "https://a b/"] {
+            assert!(!http::valid_prefix(p), "{p:?}");
+        }
+        let list = vec!["https://api.open.mp/".to_string()];
+        assert!(http::allows(&list, "https://api.open.mp/servers/"));
+        assert!(!http::allows(&list, "https://api.open.mp.evil.org/servers/"));
+        assert!(!http::allows(&list, "https://api.open.mp/a b"));
+        assert!(!http::allows(&list, "https://api.open.mp/../x") && !http::allows(&list, "https://api.open.mp/%2E%2e/x"));
     }
 
     #[test]

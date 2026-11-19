@@ -6,6 +6,8 @@
 import * as sa from './pkg/sa_game.js';
 
 const instances = [];
+const requests = new Map();
+let nextRequest = 1;
 
 // The mods' storage (`storage = true`): every value of the IndexedDB database `sa-mod-storage` (object store `kv`,
 // keys `MOD_ID/KEY`), copied here before the game runs (`loadStorage`); the host reads this copy synchronously and
@@ -64,6 +66,35 @@ self.saGameMods = {
     let out = '';
     for (const [k, v] of stored) if (k.startsWith(prefix)) out += `${k.slice(prefix.length)}\t${v.length}\n`;
     return out;
+  },
+  // the mods' HTTP GET requests (`http = [...]`, checked by the host): id -> { done, status, body, error, abort }
+  httpGet(url, maxBody) {
+    const id = nextRequest++;
+    const abort = new AbortController();
+    const r = { done: false, abort };
+    requests.set(id, r);
+    (async () => {
+      const res = await fetch(url, { signal: abort.signal, credentials: 'omit' });
+      const body = new Uint8Array(await res.arrayBuffer());
+      if (body.length > maxBody) throw new Error(`the body is over ${maxBody} bytes`);
+      Object.assign(r, { done: true, status: res.status, body });
+    })().catch((e) => Object.assign(r, { done: true, error: String(e) }));
+    return id;
+  },
+  httpPoll(id) {
+    const r = requests.get(id);
+    if (!r) return 'no such request';
+    if (!r.done) return undefined;
+    return r.error ?? r.status;
+  },
+  httpTake(id) {
+    const r = requests.get(id);
+    requests.delete(id);
+    return r?.body ?? new Uint8Array();
+  },
+  httpDrop(id) {
+    requests.get(id)?.abort.abort();
+    requests.delete(id);
   },
   // a mod file from the page's server (synchronous: the game thread waits), undefined when missing
   fetch(url) {

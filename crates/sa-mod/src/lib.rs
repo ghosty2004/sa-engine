@@ -394,6 +394,46 @@ pub mod net {
     }
 }
 
+/// HTTP GET requests (permission `http = ["https://HOST/PATH/", ...]`; API 1.7): the host runs them in the
+/// background; poll [`Request::status`] every frame until it is no longer [`Error::Again`].
+pub mod http {
+    use super::{Error, check, ffi, ptr_len};
+    pub use sa_mod_api::http::{MAX_BODY, MAX_REQUESTS, MAX_URL, TIMEOUT_MS};
+
+    /// A request; forgotten (a running one abandoned) when dropped.
+    #[derive(Debug)]
+    pub struct Request(i32);
+
+    impl Request {
+        /// Starts a GET request of `url`, which must start with a prefix of the manifest's `http` list.
+        pub fn get(url: &str) -> Result<Request, Error> {
+            let (p, n) = ptr_len(url.as_bytes());
+            // SAFETY: a host function call; the host reads `url` through a bounds-checked copy
+            check(unsafe { ffi::http_get(p, n) }).map(Request)
+        }
+
+        /// The response's HTTP status once the whole body is there; [`Error::Again`] while it runs, `Failed` when it
+        /// failed (the log says why).
+        pub fn status(&self) -> Result<u16, Error> {
+            // SAFETY: a host function call with a plain value
+            check(unsafe { ffi::http_status(self.0) }).map(|s| s as u16)
+        }
+
+        /// The response's body (as [`Request::status`] while there is none).
+        pub fn body(&self) -> Result<Vec<u8>, Error> {
+            // SAFETY: host function calls; the host writes at most `len` bytes at `ptr`, inside the buffer
+            super::read_sized(|ptr, len| unsafe { ffi::http_body(self.0, ptr, len) }).map(Option::unwrap_or_default)
+        }
+    }
+
+    impl Drop for Request {
+        fn drop(&mut self) {
+            // SAFETY: a host function call with a plain value
+            unsafe { ffi::http_close(self.0) };
+        }
+    }
+}
+
 /// The mod's persistent key / value storage (permission `storage = true`; API 1.4): natively a folder under the
 /// user's data directory, in the browser the page's IndexedDB. Keys are `A-Z a-z 0-9 . _ -` (1..=64 bytes, not
 /// starting with `.`).

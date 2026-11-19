@@ -8,8 +8,8 @@ use std::rc::Rc;
 use sa_access::View;
 use sa_mod_api::state::{CameraInfo, MatrixInfo, PadInfo, PedInfo, PlayerInfo, VehicleInfo, Words, WorldInfo, to_bytes};
 use sa_mod_api::{
-    Call, IMPORTS, MAX_FILE, Permission, VIDEO_MODE_MAX, VIDEO_MODE_MIN, Val, event, hook, image, net, script, status,
-    storage, valid_file_name,
+    Call, IMPORTS, MAX_FILE, Permission, VIDEO_MODE_MAX, VIDEO_MODE_MIN, Val, event, hook, http, image, net, script,
+    status, storage, valid_file_name,
 };
 use sa_platform::gpu::OverlayQuad;
 use sa_types::script::{Opcode, ScriptArg, ScriptLocals};
@@ -17,6 +17,7 @@ use sa_types::{EntityRef, GameError, GameOption, GameResult, ModelId, ObjectRef,
 
 use crate::ModSource;
 use crate::approval::Approvals;
+use crate::http::{Http, Outcome, Requests};
 use crate::images::{self, CreateError, Images};
 use crate::manifest::{NetRule, Permissions, split_target};
 use crate::net::{LinkState, Net, Sockets};
@@ -237,6 +238,12 @@ pub struct CallCtx {
     pub user_approved: bool,
     /// The user's answers (the host's).
     pub approvals: Option<Rc<RefCell<Approvals>>>,
+    /// The HTTP client the mod's requests go to (`None`: none).
+    pub http: Option<Http>,
+    /// The URL prefixes the manifest lets the mod GET.
+    pub http_prefixes: Rc<[String]>,
+    /// The mod's requests.
+    pub requests: Requests,
 }
 
 impl CallCtx {
@@ -256,6 +263,7 @@ impl CallCtx {
             Permission::Audio => self.permissions.audio,
             Permission::Net => self.permissions.net,
             Permission::Storage => self.permissions.storage,
+            Permission::Http => self.permissions.http,
             Permission::Capture => self.permissions.capture,
         }
     }
@@ -864,6 +872,57 @@ fn services(ctx: &mut CallCtx, mem: &mut dyn Mem, call: Call) -> Option<i32> {
         }
         Call::net_close { handle } => {
             if ctx.sockets.close(handle) {
+                status::OK
+            } else {
+                status::NOT_FOUND
+            }
+        }
+        Call::http_get { url_ptr, url_len } => {
+            if url_len < 0 || url_len as usize > http::MAX_URL {
+                return Some(status::BAD_ARG);
+            }
+            let Some(url) = text(mem, url_ptr, url_len) else { return Some(status::BAD_ARG) };
+            if !http::valid_url(&url) {
+                return Some(status::BAD_ARG);
+            }
+            if !http::allows(&ctx.http_prefixes, &url) {
+                return Some(status::DENIED);
+            }
+            if !ctx.requests.has_room() {
+                ctx.log_error(format!("http_get {url}: the mod holds {} requests already", http::MAX_REQUESTS));
+                return Some(status::FAILED);
+            }
+            let Some(client) = ctx.http.clone() else {
+                ctx.log_error(format!("http_get {url}: no HTTP client in this host"));
+                return Some(status::FAILED);
+            };
+            ctx.requests.add(client.0.get(&url)).map_or(status::FAILED, |h| h as i32)
+        }
+        Call::http_status { handle } | Call::http_body { handle, .. } => {
+            let Some((outcome, why)) = ctx.requests.poll(handle) else { return Some(status::NOT_FOUND) };
+            let r = match (outcome, call) {
+                (Outcome::Running, _) => status::AGAIN,
+                (Outcome::Failed, _) => status::FAILED,
+                (Outcome::Done(code, _), Call::http_status { .. }) => i32::from(code),
+                (Outcome::Done(_, body), Call::http_body { buf_ptr, buf_len, .. }) => {
+                    if buf_ptr < 0 || buf_len < 0 {
+                        return Some(status::BAD_ARG);
+                    }
+                    let n = body.len().min(buf_len as usize);
+                    if !mem.write(buf_ptr as u32, &body[..n]) {
+                        return Some(status::BAD_ARG);
+                    }
+                    body.len() as i32
+                }
+                (Outcome::Done(..), _) => unreachable!("only http_status and http_body poll"),
+            };
+            if let Some(why) = why {
+                ctx.log_error(format!("http request {handle}: {why}"));
+            }
+            r
+        }
+        Call::http_close { handle } => {
+            if ctx.requests.close(handle) {
                 status::OK
             } else {
                 status::NOT_FOUND

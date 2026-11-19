@@ -2,8 +2,8 @@
 //! build), where Cranelift has no backend, it compiles to Pulley bytecode that wasmtime's interpreter runs. Budgets:
 //! wasmtime fuel per call, the memory cap through the store's resource limiter. Signal-based traps are off (the
 //! game owns the process's signal handlers; bounds are checked explicitly) and memories are not reserved up front
-//! (the i686 address space is shared with the game's arena). Sockets are real UDP sockets; storage is a folder
-//! per mod under the user's data directory.
+//! (the i686 address space is shared with the game's arena). Sockets are real UDP sockets, HTTP requests run on a
+//! thread each (ureq with rustls); storage is a folder per mod under the user's data directory.
 
 use std::io;
 use std::path::{Path, PathBuf};
@@ -16,7 +16,9 @@ use crate::ModSource;
 use crate::api::{CallCtx, SliceMem, dispatch};
 use crate::engine::{CallError, Engine, Instance};
 use crate::manifest::{INIT_FUEL_FACTOR, Limits};
+use crate::http::{HttpClient, HttpRequest, Progress};
 use crate::net::{DatagramTransport, Network};
+use sa_mod_api::http::{MAX_BODY, TIMEOUT_MS};
 use crate::storage::{Storage, StorageProvider};
 
 /// wasmtime.
@@ -199,6 +201,66 @@ impl Network for Udp {
 /// The platform's network: UDP sockets (`_proxy`, the browser's relay, does not apply natively).
 pub fn network(_proxy: Option<&str>) -> Rc<dyn Network> {
     Rc::new(Udp)
+}
+
+/// HTTP GET requests, each on its own thread.
+struct Threads(ureq::Agent);
+
+/// A request's thread hands over its outcome.
+struct Pending(std::sync::mpsc::Receiver<Progress>);
+
+impl HttpRequest for Pending {
+    fn poll(&mut self) -> Progress {
+        use std::sync::mpsc::TryRecvError;
+        match self.0.try_recv() {
+            Ok(p) => p,
+            Err(TryRecvError::Empty) => Progress::Running,
+            Err(TryRecvError::Disconnected) => Progress::Failed("the request's thread ended".into()),
+        }
+    }
+}
+
+fn fetch(agent: &ureq::Agent, url: &str) -> Progress {
+    let mut response = match agent.get(url).call() {
+        Ok(r) => r,
+        Err(e) => return Progress::Failed(e.to_string()),
+    };
+    let status = response.status().as_u16();
+    match response.body_mut().with_config().limit(MAX_BODY as u64).read_to_vec() {
+        Ok(body) => Progress::Done { status, body },
+        Err(e) => Progress::Failed(e.to_string()),
+    }
+}
+
+impl HttpClient for Threads {
+    fn get(&self, url: &str) -> Box<dyn HttpRequest> {
+        let (tx, rx) = std::sync::mpsc::channel();
+        let (agent, url) = (self.0.clone(), url.to_string());
+        let spawned = std::thread::Builder::new().name("mod-http".into()).spawn(move || {
+            let _ = tx.send(fetch(&agent, &url));
+        });
+        if let Err(e) = spawned {
+            let (tx, rx) = std::sync::mpsc::channel();
+            let _ = tx.send(Progress::Failed(format!("no thread for the request: {e}")));
+            return Box::new(Pending(rx));
+        }
+        Box::new(Pending(rx))
+    }
+
+    fn describe(&self) -> String {
+        "HTTP (ureq, rustls)".into()
+    }
+}
+
+/// The platform's HTTP client.
+pub fn http() -> Rc<dyn HttpClient> {
+    let agent = ureq::Agent::config_builder()
+        .http_status_as_error(false)
+        .timeout_global(Some(std::time::Duration::from_millis(TIMEOUT_MS)))
+        .user_agent("sa-engine-mods")
+        .build()
+        .new_agent();
+    Rc::new(Threads(agent))
 }
 
 /// The storage areas under one folder: one sub-folder per mod id, one file per key.

@@ -23,6 +23,9 @@
 //!                            # UDP sockets to these targets (API 1.4): `udp:HOST:PORT`, `*` for any host or
 //!                            # port; the host compares the target text the mod opens, before resolving it
 //! storage = true             # the mod's persistent key / value storage (API 1.4); `ui` is known but not granted
+//! http = ["https://api.example.org/"]
+//!                            # GET requests to URLs under these prefixes (API 1.7): `http://` or `https://`, a
+//!                            # host and a path starting with `/`
 //!
 //! [limits]                   # optional; clamped to the host's maxima
 //! memory_mib = 16            # linear memory cap
@@ -56,6 +59,8 @@ pub struct Permissions {
     pub net: bool,
     /// `storage = true`: the mod's persistent key / value storage.
     pub storage: bool,
+    /// `http = [...]` names at least one prefix ([`Manifest::http`]).
+    pub http: bool,
     /// `input = "capture"`: input events before the game, keyboard and mouse taken from the game (with `input`).
     pub capture: bool,
 }
@@ -154,6 +159,8 @@ pub struct Manifest {
     pub net: Vec<NetRule>,
     /// `net = ["udp:user-approved"]`: also any target the user approves for it ([`crate::approval`]).
     pub net_user_approved: bool,
+    /// The URL prefixes it may GET (`http = [...]`).
+    pub http: Vec<String>,
     /// Its budgets.
     pub limits: Limits,
 }
@@ -207,6 +214,7 @@ pub fn parse(text: &str) -> Result<(Manifest, Vec<String>), String> {
     let mut hooks = Vec::new();
     let mut net = Vec::new();
     let mut net_user_approved = false;
+    let mut http = Vec::new();
     if id == crate::approval::AREA {
         return Err(format!("mod.toml: [mod] id {id:?} is the host's"));
     }
@@ -278,6 +286,19 @@ pub fn parse(text: &str) -> Result<(Manifest, Vec<String>), String> {
                     }
                     permissions.net = !net.is_empty() || net_user_approved;
                 }
+                "http" => {
+                    let bad = |v: &Value| {
+                        format!("mod.toml: permissions.http: expected a list of \"https://HOST/PATH\" prefixes, got {v:?}")
+                    };
+                    let Value::Array(prefixes) = v else { return Err(bad(v)) };
+                    for p in prefixes {
+                        match p {
+                            Value::String(p) if sa_mod_api::http::valid_prefix(p) => http.push(p.clone()),
+                            _ => return Err(bad(p)),
+                        }
+                    }
+                    permissions.http = !http.is_empty();
+                }
                 "entities" | "scripts" | "audio" | "storage" => match v {
                     Value::Boolean(b) => match k.as_str() {
                         "entities" => permissions.entities = *b,
@@ -333,6 +354,7 @@ pub fn parse(text: &str) -> Result<(Manifest, Vec<String>), String> {
             hooks,
             net,
             net_user_approved,
+            http,
             limits,
         },
         warnings,
@@ -406,6 +428,20 @@ mod tests {
         }
         assert_eq!(split_target("a.b:7777"), Some(("a.b", 7777)));
         assert_eq!(split_target("a.b"), None);
+    }
+
+    #[test]
+    fn level_seven_permissions() {
+        let (m, w) = parse(
+            "[mod]\nid = \"t\"\napi_version = \"1.7\"\n[permissions]\nhttp = [\"https://api.open.mp/\"]\n",
+        )
+        .unwrap();
+        assert!(m.permissions.http && w.is_empty(), "{w:?}");
+        assert_eq!(m.http, ["https://api.open.mp/"]);
+        for bad in ["\"https://api.open.mp\"", "\"ftp://a/\"", "1"] {
+            let t = format!("[mod]\nid = \"t\"\napi_version = \"1.7\"\n[permissions]\nhttp = [{bad}]\n");
+            assert!(parse(&t).is_err(), "{bad}");
+        }
     }
 
     #[test]

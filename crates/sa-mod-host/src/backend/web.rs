@@ -4,7 +4,8 @@
 //! shared [`dispatch`]. Fuel: the module is instrumented at load time ([`super::meter`]); the glue sets the counter
 //! before each call and reports an overrun. The memory cap is the instrumented memory's maximum. Instantiation is
 //! synchronous (allowed in a worker). Sockets are WebSockets to the page's UDP proxy (sa-net's, one binary frame
-//! per datagram); storage is the glue's copy of the page's IndexedDB, loaded before the game starts and written
+//! per datagram); HTTP requests are the worker's `fetch` (the glue keeps their outcome until the host polls it);
+//! storage is the glue's copy of the page's IndexedDB, loaded before the game starts and written
 //! back in the background.
 
 use std::cell::RefCell;
@@ -20,6 +21,7 @@ use crate::ModSource;
 use crate::api::{CallCtx, Mem, dispatch};
 use crate::engine::{CallError, Engine, Instance};
 use crate::manifest::{INIT_FUEL_FACTOR, Limits};
+use crate::http::{HttpClient, HttpRequest, Progress};
 use crate::net::{DatagramTransport, Network};
 use crate::storage::{Storage, StorageProvider};
 
@@ -51,6 +53,18 @@ extern "C" {
     /// `saGameMods.storageDelete(id, key)`: false when there was no value.
     #[wasm_bindgen(js_namespace = saGameMods, js_name = storageDelete)]
     fn js_storage_delete(id: &str, key: &str) -> bool;
+    /// `saGameMods.httpGet(url, maxBody)`: starts a `fetch` in the background; returns its id.
+    #[wasm_bindgen(js_namespace = saGameMods, js_name = httpGet)]
+    fn js_http_get(url: &str, max_body: u32) -> u32;
+    /// `saGameMods.httpPoll(id)`: `undefined` while it runs, else the HTTP status (> 0) or the error's text.
+    #[wasm_bindgen(js_namespace = saGameMods, js_name = httpPoll)]
+    fn js_http_poll(id: u32) -> JsValue;
+    /// `saGameMods.httpTake(id)`: the body of a finished request; the glue forgets it.
+    #[wasm_bindgen(js_namespace = saGameMods, js_name = httpTake)]
+    fn js_http_take(id: u32) -> Vec<u8>;
+    /// `saGameMods.httpDrop(id)`: forgets a request (a running one is aborted).
+    #[wasm_bindgen(js_namespace = saGameMods, js_name = httpDrop)]
+    fn js_http_drop(id: u32);
     /// `saGameMods.storageList(id)`: `key\tsize\n` per key.
     #[wasm_bindgen(js_namespace = saGameMods, js_name = storageList)]
     fn js_storage_list(id: &str) -> String;
@@ -221,6 +235,53 @@ const DEFAULT_PROXY: &str = "ws://127.0.0.1:7781";
 pub fn network(proxy: Option<&str>) -> Rc<dyn Network> {
     let proxy_url = proxy.filter(|p| !p.is_empty()).unwrap_or(DEFAULT_PROXY).to_string();
     Rc::new(Proxied(sa_net::WebSocketConnector { proxy_url }))
+}
+
+/// The worker's `fetch`, through the glue.
+struct Fetch;
+
+/// A `fetch` the glue runs.
+struct Fetched(Option<u32>);
+
+impl HttpRequest for Fetched {
+    fn poll(&mut self) -> Progress {
+        let Some(id) = self.0 else { return Progress::Failed("polled after it ended".into()) };
+        let r = js_http_poll(id);
+        if r.is_undefined() {
+            return Progress::Running;
+        }
+        self.0 = None;
+        match r.as_f64() {
+            Some(status) => Progress::Done { status: status as u16, body: js_http_take(id) },
+            None => {
+                js_http_drop(id);
+                Progress::Failed(r.as_string().unwrap_or_else(|| "fetch failed".into()))
+            }
+        }
+    }
+}
+
+impl Drop for Fetched {
+    fn drop(&mut self) {
+        if let Some(id) = self.0 {
+            js_http_drop(id);
+        }
+    }
+}
+
+impl HttpClient for Fetch {
+    fn get(&self, url: &str) -> Box<dyn HttpRequest> {
+        Box::new(Fetched(Some(js_http_get(url, sa_mod_api::http::MAX_BODY as u32))))
+    }
+
+    fn describe(&self) -> String {
+        "HTTP (fetch)".into()
+    }
+}
+
+/// The platform's HTTP client: the worker's `fetch` (cross-origin URLs need the server's CORS headers).
+pub fn http() -> Rc<dyn HttpClient> {
+    Rc::new(Fetch)
 }
 
 /// The page's storage: the glue's copy of IndexedDB.

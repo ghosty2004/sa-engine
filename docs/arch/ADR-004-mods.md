@@ -113,6 +113,7 @@ state    = "none"           # none | read | write            (level 2+)
 hooks    = []               # registry hooks, by name          (level 2+)
 entities = false            #                                   (level 3+)
 net      = []               # allowed host:port targets         (level 4)
+http     = []               # URL prefixes for GET requests     (API 1.7)
 files    = "own"            # none | own (the mod's folder, through the host)
 ```
 
@@ -303,7 +304,7 @@ API 1.5 (reference `docs/mods/api.md` level 5). Decisions:
   prompt (drawn over the mods' overlay, keys taken until the answer) and returns AGAIN; the answer is kept per mod
   id in the host's storage area (`sa-engine-host`, natively a folder, in the browser IndexedDB) and asked once. Any
   network mod can use it; explicit `udp:HOST:PORT` rules keep working.
-- **The samp mod** shows a connect screen (server, nickname, favourites in its storage), then runs
+- **The samp mod** shows a connect screen (a server browser, §4.1e), then runs
   `samp_client::hosted` (the engine client moved out of sa-game, plus remote players) on its game adapter over the
   mod API; the adapter answers `Unsupported` for what the API does not offer, as any backend lacking a feature.
 - Multiplayer starts with `--mods target/mods/resolution,target/mods/samp` (single player without the samp mod).
@@ -329,6 +330,23 @@ API 1.5 (reference `docs/mods/api.md` level 5). Decisions:
 - **The start screens are a game option** (`StartScreens`, 1.6): the samp mod turns them off in `sa_init` like
   samp.dll's start-up; `--start-in-world` (skipping main.scm's intro mission) stays a run option, as samp.dll ships
   its own main.scm.
+
+### 4.1e HTTP requests (API 1.7, 2026-11-19)
+
+API 1.7 (reference `docs/mods/api.md` level 7). Decisions:
+
+- **GET only, by URL prefix.** `http = ["https://HOST/PATH/", ...]` in the manifest; a prefix needs a path starting
+  with `/`, so it cannot be stretched to another host, and a URL with `..` / `%2e` cannot climb out of it. The
+  manifest is the consent (a list fetched over HTTP is data, not a server the mod talks to), unlike UDP targets,
+  which the user approves one by one.
+- **Non-blocking, bounded.** `http_get` starts a request; `http_status` / `http_body` poll it; at most 4 per mod,
+  16 MiB, 30 s. The host's `HttpClient` (`sa-mod-host/src/http.rs`) has one backend per platform: natively a
+  thread per request with ureq and rustls (no OpenSSL, the Mozilla roots), in the browser the worker's `fetch`
+  through the glue (`web/mods.js`), which needs CORS on the server.
+- **First user: the samp mod's Internet tab.** It reads the open.mp server list (`https://api.open.mp/servers/`,
+  JSON with hostname, players, mode, language, password, version); the selected server's ping, rules and players come
+  from SA:MP's UDP query (`samp_proto::query`) through the approved sockets. Tests point the mod at a local fixture
+  (`server_list_url`), never at the public list.
 
 ### 4.2 Data mods (added by the user, 2026-11-17)
 

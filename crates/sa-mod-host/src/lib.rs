@@ -4,7 +4,8 @@
 //! * [`manifest`]: `mod.toml` (identity, `api_version`, permissions, limits);
 //! * [`module`]: the checks every module passes (the interface of `sa-mod-api`, the memory cap);
 //! * [`api`]: the host functions, implemented once for both engines;
-//! * [`net`], [`storage`]: the mods' sockets and persistent storage, with a backend per platform;
+//! * [`net`], [`http`], [`storage`]: the mods' sockets, HTTP requests and persistent storage, with a backend per
+//!   platform;
 //! * [`engine`]: the engine seam, with the backends wasmtime (native) and the browser's WebAssembly (wasm32) in
 //!   `backend`;
 //! * [`Host`]: loading, the load order, the call points (the settings phase before the game's D3D device exists,
@@ -23,6 +24,7 @@ pub mod approval;
 mod backend;
 pub mod engine;
 pub mod events;
+pub mod http;
 pub mod images;
 pub mod manifest;
 pub mod module;
@@ -42,10 +44,11 @@ use sa_types::EntityRef;
 use crate::api::{CallCtx, Display, Files, Game, HookCall, HookDecision, Registry, VideoRequest};
 use crate::engine::{Engine, Instance};
 use crate::manifest::{INIT_FUEL_FACTOR, Manifest, NetRule};
+use crate::http::{Http, HttpClient, Requests};
 use crate::net::{Net, Network, Sockets};
 use crate::storage::{StorageProvider, Store};
 
-pub use backend::{network as platform_network, sources, storage as platform_storage};
+pub use backend::{http as platform_http, network as platform_network, sources, storage as platform_storage};
 
 /// Where a mod's files come from (a folder natively, the page's server on the web).
 pub trait ModSource {
@@ -67,6 +70,8 @@ pub struct LoadedMod {
     env: ModEnv,
     /// Its open sockets.
     sockets: Sockets,
+    /// Its HTTP requests.
+    requests: Requests,
     /// Its overlay images.
     images: images::Images,
     /// Why it was disabled (`None`: running).
@@ -104,6 +109,8 @@ struct ModEnv {
     hook_names: Rc<[String]>,
     /// The targets it may open sockets to.
     net_rules: Rc<[NetRule]>,
+    /// The URL prefixes it may GET.
+    http_prefixes: Rc<[String]>,
     /// Its storage area (`storage = true`).
     storage: Option<Store>,
 }
@@ -137,6 +144,8 @@ pub struct Host {
     epoch: web_time::Instant,
     /// Where the mods' sockets go.
     network: Option<Net>,
+    /// Where the mods' HTTP requests go.
+    http: Option<Http>,
     /// Where the mods' storage areas are.
     storages: Option<Rc<dyn StorageProvider>>,
     /// The servers the user approved, and the question on screen.
@@ -167,6 +176,7 @@ impl Host {
             orphans: Vec::new(),
             epoch: web_time::Instant::now(),
             network: None,
+            http: None,
             storages: None,
             approvals: Rc::default(),
             game_2d: Vec::new(),
@@ -176,6 +186,11 @@ impl Host {
     /// The network the mods' sockets go to (`platform_network`); without one `net_open` fails.
     pub fn set_network(&mut self, network: Rc<dyn Network>) {
         self.network = Some(Net(network));
+    }
+
+    /// The HTTP client the mods' requests go to (`platform_http`); without one `http_get` fails.
+    pub fn set_http(&mut self, http: Rc<dyn HttpClient>) {
+        self.http = Some(Http(http));
     }
 
     /// Where the mods' storage areas are (`platform_storage`); without it a mod asking for storage is not loaded.
@@ -256,6 +271,7 @@ impl Host {
             source: src,
             hook_names: manifest.hooks.clone().into(),
             net_rules: manifest.net.clone().into(),
+            http_prefixes: manifest.http.clone().into(),
             storage,
         };
         let mut ctx = self.ctx(&manifest, &env, 0);
@@ -279,7 +295,7 @@ impl Host {
         let p = manifest.permissions;
         (self.log)(&format!(
             "mod {id} loaded: {} {} from {at} ({} bytes, {}; render {}, files {}, state {}, input {}, hooks {:?}, \
-             entities {}, scripts {}, audio {}, net {:?}, storage {}, memory cap {} MiB, fuel {} per call)",
+             entities {}, scripts {}, audio {}, net {:?}, http {:?}, storage {}, memory cap {} MiB, fuel {} per call)",
             manifest.name,
             manifest.version,
             wasm.len(),
@@ -293,6 +309,7 @@ impl Host {
             p.scripts,
             p.audio,
             manifest.net.iter().map(net_rule_text).collect::<Vec<_>>(),
+            manifest.http,
             env.storage.as_ref().map_or("none".to_string(), |s| s.0.location()),
             manifest.limits.memory_bytes >> 20,
             manifest.limits.fuel
@@ -303,6 +320,7 @@ impl Host {
             exports,
             env,
             sockets: std::mem::take(&mut ctx.sockets),
+            requests: std::mem::take(&mut ctx.requests),
             images: std::mem::take(&mut ctx.images),
             disabled: None,
             frames: 0,
@@ -336,6 +354,8 @@ impl Host {
             epoch: Some(self.epoch),
             network: if manifest.permissions.net { self.network.clone() } else { None },
             net_rules: env.net_rules.clone(),
+            http: if manifest.permissions.http { self.http.clone() } else { None },
+            http_prefixes: env.http_prefixes.clone(),
             storage: env.storage.clone(),
             mod_id: (manifest.id.clone(), manifest.name.clone()),
             user_approved: manifest.net_user_approved,
@@ -367,6 +387,7 @@ impl Host {
         self.mods[i].disabled = Some(why.clone());
         self.mods[i].deferred.clear();
         self.mods[i].sockets = Sockets::default();
+        self.mods[i].requests = Requests::default();
         self.mods[i].images.clear();
         self.mods[i].capture = (false, false, false);
         let off = std::mem::take(&mut self.mods[i].options_off);
@@ -413,6 +434,7 @@ impl Host {
         let m = &mut self.mods[i];
         ctx.owned = std::mem::take(&mut m.owned);
         ctx.sockets = std::mem::take(&mut m.sockets);
+        ctx.requests = std::mem::take(&mut m.requests);
         ctx.images = std::mem::take(&mut m.images);
         ctx.capture = m.capture;
         ctx.options_off = std::mem::take(&mut m.options_off);
@@ -421,6 +443,7 @@ impl Host {
         m.micros += t.elapsed().as_micros() as u64;
         m.owned = std::mem::take(&mut ctx.owned);
         m.sockets = std::mem::take(&mut ctx.sockets);
+        m.requests = std::mem::take(&mut ctx.requests);
         m.images = std::mem::take(&mut ctx.images);
         m.capture = ctx.capture;
         m.options_off = std::mem::take(&mut ctx.options_off);
@@ -988,6 +1011,71 @@ mod tests {
         // disabling closes its sockets
         h.disable(0, "test".into());
         assert_eq!(h.mods()[0].sockets.open(), 0);
+    }
+
+    /// A level-seven mod: GETs `url` in `sa_init` (and checks that `denied` is refused), logs the status and the
+    /// body once the request is done.
+    fn level_seven_mod(url: &str, denied: &str) -> Vec<u8> {
+        wat::parse_str(format!(
+            r#"(module
+              (import "sa" "log" (func $log (param i32 i32 i32) (result i32)))
+              (import "sa" "http_get" (func $get (param i32 i32) (result i32)))
+              (import "sa" "http_status" (func $status (param i32) (result i32)))
+              (import "sa" "http_body" (func $body (param i32 i32 i32) (result i32)))
+              (import "sa" "http_close" (func $close (param i32) (result i32)))
+              (memory (export "memory") 1)
+              (global $req (mut i32) (i32.const -1))
+              (data (i32.const 16) "status")
+              (data (i32.const 64) "{url}")
+              (data (i32.const 256) "{denied}")
+              (func (export "sa_api_version") (result i32) i32.const 0x10007)
+              (func (export "sa_init") (result i32)
+                i32.const 256 i32.const {denied_len} call $get i32.const -1 i32.ne (if (then unreachable))
+                i32.const 64 i32.const {url_len} call $get global.set $req
+                global.get $req i32.const 0 i32.lt_s (if (then unreachable))
+                i32.const 0)
+              (func (export "sa_overlay") (param i32) (result i32) (local $s i32) (local $n i32)
+                global.get $req i32.const 0 i32.lt_s (if (then i32.const 0 return))
+                global.get $req call $status local.set $s
+                local.get $s i32.const 0 i32.le_s (if (then i32.const 0 return))
+                global.get $req i32.const 1024 i32.const 512 call $body local.set $n
+                i32.const 0 i32.const 1024 local.get $n call $log drop
+                global.get $req call $close drop
+                i32.const -1 global.set $req
+                i32.const 0))"#,
+            url_len = url.len(),
+            denied_len = denied.len()
+        ))
+        .unwrap()
+    }
+
+    #[test]
+    fn http_requests_reach_a_level_seven_mod() {
+        use std::io::{Read as _, Write as _};
+        let server = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let url = format!("http://{}/list/servers.json", server.local_addr().unwrap());
+        std::thread::spawn(move || {
+            let (mut c, _) = server.accept().unwrap();
+            let mut req = [0u8; 1024];
+            let n = c.read(&mut req).unwrap();
+            assert!(req[..n].starts_with(b"GET /list/servers.json HTTP/1.1\r\n"));
+            c.write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 7\r\nConnection: close\r\n\r\n[\"ok\"]\n").unwrap();
+        });
+        let (mut h, log) = host();
+        h.set_http(platform_http());
+        let prefix = url.trim_end_matches("servers.json");
+        let toml = format!("[mod]\nid = \"seven\"\napi_version = \"1.7\"\n[permissions]\nhttp = [\"{prefix}\"]\n");
+        let wasm = level_seven_mod(&url, "http://127.0.0.2/list/servers.json");
+        h.load(Box::new(Mem(vec![("mod.toml", toml.into_bytes()), ("seven.wasm", wasm.clone())]))).unwrap();
+        let start = std::time::Instant::now();
+        while !log.borrow().iter().any(|l| l == "mod seven: [\"ok\"]") {
+            assert!(start.elapsed().as_secs() < 5, "{:?}", log.borrow());
+            h.overlay((640, 480), &mut OverlayFrame::default());
+        }
+        // without the permission the request is denied and the mod traps in sa_init
+        let toml = "[mod]\nid = \"bare\"\napi_version = \"1.7\"\nentry = \"seven.wasm\"\n".to_string();
+        let e = h.load(Box::new(Mem(vec![("mod.toml", toml.into_bytes()), ("seven.wasm", wasm)]))).unwrap_err();
+        assert!(e.contains("sa_init"), "{e}");
     }
 
     #[test]

@@ -219,6 +219,7 @@ pub fn install(spec: &str) -> Result<(), String> {
     host.set_registry(Registry(Rc::new(EngineRegistry)));
     observe::set_handler(observed);
     host.set_network(sa_mod_host::platform_network(crate::env::var_os("SA_MODS_PROXY").as_deref()));
+    host.set_http(sa_mod_host::platform_http());
     match sa_mod_host::platform_storage(None) {
         Ok(s) => host.set_storage(s),
         Err(e) => println!("sa-game: mods: {e}; mods that ask for storage are not loaded"),
