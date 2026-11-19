@@ -45,6 +45,14 @@ pub const OBJECT_POOL: Pool = Pool {
     element: 0x19C,
 };
 
+/// `CVehicleModelInfo::ms_pInfoPool`, slot `sizeof(CVehicleStructure)`: one per loaded vehicle model.
+pub const VEHICLE_STRUCTURE_POOL: Pool = Pool {
+    global: 0xB4E680,
+    element: 0x314,
+};
+/// The vehicle model ids (`MODEL_LANDSTAL` .. `MODEL_UTILTR1`).
+pub const VEHICLE_MODELS: core::ops::RangeInclusive<i32> = 400..=611;
+
 /// `CModelInfo::ms_modelInfoPtrs` (20,000 entries).
 pub const MODEL_INFO_PTRS: u32 = 0xA9B0C8;
 /// Entries of [`MODEL_INFO_PTRS`].
@@ -133,6 +141,11 @@ pub const PICKUP_SIZE: u32 = 0x20;
 pub const PICKUP_HEIGHT_RANGE: u32 = 0x858CA0;
 /// The squared distance across below which `CPickup::Update` picks a pickup up (`.rdata` float).
 pub const PICKUP_RANGE_SQUARED: u32 = 0x859BB4;
+
+/// `CRestart::NumberOfHospitalRestarts` (u16).
+pub const HOSPITAL_RESTART_COUNT: u32 = 0xA4326C;
+/// Entries of `CRestart`'s restart point arrays (`MAX_RESTART_POINTS`).
+pub const RESTART_POINTS: usize = 10;
 
 /// `CMatrix` rows.
 pub mod matrix {

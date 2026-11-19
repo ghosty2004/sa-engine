@@ -66,7 +66,7 @@ const REMOVAL_AREA: u8 = 1;
 const VTBL_ATOMIC_KINDS: [u32; 5] = [0x85BBF0, 0x85BC30, 0x85BC70, 0x85BCB0, 0x85BCF0];
 const VTBL_CLUMP_MODEL_INFO: u32 = 0x85BD30;
 const VTBL_WEAPON_MODEL_INFO: u32 = 0x85BD78;
-const VTBL_VEHICLE_MODEL_INFO: u32 = 0x85C5C8;
+pub(crate) const VTBL_VEHICLE_MODEL_INFO: u32 = 0x85C5C8;
 
 /// Material slots of an object that can be drawn with another texture or colour.
 pub const MATERIAL_SLOTS: usize = 16;

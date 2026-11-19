@@ -1222,7 +1222,7 @@ fn markers(ctx: &mut CallCtx, call: Call) -> Option<i32> {
         }
         Call::destroy_checkpoint { handle } => destroy(ctx, game, Owned::Checkpoint(CheckpointRef(handle as u32))),
         Call::create_coord_blip { x, y, z, sprite, flags } => {
-            if !finite(&[x, y, z]) || !(0..=255).contains(&sprite) || flags & !(blip::GLOBAL | blip::CONTACT_POINT) != 0 {
+            if !finite(&[x, y, z]) || !(0..=blip::MAX_SPRITE).contains(&sprite) || flags & !(blip::GLOBAL | blip::CONTACT_POINT) != 0 {
                 return Some(status::BAD_ARG);
             }
             let style = sa_access::BlipStyle { global: flags & blip::GLOBAL != 0, contact_point: flags & blip::CONTACT_POINT != 0 };

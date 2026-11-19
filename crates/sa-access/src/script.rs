@@ -43,6 +43,7 @@ pub mod op {
     pub const CREATE_CAR: u16 = 0x00A5;
     pub const SET_CAR_COORDINATES: u16 = 0x00AB;
     pub const ALTER_WANTED_LEVEL: u16 = 0x010D;
+    pub const FORCE_WEATHER_NOW: u16 = 0x01B6;
     pub const DELETE_CAR: u16 = 0x00A6;
     pub const CLEAR_PRINTS: u16 = 0x00BE;
     pub const ADD_ONE_OFF_SOUND: u16 = 0x018C;
@@ -335,7 +336,6 @@ fn unknown_model(op: Opcode, args: &[ScriptArg<'_>]) -> Option<i32> {
 impl<V: View> Game<V> {
     /// Runs one command on the layer's own script thread (made on first use) and returns the condition result.
     pub fn run_op(&mut self, op: u16, args: &[ScriptArg<'_>]) -> GameResult<bool> {
-        self.check_arguments(op, args)?;
         let t = match self.threads.backend {
             Some(t) => t,
             None => {
@@ -345,10 +345,20 @@ impl<V: View> Game<V> {
             }
         };
         // Some commands read their output variable before writing it (the ADD_BLIP_FOR_* handlers look up the
-        // blip it holds and drop the result); a stale handle from an earlier command would index past the
-        // radar traces, which the original's address space happens to map and this one does not.
+        // blip it holds and drop the result); a stale handle from an earlier command would index far past the
+        // radar traces, into the no-CD sections.
         self.threads.get_mut(t)?.set_local(0, 0);
-        self.threads.run(t, Opcode(op), args)
+        self.run_checked(t, Opcode(op), args)
+    }
+
+    /// Runs `op` on thread `t` unless [`Game::unchecked_argument`] or [`Game::refused_arguments`] refuses its
+    /// arguments.
+    fn run_checked(&mut self, t: ScriptThreadRef, op: Opcode, args: &[ScriptArg<'_>]) -> GameResult<bool> {
+        if let Some(why) = self.unchecked_argument(op, args) {
+            return Err(GameError::Other(format!("command {:04X}: {why}", op.0)));
+        }
+        self.check_arguments(op.0, args)?;
+        self.threads.run(t, op, args)
     }
 
     /// Like [`Game::run_op`], then reads local 0 of the thread (the output parameter of a command whose last
@@ -362,7 +372,6 @@ impl<V: View> Game<V> {
     /// Runs one command on a private thread whose locals are copied in from and out to `locals`; returns the
     /// condition result.
     pub fn run_command(&mut self, op: Opcode, args: &[ScriptArg<'_>], locals: &mut ScriptLocals) -> GameResult<bool> {
-        self.check_arguments(op.0, args)?;
         let t = match self.threads.one_shot {
             Some(t) => t,
             None => {
@@ -374,7 +383,7 @@ impl<V: View> Game<V> {
         for (i, v) in locals.0.iter().enumerate() {
             self.threads.get_mut(t)?.set_local(i, *v);
         }
-        let cond = self.threads.run(t, op, args)?;
+        let cond = self.run_checked(t, op, args)?;
         let th = self.threads.get(t)?;
         for (i, v) in locals.0.iter_mut().enumerate() {
             *v = th.local(i);
@@ -394,8 +403,7 @@ impl<V: View> Game<V> {
 
     /// Runs one command on `thread`; returns the condition result.
     pub fn run_on_thread(&mut self, thread: ScriptThreadRef, op: Opcode, args: &[ScriptArg<'_>]) -> GameResult<bool> {
-        self.check_arguments(op.0, args)?;
-        self.threads.run(thread, op, args)
+        self.run_checked(thread, op, args)
     }
 
     fn check_arguments(&self, op: u16, args: &[ScriptArg<'_>]) -> GameResult<()> {

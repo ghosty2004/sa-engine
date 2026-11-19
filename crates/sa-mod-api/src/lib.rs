@@ -627,6 +627,8 @@ pub mod blip {
     pub const PED: i32 = 0;
     /// `create_entity_blip` kind: a vehicle.
     pub const VEHICLE: i32 = 1;
+    /// The highest radar sprite `create_coord_blip` accepts (`CRadar::RadarBlipSprites` has 64).
+    pub const MAX_SPRITE: i32 = 63;
 }
 
 /// Radar areas (API 1.8): coloured world rectangles on the radar and the map.
@@ -1057,7 +1059,8 @@ macro_rules! for_each_import {
             [Entities] fn create_checkpoint(kind: i32, x: f32, y: f32, z: f32, nx: f32, ny: f32, nz: f32, size: f32) -> i32;
             /// (1.8) Deletes checkpoint `handle` (`DELETE_CHECKPOINT`), which the mod created; `DENIED` for any other.
             [Entities] fn destroy_checkpoint(handle: i32) -> i32;
-            /// (1.8) Adds a radar blip at (`x`, `y`, `z`) with radar sprite `sprite` (0: a plain marker) and
+            /// (1.8) Adds a radar blip at (`x`, `y`, `z`) with radar sprite `sprite` (0: a plain marker; at most
+            /// [`blip::MAX_SPRITE`]) and
             /// [`blip`] `flags` (`ADD_SHORT_RANGE_SPRITE_BLIP_FOR_COORD` and its global / contact-point forms).
             /// Returns its handle; the mod owns it. `WRONG_PHASE` inside a hook.
             [Entities] fn create_coord_blip(x: f32, y: f32, z: f32, sprite: i32, flags: i32) -> i32;

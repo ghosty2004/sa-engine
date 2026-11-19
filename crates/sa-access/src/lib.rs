@@ -28,6 +28,7 @@
 
 pub mod addr;
 mod audio;
+mod checks;
 mod control;
 mod entities;
 mod markers;

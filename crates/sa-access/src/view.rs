@@ -156,6 +156,12 @@ impl Pool {
             .collect()
     }
 
+    /// The number of free slots (0 before the pool exists).
+    pub fn free_slots<V: View + ?Sized>(&self, v: &V) -> u32 {
+        let Some((_, map, size)) = self.header(v) else { return 0 };
+        (0..size as u32).filter(|&slot| v.read_u8(map + slot) & sa_core::pool::FREE != 0).count() as u32
+    }
+
     /// The reference of the object at `obj` (`CPool::GetRef`: `slot << 8 | map[slot]`), or `None` when `obj`
     /// is not the start of a used slot of this pool.
     pub fn ref_of<V: View + ?Sized>(&self, v: &V, obj: u32) -> Option<u32> {
