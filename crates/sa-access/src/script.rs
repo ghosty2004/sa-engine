@@ -335,6 +335,7 @@ fn unknown_model(op: Opcode, args: &[ScriptArg<'_>]) -> Option<i32> {
 impl<V: View> Game<V> {
     /// Runs one command on the layer's own script thread (made on first use) and returns the condition result.
     pub fn run_op(&mut self, op: u16, args: &[ScriptArg<'_>]) -> GameResult<bool> {
+        self.check_arguments(op, args)?;
         let t = match self.threads.backend {
             Some(t) => t,
             None => {
@@ -361,6 +362,7 @@ impl<V: View> Game<V> {
     /// Runs one command on a private thread whose locals are copied in from and out to `locals`; returns the
     /// condition result.
     pub fn run_command(&mut self, op: Opcode, args: &[ScriptArg<'_>], locals: &mut ScriptLocals) -> GameResult<bool> {
+        self.check_arguments(op.0, args)?;
         let t = match self.threads.one_shot {
             Some(t) => t,
             None => {
@@ -392,7 +394,15 @@ impl<V: View> Game<V> {
 
     /// Runs one command on `thread`; returns the condition result.
     pub fn run_on_thread(&mut self, thread: ScriptThreadRef, op: Opcode, args: &[ScriptArg<'_>]) -> GameResult<bool> {
+        self.check_arguments(op.0, args)?;
         self.threads.run(thread, op, args)
+    }
+
+    fn check_arguments(&self, op: u16, args: &[ScriptArg<'_>]) -> GameResult<()> {
+        match self.refused_arguments(op, args) {
+            Some(why) => Err(GameError::Other(why)),
+            None => Ok(()),
+        }
     }
 
     /// Local `i` of `thread`.

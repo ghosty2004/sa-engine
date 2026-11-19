@@ -36,6 +36,7 @@ pub mod fake;
 pub mod objects;
 pub mod script;
 pub mod setup;
+mod vehicles;
 mod view;
 mod world;
 
@@ -43,6 +44,7 @@ pub use sa_types::{EntityRef, GameError, GameResult, ObjectRef, PedRef, VehicleR
 pub use objects::{MaterialSlot, Removal, SavedMaterials};
 pub use control::{draw_sprite, load_texture, print_text, world_to_screen};
 pub use markers::{BlipStyle, draw_radar_area};
+pub use vehicles::FLOAT_STAT_COUNT;
 pub use view::{EngineView, Pool, View};
 
 /// The game, through a [`View`] of its memory.

@@ -61,6 +61,11 @@ pub trait View {
     fn write_u32(&mut self, a: u32, v: u32) {
         self.write(a, &v.to_le_bytes());
     }
+
+    /// Writes `data` at `addr` in the original's constant data (`.rdata`), which the platform may map read-only.
+    fn write_image(&mut self, addr: u32, data: &[u8]) {
+        self.write(addr, data);
+    }
 }
 
 impl<T: View + ?Sized> View for Box<T> {
@@ -70,6 +75,10 @@ impl<T: View + ?Sized> View for Box<T> {
 
     fn write(&mut self, addr: u32, data: &[u8]) {
         (**self).write(addr, data);
+    }
+
+    fn write_image(&mut self, addr: u32, data: &[u8]) {
+        (**self).write_image(addr, data);
     }
 }
 
@@ -92,6 +101,12 @@ impl View for EngineView {
         debug_assert_ne!(addr, 0, "sa-access write at address 0");
         for (i, b) in data.iter().enumerate() {
             sa_core::mem::GPtr::<u8>::from_addr(addr.wrapping_add(i as u32) as usize).write(*b);
+        }
+    }
+
+    fn write_image(&mut self, addr: u32, data: &[u8]) {
+        if !sa_core::orig::registry::write_image(addr as usize, data) {
+            self.write(addr, data);
         }
     }
 }

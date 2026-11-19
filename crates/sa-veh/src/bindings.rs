@@ -239,6 +239,11 @@ orig! {
 }
 
 orig! {
+    /// `CAutomobile::SetupDamageAfterLoad` (0x6B3E90)
+    pub fn automobile_setup_damage_after_load(this: GPtr<u8>) = thiscall 0x6B3E90 => crate::frontier_b::automobile_setup_damage_after_load;
+}
+
+orig! {
     /// `CBike::DamageKnockOffRider` (0x6B5A10)
     pub fn damage_knock_off_rider(v: GPtr<u8>, dmg: u32, comp: u32, e: GPtr<u8>, coors: GPtr<u8>, dir: GPtr<u8>) -> u8 = cdecl 0x6B5A10 => unported;
 }

@@ -2074,6 +2074,11 @@ orig! {
 }
 
 orig! {
+    /// `CAutomobile::SetupDamageAfterLoad` (0x6B3E90)
+    pub fn automobile_setup_damage_after_load(this: GPtr<u8>) = thiscall 0x6B3E90 => unported;
+}
+
+orig! {
     /// `CBike::Constructor` (0x6BF430)
     pub fn bike_ctor(this: GPtr<u8>, mi: i32, created_by: u32) -> GPtr<u8> = thiscall 0x6BF430 => unported;
 }

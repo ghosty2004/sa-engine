@@ -802,6 +802,28 @@ pub mod registry {
         a >= lo && a < hi && a.saturating_add(n) <= hi
     }
 
+    static IMAGE_WRITER: AtomicUsize = AtomicUsize::new(0);
+
+    /// Sets how bytes are written into the original's data sections where the platform maps them read-only
+    /// (natively sa-game's `.rdata`, as the original's loader does): `f(addr, bytes)` lifts the protection for
+    /// the write and returns true when it wrote.
+    pub fn set_image_writer(f: fn(usize, &[u8]) -> bool) {
+        IMAGE_WRITER.store(f as usize, Ordering::SeqCst);
+    }
+
+    /// Writes `bytes` at `addr` of the mapped image through the image writer; false without one (the image is
+    /// then writable where the caller writes, or not mapped by this process).
+    pub fn write_image(addr: usize, bytes: &[u8]) -> bool {
+        match IMAGE_WRITER.load(Ordering::Acquire) {
+            0 => false,
+            f => {
+                // SAFETY: stored from a `fn(usize, &[u8]) -> bool` by `set_image_writer`.
+                let f = unsafe { core::mem::transmute::<usize, fn(usize, &[u8]) -> bool>(f) };
+                f(addr, bytes)
+            }
+        }
+    }
+
     static SITE_RESOLVER: AtomicUsize = AtomicUsize::new(0);
     static NAMES: AtomicPtr<(u32, &'static str)> = AtomicPtr::new(core::ptr::null_mut());
     static NAMES_LEN: AtomicUsize = AtomicUsize::new(0);

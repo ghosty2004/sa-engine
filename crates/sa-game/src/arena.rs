@@ -161,6 +161,7 @@ pub fn map_image(image: Image, label: &str) -> Result<String, String> {
     // `.rdata` read-only, as the original's loader does
     protect_read_only(RDATA.0, RDATA.1 - RDATA.0).map_err(|e| format!("mprotect(.rdata) failed: {e}"))?;
     sa_core::orig::registry::set_arena(lo, hi);
+    sa_core::orig::registry::set_image_writer(image_writer);
     Ok(format!(
         "{bytes} initialised bytes at {lo:#x}..{hi:#x} from {source} (.bss zero){checked}, {nimp} IAT cells trapped{}",
         if ro > 0 { format!(", {ro} code bytes of the exe readable") } else { String::new() }
@@ -313,6 +314,18 @@ pub fn patch_image(addr: usize, original: &[u8], new: &[u8]) -> Result<bool, Str
     if current != original {
         return Ok(false);
     }
+    write_image(addr, new)?;
+    Ok(true)
+}
+
+/// The image writer `sa_core::orig::registry::write_image` calls: [`write_image`] for a range inside the arena.
+fn image_writer(addr: usize, bytes: &[u8]) -> bool {
+    let (lo, hi) = ARENA;
+    addr >= lo && addr.saturating_add(bytes.len()) <= hi && write_image(addr, bytes).is_ok()
+}
+
+/// Writes `new` at `addr` inside the mapped image, lifting a read-only protection for the write.
+pub fn write_image(addr: usize, new: &[u8]) -> Result<(), String> {
     #[cfg(not(target_arch = "wasm32"))]
     let (page, len) = {
         let page = addr & !0xFFF;
@@ -332,7 +345,7 @@ pub fn patch_image(addr: usize, original: &[u8], new: &[u8]) -> Result<bool, Str
             protect_read_only(page, len)?;
         }
     }
-    Ok(true)
+    Ok(())
 }
 
 /// First trap address written into an IAT cell; import `i` gets `TRAP_BASE + TRAP_STRIDE * i`

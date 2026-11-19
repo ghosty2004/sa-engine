@@ -71,7 +71,7 @@ pub struct VehicleSpawn {
     pub pos: Vec3,
     /// Heading in degrees.
     pub heading_deg: f32,
-    /// Colours.
+    /// Colours (`carcols.dat` indices); both 0xFF keep the model's own colours.
     pub colours: [u8; 2],
     /// Paintjob (3 = none).
     pub paintjob: u8,

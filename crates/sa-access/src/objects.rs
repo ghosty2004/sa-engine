@@ -202,13 +202,7 @@ impl<V: View> Game<V> {
     /// Writes the object's move and turn speed (`CPhysical` +0x44 / +0x50, units per 1/50 s): what peds standing
     /// on it move with.
     pub fn set_object_speed(&mut self, o: ObjectRef, move_speed: Vec3, turn_speed: Vec3) -> GameResult<()> {
-        let p = self.object_addr(o)?;
-        for (v, at) in [(move_speed, off::MOVE_SPEED), (turn_speed, off::TURN_SPEED)] {
-            for (i, c) in [v.x, v.y, v.z].into_iter().enumerate() {
-                self.view.write(p + at + 4 * i as u32, &c.to_le_bytes());
-            }
-        }
-        Ok(())
+        self.set_physical_speed(EntityRef::Object(o), move_speed, Some(turn_speed))
     }
 
     /// Attaches the object to a ped, vehicle or object with an offset and a rotation in degrees

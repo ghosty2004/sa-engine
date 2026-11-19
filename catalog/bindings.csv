@@ -2768,3 +2768,4 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x53EFF0,sa-input,call_controller_state_check_for_input,thiscall,,state:GPtr<u8>,u8,sa_input::pad::controller_state_check_for_input,CControllerState::CheckForInput,
 0x5407F0,sa-input,pad_sprint_just_down,thiscall,,pad:GPtr<u8>,u8,unported,CPad::SprintJustDown,
 0x5853D0,sa-core,draw_area_on_radar,cdecl,,rect:GPtr<f32>;colour:GPtr<u8>;in_menu:u8,,unported,CRadar::DrawAreaOnRadar,sa_hud::radar_draw2::draw_area_on_radar
+0x6B3E90,sa-core,automobile_setup_damage_after_load,thiscall,,this:GPtr<u8>,,unported,CAutomobile::SetupDamageAfterLoad,sa_veh::frontier_b::automobile_setup_damage_after_load
