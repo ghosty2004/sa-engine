@@ -761,6 +761,10 @@ pub mod world {
     pub fn set_gravity(gravity: f32) -> Result<(), Error> {
         done(unsafe { ffi::set_gravity(gravity) })
     }
+    /// Switches the entry-exits (the yellow markers into interiors) off or back on (API 1.11).
+    pub fn set_entry_exits_enabled(on: bool) -> Result<(), Error> {
+        done(unsafe { ffi::set_entry_exits_enabled(i32::from(on)) })
+    }
     /// Sets the game's float statistic `stat` (API 1.11).
     pub fn set_float_stat(stat: u16, value: f32) -> Result<(), Error> {
         done(unsafe { ffi::set_float_stat(i32::from(stat), value) })

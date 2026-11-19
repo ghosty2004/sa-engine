@@ -34,7 +34,7 @@ pub const EXPORT_MEMORY: &str = "memory";
 /// The API's major version.
 pub const API_MAJOR: u16 = 1;
 /// The API's minor version.
-pub const API_MINOR: u16 = 13;
+pub const API_MINOR: u16 = 14;
 
 /// `major << 16 | minor`, the value of the `sa_api_version` export.
 pub const fn pack_version(major: u16, minor: u16) -> i32 {
@@ -1253,6 +1253,11 @@ macro_rules! for_each_import {
             /// `u32` each, in order, the first one first) to the buffer, as `ped_list`; `BAD_ARG` for a vehicle that
             /// is no train.
             [State] fn train_carriages(handle: i32, buf_ptr: i32, buf_len: i32) -> i32;
+            /// (1.14) Switches the entry-exits (the yellow markers into interiors and out of them) off (0) or back on
+            /// (1). Off clears the flags word of every entry-exit, which leaves it without access: no marker, no way
+            /// in or out, also for a player already inside. On gives each the flags it had before the first switch
+            /// off; the host does that too when it disables the mod. Not inside a hook.
+            [Write] fn set_entry_exits_enabled(on: i32) -> i32;
         }
     };
 }

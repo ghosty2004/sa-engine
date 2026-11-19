@@ -107,6 +107,26 @@ impl<V: View> Game<V> {
         self.view.read_f32(addr::GAME_GRAVITY)
     }
 
+    /// The flags word of every entry-exit (yellow marker), with its pool reference.
+    pub fn entry_exit_flags(&self) -> Vec<(u32, u16)> {
+        let pool = addr::ENTRY_EXIT_POOL;
+        pool.refs(&self.view)
+            .into_iter()
+            .filter_map(|r| Some((r, self.view.read_u16(pool.at_ref(&self.view, r)? + addr::ENTRY_EXIT_FLAGS))))
+            .collect()
+    }
+
+    /// Writes the flags words `entry_exit_flags` returned back into the entry-exits that still hold those slots.
+    /// A word of 0 leaves the entry-exit without access: no marker, no way in or out.
+    pub fn set_entry_exit_flags(&mut self, flags: &[(u32, u16)]) {
+        let pool = addr::ENTRY_EXIT_POOL;
+        for &(r, word) in flags {
+            if let Some(p) = pool.at_ref(&self.view, r) {
+                self.view.write(p + addr::ENTRY_EXIT_FLAGS, &word.to_le_bytes());
+            }
+        }
+    }
+
     /// `CGame::currArea`.
     pub fn area_raw(&self) -> i32 {
         self.view.read_i32(addr::CURR_AREA)
@@ -133,5 +153,33 @@ impl<V: View> Game<V> {
     /// frame (`CPad::NewKeyState`), not the OS's.
     pub fn key_held(&self, vk: u16) -> bool {
         key_state_index(vk).is_some_and(|i| self.view.read_i16(addr::NEW_KEY_STATE + 2 * i) != 0)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::addr;
+    use crate::fake::{self, put};
+    use crate::view::View as _;
+
+    #[test]
+    fn entry_exit_flags_round_trip_by_pool_reference() {
+        let mut g = fake::game();
+        let (header, objects, map) = (0x0170_0000, 0x0171_0000, 0x0170_1000);
+        fake::pool(&mut g, addr::ENTRY_EXIT_POOL.global, header, objects, map, 4);
+        put(&mut g, map + 1, 0x03u8);
+        put(&mut g, map + 3, 0x00u8);
+        put(&mut g, objects + 0x3C + 0x30, 0x4004u16);
+        put(&mut g, objects + 3 * 0x3C + 0x30, 0x4104u16);
+        let saved = g.entry_exit_flags();
+        assert_eq!(saved, [(0x103, 0x4004), (0x300, 0x4104)]);
+        g.set_entry_exit_flags(&saved.iter().map(|&(r, _)| (r, 0)).collect::<Vec<_>>());
+        assert_eq!(g.view.read_u16(objects + 0x3C + 0x30), 0);
+        assert_eq!(g.view.read_u16(objects + 3 * 0x3C + 0x30), 0);
+        // A slot reused since (another counter) is left alone.
+        put(&mut g, map + 3, 0x01u8);
+        g.set_entry_exit_flags(&saved);
+        assert_eq!(g.view.read_u16(objects + 0x3C + 0x30), 0x4004);
+        assert_eq!(g.view.read_u16(objects + 3 * 0x3C + 0x30), 0);
     }
 }

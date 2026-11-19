@@ -15,6 +15,8 @@ pub struct GameChanges {
     pub draw_distances: Vec<(ModelId, f32)>,
     /// The gravity before its first change.
     pub gravity: Option<f32>,
+    /// The entry-exits' flags before it switched them off (pool reference, flags word).
+    pub entry_exit_flags: Option<Vec<(u32, u16)>>,
 }
 
 impl GameChanges {
@@ -28,6 +30,9 @@ impl GameChanges {
         }
         if let Some(gravity) = self.gravity {
             let _ = g.set_gravity(gravity);
+        }
+        if let Some(flags) = self.entry_exit_flags {
+            g.set_entry_exit_flags(&flags);
         }
     }
 }

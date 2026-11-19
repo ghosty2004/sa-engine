@@ -56,6 +56,14 @@ pub const VEHICLE_STRUCTURE_POOL: Pool = Pool {
     global: 0xB4E680,
     element: 0x314,
 };
+/// `CEntryExitManager::mp_poolEntryExits`, slot `sizeof(CEntryExit)`.
+pub const ENTRY_EXIT_POOL: Pool = Pool {
+    global: 0x96A7D8,
+    element: 0x3C,
+};
+/// `CEntryExit::m_nFlags` (u16; `ENABLE_ACCESS` 0x4000 lets peds use it).
+pub const ENTRY_EXIT_FLAGS: u32 = 0x30;
+
 /// The vehicle model ids (`MODEL_LANDSTAL` .. `MODEL_UTILTR1`).
 pub const VEHICLE_MODELS: core::ops::RangeInclusive<i32> = 400..=611;
 

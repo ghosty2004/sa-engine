@@ -1,4 +1,4 @@
-//! The vehicle damage and class, speed, gravity and statistics host functions (API 1.11).
+//! The vehicle damage and class, speed, gravity, statistics and entry-exit host functions (API 1.11).
 
 use sa_mod_api::{Call, status, vehicle};
 use sa_types::{EntityRef, PedRef, Vec3, VehicleRef};
@@ -16,6 +16,7 @@ pub fn calls(ctx: &mut CallCtx, mem: &mut dyn Mem, call: Call) -> Option<i32> {
             | Call::set_vehicle_speed { .. }
             | Call::set_ped_speed { .. }
             | Call::set_float_stat { .. }
+            | Call::set_entry_exits_enabled { .. }
     );
     if !reads && !writes {
         return None;
@@ -81,6 +82,18 @@ pub fn calls(ctx: &mut CallCtx, mem: &mut dyn Mem, call: Call) -> Option<i32> {
                 return Some(status::BAD_ARG);
             }
             done(guarded(&mut ctx.logs, "set_float_stat", || g.set_float_stat(stat, value)))
+        }
+        Call::set_entry_exits_enabled { on } => {
+            match (on != 0, ctx.changes.entry_exit_flags.take()) {
+                (true, Some(saved)) => g.set_entry_exit_flags(&saved),
+                (true, None) => {}
+                (false, saved) => {
+                    let now = g.entry_exit_flags();
+                    g.set_entry_exit_flags(&now.iter().map(|&(r, _)| (r, 0)).collect::<Vec<_>>());
+                    ctx.changes.entry_exit_flags = Some(saved.unwrap_or(now));
+                }
+            }
+            status::OK
         }
         _ => return None,
     })
