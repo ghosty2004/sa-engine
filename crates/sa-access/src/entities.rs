@@ -361,6 +361,7 @@ impl<V: View> Game<V> {
     /// Deletes an object (`DELETE_OBJECT` 0108).
     pub fn destroy_object(&mut self, o: ObjectRef) -> GameResult<()> {
         self.object_addr(o)?;
+        self.clear_object_materials(o);
         self.run_op(op::DELETE_OBJECT, &[I(o.0 as i32)]).map(drop)
     }
 

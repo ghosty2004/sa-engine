@@ -80,6 +80,13 @@ pub mod op {
     pub const WARP_CHAR_INTO_CAR_AS_PASSENGER: u16 = 0x0430;
     pub const SET_CHAR_SUFFERS_CRITICAL_HITS: u16 = 0x0446;
     pub const SET_OBJECT_ROTATION: u16 = 0x0453;
+    pub const SET_OBJECT_COLLISION: u16 = 0x0382;
+    pub const SET_OBJECT_VISIBLE: u16 = 0x0750;
+    pub const SET_OBJECT_SCALE: u16 = 0x08D2;
+    pub const ATTACH_OBJECT_TO_CAR: u16 = 0x0681;
+    pub const DETACH_OBJECT: u16 = 0x0682;
+    pub const ATTACH_OBJECT_TO_OBJECT: u16 = 0x069A;
+    pub const ATTACH_OBJECT_TO_CHAR: u16 = 0x069B;
     pub const REMOVE_ALL_CHAR_WEAPONS: u16 = 0x048F;
     pub const SET_AREA_VISIBLE: u16 = 0x04BB;
     pub const FREEZE_CHAR_POSITION: u16 = 0x04D7;

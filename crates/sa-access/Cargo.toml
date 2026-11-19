@@ -1,7 +1,7 @@
 [package]
 name = "sa-access"
 version = "0.1.0"
-description = "The running game's state, read and written from outside the ports through handles: pool lookups, ped / vehicle / camera / world records, keys, and changes through the game's own script command handlers (entities, positions, health, money, wanted level, clock, weather, sounds). Used by the mod host and the SA:MP game adapter"
+description = "The running game's state, read and written from outside the ports through handles: pool lookups, ped / vehicle / object / camera / world records, keys, and changes through the game's own script command handlers and functions (entities, positions, health, money, wanted level, clock, weather, sounds, object transforms and materials, building removal). Used by the mod host and the SA:MP game adapter"
 edition.workspace = true
 license.workspace = true
 publish.workspace = true

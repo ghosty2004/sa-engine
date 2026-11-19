@@ -150,7 +150,7 @@ pub fn world_to_screen(p: sa_types::Vec3) -> Option<(f32, f32, f32)> {
 }
 
 /// A NUL-terminated copy of `s`.
-fn c_str(s: &[u8]) -> Vec<u8> {
+pub(crate) fn c_str(s: &[u8]) -> Vec<u8> {
     let mut v: Vec<u8> = s.iter().copied().take_while(|&b| b != 0).collect();
     v.push(0);
     v

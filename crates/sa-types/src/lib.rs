@@ -4,6 +4,7 @@
 pub mod camera;
 pub mod error;
 pub mod input;
+pub mod object;
 pub mod ped;
 pub mod script;
 pub mod text;
@@ -11,4 +12,5 @@ pub mod vehicle;
 mod values;
 
 pub use error::{GameError, GameResult};
+pub use object::{ModelKind, ObjectSnapshot};
 pub use values::*;
