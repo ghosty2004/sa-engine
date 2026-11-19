@@ -538,6 +538,8 @@ pub mod pad {
 pub const WEAPON_SKILL_FIRST_STAT: u16 = 69;
 /// Weapon-skill types RPC 34 sets.
 pub const WEAPON_SKILL_TYPES: u32 = 11;
+/// The weapon skill `CCheat::WeaponSkillsCheat` (0x439940) gives every weapon, which samp runs on its first frame.
+pub const WEAPON_SKILLS_CHEAT_LEVEL: f32 = 1000.0;
 
 /// RPC 34 for the local player: the float statistic of `skill`, if samp sets one. Mirrors samp.dll 0x1000F5E0.
 pub fn weapon_skill_stat(skill: u32) -> Option<u16> {

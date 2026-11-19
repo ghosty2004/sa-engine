@@ -290,7 +290,14 @@ impl HostedClient {
         report(self, "set_max_wanted_level", game.set_max_wanted_level(0));
         report(self, "switch_roads_off", game.switch_roads_off());
         report(self, "set_player_control", game.set_player_control(false));
-        self.note("world set up like samp's main.scm (densities 0, wanted 0, roads off, control off)".into());
+        // samp's first frame also runs GTA's weapon-skill cheat: every weapon skill at its maximum
+        for skill in 0..crate::combat::WEAPON_SKILL_TYPES {
+            if let Some(stat) = crate::combat::weapon_skill_stat(skill) {
+                report(self, "set_float_stat", game.set_float_stat(stat, crate::combat::WEAPON_SKILLS_CHEAT_LEVEL));
+            }
+        }
+        self.note("world set up like samp's main.scm and first frame (densities 0, wanted 0, roads off, control off, \
+                   weapon skills maxed)".into());
     }
 
     fn on_event(&mut self, e: Event, game: &mut dyn GameAdapter) {
