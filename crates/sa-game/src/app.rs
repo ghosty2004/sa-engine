@@ -241,6 +241,7 @@ pub(crate) fn synthetic_input(n: u32) -> InputState {
             i.events.push(InputEvent::KeyUp { key: *key });
         }
     }
+    live_keys(n, &mut i);
     // in game (gGameState IDLE) the menu input stops: the left button is the fire / punch key and Enter
     // enters vehicles
     let first_key = plan.iter().map(|p| p.1).min();
@@ -548,30 +549,73 @@ fn keys_spec() -> Vec<(Key, u32, Option<u32>)> {
     v.split(',')
         .filter_map(|e| {
             let mut it = e.trim().split(':');
-            let name = it.next()?.to_ascii_lowercase();
-            let key = match name.as_str() {
-                "space" => Key::Space,
-                "enter" => Key::Enter,
-                "esc" => Key::Escape,
-                "tab" => Key::Tab,
-                "shift" => Key::ShiftLeft,
-                "ctrl" => Key::ControlLeft,
-                "up" => Key::Up,
-                "down" => Key::Down,
-                "left" => Key::Left,
-                "right" => Key::Right,
-                n if n.len() == 1 && n.as_bytes()[0].is_ascii_lowercase() => letter_key(n.as_bytes()[0]),
-                n if n.len() > 1 && n.starts_with('f') => match n[1..].parse::<u8>() {
-                    Ok(f @ 1..=12) => Key::Fn(f),
-                    _ => return None,
-                },
-                _ => return None,
-            };
+            let key = key_named(it.next()?)?;
             let down = it.next()?.parse().ok()?;
             let up = it.next().and_then(|u| u.parse().ok());
             Some((key, down, up))
         })
         .collect()
+}
+
+/// The key of a name of `SA_GAME_KEYS`.
+fn key_named(name: &str) -> Option<Key> {
+    let name = name.to_ascii_lowercase();
+    Some(match name.as_str() {
+        "space" => Key::Space,
+        "enter" | "return" => Key::Enter,
+        "esc" => Key::Escape,
+        "tab" => Key::Tab,
+        "shift" => Key::ShiftLeft,
+        "ctrl" => Key::ControlLeft,
+        "up" => Key::Up,
+        "down" => Key::Down,
+        "left" => Key::Left,
+        "right" => Key::Right,
+        n if n.len() == 1 && n.as_bytes()[0].is_ascii_lowercase() => letter_key(n.as_bytes()[0]),
+        n if n.len() > 1 && n.starts_with('f') => match n[1..].parse::<u8>() {
+            Ok(f @ 1..=12) => Key::Fn(f),
+            _ => return None,
+        },
+        _ => return None,
+    })
+}
+
+/// Iterations a key of `SA_GAME_KEY_FILE` stays held.
+const LIVE_KEY_HOLD: u32 = 4;
+
+thread_local! {
+    /// `SA_GAME_KEY_FILE`: the bytes read so far and the keys held, with the iteration that releases each.
+    static LIVE_KEYS: std::cell::RefCell<(u64, Vec<(Key, u32)>)> = const { std::cell::RefCell::new((0, Vec::new())) };
+}
+
+/// `SA_GAME_KEY_FILE=PATH` (evidence runs): the key names (as `SA_GAME_KEYS` names them) a test harness appends to
+/// the file while the game runs, one per line, each pressed at the iteration that reads it and held for
+/// [`LIVE_KEY_HOLD`] iterations, for keys timed by what the game shows rather than by iteration.
+fn live_keys(n: u32, i: &mut InputState) {
+    let Ok(path) = crate::env::var("SA_GAME_KEY_FILE") else { return };
+    LIVE_KEYS.with_borrow_mut(|(read, held)| {
+        if let Ok(all) = std::fs::read(&path)
+            && let Some(new) = all.get(*read as usize..)
+            && let Some(end) = new.iter().rposition(|&b| b == b'\n')
+        {
+            for line in String::from_utf8_lossy(&new[..end]).lines() {
+                if let Some(k) = key_named(line.trim()) {
+                    i.key_down(k);
+                    held.push((k, n + LIVE_KEY_HOLD));
+                }
+            }
+            *read += end as u64 + 1;
+        }
+        held.retain(|&(k, up)| {
+            if n < up {
+                i.held.insert(k);
+                true
+            } else {
+                i.events.push(InputEvent::KeyUp { key: k });
+                false
+            }
+        });
+    });
 }
 
 /// The `Key` of a lowercase ASCII letter.

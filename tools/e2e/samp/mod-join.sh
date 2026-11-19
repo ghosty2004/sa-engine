@@ -24,7 +24,8 @@
 # SA:MP's data files (SAMP_CLIENT/SAMP/: SAMP.img, SAMP.ide, ...; the manifest's [data]) are linked there too
 # (SAMP_DATA=0: not, the mod then runs without SA:MP's own models).
 # EXTRA_CMDS: more server commands after the scripted ones, `;`-separated (`sleep|S` waits, `shot|NAME` copies the
-# newest complete presented frame to OUT/shots/NAME.png), then the lines of the file CMDS (tools/e2e/samp/objects.cmds), e.g.
+# newest complete presented frame to OUT/shots/NAME.png, `key|NAME` presses a key through the game's key file,
+# `SA_GAME_KEY_FILE`), then the lines of the file CMDS (tools/e2e/samp/objects.cmds), e.g.
 # 'td|~y~textdraw;dialog|1|0|Welcome|Hello;sleep|8'; SA_GAME_KEYS adds scripted keys (`tab:1500:1502`
 # opens the scoreboard). BOT=1: samp-rs's samp-bot (SAMP_BOT, default samp-rs/target/release/samp-bot) joins as
 # a second, real player once ours spawned, stands at the spawn point, ahead of our player (its nametag), and leaves
@@ -242,7 +243,8 @@ if [ "$WEB" = 1 ]; then
     GAME_PID=$!
     say "headless Chromium pid $GAME_PID ($url)"
 else
-    SA_MOD_DATA="$OUT/moddata" SA_GAME_STUB="${SA_GAME_STUB:-$STUBS}" SA_GAME_SCRIPT_SKIP=1 SA_GAME_PRESENT_GAME=1 \
+    : > "$OUT/keys.txt"
+    SA_GAME_KEY_FILE="$OUT/keys.txt" SA_MOD_DATA="$OUT/moddata" SA_GAME_STUB="${SA_GAME_STUB:-$STUBS}" SA_GAME_SCRIPT_SKIP=1 SA_GAME_PRESENT_GAME=1 \
         SA_GAME_PRESENT_EVERY="${SA_GAME_PRESENT_EVERY:-20}" \
         "$GAME_BIN" --game "$SA_ROOT/wine/gta-sa" --frames "$FRAMES" --start-in-world --mods "$MOD_DIRS" \
         --present-dir "$OUT/present" --report "$OUT/report.md" > "$OUT/sa-game.log" 2>&1 &
@@ -341,6 +343,7 @@ elif wait_log '\[cov\] spawn id=' 150; then
         case "$c" in
             sleep\|*) sleep "${c#sleep|}" ;;
             restart\|*) say "server restart"; server_kill; sleep "${c#restart|}"; server_start ;;
+            key\|*) echo "${c#key|}" >> "$OUT/keys.txt" ;;
             shot\|*) shot="$(ls -t "$OUT/present" | grep -E '^present-[0-9]+[.]png$' | sed -n 2p)"
                 [ -n "$shot" ] && cp "$OUT/present/$shot" "$OUT/shots/${c#shot|}.png" && say "shot ${c#shot|} ($shot)" ;;
             ?*) cmd "$c" ;;

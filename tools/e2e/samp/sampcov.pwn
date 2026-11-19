@@ -13,7 +13,7 @@
 //   cp|x|y|z|size  rcp|type|x|y|z|nx|ny|nz|size  cpoff  gz|minx|miny|maxx|maxy  icon|id|x|y|z|type
 //   actor|skin|x|y|z|angle  explode|x|y|z|type|radius  time|h  weather|w  money|n  wanted|n
 //   anim|lib|name  clranim  special|action  campos|x|y|z|lx|ly|lz  camback  spec|1/0  drunk|level  attach|model|bone
-//   menu  sound|id  gravity|g  control|0/1  rcon|command
+//   menu  hidemenu  forceclass  sound|id  gravity|g  control|0/1  rcon|command
 //   Objects (tools/e2e/samp/objects.cmds): objscene (a small mapping with materials, a moving and turning object,
 //   an object on the player and one on a bone, a removed house)  objscene2 (moves, stops, rotations, a deletion)
 //   objwhere (every scene object's position)  rmbuild|model|x|y|z|radius
@@ -312,6 +312,8 @@ Run(seq, const line[])
         }
         ShowMenuForPlayer(gMenu, p);
     }
+    else if (!strcmp(cmd, "hidemenu")) HideMenuForPlayer(gMenu, p);
+    else if (!strcmp(cmd, "forceclass")) ForceClassSelection(p);
     else if (!strcmp(cmd, "sound")) PlayerPlaySound(p, in(line, 1), 0.0, 0.0, 0.0);
     else if (!strcmp(cmd, "vehc"))
     {
@@ -319,6 +321,8 @@ Run(seq, const line[])
         if (gVehCount < sizeof gVehs) gVehs[gVehCount++] = v;
         printf("[cov] %d veh %d", seq, v);
     }
+    else if (!strcmp(cmd, "vin")) PutPlayerInVehicle(p, vs(line, 1), in(line, 2));
+    else if (!strcmp(cmd, "vhealth")) SetVehicleHealth(vs(line, 1), fl(line, 2));
     else if (!strcmp(cmd, "vcol")) ChangeVehicleColor(vs(line, 1), in(line, 2), in(line, 3));
     else if (!strcmp(cmd, "vpaint")) ChangeVehiclePaintjob(vs(line, 1), in(line, 2));
     else if (!strcmp(cmd, "vmod")) AddVehicleComponent(vs(line, 1), in(line, 2));

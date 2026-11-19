@@ -16,7 +16,8 @@
 # zone, an actor, then gmx and a server restart) instead of the join steps, then /q; mod-join.sh SCENARIO=world runs the
 # same steps on the samp mod.
 # CMDS=FILE (tools/e2e/samp/objects.cmds): after the spawn, the file's server commands instead of the fixed scenario
-# (`sleep|S` waits, `shot|NAME` takes a screenshot), then /q.
+# (`sleep|S` waits, `shot|NAME` takes a screenshot, `key|NAME` presses an xdotool key), then /q. FILTERSCRIPTS adds the
+# server's filterscripts (comma-separated, e.g. npc_trains), as mod-join.sh does.
 # Output: target/e2e/lane-N/samp-ab/NAME/ (server.log, samp-rs.log, shots, sequence.txt).
 # sequence.txt = the server's [cov] event lines + the client's RPC/state lines, with timestamps removed.
 set -uo pipefail
@@ -69,9 +70,10 @@ mkdir -p "$SRV"
 rsync -a --delete --exclude log.txt "$SERVER_SRC/" "$SRV/"
 ( cd "$SRV" && LD_LIBRARY_PATH=qawno ./qawno/pawncc "$HERE/sampcov.pwn" -iqawno/include \
     -ogamemodes/sampcov.amx -d0 > "$OUT/pawncc.log" 2>&1 ) || { cat "$OUT/pawncc.log"; exit 1; }
-python3 -I - "$SRV/config.json" "$SAMP_PORT" << 'PY'
+python3 -I - "$SRV/config.json" "$SAMP_PORT" "${FILTERSCRIPTS:-}" << 'PY'
 import json, sys
 p, port = sys.argv[1], int(sys.argv[2])
+filterscripts = [f for f in sys.argv[3].split(",") if f]
 d = json.load(open(p))
 d["announce"] = False
 d["network"]["port"] = port
@@ -79,7 +81,7 @@ d["network"]["bind"] = "127.0.0.1"
 d["artwork"]["enable"] = False
 d["rcon"]["enable"] = False
 d["pawn"]["main_scripts"] = ["sampcov 1"]
-d["pawn"]["side_scripts"] = []
+d["pawn"]["side_scripts"] = [f"filterscripts/{f}" for f in filterscripts]
 d["game"]["use_entry_exit_markers"] = True
 d["max_bots"] = 4
 json.dump(d, open(p, "w"), indent=4)
@@ -295,6 +297,7 @@ else
             '#'* | '') ;;
             sleep\|*) sleep "${c#sleep|}" ;;
             shot\|*) alive; shot "${c#shot|}"; world "$OUT/world-${c#shot|}.txt" ;;
+            key\|*) e2e_key "${c#key|}" ;;
             *) cmd "$c" ;;
         esac
     done < "$CMDS"

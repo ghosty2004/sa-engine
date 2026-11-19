@@ -1,0 +1,51 @@
+# The death, menu and train scenario (sampcov.pwn commands, one per line; `sleep|S` waits, `shot|NAME` takes a
+# screenshot, `key|NAME` presses a key on the DLL client's display): a death by the server's `kill` and the respawn,
+# a death in a burning car and the respawn, the forced class selection after a death (RPC 74), a menu with a row
+# selected and one left, then the gamemode's static train streamed in. Run after the spawn by samp-rs-ab.sh (CMDS=...)
+# on the DLL client and by mod-join.sh (CMDS=...) on the samp mod; mod-join.sh presses the menu's keys on its own
+# schedule (MENU_KEYS), as the native game takes keys by iteration only.
+clearnpcs
+clearvehs
+time|12
+weather|1
+pos|2495|-1682|13.5|0
+sleep|4
+shot|alive
+kill
+sleep|2
+shot|wasted
+sleep|14
+shot|respawned
+vehc|560|2495|-1668|13.4|0|1|1
+sleep|3
+vin|1|0
+sleep|3
+vhealth|1|0
+sleep|4
+shot|burning
+sleep|16
+shot|respawned2
+clearvehs
+menu
+sleep|3
+shot|menu
+key|space
+sleep|3
+shot|selected
+menu
+sleep|3
+key|Return
+sleep|3
+shot|exited
+forceclass
+kill
+sleep|16
+shot|classsel
+key|shift
+sleep|6
+pos|1712|-1946|13.5|90
+sleep|10
+campos|1690|-1925|24|1700|-1953|15
+sleep|4
+shot|train
+camback

@@ -1,0 +1,21 @@
+# The trains scenario (sampcov.pwn commands; `sleep|S` waits, `shot|NAME` takes a screenshot), with the server's
+# filterscript npc_trains (FILTERSCRIPTS=npc_trains): its NPC-driven trains at Market and Unity Station beside the
+# gamemode's static train. Run after the spawn by samp-rs-ab.sh (CMDS=...) on the DLL client and by mod-join.sh
+# (CMDS=...) on the samp mod.
+clearvehs
+time|12
+weather|1
+pos|830|-1335|13.5|180
+sleep|10
+campos|795|-1320|30|814|-1361|0
+sleep|4
+shot|market
+sleep|20
+shot|market-later
+camback
+pos|1712|-1946|13.5|90
+sleep|10
+campos|1690|-1925|24|1700|-1953|15
+sleep|4
+shot|unity
+camback
