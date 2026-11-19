@@ -346,11 +346,13 @@ pub enum GameLimit {
     TextureDictionaries,
     /// The streaming memory budget in bytes, 50 MiB.
     StreamingMemory,
+    /// Vehicle structures, one per vehicle model loaded at the same time, 50.
+    VehicleStructures,
 }
 
 impl GameLimit {
     /// Every limit, in declaration order.
-    pub const ALL: [GameLimit; 15] = [
+    pub const ALL: [GameLimit; 16] = [
         GameLimit::PtrNodesSingle,
         GameLimit::PtrNodesDouble,
         GameLimit::EntryInfoNodes,
@@ -366,5 +368,6 @@ impl GameLimit {
         GameLimit::Matrices,
         GameLimit::TextureDictionaries,
         GameLimit::StreamingMemory,
+        GameLimit::VehicleStructures,
     ];
 }

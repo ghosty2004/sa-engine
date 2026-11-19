@@ -1978,7 +1978,7 @@ pub fn sscanf_n(line: GPtr<u8>, fmt: GPtr<u8>, t: &[GPtr<u8>]) -> i32 {
 
 /// `CVehicleModelInfo::SetupCommonData` (0x5B8F00): colours, upgrades, env maps (a loading-screen
 /// chunk after each), the shared "vehicle" TXD and its light textures, the CVehicleStructure pool
-/// (50, "VehicleStruct"), the dirt textures.
+/// (50, "VehicleStruct", or the size a host raised it to), the dirt textures.
 #[hook(addr = 0x5B8F00, conv = cdecl, name = "CVehicleModelInfo::SetupCommonData", expect = "6A FF 68 5B D5 83 00")]
 pub fn setup_common_data() {
     load_vehicle_colours_call();
@@ -2007,7 +2007,7 @@ pub fn setup_common_data() {
     LIGHTS_ON_TEXTURE.set(rw_tex_dictionary_find_named_texture(VEHICLE_TXD.get(), s(0x869AAC)));
     new_chunk_loaded();
     let p = operator_new(0x14);
-    let pool = if p.is_null() { GPtr::NULL } else { vehicle_structure_pool_ctor(p, 0x32, s(0x869A9C)) };
+    let pool = if p.is_null() { GPtr::NULL } else { vehicle_structure_pool_ctor(p, sa_core::options::limit(sa_core::options::Limit::VehicleStructures) as i32, s(0x869A9C)) };
     GPtr::<GPtr<u8>>::from_addr(0xB4E680).write(pool);
     initialise_dirt_texture();
 }

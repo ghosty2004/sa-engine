@@ -514,6 +514,7 @@ game was sized with them. The numbers are `sa_types::GameLimit`'s order:
 | 12 `Matrices` | 900 | 65536 | `CPlaceable::InitMatrixArray` |
 | 13 `TextureDictionaries` | 5000 | 32767 | `CTxdStore::Initialise` |
 | 14 `StreamingMemory` (bytes) | 0x3200000 | 0x40000000 | `CStreaming::Init2` |
+| 15 `VehicleStructures` | 50 | 32767 | `CVehicleModelInfo::SetupCommonData` |
 
 A value below the original's or above the maximum is BAD_ARG. The pools come from the game heap (natively the fixed
 896 MiB region at 0x18000000, docs/arch/platform.md §21; in the browser linear memory): samp's sizes add about 6 MiB of

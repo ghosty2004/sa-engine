@@ -23,6 +23,7 @@ fn core_limit(limit: GameLimit) -> sa_core::options::Limit {
         GameLimit::Matrices => L::Matrices,
         GameLimit::TextureDictionaries => L::TextureDictionaries,
         GameLimit::StreamingMemory => L::StreamingMemory,
+        GameLimit::VehicleStructures => L::VehicleStructures,
     }
 }
 

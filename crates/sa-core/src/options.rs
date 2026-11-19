@@ -68,7 +68,8 @@ pub fn reset() {
 
 /// A limit of the game a host may raise before the game sizes it (read when the game starts: the pools in
 /// `CPools::Initialise`, the matrices in `CPlaceable::InitMatrixArray`, the texture dictionaries in
-/// `CTxdStore::Initialise`, the streaming budget in `CStreaming::Init2`).
+/// `CTxdStore::Initialise`, the streaming budget in `CStreaming::Init2`, the vehicle structures in
+/// `CVehicleModelInfo::SetupCommonData`).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(u8)]
 pub enum Limit {
@@ -102,11 +103,13 @@ pub enum Limit {
     TextureDictionaries,
     /// `CStreaming::ms_memoryAvailable` in bytes (0x3200000, 50 MiB).
     StreamingMemory,
+    /// `CVehicleModelInfo::ms_pInfoPool`, one `CVehicleStructure` per loaded vehicle model (50).
+    VehicleStructures,
 }
 
 impl Limit {
     /// Every limit, in declaration order.
-    pub const ALL: [Limit; 15] = [
+    pub const ALL: [Limit; 16] = [
         Limit::PtrNodesSingle,
         Limit::PtrNodesDouble,
         Limit::EntryInfoNodes,
@@ -122,6 +125,7 @@ impl Limit {
         Limit::Matrices,
         Limit::TextureDictionaries,
         Limit::StreamingMemory,
+        Limit::VehicleStructures,
     ];
 
     /// The original's value.
@@ -142,6 +146,7 @@ impl Limit {
             Limit::Matrices => 900,
             Limit::TextureDictionaries => 5000,
             Limit::StreamingMemory => 0x0320_0000,
+            Limit::VehicleStructures => 50,
         }
     }
 

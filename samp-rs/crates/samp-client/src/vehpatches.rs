@@ -54,7 +54,7 @@ pub const INIT: &[Entry] = &[
     // 'VehicleStruct' pool capacity 50 → 127.
     Entry {
         addr: 0x5b8fe4,
-        write: Write::Bytes(&[0x7f]),
+        write: Write::Bytes(&[crate::patches::limits::VEHICLE_STRUCTURES as u8]),
         original: &[0x32],
         csv_row: 156,
         what: "0x5b8f00 CVehicleModelInfo::SetupCommonData",

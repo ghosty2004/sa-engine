@@ -82,6 +82,8 @@ pub mod limits {
     pub const TEXTURE_DICTIONARIES: u32 = 20_000;
     /// `CPools::ms_pObjectPool` (patched with samp's world hooks, worldhooks/install.rs).
     pub const OBJECTS: u32 = 3000;
+    /// `CVehicleModelInfo::ms_pInfoPool`, the vehicle structures (patched with the vehicle patches, vehpatches.rs).
+    pub const VEHICLE_STRUCTURES: u32 = 127;
 
     /// `push v`.
     pub(super) const fn push(v: u32) -> [u8; 5] {
