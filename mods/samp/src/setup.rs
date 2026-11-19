@@ -1,12 +1,12 @@
 //! What samp.dll changes in the game before it starts, through the mod API's game options, limits and script
 //! files (the inventory of its patches: docs/samp/patch-parity.md).
 
-use sa_mod::game::{GameLimit, GameOption, set_limit, set_option};
+use sa_mod::game::{GameLimit, GameOption, set_frame_limit, set_limit, set_option};
 use sa_mod::script::{ScriptFile, set_file};
 use samp_client::patches::{limits, streaming_budget};
 
 /// The game's features samp.dll switches off (RPC 30 TogglePlayerClock turns the clock back on).
-const OPTIONS_OFF: [GameOption; 30] = [
+const OPTIONS_OFF: [GameOption; 31] = [
     GameOption::StartScreens,
     GameOption::TypedCheats,
     GameOption::Clock,
@@ -37,6 +37,7 @@ const OPTIONS_OFF: [GameOption; 30] = [
     GameOption::StatChanges,
     GameOption::HandbrakeNeedsControl,
     GameOption::StandingSpeedClamp,
+    GameOption::GunMoveTimeStep,
 ];
 
 /// The physical memory samp.dll's streaming budget is chosen for: the mod sees no machine figures, and this
@@ -87,6 +88,16 @@ fn main_script() -> Result<&'static str, String> {
         set_file(ScriptFile::Streamed, &img).map_err(|e| format!("streamed scripts: {e:?}"))?;
     }
     Ok(what)
+}
+
+/// samp.dll's frame rate: its own limiter caps the frames at its fps limit (sa-mp.cfg's `fpslimit`, which samp
+/// creates with [`samp_ui::config::DEFAULT_FPS_LIMIT`], or `/fpslimit`; the game's limit raised to 200, `Idle`'s
+/// wait cut to 2 ms); the game's limiter at that limit does the same. In `sa_settings` or later: the game sets its
+/// own limit as it starts.
+pub fn apply_frame_limit(fps: u32) {
+    if let Err(e) = set_frame_limit(fps) {
+        sa_mod::info(&format!("samp: frame limit {fps}: {e:?}"));
+    }
 }
 
 /// Applies samp.dll's changes to the game; only in `sa_init` / `sa_settings`, before the game starts.

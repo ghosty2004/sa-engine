@@ -163,6 +163,8 @@ struct Samp {
     screen: connect::Screen,
     game: game::ModGame,
     images: canvas::Images,
+    /// The frame limit last given to the game (samp's fps limit).
+    frame_limit: Option<u32>,
 }
 
 impl Default for Samp {
@@ -177,11 +179,27 @@ impl Default for Samp {
             screen: connect::Screen::load(DEFAULT_SERVER, DEFAULT_NAME),
             game,
             images: Default::default(),
+            frame_limit: None,
         }
     }
 }
 
 impl Samp {
+    /// Gives the game samp's fps limit as its frame limit: the client's (`/fpslimit`), else the one samp writes into a
+    /// new sa-mp.cfg; nothing for the reference scene, which runs single player.
+    fn follow_frame_limit(&mut self) {
+        let fps = match &self.stage {
+            Stage::Scene(_) => return,
+            Stage::Client { client, .. } => client.ui.core.settings.fps_limit,
+            _ => None,
+        }
+        .unwrap_or(samp_ui::config::DEFAULT_FPS_LIMIT as u32);
+        if self.frame_limit != Some(fps) {
+            self.frame_limit = Some(fps);
+            setup::apply_frame_limit(fps);
+        }
+    }
+
     /// One of samp's frame points; the client runs only while the game runs its world (samp hooks
     /// `CGame::Process`, which the start-up and the loading never reach).
     fn frame(&mut self, phase: FramePhase) {
@@ -279,6 +297,10 @@ fn window_event(e: Input) -> WindowEvent {
 }
 
 impl Mod for Samp {
+    fn settings(&mut self) {
+        self.follow_frame_limit();
+    }
+
     fn init(&mut self) -> Result<(), String> {
         samp_proto::time::set_clock(host_time);
         assets::install(&mut self.game.ui);
@@ -321,6 +343,7 @@ impl Mod for Samp {
             }
             self.frame(FramePhase::BeforeGameProcess);
             self.capture();
+            self.follow_frame_limit();
         }
     }
 
