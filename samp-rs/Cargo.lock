@@ -152,6 +152,7 @@ version = "0.1.0"
 dependencies = [
  "sa-net",
  "sa-samp-api",
+ "sa-types",
  "samp-proto",
  "samp-saa",
  "samp-ui",

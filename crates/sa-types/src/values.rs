@@ -325,11 +325,14 @@ pub enum GameOption {
     /// A ped standing on a vehicle or object takes up a change of speed only gradually (off, at once, as on the
     /// ground).
     StandingSpeedClamp,
+    /// A ped moving while it aims a gun speeds up and slows down by the frame's time step; off, by the time step of
+    /// a 25 fps frame ([`GUN_MOVE_FIXED_TIME_STEP`]) every frame, whatever the frame rate.
+    GunMoveTimeStep,
 }
 
 impl GameOption {
     /// Every option, in declaration order.
-    pub const ALL: [GameOption; 30] = [
+    pub const ALL: [GameOption; 31] = [
         GameOption::TypedCheats,
         GameOption::Clock,
         GameOption::AmbientPeds,
@@ -360,8 +363,13 @@ impl GameOption {
         GameOption::StatChanges,
         GameOption::HandbrakeNeedsControl,
         GameOption::StandingSpeedClamp,
+        GameOption::GunMoveTimeStep,
     ];
 }
+
+/// The time step `CTaskSimpleUseGun::ControlGunMove` takes with [`GameOption::GunMoveTimeStep`] off: 2.0, a 25 fps
+/// frame in the game's 1/50 s units.
+pub const GUN_MOVE_FIXED_TIME_STEP: f32 = 2.0;
 
 /// A limit of the game a host may raise before the game sizes it (all the original's by default). The mod API's
 /// limit numbers are the declaration order ([`GameLimit::ALL`]).

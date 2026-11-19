@@ -22,6 +22,8 @@ samp-ui = { path = "../samp-ui" }
 sa-net = { path = "../../../crates/sa-net" }
 # The game-adapter traits the client calls (implemented by the original-exe backend and the samp mod).
 sa-samp-api = { path = "../sa-samp-api" }
+# The engine's game values (the gun-move time step samp fixes).
+sa-types = { path = "../../../crates/sa-types" }
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "=0.61.2", features = [

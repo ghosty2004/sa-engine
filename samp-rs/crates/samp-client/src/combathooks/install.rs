@@ -3,7 +3,7 @@
 use super::damage::{affects_ped_stub, damage_stub, inflict_stub};
 use super::shot::{SELECTOR, add_bullet_site, fire_instant_hit_site, fire_sniper_site, los_site};
 use super::weapons::{
-    BOUND_MAX, BOUND_MIN, TWO, crosshairs_site, detonator_stub, no_cam_shake, render_weapon_skill, satchel_update_stub,
+    BOUND_MAX, BOUND_MIN, GUN_MOVE_TIME_STEP, crosshairs_site, detonator_stub, no_cam_shake, render_weapon_skill, satchel_update_stub,
     take_photo_stub,
 };
 use super::*;
@@ -140,7 +140,7 @@ fn install_byte_patches(patcher: &mut Patcher, mem: &mut ProcessMemory, out: &mu
         out.push((row, patcher.nop(mem, what, addr, len, Some(orig))));
     }
     let ptrs: [(u32, u32, u32, u32, &'static str); 5] = [
-        (210, 0x61E0C2, 0xB7CB5C, &TWO as *const f32 as u32, "ControlGunMove time step := 2.0"),
+        (210, 0x61E0C2, 0xB7CB5C, &GUN_MOVE_TIME_STEP as *const f32 as u32, "ControlGunMove fixed time step"),
         (240, 0x7361B2, 0x859A90, &BOUND_MIN as *const f32 as u32, "bullet bound -20000"),
         (241, 0x7361CB, 0x859A94, &BOUND_MAX as *const f32 as u32, "bullet bound 20000"),
         (242, 0x7361E0, 0x859A90, &BOUND_MIN as *const f32 as u32, "bullet bound -20000"),

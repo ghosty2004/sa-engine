@@ -268,10 +268,16 @@ pub fn use_gun_player_passive_control_gun(this: GPtr<u8>) -> u8 {
 
 /// `CTaskSimpleUseGun::ControlGunMove(const CVector2D*)` (0x61E0C0, `ret 4`): each move component (y first,
 /// then x) moves towards the input by at most `ts * 0.07`: above `cur + t` -> `cur + t`, below `cur - t`
-/// -> `cur - t`, else (NaN too) the input copied. +0xA = 1.
+/// -> `cur - t`, else (NaN too) the input copied. +0xA = 1. With the option `GunMoveTimeStep` off, `ts` is
+/// `sa_types::GUN_MOVE_FIXED_TIME_STEP` instead of `CTimer::ms_fTimeStep`.
 #[hook(addr = 0x61E0C0, conv = thiscall, name = "CTaskSimpleUseGun::ControlGunMove", expect = "D9 05 5C CB B7 00")]
 pub fn use_gun_control_gun_move(this: GPtr<u8>, mv: GPtr<u8>) {
-    let t = cf(TIME_STEP).fmul_m(g::<f32>(0x858CA8).read());
+    let ts = if sa_core::options::enabled(sa_core::options::Feature::GunMoveTimeStep) {
+        cf(TIME_STEP)
+    } else {
+        x(sa_types::GUN_MOVE_FIXED_TIME_STEP)
+    };
+    let t = ts.fmul_m(g::<f32>(0x858CA8).read());
     for (src, dst) in [(4isize, 0x18isize), (0, 0x14)] {
         let d = x(rd::<f32>(mv, src)).fsub_m(rd::<f32>(this, dst));
         if !d.fcom(t).test_any(0x41) {

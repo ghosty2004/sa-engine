@@ -9,6 +9,9 @@ use crate::addr;
 use crate::script::op;
 use crate::{Game, View};
 
+/// The highest frame limit [`Game::set_frame_limit`] takes (one frame a millisecond).
+pub const FRAME_LIMIT_MAX: u32 = 1000;
+
 /// The longest big message, in bytes (the game keeps a pointer to the text, so it lives in [`Game`]).
 pub const BIG_MESSAGE_MAX: usize = 0x1FF;
 
@@ -80,6 +83,21 @@ impl<V: View> Game<V> {
         self.run_op(op::SET_PLAYER_MODEL, &[I(i32::from(slot)), I(model.0)]).map(drop)
     }
 
+    /// The frame rate the game's frame limiter caps at (`RsGlobal.frameLimit`).
+    pub fn frame_limit(&self) -> u32 {
+        self.view.read_u32(addr::RS_FRAME_LIMIT)
+    }
+
+    /// Sets the frame rate the game's frame limiter caps at while the menu's Frame Limiter is on (`WinMain` runs a
+    /// frame once `1000 / frameLimit` ms have passed since the last one).
+    pub fn set_frame_limit(&mut self, fps: u32) -> GameResult<()> {
+        if !(1..=FRAME_LIMIT_MAX).contains(&fps) {
+            return Err(GameError::Other(format!("frame limit {fps}")));
+        }
+        self.view.write(addr::RS_FRAME_LIMIT, &fps.to_le_bytes());
+        Ok(())
+    }
+
     /// Turns one of the game's own features on or off.
     pub fn set_option(&mut self, option: GameOption, on: bool) {
         use sa_core::options::{Feature as F, set};
@@ -114,6 +132,7 @@ impl<V: View> Game<V> {
             GameOption::StatChanges => F::StatChanges,
             GameOption::HandbrakeNeedsControl => F::HandbrakeNeedsControl,
             GameOption::StandingSpeedClamp => F::StandingSpeedClamp,
+            GameOption::GunMoveTimeStep => F::GunMoveTimeStep,
         };
         set(feature, on);
     }
@@ -231,3 +250,18 @@ pub fn draw_sprite(texture: u32, rect: [f32; 4], rgba: u32) {
 /// `rwRENDERSTATETEXTUREFILTER`, `rwFILTERLINEAR`.
 const RW_TEXTURE_FILTER: i32 = 9;
 const RW_FILTER_LINEAR: u32 = 2;
+
+#[cfg(test)]
+mod tests {
+    use crate::fake;
+
+    #[test]
+    fn frame_limit_in_range() {
+        let mut g = fake::game();
+        g.set_frame_limit(90).unwrap();
+        assert_eq!(g.frame_limit(), 90);
+        assert!(g.set_frame_limit(0).is_err());
+        assert!(g.set_frame_limit(super::FRAME_LIMIT_MAX + 1).is_err());
+        assert_eq!(g.frame_limit(), 90);
+    }
+}

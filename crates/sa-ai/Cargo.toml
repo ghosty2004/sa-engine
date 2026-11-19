@@ -16,6 +16,7 @@ sa-stream = { path = "../sa-stream" }
 sa-core = { path = "../sa-core" }
 sa-math = { path = "../sa-math" }
 sa-macros = { path = "../sa-macros" }
+sa-types = { path = "../sa-types" }
 # byte-offset field helpers (`world::common`)
 sa-world = { path = "../sa-world" }
 

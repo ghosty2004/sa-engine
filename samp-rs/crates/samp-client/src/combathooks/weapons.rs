@@ -107,8 +107,8 @@ pub(super) unsafe extern "C" fn detonator_stub() {
     )
 }
 
-/// Constants samp points GTA at (the aim time step and the bullet bounds).
-pub(super) static TWO: f32 = 2.0;
+/// Constants samp points GTA at (the gun-move time step and the bullet bounds).
+pub(super) static GUN_MOVE_TIME_STEP: f32 = sa_types::GUN_MOVE_FIXED_TIME_STEP;
 pub(super) static BOUND_MIN: f32 = -20000.0;
 pub(super) static BOUND_MAX: f32 = 20000.0;
 

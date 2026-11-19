@@ -2587,6 +2587,7 @@ dependencies = [
  "sa-script",
  "sa-stream",
  "sa-testkit",
+ "sa-types",
  "sa-weapon",
  "sa-world",
 ]
@@ -3148,6 +3149,7 @@ version = "0.1.0"
 dependencies = [
  "sa-net",
  "sa-samp-api",
+ "sa-types",
  "samp-proto",
  "samp-saa",
  "samp-ui",

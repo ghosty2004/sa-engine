@@ -94,6 +94,9 @@ pub enum Feature {
     /// branch 0x5E1E70 of the clamp at the end of `CPed::UpdatePosition` (off, the clamp runs as for a ped without a
     /// ground entity).
     StandingSpeedClamp,
+    /// The frame's time step in `CTaskSimpleUseGun::ControlGunMove` (the `CTimer::ms_fTimeStep` load 0x61E0C0); off,
+    /// `sa_types::GUN_MOVE_FIXED_TIME_STEP` instead.
+    GunMoveTimeStep,
 }
 
 /// The features turned off, as bits.
