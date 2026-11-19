@@ -30,6 +30,7 @@ pub mod addr;
 mod audio;
 mod control;
 mod entities;
+mod markers;
 #[cfg(any(test, feature = "fake"))]
 pub mod fake;
 pub mod script;
@@ -38,6 +39,7 @@ mod world;
 
 pub use sa_types::{EntityRef, GameError, GameResult, ObjectRef, PedRef, VehicleRef};
 pub use control::{draw_sprite, load_texture, print_text, world_to_screen};
+pub use markers::{BlipStyle, draw_radar_area};
 pub use view::{EngineView, Pool, View};
 
 /// The game, through a [`View`] of its memory.

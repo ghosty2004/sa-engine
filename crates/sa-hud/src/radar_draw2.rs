@@ -213,6 +213,7 @@ use sa_world::bindings::is_coop_game_going_on;
 use sa_world::bindings::is_player_in_remote_mode as player_in_remote_mode;
 use sa_world::bindings::is_player_on_a_mission;
 use crate::bindings::calculate_cached_sin_cos_call;
+use crate::bindings::draw_area_on_radar as draw_area_on_radar_call;
 use crate::bindings::draw_radar_gang_overlay_call;
 use crate::bindings::draw_radar_sprite_call;
 use crate::bindings::limit_to_map_call;
@@ -260,8 +261,6 @@ orig! {
     fn draw_radar_section_call(px: i32, py: i32) = cdecl 0x586110 => draw_radar_section;
     /// `CRadar::GetTextureCorners(int32, int32, CVector2D*)` (0x584D90)
     fn get_texture_corners_call(tx: i32, ty: i32, out: GPtr<f32>) = cdecl 0x584D90 => crate::radar::get_texture_corners;
-    /// `CRadar::DrawAreaOnRadar(const CRect&, const CRGBA&, bool inMenu)` (0x5853D0)
-    fn draw_area_on_radar_call(rect: GPtr<f32>, colour: GPtr<u8>, in_menu: u8) = cdecl 0x5853D0 => draw_area_on_radar;
     /// `CRadar::ClipRadarPoly(CVector2D* out, const CVector2D* in)` (0x585040)
     fn clip_radar_poly_call(out: GPtr<u8>, inp: GPtr<u8>) -> i32 = cdecl 0x585040 => crate::radar_draw::clip_radar_poly;
     /// `CSprite2d::SetVertices(int32 n, float* pos, float* uv, const CRGBA&)` (0x727890)

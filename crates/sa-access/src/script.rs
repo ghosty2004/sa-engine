@@ -63,6 +63,7 @@ pub mod op {
     pub const SET_CAR_DENSITY_MULTIPLIER: u16 = 0x01EB;
     pub const SET_MAX_WANTED_LEVEL: u16 = 0x01F0;
     pub const CREATE_PICKUP: u16 = 0x0213;
+    pub const HAS_PICKUP_BEEN_COLLECTED: u16 = 0x0214;
     pub const REMOVE_PICKUP: u16 = 0x0215;
     pub const CHANGE_CAR_COLOUR: u16 = 0x0229;
     pub const REQUEST_MODEL: u16 = 0x0247;
@@ -97,6 +98,19 @@ pub mod op {
     pub const TASK_LEAVE_CAR: u16 = 0x05CD;
     pub const TASK_USE_MOBILE_PHONE: u16 = 0x0729;
     pub const SET_PLAYER_MODEL: u16 = 0x09C7;
+    pub const LOCATE_CHAR_ANY_MEANS_3D: u16 = 0x00FE;
+    pub const REMOVE_BLIP: u16 = 0x0164;
+    pub const CHANGE_BLIP_COLOUR: u16 = 0x0165;
+    pub const CHANGE_BLIP_SCALE: u16 = 0x0168;
+    pub const ADD_BLIP_FOR_CAR: u16 = 0x0186;
+    pub const ADD_BLIP_FOR_CHAR: u16 = 0x0187;
+    pub const CHANGE_BLIP_DISPLAY: u16 = 0x018B;
+    pub const ADD_SPRITE_BLIP_FOR_CONTACT_POINT: u16 = 0x02A7;
+    pub const ADD_SPRITE_BLIP_FOR_COORD: u16 = 0x02A8;
+    pub const ADD_SHORT_RANGE_SPRITE_BLIP_FOR_COORD: u16 = 0x04CE;
+    pub const ADD_SHORT_RANGE_SPRITE_BLIP_FOR_CONTACT_POINT: u16 = 0x0570;
+    pub const CREATE_CHECKPOINT: u16 = 0x06D5;
+    pub const DELETE_CHECKPOINT: u16 = 0x06D6;
 }
 
 /// Parameter type bytes of the SCM format.

@@ -370,6 +370,12 @@ impl<V: View> Game<V> {
         self.run_op(op::SET_OBJECT_COORDINATES, &[I(o.0 as i32), F(pos.x), F(pos.y), F(pos.z)]).map(drop)
     }
 
+    /// Whether the game defines `model` (`CModelInfo::ms_modelInfoPtrs[model]` is set).
+    pub fn model_exists(&self, model: ModelId) -> bool {
+        (0..addr::MODEL_INFO_COUNT as i32).contains(&model.0)
+            && self.view.read_u32(addr::MODEL_INFO_PTRS + 4 * model.0 as u32) != 0
+    }
+
     /// Whether `model` is loaded (`CStreaming::ms_aInfoForModel[model].m_nLoadState == LOADSTATE_LOADED`).
     pub fn model_loaded(&self, model: ModelId) -> bool {
         (0..addr::STREAMING_MODELS as i32).contains(&model.0)

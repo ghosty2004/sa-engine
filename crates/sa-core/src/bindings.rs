@@ -1369,6 +1369,11 @@ orig! {
 }
 
 orig! {
+    /// `CRadar::DrawAreaOnRadar` (0x5853D0)
+    pub fn draw_area_on_radar(rect: GPtr<f32>, colour: GPtr<u8>, in_menu: u8) = cdecl 0x5853D0 => unported;
+}
+
+orig! {
     /// `CRadar::Initialise` (0x587FB0)
     pub fn radar_initialise() = cdecl 0x587FB0 => unported;
 }

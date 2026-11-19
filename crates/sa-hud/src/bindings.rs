@@ -184,6 +184,11 @@ orig! {
 }
 
 orig! {
+    /// `CRadar::DrawAreaOnRadar` (0x5853D0)
+    pub fn draw_area_on_radar(rect: GPtr<f32>, colour: GPtr<u8>, in_menu: u8) = cdecl 0x5853D0 => crate::radar_draw2::draw_area_on_radar;
+}
+
+orig! {
     /// `CRadar::InitFrontEndMap` (0x585960)
     pub fn init_front_end_map_call() = cdecl 0x585960 => crate::radar_draw::init_front_end_map;
 }

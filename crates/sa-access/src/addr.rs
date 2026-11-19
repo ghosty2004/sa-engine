@@ -123,6 +123,17 @@ pub mod camera {
     pub const ASPECT_RATIO: u32 = 0xC3EFA4;
 }
 
+/// `CPickups::aPickUps` (`CPickup[620]`, 0x20 bytes each).
+pub const PICKUPS: u32 = 0x9788C0;
+/// Entries of [`PICKUPS`].
+pub const PICKUP_COUNT: u32 = 620;
+/// `sizeof(CPickup)`.
+pub const PICKUP_SIZE: u32 = 0x20;
+/// The height difference below which `CPickup::Update` picks a pickup up (`.rdata` float).
+pub const PICKUP_HEIGHT_RANGE: u32 = 0x858CA0;
+/// The squared distance across below which `CPickup::Update` picks a pickup up (`.rdata` float).
+pub const PICKUP_RANGE_SQUARED: u32 = 0x859BB4;
+
 /// `CMatrix` rows.
 pub mod matrix {
     /// Right vector.
@@ -139,6 +150,16 @@ pub mod matrix {
 pub mod off {
     /// vtable.
     pub const VTABLE: u32 = 0x0;
+    /// `CPickup::m_pObject`.
+    pub const PICKUP_OBJECT: u32 = 0x4;
+    /// `CPickup::m_nReferenceIndex` (the high word of the pickup's handle).
+    pub const PICKUP_REFERENCE: u32 = 0x1A;
+    /// `CPickup::m_nPickupType` (0: the slot is free).
+    pub const PICKUP_TYPE: u32 = 0x1C;
+    /// `CPickup::m_nFlags`.
+    pub const PICKUP_FLAGS: u32 = 0x1D;
+    /// `CObject::m_nObjectFlags`.
+    pub const OBJECT_FLAGS: u32 = 0x140;
     /// `CPlaceable::m_placement.m_vPosn` (used when `m_matrix` is null).
     pub const PLACEMENT_POS: u32 = 0x4;
     /// `CPlaceable::m_placement.m_fHeading`.
