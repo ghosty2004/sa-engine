@@ -70,6 +70,10 @@ pub mod calls {
     }
 }
 
+/// `CPedIntelligence::FlushImmediately(bool)`.
+#[cfg(windows)]
+const FLUSH_IMMEDIATELY: u32 = 0x601640;
+
 impl<M: Memory> Peds for OriginalGame<M> {
     fn local_player(&self) -> Option<PedRef> {
         match self.mem.read_u32(game::CWORLD_PLAYERS + game::off::PLAYER_INFO_PED) {
@@ -111,12 +115,37 @@ impl<M: Memory> Peds for OriginalGame<M> {
         Err(GameError::Unsupported("Peds::create_player_ped"))
     }
 
-    fn create_actor(&mut self, _model: ModelId, _pos: Vec3, _heading_deg: f32) -> GameResult<PedRef> {
-        Err(GameError::Unsupported("Peds::create_actor"))
+    /// samp's actor: `CREATE_CHAR` (009A) with ped type 5, then `SET_CHAR_HEADING` (0173). Mirrors samp.dll
+    /// 0x1009C310.
+    fn create_actor(&mut self, model: ModelId, pos: Vec3, heading_deg: f32) -> GameResult<PedRef> {
+        let (i, f) = (ScriptArg::Int, ScriptArg::Float);
+        let args = [i(crate::worldents::ACTOR_PED_TYPE), i(model.0), f(pos.x), f(pos.y), f(pos.z), ScriptArg::Local(0)];
+        let h = self.run_op_out(crate::worldents::op::CREATE_CHAR, &args)? as i32;
+        let ped = self.ped_from_script_handle(ScriptHandle(h)).ok_or(GameError::InvalidHandle)?;
+        self.run_op(op::SET_CHAR_HEADING, &[i(h), f(heading_deg)])?;
+        Ok(ped)
     }
 
-    fn destroy_ped(&mut self, _ped: PedRef) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::destroy_ped"))
+    /// An actor's deletion: the ped's own scalar deleting destructor (no script command), while its pool slot still
+    /// holds it. Mirrors samp.dll's actor wrapper destructor.
+    fn destroy_ped(&mut self, ped: PedRef) -> GameResult<()> {
+        self.ped_script_handle(ped)?;
+        let vt = self.mem.read_u32(ped.0).map_err(read_error)?;
+        if vt == game::VTBL_PLACEABLE {
+            return Ok(());
+        }
+        #[cfg(windows)]
+        {
+            let dtor = self.mem.read_u32(vt).map_err(read_error)?;
+            // SAFETY: the live ped's own scalar deleting destructor (thiscall, flag 1).
+            unsafe {
+                let f: extern "thiscall" fn(u32, u32) = std::mem::transmute(dtor as usize);
+                f(ped.0, 1);
+            }
+            Ok(())
+        }
+        #[cfg(not(windows))]
+        Err(GameError::Unsupported("Peds::destroy_ped outside the game"))
     }
 
     fn set_ped_model(&mut self, _ped: PedRef, _model: ModelId) -> GameResult<()> {
@@ -151,8 +180,27 @@ impl<M: Memory> Peds for OriginalGame<M> {
         self.mem.read_i32(game::PLAYER_MONEY).unwrap_or(0)
     }
 
-    fn set_ped_position(&mut self, _ped: PedRef, _pos: Vec3) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::set_ped_position"))
+    /// The entity's own `Teleport` virtual (vtable +0x38: position, no rotation reset). Mirrors samp.dll 0x1009F0A0.
+    fn set_ped_position(&mut self, ped: PedRef, pos: Vec3) -> GameResult<()> {
+        let vt = self.mem.read_u32(ped.0).map_err(read_error)?;
+        if vt == game::VTBL_PLACEABLE {
+            return Ok(());
+        }
+        #[cfg(windows)]
+        {
+            let target = self.mem.read_u32(vt + 0x38).map_err(read_error)?;
+            // SAFETY: the entity's own virtual (thiscall, CVector by value, bool).
+            unsafe {
+                let f: extern "thiscall" fn(u32, f32, f32, f32, u32) = std::mem::transmute(target as usize);
+                f(ped.0, pos.x, pos.y, pos.z, 0);
+            }
+            Ok(())
+        }
+        #[cfg(not(windows))]
+        {
+            let _ = pos;
+            Err(GameError::Unsupported("Peds::set_ped_position outside the game"))
+        }
     }
 
     fn set_ped_matrix(&mut self, _ped: PedRef, _m: &Matrix) -> GameResult<()> {
@@ -163,17 +211,18 @@ impl<M: Memory> Peds for OriginalGame<M> {
         Err(GameError::Unsupported("Peds::set_ped_move_speed"))
     }
 
-    /// `SET_CHAR_HEADING` (0173); the raw form is not routed yet.
+    /// `SET_CHAR_HEADING` (0173); the raw form writes the heading goal (radians) only, as samp's actors do.
     fn set_ped_heading(&mut self, ped: PedRef, heading: f32, raw: bool) -> GameResult<()> {
         if raw {
-            return Err(GameError::Unsupported("Peds::set_ped_heading (raw)"));
+            return self.mem.write_data(ped.0 + game::off::PED_HEADING_GOAL, &heading.to_le_bytes()).map_err(super::write_error);
         }
         let h = self.ped_script_handle(ped)?.0;
         self.run_op(op::SET_CHAR_HEADING, &[ScriptArg::Int(h), ScriptArg::Float(heading)]).map(|_| ())
     }
 
-    fn set_ped_health(&mut self, _ped: PedRef, _health: f32) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::set_ped_health"))
+    /// `CPed::m_fHealth`, written directly.
+    fn set_ped_health(&mut self, ped: PedRef, health: f32) -> GameResult<()> {
+        self.mem.write_data(ped.0 + game::off::PED_HEALTH, &health.to_le_bytes()).map_err(super::write_error)
     }
 
     fn set_ped_armour(&mut self, _ped: PedRef, _armour: f32) -> GameResult<()> {
@@ -202,8 +251,12 @@ impl<M: Memory> Peds for OriginalGame<M> {
         Err(GameError::Unsupported("Peds::remove_weapon_entering_vehicle"))
     }
 
-    fn set_proofs(&mut self, _ped: PedRef, _proofs: Proofs) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::set_proofs"))
+    /// `SET_CHAR_PROOFS` (02AB): bullet, fire, explosion, collision, melee.
+    fn set_proofs(&mut self, ped: PedRef, p: Proofs) -> GameResult<()> {
+        let h = self.ped_script_handle(ped)?.0;
+        let b = |v: bool| ScriptArg::Int(i32::from(v));
+        let args = [ScriptArg::Int(h), b(p.bullet), b(p.fire), b(p.explosion), b(p.collision), b(p.melee)];
+        self.run_op(op::SET_CHAR_PROOFS, &args).map(|_| ())
     }
 
     /// `SET_CHAR_SUFFERS_CRITICAL_HITS` (0446).
@@ -231,8 +284,10 @@ impl<M: Memory> Peds for OriginalGame<M> {
         self.run_op(op::SET_CHAR_AREA_VISIBLE, &[ScriptArg::Int(h), ScriptArg::Int(i32::from(area.0))]).map(|_| ())
     }
 
-    fn set_decision_maker(&mut self, _ped: PedRef, _maker: i32) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::set_decision_maker"))
+    /// `SET_CHAR_DECISION_MAKER` (060B).
+    fn set_decision_maker(&mut self, ped: PedRef, maker: i32) -> GameResult<()> {
+        let h = self.ped_script_handle(ped)?.0;
+        self.run_op(crate::worldents::op::SET_CHAR_DECISION_MAKER, &[ScriptArg::Int(h), ScriptArg::Int(maker)]).map(|_| ())
     }
 
     fn set_player_money(&mut self, _money: i32) -> GameResult<()> {
@@ -257,8 +312,10 @@ impl<M: Memory> Peds for OriginalGame<M> {
         Err(GameError::Unsupported("Peds::extinguish_ped"))
     }
 
-    fn explode_head(&mut self, _ped: PedRef) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::explode_head"))
+    /// `EXPLODE_CHAR_HEAD` (0321).
+    fn explode_head(&mut self, ped: PedRef) -> GameResult<()> {
+        let h = self.ped_script_handle(ped)?.0;
+        self.run_op(crate::worldents::op::EXPLODE_CHAR_HEAD, &[ScriptArg::Int(h)]).map(|_| ())
     }
 
     fn warp_into_vehicle(&mut self, _ped: PedRef, _vehicle: VehicleRef, _seat: Option<i32>) -> GameResult<()> {
@@ -273,16 +330,58 @@ impl<M: Memory> Peds for OriginalGame<M> {
         Err(GameError::Unsupported("Peds::start_task"))
     }
 
-    fn flush_tasks(&mut self, _ped: PedRef) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::flush_tasks"))
+    /// `CPedIntelligence::FlushImmediately(true)` on the ped's intelligence.
+    fn flush_tasks(&mut self, ped: PedRef) -> GameResult<()> {
+        let intel = self.mem.read_u32(ped.0 + game::off::PED_INTELLIGENCE).map_err(read_error)?;
+        if intel == 0 {
+            return Ok(());
+        }
+        #[cfg(windows)]
+        {
+            // SAFETY: CPedIntelligence::FlushImmediately(bool) (thiscall) on the ped's live intelligence.
+            unsafe {
+                let f: extern "thiscall" fn(u32, u32) = std::mem::transmute(FLUSH_IMMEDIATELY as usize);
+                f(intel, 1);
+            }
+            Ok(())
+        }
+        #[cfg(not(windows))]
+        Err(GameError::Unsupported("Peds::flush_tasks outside the game"))
     }
 
     fn delete_task(&mut self, _task: TaskRef) -> GameResult<()> {
         Err(GameError::Unsupported("Peds::delete_task"))
     }
 
-    fn play_anim(&mut self, _ped: PedRef, _anim: &AnimRequest<'_>) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::play_anim"))
+    /// The block loaded if needed (`REQUEST_ANIMATION` 04ED, polled with `HAS_ANIMATION_LOADED` 04EE for at most
+    /// 15 ms: the animation is dropped when the block is not there by then), then `TASK_PLAY_ANIM_NON_INTERRUPTABLE`
+    /// (0812). Mirrors samp.dll 0x1009C4C0.
+    fn play_anim(&mut self, ped: PedRef, anim: &AnimRequest<'_>) -> GameResult<()> {
+        let h = self.ped_script_handle(ped)?.0;
+        let block = ScriptArg::Text(anim.block.as_bytes());
+        if !self.run_op(op::HAS_ANIMATION_LOADED, &[block])? {
+            self.run_op(op::REQUEST_ANIMATION, &[block])?;
+            let t0 = samp_proto::time::Instant::now();
+            while !self.run_op(op::HAS_ANIMATION_LOADED, &[block])? {
+                if t0.elapsed() > std::time::Duration::from_millis(15) {
+                    return Err(GameError::NotLoaded);
+                }
+                std::thread::sleep(std::time::Duration::from_millis(1));
+            }
+        }
+        let b = |v: bool| ScriptArg::Int(i32::from(v));
+        let args = [
+            ScriptArg::Int(h),
+            ScriptArg::Text(anim.name.as_bytes()),
+            block,
+            ScriptArg::Float(anim.delta),
+            b(anim.looped),
+            b(anim.lock_x),
+            b(anim.lock_y),
+            b(anim.freeze),
+            ScriptArg::Int(anim.time_ms),
+        ];
+        self.run_op(crate::worldents::op::TASK_PLAY_ANIM_NON_INTERRUPTABLE, &args).map(|_| ())
     }
 
     fn stop_anims(&mut self, _ped: PedRef) -> GameResult<()> {

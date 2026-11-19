@@ -2,6 +2,7 @@
 //! Methods that return `Unsupported` (or a neutral value, for reads that cannot fail) are not routed through
 //! the adapter yet; the client still does that work in its own modules.
 
+use sa_samp_api::peds::Peds as _;
 use sa_samp_api::world::*;
 use sa_samp_api::*;
 
@@ -149,8 +150,11 @@ impl<M: Memory> WorldState for OriginalGame<M> {
 }
 
 impl<M: Memory> WorldEntities for OriginalGame<M> {
-    fn create_pickup(&mut self, _model: ModelId, _kind: i32, _pos: Vec3) -> GameResult<PickupRef> {
-        Err(GameError::Unsupported("WorldEntities::create_pickup"))
+    /// `CREATE_PICKUP` (0213): the pickup's script handle.
+    fn create_pickup(&mut self, model: ModelId, kind: i32, pos: Vec3) -> GameResult<PickupRef> {
+        let (i, f) = (ScriptArg::Int, ScriptArg::Float);
+        self.run_op_out(crate::worldents::op::CREATE_PICKUP, &[i(model.0), i(kind), f(pos.x), f(pos.y), f(pos.z), ScriptArg::Local(0)])
+            .map(PickupRef)
     }
 
     /// `REMOVE_PICKUP` (0215) with the pickup's script handle.
@@ -158,16 +162,28 @@ impl<M: Memory> WorldEntities for OriginalGame<M> {
         self.run_op(crate::worldents::op::REMOVE_PICKUP, &[ScriptArg::Int(p.0 as i32)]).map(|_| ())
     }
 
-    fn pickup_collected(&self, _p: PickupRef) -> GameResult<bool> {
-        Err(GameError::Unsupported("WorldEntities::pickup_collected"))
+    /// `HAS_PICKUP_BEEN_COLLECTED` (0214).
+    fn pickup_collected(&self, p: PickupRef) -> GameResult<bool> {
+        super::script::backend_op(crate::worldents::op::HAS_PICKUP_BEEN_COLLECTED, &[ScriptArg::Int(p.0 as i32)])
     }
 
     fn pickup_index(&self, _p: PickupRef) -> GameResult<u16> {
         Err(GameError::Unsupported("WorldEntities::pickup_index"))
     }
 
-    fn create_checkpoint(&mut self, _kind: CheckpointKind, _pos: Vec3, _size: f32) -> GameResult<CheckpointRef> {
-        Err(GameError::Unsupported("WorldEntities::create_checkpoint"))
+    /// samp hooks `CPickup::Update` instead (worldhooks).
+    fn pickup_touched(&self, _p: PickupRef) -> GameResult<bool> {
+        Err(GameError::Unsupported("WorldEntities::pickup_touched"))
+    }
+
+    /// `CREATE_CHECKPOINT` (06D5) for a race checkpoint; samp draws its normal checkpoint with `locate_ped`.
+    fn create_checkpoint(&mut self, kind: CheckpointKind, pos: Vec3, size: f32) -> GameResult<CheckpointRef> {
+        let CheckpointKind::Race { kind, next } = kind else {
+            return Err(GameError::Unsupported("WorldEntities::create_checkpoint (normal)"));
+        };
+        let f = ScriptArg::Float;
+        let args = [ScriptArg::Int(i32::from(kind)), f(pos.x), f(pos.y), f(pos.z), f(next.x), f(next.y), f(next.z), f(size), ScriptArg::Local(0)];
+        self.run_op_out(crate::worldents::op::CREATE_CHECKPOINT, &args).map(CheckpointRef)
     }
 
     /// `DELETE_CHECKPOINT` (06D6) with the checkpoint's script handle.
@@ -175,12 +191,23 @@ impl<M: Memory> WorldEntities for OriginalGame<M> {
         self.run_op(crate::worldents::op::DELETE_CHECKPOINT, &[ScriptArg::Int(c.0 as i32)]).map(|_| ())
     }
 
-    fn locate_ped(&self, _ped: PedRef, _pos: Vec3, _radius: Vec3) -> GameResult<bool> {
-        Err(GameError::Unsupported("WorldEntities::locate_ped"))
+    /// `LOCATE_CHAR_ANY_MEANS_3D` (00FE).
+    fn locate_ped(&mut self, ped: PedRef, pos: Vec3, radius: Vec3, marker: bool) -> GameResult<bool> {
+        let h = self.ped_script_handle(ped)?.0;
+        let f = ScriptArg::Float;
+        let args =
+            [ScriptArg::Int(h), f(pos.x), f(pos.y), f(pos.z), f(radius.x), f(radius.y), f(radius.z), ScriptArg::Int(i32::from(marker))];
+        self.run_op(crate::worldents::op::LOCATE_CHAR_ANY_MEANS_3D, &args)
     }
 
-    fn add_blip(&mut self, _target: BlipTarget) -> GameResult<BlipRef> {
-        Err(GameError::Unsupported("WorldEntities::add_blip"))
+    /// A coordinate blip: one of the four sprite blip opcodes (`worldents::coord_blip_opcode`).
+    fn add_blip(&mut self, target: BlipTarget) -> GameResult<BlipRef> {
+        let BlipTarget::Coord { pos, sprite, short_range, contact_point } = target else {
+            return Err(GameError::Unsupported("WorldEntities::add_blip (entity)"));
+        };
+        let f = ScriptArg::Float;
+        let opcode = crate::worldents::coord_blip_opcode(short_range, contact_point);
+        self.run_op_out(opcode, &[f(pos.x), f(pos.y), f(pos.z), ScriptArg::Int(i32::from(sprite)), ScriptArg::Local(0)]).map(BlipRef)
     }
 
     /// `REMOVE_BLIP` (0164) with the blip's script handle.
@@ -200,5 +227,32 @@ impl<M: Memory> WorldEntities for OriginalGame<M> {
 
     fn set_blip_display(&mut self, _b: BlipRef, _display: i32) -> GameResult<()> {
         Err(GameError::Unsupported("WorldEntities::set_blip_display"))
+    }
+
+    /// The zone record samp's radar hook draws (worldhooks), the colours back in the wire's byte order.
+    #[cfg(windows)]
+    fn show_radar_area(&mut self, id: u16, area: &RadarArea) -> GameResult<()> {
+        let mut zone = crate::worldents::GangZone::new(area.min.0, area.min.1, area.max.0, area.max.1, area.colour.swap_bytes());
+        if let Some((flash, _)) = area.flash {
+            zone.flash = flash.swap_bytes();
+        }
+        crate::worldhooks::with_shared(|s| s.zones.insert(id, zone));
+        Ok(())
+    }
+
+    #[cfg(windows)]
+    fn hide_radar_area(&mut self, id: u16) -> GameResult<()> {
+        crate::worldhooks::with_shared(|s| s.zones.remove(&id));
+        Ok(())
+    }
+
+    #[cfg(not(windows))]
+    fn show_radar_area(&mut self, _id: u16, _area: &RadarArea) -> GameResult<()> {
+        Err(GameError::Unsupported("WorldEntities::show_radar_area"))
+    }
+
+    #[cfg(not(windows))]
+    fn hide_radar_area(&mut self, _id: u16) -> GameResult<()> {
+        Err(GameError::Unsupported("WorldEntities::hide_radar_area"))
     }
 }

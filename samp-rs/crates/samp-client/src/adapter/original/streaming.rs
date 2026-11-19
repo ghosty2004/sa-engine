@@ -8,6 +8,7 @@ use sa_samp_api::*;
 use sa_samp_api::script::ScriptArg;
 
 use super::OriginalGame;
+use crate::game;
 use super::script::backend_op;
 use crate::patch::Memory;
 use crate::script::op;
@@ -50,8 +51,17 @@ pub mod calls {
 }
 
 impl<M: Memory> Streaming for OriginalGame<M> {
-    fn model_kind(&self, _model: ModelId) -> ModelKind {
-        ModelKind::None
+    /// Whether the model has model info (`CModelInfo::ms_modelInfoPtrs`): a ped model by its vtable, any other as
+    /// `Atomic` (the client only asks whether the model exists).
+    fn model_kind(&self, model: ModelId) -> ModelKind {
+        if !(0..game::MODEL_INFO_COUNT as i32).contains(&model.0) {
+            return ModelKind::None;
+        }
+        match self.mem.read_u32(game::MODEL_INFO_PTRS + 4 * model.0 as u32) {
+            Ok(0) | Err(_) => ModelKind::None,
+            Ok(info) if self.mem.read_u32(info).ok() == Some(game::VTBL_PED_MODEL_INFO) => ModelKind::Ped,
+            Ok(_) => ModelKind::Atomic,
+        }
     }
 
     /// `REQUEST_MODEL` (0247).

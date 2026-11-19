@@ -124,6 +124,13 @@ impl<M: Memory> OriginalGame<M> {
     pub(super) fn run_op(&mut self, op: u16, args: &[ScriptArg<'_>]) -> GameResult<bool> {
         backend_op(op, args)
     }
+
+    /// Like [`Self::run_op`] for a command whose output parameter is `ScriptArg::Local(0)`: that local afterwards.
+    pub(super) fn run_op_out(&mut self, op: u16, args: &[ScriptArg<'_>]) -> GameResult<u32> {
+        backend_op(op, args)?;
+        let t = BACKEND_THREAD.load(std::sync::atomic::Ordering::Relaxed);
+        with_thread(ScriptThreadRef(t), |th| th.local(0))
+    }
 }
 
 /// A new thread in the table (handle = index + 1).

@@ -72,6 +72,19 @@ pub enum CheckpointKind {
     },
 }
 
+/// A world rectangle drawn on the radar and the map (`CRadar::DrawAreaOnRadar` 0x5853D0; samp's gang zones).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct RadarArea {
+    /// Lower x / y corner.
+    pub min: (f32, f32),
+    /// Upper x / y corner.
+    pub max: (f32, f32),
+    /// Colour, `0xRRGGBBAA`.
+    pub colour: u32,
+    /// The colour it alternates with (`0xRRGGBBAA`) and the period in milliseconds.
+    pub flash: Option<(u32, u32)>,
+}
+
 /// Weather and time.
 pub trait WorldState {
     /// Game clock hours and minutes (`CClock::ms_nGameClockHours/Minutes` 0xB70153/0xB70152).
@@ -124,8 +137,7 @@ pub trait WorldState {
     fn load_shop(&mut self, name: &str) -> GameResult<()>;
 }
 
-/// Pickups, checkpoints and blips. Gang zones are drawn by samp-rs through
-/// [`crate::hooks::GameHooks::radar_overlay`].
+/// Pickups, checkpoints, blips and radar areas.
 pub trait WorldEntities {
     /// `CREATE_PICKUP` (0213).
     fn create_pickup(&mut self, model: ModelId, kind: i32, pos: Vec3) -> GameResult<PickupRef>;
@@ -136,14 +148,17 @@ pub trait WorldEntities {
     fn pickup_collected(&self, p: PickupRef) -> GameResult<bool>;
     /// Index of a pickup in the game's array (samp sends it; `CPickups::aPickUps` 0x9788C0).
     fn pickup_index(&self, p: PickupRef) -> GameResult<u16>;
+    /// Whether the local player stands where `CPickup::Update` picks the pickup up (the state samp's collision
+    /// hook at 0x4579C6 sees), for hosts that cannot hook that site.
+    fn pickup_touched(&self, p: PickupRef) -> GameResult<bool>;
 
     /// Creates a checkpoint.
     fn create_checkpoint(&mut self, kind: CheckpointKind, pos: Vec3, size: f32) -> GameResult<CheckpointRef>;
     /// `DELETE_CHECKPOINT` (06D6).
     fn delete_checkpoint(&mut self, c: CheckpointRef) -> GameResult<()>;
-    /// `LOCATE_CHAR_ANY_MEANS_3D` (00FE): is the ped within `radius` (box) of `pos`, optionally drawing the
-    /// marker.
-    fn locate_ped(&self, ped: PedRef, pos: Vec3, radius: Vec3) -> GameResult<bool>;
+    /// `LOCATE_CHAR_ANY_MEANS_3D` (00FE): is the ped within `radius` (box) of `pos`; `marker` also places the
+    /// game's area marker there for this frame.
+    fn locate_ped(&mut self, ped: PedRef, pos: Vec3, radius: Vec3, marker: bool) -> GameResult<bool>;
 
     /// Adds a blip.
     fn add_blip(&mut self, target: BlipTarget) -> GameResult<BlipRef>;
@@ -155,4 +170,9 @@ pub trait WorldEntities {
     fn set_blip_scale(&mut self, b: BlipRef, scale: i32) -> GameResult<()>;
     /// `CHANGE_BLIP_DISPLAY` (018B).
     fn set_blip_display(&mut self, b: BlipRef, display: i32) -> GameResult<()>;
+
+    /// Shows radar area `id` (drawn in id order where the game draws its gang areas), replacing one of that id.
+    fn show_radar_area(&mut self, id: u16, area: &RadarArea) -> GameResult<()>;
+    /// Removes radar area `id`.
+    fn hide_radar_area(&mut self, id: u16) -> GameResult<()>;
 }

@@ -141,6 +141,8 @@ pub const MODEL_INFO_PTRS: u32 = 0xA9B0C8;
 pub const MODEL_INFO_COUNT: u32 = 20001;
 /// `CPedModelInfo` vtable; a ped model's info has it.
 pub const VTBL_PED_MODEL_INFO: u32 = 0x85BDC0;
+/// `CPlaceable` vtable (left in an entity after its destructor ran).
+pub const VTBL_PLACEABLE: u32 = 0x863C40;
 /// `CWorld::PlayerInFocus` (u8).
 pub const PLAYER_IN_FOCUS: u32 = 0xB7CD74;
 /// `CStats::StatTypesFloat[69..79]` (weapon skills, 11 floats).

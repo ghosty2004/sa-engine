@@ -86,8 +86,9 @@ pub const ENTITY_FLAG_LIGHTING: u32 = 0x1000_0000;
 /// What a hook asks the client to do in the next tick.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Event {
-    /// The collision path reported pickup `id` (RPC 131, rel 9).
-    PickupHit(i32),
+    /// The local player touched the pickup at this index of the game's pickup array (samp's collision path,
+    /// RPC 131 rel 9, when it is one of the server's).
+    PickupTouched(u32),
 }
 
 /// A material slot as the render hooks apply it (samp keeps texture and colour at object +0x217 / +0x257;
@@ -155,9 +156,6 @@ pub struct Shared {
     pub zones: BTreeMap<u16, GangZone>,
     pub flash: FlashPhase,
     pub removals: Vec<Removal>,
-    /// GTA pickup index → samp pickup id, and the per-id collision cooldown.
-    pub pickups: HashMap<u32, i32>,
-    pub cooldown: HashMap<i32, u32>,
     pub colours: Option<crate::ui::colours::PlayerColours>,
     pub attached: Vec<Attached>,
     pub events: Vec<Event>,

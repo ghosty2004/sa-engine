@@ -190,12 +190,13 @@ calls the ported opcode handler (or a direct port of what the handler does).
 | `set_max_wanted_level`, `set_densities`, `switch_roads_off`, `set_random_trains`, `set_restart_point` | `scm.rs`, `client.rs` | opcodes 01F0, 03DE, 01EB, 01E8, 06D7, 016C; samp A also writes the restart block 0xA4326C… | opcode | ported handlers |
 | `ground_z`, `line_of_sight`, `line_clear` | `client.rs`, `client/gta.rs`, `entities.rs` | opcode 02CE, `CWorld::ProcessLineOfSight` 0x56BA00, opcode 06BD (missing from samp-rs's list, dynamic.md §4) | opcode/call | `CWorld` port (sector relocation not needed natively) |
 | `add_explosion`, `create_fx`, `kill_fx`, `load_shop` | `combatclient.rs`, `specials.rs`, `behaviourclient.rs` | opcodes 0948, 066A, 064C, 0650; `CShopping::LoadShop` 0x49BBE0 | opcode/call | ports |
-| pickups: `create_pickup`, `remove_pickup`, `pickup_collected`, `pickup_index` | `entities.rs`, `worldents.rs`, `worldhooks/pickups.rs` | opcodes 0213, 0215, 0214, `CPickups::aPickUps` 0x9788C0, `CPickup::IsVisible` patch 0x454CC9 | opcode + hook | ports |
-| checkpoints: `create_checkpoint`, `delete_checkpoint`, `locate_ped` | `entities.rs` | opcodes 06D5, 06D6, 00FE | opcode | ported handlers |
+| pickups: `create_pickup`, `remove_pickup`, `pickup_collected`, `pickup_index`, `pickup_touched` | `serverworld.rs`, `worldents.rs`, `worldhooks/pickups.rs` | opcodes 0213, 0215, 0214, `CPickups::aPickUps` 0x9788C0, `CPickup::IsVisible` patch 0x454CC9; the collision hook 0x4579C6 (the mod: `pickup_touched`, the same test between frames) | opcode + hook | ports |
+| checkpoints: `create_checkpoint`, `delete_checkpoint`, `locate_ped` | `serverworld.rs` | opcodes 06D5, 06D6, 00FE | opcode | ported handlers |
 | blips: `add_blip`, `remove_blip`, `set_blip_colour/scale/display` | `players.rs`, `entities.rs`, `worldents.rs` | opcodes 0187, 0161, 02A8, 04CE, 02A7, 0570, 0164, 0165, 0168, 018B | opcode | `CRadar` port |
 
-Gang zones are not an adapter method: samp-rs draws them itself from `GameHooks::radar_overlay` through
-a `RadarPainter` (`CRadar::DrawAreaOnRadar` 0x5853D0), as it does today.
+Gang zones are radar areas (`show_radar_area`, `hide_radar_area`; `serverworld.rs` keeps the records): the original
+backend hands them to samp-rs's own radar hook (`worldhooks/radar.rs`, `CRadar::DrawAreaOnRadar` 0x5853D0 in place of
+the gang overlay), the mod to the mod API's radar areas, which the engine draws after `CRadar::DrawRadarGangOverlay`.
 
 ### 4.5 Camera (`camera::Camera`)
 

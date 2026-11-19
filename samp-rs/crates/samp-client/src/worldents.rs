@@ -97,13 +97,24 @@ pub mod op {
     pub const ADD_SPRITE_BLIP_FOR_CONTACT_POINT: u16 = 0x02A7;
 }
 
-/// Blip opcode of a map icon style (world-entities.md, "56 SetPlayerMapIcon").
-pub fn map_icon_opcode(style: u8) -> u16 {
+/// The blip of a map icon style as (short range, contact point) (world-entities.md, "56 SetPlayerMapIcon": style 0
+/// SCM 0x04CE, 1 0x02A8, 2 0x0570, 3 0x02A7, anything else 0x04CE).
+pub fn map_icon_style(style: u8) -> (bool, bool) {
     match style {
-        1 => op::ADD_SPRITE_BLIP_FOR_COORD,
-        2 => op::ADD_SHORT_RANGE_SPRITE_BLIP_FOR_CONTACT_POINT,
-        3 => op::ADD_SPRITE_BLIP_FOR_CONTACT_POINT,
-        _ => op::ADD_SHORT_RANGE_SPRITE_BLIP_FOR_COORD,
+        1 => (false, false),
+        2 => (true, true),
+        3 => (false, true),
+        _ => (true, false),
+    }
+}
+
+/// The blip opcode of a coordinate blip: short range or global, contact point or not.
+pub fn coord_blip_opcode(short_range: bool, contact_point: bool) -> u16 {
+    match (short_range, contact_point) {
+        (true, false) => op::ADD_SHORT_RANGE_SPRITE_BLIP_FOR_COORD,
+        (false, false) => op::ADD_SPRITE_BLIP_FOR_COORD,
+        (true, true) => op::ADD_SHORT_RANGE_SPRITE_BLIP_FOR_CONTACT_POINT,
+        (false, true) => op::ADD_SPRITE_BLIP_FOR_CONTACT_POINT,
     }
 }
 
@@ -431,11 +442,15 @@ mod tests {
 
     #[test]
     fn map_icons() {
-        assert_eq!(map_icon_opcode(0), 0x04CE);
-        assert_eq!(map_icon_opcode(1), 0x02A8);
-        assert_eq!(map_icon_opcode(2), 0x0570);
-        assert_eq!(map_icon_opcode(3), 0x02A7);
-        assert_eq!(map_icon_opcode(9), 0x04CE);
+        let opcode = |style| {
+            let (short, contact) = map_icon_style(style);
+            coord_blip_opcode(short, contact)
+        };
+        assert_eq!(opcode(0), 0x04CE);
+        assert_eq!(opcode(1), 0x02A8);
+        assert_eq!(opcode(2), 0x0570);
+        assert_eq!(opcode(3), 0x02A7);
+        assert_eq!(opcode(9), 0x04CE);
         assert_eq!(map_icon_scale(5), 2);
         assert_eq!(map_icon_scale(0xFF00_00FF), 3);
         assert_eq!(map_icon_scale(1004), 3);

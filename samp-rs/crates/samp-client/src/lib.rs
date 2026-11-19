@@ -33,6 +33,7 @@ pub mod remote;
 pub mod saafs;
 pub mod scm;
 pub mod scmops;
+pub mod serverworld;
 pub mod script;
 pub mod sectors;
 pub mod specials;
