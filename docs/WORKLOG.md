@@ -4876,3 +4876,25 @@
   (`crashes/crash-SECS.txt`: fault, call chain, mods' last log lines); the auth table built into samp-proto.
 - Verified: mod-join.sh standard, world, objects scenarios; the pool limits verify-all IDENTICAL 13/13.
 
+## 2026-11-19 — MOD-2: the SA:MP mod's game adapter for vehicles, peds, camera and world effects (agent, worktree)
+- Mod API (level after 1.9, numbered at integration): `set_gravity` (GAME_GRAVITY through the engine's image writer:
+  `sa_core::orig::registry::set_image_writer`, sa-game `arena::write_image`, `View::write_image`), `vehicle_class`,
+  `vehicle_damage` / `set_vehicle_damage` (damage manager + `CAutomobile::SetupDamageAfterLoad`, new sa-core binding),
+  `set_vehicle_speed`, `set_ped_speed`, `set_float_stat`; 41 script commands (vehicle tuning, doors, trains, trailers,
+  engine / lights, gear, camera point-at and scripted moves, explosions, ground z, jetpack, look-at, melee style,
+  phone, weapon slots, radio, shops, fire) with `Game::refused_arguments` guards (class / index checks the handlers
+  lack); the host restores the gravity when it disables the mod.
+- samp mod adapter (`mods/samp/src/game.rs`): 47 more methods implemented (vehicles, peds, camera, world,
+  streaming components and animation blocks); `Unsupported` left: see the hand-back.
+- samp-rs: `sa-samp-api` gained `Camera::reset_scripted_moves` / `persist_position`, `Peds::set_fighting_style`,
+  `WorldState::set_float_stat` (default Unsupported; the original backend implements them, plus `add_component`).
+  Shared rules for both hosts: `vehicle.rs` (params, doors, windows, colours, damage repair, paintjobs, alarm),
+  `behaviour.rs` (interpolation cut, find-z height, shop name, widescreen line, melee moves), `combat.rs` (weapon
+  skill stat, explosion shake bits), `vehops.rs` (add-component sequence), `camops.rs` (RPC 157 / 158 / 162); the DLL
+  client calls them. The hosted client applies every vehicle RPC, session 98 / 161 and player RPCs 13, 33, 34, 48,
+  79, 82, 89, 90, 111, 146, special action 2 (`hosted/vehicles.rs`).
+- Verified: A/B on the same scenario (`tools/e2e/samp/adapter.cmds`, new sampcov commands): `samp-rs-ab.sh` LANE=6
+  (DLL client on the original exe under Wine) vs `mod-join.sh` (goal 4/4 PASS); screenshots side by side
+  (target/cmp in the worktree): colours, removed doors, repair, bonnet, explosion, camera moves, behind-player,
+  widescreen match; differences in the divergence ledger. Tests: sa-access (4 new), sa-mod-api / sa-mod-host,
+  samp-client lib (212, 3 new), clippy samp-client host + i686-pc-windows-gnu, the writer gate.
