@@ -4866,3 +4866,13 @@
   turn, the stop, the deletion, the object on the player at z 16.34, the rifle on the spine 0.2-0.3 behind the
   player), the screenshots match but for the colour material slots (black on the mod; divergence ledger). Unit tests:
   sa-access, sa-mod-api, sa-mod-host (objects_and_models), samp-client worldents (motion, bone placement).
+
+## 2026-11-19 — SA:MP mod: fixes from live play (main session)
+- Crashes the user hit on real servers, each reproduced with mod-join.sh, fixed, re-run: AddPed NULL under ambient
+  peds off (densities 0 before the join, then every frame), wanted level 4 in Las Venturas from the story script
+  (cap 0 every frame), unknown anim block (sa-access refuses it), undefined model 18631+ (refused), stale output
+  variable read by ADD_BLIP_FOR_* (local 0 zeroed), pools full (limits API, samp.dll's sizes incl. objects 3000).
+- The window releases the pointer while a mod takes the mouse (dialogs, scoreboard); crash reports
+  (`crashes/crash-SECS.txt`: fault, call chain, mods' last log lines); the auth table built into samp-proto.
+- Verified: mod-join.sh standard, world, objects scenarios; the pool limits verify-all IDENTICAL 13/13.
+

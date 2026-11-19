@@ -1,4 +1,22 @@
-# Where to continue (state at 2026-11-14)
+# Where to continue (state at 2026-11-19)
+
+**master** (`git log -1`): every catalogued function runs in Rust natively but the MatFX bump render
+(0x814460 / 0x8149E0); the game runs without gta_sa.exe (`--image builtin`, ADR-005); the mod API is at 1.11
+(ADR-004, docs/mods/api.md); SA:MP is the `mods/samp` mod (server browser, join, sync, world entities, objects,
+restart / reconnect, samp.dll's pool sizes, built-in auth table). sa-game writes `crashes/crash-SECS.txt` on a fault.
+
+Waiting (worktrees under `.claude/worktrees/`, work uncommitted unless noted):
+- SA:MP game adapter (vehicles, peds, camera, world): committed, rebased as branch `int-ad` (API 1.11); merges after
+  its verify-all and gate.
+- Crash hunt: the original's address space for harmless reads, validation of every mod-reachable command, soak runs.
+- samp.dll patch parity: game options for samp's remaining patches (stunt bonus, SP pickups, HUD, story script).
+- Data mods: a mod's own IMG / IDE / IPL / TXD / IFP files (SA:MP's models 18631+ and the SAMP anim library).
+Open beyond those: menus on the mod (GXT entries), mission trains, a paintjob texture difference, MatFX bump,
+the photo front-buffer read-back, user tracks / WAV, verification promotion.
+
+---
+
+Earlier state (2026-11-14):
 
 **Newest tree = branch `worktree-agent-ab80f5d4fe8147e79` (INTRO-2, docs/verify/integration-intro2.md): master
 `97e55daf` + AUDIO-STREAM + INTRO-1 + SCRIPT-5 + the intro ports up to the BMX ride; verify-all IDENTICAL 13/13;

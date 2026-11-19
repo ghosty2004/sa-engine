@@ -111,7 +111,7 @@ re/snapshots/…                   Ghidra snapshot
 re/gta-reversed/                 gta-reversed, pinned at 20d8d2a (reading aid)
 re/samp/client/                  your SA:MP 0.3.7-R4 client files (samp.dll, samp.saa, sampgui.png, …)
 re/samp/server/                  an open.mp 1.6.7 server copy for local tests
-re/samp/auth_table.txt           SA:MP's 256-entry auth-key table (tools/e2e/samp/*; AUTH_TABLE overrides)
+re/samp/auth_table.txt           optional: an auth-key table replacing the built-in one (AUTH_TABLE)
 re/samp/gta-patches-r4-annotated.csv  samp.dll's patch list (docs/samp/samp_usage.py; also read from samp-rs/docs/re/data/)
 wine/prefix/                     the Wine prefix (DXVK installed)
 wine/gta-sa/                     the game copy: gta_sa.exe 1.0 US + data (incl. the install's vorbisFile.dll)
@@ -360,17 +360,15 @@ Practical rules learned the hard way:
 
 ## 9. Where the work stands and what is next
 
-**Read [CONTINUE.md](CONTINUE.md) first** — it is kept current at every hand-off. As of 2026-11-12:
+**Read [CONTINUE.md](CONTINUE.md) first** — it is kept current at every hand-off. As of 2026-11-19:
 
-- **master** (verified IDENTICAL on all 13 recordings): the native Linux game (walking, sprint, jump, fists,
-  window loop, deterministic mode, traffic, shadows), ~84 % of the exe's functions written in Rust, 34 % verified
-  at L2/L3, SA:MP read side, the proxy.
-- **Integration branch `worktree-agent-ac8a20a070c956b08` (`7fc5980a`, also verified 13/13)**: everything above
-  plus the browser build, driving, climbing, SA:MP natively and in the browser (join, SA:MP loading screen,
-  class selection, spawn, chat/dialogs/UI), browser audio. It still has to be combined with master's last
-  verification commits — that is step 1 in CONTINUE.md.
-- Other branches listed in CONTINUE.md hold the intro mission (New Game runs the real intro cutscene),
-  streamed audio, script callees for the first missions, SA:MP skins/animations/weapons, more WORLD/weapon ports.
+- Every catalogued function runs in Rust natively but the MatFX bump render (0x814460 / 0x8149E0); verification
+  promotion (L2/L3 per function) is the long tail (`catalog/verify-queue.csv`).
+- The game runs without gta_sa.exe (`--image builtin`, the default when the exe is absent; ADR-005).
+- Mods (ADR-004, `docs/mods/api.md`, API 1.11): overlays and display, state and events, entities and script
+  commands, sockets and storage, HTTP GET, markers and radar areas, objects and models, the game's limits, vehicles.
+- SA:MP is the `mods/samp` mod (docs/samp/README.md): server browser, join, sync, world entities, objects,
+  restart / reconnect; open gaps are in docs/ROADMAP.md (MOD-2 and the divergence ledger).
 
 Live numbers: `catalog/progress.md` (`python3 tools/catalog/progress.py`), `catalog/verify-queue.csv`.
 
@@ -400,6 +398,7 @@ These are binding (from the project owner, see [CLAUDE.md](../CLAUDE.md) and ROA
 
 | symptom | cause / fix |
 |---|---|
+| sa-game exits with `SIGSEGV ... phase B does not provide` | read the report it wrote (`crashes/crash-SECS.txt` next to the executable, or `SA_GAME_CRASH_DIR`): the fault, the Rust call chain and the mods' last log lines |
 | `cargo test -p sa-hook --lib` fails "X overlaps X" / "unverified_selection" | an address is registered twice (two branches ported the same function). Keep one. |
 | native run stops: "calls unported NAME (0xADDR)" / "the same failure three times in a row" | a phase B blocker: port that function (or stub it for exploration with `SA_GAME_STUB`) |
 | `sa-game --window` fails to open | 32-bit X11 libraries missing (§2); use `LD_LIBRARY_PATH` to a folder with them |

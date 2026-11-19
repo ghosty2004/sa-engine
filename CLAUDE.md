@@ -1,7 +1,8 @@
 # sa-engine
 
-A Rust reimplementation of GTA San Andreas (`gta_sa.exe` 1.0 US) that aims for 1:1 behaviour. It will later
-also build for WebAssembly, and it hosts the Rust SA:MP client samp-rs, which lives in this repository in `samp-rs/`.
+A Rust reimplementation of GTA San Andreas (`gta_sa.exe` 1.0 US) that aims for 1:1 behaviour, natively and for
+WebAssembly (browser), with or without the user's exe (built-in image, ADR-005). Extras come as WebAssembly mods
+(ADR-004); SA:MP is one of them (`mods/samp`, running the Rust SA:MP client samp-rs from `samp-rs/`).
 
 ## Read first
 - `docs/PLAN.md`: strategy, oracle levels, definition of done.
@@ -13,7 +14,8 @@ also build for WebAssembly, and it hosts the Rust SA:MP client samp-rs, which li
 - gta-reversed (`re/gta-reversed`, pinned at `20d8d2a`) **may be used as a source of code**: port its C++ to Rust.
   For functions it has not reversed (`.Reversed = false`, `plugin::Call*`, raw thunks, RenderWare), we
   analyse the original ourselves with REA/Ghidra.
-- Scope: the **complete single-player game**. The user will later adapt it to samp-rs.
+- Scope: the **complete single-player game**; the engine stays strictly GTA SA, multiplayer and other extras are
+  mods on the generic mod API (user, 2026-11-18).
 - Target binary: `gta_sa.exe` **1.0 US**, at `re/gta/1.0-US/gta_sa.exe` (sha256 `a559aa77…cbd26`).
   Ghidra snapshot: `re/snapshots/gta_sa_1.0US.snapshot`. `re/` is gitignored and holds our own copies.
 
