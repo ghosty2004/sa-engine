@@ -260,7 +260,7 @@ Sections: *pending* (blocks "done") · *original UB, not reproducible* · *accep
   Successful writes are unaffected. Not reached by the corpus (PNG screenshots are not taken). This holds for the
   parity build (phase A); in phase B the libpng entry points are served by the `png` crate (PURE-1 step 1f, entry
   "Third-party code in phase B"), so an error no longer jumps anywhere and only the NULL return differs.
-- MOD-2 SA:MP mod, world RPCs and the connection lifecycle (API 1.9; reference: the DLL client on the original exe under
+- MOD-2 SA:MP mod, world RPCs and the connection lifecycle (API 1.8; reference: the DLL client on the original exe under
   Wine, `tools/e2e/samp/samp-rs-ab.sh SCENARIO=world` against `mod-join.sh SCENARIO=world`, same server events up to
   timing): (1) samp's pickup collision path is its hook in `CPickup::Update` (0x4579C6); the mod tests the same
   condition between frames (`pickup_touched`), so a report can come a frame earlier or later, and while the player

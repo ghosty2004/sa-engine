@@ -4816,8 +4816,8 @@
   1920x1080 with mouse), unit tests of sa-mod-api, sa-mod-host (incl. a local HTTP GET), the samp mod and samp-proto.
   The test list is a local fixture; no public server contacted.
 
-## 2026-11-19 — MOD-2: the samp mod's world RPCs, server restart and reconnect (API 1.9) (agent, worktree)
-- API 1.9 (ADR-004 §4.1e, docs/mods/api.md level 9): owned pickups (`create_pickup` / `destroy_pickup`,
+## 2026-11-19 — MOD-2: the samp mod's world RPCs, server restart and reconnect (API 1.8) (agent, worktree)
+- API 1.8 (ADR-004 §4.1f, docs/mods/api.md level 8): owned pickups (`create_pickup` / `destroy_pickup`,
   `pickup_collected`, `pickup_touched`: the pick-up test of `CPickup::Update` read between frames), checkpoint markers
   (`create_checkpoint` / `destroy_checkpoint`, `CREATE_CHECKPOINT`), coordinate and entity blips with colour, scale and
   display, radar areas (`set_radar_area` / `flash_radar_area` / `remove_radar_area`, drawn by the host with

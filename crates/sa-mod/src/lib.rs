@@ -790,7 +790,7 @@ pub mod entities {
 }
 
 /// Pickups, checkpoint markers and radar blips the mod creates and owns (permission `entities = true`; the reads
-/// `state = "read"`; API 1.9): removed by the host when the mod is disabled. Not inside a hook.
+/// `state = "read"`; API 1.8): removed by the host when the mod is disabled. Not inside a hook.
 pub mod markers {
     use super::*;
     pub use sa_mod_api::sa_types::{BlipRef, CheckpointRef, PickupRef};
@@ -856,7 +856,7 @@ pub mod markers {
     }
 }
 
-/// Radar areas (permission `render = true`; API 1.9): world rectangles drawn on the radar and the map, in id order.
+/// Radar areas (permission `render = true`; API 1.8): world rectangles drawn on the radar and the map, in id order.
 pub mod radar {
     use super::*;
 
