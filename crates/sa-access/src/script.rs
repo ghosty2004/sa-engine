@@ -343,6 +343,10 @@ impl<V: View> Game<V> {
                 t
             }
         };
+        // Some commands read their output variable before writing it (the ADD_BLIP_FOR_* handlers look up the
+        // blip it holds and drop the result); a stale handle from an earlier command would index past the
+        // radar traces, which the original's address space happens to map and this one does not.
+        self.threads.get_mut(t)?.set_local(0, 0);
         self.threads.run(t, Opcode(op), args)
     }
 
