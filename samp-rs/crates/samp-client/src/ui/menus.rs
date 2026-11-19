@@ -80,21 +80,14 @@ pub fn set_gxt(menu: Option<&Menu>) {
     let mut g = GXT.lock().unwrap_or_else(|e| e.into_inner());
     g.clear();
     let Some(m) = menu else { return };
-    let mut keys: Vec<&str> = vec!["HED", "RW1", "RW2"];
-    for c in 0..2 {
-        for k in samp_ui::menu::CELL_KEYS[c] {
-            keys.push(&k[4..]);
-        }
-    }
-    for k in keys {
-        if let Some(t) = m.gxt(k.as_bytes()) {
-            let mut key = [0u8; 8];
-            key[..k.len()].copy_from_slice(k.as_bytes());
-            let mut buf = Box::new([0u8; 40]);
-            let n = t.len().min(39);
-            buf[..n].copy_from_slice(&t[..n]);
-            g.push((key, buf));
-        }
+    for (k, t) in m.texts() {
+        let k = &k.as_bytes()[4..];
+        let mut key = [0u8; 8];
+        key[..k.len()].copy_from_slice(k);
+        let mut buf = Box::new([0u8; 40]);
+        let n = t.len().min(39);
+        buf[..n].copy_from_slice(&t[..n]);
+        g.push((key, buf));
     }
 }
 

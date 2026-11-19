@@ -134,9 +134,7 @@ const PEDSTATE_SNIPER: u32 = 12;
 const PEDSTATE_DRIVING: u32 = 50;
 /// GTA's passenger state (passengers normally show 50 as well; accepted for safety).
 const PEDSTATE_PASSENGER: u32 = 51;
-/// GTA's dying and dead ped states.
-const PEDSTATE_DIE: u32 = 54;
-const PEDSTATE_DEAD: u32 = 55;
+use crate::death::{PEDSTATE_DEAD, PEDSTATE_DIE};
 
 fn send<P: OutgoingRpc>(net: &mut NetClient, p: &P) {
     net.send_rpc(p, P::RELIABILITY);

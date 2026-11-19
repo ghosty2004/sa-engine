@@ -124,16 +124,4 @@ impl<M: Memory> Text2d for OriginalGame<M> {
     }
 }
 
-impl<M: Memory> Menus for OriginalGame<M> {
-    fn show_menu(&mut self, _menu: &MenuSpec) -> GameResult<MenuRef> {
-        Err(GameError::Unsupported("Menus::show_menu"))
-    }
-
-    fn menu_selection(&self, _menu: MenuRef) -> GameResult<i32> {
-        Err(GameError::Unsupported("Menus::menu_selection"))
-    }
-
-    fn delete_menu(&mut self, _menu: MenuRef) -> GameResult<()> {
-        Err(GameError::Unsupported("Menus::delete_menu"))
-    }
-}
+impl<M: Memory> Menus for OriginalGame<M> {}

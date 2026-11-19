@@ -47,6 +47,19 @@ pub trait Vehicles {
     fn set_vehicle_speed(&mut self, v: VehicleRef, move_speed: Vec3, turn_speed: Vec3) -> GameResult<()>;
     /// `SET_CAR_HEADING` (0175).
     fn set_vehicle_heading(&mut self, v: VehicleRef, heading_deg: f32) -> GameResult<()>;
+    /// Creates a mission train of `CTrain` type `kind` on the track nearest to `pos` (`CREATE_MISSION_TRAIN` 06D8,
+    /// `CTrain::CreateMissionTrain` 0x6F7550); returns its first carriage.
+    fn create_train(&mut self, _kind: i32, _pos: Vec3, _clockwise: bool) -> GameResult<VehicleRef> {
+        Err(crate::GameError::Unsupported("Vehicles::create_train"))
+    }
+    /// Deletes the train whose first carriage is `first`, every carriage (`DELETE_MISSION_TRAIN` 07BD).
+    fn destroy_train(&mut self, _first: VehicleRef) -> GameResult<()> {
+        Err(crate::GameError::Unsupported("Vehicles::destroy_train"))
+    }
+    /// The carriages of the train whose first carriage is `first`, `first` first (`CTrain::m_pNextCarriage` +0x5D4).
+    fn train_carriages(&self, _first: VehicleRef) -> GameResult<Vec<VehicleRef>> {
+        Err(crate::GameError::Unsupported("Vehicles::train_carriages"))
+    }
     /// `SET_MISSION_TRAIN_COORDINATES` (07C7).
     fn set_train_position(&mut self, v: VehicleRef, pos: Vec3) -> GameResult<()>;
     /// Writes the train speed.

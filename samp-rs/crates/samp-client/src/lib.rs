@@ -17,6 +17,7 @@ pub mod combat;
 pub mod cmdline;
 pub mod control;
 pub mod crash;
+pub mod death;
 pub mod footsync;
 pub mod frametimer;
 pub mod game;

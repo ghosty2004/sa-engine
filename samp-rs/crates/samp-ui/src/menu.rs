@@ -118,6 +118,19 @@ impl Menu {
             .find(|&(r, c)| rest == &CELL_KEYS[c][r].as_bytes()[4..])
             .map(|(r, c)| self.cells[c][r].as_slice())
     }
+
+    /// Every text of the menu by its whole key (`SAMPHED`, `SAMPRW1`, `SAMPRW2`, then the cells row by row), the
+    /// texts samp's `CText::Get` hook answers while the menu is current.
+    pub fn texts(&self) -> Vec<(&'static str, &[u8])> {
+        let mut out = vec![(TITLE_KEY, self.title.as_slice())];
+        out.extend(HEADER_KEYS.iter().zip(&self.headers).map(|(k, t)| (*k, t.as_slice())));
+        for r in 0..MAX_MENU_ITEMS {
+            for (keys, cells) in CELL_KEYS.iter().zip(&self.cells) {
+                out.push((keys[r], cells[r].as_slice()));
+            }
+        }
+        out
+    }
 }
 
 /// One `SET_MENU_COLUMN` + `SET_MENU_COLUMN_WIDTH` pair.

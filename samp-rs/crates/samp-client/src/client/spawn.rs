@@ -10,7 +10,8 @@ use samp_proto::raknet::Reliability;
 use samp_proto::rpcs::player;
 
 use super::gta::{async_key_down, entity_pos, poke, set_hud};
-use super::{Client, PEDSTATE_DEAD, PEDSTATE_DIE};
+use super::Client;
+use crate::death::{Life, LifeStep};
 use crate::adapter::original::process;
 use crate::classsel;
 use crate::game::{self, off};
@@ -29,13 +30,7 @@ impl Client {
     /// RPC 68 / 128 spawn block, with the client's range check (docs/re/subsystems/player-state.md,
     /// "68 SetSpawnInfo").
     pub(super) fn store_spawn_info(&mut self, s: player::SpawnInfo) {
-        let ok = s.pos.x > -20000.0
-            && s.pos.x < 20000.0
-            && s.pos.y > -20000.0
-            && s.pos.y < 20000.0
-            && s.pos.z > -10000.0
-            && s.pos.z < 100000.0;
-        if ok {
+        if crate::death::spawn_info_in_range(s.pos.x, s.pos.y, s.pos.z) {
             self.spawn_info = Some(s);
         } else {
             crate::log!("client: spawn info out of range ignored: {:?}", s.pos);
@@ -184,34 +179,36 @@ impl Client {
             return;
         }
         let mem = ProcessMemory;
-        let st = mem.read_u32(ped + off::PED_STATE).unwrap_or(0);
-        let health = mem.read_f32(ped + off::PED_HEALTH).unwrap_or(0.0);
-        if self.spawned {
-            if (!self.dead && st == PEDSTATE_DIE) || health <= 0.0 {
-                self.on_local_death(ped, now);
-            }
-            return;
+        let life = Life {
+            spawned: self.spawned,
+            dead: self.dead,
+            ped_state: mem.read_u32(ped + off::PED_STATE).unwrap_or(0),
+            health: mem.read_f32(ped + off::PED_HEALTH).unwrap_or(0.0),
+            spawn_info: self.spawn_info.is_some(),
+            force_class_selection: self.force_class_selection,
+            connected: self.netgame.connected(),
+        };
+        let step = life.step();
+        if matches!(step, LifeStep::Reviving | LifeStep::Respawn | LifeStep::ClassSelection) {
+            // Cuffs off; the jetpack does not exist here.
+            self.combat.cuffs.cuffed = false;
+            self.combat.publish_masks();
         }
-        // Dead: wait until GTA's wasted sequence has ended (ped state no longer 54/55).
-        if st == PEDSTATE_DIE || st == PEDSTATE_DEAD {
-            return;
-        }
-        // Cuffs off; the jetpack does not exist here.
-        self.combat.cuffs.cuffed = false;
-        self.combat.publish_masks();
-        let connected = self.netgame.connected();
-        if self.spawn_info.is_some() && !self.force_class_selection && connected {
-            if health > 0.0 {
+        match step {
+            LifeStep::Died => self.on_local_death(ped, now),
+            LifeStep::Respawn => {
                 self.dead = false;
                 crate::log!("client: respawn after death");
                 self.spawn();
             }
-            return;
+            LifeStep::ClassSelection => {
+                self.dead = false;
+                let count = self.class_count;
+                self.enter_class_selection(now, count);
+                self.force_class_selection = false;
+            }
+            LifeStep::Alive | LifeStep::Wasted | LifeStep::Reviving => {}
         }
-        self.dead = false;
-        let count = self.class_count;
-        self.enter_class_selection(now, count);
-        self.force_class_selection = false;
     }
 
     /// The death branch of the local tick: special states off, controllable, a driver's last 200, fires out,
@@ -250,19 +247,14 @@ impl Client {
 
     /// The last damaging entity against the pools (remote ped, pool vehicle with its remote driver).
     fn damager_of(&self, entity: u32) -> crate::combat::Damager {
-        use crate::combat::Damager;
-        if entity == 0 {
-            return Damager::None;
-        }
-        if let Some(p) = self.players.iter().find(|p| p.ped == entity) {
-            return Damager::Player(p.id);
-        }
-        if self.vehicles.hook_vehicles().iter().any(|v| v.0 == entity) {
-            let driver = ProcessMemory.read_u32(entity + off::VEHICLE_DRIVER).unwrap_or(0);
-            let id = if driver != 0 { self.players.iter().find(|p| p.ped == driver).map(|p| p.id) } else { None };
-            return Damager::Vehicle { driver: id };
-        }
-        Damager::Other
+        let player_of = |ped: u32| self.players.iter().find(|p| p.ped == ped).map(|p| p.id);
+        let vehicle_driver = |v: u32| {
+            self.vehicles.hook_vehicles().iter().any(|h| h.0 == v).then(|| {
+                let driver = ProcessMemory.read_u32(v + off::VEHICLE_DRIVER).unwrap_or(0);
+                if driver != 0 { player_of(driver) } else { None }
+            })
+        };
+        crate::death::damager((entity != 0).then_some(entity), player_of, vehicle_driver)
     }
 }
 

@@ -2,7 +2,7 @@
 //! samp-rs today: `ui/textdraws.rs`, `ui/menus.rs`, `ui/glue/*.rs`, `behaviourclient.rs`, `game.rs`.
 //! Mapping: `docs/samp/game-adapter.md` §4.6.
 
-use crate::{GameResult, MenuRef, Point2, Rect2, Rgba, TextureRef, TxdSlot};
+use crate::{GameError, GameResult, MenuRef, Point2, Rect2, Rgba, TextureRef, TxdSlot};
 
 /// The complete `CFont` state for one print call. Replaces the 14 setter calls samp-rs makes in samp's
 /// order (`CFont::SetScale` 0x719380 … `SetOrientation` 0x719610); the backend issues them in that order.
@@ -89,28 +89,59 @@ pub trait Text2d {
     fn release_sprite(&mut self, sprite: TextureRef) -> GameResult<()>;
 }
 
-/// One GTA menu (samp's ShowMenu, RPC 76/77; `CREATE_MENU` 08D4 family).
-#[derive(Clone, Debug, PartialEq)]
-pub struct MenuSpec {
-    /// Title.
-    pub title: String,
-    /// Position.
+/// A GTA script menu to create (`CREATE_MENU` 08D4). Its title, headers and rows are text keys the game looks up
+/// (`CText::Get` 0x6A0050), registered with [`Menus::set_text_entry`]; `DUMMY` is no text.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct MenuSpec<'a> {
+    /// The title's key.
+    pub title: &'a str,
+    /// Top left, in the game's 640 x 448 menu units.
     pub pos: Point2,
-    /// Column widths (1 or 2 columns, `SET_MENU_COLUMN_WIDTH` 09DB).
-    pub column_widths: Vec<f32>,
-    /// Column header and rows per column (`SET_MENU_COLUMN` 08DB).
-    pub columns: Vec<(String, Vec<String>)>,
-    /// Disabled rows (`ACTIVATE_MENU_ITEM` 08D9).
-    pub disabled_rows: Vec<u8>,
+    /// Column width, in menu units.
+    pub width: f32,
+    /// Columns (1 ..= 4).
+    pub columns: u8,
+    /// Rows can be selected.
+    pub interactive: bool,
+    /// A background box.
+    pub background: bool,
+    /// Text alignment (`eFontAlignment`: 0 centre, 1 left, 2 right).
+    pub alignment: u8,
 }
 
-/// GTA's menu system.
+/// GTA's script menus (`CMenuSystem`, two at a time) and the text entries they show.
 pub trait Menus {
-    /// Creates and shows a menu. The original backend registers the strings under `SAMP…` GXT keys and
-    /// serves them from its `CText::Get` hook (0x6A0043 slot).
-    fn show_menu(&mut self, menu: &MenuSpec) -> GameResult<MenuRef>;
+    /// Registers the text of key `key` (code page 1252 bytes): the game's lookups of the key find it before its own
+    /// texts. samp.dll serves its `SAMP…` keys from its `CText::Get` hook (0x6A0043 slot).
+    fn set_text_entry(&mut self, _key: &str, _text: &[u8]) -> GameResult<()> {
+        Err(GameError::Unsupported("Menus::set_text_entry"))
+    }
+    /// Removes a key of [`Menus::set_text_entry`].
+    fn remove_text_entry(&mut self, _key: &str) -> GameResult<()> {
+        Err(GameError::Unsupported("Menus::remove_text_entry"))
+    }
+    /// Creates a menu (`CREATE_MENU` 08D4); shown from the next frame.
+    fn create_menu(&mut self, _menu: &MenuSpec<'_>) -> GameResult<MenuRef> {
+        Err(GameError::Unsupported("Menus::create_menu"))
+    }
+    /// A column's header key and up to 12 row keys (`SET_MENU_COLUMN` 08DB).
+    fn set_menu_column(&mut self, _menu: MenuRef, _column: u8, _header: &str, _rows: &[&str]) -> GameResult<()> {
+        Err(GameError::Unsupported("Menus::set_menu_column"))
+    }
+    /// A column's width in menu units (`SET_MENU_COLUMN_WIDTH` 09DB).
+    fn set_menu_column_width(&mut self, _menu: MenuRef, _column: u8, _width: u16) -> GameResult<()> {
+        Err(GameError::Unsupported("Menus::set_menu_column_width"))
+    }
+    /// Whether a row can be selected (`ACTIVATE_MENU_ITEM` 08D9).
+    fn set_menu_row_enabled(&mut self, _menu: MenuRef, _row: u8, _on: bool) -> GameResult<()> {
+        Err(GameError::Unsupported("Menus::set_menu_row_enabled"))
+    }
     /// Selected row (`GET_MENU_ITEM_SELECTED` 08D7).
-    fn menu_selection(&self, menu: MenuRef) -> GameResult<i32>;
+    fn menu_selection(&self, _menu: MenuRef) -> GameResult<i32> {
+        Err(GameError::Unsupported("Menus::menu_selection"))
+    }
     /// `DELETE_MENU` (08DA).
-    fn delete_menu(&mut self, menu: MenuRef) -> GameResult<()>;
+    fn delete_menu(&mut self, _menu: MenuRef) -> GameResult<()> {
+        Err(GameError::Unsupported("Menus::delete_menu"))
+    }
 }

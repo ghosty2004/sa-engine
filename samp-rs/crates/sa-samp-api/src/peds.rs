@@ -9,7 +9,7 @@ use crate::{
     WeaponType,
 };
 
-pub use sa_types::ped::{PedSnapshot, WeaponSlot};
+pub use sa_types::ped::{DamageSource, PedDamage, PedSnapshot, WeaponSlot};
 
 /// Bone ids used by samp (`ePedBones`).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -167,6 +167,10 @@ pub trait Peds {
     /// Every ped in the ped pool (`CPools::ms_pPedPool` 0xB74490), in slot order.
     fn peds(&self) -> Vec<PedRef> {
         Vec::new()
+    }
+    /// The ped's last damage (`CPed::m_nLastWeaponDamage` +0x760, `m_pLastEntityDamage` +0x764).
+    fn ped_damage(&self, _ped: PedRef) -> GameResult<PedDamage> {
+        Err(crate::GameError::Unsupported("Peds::ped_damage"))
     }
 
     // --- state writes -------------------------------------------------------------------------------

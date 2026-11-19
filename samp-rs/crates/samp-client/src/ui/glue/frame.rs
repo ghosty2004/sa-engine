@@ -7,8 +7,9 @@ use super::adapters::{LiveGame, gta_menu_active};
 use super::present::{present_hook, reset_hook};
 use super::session::flush_pending_debug;
 use super::{State, UI, ensure, exec_ops};
-use crate::script::Arg;
-use crate::ui::core::{MenuRequest, Outgoing};
+use crate::script::{Arg, Runner};
+use crate::ui::core::Outgoing;
+use crate::ui::menuwork::MenuGame;
 use crate::ui::d3d;
 use crate::ui::d3d::renderer::Renderer;
 
@@ -184,44 +185,26 @@ pub fn game_frame() {
 /// Menus: build / delete requests and the selection poll (docs/re/subsystems/ui-chat-audio.md, RPCs 77, 78,
 /// 132 and 140).
 fn menu_work(st: &mut State) {
-    use samp_ui::menu::PollAction;
-    for req in std::mem::take(&mut st.core.requests.menus) {
-        match req {
-            MenuRequest::Show { delete_previous, build } => {
-                if delete_previous && let Some(h) = st.menu_handle.take() {
-                    st.runner.run(OP_DELETE_MENU, &[Arg::Int(h)]);
-                }
-                crate::ui::menus::set_gxt(st.core.menus.current_menu());
-                st.menu_handle = crate::ui::menus::build(&mut st.runner, &build);
-            }
-            MenuRequest::Delete => {
-                if let Some(h) = st.menu_handle.take() {
-                    st.runner.run(OP_DELETE_MENU, &[Arg::Int(h)]);
-                }
-            }
-        }
+    let pad = crate::ui::menus::pad_buttons();
+    st.menus.frame(&mut st.core, &mut ScriptMenus(&mut st.runner), pad);
+}
+
+/// The GTA menu through samp's script commands, its texts served by the `CText::Get` hook.
+struct ScriptMenus<'a>(&'a mut Runner);
+
+impl MenuGame for ScriptMenus<'_> {
+    fn build_menu(&mut self, build: &samp_ui::menu::MenuBuild, menu: Option<&samp_ui::menu::Menu>) -> Option<i32> {
+        crate::ui::menus::set_gxt(menu);
+        crate::ui::menus::build(self.0, build)
     }
-    let (cross, triangle) = crate::ui::menus::pad_buttons();
-    let (old_c, old_t) = st.menu_pad;
-    st.menu_pad = (cross, triangle);
-    let handle = st.menu_handle;
-    let runner = &mut st.runner;
-    let action = st.core.menus.poll(cross && !old_c, triangle && !old_t, || match handle {
-        Some(h) => {
-            runner.run(OP_GET_MENU_ITEM_SELECTED, &[Arg::Int(h), Arg::Local(0)]);
-            runner.local_i32(0) as u8
-        }
-        None => samp_ui::menu::NO_ROW,
-    });
-    match action {
-        Some(PollAction::Selected(row)) => st.core.push_outgoing(Outgoing::MenuRow(row)),
-        Some(PollAction::Exited) => st.core.push_outgoing(Outgoing::MenuExit),
-        Some(PollAction::HideLocal) => {
-            if let Some(h) = st.menu_handle.take() {
-                st.runner.run(OP_DELETE_MENU, &[Arg::Int(h)]);
-            }
-        }
-        None => {}
+
+    fn delete_menu(&mut self, handle: i32) {
+        self.0.run(OP_DELETE_MENU, &[Arg::Int(handle)]);
+    }
+
+    fn selected_row(&mut self, handle: i32) -> u8 {
+        self.0.run(OP_GET_MENU_ITEM_SELECTED, &[Arg::Int(handle), Arg::Local(0)]);
+        self.0.local_i32(0) as u8
     }
 }
 

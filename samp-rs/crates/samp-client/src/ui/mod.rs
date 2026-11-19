@@ -14,6 +14,7 @@ pub mod colours;
 pub mod host;
 pub mod core;
 pub mod inputlock;
+pub mod menuwork;
 pub mod render;
 pub mod scene;
 pub mod session;

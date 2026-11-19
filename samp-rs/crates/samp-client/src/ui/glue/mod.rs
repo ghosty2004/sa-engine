@@ -54,10 +54,8 @@ struct State {
     session: UiSession,
     /// Remote players published by the session tick.
     remotes: Vec<super::core::RemoteUi>,
-    /// GTA menu handle of the current menu.
-    menu_handle: Option<i32>,
-    /// Pad buttons last frame (cross, triangle) for the menu poll.
-    menu_pad: (bool, bool),
+    /// The GTA menu of the current server menu.
+    menus: crate::ui::menuwork::MenuWork,
     /// The spawn ends class selection: its mode-0 request restores input only after 10 frames
     /// (docs/phase3/parity-notes.md).
     spawn_release: bool,
@@ -214,8 +212,7 @@ fn ensure(g: &mut Option<State>, debug_mode: bool) -> &mut State {
             fonts_added: false,
             session: UiSession::new(),
             remotes: Vec::new(),
-            menu_handle: None,
-            menu_pad: (false, false),
+            menus: Default::default(),
             spawn_release: false,
             netgame_object: false,
             net_stats: super::core::NetStats::default(),

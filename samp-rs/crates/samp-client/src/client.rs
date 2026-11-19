@@ -43,8 +43,7 @@ pub const AUTH_TABLE_ENV: &str = "SAMP_RS_AUTH_TABLE";
 const PEDSTATE_IDLE: u32 = 1;
 const PEDSTATE_SNIPER: u32 = 12;
 const PEDSTATE_DRIVING: u32 = 50;
-const PEDSTATE_DIE: u32 = 54;
-const PEDSTATE_DEAD: u32 = 55;
+use crate::death::{PEDSTATE_DEAD, PEDSTATE_DIE};
 /// `TheCamera.m_aCams[0].Front` (what samp's camera-front pointer holds).
 const CAMERA_FRONT: u32 = 0xB6F32C;
 /// The in-vehicle bit of the first `CPed` flag word.

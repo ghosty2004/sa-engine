@@ -121,6 +121,10 @@ pub trait WorldState {
     fn set_random_trains(&mut self, on: bool) -> GameResult<()>;
     /// `ADD_HOSPITAL_RESTART` (016C) / the restart override samp writes at spawn.
     fn set_restart_point(&mut self, pos: Vec3, heading_deg: f32) -> GameResult<()>;
+    /// `OVERRIDE_NEXT_RESTART` (016E): the next restart after death or arrest at this point.
+    fn override_restart(&mut self, _pos: Vec3, _heading_deg: f32) -> GameResult<()> {
+        Err(crate::GameError::Unsupported("WorldState::override_restart"))
+    }
     /// `GET_GROUND_Z_FOR_3D_COORD` (02CE).
     fn ground_z(&self, pos: Vec3) -> f32;
     /// Line of sight with hit details (`CWorld::ProcessLineOfSight` 0x56BA00).

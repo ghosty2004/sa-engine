@@ -45,7 +45,7 @@ impl Vehicles {
     fn add_carriages(&mut self, s: &rv::StreamInVehicle, ptr: u32) {
         let Some(cm) = vm::carriage_of(s.model) else { return };
         let mut prev = ptr;
-        for i in 1..=3u16 {
+        for i in 1..=vm::TRAIN_CARRIAGE_IDS {
             let next: u32 = rd(prev + g::TRAIN_NEXT_CARRIAGE);
             if next == 0 {
                 break;
@@ -86,7 +86,7 @@ impl Vehicles {
         }
         self.delete(runner, id);
         if matches!(v.model, 537 | 538) {
-            for i in 1..=3 {
+            for i in 1..=vm::TRAIN_CARRIAGE_IDS {
                 self.pool.remove(&(id + i));
             }
         }
@@ -151,7 +151,7 @@ fn create_for_stream_in(runner: &mut Runner, s: &rv::StreamInVehicle) -> Option<
             crate::ui::print_debug(&format!("Warning: couldn't create vehicle type: {}", s.model));
             return None;
         }
-        let dir = i32::from(s.angle > 180.0);
+        let dir = i32::from(vm::train_clockwise(s.angle));
         runner.run(
             op::CREATE_MISSION_TRAIN,
             &[Arg::Int(train), Arg::Float(x), Arg::Float(y), Arg::Float(z), Arg::Int(dir), Arg::Local(0)],

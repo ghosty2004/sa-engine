@@ -209,6 +209,14 @@ pub fn carriage_of(model: u32) -> Option<u32> {
     }
 }
 
+/// The vehicle ids after a locomotive's that name its carriages.
+pub const TRAIN_CARRIAGE_IDS: u16 = 3;
+
+/// CREATE_MISSION_TRAIN's direction for a stream-in heading: clockwise beyond 180 degrees.
+pub fn train_clockwise(angle: f32) -> bool {
+    angle > 180.0
+}
+
 /// CREATE_MISSION_TRAIN type for a locomotive / tram model.
 pub fn train_type(model: u32) -> Option<i32> {
     match model {

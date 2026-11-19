@@ -64,6 +64,11 @@ impl ClassSelection {
         }
     }
 
+    /// The server's class count.
+    pub fn count(&self) -> u32 {
+        self.count
+    }
+
     pub fn is_active(&self) -> bool {
         self.active
     }
