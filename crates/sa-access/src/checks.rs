@@ -7,7 +7,7 @@
 //! first goes through [`Game::unchecked_argument`]; a refused command is not run and returns an error.
 
 use sa_types::script::{Opcode, ScriptArg};
-use sa_types::{ModelId, ModelKind, VehicleRef};
+use sa_types::{MenuRef, ModelId, ModelKind, VehicleRef};
 
 use crate::addr::{self, off};
 use crate::script::op;
@@ -36,6 +36,11 @@ enum Rule {
     /// A model the game can load now: a vehicle model takes a `CVehicleStructure` while it is loaded, and with the
     /// pool full `CVehicleModelInfo::SetClump` gets none and fills it at null.
     Loadable,
+    /// A menu number whose slot holds a panel: the menu commands index `CMenuSystem::MenuNumber` with it.
+    Menu,
+    /// The first carriage of a train: `CTrain::RemoveOneMissionTrain` follows the carriage links of whatever vehicle
+    /// it gets, and a later carriage would leave its predecessor linked to a deleted one.
+    TrainHead,
 }
 
 /// Radar traces (`CRadar::ms_RadarTrace[175]`).
@@ -80,6 +85,19 @@ const RULES: &[(u16, usize, Rule)] = &[
     (op::HAS_ANIMATION_LOADED, 0, Rule::Text(15)),
     (op::TASK_PLAY_ANIM_NON_INTERRUPTABLE, 1, Rule::Text(23)),
     (op::TASK_PLAY_ANIM_NON_INTERRUPTABLE, 2, Rule::Text(15)),
+    (op::CREATE_MISSION_TRAIN, 0, Rule::Range(0, crate::trains::TRAIN_TYPES as i32 - 1)),
+    (op::DELETE_MISSION_TRAIN, 0, Rule::TrainHead),
+    (op::CREATE_MENU, 4, Rule::Range(1, crate::menus::COLUMNS as i32)),
+    (op::CREATE_MENU, 7, Rule::Range(0, 2)),
+    (op::GET_MENU_ITEM_SELECTED, 0, Rule::Menu),
+    (op::GET_MENU_ITEM_ACCEPTED, 0, Rule::Menu),
+    (op::ACTIVATE_MENU_ITEM, 0, Rule::Menu),
+    (op::ACTIVATE_MENU_ITEM, 1, Rule::Range(0, crate::menus::ROWS as i32 - 1)),
+    (op::DELETE_MENU, 0, Rule::Menu),
+    (op::SET_MENU_COLUMN, 0, Rule::Menu),
+    (op::SET_MENU_COLUMN, 1, Rule::Range(0, crate::menus::COLUMNS as i32 - 1)),
+    (op::SET_MENU_COLUMN_WIDTH, 0, Rule::Menu),
+    (op::SET_MENU_COLUMN_WIDTH, 1, Rule::Range(0, crate::menus::COLUMNS as i32 - 1)),
 ];
 
 impl<V: View> Game<V> {
@@ -116,6 +134,14 @@ impl<V: View> Game<V> {
         {
             return Some(format!("the game's {} hospital restart points are all used", addr::RESTART_POINTS));
         }
+        if op.0 == op::CREATE_MENU && !self.menu_slot_free() {
+            return Some(format!("the game's {} menus are in use", crate::menus::SLOTS));
+        }
+        if op.0 == op::CREATE_MISSION_TRAIN
+            && let Some(&ScriptArg::Int(kind)) = args.first()
+        {
+            return self.train_unbuildable(kind as u32);
+        }
         None
     }
 
@@ -138,6 +164,8 @@ impl<V: View> Game<V> {
                 (!ok).then(|| format!("not a passenger seat of a vehicle with {seats}"))
             }
             Rule::Text(_) => None,
+            Rule::Menu => self.menu_slot(MenuRef(v as u32)).err().map(|_| "not a menu in use".into()),
+            Rule::TrainHead => self.train_head(VehicleRef(v as u32)).err().map(|e| e.to_string()),
             Rule::Loadable => {
                 let state = |m: i32| self.view.read_u8(addr::STREAMING_INFO + m as u32 * addr::STREAMING_INFO_SIZE + 0x10);
                 if !addr::VEHICLE_MODELS.contains(&v) || state(v) != 0 {

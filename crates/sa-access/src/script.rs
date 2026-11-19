@@ -120,6 +120,15 @@ pub mod op {
     pub const ADD_SHORT_RANGE_SPRITE_BLIP_FOR_CONTACT_POINT: u16 = 0x0570;
     pub const CREATE_CHECKPOINT: u16 = 0x06D5;
     pub const DELETE_CHECKPOINT: u16 = 0x06D6;
+    pub const CREATE_MISSION_TRAIN: u16 = 0x06D8;
+    pub const DELETE_MISSION_TRAIN: u16 = 0x07BD;
+    pub const CREATE_MENU: u16 = 0x08D4;
+    pub const GET_MENU_ITEM_SELECTED: u16 = 0x08D7;
+    pub const GET_MENU_ITEM_ACCEPTED: u16 = 0x08D8;
+    pub const ACTIVATE_MENU_ITEM: u16 = 0x08D9;
+    pub const DELETE_MENU: u16 = 0x08DA;
+    pub const SET_MENU_COLUMN: u16 = 0x08DB;
+    pub const SET_MENU_COLUMN_WIDTH: u16 = 0x09DB;
 }
 
 /// Parameter type bytes of the SCM format.

@@ -1,6 +1,6 @@
 //! Peds.
 
-use crate::{AreaCode, Matrix, ModelId, Vec3, VehicleRef, WeaponType};
+use crate::{AreaCode, Matrix, ModelId, PedRef, Vec3, VehicleRef, WeaponType};
 
 /// One weapon slot (`CWeapon`, 0x1C bytes at `CPed::m_aWeapons` +0x5A0).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -48,3 +48,27 @@ pub struct PedSnapshot {
     pub in_world: bool,
 }
 
+
+/// What dealt a ped its last damage (`CPed::m_pLastEntityDamage` +0x764).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum DamageSource {
+    /// Nothing (no damage since the record was cleared).
+    #[default]
+    None,
+    /// A ped of the ped pool.
+    Ped(PedRef),
+    /// A vehicle of the vehicle pool.
+    Vehicle(VehicleRef),
+    /// Anything else (an object, a building).
+    Other,
+}
+
+/// A ped's last damage: the weapon type (`CPed::m_nLastWeaponDamage` +0x760) and its source.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct PedDamage {
+    /// The weapon type, as the game records it (`eWeaponType`, or the damage kinds above the weapons: 49 rammed,
+    /// 50 helicopter blades, 51 explosion, 53 drowned, 54 collision or fall; 255 none).
+    pub weapon: WeaponType,
+    /// Who or what dealt it.
+    pub source: DamageSource,
+}
