@@ -13,6 +13,7 @@ use sa_mod_api::{EXPORT_MEMORY, EXPORTS, IMPORT_MODULE, IMPORTS, Ty, Val};
 use wasmtime::{Config, Engine as WtEngine, FuncType, Linker, Module, Store, StoreLimits, StoreLimitsBuilder, Trap, ValType};
 
 use crate::ModSource;
+use sa_platform::fs::{GameFs, RandomRead, StdFile};
 use crate::api::{CallCtx, SliceMem, dispatch};
 use crate::engine::{CallError, Engine, Instance};
 use crate::manifest::{INIT_FUEL_FACTOR, Limits};
@@ -174,6 +175,39 @@ impl ModSource for DirSource {
 
     fn location(&self) -> String {
         self.0.display().to_string()
+    }
+
+    fn files(&self) -> Box<dyn GameFs> {
+        Box::new(DirFiles(self.0.clone()))
+    }
+}
+
+/// The files of a mod folder, matched without case (the mod names them as their authors spell them).
+struct DirFiles(PathBuf);
+
+impl DirFiles {
+    fn resolve(&self, name: &str) -> io::Result<PathBuf> {
+        let exact = self.0.join(name);
+        if exact.is_file() {
+            return Ok(exact);
+        }
+        std::fs::read_dir(&self.0)?
+            .flatten()
+            .map(|e| e.path())
+            .find(|p| p.file_name().is_some_and(|n| n.to_string_lossy().eq_ignore_ascii_case(name)))
+            .ok_or_else(|| io::ErrorKind::NotFound.into())
+    }
+}
+
+impl GameFs for DirFiles {
+    fn read(&self, path: &str) -> io::Result<Vec<u8>> {
+        std::fs::read(self.resolve(path)?)
+    }
+    fn open(&self, path: &str) -> io::Result<Box<dyn RandomRead>> {
+        Ok(Box::new(StdFile::open(&self.resolve(path)?)?))
+    }
+    fn exists(&self, path: &str) -> bool {
+        self.resolve(path).is_ok()
     }
 }
 

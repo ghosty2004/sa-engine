@@ -12,12 +12,14 @@ use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::io;
 use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
 use sa_mod_api::{IMPORTS, Val};
 use wasm_bindgen::prelude::*;
 
 use super::meter;
 use crate::ModSource;
+use sa_platform::fs::{GameFs, MemFile, RandomRead};
 use crate::api::{CallCtx, Mem, dispatch};
 use crate::engine::{CallError, Engine, Instance};
 use crate::manifest::{INIT_FUEL_FACTOR, Limits};
@@ -197,6 +199,39 @@ impl ModSource for UrlSource {
 
     fn location(&self) -> String {
         self.0.clone()
+    }
+
+    fn files(&self) -> Box<dyn GameFs> {
+        Box::new(UrlFiles { base: self.0.clone(), fetched: Mutex::default() })
+    }
+}
+
+/// The files of a mod folder on the page's server, each fetched once (by the name the mod spells it) and kept for
+/// the session: the game reads its data files at start-up and its image archives for the whole session.
+struct UrlFiles {
+    base: String,
+    fetched: Mutex<BTreeMap<String, Option<Arc<Vec<u8>>>>>,
+}
+
+impl UrlFiles {
+    fn get(&self, name: &str) -> io::Result<Arc<Vec<u8>>> {
+        let mut f = self.fetched.lock().unwrap_or_else(|e| e.into_inner());
+        f.entry(name.to_ascii_lowercase())
+            .or_insert_with(|| js_fetch(&format!("{}{name}", self.base)).map(Arc::new))
+            .clone()
+            .ok_or_else(|| io::ErrorKind::NotFound.into())
+    }
+}
+
+impl GameFs for UrlFiles {
+    fn read(&self, path: &str) -> io::Result<Vec<u8>> {
+        self.get(path).map(|d| d.to_vec())
+    }
+    fn open(&self, path: &str) -> io::Result<Box<dyn RandomRead>> {
+        Ok(Box::new(MemFile(self.get(path)?)))
+    }
+    fn exists(&self, path: &str) -> bool {
+        self.get(path).is_ok()
     }
 }
 

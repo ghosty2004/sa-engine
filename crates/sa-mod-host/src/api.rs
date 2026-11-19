@@ -1648,6 +1648,9 @@ mod tests {
         fn location(&self) -> String {
             "memory".into()
         }
+        fn files(&self) -> Box<dyn sa_platform::fs::GameFs> {
+            Box::new(sa_platform::fs::MemFs::default())
+        }
     }
 
     #[test]

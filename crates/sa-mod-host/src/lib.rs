@@ -22,6 +22,7 @@
 pub mod api;
 pub mod approval;
 mod backend;
+pub mod data;
 pub mod engine;
 pub mod events;
 pub mod http;
@@ -59,6 +60,8 @@ pub trait ModSource {
     fn write(&self, file: &str, data: &[u8]) -> Result<(), String>;
     /// The folder, for messages.
     fn location(&self) -> String;
+    /// The folder as a read-only game file tree (file names in any case), for the game's file layer.
+    fn files(&self) -> Box<dyn sa_platform::fs::GameFs>;
 }
 
 /// A loaded mod.
@@ -157,6 +160,8 @@ pub struct Host {
     approvals: Rc<std::cell::RefCell<approval::Approvals>>,
     /// The game's 2D drawing the mods queued in the last overlay phase, in load order.
     game_2d: Vec<api::Game2d>,
+    /// The loaded mods' game data, until the game takes it ([`Host::take_data`]).
+    data: Vec<data::ModData>,
 }
 
 impl Host {
@@ -185,6 +190,7 @@ impl Host {
             storages: None,
             approvals: Rc::default(),
             game_2d: Vec::new(),
+            data: Vec::new(),
         }
     }
 
@@ -346,7 +352,26 @@ impl Host {
         });
         let i = self.mods.len() - 1;
         self.take_subscriptions(i, &mut ctx);
+        let m = &self.mods[i].manifest;
+        if !m.data.is_empty() {
+            let files = self.mods[i].env.source.files();
+            let missing: Vec<&str> = m.data.all().filter(|f| !files.exists(f)).map(String::as_str).collect();
+            if missing.is_empty() {
+                let fs = Box::new(data::Declared::new(&m.data, files));
+                self.data.push(data::ModData { id: id.clone(), dir: String::new(), files: m.data.clone(), fs });
+            } else {
+                (self.log)(&format!(
+                    "mod {id}: data not loaded: {} missing in {at} (the mod runs without it)",
+                    missing.join(", ")
+                ));
+            }
+        }
         Ok(())
+    }
+
+    /// The loaded mods' game data files, in load order, for the game's start-up (once).
+    pub fn take_data(&mut self) -> Vec<data::ModData> {
+        std::mem::take(&mut self.data)
     }
 
     /// A call context for the mod with `manifest` and `env`, `hooks` hooks so far.
@@ -805,6 +830,13 @@ mod tests {
         fn location(&self) -> String {
             "memory".into()
         }
+        fn files(&self) -> Box<dyn sa_platform::fs::GameFs> {
+            let mut fs = sa_platform::fs::MemFs::default();
+            for (name, data) in &self.0 {
+                fs.insert(name, data.clone());
+            }
+            Box::new(fs)
+        }
     }
 
     fn src(id: &str, wasm: Vec<u8>) -> Box<Mem> {
@@ -820,6 +852,24 @@ mod tests {
     }
 
     const DRAW: &str = "f32.const 1 f32.const 2 f32.const 3 f32.const 4 i32.const -1 call $rect drop i32.const 0";
+
+    #[test]
+    fn data_loads_only_when_every_file_is_there() {
+        let (mut h, log) = host();
+        let toml = |id: &str| {
+            format!("[mod]\nid = \"{id}\"\napi_version = \"1.0\"\n[data]\nimg = [\"a.img\"]\nide = [\"A.ide\"]\n").into_bytes()
+        };
+        let wasm = || wat_mod("", "1", DRAW);
+        h.load(Box::new(Mem(vec![("mod.toml", toml("whole")), ("whole.wasm", wasm()), ("a.img", vec![]), ("a.ide", vec![])])))
+            .unwrap();
+        h.load(Box::new(Mem(vec![("mod.toml", toml("part")), ("part.wasm", wasm()), ("a.img", vec![])]))).unwrap();
+        let data = h.take_data();
+        assert_eq!(data.iter().map(|d| d.id.as_str()).collect::<Vec<_>>(), ["whole"]);
+        assert!(data[0].fs.exists("A.IDE") && !data[0].fs.exists("whole.wasm"));
+        assert!(log.borrow().iter().any(|l| l.contains("mod part: data not loaded: A.ide missing")), "{:?}", log.borrow());
+        assert_eq!(h.mods().len(), 2);
+        assert!(h.take_data().is_empty());
+    }
 
     #[test]
     fn broken_mods_are_disabled_and_the_others_go_on() {

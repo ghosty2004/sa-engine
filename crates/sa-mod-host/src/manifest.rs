@@ -27,12 +27,18 @@
 //!                            # GET requests to URLs under these prefixes (API 1.7): `http://` or `https://`, a
 //!                            # host and a path starting with `/`
 //!
+//! [data]                     # game data files from the mod's folder, loaded with the game's own ([`crate::data`])
+//! img = ["extra.img"]
+//! ide = ["extra.ide"]
+//!
 //! [limits]                   # optional; clamped to the host's maxima
 //! memory_mib = 16            # linear memory cap
 //! fuel = 10000000            # per call (~ wasm instructions)
 //! ```
 
 use toml::{Table, Value};
+
+use crate::data::DataFiles;
 
 /// What the host grants a mod.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -163,6 +169,8 @@ pub struct Manifest {
     pub http: Vec<String>,
     /// Its budgets.
     pub limits: Limits,
+    /// The game data files it adds (`[data]`).
+    pub data: DataFiles,
 }
 
 fn str_field(t: &Table, k: &str) -> Result<Option<String>, String> {
@@ -338,8 +346,12 @@ pub fn parse(text: &str) -> Result<(Manifest, Vec<String>), String> {
             }
         }
     }
+    let data = match root.get("data") {
+        Some(d) => DataFiles::parse(d, &mut warnings)?,
+        None => DataFiles::default(),
+    };
     for k in root.keys() {
-        if !["mod", "permissions", "limits"].contains(&k.as_str()) {
+        if !["mod", "permissions", "limits", "data"].contains(&k.as_str()) {
             warnings.push(format!("[{k}]: unknown table, ignored"));
         }
     }
@@ -356,6 +368,7 @@ pub fn parse(text: &str) -> Result<(Manifest, Vec<String>), String> {
             net_user_approved,
             http,
             limits,
+            data,
         },
         warnings,
     ))
@@ -442,6 +455,15 @@ mod tests {
             let t = format!("[mod]\nid = \"t\"\napi_version = \"1.7\"\n[permissions]\nhttp = [{bad}]\n");
             assert!(parse(&t).is_err(), "{bad}");
         }
+    }
+
+    #[test]
+    fn data_files() {
+        let (m, w) = parse("[mod]\nid = \"t\"\napi_version = \"1.0\"\n[data]\nimg = [\"S.img\"]\nipl = [\"S.ipl\"]\n").unwrap();
+        assert_eq!((m.data.img.as_slice(), m.data.ipl.as_slice()), (&["S.img".to_string()][..], &["S.ipl".to_string()][..]));
+        assert!(w.is_empty(), "{w:?}");
+        assert!(parse("[mod]\nid = \"t\"\napi_version = \"1.0\"\n[data]\nimg = [\"../S.img\"]\n").is_err());
+        assert!(parse("[mod]\nid = \"t\"\napi_version = \"1.0\"\n").unwrap().0.data.is_empty());
     }
 
     #[test]
