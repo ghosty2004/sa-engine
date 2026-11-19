@@ -1,0 +1,49 @@
+# What samp.dll changes in the game, seen from the client (docs/samp/patch-parity.md): run by samp-rs-ab.sh and
+# mod-join.sh with SCENARIO=parity, with the same screenshots on both.
+say|grove street: no single-player pickups, no ambient peds or traffic
+pos|2495|-1680|13.5|0
+sleep|5
+shot|grove
+say|the IPL sniper rifle pickup (type 29) at -1435.85,-965.72,200.17 inside its shed, the camera inside the shed
+pos|-1437.9|-967.7|200.6|0
+sleep|10
+campos|-1438.4|-968.4|201.6|-1435.85|-965.72|200.4
+sleep|3
+shot|ipl-pickup
+camback
+say|entering a vehicle: no vehicle name on the HUD
+pos|2495|-1680|13.5|0
+sleep|3
+veh|411|2500|-1676|13.4|0
+sleep|2
+putin|LASTVEH|0
+sleep|1
+shot|vehicle-name
+sleep|2
+shot|vehicle-name-2
+eject
+sleep|2
+say|the stunt bonus switch (the main script's $709)
+stunt|1
+sleep|1
+probe|stunt-on
+stunt|0
+sleep|1
+probe|stunt-off
+stunt|1
+say|Las Venturas and San Fierro before they are unlocked: no wanted level
+pos|2027|1008|10.8|0
+sleep|12
+shot|las-venturas
+pos|-1984|138|27.7|0
+sleep|8
+shot|san-fierro
+say|more vehicles than the original pool (110)
+pos|2440|-1700|13.5|0
+sleep|3
+vehs|400|130|2420|-1690|13.5
+sleep|45
+campos|2453|-1730|45|2453|-1660|13
+sleep|3
+shot|many-vehicles
+camback

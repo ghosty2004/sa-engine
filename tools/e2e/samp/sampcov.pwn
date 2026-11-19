@@ -7,7 +7,8 @@
 //
 //   msg|text  gametext|style|ms|text  dialog|id|style|caption|body  td|text  tdhide
 //   pos|x|y|z|angle  interior|i  vw|world  hp|value  armour|value  kill  weapon|weapon|ammo  skin|skin
-//   veh|model|x|y|z|angle  putin|vehid|seat  eject  vhp|vehid|health  vdel|vehid
+//   veh|model|x|y|z|angle  vehs|model|count|x|y|z (a grid, 6 m apart)  putin|vehid|seat  eject  vhp|vehid|health
+//   vdel|vehid  stunt|1/0
 //   obj|model|x|y|z  objmove|id|x|y|z|speed  pickup|model|type|x|y|z  label|text|x|y|z
 //   cp|x|y|z|size  rcp|type|x|y|z|nx|ny|nz|size  cpoff  gz|minx|miny|maxx|maxy  icon|id|x|y|z|type
 //   actor|skin|x|y|z|angle  explode|x|y|z|type|radius  time|h  weather|w  money|n  wanted|n
@@ -211,6 +212,16 @@ Run(seq, const line[])
         new v = CreateVehicle(in(line, 1), fl(line, 2), fl(line, 3), fl(line, 4), fl(line, 5), -1, -1, -1);
         printf("[cov] %d veh %d", seq, v);
     }
+    else if (!strcmp(cmd, "vehs"))
+    {
+        new n = 0;
+        for (new i = 0; i < in(line, 2); i++)
+        {
+            if (CreateVehicle(in(line, 1), fl(line, 3) + float(i % 12) * 6.0, fl(line, 4) + float(i / 12) * 6.0, fl(line, 5), 0.0, -1, -1, -1) != INVALID_VEHICLE_ID) n++;
+        }
+        printf("[cov] %d vehs %d", seq, n);
+    }
+    else if (!strcmp(cmd, "stunt")) EnableStuntBonusForPlayer(p, in(line, 1) != 0);
     else if (!strcmp(cmd, "putin")) PutPlayerInVehicle(p, in(line, 1), in(line, 2));
     else if (!strcmp(cmd, "eject")) RemovePlayerFromVehicle(p);
     else if (!strcmp(cmd, "vhp")) SetVehicleHealth(in(line, 1), fl(line, 2));

@@ -4,7 +4,8 @@
 # walk, server commands: message, game text, position, weapon, money, clock, weather, pickup, map icon, object,
 # checkpoints, vehicle enter/drive/exit,
 # interior, death and respawn, /q). Used to show that an adapter step of samp-rs is a pure refactor: run it once
-# with the build before the step (A) and once after (B) and diff the two `sequence.txt` files.
+# with the build before the step (A) and once after (B) and diff the two `sequence.txt` files. SCENARIO=parity runs
+# tools/e2e/samp/parity.steps after the spawn instead (what samp.dll changes in the game; mod-join.sh runs the same).
 #
 #   LANE=3 SA_ROOT=~/sa-engine tools/e2e/samp/samp-rs-ab.sh DLL_DIR NAME
 #
@@ -247,6 +248,15 @@ mark "spawned"
 sleep 4
 shot spawn
 probe spawned
+if [ "${SCENARIO:-}" = parity ]; then
+    # the main script's stunt-bonus switch ($709) as well
+    PEEKS="$PEEKS 0xA4A474:4"
+    # shellcheck source=steps.sh
+    source "$HERE/steps.sh"
+    run_steps "$HERE/parity.steps" | tee -a "$OUT/steps.log"
+    say "parity steps done"
+    exit 0
+fi
 if [ "${SCENARIO:-join}" = world ] || [ -n "${CMDS:-}" ]; then
 if [ "${SCENARIO:-join}" = world ]; then
     wait_count() { # REGEX N SECS

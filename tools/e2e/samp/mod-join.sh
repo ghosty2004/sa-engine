@@ -18,7 +18,9 @@
 # public list: the mod's copy in OUT/mods/samp gets that prefix in its `http` permission. RESOLUTION=WxH also loads
 # the resolution mod (from MODS) at that video mode.
 # SA:MP's UI files (sampgui.png, mouse.png, sampaux3.ttf from SAMP_CLIENT, default $SA_ROOT/re/samp/client, and the
-# game's gtaweap3.ttf; third-party, never committed) are copied into the samp mod's folder when they exist.
+# game's gtaweap3.ttf; third-party, never committed) are copied into the samp mod's folder when they exist, and so is
+# samp.saa (its main.scm and script.img become the game's main script; SAMP_SAA=0 leaves it out: samp-rs's minimal
+# one).
 # EXTRA_CMDS: more server commands after the scripted ones, `;`-separated (`sleep|S` waits, `shot|NAME` copies the
 # newest complete presented frame to OUT/shots/NAME.png), then the lines of the file CMDS (tools/e2e/samp/objects.cmds), e.g.
 # 'td|~y~textdraw;dialog|1|0|Welcome|Hello;sleep|8'; SA_GAME_KEYS adds scripted keys (`tab:1500:1502`
@@ -42,6 +44,8 @@
 # the server (SIGKILL), waits S seconds and starts it again; SOAK_SECONDS stops the command list after that many
 # seconds and KILL_AFTER=1 then ends the game instead of waiting for FRAMES (tools/e2e/samp/soak.sh uses both).
 # Crash reports of sa-game go to OUT/crashes (SA_GAME_CRASH_DIR).
+# SCENARIO=parity: the steps of tools/e2e/samp/parity.steps (what samp.dll changes in the game), as samp-rs-ab.sh
+# SCENARIO=parity runs them on the DLL client; screenshots in OUT/shots/.
 # SA_GAME = the sa-game binary (default target/i686-unknown-linux-gnu/release/sa-game), MODS = the built mods
 # (default target/mods). FRAMES (default 1800). Port SAMP_PORT (default 7813).
 # Output: server.log, sa-game.log, report.md, present/*.png (every 20th in-game frame), server-events.txt, and
@@ -120,6 +124,7 @@ fi
 for f in "$CLIENT/sampgui.png" "$CLIENT/mouse.png" "$CLIENT/sampaux3.ttf" "$SA_ROOT/wine/gta-sa/gtaweap3.ttf"; do
     [ -f "$f" ] && cp "$f" "$OUT/mods/samp/"
 done
+[ "${SAMP_SAA:-1}" = 1 ] && [ -f "$CLIENT/samp.saa" ] && cp "$CLIENT/samp.saa" "$OUT/mods/samp/"
 python3 -I - "$OUT/list/servers.json" "$PORT" << 'PY'
 import json, sys
 rows = [
@@ -278,6 +283,18 @@ if [ "${SCENARIO:-join}" = world ] && wait_log '\[cov\] spawn id=' 150; then
     sleep 4
     world_scenario
     kill "$GAME_PID" 2> /dev/null
+elif [ "${SCENARIO:-join}" = parity ] && wait_log '\[cov\] spawn id=' 150; then
+    say "spawned"
+    shot() {
+        local f
+        f="$(ls -t "$OUT"/present/present-[0-9]*.png 2> /dev/null | sed -n 2p)"
+        [ -n "$f" ] && cp "$f" "$OUT/shots/$1.png" && say "shot $1: $(basename "$f")"
+    }
+    # shellcheck source=steps.sh
+    source "$HERE/steps.sh"
+    sleep 4
+    run_steps "$HERE/parity.steps"
+    kill "$GAME_PID" 2> /dev/null
 elif wait_log '\[cov\] spawn id=' 150; then
     say "spawned"
     if [ "${BOT:-0}" = 1 ]; then
@@ -349,7 +366,8 @@ steps = [("connected", bool(re.search(r"\[cov\] connect id=\d+ name=ModCJ", slog
          ("commands acknowledged", all(re.search(rf"\[cov\] {i} done", slog) for i in range(1, seqs + 1)))]
 after = slog.split(f"[cov] {pos_seq} done", 1)[1] if pos_seq and f"[cov] {pos_seq} done" in slog else ""
 far = max((math.dist((float(x), float(y)), (2495.0, -1680.0)) for x, y in re.findall(r"where st=1 pos=(-?[\d.]+),(-?[\d.]+),", after)), default=0.0)
-steps.append((f"walk seen by the server ({far:.1f} m from the teleport point)", far >= 1.0))
+if pos_seq:
+    steps.append((f"walk seen by the server ({far:.1f} m from the teleport point)", far >= 1.0))
 if bot:
     m = re.search(r"player (\d+) \(skin \d+\) streamed in", game)
     steps.append(("the other player streamed in as a ped", m is not None))
