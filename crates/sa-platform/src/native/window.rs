@@ -7,6 +7,7 @@ use winit::dpi::PhysicalSize;
 use winit::event::{DeviceEvent, ElementState, MouseScrollDelta, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::keyboard::{KeyCode, PhysicalKey};
+use winit::platform::modifier_supplement::KeyEventExtModifierSupplement;
 use winit::window::{CursorGrabMode, Window, WindowId};
 
 use crate::input::{InputEvent, InputState, Key, MouseButton};
@@ -248,8 +249,9 @@ impl<A: WindowApp> ApplicationHandler for Runner<'_, A> {
                     ElementState::Pressed => self.input.key_down(k),
                     ElementState::Released => self.input.key_up(k),
                 }
+                // with the modifiers applied, as Windows' WM_CHAR: Ctrl+A is 0x01 (an edit box's select-all), not "a"
                 if event.state == ElementState::Pressed
-                    && let Some(t) = &event.text
+                    && let Some(t) = event.text_with_all_modifiers()
                 {
                     for c in t.chars() {
                         self.input.events.push(InputEvent::Char(c));
