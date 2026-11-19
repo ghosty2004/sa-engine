@@ -22,7 +22,7 @@ use sa_rw_wgpu::d3d9::WgpuDevice;
 
 use crate::app::{Args, Session};
 use crate::d3d9;
-use crate::frontend::{CLIENT_HEIGHT as HEIGHT, CLIENT_WIDTH as WIDTH, FrontEnd, client_size, in_menu, to_client};
+use crate::frontend::{CLIENT_HEIGHT as HEIGHT, CLIENT_WIDTH as WIDTH, FrontEnd, client_size, cursor_shown, in_menu, to_client};
 
 use sa_rw_wgpu::d3d9::block_on;
 
@@ -126,6 +126,8 @@ struct GameWindow<'a> {
     titled: usize,
     /// the pointer is captured (relative mode, as DirectInput's exclusive mode in game); released in the menus
     captured: bool,
+    /// the platform's cursor is shown while the pointer is released
+    cursor_shown: bool,
     /// the shared front end's input pipeline
     front: FrontEnd,
 }
@@ -195,10 +197,17 @@ impl WindowApp for GameWindow<'_> {
             let menu = in_menu();
             if menu && self.captured {
                 set_pointer_capture(w, false);
-                // the menu draws its own cursor
-                w.set_cursor_visible(false);
                 self.captured = false;
-            } else if !menu && !self.captured {
+                self.cursor_shown = true;
+            }
+            if menu {
+                // the menu or the mod draws its own cursor unless a mod asks for the platform's
+                let shown = cursor_shown();
+                if shown != self.cursor_shown {
+                    w.set_cursor_visible(shown);
+                    self.cursor_shown = shown;
+                }
+            } else if !self.captured {
                 self.captured = set_pointer_capture(w, true);
             }
             let s = w.inner_size();
@@ -234,6 +243,7 @@ pub fn run(args: &Args) -> Result<Session, String> {
         start: Instant::now(),
         titled: 0,
         captured: false,
+        cursor_shown: true,
         front: FrontEnd::new(args.auto_input),
     };
     let mut cfg = WindowConfig::new("sa-game", WIDTH, HEIGHT);

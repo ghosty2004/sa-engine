@@ -401,6 +401,16 @@ pub fn cursor_visible() -> bool {
     with_host(|h| h.capture().2).unwrap_or(false)
 }
 
+/// Whether a mod takes the mouse (`input_capture`'s mouse) or shows the platform's cursor: the pointer is then
+/// released and the mods get its absolute positions, whichever cursor is drawn.
+pub fn takes_pointer() -> bool {
+    with_host(|h| {
+        let c = h.capture();
+        c.1 || c.2
+    })
+    .unwrap_or(false)
+}
+
 /// The resize event: the window's client area / the canvas is now `width` x `height` pixels.
 pub fn resize(width: u32, height: u32) {
     let screen = crate::d3d9::with_device(|d| sa_platform::gpu::D3d9Device::back_buffer_size(d)).unwrap_or((0, 0));

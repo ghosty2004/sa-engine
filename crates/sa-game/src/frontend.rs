@@ -41,12 +41,21 @@ pub fn to_client(x: i32, y: i32, size: (u32, u32), client: (u32, u32)) -> (i32, 
 }
 
 /// The menus (front end, or the pause menu over the game: `FrontEndMenuManager.m_bMenuActive` with gGameState
-/// IDLE), or a mod showing the platform's cursor: the game / the mod draws its own cursor at the `WM_MOUSEMOVE` position, so the backend does not capture the pointer and sends absolute
-/// positions and clicks. Elsewhere the game owns the pointer (DirectInput exclusive mode: captured, relative motion).
+/// IDLE), or a mod taking the mouse: the game / the mod draws its own cursor (or the platform's, [`cursor_shown`]) at
+/// the `WM_MOUSEMOVE` position, so the backend does not capture the pointer and sends absolute positions and clicks.
+/// Elsewhere the game owns the pointer (DirectInput exclusive mode: captured, relative motion).
 pub fn in_menu() -> bool {
     crate::winmain::game_state() != crate::winmain::STATE_IDLE
         || sa_core::game::MENU_ACTIVE.get().get()
-        || cursor_shown()
+        || mod_takes_pointer()
+}
+
+/// Whether a mod takes the mouse or shows the platform's cursor (`input_capture`).
+fn mod_takes_pointer() -> bool {
+    #[cfg(feature = "mods")]
+    return crate::mods::takes_pointer();
+    #[cfg(not(feature = "mods"))]
+    false
 }
 
 /// Whether a mod shows the platform's cursor (`input_capture`).
