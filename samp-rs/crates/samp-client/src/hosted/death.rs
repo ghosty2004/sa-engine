@@ -87,8 +87,12 @@ impl HostedClient {
         report(self, "set_drunkenness", game.set_drunkenness(0));
         report(self, "set_player_control", game.set_player_control(true));
         if let Some(v) = s.vehicle {
-            self.last_car_sync = None;
-            self.car_sync(game, v, s, now);
+            self.driver_timer.reset();
+            self.passenger_timer.reset();
+            self.in_car_dup.reset();
+            let pad = Self::local_pad(game);
+            let key_ctx = Self::key_context(game, me, s, &pad);
+            self.car_sync(game, me, v, s, &pad, key_ctx, now);
         }
         let damage = game.ped_damage(me).unwrap_or_default();
         let source = (damage.source != DamageSource::None).then_some(damage.source);

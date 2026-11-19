@@ -39,11 +39,10 @@ pub(crate) use gta::{load_model, ped_in_world, set_hud, set_ped_skin};
 /// Environment variable with the (Windows) path of an `auth_table.txt` that replaces the built-in table.
 pub const AUTH_TABLE_ENV: &str = "SAMP_RS_AUTH_TABLE";
 
-/// Ped state `PEDSTATE_IDLE` (gta-reversed `Enums/ePedState.h`, like the other `PEDSTATE_*`).
-const PEDSTATE_IDLE: u32 = 1;
-const PEDSTATE_SNIPER: u32 = 12;
-const PEDSTATE_DRIVING: u32 = 50;
-use crate::death::{PEDSTATE_DEAD, PEDSTATE_DIE};
+use crate::footsync::pedstate::{
+    DEAD as PEDSTATE_DEAD, DIE as PEDSTATE_DIE, DRIVING as PEDSTATE_DRIVING, IDLE as PEDSTATE_IDLE,
+    SNIPER as PEDSTATE_SNIPER,
+};
 /// `TheCamera.m_aCams[0].Front` (what samp's camera-front pointer holds).
 const CAMERA_FRONT: u32 = 0xB6F32C;
 /// The in-vehicle bit of the first `CPed` flag word.

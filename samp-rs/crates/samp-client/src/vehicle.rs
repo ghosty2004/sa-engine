@@ -10,6 +10,7 @@ use std::time::Duration;
 
 use samp_proto::time::Instant;
 
+use samp_proto::sync::SyncPacket;
 use samp_proto::sync::encoding::WeaponByte;
 use samp_proto::sync::vehicle::{PassengerSync, RemoteVehicleSync, UnoccupiedSync, VehicleSync};
 use samp_proto::types::{Quat, Vec3};
@@ -484,6 +485,11 @@ impl DupGate {
         self.last_send = Some(now);
         self.last.insert(packet_id, bytes);
         true
+    }
+
+    /// [`DupGate::offer`] of a sync packet, compared by its encoding.
+    pub fn offer_sync<S: SyncPacket>(&mut self, now: Instant, p: &S) -> bool {
+        self.offer(now, S::PACKET_ID, p.to_bits().as_bytes().to_vec())
     }
 
     /// A send that bypasses the comparison but still refreshes the shared timestamp (210 while towing).

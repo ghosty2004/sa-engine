@@ -151,7 +151,7 @@ impl Vehicles {
             extra: driver_extra(veh, kind),
         };
         let p = vm::build_driver_sync(&s, self.last_rotation);
-        if self.dup.offer(now, samp_proto::sync::ids::VEHICLE_SYNC, body(&p)) {
+        if self.dup.offer_sync(now, &p) {
             self.last_rotation = Some(p.rotation);
             net.send_sync(&p);
             self.n.sent_200 += 1;
@@ -178,7 +178,7 @@ impl Vehicles {
         // Drive-by bit (byte 2 bit 6): the local drive-by task is active, from its start frame on.
         p.drive_by = self.local_drive_by;
         p.cuffed = self.local_cuffed;
-        if self.dup.offer(now, samp_proto::sync::ids::PASSENGER_SYNC, body(&p)) {
+        if self.dup.offer_sync(now, &p) {
             net.send_sync(&p);
             self.n.sent_211 += 1;
         }

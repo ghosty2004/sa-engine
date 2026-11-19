@@ -640,10 +640,22 @@ impl Vehicles for ModGame {
         let v = VehicleRef(h.0 as u32);
         state::vehicle(v).map(|_| v)
     }
+    /// The passengers only of the vehicle the local player rides in as one (the mod API's vehicle record has none;
+    /// a seat is a script command each).
     fn vehicle_snapshot(&self, v: VehicleRef) -> GameResult<VehicleSnapshot> {
         let i = state::vehicle(v).ok_or(GameError::InvalidHandle)?;
         let m = state::vehicle_matrix(v).ok_or(GameError::InvalidHandle)?;
+        let mut passengers = [None; 8];
+        let me = self.local_player();
+        if me.is_some() && i.driver != me && self.local_vehicle() == Some(v) {
+            for (seat, p) in (0..).zip(passengers.iter_mut()) {
+                *p = script::run(0x0432, &[Arg::Vehicle(v), Arg::Int(seat), Arg::Out])
+                    .ok()
+                    .map(|o| PedRef(o.outputs[0]));
+            }
+        }
         Ok(VehicleSnapshot {
+            passengers,
             matrix: m.into(),
             move_speed: i.move_speed,
             health: i.health,

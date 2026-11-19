@@ -5,8 +5,7 @@
 use crate::combat::Damager;
 
 /// `ePedState`: dying (the wasted sequence runs) and dead.
-pub const PEDSTATE_DIE: u32 = 54;
-pub const PEDSTATE_DEAD: u32 = 55;
+pub use crate::footsync::pedstate::{DEAD as PEDSTATE_DEAD, DIE as PEDSTATE_DIE};
 
 /// Whether a spawn position is accepted (samp.dll's validator 0x100B4B90): -20000 < x, y < 20000,
 /// -10000 < z < 100000.

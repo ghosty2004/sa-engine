@@ -27,7 +27,6 @@ use samp_proto::time::Instant;
 use samp_proto::rpcs::OutgoingRpc;
 use samp_proto::rpcs::vehicle::{self as rv, Incoming as V};
 use samp_proto::sync::IncomingSync;
-use samp_proto::sync::SyncPacket;
 use samp_proto::sync::vehicle::TrailerSync;
 use samp_proto::types::Quat;
 
@@ -129,19 +128,13 @@ mod g {
     pub const VT_TASK_GET_TYPE: u32 = 0x10;
 }
 
-const PEDSTATE_IDLE: u32 = 1;
-const PEDSTATE_SNIPER: u32 = 12;
-const PEDSTATE_DRIVING: u32 = 50;
-/// GTA's passenger state (passengers normally show 50 as well; accepted for safety).
-const PEDSTATE_PASSENGER: u32 = 51;
-use crate::death::{PEDSTATE_DEAD, PEDSTATE_DIE};
+use crate::footsync::pedstate::{
+    DEAD as PEDSTATE_DEAD, DIE as PEDSTATE_DIE, DRIVING as PEDSTATE_DRIVING, IDLE as PEDSTATE_IDLE,
+    PASSENGER as PEDSTATE_PASSENGER, SNIPER as PEDSTATE_SNIPER,
+};
 
 fn send<P: OutgoingRpc>(net: &mut NetClient, p: &P) {
     net.send_rpc(p, P::RELIABILITY);
-}
-
-fn body<S: SyncPacket>(p: &S) -> Vec<u8> {
-    p.to_bits().as_bytes().to_vec()
 }
 
 /// One samp vehicle object.

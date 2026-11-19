@@ -19,6 +19,7 @@ use std::time::Duration;
 use samp_proto::time::Instant;
 
 use crate::classsel::{self, ClassSelection};
+use crate::footsync::pedstate::{DRIVING as PEDSTATE_DRIVING, IDLE as PEDSTATE_IDLE, PASSENGER as PEDSTATE_PASSENGER, SNIPER as PEDSTATE_SNIPER};
 use crate::footsync::{self, FootSender, KeyContext, LocalSample, Rotation};
 use crate::hostedobjects::{HostedObjects, PlayerPeds};
 use crate::lifecycle::{self, NetGame};
@@ -85,7 +86,11 @@ pub struct HostedClient {
     /// What the nametags show of the other players: NPC (RPC 137), health, armour and the time of the last
     /// on-foot sync.
     remotes: HashMap<u16, RemoteTag>,
-    last_car_sync: Option<Instant>,
+    /// InitGame's in-car send rate (ms).
+    in_car_rate: u32,
+    driver_timer: crate::vehicle::IntervalTimer,
+    passenger_timer: crate::vehicle::IntervalTimer,
+    in_car_dup: crate::vehicle::DupGate,
     car_rotation: Option<samp_proto::types::Quat>,
     /// samp's netgame state and connect timer (`Connecting to` 3 s after `Started`).
     netgame: NetGame,
@@ -152,7 +157,10 @@ impl HostedClient {
             spawned_once: false,
             players: HashMap::new(),
             remotes: HashMap::new(),
-            last_car_sync: None,
+            in_car_rate: 30,
+            driver_timer: Default::default(),
+            passenger_timer: Default::default(),
+            in_car_dup: Default::default(),
             car_rotation: None,
             netgame: NetGame::new(0),
             clock: crate::world::World::default(),
@@ -285,6 +293,7 @@ impl HostedClient {
             Event::InitGame(g) => {
                 self.connected = true;
                 self.on_foot_rate = g.on_foot_rate.clamp(10, 1000);
+                self.in_car_rate = g.in_car_rate.clamp(10, 1000);
                 self.manual_engine = g.manual_engine_and_lights;
                 self.note(format!(
                     "InitGame: server {:?}, our id {:?}, hour {}, weather {}, gravity {}, entry-exits disabled {}",
@@ -785,57 +794,132 @@ impl HostedClient {
         }
     }
 
-    /// Driver sync (200) while the local player drives a vehicle the server streamed in.
+    /// Driver sync (200) or passenger sync (211) while the local player sits in a vehicle the server streamed in,
+    /// on the in-car interval and through the in-car duplicate gate, as the DLL client's `local_tick`.
+    #[allow(clippy::too_many_arguments)]
     fn car_sync(
         &mut self,
         game: &mut dyn GameAdapter,
+        me: PedRef,
         v: VehicleRef,
         s: &sa_samp_api::peds::PedSnapshot,
+        pad: &footsync::PadState,
+        key_ctx: KeyContext,
         now: Instant,
     ) {
         let Some((&id, _)) = self.vehicles.iter().find(|(_, r)| **r == v) else {
             return;
         };
         let Ok(vs) = game.vehicle_snapshot(v) else { return };
-        if vs.driver != game.local_player() {
-            return;
-        }
-        let due = self
-            .last_car_sync
-            .is_none_or(|t| now.duration_since(t) >= Duration::from_millis(u64::from(self.on_foot_rate)));
-        if !due {
-            return;
-        }
-        self.last_car_sync = Some(now);
-        let (pad, _) = game.pad();
+        let interval = crate::vehicle::in_car_interval(self.in_car_rate.max(10), self.players.len() as u32);
+        let keys = footsync::key_word(pad, key_ctx);
+        let additional_key = footsync::additional_key(pad);
         let a = |v: Vec3| [v.x, v.y, v.z];
-        let m = vs.matrix;
-        let sample = crate::vehicle::DriverSample {
-            vehicle_id: id,
-            left_right: pad.left_x,
-            up_down: pad.left_y,
-            keys: 0,
-            additional_key: 0,
-            rotation: Rotation {
-                right: a(m.right),
-                forward: a(m.forward),
-                up: a(m.up),
-            },
-            position: a(m.pos),
-            velocity: a(vs.move_speed),
-            vehicle_health: vs.health,
-            health: s.health,
-            armour: s.armour,
-            weapon: s.weapon.0,
-            siren: vs.siren,
-            landing_gear: vs.gear_down,
-            trailer_id: 0,
-            extra: 0,
-        };
-        let p = crate::vehicle::build_driver_sync(&sample, self.car_rotation);
-        self.car_rotation = Some(p.rotation);
-        self.net.send_sync(&p);
-        self.syncs_sent += 1;
+        if vs.driver == Some(me) && s.ped_state == PEDSTATE_DRIVING {
+            if !self.driver_timer.due(now, interval) {
+                return;
+            }
+            let m = vs.matrix;
+            let sample = crate::vehicle::DriverSample {
+                vehicle_id: id,
+                left_right: pad.left_stick_x,
+                up_down: pad.left_stick_y,
+                keys,
+                additional_key,
+                rotation: Rotation {
+                    right: a(m.right),
+                    forward: a(m.forward),
+                    up: a(m.up),
+                },
+                position: a(m.pos),
+                velocity: a(vs.move_speed),
+                vehicle_health: vs.health,
+                health: s.health,
+                armour: s.armour,
+                weapon: s.weapon.0,
+                siren: vs.siren,
+                landing_gear: vs.gear_down,
+                trailer_id: 0,
+                extra: 0,
+            };
+            let p = crate::vehicle::build_driver_sync(&sample, self.car_rotation);
+            if self.in_car_dup.offer_sync(now, &p) {
+                self.car_rotation = Some(p.rotation);
+                self.net.send_sync(&p);
+                self.syncs_sent += 1;
+            }
+        } else if let Some(i) = vs.passengers.iter().position(|p| *p == Some(me)) {
+            if !self.passenger_timer.due(now, interval) {
+                return;
+            }
+            let p = crate::vehicle::build_passenger_sync(
+                id,
+                i as u8 + 1,
+                s.weapon.0,
+                additional_key,
+                s.health,
+                s.armour,
+                pad.left_stick_x,
+                pad.left_stick_y,
+                keys,
+                a(s.matrix.pos),
+            );
+            if self.in_car_dup.offer_sync(now, &p) {
+                self.net.send_sync(&p);
+                self.syncs_sent += 1;
+            }
+        }
+    }
+
+    /// The local player's pad as samp reads it (pad 0's new state).
+    fn local_pad(game: &dyn GameAdapter) -> footsync::PadState {
+        let (pad, _) = game.pad();
+        footsync::PadState {
+            left_stick_x: pad.left_x,
+            left_stick_y: pad.left_y,
+            right_stick_x: pad.right_x,
+            right_stick_y: pad.right_y,
+            left_shoulder1: pad.shoulders[0],
+            left_shoulder2: pad.shoulders[1],
+            right_shoulder1: pad.shoulders[2],
+            right_shoulder2: pad.shoulders[3],
+            dpad_up: pad.dpad[0],
+            dpad_down: pad.dpad[1],
+            dpad_left: pad.dpad[2],
+            dpad_right: pad.dpad[3],
+            start: pad.start_select[0],
+            select: pad.start_select[1],
+            square: pad.face[0],
+            triangle: pad.face[1],
+            cross: pad.face[2],
+            circle: pad.face[3],
+            shock_left: pad.shock[0],
+            shock_right: pad.shock[1],
+            chat_indicated: pad.chat_indicated,
+            ped_walk: pad.ped_walk,
+            vehicle_mouse_look: 0,
+            radio_track_skip: 0,
+        }
+    }
+
+    /// The key word's context (`game::read_local_sample`). Whether the weapon has ammo only matters with Circle
+    /// held and the jetpack only with Triangle held on foot, so the game is asked only then.
+    fn key_context(
+        game: &dyn GameAdapter,
+        me: PedRef,
+        s: &sa_samp_api::peds::PedSnapshot,
+        pad: &footsync::PadState,
+    ) -> KeyContext {
+        let in_vehicle = s.vehicle.is_some();
+        let weapon = s.weapon.0;
+        let can_fire = weapon < 16
+            || weapon == 46
+            || (pad.circle != 0
+                && game.ped_weapons(me).is_ok_and(|w| {
+                    w.iter().any(|slot| slot.weapon == weapon && slot.ammo_total > 0)
+                }));
+        let jetpack = !in_vehicle && pad.triangle != 0 && game.has_jetpack(me).unwrap_or(false);
+        KeyContext { in_vehicle, can_fire, jetpack }
     }
 
     /// samp's local spawn routine, reduced to what the native adapter serves: control, HUD, the spawn
@@ -991,50 +1075,38 @@ impl HostedClient {
         }
     }
 
-    /// On-foot sync (207) when due, stats sync (205) every second.
+    /// Stats sync (205) every second, then the in-car syncs ([`Self::car_sync`]) or on-foot sync (207) when due.
     fn sync(&mut self, game: &mut dyn GameAdapter, now: Instant) {
         let Some(me) = game.local_player() else { return };
         let Ok(s) = game.ped_snapshot(me) else { return };
-        if let Some(v) = s.vehicle {
-            self.car_sync(game, v, &s, now);
+        if self
+            .last_stats
+            .is_none_or(|t| now.duration_since(t) > footsync::STATS_INTERVAL)
+        {
+            self.last_stats = Some(now);
+            self.net.send_sync(&StatsSync {
+                money: game.player_money(),
+                drunk_level: 0,
+            });
+        }
+        let pad = Self::local_pad(game);
+        let key_ctx = Self::key_context(game, me, &s, &pad);
+        if let Some(v) = s.vehicle
+            && matches!(s.ped_state, PEDSTATE_DRIVING | PEDSTATE_PASSENGER)
+        {
+            self.car_sync(game, me, v, &s, &pad, key_ctx, now);
             return;
         }
-        let (pad, _) = game.pad();
-        let pad = footsync::PadState {
-            left_stick_x: pad.left_x,
-            left_stick_y: pad.left_y,
-            right_stick_x: pad.right_x,
-            right_stick_y: pad.right_y,
-            left_shoulder1: pad.shoulders[0],
-            left_shoulder2: pad.shoulders[1],
-            right_shoulder1: pad.shoulders[2],
-            right_shoulder2: pad.shoulders[3],
-            dpad_up: pad.dpad[0],
-            dpad_down: pad.dpad[1],
-            dpad_left: pad.dpad[2],
-            dpad_right: pad.dpad[3],
-            start: pad.start_select[0],
-            select: pad.start_select[1],
-            square: pad.face[0],
-            triangle: pad.face[1],
-            cross: pad.face[2],
-            circle: pad.face[3],
-            shock_left: pad.shock[0],
-            shock_right: pad.shock[1],
-            chat_indicated: pad.chat_indicated,
-            ped_walk: pad.ped_walk,
-            vehicle_mouse_look: 0,
-            radio_track_skip: 0,
-        };
+        self.car_rotation = None;
+        // nothing while entering a seat or during the exit animation
+        if !matches!(s.ped_state, PEDSTATE_IDLE | PEDSTATE_SNIPER) {
+            return;
+        }
         let m = s.matrix;
         let a = |v: Vec3| [v.x, v.y, v.z];
         let sample = LocalSample {
             pad,
-            key_ctx: KeyContext {
-                in_vehicle: false,
-                can_fire: true,
-                jetpack: false,
-            },
+            key_ctx,
             position: a(m.pos),
             rotation: Rotation {
                 right: a(m.right),
@@ -1051,7 +1123,7 @@ impl HostedClient {
             surf_id: 0xFFFF,
         };
         let keys = footsync::key_word(&sample.pad, sample.key_ctx);
-        let interval = footsync::on_foot_interval(self.on_foot_rate, 0);
+        let interval = footsync::on_foot_interval(self.on_foot_rate, self.players.len() as u32);
         if self.sender.due(
             now,
             interval,
@@ -1064,16 +1136,6 @@ impl HostedClient {
                 self.net.send_sync(&f);
                 self.syncs_sent += 1;
             }
-        }
-        if self
-            .last_stats
-            .is_none_or(|t| now.duration_since(t) > footsync::STATS_INTERVAL)
-        {
-            self.last_stats = Some(now);
-            self.net.send_sync(&StatsSync {
-                money: game.player_money(),
-                drunk_level: 0,
-            });
         }
     }
 }

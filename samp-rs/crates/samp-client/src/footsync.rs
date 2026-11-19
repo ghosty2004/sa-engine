@@ -87,6 +87,17 @@ impl PadState {
     }
 }
 
+/// The ped states the local player's sync tells apart (`CPed::m_nPedState`, gta-reversed `Enums/ePedState.h`).
+pub mod pedstate {
+    pub const IDLE: u32 = 1;
+    pub const SNIPER: u32 = 12;
+    pub const DRIVING: u32 = 50;
+    /// GTA's passenger state (passengers normally show 50 as well).
+    pub const PASSENGER: u32 = 51;
+    pub const DIE: u32 = 54;
+    pub const DEAD: u32 = 55;
+}
+
 /// Context flags that gate some key bits (remote-players-sync.md §0.3).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct KeyContext {
