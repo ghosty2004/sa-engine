@@ -8,12 +8,15 @@ use std::rc::Rc;
 use sa_access::View;
 use sa_mod_api::state::{CameraInfo, MatrixInfo, PadInfo, PedInfo, PlayerInfo, VehicleInfo, Words, WorldInfo, to_bytes};
 use sa_mod_api::{
-    Call, IMPORTS, MAX_FILE, Permission, VIDEO_MODE_MAX, VIDEO_MODE_MIN, Val, event, hook, http, image, net, script,
-    status, storage, valid_file_name,
+    Call, IMPORTS, MAX_FILE, Permission, VIDEO_MODE_MAX, VIDEO_MODE_MIN, Val, blip, checkpoint, event, hook, http,
+    image, net, pickup, radar, script, status, storage, valid_file_name,
 };
 use sa_platform::gpu::OverlayQuad;
 use sa_types::script::{Opcode, ScriptArg, ScriptLocals};
-use sa_types::{EntityRef, GameError, GameOption, GameResult, ModelId, ObjectRef, PedRef, Vec3, VehicleRef, WeaponType};
+use sa_types::{
+    BlipRef, CheckpointRef, EntityRef, GameError, GameOption, GameResult, ModelId, ObjectRef, PedRef, PickupRef, Vec3,
+    VehicleRef, WeaponType,
+};
 
 use crate::ModSource;
 use crate::approval::Approvals;
@@ -106,6 +109,45 @@ impl Game2d {
         }
     }
 }
+
+/// What a mod created and owns: deleted when the mod deletes it or is disabled.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Owned {
+    /// A ped, vehicle or object.
+    Entity(EntityRef),
+    /// A pickup.
+    Pickup(PickupRef),
+    /// A checkpoint marker.
+    Checkpoint(CheckpointRef),
+    /// A radar blip.
+    Blip(BlipRef),
+}
+
+/// A radar area a mod shows (`set_radar_area`).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct RadarArea {
+    /// The world rectangle's lower corner.
+    pub min: (f32, f32),
+    /// Its upper corner.
+    pub max: (f32, f32),
+    /// Its colour, `0xRRGGBBAA`.
+    pub rgba: u32,
+    /// The colour it alternates with and the period in milliseconds (`flash_radar_area`).
+    pub flash: Option<(u32, u32)>,
+}
+
+impl RadarArea {
+    /// The colour shown `ms` milliseconds after the host started: the second colour in every other period.
+    pub fn colour_at(&self, ms: u64) -> u32 {
+        match self.flash {
+            Some((rgba, period)) if period > 0 && (ms / u64::from(period)) % 2 == 1 => rgba,
+            _ => self.rgba,
+        }
+    }
+}
+
+/// A mod's radar areas, by id (drawn in id order).
+pub type RadarAreas = std::collections::BTreeMap<u16, RadarArea>;
 
 /// The game functions mods can hook: the engine's hook registry.
 pub trait HookRegistry {
@@ -214,8 +256,10 @@ pub struct CallCtx {
     pub decision: HookDecision,
     /// Changes asked for inside a hook, for the next frame boundary.
     pub deferred: Vec<Call>,
-    /// The entities the mod created and has not deleted.
-    pub owned: Vec<EntityRef>,
+    /// What the mod created and has not deleted.
+    pub owned: Vec<Owned>,
+    /// The mod's radar areas.
+    pub radar_areas: RadarAreas,
     /// When the host started (`clock`'s monotonic time; `None`: zero).
     pub epoch: Option<web_time::Instant>,
     /// The network the mod's sockets go to (`None`: none).
@@ -378,6 +422,9 @@ pub fn dispatch(ctx: &mut CallCtx, mem: &mut dyn Mem, index: usize, args: &[Val]
         return Ok(apply(&mut g.0.borrow_mut(), call, &mut ctx.logs));
     }
     if let Some(r) = entities_and_scripts(ctx, mem, call) {
+        return Ok(r);
+    }
+    if let Some(r) = markers(ctx, call) {
         return Ok(r);
     }
     if let Some(r) = services(ctx, mem, call) {
@@ -1023,18 +1070,18 @@ fn entities_and_scripts(ctx: &mut CallCtx, mem: &mut dyn Mem, call: Call) -> Opt
             create(ctx, game, |g| {
                 let v = g.create_car(ModelId(model), Vec3::new(x, y, z))?;
                 g.set_vehicle_heading(v, degrees)?;
-                Ok(EntityRef::Vehicle(v))
+                Ok(Owned::Entity(EntityRef::Vehicle(v)))
             }, ModelId(model), [x, y, z, degrees])
         }
         Call::create_ped { model, x, y, z } => {
-            create(ctx, game, |g| g.create_ped(ModelId(model), Vec3::new(x, y, z)).map(EntityRef::Ped), ModelId(model), [x, y, z, 0.0])
+            create(ctx, game, |g| g.create_ped(ModelId(model), Vec3::new(x, y, z)).map(|p| Owned::Entity(EntityRef::Ped(p))), ModelId(model), [x, y, z, 0.0])
         }
         Call::create_object { model, x, y, z } => {
-            create(ctx, game, |g| g.create_object(ModelId(model), Vec3::new(x, y, z)).map(EntityRef::Object), ModelId(model), [x, y, z, 0.0])
+            create(ctx, game, |g| g.create_object(ModelId(model), Vec3::new(x, y, z)).map(|o| Owned::Entity(EntityRef::Object(o))), ModelId(model), [x, y, z, 0.0])
         }
-        Call::destroy_vehicle { handle } => destroy(ctx, game, EntityRef::Vehicle(VehicleRef(handle as u32))),
-        Call::destroy_ped { handle } => destroy(ctx, game, EntityRef::Ped(PedRef(handle as u32))),
-        Call::destroy_object { handle } => destroy(ctx, game, EntityRef::Object(ObjectRef(handle as u32))),
+        Call::destroy_vehicle { handle } => destroy(ctx, game, Owned::Entity(EntityRef::Vehicle(VehicleRef(handle as u32)))),
+        Call::destroy_ped { handle } => destroy(ctx, game, Owned::Entity(EntityRef::Ped(PedRef(handle as u32)))),
+        Call::destroy_object { handle } => destroy(ctx, game, Owned::Entity(EntityRef::Object(ObjectRef(handle as u32)))),
         Call::script_command { opcode, args_ptr, args_len, out_ptr } => {
             let Some(params) = script::params(opcode) else { return Some(status::DENIED) };
             if ctx.in_hook() {
@@ -1095,6 +1142,148 @@ fn entities_and_scripts(ctx: &mut CallCtx, mem: &mut dyn Mem, call: Call) -> Opt
         }
         _ => return None,
     })
+}
+
+/// Pickups, checkpoint markers, blips and radar areas: `None` for any other call.
+fn markers(ctx: &mut CallCtx, call: Call) -> Option<i32> {
+    let game = ctx.game.clone();
+    let finite = |v: &[f32]| v.iter().all(|f| f.is_finite());
+    let owned = |ctx: &CallCtx, o: Owned| ctx.owned.contains(&o);
+    Some(match call {
+        Call::create_pickup { model, kind, x, y, z } => {
+            if !(1..=pickup::MAX_TYPE).contains(&kind) {
+                return Some(status::BAD_ARG);
+            }
+            create(ctx, game, |g| g.create_pickup(ModelId(model), kind, Vec3::new(x, y, z)).map(Owned::Pickup), ModelId(model), [x, y, z, 0.0])
+        }
+        Call::destroy_pickup { handle } => destroy(ctx, game, Owned::Pickup(PickupRef(handle as u32))),
+        Call::pickup_collected { handle } => {
+            let Some(g) = game else { return Some(status::WRONG_PHASE) };
+            if ctx.in_hook() {
+                return Some(status::WRONG_PHASE);
+            }
+            let p = PickupRef(handle as u32);
+            let mut g = g.0.borrow_mut();
+            if g.pickup_touched(p).is_err() {
+                return Some(status::NOT_FOUND);
+            }
+            match guarded(&mut ctx.logs, "pickup_collected", || g.pickup_collected(p)) {
+                Ok(c) => i32::from(c),
+                Err(s) => s,
+            }
+        }
+        Call::pickup_touched { handle } => {
+            let Some(g) = game else { return Some(status::WRONG_PHASE) };
+            match g.0.borrow().pickup_touched(PickupRef(handle as u32)) {
+                Ok(t) => i32::from(t),
+                Err(_) => status::NOT_FOUND,
+            }
+        }
+        Call::create_checkpoint { kind, x, y, z, nx, ny, nz, size } => {
+            if !(0..=checkpoint::MAX_TYPE).contains(&kind) || !finite(&[x, y, z, nx, ny, nz, size]) {
+                return Some(status::BAD_ARG);
+            }
+            create_marker(ctx, game, "create_checkpoint", |g| {
+                g.create_checkpoint(kind, Vec3::new(x, y, z), Vec3::new(nx, ny, nz), size).map(Owned::Checkpoint)
+            })
+        }
+        Call::destroy_checkpoint { handle } => destroy(ctx, game, Owned::Checkpoint(CheckpointRef(handle as u32))),
+        Call::create_coord_blip { x, y, z, sprite, flags } => {
+            if !finite(&[x, y, z]) || !(0..=255).contains(&sprite) || flags & !(blip::GLOBAL | blip::CONTACT_POINT) != 0 {
+                return Some(status::BAD_ARG);
+            }
+            let style = sa_access::BlipStyle { global: flags & blip::GLOBAL != 0, contact_point: flags & blip::CONTACT_POINT != 0 };
+            create_marker(ctx, game, "create_coord_blip", |g| g.add_coord_blip(Vec3::new(x, y, z), sprite, style).map(Owned::Blip))
+        }
+        Call::create_entity_blip { kind, handle } => {
+            let r = match kind {
+                blip::PED => create_marker(ctx, game, "create_entity_blip", |g| g.add_ped_blip(PedRef(handle as u32)).map(Owned::Blip)),
+                blip::VEHICLE => {
+                    create_marker(ctx, game, "create_entity_blip", |g| g.add_vehicle_blip(VehicleRef(handle as u32)).map(Owned::Blip))
+                }
+                _ => status::BAD_ARG,
+            };
+            return Some(r);
+        }
+        Call::destroy_blip { handle } => destroy(ctx, game, Owned::Blip(BlipRef(handle as u32))),
+        Call::set_blip_colour { handle, colour } | Call::set_blip_scale { handle, scale: colour } | Call::set_blip_display { handle, display: colour } => {
+            let b = BlipRef(handle as u32);
+            if !owned(ctx, Owned::Blip(b)) {
+                return Some(status::DENIED);
+            }
+            if ctx.in_hook() {
+                return Some(status::WRONG_PHASE);
+            }
+            let Some(g) = game else { return Some(status::WRONG_PHASE) };
+            let mut g = g.0.borrow_mut();
+            let r = match call {
+                Call::set_blip_colour { .. } => guarded(&mut ctx.logs, "set_blip_colour", || g.set_blip_colour(b, colour as u32)),
+                Call::set_blip_scale { .. } => guarded(&mut ctx.logs, "set_blip_scale", || g.set_blip_scale(b, colour)),
+                _ => guarded(&mut ctx.logs, "set_blip_display", || g.set_blip_display(b, colour)),
+            };
+            r.map_or_else(|s| s, |()| status::OK)
+        }
+        Call::set_radar_area { id, min_x, min_y, max_x, max_y, rgba } => {
+            let Some(id) = radar_area_id(id) else { return Some(status::BAD_ARG) };
+            if !finite(&[min_x, min_y, max_x, max_y]) {
+                return Some(status::BAD_ARG);
+            }
+            ctx.radar_areas.insert(id, RadarArea { min: (min_x, min_y), max: (max_x, max_y), rgba: rgba as u32, flash: None });
+            status::OK
+        }
+        Call::flash_radar_area { id, rgba, period_ms } => {
+            let Some(id) = radar_area_id(id) else { return Some(status::BAD_ARG) };
+            let Ok(period) = u32::try_from(period_ms) else { return Some(status::BAD_ARG) };
+            match ctx.radar_areas.get_mut(&id) {
+                Some(a) => {
+                    a.flash = (period > 0).then_some((rgba as u32, period));
+                    status::OK
+                }
+                None => status::NOT_FOUND,
+            }
+        }
+        Call::model_exists { model } => {
+            let Some(g) = game else { return Some(status::WRONG_PHASE) };
+            i32::from(g.0.borrow().model_exists(ModelId(model)))
+        }
+        Call::remove_radar_area { id } => match radar_area_id(id).and_then(|id| ctx.radar_areas.remove(&id)) {
+            Some(_) => status::OK,
+            None => status::NOT_FOUND,
+        },
+        _ => return None,
+    })
+}
+
+/// A radar area id a mod may use.
+fn radar_area_id(id: i32) -> Option<u16> {
+    (0..radar::MAX_AREAS).contains(&id).then_some(id as u16)
+}
+
+/// Creates a pickup-less marker (a checkpoint or a blip) with `f`; the mod owns it.
+fn create_marker(ctx: &mut CallCtx, game: Option<Game>, what: &str, f: impl FnOnce(&mut GameAccess) -> GameResult<Owned>) -> i32 {
+    if ctx.in_hook() {
+        return status::WRONG_PHASE;
+    }
+    let Some(g) = game else { return status::WRONG_PHASE };
+    let r = guarded(&mut ctx.logs, what, || f(&mut g.0.borrow_mut()));
+    match r {
+        Ok(o) => {
+            ctx.owned.push(o);
+            owned_handle(o)
+        }
+        Err(s) => s,
+    }
+}
+
+/// The handle a mod gets for what it created.
+fn owned_handle(o: Owned) -> i32 {
+    match o {
+        Owned::Entity(EntityRef::Ped(PedRef(h)) | EntityRef::Vehicle(VehicleRef(h)) | EntityRef::Object(ObjectRef(h)))
+        | Owned::Pickup(PickupRef(h))
+        | Owned::Checkpoint(CheckpointRef(h))
+        | Owned::Blip(BlipRef(h)) => h as i32,
+        Owned::Entity(_) => status::FAILED,
+    }
 }
 
 /// The NUL-terminated string of at most `max` bytes at `ptr` in the mod's memory (without the NUL).
@@ -1228,7 +1417,7 @@ pub fn apply(g: &mut GameAccess, call: Call, logs: &mut Vec<(i32, String)>) -> i
 fn create(
     ctx: &mut CallCtx,
     game: Option<Game>,
-    f: impl FnOnce(&mut GameAccess) -> GameResult<EntityRef>,
+    f: impl FnOnce(&mut GameAccess) -> GameResult<Owned>,
     model: ModelId,
     at: [f32; 4],
 ) -> i32 {
@@ -1245,25 +1434,22 @@ fn create(
         f(&mut g)
     });
     match r {
-        Ok(e) => {
-            ctx.owned.push(e);
-            let (EntityRef::Ped(PedRef(h)) | EntityRef::Vehicle(VehicleRef(h)) | EntityRef::Object(ObjectRef(h))) = e else {
-                return status::FAILED;
-            };
-            h as i32
+        Ok(o) => {
+            ctx.owned.push(o);
+            owned_handle(o)
         }
         Err(s) => s,
     }
 }
 
 /// Deletes `e`, which the mod must own.
-fn destroy(ctx: &mut CallCtx, game: Option<Game>, e: EntityRef) -> i32 {
+fn destroy(ctx: &mut CallCtx, game: Option<Game>, e: Owned) -> i32 {
     if ctx.in_hook() {
         return status::WRONG_PHASE;
     }
     let Some(i) = ctx.owned.iter().position(|o| *o == e) else { return status::DENIED };
     let Some(g) = game else { return status::WRONG_PHASE };
-    let r = destroy_entity(&mut g.0.borrow_mut(), e, &mut ctx.logs);
+    let r = destroy_owned(&mut g.0.borrow_mut(), e, &mut ctx.logs);
     if r != status::FAILED {
         ctx.owned.remove(i);
     }
@@ -1271,12 +1457,15 @@ fn destroy(ctx: &mut CallCtx, game: Option<Game>, e: EntityRef) -> i32 {
 }
 
 /// Deletes `e` (`NOT_FOUND`: it is gone already).
-pub fn destroy_entity(g: &mut GameAccess, e: EntityRef, logs: &mut Vec<(i32, String)>) -> i32 {
+pub fn destroy_owned(g: &mut GameAccess, e: Owned, logs: &mut Vec<(i32, String)>) -> i32 {
     let r = guarded(logs, "destroy", || match e {
-        EntityRef::Ped(p) => g.destroy_ped(p),
-        EntityRef::Vehicle(v) => g.destroy_vehicle(v),
-        EntityRef::Object(o) => g.destroy_object(o),
-        _ => Err(GameError::InvalidHandle),
+        Owned::Entity(EntityRef::Ped(p)) => g.destroy_ped(p),
+        Owned::Entity(EntityRef::Vehicle(v)) => g.destroy_vehicle(v),
+        Owned::Entity(EntityRef::Object(o)) => g.destroy_object(o),
+        Owned::Entity(_) => Err(GameError::InvalidHandle),
+        Owned::Pickup(p) => g.remove_pickup(p),
+        Owned::Checkpoint(c) => g.delete_checkpoint(c),
+        Owned::Blip(b) => g.remove_blip(b),
     });
     r.map_or_else(|s| s, |()| status::OK)
 }
@@ -1559,5 +1748,41 @@ mod tests {
         // a stale ped handle never reaches the command
         m.0[..4].copy_from_slice(&0x206u32.to_le_bytes());
         assert_eq!(dispatch(&mut ctx, m, i("script_command"), &cmd(0x0687, 1)), Ok(status::NOT_FOUND));
+    }
+
+    #[test]
+    fn markers_and_radar_areas() {
+        use sa_access::fake;
+        let game = Game::new(fake::game());
+        let mut data = vec![0u8; 16];
+        let m = &mut SliceMem(&mut data);
+        let mut ctx = CallCtx { game: Some(game.clone()), ..Default::default() };
+        let i = |n| import_index(n).unwrap();
+        let area = |id: i32| [Val::I32(id), Val::F32(-10.0), Val::F32(-20.0), Val::F32(10.0), Val::F32(20.0), Val::I32(0x11223344)];
+        let blip = [Val::F32(1.0), Val::F32(2.0), Val::F32(3.0), Val::I32(0), Val::I32(blip::GLOBAL)];
+        assert_eq!(dispatch(&mut ctx, m, i("set_radar_area"), &area(3)), Ok(status::DENIED));
+        assert_eq!(dispatch(&mut ctx, m, i("create_coord_blip"), &blip), Ok(status::DENIED));
+        ctx.permissions = Permissions { render: true, entities: true, ..Default::default() };
+        // radar areas: the mod's ids, flashing every other period
+        assert_eq!(dispatch(&mut ctx, m, i("set_radar_area"), &area(radar::MAX_AREAS)), Ok(status::BAD_ARG));
+        assert_eq!(dispatch(&mut ctx, m, i("set_radar_area"), &area(3)), Ok(0));
+        assert_eq!(dispatch(&mut ctx, m, i("flash_radar_area"), &[Val::I32(4), Val::I32(1), Val::I32(500)]), Ok(status::NOT_FOUND));
+        assert_eq!(dispatch(&mut ctx, m, i("flash_radar_area"), &[Val::I32(3), Val::I32(0x55), Val::I32(500)]), Ok(0));
+        let a = ctx.radar_areas[&3];
+        assert_eq!((a.min, a.max, a.colour_at(499), a.colour_at(500), a.colour_at(1000)), ((-10.0, -20.0), (10.0, 20.0), 0x11223344, 0x55, 0x11223344));
+        assert_eq!(dispatch(&mut ctx, m, i("remove_radar_area"), &[Val::I32(3)]), Ok(0));
+        assert!(ctx.radar_areas.is_empty());
+        // blips: owned, through the game's command; only its own ones change
+        let h = dispatch(&mut ctx, m, i("create_coord_blip"), &blip).unwrap();
+        assert!(h >= 0 && ctx.owned == [Owned::Blip(BlipRef(h as u32))]);
+        let last = game.0.borrow().issued_commands().last().cloned().unwrap();
+        assert_eq!(last[..2], 0x02A8u16.to_le_bytes());
+        assert_eq!(dispatch(&mut ctx, m, i("set_blip_colour"), &[Val::I32(h + 1), Val::I32(1)]), Ok(status::DENIED));
+        assert_eq!(dispatch(&mut ctx, m, i("set_blip_colour"), &[Val::I32(h), Val::I32(1)]), Ok(0));
+        assert_eq!(dispatch(&mut ctx, m, i("destroy_blip"), &[Val::I32(h)]), Ok(0));
+        assert!(ctx.owned.is_empty());
+        // a stale pickup handle
+        ctx.permissions.state = true;
+        assert_eq!(dispatch(&mut ctx, m, i("pickup_touched"), &[Val::I32(0x0001_0005)]), Ok(status::NOT_FOUND));
     }
 }

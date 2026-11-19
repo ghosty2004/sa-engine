@@ -39,7 +39,6 @@ use sa_mod_api::{
 };
 use sa_platform::gpu::{OverlayFrame, OverlayQuad};
 
-use sa_types::EntityRef;
 
 use crate::api::{CallCtx, Display, Files, Game, HookCall, HookDecision, Registry, VideoRequest};
 use crate::engine::{Engine, Instance};
@@ -91,8 +90,10 @@ pub struct LoadedMod {
     /// Hook calls dropped by the per-frame limit ([`hook::MAX_CALLS_PER_FRAME`]).
     pub hook_dropped: u64,
     hook_calls_frame: u32,
-    /// The entities it created and has not deleted.
-    pub owned: Vec<EntityRef>,
+    /// What it created and has not deleted.
+    pub owned: Vec<api::Owned>,
+    /// Its radar areas.
+    radar_areas: api::RadarAreas,
     /// Changes it asked for inside hooks, for the next frame boundary.
     deferred: Vec<sa_mod_api::Call>,
     /// What it takes from the game (`input_capture`): keyboard, mouse, the platform's cursor.
@@ -139,7 +140,7 @@ pub struct Host {
     /// The hooked functions whose calls hooks may change ([`hook::CONTROLLABLE`]).
     controllable: Vec<u32>,
     /// Entities of disabled mods, deleted at the next frame boundary.
-    orphans: Vec<EntityRef>,
+    orphans: Vec<api::Owned>,
     /// The start of the host (`clock`).
     epoch: web_time::Instant,
     /// Where the mods' sockets go.
@@ -332,6 +333,7 @@ impl Host {
             hook_dropped: 0,
             hook_calls_frame: 0,
             owned: std::mem::take(&mut ctx.owned),
+            radar_areas: std::mem::take(&mut ctx.radar_areas),
             deferred: std::mem::take(&mut ctx.deferred),
             capture: ctx.capture,
             options_off: std::mem::take(&mut ctx.options_off),
@@ -389,6 +391,7 @@ impl Host {
         self.mods[i].sockets = Sockets::default();
         self.mods[i].requests = Requests::default();
         self.mods[i].images.clear();
+        self.mods[i].radar_areas.clear();
         self.mods[i].capture = (false, false, false);
         let off = std::mem::take(&mut self.mods[i].options_off);
         if let Some(g) = &self.game {
@@ -433,6 +436,7 @@ impl Host {
         prep(&mut ctx);
         let m = &mut self.mods[i];
         ctx.owned = std::mem::take(&mut m.owned);
+        ctx.radar_areas = std::mem::take(&mut m.radar_areas);
         ctx.sockets = std::mem::take(&mut m.sockets);
         ctx.requests = std::mem::take(&mut m.requests);
         ctx.images = std::mem::take(&mut m.images);
@@ -442,6 +446,7 @@ impl Host {
         let r = m.instance.call(export, args, m.manifest.limits.fuel, &mut ctx);
         m.micros += t.elapsed().as_micros() as u64;
         m.owned = std::mem::take(&mut ctx.owned);
+        m.radar_areas = std::mem::take(&mut ctx.radar_areas);
         m.sockets = std::mem::take(&mut ctx.sockets);
         m.requests = std::mem::take(&mut ctx.requests);
         m.images = std::mem::take(&mut ctx.images);
@@ -555,6 +560,22 @@ impl Host {
         }
         for d in &self.game_2d {
             d.draw();
+        }
+    }
+
+    /// Whether a running mod shows radar areas.
+    pub fn has_radar_areas(&self) -> bool {
+        self.mods.iter().any(|m| m.disabled.is_none() && !m.radar_areas.is_empty())
+    }
+
+    /// Draws the running mods' radar areas, in load order and each mod's in id order (call where the game draws its
+    /// gang areas: after `CRadar::DrawRadarGangOverlay`, with its `in_menu`).
+    pub fn draw_radar_areas(&self, in_menu: bool) {
+        let ms = self.epoch.elapsed().as_millis() as u64;
+        for m in self.mods.iter().filter(|m| m.disabled.is_none()) {
+            for a in m.radar_areas.values() {
+                sa_access::draw_radar_area(a.min, a.max, a.colour_at(ms), in_menu);
+            }
         }
     }
 
@@ -674,7 +695,7 @@ impl Host {
         let mut g = g.0.borrow_mut();
         for e in std::mem::take(&mut self.orphans) {
             let mut logs = Vec::new();
-            api::destroy_entity(&mut g, e, &mut logs);
+            api::destroy_owned(&mut g, e, &mut logs);
             for (_, l) in logs {
                 (self.log)(&format!("mods: {l}"));
             }
@@ -817,8 +838,9 @@ mod tests {
         let (mut h, _) = host();
         // newer minor API version
         let mut s = src("new", wat_mod("", "1", DRAW));
-        s.0[0].1 = b"[mod]\nid = \"new\"\napi_version = \"1.7\"\n".to_vec();
-        assert!(h.load(s).unwrap_err().contains("API 1.7"));
+        let newer = format!("1.{}", sa_mod_api::API_MINOR + 1);
+        s.0[0].1 = format!("[mod]\nid = \"new\"\napi_version = \"{newer}\"\n").into_bytes();
+        assert!(h.load(s).unwrap_err().contains(&format!("API {newer}")));
         // memory above the cap (16 MiB default: 300 pages)
         assert!(h.load(src("big", wat_mod("", "300", DRAW))).unwrap_err().contains("cap"));
         // growth beyond the cap fails inside the mod (memory.grow returns -1), the mod goes on

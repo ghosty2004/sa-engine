@@ -27,7 +27,7 @@ pub use sa_mod_api::hook::Value;
 pub use sa_mod_api::sa_types::text::FontText;
 pub use sa_mod_api::sa_types::{GameState, ObjectRef, PedRef, Vec3, VehicleRef};
 pub use sa_mod_api::state::{CameraInfo, MatrixInfo, PadInfo, PedInfo, PlayerInfo, VehicleInfo, WorldInfo};
-pub use sa_mod_api::{API_MAJOR, API_MINOR, event as event_kind, level, status};
+pub use sa_mod_api::{API_MAJOR, API_MINOR, blip, event as event_kind, level, status};
 
 #[doc(hidden)]
 pub mod ffi;
@@ -786,6 +786,94 @@ pub mod entities {
     /// Deletes an object the mod created.
     pub fn destroy_object(o: ObjectRef) -> Result<(), Error> {
         check(unsafe { ffi::destroy_object(o.0 as i32) }).map(drop)
+    }
+}
+
+/// Pickups, checkpoint markers and radar blips the mod creates and owns (permission `entities = true`; the reads
+/// `state = "read"`; API 1.9): removed by the host when the mod is disabled. Not inside a hook.
+pub mod markers {
+    use super::*;
+    pub use sa_mod_api::sa_types::{BlipRef, CheckpointRef, PickupRef};
+
+    // SAFETY (every function below): a host function call with plain values.
+
+    /// A pickup of `model` and pickup type `kind` at `pos`.
+    pub fn create_pickup(model: i32, kind: i32, pos: Vec3) -> Result<PickupRef, Error> {
+        check(unsafe { ffi::create_pickup(model, kind, pos.x, pos.y, pos.z) }).map(|h| PickupRef(h as u32))
+    }
+    /// Removes a pickup the mod created.
+    pub fn destroy_pickup(p: PickupRef) -> Result<(), Error> {
+        check(unsafe { ffi::destroy_pickup(p.0 as i32) }).map(drop)
+    }
+    /// Whether the game collected the pickup.
+    pub fn pickup_collected(p: PickupRef) -> Result<bool, Error> {
+        check(unsafe { ffi::pickup_collected(p.0 as i32) }).map(|r| r == 1)
+    }
+    /// Whether the local player stands where the game picks the pickup up.
+    pub fn pickup_touched(p: PickupRef) -> Result<bool, Error> {
+        check(unsafe { ffi::pickup_touched(p.0 as i32) }).map(|r| r == 1)
+    }
+    /// A checkpoint marker of type `kind` at `pos` pointing to `next`, `size` its radius.
+    pub fn create_checkpoint(kind: i32, pos: Vec3, next: Vec3, size: f32) -> Result<CheckpointRef, Error> {
+        check(unsafe { ffi::create_checkpoint(kind, pos.x, pos.y, pos.z, next.x, next.y, next.z, size) })
+            .map(|h| CheckpointRef(h as u32))
+    }
+    /// Deletes a checkpoint marker the mod created.
+    pub fn destroy_checkpoint(c: CheckpointRef) -> Result<(), Error> {
+        check(unsafe { ffi::destroy_checkpoint(c.0 as i32) }).map(drop)
+    }
+    /// Whether the game defines `model`.
+    pub fn model_exists(model: i32) -> bool {
+        check(unsafe { ffi::model_exists(model) }) == Ok(1)
+    }
+    /// A radar blip at `pos` with radar sprite `sprite` and `sa_mod_api::blip` flags.
+    pub fn create_coord_blip(pos: Vec3, sprite: u8, flags: i32) -> Result<BlipRef, Error> {
+        check(unsafe { ffi::create_coord_blip(pos.x, pos.y, pos.z, i32::from(sprite), flags) }).map(|h| BlipRef(h as u32))
+    }
+    /// A radar blip on a ped.
+    pub fn create_ped_blip(ped: PedRef) -> Result<BlipRef, Error> {
+        check(unsafe { ffi::create_entity_blip(sa_mod_api::blip::PED, ped.0 as i32) }).map(|h| BlipRef(h as u32))
+    }
+    /// A radar blip on a vehicle.
+    pub fn create_vehicle_blip(vehicle: VehicleRef) -> Result<BlipRef, Error> {
+        check(unsafe { ffi::create_entity_blip(sa_mod_api::blip::VEHICLE, vehicle.0 as i32) }).map(|h| BlipRef(h as u32))
+    }
+    /// Removes a blip the mod created.
+    pub fn destroy_blip(b: BlipRef) -> Result<(), Error> {
+        check(unsafe { ffi::destroy_blip(b.0 as i32) }).map(drop)
+    }
+    /// A blip's colour: the game's blip colours 0..=8, any other value `0xRRGGBBAA`.
+    pub fn set_blip_colour(b: BlipRef, colour: u32) -> Result<(), Error> {
+        check(unsafe { ffi::set_blip_colour(b.0 as i32, colour as i32) }).map(drop)
+    }
+    /// A blip's size.
+    pub fn set_blip_scale(b: BlipRef, scale: i32) -> Result<(), Error> {
+        check(unsafe { ffi::set_blip_scale(b.0 as i32, scale) }).map(drop)
+    }
+    /// Where a blip shows (1 marker only, 2 blip only, 3 both).
+    pub fn set_blip_display(b: BlipRef, display: i32) -> Result<(), Error> {
+        check(unsafe { ffi::set_blip_display(b.0 as i32, display) }).map(drop)
+    }
+}
+
+/// Radar areas (permission `render = true`; API 1.9): world rectangles drawn on the radar and the map, in id order.
+pub mod radar {
+    use super::*;
+
+    // SAFETY (every function below): a host function call with plain values.
+
+    /// Shows area `id` over the rectangle `min` - `max` (x, y) in `colour`, not flashing.
+    pub fn set_area(id: u16, min: (f32, f32), max: (f32, f32), colour: Rgba) -> Result<(), Error> {
+        check(unsafe { ffi::set_radar_area(i32::from(id), min.0, min.1, max.0, max.1, colour.0 as i32) }).map(drop)
+    }
+    /// Makes area `id` alternate with `colour` every `period_ms` (0 stops it).
+    pub fn flash_area(id: u16, colour: Rgba, period_ms: u32) -> Result<(), Error> {
+        check(unsafe { ffi::flash_radar_area(i32::from(id), colour.0 as i32, period_ms.min(i32::MAX as u32) as i32) })
+            .map(drop)
+    }
+    /// Removes area `id`.
+    pub fn remove_area(id: u16) -> Result<(), Error> {
+        check(unsafe { ffi::remove_radar_area(i32::from(id)) }).map(drop)
     }
 }
 

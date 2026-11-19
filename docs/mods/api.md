@@ -1,4 +1,4 @@
-# Mod API reference (API 1.7)
+# Mod API reference (API 1.8)
 
 The interface is defined once, in `crates/sa-mod-api/src/lib.rs` (`for_each_import!`, `for_each_export!`); this page
 explains it. The Rust SDK (`crates/sa-mod`) wraps every function; other languages import the functions from module
@@ -20,7 +20,7 @@ optional and the host skips them.
 | `state` | `"none"` / `"read"` / `"write"` | game state queries (1.6: `world_to_screen`), game events except frames and keys (1.2); `"write"`: also changes of the state (1.3) |
 | `input` | `"none"` / `"read"` / `"capture"` | `key_down`, key events (1.2), `pad_state` (1.5); `"capture"`: also the input events before the game and `input_capture` (1.5) |
 | `hooks` | a list of function names | before / after hooks on these functions (1.2); with `state = "write"`, decisions on the controllable ones (1.3) |
-| `entities` | `true` / `false` | create and delete peds, vehicles, objects (1.3) |
+| `entities` | `true` / `false` | create and delete peds, vehicles, objects (1.3), pickups, checkpoint markers, blips (1.8) |
 | `scripts` | `true` / `false` | the allowed script commands (1.3) |
 | `audio` | `true` / `false` | game sounds (1.3) |
 | `net` | a list of `"udp:HOST:PORT"` rules, `*` for any host or port | UDP sockets to the targets a rule allows (1.4) |
@@ -388,3 +388,60 @@ thread (ureq with rustls and the Mozilla root certificates; no system TLS librar
 
 Requests run only for a mod that starts them; their timing is the network's, so a mod that waits for one is not
 deterministic across runs (as with sockets).
+## Level 8: pickups, checkpoints, blips, radar areas (1.8)
+
+The game's own markers, as its missions use them. Everything a mod creates here it owns: it removes only its own, and
+the host removes them when it disables the mod. Creation is refused inside a hook (WRONG_PHASE).
+
+### Pickups (`entities = true`; the reads `state = "read"`)
+
+| function | SDK (`sa_mod::markers`) | what |
+|---|---|---|
+| `create_pickup(model, kind, x, y, z)` | `create_pickup(model, kind, pos)` | `CREATE_PICKUP` with the pickup type `kind` (`ePickupType`, 1..=22), the model loaded first; returns the game's pickup handle |
+| `destroy_pickup(h)` | `destroy_pickup(p)` | `REMOVE_PICKUP` |
+| `pickup_collected(h)` | `pickup_collected(p)` | `HAS_PICKUP_BEEN_COLLECTED` (1 / 0; NOT_FOUND for a handle that names no pickup) |
+| `pickup_touched(h)` | `pickup_touched(p)` | 1 while the local player stands where `CPickup::Update` picks the pickup up: the pickup shown and not waiting to come back, a type with the pick-up test (not the mines and packages, 9..=14), its object pickable, the player on foot and alive, closer than the original's height and distance constants. A test of the state between frames |
+| `model_exists(model)` | `model_exists(model)` | 1 when the game defines the model (it has model info) |
+
+### Checkpoint markers and the area test
+
+| function | SDK | what |
+|---|---|---|
+| `create_checkpoint(kind, x, y, z, nx, ny, nz, size)` | `create_checkpoint(kind, pos, next, size)` | `CREATE_CHECKPOINT`: the game's checkpoint types 0..=8 (race arrows, finish flags, rings), pointing at `next`, `size` its radius |
+| `destroy_checkpoint(h)` | `destroy_checkpoint(c)` | `DELETE_CHECKPOINT` |
+
+The area test with the game's red marker is a script command (`scripts = true`): `LOCATE_CHAR_ANY_MEANS_3D` (00FE:
+ped, x, y, z, radius x, y, z, marker), run every frame as the missions do; the marker shows for that frame.
+
+### Blips
+
+| function | SDK | what |
+|---|---|---|
+| `create_coord_blip(x, y, z, sprite, flags)` | `create_coord_blip(pos, sprite, flags)` | a radar blip at a point with radar sprite `sprite` (0: a plain marker); `blip::GLOBAL` shows it on the whole radar and map (`ADD_SPRITE_BLIP_FOR_COORD`, else `ADD_SHORT_RANGE_SPRITE_BLIP_FOR_COORD`), `blip::CONTACT_POINT` makes it a contact point |
+| `create_entity_blip(kind, h)` | `create_ped_blip(p)`, `create_vehicle_blip(v)` | `ADD_BLIP_FOR_CHAR` / `ADD_BLIP_FOR_CAR` (`blip::PED`, `blip::VEHICLE`) |
+| `destroy_blip(h)` | `destroy_blip(b)` | `REMOVE_BLIP` |
+| `set_blip_colour(h, colour)` | `set_blip_colour(b, colour)` | `CHANGE_BLIP_COLOUR`: the game's colours 0..=8, any other value `0xRRGGBBAA` |
+| `set_blip_scale(h, scale)` | `set_blip_scale(b, scale)` | `CHANGE_BLIP_SCALE` |
+| `set_blip_display(h, display)` | `set_blip_display(b, display)` | `CHANGE_BLIP_DISPLAY` (1 marker only, 2 blip only, 3 both) |
+
+### Radar areas (`render = true`)
+
+| function | SDK (`sa_mod::radar`) | what |
+|---|---|---|
+| `set_radar_area(id, min_x, min_y, max_x, max_y, rgba)` | `set_area(id, min, max, colour)` | shows area `id` (0..1024, the mod's own numbering) over a world rectangle, replacing one of that id (not flashing) |
+| `flash_radar_area(id, rgba, period_ms)` | `flash_area(id, colour, period_ms)` | the area alternates with `rgba` every `period_ms` (0 stops it); NOT_FOUND without such an area |
+| `remove_radar_area(id)` | `remove_area(id)` | removes it |
+
+The host draws the areas with `CRadar::DrawAreaOnRadar` right after the game's gang areas
+(`CRadar::DrawRadarGangOverlay`), on the radar and on the map, each mod's in id order, the mods in load order.
+
+### Script commands
+
+1.8 adds `LOCATE_CHAR_ANY_MEANS_3D` (00FE), `HAS_MODEL_LOADED` (0248), `EXPLODE_CHAR_HEAD` (0321),
+`SET_CHAR_DECISION_MAKER` (060B) and `CLEAR_CHAR_TASKS_IMMEDIATELY` (0792): what actors (peds a mod created, with a
+heading, proofs, a decision maker, animations and health) need beyond level 3.
+
+### Determinism
+
+Nothing of level 8 runs without a mod that asks for it; the gang overlay is observed only from a mod's first radar
+area on.

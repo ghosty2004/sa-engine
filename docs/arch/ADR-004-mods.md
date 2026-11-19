@@ -347,6 +347,31 @@ API 1.7 (reference `docs/mods/api.md` level 7). Decisions:
   JSON with hostname, players, mode, language, password, version); the selected server's ping, rules and players come
   from SA:MP's UDP query (`samp_proto::query`) through the approved sockets. Tests point the mod at a local fixture
   (`server_list_url`), never at the public list.
+### 4.1f Pickups, checkpoints, blips, radar areas (API 1.8, 2026-11-19)
+
+API 1.8 (reference `docs/mods/api.md`). What SA:MP's world RPCs need, as GTA SA's own concepts:
+
+- **Pickups, checkpoint markers and blips are owned entities** (`entities = true`): `create_pickup` (`CREATE_PICKUP`,
+  the model loaded first), `create_checkpoint` (`CREATE_CHECKPOINT`, the game's checkpoint types with their pointing
+  direction), `create_coord_blip` (the four sprite blip commands: short range or global, contact point or not) and
+  `create_entity_blip` (`ADD_BLIP_FOR_CHAR` / `CAR`); each has its `destroy_*`, and colour, scale and display change
+  only the mod's own blips. The host deletes what a disabled mod owned, as for peds, vehicles and objects. Handles are
+  the game's own (pickup handle, checkpoint and blip script handles): the game's code already ignores a stale one.
+- **Reads** (`state = "read"`): `pickup_collected` (`HAS_PICKUP_BEEN_COLLECTED`), `pickup_touched` (the local player
+  stands where `CPickup::Update` picks the pickup up: shown, a type with the pick-up test, on foot, alive, within the
+  original's height and distance constants) and `model_exists`. `pickup_touched` is a state test between frames, not
+  a hook in `CPickup::Update` (no port body changes); samp's DLL reports from that hook, so a report can come up to a
+  frame earlier or later than the original's (ledger).
+- **The area test with its marker** is the script command `LOCATE_CHAR_ANY_MEANS_3D` (whitelisted with
+  `HAS_MODEL_LOADED`, `EXPLODE_CHAR_HEAD`, `SET_CHAR_DECISION_MAKER`, `CLEAR_CHAR_TASKS_IMMEDIATELY`), as the game's
+  missions do it every frame.
+- **Radar areas are visual** (`render = true`): `set_radar_area` / `flash_radar_area` / `remove_radar_area` keep
+  per-mod rectangles (ids `0 .. 1024`, the mod's numbering) that the host draws in id order with
+  `CRadar::DrawAreaOnRadar`, after `CRadar::DrawRadarGangOverlay` (registry observation of its call, watched from the
+  first area on; the radar and the map), alternating with the flash colour every period. sa-access reaches
+  `DrawAreaOnRadar` through a binding in sa-core (`catalog/bindings.csv`, twin in sa-hud).
+- **Actors** need nothing new: `create_ped` plus the whitelisted commands (heading, proofs, decision maker, animations,
+  task flush, health). samp's actors are ped type 5, `create_ped` makes type 4 (ledger).
 
 ### 4.2 Data mods (added by the user, 2026-11-17)
 

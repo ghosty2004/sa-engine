@@ -145,9 +145,14 @@ fn decide(game: &GameAccess, o: &mut Observed<'_>, d: HookDecision) {
 /// buffer the frame's `DrawFonts` draws with the HUD's text).
 const RENDER_2D_STUFF: u32 = 0x53E230;
 
+/// `CRadar::DrawRadarGangOverlay(bool inMenu)`: the mods' radar areas are drawn after it, on the radar and the map.
+const DRAW_RADAR_GANG_OVERLAY: u32 = 0x586650;
+
 thread_local! {
     /// Whether `Render2dStuff` is watched for the mods' 2D drawing (from the first queued item on).
     static TEXT_POINT: Cell<bool> = const { Cell::new(false) };
+    /// Whether the gang overlay is watched for the mods' radar areas (from the first area on).
+    static RADAR_POINT: Cell<bool> = const { Cell::new(false) };
 }
 
 /// The mods' part of the game's 2D phase ([`Host::draw_2d`]).
@@ -165,6 +170,16 @@ fn draw_game_2d() {
 fn observed(o: &mut Observed<'_>) {
     if o.entry.addr == RENDER_2D_STUFF && matches!(o.phase, Phase::After) {
         draw_game_2d();
+    }
+    if o.entry.addr == DRAW_RADAR_GANG_OVERLAY && matches!(o.phase, Phase::After) {
+        let in_menu = matches!(o.arg(0), Some(Raw::Int(v)) if v as u8 != 0);
+        HOST.with(|h| {
+            if let Ok(h) = h.try_borrow()
+                && let Some(h) = h.as_ref()
+            {
+                h.draw_radar_areas(in_menu);
+            }
+        });
     }
     let Some(game) = GAME.with_borrow(Clone::clone) else { return };
     // a hooked function that runs while the game is being changed for a mod is not reported
@@ -435,6 +450,10 @@ pub fn overlay(d: &mut WgpuDevice) {
         if h.wants_2d() && !TEXT_POINT.get() {
             TEXT_POINT.set(true);
             EngineRegistry.watch(RENDER_2D_STUFF, true);
+        }
+        if h.has_radar_areas() && !RADAR_POINT.get() {
+            RADAR_POINT.set(true);
+            EngineRegistry.watch(DRAW_RADAR_GANG_OVERLAY, true);
         }
         h.frame_end();
     });

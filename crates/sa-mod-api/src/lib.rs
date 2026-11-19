@@ -34,7 +34,7 @@ pub const EXPORT_MEMORY: &str = "memory";
 /// The API's major version.
 pub const API_MAJOR: u16 = 1;
 /// The API's minor version.
-pub const API_MINOR: u16 = 7;
+pub const API_MINOR: u16 = 8;
 
 /// `major << 16 | minor`, the value of the `sa_api_version` export.
 pub const fn pack_version(major: u16, minor: u16) -> i32 {
@@ -360,6 +360,7 @@ pub mod script {
         (0x00C0, "SET_TIME_OF_DAY", "ii"),
         (0x00DF, "IS_CHAR_IN_ANY_CAR", "p"),
         (0x00EC, "LOCATE_CHAR_ANY_MEANS_2D", "pffffi"),
+        (0x00FE, "LOCATE_CHAR_ANY_MEANS_3D", "pffffffi"),
         (0x0109, "ADD_SCORE", "Pi"),
         (0x0110, "CLEAR_WANTED_LEVEL", "P"),
         (0x0118, "IS_CHAR_DEAD", "p"),
@@ -379,10 +380,12 @@ pub mod script {
         (0x0224, "SET_CAR_HEALTH", "vi"),
         (0x0229, "CHANGE_CAR_COLOUR", "vii"),
         (0x0247, "REQUEST_MODEL", "i"),
+        (0x0248, "HAS_MODEL_LOADED", "i"),
         (0x02A3, "SWITCH_WIDESCREEN", "i"),
         (0x02AB, "SET_CHAR_PROOFS", "piiiii"),
         (0x02AC, "SET_CAR_PROOFS", "viiiii"),
         (0x02EB, "RESTORE_CAMERA_JUMPCUT", ""),
+        (0x0321, "EXPLODE_CHAR_HEAD", "p"),
         (0x0330, "SET_PLAYER_NEVER_GETS_TIRED", "Pi"),
         (0x0362, "WARP_CHAR_FROM_CAR_TO_COORD", "pfff"),
         (0x036A, "WARP_CHAR_INTO_CAR", "pv"),
@@ -405,9 +408,11 @@ pub mod script {
         (0x05CA, "TASK_ENTER_CAR_AS_PASSENGER", "pvii"),
         (0x05CB, "TASK_ENTER_CAR_AS_DRIVER", "pvi"),
         (0x05CD, "TASK_LEAVE_CAR", "pv"),
+        (0x060B, "SET_CHAR_DECISION_MAKER", "pi"),
         (0x0687, "CLEAR_CHAR_TASKS", "p"),
         (0x06BD, "IS_LINE_OF_SIGHT_CLEAR", "ffffffiiiii"),
         (0x06D7, "SWITCH_RANDOM_TRAINS", "i"),
+        (0x0792, "CLEAR_CHAR_TASKS_IMMEDIATELY", "p"),
         (0x0812, "TASK_PLAY_ANIM_NON_INTERRUPTABLE", "pssfiiiii"),
         (0x0826, "DISPLAY_HUD", "i"),
         (0x0860, "SET_CHAR_AREA_VISIBLE", "pi"),
@@ -556,6 +561,37 @@ pub mod text {
             style: small(14, 3)?,
         })
     }
+}
+
+/// Pickups (API 1.8).
+pub mod pickup {
+    /// The highest pickup type (`ePickupType`) `create_pickup` accepts.
+    pub const MAX_TYPE: i32 = 22;
+}
+
+/// Checkpoint markers (API 1.8).
+pub mod checkpoint {
+    /// The highest checkpoint type `create_checkpoint` accepts (the game's race checkpoint types).
+    pub const MAX_TYPE: i32 = 8;
+}
+
+/// Radar blips (API 1.8).
+pub mod blip {
+    /// `create_coord_blip` flag: shown on the whole radar and map (`ADD_SPRITE_BLIP_FOR_COORD`), else only near
+    /// the player (`ADD_SHORT_RANGE_SPRITE_BLIP_FOR_COORD`).
+    pub const GLOBAL: i32 = 1;
+    /// `create_coord_blip` flag: a contact point (`ADD_SPRITE_BLIP_FOR_CONTACT_POINT` and its short-range form).
+    pub const CONTACT_POINT: i32 = 2;
+    /// `create_entity_blip` kind: a ped.
+    pub const PED: i32 = 0;
+    /// `create_entity_blip` kind: a vehicle.
+    pub const VEHICLE: i32 = 1;
+}
+
+/// Radar areas (API 1.8): coloured world rectangles on the radar and the map.
+pub mod radar {
+    /// Radar area ids one mod may use (`0 .. MAX_AREAS`).
+    pub const MAX_AREAS: i32 = 1024;
 }
 
 /// The persistent key / value storage (API 1.4, `storage = true`): one area per mod id, natively a folder under
@@ -866,6 +902,54 @@ macro_rules! for_each_import {
             /// (1.7) Forgets request `handle` (a running one is abandoned; the host drops every request of a mod it
             /// disables). Returns 0 or `NOT_FOUND`.
             [Http] fn http_close(handle: i32) -> i32;
+            /// (1.8) Creates a pickup of `model` and pickup type `kind` (`ePickupType`, [`pickup::MAX_TYPE`] at most)
+            /// at (`x`, `y`, `z`) through `CREATE_PICKUP`, the model loaded first. Returns its handle (the game's
+            /// pickup handle). The mod owns it: it is removed when the mod is disabled. `WRONG_PHASE` inside a hook.
+            [Entities] fn create_pickup(model: i32, kind: i32, x: f32, y: f32, z: f32) -> i32;
+            /// (1.8) Removes pickup `handle` (`REMOVE_PICKUP`), which the mod created; `DENIED` for any other.
+            [Entities] fn destroy_pickup(handle: i32) -> i32;
+            /// (1.8) 1 when the game has collected pickup `handle` (`HAS_PICKUP_BEEN_COLLECTED`), else 0;
+            /// `NOT_FOUND` for a handle that names no pickup.
+            [State] fn pickup_collected(handle: i32) -> i32;
+            /// (1.8) 1 while the local player stands where the game's pickup update picks pickup `handle` up (on
+            /// foot, alive, within the pickup's collection range, the pickup shown), else 0; `NOT_FOUND` for a handle
+            /// that names no pickup. The test reads the state between frames; the game's own update runs in the frame.
+            [State] fn pickup_touched(handle: i32) -> i32;
+            /// (1.8) Creates a checkpoint marker of type `kind` (`CREATE_CHECKPOINT`, the game's race checkpoint
+            /// types, [`checkpoint::MAX_TYPE`] at most) at (`x`, `y`, `z`) pointing to (`nx`, `ny`, `nz`), `size` its
+            /// radius. Returns its handle; the mod owns it. `WRONG_PHASE` inside a hook.
+            [Entities] fn create_checkpoint(kind: i32, x: f32, y: f32, z: f32, nx: f32, ny: f32, nz: f32, size: f32) -> i32;
+            /// (1.8) Deletes checkpoint `handle` (`DELETE_CHECKPOINT`), which the mod created; `DENIED` for any other.
+            [Entities] fn destroy_checkpoint(handle: i32) -> i32;
+            /// (1.8) Adds a radar blip at (`x`, `y`, `z`) with radar sprite `sprite` (0: a plain marker) and
+            /// [`blip`] `flags` (`ADD_SHORT_RANGE_SPRITE_BLIP_FOR_COORD` and its global / contact-point forms).
+            /// Returns its handle; the mod owns it. `WRONG_PHASE` inside a hook.
+            [Entities] fn create_coord_blip(x: f32, y: f32, z: f32, sprite: i32, flags: i32) -> i32;
+            /// (1.8) Adds a radar blip on ped ([`blip::PED`]) or vehicle ([`blip::VEHICLE`]) `handle`
+            /// (`ADD_BLIP_FOR_CHAR`, `ADD_BLIP_FOR_CAR`). Returns its handle; the mod owns it. `NOT_FOUND` for a
+            /// stale entity handle.
+            [Entities] fn create_entity_blip(kind: i32, handle: i32) -> i32;
+            /// (1.8) Removes blip `handle` (`REMOVE_BLIP`), which the mod created; `DENIED` for any other.
+            [Entities] fn destroy_blip(handle: i32) -> i32;
+            /// (1.8) Sets the colour of the mod's blip `handle` (`CHANGE_BLIP_COLOUR`): the game's blip colours 0..=8,
+            /// any other value an `0xRRGGBBAA` colour.
+            [Entities] fn set_blip_colour(handle: i32, colour: i32) -> i32;
+            /// (1.8) Sets the size of the mod's blip `handle` (`CHANGE_BLIP_SCALE`, 1..=4 in the game's scripts).
+            [Entities] fn set_blip_scale(handle: i32, scale: i32) -> i32;
+            /// (1.8) Where the mod's blip `handle` shows (`CHANGE_BLIP_DISPLAY`: 1 marker only, 2 blip only, 3 both).
+            [Entities] fn set_blip_display(handle: i32, display: i32) -> i32;
+            /// (1.8) Shows the radar area `id` (`0 .. radar::MAX_AREAS`, the mod's own numbering; drawn in id order
+            /// after the game's gang areas, on the radar and the map, as `CRadar::DrawAreaOnRadar` draws) over the
+            /// world rectangle (`min_x`, `min_y`) - (`max_x`, `max_y`) in `rgba` (`0xRRGGBBAA`); replaces an area of
+            /// the same id (not flashing). Returns 0, `BAD_ARG`.
+            [Render] fn set_radar_area(id: i32, min_x: f32, min_y: f32, max_x: f32, max_y: f32, rgba: i32) -> i32;
+            /// (1.8) Makes radar area `id` alternate between its colour and `rgba` every `period_ms` (0 stops it).
+            /// Returns 0, `NOT_FOUND`, `BAD_ARG`.
+            [Render] fn flash_radar_area(id: i32, rgba: i32, period_ms: i32) -> i32;
+            /// (1.8) Removes radar area `id`. Returns 0, `NOT_FOUND`.
+            [Render] fn remove_radar_area(id: i32) -> i32;
+            /// (1.8) 1 when the game defines model `model` (it has model info), else 0.
+            [State] fn model_exists(model: i32) -> i32;
         }
     };
 }
@@ -1176,6 +1260,14 @@ mod tests {
         assert!(!http::allows(&list, "https://api.open.mp.evil.org/servers/"));
         assert!(!http::allows(&list, "https://api.open.mp/a b"));
         assert!(!http::allows(&list, "https://api.open.mp/../x") && !http::allows(&list, "https://api.open.mp/%2E%2e/x"));
+    }
+
+    #[test]
+    fn markers_and_radar_areas() {
+        assert_eq!(IMPORTS[import_index("create_pickup").unwrap()].permission, Permission::Entities);
+        assert_eq!(IMPORTS[import_index("pickup_touched").unwrap()].permission, Permission::State);
+        assert_eq!(IMPORTS[import_index("set_radar_area").unwrap()].permission, Permission::Render);
+        assert_eq!(script::params(0x00FE), Some("pffffffi"));
     }
 
     #[test]
