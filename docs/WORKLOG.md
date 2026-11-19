@@ -4806,3 +4806,12 @@
 - Not done: samp-rs's DLL e2e suite (its feature scenarios drive the DLL's control channel) on the mod host beyond the
   goal scenario; the DLL host's Wine suite was not run (its game copy needs SA:MP's files; the samp_client.dll release
   build, clippy for i686-pc-windows-gnu and the samp-rs workspace tests, 660, pass); planes' landing-gear value; gravity.
+
+## 2026-11-19 — SA:MP mod: server browser and HTTP in the mod API
+- Mod API level 1.7: HTTP GET behind manifest URL prefixes (native ureq + rustls on worker threads, browser fetch).
+- samp-proto: SA:MP query codec ('i', 'r', 'c', 'p').
+- mods/samp: the connect screen is a full-screen server browser (Internet / Favourites / Recent / Direct connect,
+  details panel with live ping, rules and players, mouse and keyboard), covering the world until the join.
+- Verified: tools/e2e/samp/mod-join.sh 4/4 (standard 800x600; UX at 1280x720 through the approval prompt; UX at
+  1920x1080 with mouse), unit tests of sa-mod-api, sa-mod-host (incl. a local HTTP GET), the samp mod and samp-proto.
+  The test list is a local fixture; no public server contacted.
