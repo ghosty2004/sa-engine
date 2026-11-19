@@ -32,9 +32,7 @@ fn vec(v: Vec3) -> [f32; 3] {
 }
 
 /// samp patches `CRadar::GetRadarTraceColour` (worldhooks), so blips keep samp's colour values.
-fn blip_colour(c: u32) -> u32 {
-    c
-}
+const BLIP_COLOUR: &dyn Fn(u32) -> u32 = &|c| c;
 
 #[derive(Clone, Debug)]
 struct Label {
@@ -78,7 +76,7 @@ impl Entities {
                 self.labels.remove(&l.label_id);
             }
             r => {
-                if let Some(line) = self.world.on_rpc(&mut process(), &r, &blip_colour) {
+                if let Some(line) = self.world.on_rpc(&mut process(), &r, BLIP_COLOUR) {
                     crate::ui::print_debug(&line);
                 }
             }
@@ -130,7 +128,7 @@ impl Entities {
 
     /// Per frame, from the netgame tick: checkpoints and the pickup poll ([`ServerWorld::tick`]), then the labels.
     pub fn tick(&mut self, runner: &mut Runner, net: &mut NetClient, players: &Players, vehicles: &Vehicles) {
-        self.world.tick(&mut process(), net, &blip_colour);
+        self.world.tick(&mut process(), net, BLIP_COLOUR);
         self.labels_tick(runner, players, vehicles);
     }
 
