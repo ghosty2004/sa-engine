@@ -4989,3 +4989,30 @@
   without NO_ENEX: disabled, no marker and the player stays on the porch at the marker (2495.33,-1690.75) on both
   hosts; enabled, the cone shows and the player is inside CJ's house (2496.05,-1692.93,1014.74; DLL client RPC 118
   0->3). Tests: sa-access (1 new), samp-client (1 new), clippy (host, i686-pc-windows-gnu, wasm32 samp mod).
+
+## 2026-11-19 — MOD-2: the SA:MP mod's keys in sync, and all 384 samp.dll patch sites inventoried (agent, worktree)
+
+- Keys: the hosted client's driver sync carried no keys (`keys: 0`, no additional key) and it sent no passenger
+  sync at all, so every in-car key (fire, horn on Caps Lock, handbrake, look left / right, submission, ...) never
+  reached the server; on foot the key context was fixed (`can_fire` always, no jetpack). Now the driver (200) and
+  passenger (211) syncs carry `footsync::key_word` / `additional_key` with the DLL client's in-car interval
+  (InitGame's in-car rate + streamed players), its shared duplicate gate (`DupGate::offer_sync`) and its ped-state
+  rules (in-car only in states 50 / 51, on foot only in 1 / 12); the key context asks the game for ammo / jetpack
+  only while Circle / Triangle is held; stats (205) go out in a vehicle too. The mod adapter reports the local
+  player's passenger seat (script command 0432, now allowed, refused for an empty or out-of-range seat).
+- Input capture: samp's input lock state (`InputLock::cut`, until the delayed restore) drives the mod's capture;
+  the host cuts a captured keyboard at the `AffectPadFromKeyBoard` call of `CPad::UpdatePads`
+  (`Feature::KeyboardControls`) instead of clearing held keys the game never reads, and hides the mouse only when
+  the mouse is captured (a captured keyboard no longer hides it).
+- The frozen-control report: not reproduced (`freezeonspawn` + `spawnp` + `control|1` with W held: the player
+  walks 44 m); the user's log shows the key-down messages reaching the game after `TogglePlayerControllable 1`, the
+  ped moving 3.3 m between 14 and 16 s, and the window losing the focus twice (`not the foreground app: Sleep(100)`,
+  the original's behaviour); no capture was in effect (the UI consumed none of those keys).
+- Patches: docs/samp/patch-parity.md covers all 384 rows (23 covered, 34 options / limits, 67 left, 207 DLL host
+  only, 47 not wanted, 6 dead code). New options 22..=28: `WastedMessage`, `VehicleFreebies`, `PlayerIdleAnims`,
+  `GunAimedAtResponse`, `FireFailSounds`, `StatChanges`, `HandbrakeNeedsControl`, switched off by the samp mod.
+- Verified: SCENARIO=keys (tools/e2e/samp/keys.sh) on the mod (mod-join.sh, port 7954) and on samp-rs's DLL client
+  (samp-rs-ab.sh LANE=4, port 7953): the server's key-change sequences are identical but for the exit key as a
+  driver (ROADMAP ledger); the freeze scenario; an options run (police car, kill: no shotgun, no "wasted").
+  Unit tests (samp-client 213, sa-access, sa-core, sa-mod-api, sa-mod-host), clippy host + i686-pc-windows-gnu,
+  verify-all IDENTICAL 13/13 on lane 4 (tag keyspar), the writer gate (queue regenerated: line numbers).

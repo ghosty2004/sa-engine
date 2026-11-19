@@ -261,6 +261,22 @@ Sections: *pending* (blocks "done") · *original UB, not reproducible* · *accep
   - the remote-player patches (rows 167, 173-176, 183, 193, 206, 213-215, 217) stay unapplied while other players
     are actors, not `CPlayerPed`s;
   - gravity (InitGame, RPC 146) is still not written (`GAME_GRAVITY` is read-only image data natively).
+- SA:MP mod, all 384 patch sites of samp.dll (docs/samp/patch-parity.md, every row of gta-patches-r4-annotated.csv):
+  23 covered, 34 options / limits, 207 DLL host only, 47 not wanted, 6 dead code; 67 have no switch yet, beyond the
+  28 above: values rather than switches (bullet bounds +-20000, pickup distance 10000, gun-aim time step 2.0, wide-screen
+  HUD constants, escalator constants), functions not ported yet (`CTrain::ProcessControl`: trains still stop for
+  passengers; `CGarage::Update`: the Pay'n'Spray still refuses some vehicles), the 256-colour vehicle table (colours
+  128..255), the light decisions under manual engine and lights, auto-aim lock-on (rows 4 / 5: the `ret` leaves the
+  callers an undefined result), the weapon kept when getting into a vehicle (219-221), `CClothes::RebuildPlayer`
+  (363), `CCamera::Fade` after the first spawn (365), `CVehicle::SetupRender` (375), the hospital restart override
+  (385, A build), the camera weapon's photo bookkeeping (45).
+- SA:MP mod, keys in sync (`SCENARIO=keys`, tools/e2e/samp/keys.sh: the same keys on foot, as driver, as passenger;
+  mod-join.sh vs LANE=4 samp-rs-ab.sh, 2026-11-19): the server's OnPlayerKeyStateChange sequence and the polled
+  GetPlayerKeys up / down / left / right agree, but for the exit key (F) as a driver: the mod's driver sync carries it
+  once, the DLL client's did not in either run (as a passenger it did in one run of two). The window is the one frame
+  between the key and the exit task's start, which the two clients sample at different points of the frame (the
+  DLL after `CGame::Process`, the mod at the start of the next iteration). The mod sends no aim sync (203) yet, so
+  the server's aim data (camera mode, aim vector) of the local player stays empty.
 - SA:MP mod, objects (API 1.9, `samp_client::hostedobjects`), compared with samp-rs's DLL client on the original exe
   (objects scenario `tools/e2e/samp/objects.cmds`, mod-join.sh vs LANE=2 samp-rs-ab.sh, 2026-11-19): object
   positions, rotations, moves, StopObject, SetObjectPos/Rot, DestroyObject, the object on the player, the bone-attached
