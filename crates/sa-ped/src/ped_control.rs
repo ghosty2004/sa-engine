@@ -1758,6 +1758,7 @@ pub fn player_process_control(this: GPtr<u8>) {
             let wt = rd::<i32>(active_weapon(this), 0);
             if (camera_using_1st_person_weapon_mode(g::<u8>(THE_CAMERA)) == 0 || rd::<i32>(active_weapon(this), 4) == 3)
                 && get_task_swim(rd::<GPtr<u8>>(this, 0x47C)).is_null()
+                && sa_core::options::enabled(sa_core::options::Feature::FireFailSounds)
             {
                 if wt == 0x22 {
                     audio_report_frontend_event(g::<u8>(AUDIO_ENGINE), 0x29, f32::from_bits(0), f32::from_bits(0x3F80_0000));

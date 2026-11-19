@@ -712,7 +712,7 @@ pub fn car_gun_just_down(this: GPtr<u8>) -> u32 {
 /// `CPad::GetHandBrake` (0x540040): Mode 0/1 RightShoulder1, 2 Triangle, 3 LeftShoulder1.
 #[hook(addr = 0x540040, conv = thiscall, name = "CPad::GetHandBrake", expect = "66 83 B9 0E 01 00 00 00", this = "CPad", entry_eax)]
 pub fn get_hand_brake(this: GPtr<u8>) -> u32 {
-    if disabled(this) {
+    if disabled(this) && sa_core::options::enabled(sa_core::options::Feature::HandbrakeNeedsControl) {
         return with_entry_hi(0);
     }
     match mode(this) {
@@ -1585,7 +1585,9 @@ pub fn update_pads() {
     call_process_pad(0);
     let m = GPtr::from_addr(CONTROLS_MANAGER);
     ccm_clear_sim_button_press_checkers(m);
-    ccm_affect_pad_from_keyboard(m);
+    if sa_core::options::enabled(sa_core::options::Feature::KeyboardControls) {
+        ccm_affect_pad_from_keyboard(m);
+    }
     ccm_affect_pad_from_mouse(m);
     call_pad_update(p0, 0);
     call_pad_update(get_pad(1), 1);

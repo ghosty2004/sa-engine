@@ -222,8 +222,10 @@ impl Samp {
         }
     }
 
-    /// The keyboard while the connect screen, the chat input or a dialog is up; the mouse and the platform's
-    /// cursor while samp's UI shows its cursor (a dialog, the scoreboard).
+    /// Everything while the connect screen is up or the join is pending; once joined, what samp's input lock cuts
+    /// from the game (the keyboard and mouse while the chat input or a dialog is up, the mouse while the
+    /// scoreboard is, until the delayed restore after they close), the keyboard also from the moment the chat
+    /// input or a dialog opens, and the platform's cursor while samp's UI shows its cursor.
     fn capture(&self) {
         let (keyboard, mouse, cursor) = match &self.stage {
             // the platform's pointer for the screen's mouse
@@ -231,14 +233,14 @@ impl Samp {
             Stage::Approval { .. } => (true, true, false),
             Stage::Client { client, joined: None, .. } if !client.connected() => (true, true, false),
             Stage::Client { client, .. } => {
-                let (_, mouse, cursor) = self.game.ui.input_state();
-                (client.ui.wants_keyboard(), mouse, cursor)
+                let (keyboard, mouse, cursor) = self.game.ui.input_state();
+                (keyboard || client.ui.wants_keyboard(), mouse, cursor)
             }
             Stage::Scene(_) => (false, false, false),
         };
         // samp's own cursor (mouse.png) when the skin is there, else the platform's
         let platform_cursor = cursor && (matches!(self.stage, Stage::Screen) || !self.game.ui.draws_cursor());
-        let _ = sa_mod::input::capture(keyboard, mouse || keyboard, platform_cursor);
+        let _ = sa_mod::input::capture(keyboard, mouse, platform_cursor);
     }
 }
 

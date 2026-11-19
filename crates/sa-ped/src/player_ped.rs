@@ -591,8 +591,7 @@ orig! {
 const PLAYER_PED_VTABLE: u32 = 0x86D168;
 /// `CWorld::Players[0].m_PlayerData` (0x190-byte `CPlayerInfo`)
 const PLAYER0_DATA: u32 = 0xB7CD9C;
-/// The "playidles" anim block name (`.rdata`) and the global its block index goes to (0xC0BC10)
-const PLAYIDLES_NAME: u32 = 0x86D1EC;
+/// The global the "playidles" anim block index goes to (0xC0BC10)
 const PLAYIDLES_BLOCK: usize = 0xC0BC10;
 /// `CPedGroups::ms_groups` (0x2D4 each)
 const PED_GROUPS: u32 = 0xC09920;
@@ -624,7 +623,7 @@ pub fn player_ped_ctor(this: GPtr<u8>, player_id: i32, group_created: u32) -> GP
     }
     wr::<u32>(this, 0x71C, 0);
     ped_set_ped_state(this, 1);
-    g::<i32>(PLAYIDLES_BLOCK).write(get_animation_block_index(GPtr::from_addr(PLAYIDLES_NAME as usize)));
+    g::<i32>(PLAYIDLES_BLOCK).write(get_animation_block_index(sa_core::options::player_idles_block_name()));
     if group_created as u8 == 0 {
         let d = rd::<GPtr<u8>>(this, 0x480);
         wr::<i32>(d, 0x38, ped_groups_add_group() as i32);

@@ -560,7 +560,7 @@ pub fn simple_car_drive_dtor(this: GPtr<u8>) {
 pub fn player_on_foot_ctor(this: GPtr<u8>) -> GPtr<u8> {
     task_simple_ctor(this);
     wr::<u32>(this, 0, 0x8708EC);
-    let b = anim_block_index_by_name(g::<u8>(0x86D1EC)) as u32;
+    let b = anim_block_index_by_name(sa_core::options::player_idles_block_name()) as u32;
     wr::<u32>(this, 8, b);
     wr::<u32>(this, 0x14, 0);
     wr::<u32>(this, 0x10, 0);

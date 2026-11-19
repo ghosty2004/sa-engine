@@ -106,6 +106,13 @@ impl<V: View> Game<V> {
             GameOption::PauseMenuOnFocus => F::PauseMenuOnFocus,
             GameOption::DeathModelCleanup => F::DeathModelCleanup,
             GameOption::SpeedBlur => F::SpeedBlur,
+            GameOption::WastedMessage => F::WastedMessage,
+            GameOption::VehicleFreebies => F::VehicleFreebies,
+            GameOption::PlayerIdleAnims => F::PlayerIdleAnims,
+            GameOption::GunAimedAtResponse => F::GunAimedAtResponse,
+            GameOption::FireFailSounds => F::FireFailSounds,
+            GameOption::StatChanges => F::StatChanges,
+            GameOption::HandbrakeNeedsControl => F::HandbrakeNeedsControl,
         };
         set(feature, on);
     }

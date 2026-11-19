@@ -272,6 +272,9 @@ pub fn u32_as_x87(c: u32) -> X87 {
 /// stats `(int16)_ftol(v)` sign-extended (original); then `CheckForStatsMessage` (tail jump).
 #[hook(addr = 0x55A070, conv = cdecl, name = "CStats::SetStatValue", expect = "D9 44 24 08 56")]
 pub fn set_stat_value(id: u16, v: f32) {
+    if !sa_core::options::enabled(sa_core::options::Feature::StatChanges) {
+        return;
+    }
     let id = u32::from(id);
     if id < 0x52 {
         set_float_stat(id, x(v).to_f32());

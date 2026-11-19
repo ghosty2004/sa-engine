@@ -1147,29 +1147,31 @@ pub fn set_driver(v: Veh, ped: GPtr<u8>) {
     entity_register_reference(ped, slot);
     if rd::<u8>(v, 0x428) & 0x80 != 0 && ped == find_player_ped(-1) {
         wr::<u8>(v, 0x428, rd::<u8>(v, 0x428) & 0x7F);
-        match i32::from(rd::<i16>(v, 0x22)) {
-            416 => player_info_add_health(GPtr::from_addr(0xB7CD98), 0x14),
-            420 | 438 => {
-                let p = g::<i32>(0xB7CE50 + 0x190 * usize::from(g::<u8>(0xB7CD74).read()));
-                p.write(p.read().wrapping_add(12));
-            }
-            427 => {
-                let max = xi(i32::from(g::<u8>(0xB7CEE8).read()));
-                let cur = x(rd::<f32>(ped, 0x548));
-                let v2 = if !max.fcom(cur).test_any(0x41) { max } else { cur };
-                wr::<f32>(ped, 0x548, v2.to_f32());
-            }
-            457 => {
-                if ped_is_player(ped) == 0 || does_player_want_new_weapon(ped, 2, 1) != 0 {
-                    streaming_request_model(0x14D, 2);
+        if sa_core::options::enabled(sa_core::options::Feature::VehicleFreebies) {
+            match i32::from(rd::<i16>(v, 0x22)) {
+                416 => player_info_add_health(GPtr::from_addr(0xB7CD98), 0x14),
+                420 | 438 => {
+                    let p = g::<i32>(0xB7CE50 + 0x190 * usize::from(g::<u8>(0xB7CD74).read()));
+                    p.write(p.read().wrapping_add(12));
                 }
+                427 => {
+                    let max = xi(i32::from(g::<u8>(0xB7CEE8).read()));
+                    let cur = x(rd::<f32>(ped, 0x548));
+                    let v2 = if !max.fcom(cur).test_any(0x41) { max } else { cur };
+                    wr::<f32>(ped, 0x548, v2.to_f32());
+                }
+                457 => {
+                    if ped_is_player(ped) == 0 || does_player_want_new_weapon(ped, 2, 1) != 0 {
+                        streaming_request_model(0x14D, 2);
+                    }
+                }
+                588 => stats_increment_stat(0xF5, f32::from_bits(0x4220_0000)),
+                596..=599 => {
+                    streaming_request_model(0x15D, 2);
+                    wr::<u8>(v, 0x428, rd::<u8>(v, 0x428) | 0x80);
+                }
+                _ => {}
             }
-            588 => stats_increment_stat(0xF5, f32::from_bits(0x4220_0000)),
-            596..=599 => {
-                streaming_request_model(0x15D, 2);
-                wr::<u8>(v, 0x428, rd::<u8>(v, 0x428) | 0x80);
-            }
-            _ => {}
         }
     }
     apply_occupant_weight(v, ped);

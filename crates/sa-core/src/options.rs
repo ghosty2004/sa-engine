@@ -65,6 +65,31 @@ pub enum Feature {
     /// The speed blur from the player's own speed: the `CPostEffects::SpeedFX` call 0x704E8A in `CPostEffects::Render`
     /// (a script's manual speed blur stays).
     SpeedBlur,
+    /// The "wasted" message: the `CMessages::AddBigMessage` call 0x56E5AD in `CPlayerInfo::KillPlayer`.
+    WastedMessage,
+    /// What the player gets on first driving some vehicles (ambulance health, taxi cash, Enforcer armour, the Caddy's
+    /// golf club, Hotdog calories, the police car's shotgun): the model switch of `CVehicle::SetDriver` 0x6D16A0 (its six
+    /// cases, jump table 0x6D1874).
+    VehicleFreebies,
+    /// The player's idle animations: the "playidles" anim block (name 0x86D1EC) that the `CPlayerPed` and
+    /// `CTaskSimplePlayerOnFoot` constructors look up (off, they look up an empty name and find no block).
+    PlayerIdleAnims,
+    /// Peds react to a gun aimed at them: the `CEventHandler::ComputeGunAimedAtResponse` call 0x4C3A5B in
+    /// `CEventHandler::ComputeEventResponseTask`.
+    GunAimedAtResponse,
+    /// The sound of firing a sniper rifle or a rocket launcher without aiming it: the two
+    /// `AudioEngine.ReportFrontendAudioEvent` calls 0x60F289 / 0x60F29D in `CPlayerPed::ProcessControl`.
+    FireFailSounds,
+    /// The game's stat setter: `CStats::SetStatValue` 0x55A070 (returns at once when off; a host still writes the
+    /// statistics directly).
+    StatChanges,
+    /// The handbrake follows the player's controls: the `DisablePlayerControls` test 0x540040 of `CPad::GetHandBrake`
+    /// (off, the handbrake works while the controls are disabled).
+    HandbrakeNeedsControl,
+    /// The keyboard's controls: the `CControllerConfigManager::AffectPadFromKeyBoard` call 0x541DF5 in
+    /// `CPad::UpdatePads` (the keys still reach the game's key state, so a key held when it comes back counts).
+    /// The host turns it off while a mod takes the keyboard.
+    KeyboardControls,
 }
 
 /// The features turned off, as bits.
@@ -84,6 +109,13 @@ pub fn set(feature: Feature, on: bool) {
 #[inline]
 pub fn enabled(feature: Feature) -> bool {
     OFF.load(Ordering::Relaxed) & (1u32 << feature as u8) == 0
+}
+
+/// The "playidles" anim block name (`.rdata`, 9 characters) the `CPlayerPed` and `CTaskSimplePlayerOnFoot`
+/// constructors look up, or its terminating NUL (an empty name, no block) with [`Feature::PlayerIdleAnims`] off.
+pub fn player_idles_block_name() -> crate::mem::GPtr<u8> {
+    const NAME: usize = 0x86D1EC;
+    crate::mem::GPtr::from_addr(if enabled(Feature::PlayerIdleAnims) { NAME } else { NAME + 9 })
 }
 
 /// Turns every feature back on.

@@ -323,8 +323,9 @@ Every platform input event reaches the capturing mods first, in load order, as `
 (`sa_mod_api::input`; SDK `Mod::input(Input)`): key down (Windows virtual-key code, auto-repeat) and up, a typed
 character (Unicode), mouse movement (pixels), a mouse button, the wheel (1/120 notches), focus. A mod that returns 1
 consumes the event: the game and later mods do not see it. `input_capture(keyboard, mouse, cursor)` (SDK
-`input::capture`) takes the keyboard (the game sees no key and no held key: typing does not move the player) and the
-mouse from the game until the mod says otherwise, and shows the platform's cursor (natively the window's; in the
+`input::capture`) takes the keyboard (its keys no longer reach the player's controls: typing does not move the
+player; the game's key state, which `key_down` reads, still follows them, so a key held when the mod lets go counts at
+once) and the mouse (its buttons and motion) from the game until the mod says otherwise, and shows the platform's cursor (natively the window's; in the
 browser the page releases the pointer lock and sends absolute positions and clicks, as in the menus). The host
 releases what a disabled mod held.
 
@@ -617,7 +618,14 @@ IPL ones are read as the map loads, so switch it in `sa_init`), 17 `AmbientGunfi
 `Idle`, `ReturnRealTimeShadow` in `CPhysical`'s destructor), 19 `PauseMenuOnFocus` (`CGame::InitAfterLostFocus` on
 `WM_SETFOCUS`), 20 `DeathModelCleanup` (`CStreaming::DeleteRwObjectsAfterDeath` in
 `CGameLogic::SortOutStreamingAndMemory`), 21 `SpeedBlur` (the `CPostEffects::SpeedFX` call from the player's speed
-in `CPostEffects::Render`). `AmbientPeds` off now also skips the two callers that would use the NULL
+in `CPostEffects::Render`), 22 `WastedMessage` (the `CMessages::AddBigMessage` call in `CPlayerInfo::KillPlayer`), 23
+`VehicleFreebies` (the model switch of `CVehicle::SetDriver`: ambulance health, taxi cash, Enforcer armour, the Caddy's
+golf club, Hotdog calories, the police car's shotgun), 24 `PlayerIdleAnims` (the "playidles" anim block of the player's
+idle animations), 25 `GunAimedAtResponse` (`CEventHandler::ComputeGunAimedAtResponse` in
+`ComputeEventResponseTask`), 26 `FireFailSounds` (the sniper rifle's and rocket launcher's fire-fail sounds in
+`CPlayerPed::ProcessControl`), 27 `StatChanges` (`CStats::SetStatValue`), 28 `HandbrakeNeedsControl` (the disabled-
+controls test of `CPad::GetHandBrake`). `GET_CHAR_IN_CAR_PASSENGER_SEAT` (0432) joins the script commands, refused for a
+seat outside 0..=7 or an empty one. `AmbientPeds` off now also skips the two callers that would use the NULL
 `AddPed` returns: the seating in `CPopulation::AddPedInCar` and `CEntryExit::GenerateAmbientPeds` when an interior is
 entered.
 

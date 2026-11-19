@@ -193,14 +193,8 @@ impl UiHost {
             let immediate = !std::mem::take(&mut self.spawn_release);
             self.lock.request_mode0(immediate);
         }
-        let (keyboard, mouse, cursor) = match self.lock.mode() {
-            1 => (true, false, false),
-            2 => (true, true, true),
-            3 => (false, true, true),
-            4 => (false, true, false),
-            _ => (false, false, false),
-        };
-        b.set_input_state(keyboard, mouse, cursor);
+        let cut = self.lock.cut();
+        b.set_input_state(cut.keyboard, cut.mouse, matches!(self.lock.mode(), 2 | 3));
     }
 
     /// A window event for the UI (samp's window procedure): edit-box keys first, then samp-ui's routing; a left

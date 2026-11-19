@@ -478,8 +478,9 @@ fn input_event(e: &InputEvent) -> Option<(i32, i32, i32)> {
     })
 }
 
-/// Runs this iteration's input through the capturing mods: what one consumes never reaches the game, and while
-/// they take the keyboard (or the mouse) the held keys (the mouse state) are hidden from the game too.
+/// Runs this iteration's input through the capturing mods: what one consumes never reaches the game; while they
+/// take the keyboard its keys reach the game's key state but not the player's controls (a key still held when they
+/// let go counts at once), and while they take the mouse its state is hidden from the game.
 pub fn filter_input(input: &mut InputState) {
     let Some((keyboard, mouse)) = with_host(|h| {
         input.events.retain(|e| input_event(e).is_none_or(|(kind, a, b)| !h.input(kind, a, b)));
@@ -488,11 +489,8 @@ pub fn filter_input(input: &mut InputState) {
     }) else {
         return;
     };
-    if keyboard {
-        input.held.clear();
-        input.pressed.clear();
-    }
-    if keyboard || mouse {
+    sa_core::options::set(sa_core::options::Feature::KeyboardControls, !keyboard);
+    if mouse {
         input.mouse_held.clear();
         input.mouse_delta = (0.0, 0.0);
         input.wheel = 0.0;

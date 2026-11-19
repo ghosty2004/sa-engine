@@ -54,7 +54,10 @@ pub fn kill_player(this: GPtr<u8>) {
     }
     wr::<u8>(this, 0xDC, 1);
     darkel_reset_on_player_death();
-    add_big_message(GPtr::from_addr((GPtr::<u8>::addr(text_get(GPtr::from_addr(0xC1B340), GPtr::from_addr(0x865020))) as u32) as usize), 0xFA0, 2);
+    let wasted = GPtr::from_addr((GPtr::<u8>::addr(text_get(GPtr::from_addr(0xC1B340), GPtr::from_addr(0x865020))) as u32) as usize);
+    if sa_core::options::enabled(sa_core::options::Feature::WastedMessage) {
+        add_big_message(wasted, 0xFA0, 2);
+    }
     increment_stat(0x87, 1.0);
     end_gang_war(0);
 }

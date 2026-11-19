@@ -307,11 +307,26 @@ pub enum GameOption {
     DeathModelCleanup,
     /// The speed blur from the player's own speed.
     SpeedBlur,
+    /// The "wasted" big message when the player dies.
+    WastedMessage,
+    /// What the player gets on first driving some vehicles: ambulance health, taxi cash, Enforcer armour, the
+    /// Caddy's golf club, Hotdog calories, the police car's shotgun.
+    VehicleFreebies,
+    /// The player's idle animations while standing still.
+    PlayerIdleAnims,
+    /// Peds react to a gun aimed at them.
+    GunAimedAtResponse,
+    /// The sound of firing a sniper rifle or a rocket launcher without aiming it.
+    FireFailSounds,
+    /// The game changes the player's statistics through its stat setter (scripts, respawns).
+    StatChanges,
+    /// The handbrake does nothing while the player's controls are disabled.
+    HandbrakeNeedsControl,
 }
 
 impl GameOption {
     /// Every option, in declaration order.
-    pub const ALL: [GameOption; 22] = [
+    pub const ALL: [GameOption; 29] = [
         GameOption::TypedCheats,
         GameOption::Clock,
         GameOption::AmbientPeds,
@@ -334,6 +349,13 @@ impl GameOption {
         GameOption::PauseMenuOnFocus,
         GameOption::DeathModelCleanup,
         GameOption::SpeedBlur,
+        GameOption::WastedMessage,
+        GameOption::VehicleFreebies,
+        GameOption::PlayerIdleAnims,
+        GameOption::GunAimedAtResponse,
+        GameOption::FireFailSounds,
+        GameOption::StatChanges,
+        GameOption::HandbrakeNeedsControl,
     ];
 }
 

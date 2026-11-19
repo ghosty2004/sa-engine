@@ -49,11 +49,21 @@ pub enum Op {
     MouseSink(u32),
 }
 
-/// Current cursor mode and the countdown to the restore of GTA's input code (−1 once restored).
+/// Current cursor mode, the countdown to the restore of GTA's input code (−1 once restored) and what of the
+/// game's input the patches in place cut.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct InputLock {
     mode: u8,
     countdown: i32,
+    cut: Cut,
+}
+
+/// What the game's input misses while the lock patches are in place: the keyboard → pad call, the mouse (state
+/// call and branch, or mode 4's redirected stores).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Cut {
+    pub keyboard: bool,
+    pub mouse: bool,
 }
 
 impl Default for InputLock {
@@ -66,17 +76,24 @@ impl InputLock {
     /// Starts in mode 0 with the countdown at 0: the original also restores the input code on the first
     /// frames after start-up.
     pub fn new() -> Self {
-        Self { mode: 0, countdown: 0 }
+        Self { mode: 0, countdown: 0, cut: Cut::default() }
     }
 
     pub fn mode(&self) -> u8 {
         self.mode
     }
 
-    fn lock_ops(out: &mut Vec<Op>, keyboard: bool) {
+    /// What the game's input misses now: from the lock until the restore, which mode 0 may delay.
+    pub fn cut(&self) -> Cut {
+        self.cut
+    }
+
+    fn lock_ops(&mut self, out: &mut Vec<Op>, keyboard: bool) {
         if keyboard {
             out.push(Op::Write(KEYBOARD_TO_PAD, NOP5.to_vec()));
+            self.cut.keyboard = true;
         }
+        self.cut.mouse = true;
         out.push(Op::Write(MOUSE_STATE_CALL, NOP5.to_vec()));
         out.push(Op::Write(MOUSE_BRANCH, MOUSE_BRANCH_LOCKED.to_vec()));
         out.push(Op::Zero(MOUSE_DELTA_X));
@@ -106,6 +123,7 @@ impl InputLock {
             return Vec::new();
         }
         self.mode = 1;
+        self.cut.keyboard = true;
         vec![Op::Write(KEYBOARD_TO_PAD, NOP5.to_vec())]
     }
 
@@ -123,6 +141,7 @@ impl InputLock {
         out.push(Op::Call(PAD_UPDATE_PADS));
         out.push(Op::Write(RS_MOUSE_SET_POS, vec![0xC3]));
         self.mode = 4;
+        self.cut.mouse = true;
         out
     }
 
@@ -139,7 +158,7 @@ impl InputLock {
     /// mode 2" check).
     pub fn request_mode2(&mut self) -> Vec<Op> {
         let mut out = Vec::new();
-        Self::lock_ops(&mut out, true);
+        self.lock_ops(&mut out, true);
         self.mode = 2;
         out
     }
@@ -150,7 +169,7 @@ impl InputLock {
             return Vec::new();
         }
         let mut out = Vec::new();
-        Self::lock_ops(&mut out, false);
+        self.lock_ops(&mut out, false);
         self.mode = 3;
         out
     }
@@ -180,6 +199,7 @@ impl InputLock {
             return Vec::new();
         }
         self.countdown -= 1;
+        self.cut = Cut::default();
         vec![
             Op::Write(KEYBOARD_TO_PAD, KEYBOARD_TO_PAD_ORIGINAL.to_vec()),
             Op::Write(MOUSE_STATE_CALL, MOUSE_STATE_CALL_ORIGINAL.to_vec()),
@@ -218,6 +238,24 @@ mod tests {
         let r = l.frame();
         assert_eq!(r[0], Op::Write(KEYBOARD_TO_PAD, KEYBOARD_TO_PAD_ORIGINAL.to_vec()));
         assert!(l.frame().is_empty());
+    }
+
+    #[test]
+    fn input_stays_cut_until_the_delayed_restore() {
+        let mut l = InputLock::new();
+        l.frame();
+        assert_eq!(l.cut(), Cut::default());
+        l.request_mode3();
+        assert_eq!(l.cut(), Cut { keyboard: false, mouse: true });
+        l.request_mode2();
+        assert_eq!(l.cut(), Cut { keyboard: true, mouse: true });
+        l.request_mode0(false);
+        for _ in 0..RESTORE_DELAY_FRAMES {
+            assert!(l.frame().is_empty());
+            assert_eq!(l.cut(), Cut { keyboard: true, mouse: true });
+        }
+        assert!(!l.frame().is_empty());
+        assert_eq!(l.cut(), Cut::default());
     }
 
     #[test]

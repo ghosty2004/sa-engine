@@ -250,7 +250,11 @@ pub fn event_handler_compute_event_response_task(this: GPtr<u8>, ev: GPtr<u8>, e
         17 => r_ped_entered_vehicle(this, ev, active, simplest),
         28 => r_vehicle_to_steal(this, ev, active, simplest),
         8 => r_knock_off_bike(this, ev, active, simplest),
-        31 => r_gun_aimed_at(this, ev, active, simplest),
+        31 => {
+            if sa_core::options::enabled(sa_core::options::Feature::GunAimedAtResponse) {
+                r_gun_aimed_at(this, ev, active, simplest)
+            }
+        }
         32 => r_script_command(this, ev, active, simplest),
         35 => r_vehicle_died(this, ev, active, simplest),
         38 | 39 => r_ped_friend(this, ev, active, simplest),

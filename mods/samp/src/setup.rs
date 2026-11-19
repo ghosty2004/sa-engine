@@ -6,7 +6,7 @@ use sa_mod::script::{ScriptFile, set_file};
 use samp_client::patches::{limits, streaming_budget};
 
 /// The game's features samp.dll switches off (RPC 30 TogglePlayerClock turns the clock back on).
-const OPTIONS_OFF: [GameOption; 22] = [
+const OPTIONS_OFF: [GameOption; 29] = [
     GameOption::StartScreens,
     GameOption::TypedCheats,
     GameOption::Clock,
@@ -29,6 +29,13 @@ const OPTIONS_OFF: [GameOption; 22] = [
     GameOption::PauseMenuOnFocus,
     GameOption::DeathModelCleanup,
     GameOption::SpeedBlur,
+    GameOption::WastedMessage,
+    GameOption::VehicleFreebies,
+    GameOption::PlayerIdleAnims,
+    GameOption::GunAimedAtResponse,
+    GameOption::FireFailSounds,
+    GameOption::StatChanges,
+    GameOption::HandbrakeNeedsControl,
 ];
 
 /// The physical memory samp.dll's streaming budget is chosen for: the mod sees no machine figures, and this
