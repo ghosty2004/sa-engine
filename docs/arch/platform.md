@@ -234,9 +234,39 @@ source (ADR-005, `--image`): `builtin` is the `sa-image` crate (generated from t
 comparing it byte for byte with the exe. Without `--image` sa-game uses `exe` when the game folder
 has gta_sa.exe and `builtin` otherwise; the web build always uses `builtin` and never reads the exe.
 The IAT cells get trap addresses (section 1) from `sa-image`'s import table, and `orig!`'s `site`
-form resolves through its call-site table. No code section is mapped in `builtin` / `check`: the
-code bytes the ports read as data (switch byte tables, no-CD protection values) are constants in
-the ports; `exe` still maps game `.text` and `.HOODLUM` read-only as a fallback.
+form resolves through its call-site table. The code bytes the ports read as data (switch byte
+tables, no-CD protection values) are constants in the ports.
+
+The rest of the original's address space is mapped as well, so that a read the original can do
+succeeds instead of faulting. The 1.0 US image spans 0x400000..0x1577000 (`SizeOfImage`
+0x1177000); outside the arena it holds:
+
+| Range | Contents | Original's access | Phase B |
+|---|---|---|---|
+| 0x400000..0x401000 | PE headers | read | read-only |
+| 0x401000..0x857000 | game `.text` | read, execute | read-only |
+| 0x857000..0x858000 | `_rwcseg` | read, execute | read-only |
+| 0xCB1000..0x12FB000 | no-CD `.text` | read, write, execute | read/write |
+| 0x12FB000..0x1301000 | no-CD `.init` | read, write, execute | read/write |
+| 0x1301000..0x1556000 | no-CD `.data` (fully initialised) | read, write, execute | read/write |
+| 0x1556000..0x1577000 | `.HOODLUM` | read, write, execute | read/write |
+
+The bytes come from the exe with `exe` and `check` (headers: the file's first page; sections:
+their raw data) and are zero with `builtin` and on the web, where no exe is read (the repository
+carries no code bytes). Nothing in these ranges is ever executable: a call or jump into them still
+faults. Why it matters: the game indexes several arrays with the low 16 bits of a script handle
+without a range check (`CRadar::GetActualBlipArrayIndex` on `ms_RadarTrace` 0xBA86F0 × 0x28,
+`CTheScripts::GetActualScriptThingIndex` on the script-thing tables, `CPickups::GetActualPickupIndex`
+on `aPickUps`), and compares the entry's counter before using it. A stale or foreign handle reads up
+to 0xFFFF × the entry size past the array; for the tables near the end of `.bss` that is inside the
+no-CD sections (radar traces reach 0xE286C8). The original reads its own bytes there and rejects the
+handle; phase B used to fault. With these sections mapped such reads behave as in the original (with
+`builtin` they see zeros, which reject the handle the same way: a zero counter never matches a live
+handle's and the tracking flag is clear). A write the original makes there (a handle whose garbage
+counter happens to match) lands in pages that are writable in the original too.
+
+The data mods and the samp mod run on top of this; the mod host still refuses the arguments the
+game's command handlers would use unchecked (`crates/sa-access/src/checks.rs`).
 
 `globals!` storage aliases the arena: in a 32-bit phase B process `Global::ptr()` returns the
 original address once sa-game has registered the arena (`sa_core::orig::registry::set_arena`), so
@@ -572,8 +602,8 @@ post-reset sequence, VM raster restore).
 ### 10.2 What changed in sa-game
 
 * **Code bytes readable.** Game `.text`/`_rwcseg` (0x401000–0x858000) and `.HOODLUM`
-  (0x1556000–0x1577000) are mapped read-only and never executable (`arena.rs`,
-  `map_read_only_code`): the no-CD protection chunks read code bytes and `.HOODLUM` dwords as
+  (0x1556000–0x1577000) are mapped and never executable (`arena.rs`, now `map_rest_of_image`, which maps
+  the whole image: section 6): the no-CD protection chunks read code bytes and `.HOODLUM` dwords as
   data and turn them into addresses or constants (e.g. `[[0x1560904] + [0x685002]]` = 0xC87FE0 in
   `TidyUpD3DTextures`, `[0x15608E8] - [0x156B63F] - 1` = 60.0 in the menu's item layout). With the
   bytes present every port computes in phase B what it computes in phase A; a call or jump into
@@ -1822,8 +1852,8 @@ wasm32 pointers are 32-bit like the exe's, so the arena is plain linear memory: 
 `--global-base=0x1600000 --no-stack-first -zstack-size=16 MiB` (`tools/web/build.sh`), so its data, stack and heap lie
 above 0x1600000 and everything below is free. `arena::map_fixed` replaces `mmap(MAP_FIXED_NOREPLACE)`: on wasm32 it
 only checks that the range lies below `WASM_LOW_END` (the memory is already there and zero). The exe's
-`.rdata`/`.data`/`.bss`/`_TEXT_HA`/`_rwdseg`/`.rsrc` (0x858000..0xCB1000), the read-only code bytes the no-CD protection
-reads (0x401000..0x858000, `.HOODLUM` 0x1556000..0x1577000) and sa-game's COM / D3D9 / DirectSound pages (0x30000..)
+`.rdata`/`.data`/`.bss`/`_TEXT_HA`/`_rwdseg`/`.rsrc` (0x858000..0xCB1000), the rest of the image (0x400000..0x1577000,
+zeros: the web build reads no exe; section 6) and sa-game's COM / D3D9 / DirectSound pages (0x30000..)
 sit at their original addresses; import traps stay 0x20000 + 0x10·i. No page protection (`.rdata` is writable),
 no fault handler (a stray access below memory size reads the arena or zeros; above it the module traps).
 `tools/web/check_layout.mjs` checks the built module (data segments ≥ 0x1600000, initial stack pointer above it).

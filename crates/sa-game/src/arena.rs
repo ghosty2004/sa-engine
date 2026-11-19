@@ -8,7 +8,10 @@
 //! (0x858000–0xCB1000). Their initial contents come from an [`Image`]: the built-in image
 //! (`sa_image`, generated from the exe's data sections) or the user's own `gta_sa.exe` (1.0 US,
 //! verified by its SHA-256), read at start-up only. The import table and the import call sites
-//! always come from `sa_image`. No code section is executable: every function runs as its Rust port.
+//! always come from `sa_image`. The rest of the original's image (the PE headers, the code sections and
+//! the no-CD build's sections, up to 0x1577000) is mapped too, with the original's protection minus
+//! execute: a read the original can do there succeeds (exe bytes from the exe, zeros from the built-in
+//! image), and no code section is executable: every function runs as its Rust port.
 //!
 //! `globals!` storage aliases the arena (`sa_core::mem::Global::ptr` returns the original address
 //! once [`sa_core::orig::registry::set_arena`] is called), so raw-address and `globals!` accesses
@@ -39,8 +42,11 @@ pub fn section_of(a: usize) -> &'static str {
         0x008A_4000..0x008E_4000 => ".data",
         0x008E_4000..0x00C9_E000 => ".bss",
         0x00C9_E000..0x00CB_1000 => "_TEXT_HA/_rwdseg/.rsrc",
-        0x00CB_1000..0x0155_6000 => "no-CD image (.text/.data copy, not mapped)",
+        0x00CB_1000..0x012F_B000 => "no-CD .text (never executed in phase B)",
+        0x012F_B000..0x0130_1000 => "no-CD .init (never executed in phase B)",
+        0x0130_1000..0x0155_6000 => "no-CD .data",
         0x0155_6000..0x0157_7000 => ".HOODLUM (never executed in phase B)",
+        0x0040_0000..0x0040_1000 => "PE headers (read-only)",
         0..0x1_0000 => "null page (a null game pointer)",
         _ => "outside the original image (a host pointer)",
     }
@@ -154,17 +160,18 @@ pub fn map_image(image: Image, label: &str) -> Result<String, String> {
     };
     let nimp = install_imports()?;
     sa_core::orig::registry::set_site_resolver(resolve_site);
-    let ro = match &image {
-        Image::Exe(exe) => map_read_only_code(exe)?,
-        _ => 0,
-    };
+    let code = map_rest_of_image(match &image {
+        Image::Exe(exe) | Image::Check(exe) => Some(exe),
+        Image::Builtin => None,
+    })?;
     // `.rdata` read-only, as the original's loader does
     protect_read_only(RDATA.0, RDATA.1 - RDATA.0).map_err(|e| format!("mprotect(.rdata) failed: {e}"))?;
     sa_core::orig::registry::set_arena(lo, hi);
     sa_core::orig::registry::set_image_writer(image_writer);
     Ok(format!(
-        "{bytes} initialised bytes at {lo:#x}..{hi:#x} from {source} (.bss zero){checked}, {nimp} IAT cells trapped{}",
-        if ro > 0 { format!(", {ro} code bytes of the exe readable") } else { String::new() }
+        "{bytes} initialised bytes at {lo:#x}..{hi:#x} from {source} (.bss zero){checked}, {nimp} IAT cells trapped, \
+         the rest of the image readable ({})",
+        if code > 0 { format!("{code} bytes of the exe") } else { "zeros: no exe read".to_owned() }
     ))
 }
 
@@ -222,30 +229,44 @@ fn image_bytes<'a>(exe: &'a [u8], secs: &[Section], va: usize, n: usize) -> Opti
     exe.get(s.raw_off + va - s.va..s.raw_off + va - s.va + n)
 }
 
-/// The code-section ranges mapped read-only (never executable) when the exe is the image source:
-/// game `.text` + `_rwcseg`, and `.HOODLUM`.
-const READ_ONLY_CODE: [(usize, usize); 2] = [(0x0040_1000, 0x0085_8000), (0x0155_6000, 0x0157_7000)];
+/// The original's image outside the arena (`SizeOfImage` 0x1177000 from 0x400000), with the access its loader
+/// gives each part minus execute: the PE headers and game `.text` + `_rwcseg` read-only, the no-CD build's `.text`,
+/// `.init`, `.data` and `.HOODLUM` (all marked read/write/execute in the exe) read/write. Bad indexes the game does
+/// not range-check (16-bit handle indexes into arrays near the end of `.bss`, a stale script variable) land here,
+/// where the original reads (and writes) whatever is there instead of faulting.
+const REST_OF_IMAGE: [(usize, usize, bool); 3] = [
+    (0x0040_0000, 0x0040_1000, false),
+    (0x0040_1000, 0x0085_8000, false),
+    (0x00CB_1000, 0x0157_7000, true),
+];
 
-/// Maps the bytes of game `.text`/`_rwcseg` and `.HOODLUM` at their addresses, read-only and not
-/// executable. The ports read the code bytes the no-CD protection chunks and MSVC's switch byte
-/// tables use as data from constants, so the built-in image needs none of this; with the exe as
-/// source a code read that is not a constant yet still sees the original bytes instead of faulting.
-/// Nothing in these ranges ever runs: a call or jump into them still faults (no `PROT_EXEC`).
-fn map_read_only_code(exe: &[u8]) -> Result<usize, String> {
-    let all = all_sections(exe)?;
+/// Maps [`REST_OF_IMAGE`]: the headers and section bytes of `exe` when there is one, zeros otherwise (the
+/// repository carries no code bytes). The ports read the code bytes the no-CD protection chunks and MSVC's switch
+/// byte tables use as data from constants, so nothing depends on these bytes; they make a stray read see what the
+/// original would. Nothing here ever runs: a call or jump into it still faults (no `PROT_EXEC`). Returns the number
+/// of exe bytes copied.
+fn map_rest_of_image(exe: Option<&Vec<u8>>) -> Result<usize, String> {
+    let secs = match exe {
+        Some(exe) => all_sections(exe)?,
+        None => Vec::new(),
+    };
     let mut total = 0;
-    for &(lo, hi) in &READ_ONLY_CODE {
-        map_fixed(lo, hi - lo).map_err(|e| format!("cannot map the code bytes: {e}"))?;
-        for s in all.iter().filter(|s| s.va >= lo && s.va < hi) {
-            let n = s.raw_size.min(s.vsize.max(s.raw_size)).min(hi - s.va);
-            let src = exe
-                .get(s.raw_off..s.raw_off + n)
-                .ok_or_else(|| format!("gta_sa.exe: section at {:#x} does not fit", s.va))?;
-            // SAFETY: inside the mapping made above (`n` is clipped to it).
-            unsafe { std::ptr::copy_nonoverlapping(src.as_ptr(), s.va as *mut u8, n) };
-            total += n;
+    for &(lo, hi, writable) in &REST_OF_IMAGE {
+        map_fixed(lo, hi - lo).map_err(|e| format!("cannot map the original's image at {lo:#x}: {e}"))?;
+        if let Some(exe) = exe {
+            // the headers are the file's first page, the sections their raw data
+            let headers = (lo == 0x0040_0000).then_some((lo, 0, hi - lo));
+            let sections = secs.iter().filter(|s| s.va >= lo && s.va < hi).map(|s| (s.va, s.raw_off, s.raw_size));
+            for (va, off, n) in headers.into_iter().chain(sections) {
+                let n = n.min(hi - va).min(exe.len().saturating_sub(off));
+                // SAFETY: inside the mapping made above (`n` is clipped to it and to the file).
+                unsafe { std::ptr::copy_nonoverlapping(exe[off..off + n].as_ptr(), va as *mut u8, n) };
+                total += n;
+            }
         }
-        protect_read_only(lo, hi - lo)?;
+        if !writable {
+            protect_read_only(lo, hi - lo)?;
+        }
     }
     Ok(total)
 }
@@ -704,6 +725,15 @@ mod tests {
         assert_eq!(hex(0xB70198, &mut [0; 18]), b"0xb70198");
         assert!(section_of(0xB70198).starts_with(".bss"));
         assert!(section_of(0x858A50).starts_with(".rdata"));
+    }
+
+    #[test]
+    fn the_whole_image_is_mapped() {
+        let mut parts: Vec<(usize, usize)> = REST_OF_IMAGE.iter().map(|&(lo, hi, _)| (lo, hi)).chain([ARENA]).collect();
+        parts.sort_unstable();
+        assert_eq!(parts[0].0, 0x0040_0000);
+        assert!(parts.windows(2).all(|w| w[0].1 == w[1].0), "{parts:x?}");
+        assert_eq!(parts[parts.len() - 1].1, 0x0040_0000 + 0x0117_7000);
     }
 
     #[test]
