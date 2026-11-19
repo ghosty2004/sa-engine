@@ -48,8 +48,9 @@ impl GameFs for ReadOnly {
 }
 
 /// A file layer in front of the mounted trees, at the point where the original's file opens reach kernel32
-/// (`CreateFileA`): given the path the game opens, the replacement bytes or `None` for the disk (a host above the
-/// game, e.g. the data mods' file overlay, registers one).
+/// (`CreateFileA`): given the absolute Windows path of the file the game opens (as [`Vfs::absolute_path`] spells it),
+/// the replacement bytes or `None` for the disk (a host above the game registers one, e.g. for a mod's story
+/// script).
 pub type Redirect = fn(&str) -> Option<std::sync::Arc<Vec<u8>>>;
 
 static REDIRECT: std::sync::RwLock<Option<Redirect>> = std::sync::RwLock::new(None);
@@ -59,9 +60,10 @@ pub fn set_redirect(r: Option<Redirect>) {
     *REDIRECT.write().unwrap_or_else(|e| e.into_inner()) = r;
 }
 
-fn redirected(path: &str) -> Option<std::sync::Arc<Vec<u8>>> {
+/// The redirect's answer for the path `path` names (only spelled out when a redirect is registered).
+fn redirected(path: impl FnOnce() -> String) -> Option<std::sync::Arc<Vec<u8>>> {
     let r = (*REDIRECT.read().unwrap_or_else(|e| e.into_inner()))?;
-    r(path)
+    r(&path())
 }
 
 /// The Windows file namespace of the game process.
@@ -122,6 +124,12 @@ impl Vfs {
             fs,
         });
         self.mounts.sort_by_key(|m| std::cmp::Reverse(m.prefix.len()));
+    }
+
+    /// The absolute Windows spelling of `path` relative to the current directory (`C:\…\GTA San
+    /// Andreas\data\script\main.scm`; below the mount points in lower case).
+    pub fn absolute_path(&self, path: &str) -> String {
+        self.display(&absolute(&self.cwd, path))
     }
 
     /// `_getcwd`: the current directory (no trailing `\`, like the CRT except at a drive root).
@@ -199,7 +207,7 @@ impl Vfs {
     }
 
     pub fn read(&self, path: &str) -> io::Result<Vec<u8>> {
-        if let Some(data) = redirected(path) {
+        if let Some(data) = redirected(|| self.absolute_path(path)) {
             return Ok(data.as_ref().clone());
         }
         let (fs, p) = self.resolve(path)?;
@@ -217,7 +225,7 @@ impl Vfs {
     }
 
     fn open_read(&self, path: &str) -> io::Result<Box<dyn RandomRead>> {
-        if let Some(data) = redirected(path) {
+        if let Some(data) = redirected(|| self.absolute_path(path)) {
             return Ok(Box::new(crate::fs::MemFile(data)));
         }
         let (fs, p) = self.resolve(path)?;
@@ -633,6 +641,14 @@ mod tests {
         assert!(!v.exists(&user));
         v.mkdir(&user).unwrap();
         assert!(v.is_dir(&user.to_uppercase()));
+    }
+
+    #[test]
+    fn absolute_paths_for_the_redirect() {
+        let mut v = vfs();
+        assert_eq!(v.chdir("DATA"), 0);
+        assert_eq!(v.absolute_path("Script\\MAIN.scm"), format!("{GAME_ROOT}\\data\\script\\main.scm"));
+        assert_eq!(v.absolute_path("..\\models\\gta3.img"), format!("{GAME_ROOT}\\models\\gta3.img"));
     }
 
     #[test]

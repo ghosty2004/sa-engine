@@ -1,4 +1,4 @@
-# Mod API reference (API 1.11)
+# Mod API reference (API 1.12)
 
 The interface is defined once, in `crates/sa-mod-api/src/lib.rs` (`for_each_import!`, `for_each_export!`); this page
 explains it. The Rust SDK (`crates/sa-mod`) wraps every function; other languages import the functions from module
@@ -567,3 +567,32 @@ channels outside 0..=13, melee styles outside 4..=16 and weapon slots outside 1.
 ### Determinism
 
 Nothing of level 10 runs without a mod that asks for it.
+
+## Level 12: the game's script files and variables (1.12)
+
+`set_script_file(file, data_ptr, data_len)` (`scripts = true`; SDK `sa_mod::script::set_file`) gives the game the
+mod's bytes (at most 16 MiB) in place of the install's `data\script\main.scm` (`script::FILE_MAIN`, 0: the main
+script with its MAIN thread, which creates the player, and the missions) or `data\script\script.img`
+(`script::FILE_STREAMED`, 1: the streamed scripts the main script declares). Only in `sa_init` and `sa_settings`
+(WRONG_PHASE later); the game reads them every time it loads the file (each new game). A main script must start with
+the `GOTO` over its global variables (BAD_ARG otherwise). sa-game's mod host serves them through the platform's file
+layer (`sa_platform::vfs::set_redirect`) at those two paths of the game folder; nothing else changes. With a mod's main
+script `--start-in-world` finds no intro mission to skip.
+
+`set_script_global(index, value)` (`state = "write"`; SDK `sa_mod::script::set_global`) sets the main script's global
+variable `$index` (the 32-bit word at byte `4 * index` of the script space), as its own `SET_VAR_INT` would: BAD_ARG
+for an index outside the loaded main script's variables (before its first chunk) or when none is loaded yet. Inside a
+hook it waits for the next frame boundary, as the other changes.
+
+## More game options: the HUD, pickups, gunfire, shadows, focus, respawns
+
+`set_game_option` numbers continue `GameOption`'s declaration order: 14 `VehicleNameOnHud` (`CHud::DrawVehicleName`
+in `CHud::Draw`), 15 `VitalStatsOnHud` (the vital-stats branch of `CHud::Draw`; off, the radar is drawn), 16
+`SinglePlayerPickups` (`CFileLoader::LoadPickup` and `Interior_c::Init`'s `AddPickups`: the map's own pickups; the
+IPL ones are read as the map loads, so switch it in `sa_init`), 17 `AmbientGunfire` (the shot branch of
+`CAEGlobalWeaponAudioEntity::ServiceAmbientGunFire`), 18 `RealTimeShadows` (`CRealTimeShadowManager::Update` in
+`Idle`, `ReturnRealTimeShadow` in `CPhysical`'s destructor), 19 `PauseMenuOnFocus` (`CGame::InitAfterLostFocus` on
+`WM_SETFOCUS`), 20 `DeathModelCleanup` (`CStreaming::DeleteRwObjectsAfterDeath` in
+`CGameLogic::SortOutStreamingAndMemory`). `AmbientPeds` off now also skips the two callers that would use the NULL
+`AddPed` returns: the seating in `CPopulation::AddPedInCar` and `CEntryExit::GenerateAmbientPeds` when an interior is
+entered.

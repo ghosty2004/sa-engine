@@ -18,6 +18,12 @@ pub const RS_MAX_WIDTH: u32 = 0xC17044;
 /// See [`RS_MAX_WIDTH`].
 pub const RS_MAX_HEIGHT: u32 = 0xC17048;
 
+/// `CTheScripts::ScriptSpace`: the main script as loaded; it starts with `GOTO` (opcode word, type byte, the
+/// offset of the first chunk after the global variables), the variables follow.
+pub const SCRIPT_SPACE: u32 = 0xA49960;
+/// The size of [`SCRIPT_SPACE`] the main script is loaded into (`CTheScripts::Init` reads up to 0x30D40 bytes).
+pub const MAIN_SCRIPT_MAX: u32 = 0x30D40;
+
 /// `CWorld::Players` (`CPlayerInfo[2]`, 0x190 bytes each; `m_pPed` at +0, `m_nMoney` at +0xB8).
 pub const PLAYERS: u32 = 0xB7CD98;
 /// `sizeof(CPlayerInfo)`.

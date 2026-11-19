@@ -970,6 +970,22 @@ pub mod script {
         let r = check(unsafe { ffi::script_command(i32::from(opcode), args_ptr, words.len() as i32, out_ptr) })?;
         Ok(Outcome { condition: r != 0, outputs })
     }
+
+    pub use sa_mod_api::sa_types::ScriptFile;
+
+    /// Gives the game `data` in place of the install's script file `file`, from the next time it loads it (every
+    /// new game; permission `scripts`). Only in `init` and `settings`, before the game starts.
+    pub fn set_file(file: ScriptFile, data: &[u8]) -> Result<(), Error> {
+        let n = sa_mod_api::script::file_number(file);
+        // SAFETY: the host copies `data` out of the mod's memory through a bounds-checked read
+        check(unsafe { ffi::set_script_file(n, data.as_ptr() as usize as i32, data.len() as i32) }).map(drop)
+    }
+
+    /// Sets global variable `$index` of the main script the game runs to `value` (permission `state = "write"`).
+    pub fn set_global(index: u16, value: i32) -> Result<(), Error> {
+        // SAFETY: a host function call with plain values
+        check(unsafe { ffi::set_script_global(i32::from(index), value) }).map(drop)
+    }
 }
 
 /// The player's view of the game (API 1.5): the HUD, on-screen messages, the player's model and the game's own

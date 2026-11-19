@@ -218,7 +218,7 @@ pub struct CallCtx {
     pub screen: (u32, u32),
     /// True while the overlay phase runs (overlay drawing is valid).
     pub overlay: bool,
-    /// True in `sa_init` and `sa_settings`, before the game starts (its limits may be raised).
+    /// True in `sa_init` and `sa_settings`, before the game starts (limits and script files may be set).
     pub boot: bool,
     /// The display the platform reports.
     pub display: Rc<Display>,
@@ -438,6 +438,9 @@ pub fn dispatch(ctx: &mut CallCtx, mem: &mut dyn Mem, index: usize, args: &[Val]
         return Ok(r);
     }
     if let Some(r) = crate::vehicles::calls(ctx, mem, call) {
+        return Ok(r);
+    }
+    if let Some(r) = script_files(ctx, mem, call) {
         return Ok(r);
     }
     if let Some(r) = services(ctx, mem, call) {
@@ -1095,6 +1098,28 @@ fn boot_setup(ctx: &mut CallCtx, call: Call) -> Option<i32> {
     })
 }
 
+/// `set_script_file`, before the game starts (`None` for any other call): the game reads the mod's file in place of
+/// the install's whenever it loads it; a disabled mod's file stays.
+fn script_files(ctx: &mut CallCtx, mem: &mut dyn Mem, call: Call) -> Option<i32> {
+    let Call::set_script_file { file, data_ptr, data_len } = call else { return None };
+    let Some(f) = sa_mod_api::script::file_from_number(file) else { return Some(status::BAD_ARG) };
+    if !ctx.boot {
+        return Some(status::WRONG_PHASE);
+    }
+    let len = usize::try_from(data_len).ok().filter(|&n| n <= sa_access::setup::SCRIPT_FILE_MAX);
+    let (Some(len), Ok(ptr)) = (len, u32::try_from(data_ptr)) else { return Some(status::BAD_ARG) };
+    let Some(data) = mem.read(ptr, len as u32) else { return Some(status::BAD_ARG) };
+    let Some(g) = ctx.game.clone() else { return Some(status::WRONG_PHASE) };
+    let r = g.0.borrow_mut().set_script_file(f, data);
+    Some(match r {
+        Ok(()) => status::OK,
+        Err(e) => {
+            ctx.log_error(format!("set_script_file: {e}"));
+            status::BAD_ARG
+        }
+    })
+}
+
 /// The calls that create or delete entities or run a script command: `None` for any other call.
 fn entities_and_scripts(ctx: &mut CallCtx, mem: &mut dyn Mem, call: Call) -> Option<i32> {
     let game = ctx.game.clone();
@@ -1365,6 +1390,7 @@ fn is_change(call: &Call) -> bool {
             | Call::play_sound { .. }
             | Call::set_ped_model { .. }
             | Call::set_hud_visible { .. }
+            | Call::set_script_global { .. }
     )
 }
 
@@ -1408,6 +1434,10 @@ pub fn apply(g: &mut GameAccess, call: Call, logs: &mut Vec<(i32, String)>) -> i
             guarded(logs, "give_weapon", || g.give_weapon(ped(handle), WeaponType(w), ammo))
         }
         Call::set_money { money } => guarded(logs, "set_money", || g.set_player_money(money)),
+        Call::set_script_global { index, value } => {
+            let Ok(i) = u32::try_from(index) else { return status::BAD_ARG };
+            guarded(logs, "set_script_global", || g.set_script_global(i, value)).map_err(|_| status::BAD_ARG)
+        }
         Call::set_wanted_level { level } => {
             let Some(l) = byte(level, 6) else { return status::BAD_ARG };
             guarded(logs, "set_wanted_level", || g.set_wanted_level(l))
@@ -1742,6 +1772,28 @@ mod tests {
         assert_eq!(dispatch(&mut ctx, m, i, &limit(GameLimit::Vehicles, 0x8000)), Ok(status::BAD_ARG));
         ctx.permissions.write = false;
         assert_eq!(dispatch(&mut ctx, m, i, &limit(GameLimit::Vehicles, 710)), Ok(status::DENIED));
+    }
+
+    #[test]
+    fn script_files_before_the_game_starts_and_script_globals() {
+        let game = Game::new(sa_access::fake::game());
+        let mut data = vec![0u8; 64];
+        data[..4].copy_from_slice(&[0x02, 0x00, 0x01, 0x10]);
+        let m = &mut SliceMem(&mut data);
+        let permissions = Permissions { state: true, write: true, scripts: true, ..Default::default() };
+        let mut ctx = CallCtx { game: Some(game), permissions, ..Default::default() };
+        let i = |n| import_index(n).unwrap();
+        let file = |f: i32, n: i32| [Val::I32(f), Val::I32(0), Val::I32(n)];
+        assert_eq!(dispatch(&mut ctx, m, i("set_script_file"), &file(0, 16)), Ok(status::WRONG_PHASE));
+        ctx.boot = true;
+        assert_eq!(dispatch(&mut ctx, m, i("set_script_file"), &file(0, 100)), Ok(status::BAD_ARG));
+        assert_eq!(dispatch(&mut ctx, m, i("set_script_file"), &file(2, 16)), Ok(status::BAD_ARG));
+        assert_eq!(dispatch(&mut ctx, m, i("set_script_file"), &file(0, 16)), Ok(0));
+        assert_eq!(sa_access::setup::script_file(sa_types::ScriptFile::Main).map(|d| d.len()), Some(16));
+        ctx.permissions.scripts = false;
+        assert_eq!(dispatch(&mut ctx, m, i("set_script_file"), &file(1, 16)), Ok(status::DENIED));
+        // no main script loaded in the fake game
+        assert_eq!(dispatch(&mut ctx, m, i("set_script_global"), &[Val::I32(709), Val::I32(1)]), Ok(status::BAD_ARG));
     }
 
     #[test]

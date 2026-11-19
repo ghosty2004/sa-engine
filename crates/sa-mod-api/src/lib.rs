@@ -34,7 +34,7 @@ pub const EXPORT_MEMORY: &str = "memory";
 /// The API's major version.
 pub const API_MAJOR: u16 = 1;
 /// The API's minor version.
-pub const API_MINOR: u16 = 11;
+pub const API_MINOR: u16 = 12;
 
 /// `major << 16 | minor`, the value of the `sa_api_version` export.
 pub const fn pack_version(major: u16, minor: u16) -> i32 {
@@ -347,6 +347,20 @@ pub mod script {
     pub const MAX_ARGS: usize = 16;
     /// The longest text argument, in bytes (without its NUL).
     pub const MAX_TEXT: usize = 63;
+    /// `set_script_file`: the main script, `data\script\main.scm`.
+    pub const FILE_MAIN: i32 = 0;
+    /// `set_script_file`: the streamed scripts, `data\script\script.img`.
+    pub const FILE_STREAMED: i32 = 1;
+
+    /// The script file numbered `n` ([`FILE_MAIN`], [`FILE_STREAMED`]).
+    pub fn file_from_number(n: i32) -> Option<sa_types::ScriptFile> {
+        usize::try_from(n).ok().and_then(|i| sa_types::ScriptFile::ALL.get(i).copied())
+    }
+
+    /// The number of script file `f`.
+    pub fn file_number(f: sa_types::ScriptFile) -> i32 {
+        sa_types::ScriptFile::ALL.iter().position(|x| *x == f).map_or(-1, |i| i as i32)
+    }
 
     /// The commands a mod may run, with their parameters, one letter each: `i` an integer, `f` a float, `p` a ped
     /// handle, `v` a vehicle handle, `P` a player (0, the local player), `o` an output, `s` a text (1.5: the word is
@@ -1187,6 +1201,16 @@ macro_rules! for_each_import {
             /// skills) to `value`, without the on-screen notice. `BAD_ARG` for another statistic or a value that is
             /// not finite.
             [Write] fn set_float_stat(stat: i32, value: f32) -> i32;
+            /// (1.12) Gives the game `data_len` bytes at `data_ptr` (at most 16 MiB) in place of the
+            /// install's script file `file` ([`script::FILE_MAIN`]: `data\script\main.scm`, the main script and
+            /// its missions; [`script::FILE_STREAMED`]: `data\script\script.img`): the game reads them whenever it
+            /// loads that file (every new game). A main script must start with the `GOTO` over its global
+            /// variables. Only in `sa_init` and `sa_settings` (`WRONG_PHASE` later). Returns 0, `BAD_ARG`.
+            [Scripts] fn set_script_file(file: i32, data_ptr: i32, data_len: i32) -> i32;
+            /// (1.12) Sets global variable `index` of the main script the game runs (`$index`, the 32-bit word at byte
+            /// `4 * index` of its variables) to `value`, as the script's own `SET_VAR_INT` would. Returns 0,
+            /// `BAD_ARG` (not a variable of the loaded main script, or none is loaded yet).
+            [Write] fn set_script_global(index: i32, value: i32) -> i32;
         }
     };
 }
