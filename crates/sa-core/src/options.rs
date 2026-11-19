@@ -62,6 +62,9 @@ pub enum Feature {
     /// The models around the old position freed on a respawn: `CStreaming::DeleteRwObjectsAfterDeath` call
     /// 0x441482 in `CGameLogic::SortOutStreamingAndMemory`.
     DeathModelCleanup,
+    /// The speed blur from the player's own speed: the `CPostEffects::SpeedFX` call 0x704E8A in `CPostEffects::Render`
+    /// (a script's manual speed blur stays).
+    SpeedBlur,
 }
 
 /// The features turned off, as bits.

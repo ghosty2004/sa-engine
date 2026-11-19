@@ -305,11 +305,13 @@ pub enum GameOption {
     PauseMenuOnFocus,
     /// The models around the old position are freed when the player respawns.
     DeathModelCleanup,
+    /// The speed blur from the player's own speed.
+    SpeedBlur,
 }
 
 impl GameOption {
     /// Every option, in declaration order.
-    pub const ALL: [GameOption; 21] = [
+    pub const ALL: [GameOption; 22] = [
         GameOption::TypedCheats,
         GameOption::Clock,
         GameOption::AmbientPeds,
@@ -331,6 +333,7 @@ impl GameOption {
         GameOption::RealTimeShadows,
         GameOption::PauseMenuOnFocus,
         GameOption::DeathModelCleanup,
+        GameOption::SpeedBlur,
     ];
 }
 

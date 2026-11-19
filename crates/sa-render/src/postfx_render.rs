@@ -346,7 +346,9 @@ fn speed_fx_block() {
     }
     if gb(CUTSCENE_RUNNING) == 0 && any {
         let m = X87::from_f64_exact(vector_magnitude(GPtr::<u8>::cast::<u32>(find_player_speed(-1))));
-        speed_fx(m.to_f32().to_bits());
+        if sa_core::options::enabled(sa_core::options::Feature::SpeedBlur) {
+            speed_fx(m.to_f32().to_bits());
+        }
     }
 }
 

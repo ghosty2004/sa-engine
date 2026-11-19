@@ -593,6 +593,7 @@ IPL ones are read as the map loads, so switch it in `sa_init`), 17 `AmbientGunfi
 `CAEGlobalWeaponAudioEntity::ServiceAmbientGunFire`), 18 `RealTimeShadows` (`CRealTimeShadowManager::Update` in
 `Idle`, `ReturnRealTimeShadow` in `CPhysical`'s destructor), 19 `PauseMenuOnFocus` (`CGame::InitAfterLostFocus` on
 `WM_SETFOCUS`), 20 `DeathModelCleanup` (`CStreaming::DeleteRwObjectsAfterDeath` in
-`CGameLogic::SortOutStreamingAndMemory`). `AmbientPeds` off now also skips the two callers that would use the NULL
+`CGameLogic::SortOutStreamingAndMemory`), 21 `SpeedBlur` (the `CPostEffects::SpeedFX` call from the player's speed
+in `CPostEffects::Render`). `AmbientPeds` off now also skips the two callers that would use the NULL
 `AddPed` returns: the seating in `CPopulation::AddPedInCar` and `CEntryExit::GenerateAmbientPeds` when an interior is
 entered.

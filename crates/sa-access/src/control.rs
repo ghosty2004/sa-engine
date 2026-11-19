@@ -105,6 +105,7 @@ impl<V: View> Game<V> {
             GameOption::RealTimeShadows => F::RealTimeShadows,
             GameOption::PauseMenuOnFocus => F::PauseMenuOnFocus,
             GameOption::DeathModelCleanup => F::DeathModelCleanup,
+            GameOption::SpeedBlur => F::SpeedBlur,
         };
         set(feature, on);
     }
