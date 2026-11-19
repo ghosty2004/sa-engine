@@ -3,7 +3,7 @@
 //! What the mod API does not offer is `Unsupported`, as on any backend that lacks a feature.
 
 use sa_mod::script::Arg;
-use sa_mod::{Error, audio, entities, game, script, state, world};
+use sa_mod::{Error, audio, entities, game, markers, radar, script, state, world};
 use sa_samp_api::audio::*;
 use sa_samp_api::camera::*;
 use sa_samp_api::config::*;
@@ -315,7 +315,10 @@ impl Peds for ModGame {
     }
     fn set_weapon_slot(&mut self, _ped: PedRef, _slot: u8, _value: WeaponSlot) -> GameResult<()> { Err(GameError::Unsupported("Peds::set_weapon_slot")) }
     fn remove_weapon_entering_vehicle(&mut self, _ped: PedRef) -> GameResult<()> { Err(GameError::Unsupported("Peds::remove_weapon_entering_vehicle")) }
-    fn set_proofs(&mut self, _ped: PedRef, _proofs: Proofs) -> GameResult<()> { Err(GameError::Unsupported("Peds::set_proofs")) }
+    fn set_proofs(&mut self, ped: PedRef, p: Proofs) -> GameResult<()> {
+        let b = |v: bool| Arg::Int(i32::from(v));
+        cmd(0x02AB, &[Arg::Ped(ped), b(p.bullet), b(p.fire), b(p.explosion), b(p.collision), b(p.melee)])
+    }
     fn set_suffers_critical_hits(&mut self, ped: PedRef, on: bool) -> GameResult<()> {
         cmd(0x0446, &[Arg::Ped(ped), Arg::Int(i32::from(on))])
     }
@@ -328,7 +331,9 @@ impl Peds for ModGame {
     fn set_ped_area(&mut self, ped: PedRef, area: AreaCode) -> GameResult<()> {
         cmd(0x0860, &[Arg::Ped(ped), Arg::Int(i32::from(area.0))])
     }
-    fn set_decision_maker(&mut self, _ped: PedRef, _maker: i32) -> GameResult<()> { Err(GameError::Unsupported("Peds::set_decision_maker")) }
+    fn set_decision_maker(&mut self, ped: PedRef, maker: i32) -> GameResult<()> {
+        cmd(0x060B, &[Arg::Ped(ped), Arg::Int(maker)])
+    }
     fn set_player_money(&mut self, money: i32) -> GameResult<()> {
         world::set_money(money).map_err(failed("set_player_money"))
     }
@@ -340,7 +345,9 @@ impl Peds for ModGame {
     }
     fn set_ped_flags(&mut self, _ped: PedRef, _mask: [u32; 2], _value: [u32; 2]) -> GameResult<()> { Err(GameError::Unsupported("Peds::set_ped_flags")) }
     fn extinguish_ped(&mut self, _ped: PedRef) -> GameResult<()> { Err(GameError::Unsupported("Peds::extinguish_ped")) }
-    fn explode_head(&mut self, _ped: PedRef) -> GameResult<()> { Err(GameError::Unsupported("Peds::explode_head")) }
+    fn explode_head(&mut self, ped: PedRef) -> GameResult<()> {
+        cmd(0x0321, &[Arg::Ped(ped)])
+    }
     fn warp_into_vehicle(&mut self, ped: PedRef, vehicle: VehicleRef, seat: Option<i32>) -> GameResult<()> {
         match seat {
             None => cmd(0x036A, &[Arg::Ped(ped), Arg::Vehicle(vehicle)]),
@@ -362,7 +369,9 @@ impl Peds for ModGame {
             _ => Err(GameError::Unsupported("Peds::start_task (this task)")),
         }
     }
-    fn flush_tasks(&mut self, _ped: PedRef) -> GameResult<()> { Err(GameError::Unsupported("Peds::flush_tasks")) }
+    fn flush_tasks(&mut self, ped: PedRef) -> GameResult<()> {
+        cmd(0x0792, &[Arg::Ped(ped)])
+    }
     fn delete_task(&mut self, _task: TaskRef) -> GameResult<()> { Err(GameError::Unsupported("Peds::delete_task")) }
     fn play_anim(&mut self, ped: PedRef, anim: &AnimRequest<'_>) -> GameResult<()> {
         if anim.name.is_empty() || anim.name.len() > 23 || anim.block.is_empty() || anim.block.len() > 15 {
@@ -428,11 +437,22 @@ impl ScriptCommands for ModGame {
 
 
 impl Streaming for ModGame {
-    fn model_kind(&self, _model: ModelId) -> ModelKind { ModelKind::None }
+    /// Ped models as such; any other model the game defines as `Atomic` (the client only asks whether it exists).
+    fn model_kind(&self, model: ModelId) -> ModelKind {
+        if PED_MODELS.contains(&model.0) {
+            ModelKind::Ped
+        } else if markers::model_exists(model.0) {
+            ModelKind::Atomic
+        } else {
+            ModelKind::None
+        }
+    }
     fn request_model(&mut self, model: ModelId) -> GameResult<()> {
         cmd(0x0247, &[Arg::Int(model.0)])
     }
-    fn model_loaded(&self, _model: ModelId) -> bool { false }
+    fn model_loaded(&self, model: ModelId) -> bool {
+        cond(0x0248, &[Arg::Int(model.0)]).unwrap_or(false)
+    }
     fn release_model(&mut self, _model: ModelId) -> GameResult<()> { Err(GameError::Unsupported("Streaming::release_model")) }
     fn load_all_now(&mut self) -> GameResult<()> {
         cmd(0x038B, &[])
@@ -577,16 +597,65 @@ impl WorldState for ModGame {
 }
 
 impl WorldEntities for ModGame {
-    fn create_pickup(&mut self, _model: ModelId, _kind: i32, _pos: Vec3) -> GameResult<PickupRef> { Err(GameError::Unsupported("WorldEntities::create_pickup")) }
-    fn remove_pickup(&mut self, _p: PickupRef) -> GameResult<()> { Err(GameError::Unsupported("WorldEntities::remove_pickup")) }
-    fn pickup_collected(&self, _p: PickupRef) -> GameResult<bool> { Err(GameError::Unsupported("WorldEntities::pickup_collected")) }
+    fn create_pickup(&mut self, model: ModelId, kind: i32, pos: Vec3) -> GameResult<PickupRef> {
+        markers::create_pickup(model.0, kind, pos).map_err(failed("create_pickup"))
+    }
+    fn remove_pickup(&mut self, p: PickupRef) -> GameResult<()> {
+        markers::destroy_pickup(p).map_err(failed("remove_pickup"))
+    }
+    fn pickup_collected(&self, p: PickupRef) -> GameResult<bool> {
+        markers::pickup_collected(p).map_err(failed("pickup_collected"))
+    }
     fn pickup_index(&self, _p: PickupRef) -> GameResult<u16> { Err(GameError::Unsupported("WorldEntities::pickup_index")) }
-    fn create_checkpoint(&mut self, _kind: CheckpointKind, _pos: Vec3, _size: f32) -> GameResult<CheckpointRef> { Err(GameError::Unsupported("WorldEntities::create_checkpoint")) }
-    fn delete_checkpoint(&mut self, _c: CheckpointRef) -> GameResult<()> { Err(GameError::Unsupported("WorldEntities::delete_checkpoint")) }
-    fn locate_ped(&self, _ped: PedRef, _pos: Vec3, _radius: Vec3) -> GameResult<bool> { Err(GameError::Unsupported("WorldEntities::locate_ped")) }
-    fn add_blip(&mut self, _target: BlipTarget) -> GameResult<BlipRef> { Err(GameError::Unsupported("WorldEntities::add_blip")) }
-    fn remove_blip(&mut self, _b: BlipRef) -> GameResult<()> { Err(GameError::Unsupported("WorldEntities::remove_blip")) }
-    fn set_blip_colour(&mut self, _b: BlipRef, _colour: u32) -> GameResult<()> { Err(GameError::Unsupported("WorldEntities::set_blip_colour")) }
-    fn set_blip_scale(&mut self, _b: BlipRef, _scale: i32) -> GameResult<()> { Err(GameError::Unsupported("WorldEntities::set_blip_scale")) }
-    fn set_blip_display(&mut self, _b: BlipRef, _display: i32) -> GameResult<()> { Err(GameError::Unsupported("WorldEntities::set_blip_display")) }
+    fn pickup_touched(&self, p: PickupRef) -> GameResult<bool> {
+        markers::pickup_touched(p).map_err(failed("pickup_touched"))
+    }
+    /// A race checkpoint's marker; the normal checkpoint is drawn with `locate_ped`.
+    fn create_checkpoint(&mut self, kind: CheckpointKind, pos: Vec3, size: f32) -> GameResult<CheckpointRef> {
+        let CheckpointKind::Race { kind, next } = kind else {
+            return Err(GameError::Unsupported("WorldEntities::create_checkpoint (normal)"));
+        };
+        markers::create_checkpoint(i32::from(kind), pos, next, size).map_err(failed("create_checkpoint"))
+    }
+    fn delete_checkpoint(&mut self, c: CheckpointRef) -> GameResult<()> {
+        markers::destroy_checkpoint(c).map_err(failed("delete_checkpoint"))
+    }
+    fn locate_ped(&mut self, ped: PedRef, pos: Vec3, radius: Vec3, marker: bool) -> GameResult<bool> {
+        let f = Arg::Float;
+        cond(0x00FE, &[Arg::Ped(ped), f(pos.x), f(pos.y), f(pos.z), f(radius.x), f(radius.y), f(radius.z), Arg::Int(i32::from(marker))])
+    }
+    fn add_blip(&mut self, target: BlipTarget) -> GameResult<BlipRef> {
+        let r = match target {
+            BlipTarget::Coord { pos, sprite, short_range, contact_point } => {
+                let flags = if short_range { 0 } else { sa_mod::blip::GLOBAL }
+                    | if contact_point { sa_mod::blip::CONTACT_POINT } else { 0 };
+                markers::create_coord_blip(pos, sprite, flags)
+            }
+            BlipTarget::Ped(p) => markers::create_ped_blip(p),
+            BlipTarget::Vehicle(v) => markers::create_vehicle_blip(v),
+        };
+        r.map_err(failed("add_blip"))
+    }
+    fn remove_blip(&mut self, b: BlipRef) -> GameResult<()> {
+        markers::destroy_blip(b).map_err(failed("remove_blip"))
+    }
+    fn set_blip_colour(&mut self, b: BlipRef, colour: u32) -> GameResult<()> {
+        markers::set_blip_colour(b, colour).map_err(failed("set_blip_colour"))
+    }
+    fn set_blip_scale(&mut self, b: BlipRef, scale: i32) -> GameResult<()> {
+        markers::set_blip_scale(b, scale).map_err(failed("set_blip_scale"))
+    }
+    fn set_blip_display(&mut self, b: BlipRef, display: i32) -> GameResult<()> {
+        markers::set_blip_display(b, display).map_err(failed("set_blip_display"))
+    }
+    fn show_radar_area(&mut self, id: u16, area: &RadarArea) -> GameResult<()> {
+        radar::set_area(id, area.min, area.max, sa_mod::Rgba(area.colour)).map_err(failed("show_radar_area"))?;
+        if let Some((colour, period)) = area.flash {
+            radar::flash_area(id, sa_mod::Rgba(colour), period).map_err(failed("show_radar_area"))?;
+        }
+        Ok(())
+    }
+    fn hide_radar_area(&mut self, id: u16) -> GameResult<()> {
+        radar::remove_area(id).map_err(failed("hide_radar_area"))
+    }
 }

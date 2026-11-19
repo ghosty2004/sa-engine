@@ -3,7 +3,7 @@
 id = "samp"
 name = "SA:MP"
 version = "0.2.0"
-api_version = "1.7"
+api_version = "1.8"
 entry = "samp.wasm"
 
 [permissions]

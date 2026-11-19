@@ -24,8 +24,6 @@ const OP_EXPLODE_CHAR_HEAD: u16 = 0x0321;
 const GTA_FIRE_EXTINGUISH: u32 = 0x5393F0;
 /// `CWorld::PlayerInFocus`.
 const GTA_PLAYER_IN_FOCUS: u32 = 0xB7CD74;
-/// samp's default gravity (server settings default, bits 0x3C03126F).
-const DEFAULT_GRAVITY: f32 = 0.008;
 
 impl Client {
     pub fn shutdown(&mut self) {
@@ -212,7 +210,7 @@ impl Client {
         crate::worldhooks::with_shared(|s| s.colours = Some(crate::ui::colours::PlayerColours::new()));
         crate::ui::reset_colours();
         // GTA gravity back to the default. The constant lives in a read-only page; samp unprotects it first.
-        if let Err(e) = crate::adapter::original::process().set_gravity(DEFAULT_GRAVITY) {
+        if let Err(e) = crate::adapter::original::process().set_gravity(lifecycle::DEFAULT_GRAVITY) {
             crate::log!("client: reset: gravity write failed: {e}");
         }
         // The HUD wanted level 0, the HUD clock off.

@@ -22,6 +22,9 @@ pub mod state {
 /// Mirrors samp.dll B 0x10008930.
 pub const CONNECT_INTERVAL_MS: u64 = 3000;
 
+/// The gravity the RPC 40 reset restores (samp's server-settings default, bits 0x3C03126F).
+pub const DEFAULT_GRAVITY: f32 = 0.008;
+
 /// samp's chat texts; each goes out as an [`Action::Debug`] (type 8) or [`Action::Info`] (type 4) line.
 pub mod msg {
     pub const DIDNT_RESPOND: &str = "The server didn't respond. Retrying..";

@@ -4,6 +4,11 @@
 //! (position, facing, health, armour, weapons, money, clock, weather, interior, control, camera, skin, animations),
 //! streams the server's vehicles and the other players in and out, and sends on-foot, driver and stats sync.
 //!
+//! The server's pickups, actors, checkpoints, gang zones and map icons are `serverworld`'s records, as on the DLL
+//! client. The connection lifecycle is samp's ([`NetGame`]): a server restart (RPC 40) and a lost connection reset the
+//! world the server made and print samp's lines, a lost connection reconnects with samp's timing, and the next InitGame
+//! starts class selection again.
+//!
 //! The UI is samp-rs's own ([`UiHost`]: `UiCore` fed with the RPCs, drawn through the adapter's UI backend).
 //! Everything runs on the game thread inside the frame callback; the host gives the session its transport and the
 //! clock (`samp_proto::time`).
@@ -16,11 +21,12 @@ use samp_proto::time::Instant;
 use crate::classsel::{self, ClassSelection};
 use crate::footsync::{self, FootSender, KeyContext, LocalSample, Rotation};
 use crate::lifecycle::{self, NetGame};
-use crate::netclient::{Event, NetClient, NetPacket};
+use crate::netclient::{Event, NetClient};
+use crate::serverworld::ServerWorld;
 use crate::ui::host::UiHost;
 use crate::ui::render::TagDraw;
 use samp_proto::raknet::Reliability;
-use samp_proto::rpcs::{Incoming, player, vehicle};
+use samp_proto::rpcs::{Incoming, player, session, vehicle, world};
 use samp_proto::sync::player::StatsSync;
 use samp_ui::classpanel::ClassButton;
 use samp_ui::text::NoExpansion;
@@ -73,8 +79,9 @@ pub struct HostedClient {
     car_rotation: Option<samp_proto::types::Quat>,
     /// samp's netgame state and connect timer (`Connecting to` 3 s after `Started`).
     netgame: NetGame,
-    /// The game clock runs (RPC 30 TogglePlayerClock; samp starts with it off).
-    clock_on: bool,
+    /// samp's clock and weather settings: the time the server holds is applied every frame (RPC 30
+    /// TogglePlayerClock lets the game's clock run instead; samp starts with it off).
+    clock: crate::world::World,
     /// The local player uses the mobile phone (special action 11 until 0 / 13).
     phone: bool,
     /// samp's class selection (arrows, Shift; RPC 128 / 129).
@@ -85,6 +92,8 @@ pub struct HostedClient {
     netgame_created: bool,
     /// Our player name (the netgame's).
     name: String,
+    /// The server's pickups, actors, checkpoints, gang zones and map icons.
+    world: ServerWorld,
     /// samp-rs's UI: chat, dialogs, textdraws, game text, scoreboard, class-selection panel.
     pub ui: UiHost,
 }
@@ -100,9 +109,6 @@ const CONNECT_PED_POS: Vec3 = Vec3::new(1133.05, -2038.40, 69.1);
 const CONNECT_CAMERA: Vec3 = Vec3::new(1093.0, -2036.0, 90.0);
 const CONNECT_LOOK_AT: Vec3 = Vec3::new(384.0, -1557.0, 20.0);
 const CONNECT_WEATHER: u8 = 1;
-/// samp's server-settings default time of day (12:00), applied every frame while samp holds the time (samp-rs
-/// `World::time_of_day` in `world_frame`); before InitGame it is the connecting scene's clock.
-const CONNECT_HOUR: u8 = 12;
 
 impl HostedClient {
     /// The client on `net` (the session the host opened, its serial seed set); the first request goes out with the
@@ -128,13 +134,14 @@ impl HostedClient {
             last_car_sync: None,
             car_rotation: None,
             netgame: NetGame::new(0),
-            clock_on: false,
+            clock: crate::world::World::default(),
             phone: false,
             class_sel: ClassSelection::new(now),
             server_text: (config.host, config.port),
             auto_spawn: config.auto_spawn,
             netgame_created: false,
             name: config.name,
+            world: ServerWorld::default(),
             ui: UiHost::new(None),
         }
     }
@@ -180,6 +187,13 @@ impl HostedClient {
         }
         for e in self.net.tick(now) {
             self.on_event(e, game);
+        }
+        // samp's netgame tick (samp-rs `world_frame`): the server's time of day while the server holds the time
+        if let Some((h, m)) = self.clock.time_of_day() {
+            report(self, "set_clock", game.set_clock(h, m));
+        }
+        if self.netgame.connected() {
+            self.world_tick(game);
         }
         if !self.netgame.connected() {
             self.connecting_scene(game);
@@ -246,6 +260,8 @@ impl HostedClient {
                     g.weather,
                     g.gravity
                 ));
+                self.clock.hour = g.world_time;
+                self.clock.weather = g.weather;
                 report(self, "set_clock", game.set_clock(g.world_time, 0));
                 report(self, "set_weather", game.set_weather(g.weather));
                 report(self, "set_gravity", game.set_gravity(g.gravity));
@@ -257,18 +273,15 @@ impl HostedClient {
                 self.enter_class_selection(game, g.spawns_available);
             }
             Event::Packet(p) => {
-                self.note(format!("packet {p:?}"));
-                if p == NetPacket::Accepted {
-                    self.debug_line(lifecycle::msg::JOINING);
-                }
-                if matches!(
-                    p,
-                    NetPacket::ServerClosed | NetPacket::ConnectionLost | NetPacket::Banned
-                ) {
-                    self.spawned = false;
-                }
+                self.note(format!("packet {p:?} in netgame state {}", self.netgame.state));
+                let actions = self.netgame.on_packet(p);
+                self.apply_actions(actions, game);
             }
-            Event::Rejected(r) => self.note(format!("connection rejected: {r}")),
+            Event::Rejected(r) => {
+                self.note(format!("connection rejected: {r}"));
+                let actions = self.netgame.on_rejected(r);
+                self.apply_actions(actions, game);
+            }
             Event::Rpc(rpc) => {
                 // The UI takes what is its (chat, dialogs, game text, textdraws, names, scores, bubbles, ...).
                 self.ui.core.on_rpc(&rpc, &NoExpansion);
@@ -277,10 +290,130 @@ impl HostedClient {
                     Incoming::Vehicle(v) => self.on_vehicle_rpc(v, game),
                     Incoming::Ui(u) => self.note(format!("ui rpc {}", u.id())),
                     Incoming::Remote(r) => self.on_remote_rpc(r, game),
+                    Incoming::World(w) => self.on_world_rpc(w, game),
+                    Incoming::Session(s) => self.on_session_rpc(s, game),
                     other => self.note(format!("rpc {} (not applied natively yet)", other_id(&other))),
                 }
             }
             Event::Sync(s) => self.on_sync(s, game),
+        }
+    }
+
+    /// Lifecycle actions (lifecycle.rs), in order.
+    fn apply_actions(&mut self, actions: Vec<lifecycle::Action>, game: &mut dyn GameAdapter) {
+        use lifecycle::Action as A;
+        for a in actions {
+            match a {
+                A::Debug(t) => self.debug_line(t),
+                A::Info(t) => self.info_line(t),
+                A::Disconnect(_) => self.net.disconnect_silent(),
+                A::Reset => self.reset_routine(game),
+                A::DeletePlayers => {
+                    let ids: Vec<u16> = self.players.keys().copied().collect();
+                    for id in ids {
+                        self.remove_player(id, game);
+                    }
+                    self.remotes.clear();
+                    self.ui.core.forget_players();
+                }
+                // samp-rs has no audio stream on this host
+                A::StopAudio { .. } => {}
+            }
+        }
+    }
+
+    /// RPC 40 reset (docs/re/subsystems/session-misc.md, "40 PlayerClose"), on the adapter: the remote players'
+    /// peds and what the server made removed, the local player back to not spawned, the UI's pools and the server
+    /// settings back to their defaults, interior 0, money 0, the local ped killed, then the not-connected scene every
+    /// frame until InitGame. Mirrors samp.dll B 0x1000A530 (the DLL's `client/session.rs` on the original
+    /// executable).
+    fn reset_routine(&mut self, game: &mut dyn GameAdapter) {
+        self.note("reset routine (server restart / lost connection)".into());
+        let ids: Vec<u16> = self.players.keys().copied().collect();
+        for id in ids {
+            self.remove_player(id, game);
+        }
+        self.class_sel.leave();
+        self.spawned = false;
+        self.phone = false;
+        self.clear_server_entities(game);
+        self.ui.core.on_reset();
+        self.ui.core.colours = crate::ui::colours::PlayerColours::new();
+        // the server settings' defaults: 12:00, weather 1, the clock stopped
+        self.clock.hour = 12;
+        self.clock.minute = 0;
+        self.clock.weather = crate::world::CONNECTING_WEATHER;
+        self.clock.toggle_clock(false);
+        if let Some(me) = game.local_player() {
+            report(self, "set_area", game.set_area(AreaCode(0)));
+            report(self, "set_ped_area", game.set_ped_area(me, AreaCode(0)));
+            let m = game.player_money();
+            if m != 0 {
+                report(self, "add_score", game.add_score(-m));
+            }
+            report(self, "set_ped_health", game.set_ped_health(me, 0.0));
+            report(self, "explode_head", game.explode_head(me));
+            report(self, "set_ped_armour", game.set_ped_armour(me, 0.0));
+        }
+        report(self, "set_zone_names", game.set_zone_names(false));
+        report(self, "set_gravity", game.set_gravity(lifecycle::DEFAULT_GRAVITY));
+        {
+            use sa_samp_api::config::RuntimeToggle;
+            report(self, "set_toggle", game.set_toggle(RuntimeToggle::GameClock(false)));
+        }
+        self.info_line(lifecycle::msg::RESTARTING);
+    }
+
+    /// The pools samp deletes and recreates on a reset, in samp's order (vehicles, then the world's records); the
+    /// server's objects belong here as well.
+    fn clear_server_entities(&mut self, game: &mut dyn GameAdapter) {
+        for (_, v) in std::mem::take(&mut self.vehicles) {
+            report(self, "destroy_vehicle", game.destroy_vehicle(v));
+        }
+        self.world.clear(game);
+    }
+
+    /// The world RPCs ([`ServerWorld`]).
+    fn on_world_rpc(&mut self, rpc: world::Incoming, game: &mut dyn GameAdapter) {
+        let id = rpc.id();
+        let colours = &self.ui.core.colours;
+        let colour = |c: u32| crate::worldents::radar_trace_colour(c, |id| colours.rgba(id));
+        if let Some(line) = self.world.on_rpc(game, &rpc, &colour) {
+            self.debug_line(&line);
+        }
+        self.note(format!("world rpc {id}"));
+    }
+
+    /// Per frame while connected: the pickups the local player touches (samp's collision path), then the
+    /// checkpoints and the pickup poll.
+    fn world_tick(&mut self, game: &mut dyn GameAdapter) {
+        for id in self.world.touched_pickups(game) {
+            let before = self.world.sent_131;
+            self.world.report_touch(&mut self.net, id);
+            if self.world.sent_131 != before {
+                self.note(format!("pickup {id} picked up"));
+            }
+        }
+        let colours = &self.ui.core.colours;
+        let colour = |c: u32| crate::worldents::radar_trace_colour(c, |id| colours.rgba(id));
+        self.world.tick(game, &mut self.net, &colour);
+    }
+
+    /// The session RPCs: RPC 40 (gmx) resets and waits for InitGame; the drunk visuals (RPC 92).
+    fn on_session_rpc(&mut self, rpc: session::Incoming, game: &mut dyn GameAdapter) {
+        use session::Incoming as S;
+        match rpc {
+            S::PlayerClose(_) => {
+                self.note("server restart (RPC 40)".into());
+                let actions = self.netgame.on_server_restart();
+                self.apply_actions(actions, game);
+            }
+            S::SetPlayerDrunkVisuals(v) => {
+                if game.local_player().is_some() {
+                    report(self, "set_drunkenness", game.set_drunkenness(v.value as i32));
+                }
+            }
+            other => self.note(format!("session rpc {} (not applied natively yet)", other.id())),
         }
     }
 
@@ -366,8 +499,10 @@ impl HostedClient {
             }
             P::SetPlayerTime(t) => {
                 report(self, "set_clock", game.set_clock(t.hour, t.minute));
+                (self.clock.hour, self.clock.minute) = (t.hour, t.minute);
                 self.note(format!("SetPlayerTime {:02}:{:02}", t.hour, t.minute));
             }
+            P::SetPlayerWorldTime(t) => self.clock.hour = t.hour,
             P::SetPlayerWeather(w) => {
                 report(self, "set_weather", game.set_weather(w.weather));
                 self.note(format!("SetPlayerWeather {}", w.weather));
@@ -422,7 +557,7 @@ impl HostedClient {
             }
             P::TogglePlayerClock(c) => {
                 use sa_samp_api::config::RuntimeToggle;
-                self.clock_on = c.enable != 0;
+                self.clock.on_toggle_clock_rpc(c.enable != 0, game.clock());
                 report(self, "set_toggle", game.set_toggle(RuntimeToggle::GameClock(c.enable != 0)));
                 self.note(format!("TogglePlayerClock {}", c.enable));
             }
@@ -462,7 +597,7 @@ impl HostedClient {
                 }
             }
             // RPC 60: the game time follows the server's while the clock is off
-            P::SendGameTimeUpdate(t) if !self.clock_on => {
+            P::SendGameTimeUpdate(t) if !self.clock.clock_enabled => {
                 report(self, "set_game_time_ms", game.set_game_time_ms((t.time as u32) & 0x3FFF_FFFF));
             }
             P::SendGameTimeUpdate(_) => {}
@@ -708,6 +843,12 @@ impl HostedClient {
         self.ui.core.print_debug(line.as_bytes());
     }
 
+    /// A type-4 (info) chat line.
+    fn info_line(&mut self, line: &str) {
+        self.note(format!("chat (info): {line}"));
+        self.ui.core.print_info(line.as_bytes());
+    }
+
     /// The class / spawn skin on the local ped (samp's `CPlayerPed::SetModelIndex`: the adapter loads the
     /// model first). Skin 0 (CJ) needs the clothes rebuild samp does, so it is left alone here.
     fn set_skin(&self, game: &mut dyn GameAdapter, skin: i32) {
@@ -726,7 +867,6 @@ impl HostedClient {
     /// ped parked under the camera, the camera fixed above Verona Beach looking at downtown Los Santos.
     fn connecting_scene(&mut self, game: &mut dyn GameAdapter) {
         report(self, "set_weather", game.set_weather(CONNECT_WEATHER));
-        report(self, "set_clock", game.set_clock(CONNECT_HOUR, 0));
         report(self, "set_hud_visible", game.set_hud_visible(false));
         if let Some(me) = game.local_player() {
             report(self, "set_ped_position", game.set_ped_position(me, CONNECT_PED_POS));
