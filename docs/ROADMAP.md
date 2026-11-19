@@ -448,6 +448,14 @@ Sections: *pending* (blocks "done") · *original UB, not reproducible* · *accep
   car is put on the car's roof on the mod (the on-foot apply's `SET_CHAR_COORDINATES` finds the ground under the
   synced point), beside it on the DLL client. (7) A trailer the game's `CTrailer::BreakTowLink` detaches is attached
   again by the next 210 on both hosts (samp.dll hooks `CAutomobile::BreakTowLink` only, and so does the mod).
+- MOD-2 SA:MP mod, aimed movement and the C-bug (reference: the DLL client on the original exe under Wine, the same
+  xdotool C-bug with D held, server positions): samp's first frame runs GTA's weapon-skill cheat, its fps limit
+  paces the frames and its patch at 0x61E0C2 steps `ControlGunMove` by 2.0; the mod now does the same
+  (`world_setup`'s weapon skills, `set_frame_limit` of samp's fps limit, `GameOption::GunMoveTimeStep` off).
+  (1) The vehicle-skill cheat of the same first frame is not applied: the driving, flying, bike and cycling skills
+  are integer statistics, which the mod API does not write. (2) The mod strafes about 17 m where the DLL client
+  strafes about 21 m in the same 8.3 s: samp's limiter paces evenly at its fps limit and writes its own time-step
+  estimate, the engine's limiter paces the frames by the game's rules.
 
 *original UB, not reproducible*
 - `CTheZones::AssignZoneInfoForThisZone` loops forever when index < count (port loops too; never hit). `CEntryExit::GetPositionRelativeToOutsideWorld` writes the z sum into its own unused stack argument slot (not reproduced). `CStuntJumpManager::Init` SEH frame around the pool constructor not reproduced. `FindPlayerCentreOfWorld_NoSniperShift` reads Players[-1] for id -1 and CShopping touches the byte before its bought-flags table for unknown keys (kept) (PORT-WORLD p1).
@@ -525,6 +533,10 @@ Sections: *pending* (blocks "done") · *original UB, not reproducible* · *accep
   (`winmain::skip_idle_spin_when_unlimited`), so the unchanged port's first test passes and it stores the real value as
   always. Applies only with the limiter off and outside the deterministic mode (`--fixed-step`); with the limiter on
   (the default) the rule runs 1:1, and phase A (sa-hook in the original exe, verify-all) is untouched.
+  *Extension, awaiting approval (MOD-2, 2026-11-19):* also skipped with the limiter on when a mod has raised
+  `RsGlobal.frameLimit` above 71 (`set_frame_limit`; the samp mod sets samp's 90): the limiter's own interval is then
+  shorter than 14 ms and paces the frames, as samp.dll's patch of the wait to 2 ms (row 130) does. At the game's own
+  limit (30) nothing changes.
 - STREAM (FRONTIER-2 turn 13): `CFileLoader::LoadPedPathNode` (0x5B41F0) passes the attached-node store
   `CPathFind::StoreNodeInfoPed` (0x44D2D0) a `last != 0` byte pushed as ECX with `setne cl`, ECX's upper bytes being
   whatever `sscanf` left there; the port passes 0 in them. The store is an empty `ret 0x30`, so nothing reads the word.
