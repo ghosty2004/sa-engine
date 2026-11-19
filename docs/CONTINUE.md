@@ -11,7 +11,7 @@ Waiting (worktrees under `.claude/worktrees/`, work uncommitted unless noted):
 - Crash hunt: the original's address space for harmless reads, validation of every mod-reachable command, soak runs.
 - samp.dll patch parity: game options for samp's remaining patches (stunt bonus, SP pickups, HUD, story script).
 - Data mods: a mod's own IMG / IDE / IPL / TXD / IFP files (SA:MP's models 18631+ and the SAMP anim library).
-Open beyond those: menus on the mod (GXT entries), mission trains, a paintjob texture difference, MatFX bump,
+Open beyond those: the wasted sequence's fades (samp's CCamera::Fade patch), a paintjob texture difference, MatFX bump,
 the photo front-buffer read-back, user tracks / WAV, verification promotion.
 
 ---

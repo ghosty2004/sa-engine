@@ -4942,3 +4942,33 @@
   client under Wine (`LANE=5 samp-rs-ab.sh`, port 7903): the same objects, pickup, cap and the fishing pose in the
   screenshots; without the files (`SAMP_DATA=0`) the objects are refused and the mod runs. Unit tests sa-mod-host
   (data: manifest, merge, needs, joined archive, declared files; host: all-or-nothing data).
+## 2026-11-19 — MOD-2: death and respawn, menus and trains on the SA:MP mod (agent, worktree)
+- Mod API (level after 1.11, numbered at integration): `ped_damage` (the weapon type and the ped / vehicle of a
+  ped's last damage), `set_text_entry` / `remove_text_entry` (labels `CText::Get` finds first: sa-game observes
+  0x6A0050 while an entry exists; buffers never freed, owned per mod), `create_menu` / `destroy_menu` /
+  `set_menu_column` / `set_menu_column_width` / `set_menu_row_enabled` / `menu_selected_row` (the game's script
+  menus, owned; a free slot of the two, the mod's own menus, columns, rows and labels checked), `create_train` /
+  `destroy_train` / `train_carriages` (`CREATE_MISSION_TRAIN`: the type's models loaded, room in the pools; deleted
+  by the first carriage only); the script command `OVERRIDE_NEXT_RESTART` (016E). sa-access `damage.rs`, `text.rs`,
+  `menus.rs`, `trains.rs`, their argument rules in the `checks.rs` table (menu numbers in use, columns, rows, the
+  free menu slot, train types, the type's models loaded and pool room, the first carriage); sa-mod-host
+  `gameplay.rs`; SDK `sa_mod::{damage, gxt, menus, trains}`.
+- The AmbientPeds option also skips the `SetPedInCarDirect` call 0x613BA7 in `CPopulation::AddPedInCar` (samp.dll
+  NOPs it together with AddPed's NULL): the mission train's driver seat faulted on the NULL ped.
+- samp-rs: `death.rs` (spawn-info range, the local tick's death branch as `Life::step`, the damager lookup) and
+  `ui/menuwork.rs` (menu requests and the selection poll), used by the DLL client (`client/spawn.rs`,
+  `ui/glue/frame.rs`) and the hosted client; `Menu::texts`, `vehicle::train_clockwise` / `TRAIN_CARRIAGE_IDS`,
+  `ClassSelection::count`. sa-samp-api: the `Menus` trait as GTA's menu commands and text entries, `Peds::ped_damage`,
+  `WorldState::override_restart`, `Vehicles::create_train` / `destroy_train` / `train_carriages` (default
+  Unsupported). Hosted client: `hosted/death.rs` (RPC 53, respawn / class selection, RPC 74, restart points),
+  `hosted/trains.rs` (rail stream-in / out, carriage ids, reset), menus through `UiHost`.
+- Tests: `SA_GAME_KEY_FILE` (keys a harness appends while the game runs) and `key|NAME` in the CMDS files of
+  mod-join.sh and samp-rs-ab.sh; samp-rs-ab.sh takes FILTERSCRIPTS as mod-join.sh does; sampcov `vin`, `vhealth`,
+  `hidemenu`, `forceclass`; `tools/e2e/samp/deathmenu.cmds`, `tools/e2e/samp/trains.cmds` (with npc_trains).
+- Verified: `samp-rs-ab.sh` LANE=6 (DLL client, original exe, Wine) and `mod-join.sh` with deathmenu.cmds: the same
+  server events (two deaths 255 / 65535 and respawns, the vehicle's death, menu row 0, menu exit, the forced class
+  selection, the train with 3 carriages streamed in); screenshots in the worktree's target/e2e/lane-6/samp-ab/deathmenu
+  and target/e2e/mod-deathmenu/shots; trains.cmds with FILTERSCRIPTS=npc_trains on both (lane-6/samp-ab/trains,
+  target/e2e/mod-trains): the trains of npc_trains and the gamemode stream in, the same Unity Station picture.
+  Unit tests: sa-access (4), sa-mod-host (2), samp-client (2). Differences in the divergence ledger ("death, menus
+  and trains").

@@ -1,4 +1,4 @@
-# Mod API reference (API 1.12)
+# Mod API reference (API 1.13)
 
 The interface is defined once, in `crates/sa-mod-api/src/lib.rs` (`for_each_import!`, `for_each_export!`); this page
 explains it. The Rust SDK (`crates/sa-mod`) wraps every function; other languages import the functions from module
@@ -619,3 +619,55 @@ IPL ones are read as the map loads, so switch it in `sa_init`), 17 `AmbientGunfi
 in `CPostEffects::Render`). `AmbientPeds` off now also skips the two callers that would use the NULL
 `AddPed` returns: the seating in `CPopulation::AddPedInCar` and `CEntryExit::GenerateAmbientPeds` when an interior is
 entered.
+
+## Level 13: a ped's last damage, text entries, script menus, mission trains (1.13)
+
+What a multiplayer client needs to report a death, show the game's menus and run trains, in GTA terms.
+
+### Reads (`state = "read"`)
+
+| function | SDK | what |
+|---|---|---|
+| `ped_damage(handle, buf, len)` | `damage::last(p)` | `DamageInfo`: the weapon type the game recorded for the ped's last damage (`eWeaponType`, or 49 rammed, 50 helicopter blades, 51 explosion, 53 drowned, 54 collision or fall; 255 none) and who dealt it: a ped, a vehicle (handles), or something else |
+| `train_carriages(handle, buf, len)` | `trains::carriages(v)` | the vehicle handles of a train's carriages, the first carriage first; BAD_ARG for a vehicle that is no train |
+
+### Text entries (`state = "write"`)
+
+| function | SDK | what |
+|---|---|---|
+| `set_text_entry(key, text)` | `gxt::set(key, text)` | registers label `key` (1..=7 of `A-Z a-z 0-9 _`, compared without case) with `text` (at most 511 bytes of the game font's code page, its `~x~` codes, no NUL): the game's text lookups (`CText::Get`) find it before the game's own texts. Replaces the text of a key the mod holds; DENIED for a key another mod holds; FAILED over 1024 keys |
+| `remove_text_entry(key)` | `gxt::remove(key)` | the game's own text of the key (if any) shows again |
+
+The host removes a mod's entries when it disables the mod.
+
+### Script menus (`entities = true`; not inside a hook: WRONG_PHASE)
+
+The game's mission menus (`CMenuSystem`: shops, the garage, the save screen), two at a time, in its 640 x 448 menu
+units. Their texts are labels (text entries or the game's own); `DUMMY` is no text.
+
+| function | SDK | what |
+|---|---|---|
+| `create_menu(title, x, y, width, columns, flags, align)` | `menus::create(..)` | `CREATE_MENU`: shown from the next frame, the first selectable row selected; columns 1..=4, flags `menu::INTERACTIVE` / `menu::BACKGROUND`, alignment 0 centre, 1 left, 2 right. The mod owns it. FAILED while both menus are in use |
+| `destroy_menu(handle)` | `menus::destroy(m)` | `DELETE_MENU` |
+| `set_menu_column(handle, column, labels)` | `menus::set_column(m, c, header, rows)` | `SET_MENU_COLUMN`: the header label and up to 12 row labels, each followed by a NUL |
+| `set_menu_column_width(handle, column, width)` | `menus::set_column_width(m, c, w)` | `SET_MENU_COLUMN_WIDTH` (0..=640) |
+| `set_menu_row_enabled(handle, row, on)` | `menus::set_row_enabled(m, r, on)` | `ACTIVATE_MENU_ITEM` |
+| `menu_selected_row(handle)` | `menus::selected_row(m)` | `GET_MENU_ITEM_SELECTED` |
+
+The player moves the selection with the game's own menu input; a mod reads the pad (`pad_state`) to accept or leave.
+Every call but `create_menu` takes only the mod's own menus (DENIED otherwise).
+
+### Mission trains (`entities = true`; not inside a hook: WRONG_PHASE)
+
+| function | SDK | what |
+|---|---|---|
+| `create_train(kind, x, y, z, clockwise)` | `trains::create(kind, pos, cw)` | `CREATE_MISSION_TRAIN`: a train of type `kind` (0..=15: 3 freight, 5 passengers, 9 the tram, as the game's scripts use them) on the track nearest to the point, the type's models loaded first; returns the first carriage, which the mod owns. FAILED without room in the vehicle and ped pools |
+| `destroy_train(handle)` | `trains::destroy(v)` | `DELETE_MISSION_TRAIN`: the whole train, by its first carriage |
+
+### Script commands
+
+`OVERRIDE_NEXT_RESTART` (016E): the next restart after the player dies or is arrested happens at this point.
+
+### Determinism
+
+Nothing of level 12 runs without a mod that asks for it; `CText::Get` is observed only while some text entry exists.

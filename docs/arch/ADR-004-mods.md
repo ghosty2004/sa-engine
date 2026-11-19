@@ -427,6 +427,40 @@ Reference `docs/mods/api.md` level 10. What SA:MP's vehicle, player and camera R
   effects (registered with the calling script's cleanup), window flags, the plate texture and GXT entries for menus
   stay for a later level.
 
+### 4.1i A ped's last damage, text entries, script menus, mission trains (API 1.13, 2026-11-19)
+
+Reference `docs/mods/api.md` level 12. What SA:MP's death notification, menus and trains needed, in GTA terms:
+
+- **A ped's last damage** (`state = "read"`): the weapon type the game records for the death (`CPed`
+  +0x760) and the pooled ped or vehicle that dealt it (+0x764, a registered reference), as handles; anything else
+  is "other". A death is the ped state and health the game already reports; the player's respawn is the game's own
+  wasted sequence, so nothing else was needed for it.
+- **The next restart** is the script command `OVERRIDE_NEXT_RESTART` (016E, `scripts = true`). `ADD_HOSPITAL_RESTART`
+  appends to the game's ten restart points without a bound; a client that adds a point per spawn adds a point only
+  once (the game restarts at the closest point, so a repeated one changes nothing) and overrides the next restart
+  once the table is full.
+- **Text entries** (`state = "write"`): labels the game's text lookup finds before its GXT tables. The game's menus,
+  help boxes and mission texts show labels, never strings, so a mod that drives them needs its own labels. Keys are
+  1..=7 characters (the game's 8-byte label buffers) and compare without case, as `CKeyGen::GetUppercaseKey` makes
+  the game's keys; a key belongs to the mod that set it first (another mod gets DENIED) and goes when the mod removes
+  it or is disabled. The lookup observes `CText::Get` (0x6A0050) while some entry exists, as the object materials
+  observe `CObject::Render`, and answers with the entry's text; no port body changes. The game keeps the pointer it
+  gets (a message holds it for its whole time), so each key's text lives in a buffer of its own that `sa-access`
+  never frees (a changed text is written over it, a removed key leaves it to the key's next text; at most 4096 keys
+  per session, 512 bytes each).
+- **Script menus** (`entities = true`): `CMenuSystem`'s panels, created, filled, read and deleted through their script
+  commands (`CREATE_MENU`, `SET_MENU_COLUMN`, `SET_MENU_COLUMN_WIDTH`, `ACTIVATE_MENU_ITEM`, `GET_MENU_ITEM_SELECTED`,
+  `DELETE_MENU`), owned as entities are. Their handlers trust the menu number: `CreateNewMenu` fills slot
+  `num_menus_in_use` of two without a test, the others index the slots. So a menu is created only into a free slot,
+  the other calls take only the mod's own menus, columns 0..=3, rows 0..=11 and labels as text entries are; the
+  command rules live in `sa-access`'s argument table (`Game::unchecked_argument`) with the other commands' rules.
+- **Mission trains** (`entities = true`): `CREATE_MISSION_TRAIN` (`CTrain::CreateMissionTrain` 0x6F7550, ported) builds
+  one carriage per model of the train type's configuration and a driver, from pool slots and models it does not
+  check; the host loads the type's models first and refuses without room in the vehicle and ped pools. A train is
+  owned by its first carriage and deleted whole (`DELETE_MISSION_TRAIN`, which follows the carriage links of whatever
+  it gets: only a train's first carriage is taken). `train_carriages` lists the carriages in order. The train
+  commands of 1.11 (speed, position) already refuse a vehicle that is no train.
+
 ### 4.2 Data mods (added by the user, 2026-11-17)
 
 Code mods (levels 1–4) cannot add content on their own: a new vehicle, ped, weapon or building needs files (models,
