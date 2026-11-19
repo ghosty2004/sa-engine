@@ -234,6 +234,33 @@ Sections: *pending* (blocks "done") · *original UB, not reproducible* · *accep
 - FSIN/FCOS/FPATAN modelled at 53 bits vs the CPU's 64 (sa_math::x87): every stored/product result matched on the 17 CPU-decided specs; the authority is one Intel CPU (an AMD CPU may differ) (MATH-2).
 - Aliased output pointers are not modelled for IntersectRay, IntersectEdge, CRect::GetCenter, ConvertToEulerAngles and matrix ops whose result aliases an operand; explicit in-place variants exist; L2 must confirm the call sites (MATH-2).
 - `CGeneral::GetATanOfXY` (0x53CC70) (state set back to `implemented` after verifier V-1: 35 call sites feed the full ST0 into x87 arithmetic; with the f32 API, 4,579/200k differ, while the `_x87` API has 0), path x > 0, y > 0, |x| ≥ |y|: the original returns the raw FPATAN value in ST0 (64-bit significand); `sa_math` has it to 53 bits. The stored f32 matched in all 1,003,364 cases on the CPU; ST0 beyond f32 differs in 78,162. Resolve by an x87-exact atan or by showing every caller stores ST0 to f32 first (call graph).
+- SA:MP mod, samp.dll's 87 game patches (docs/samp/patch-parity.md), compared with samp-rs's DLL client on the
+  original exe (`tools/e2e/samp/parity.steps`: mod-join.sh vs LANE=4 samp-rs-ab.sh, SCENARIO=parity, 2026-11-19):
+  no vehicle name on entering a car (the radio name shows), no wanted level in Las Venturas / San Fierro (single
+  player: 4 stars there), the stunt-bonus switch `$709` following RPC 104 (DLL: 0xA4A474 1 / 0 / 1; mod: no write
+  failure), samp's own main.scm running (with samp.saa in the mod's folder) agree. Left:
+  - 130 server vehicles (`vehs`): the DLL streams in all 130 in a tidy grid; the mod creates 66 (in three runs,
+    with no error and later RPCs still arriving) and they collide and burn where the grid crosses houses (the DLL
+    places them without the collision): to investigate in the mod's vehicle stream-in;
+  - the IPL pickup (the sniper rifle in its shed at -1435.85, -965.72) is not visible from outside the shed in either
+    client nor in single player, so the screenshots do not show the option; it rests on the port check;
+  - 28 patches have no switch yet: the HUD's wanted stars as a value without a real wanted level (RPC 133, row 202),
+    player idle animations (162), a skin's own walk style (187), `ClearPlayerWeaponMode` in `ClearWeaponTarget`
+    (192), stencil shadow darkness 80 (166), event facial expressions (170), the weapon drawn while holding (216), the
+    phone model (223, 224), the BMX fire branch (199), the pause map rectangle (203), `Interior_c::Exit` on a group
+    exit (212), birds' line of sight against objects (245), the `CFont` line buffer of 0x32C bytes (225-239; the mod
+    caps `game_text` at 400 bytes);
+  - the streaming budget: 256 MiB (samp's for 1-2 GB of RAM; the mod has no RAM figure), samp.dll takes 1 GiB above
+    4 GB;
+  - `CStreaming::DeleteAllRwObjects` still runs (samp.dll's RET there only protects its sector relocation): a
+    `LoadScene` flushes RW objects where samp's game keeps them;
+  - ambient gunfire off: a due burst stores the time in `LAST_TIME`, samp's mangled `mov` a status word (no sound
+    either way);
+  - samp.saa's other game data (gta.dat, the IDE files, handling.cfg, weapon.dat, stream.ini's `vehicles 20` and
+    `dontbuildpaths`, ...) is not served: that needs the data-mod file overlay (ADR-004 §4.2);
+  - the remote-player patches (rows 167, 173-176, 183, 193, 206, 213-215, 217) stay unapplied while other players
+    are actors, not `CPlayerPed`s;
+  - gravity (InitGame, RPC 146) is still not written (`GAME_GRAVITY` is read-only image data natively).
 - SA:MP mod, objects (API 1.9, `samp_client::hostedobjects`), compared with samp-rs's DLL client on the original exe
   (objects scenario `tools/e2e/samp/objects.cmds`, mod-join.sh vs LANE=2 samp-rs-ab.sh, 2026-11-19): object
   positions, rotations, moves, StopObject, SetObjectPos/Rot, DestroyObject, the object on the player, the bone-attached

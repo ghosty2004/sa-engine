@@ -15,14 +15,16 @@ Natively (multiplayer; single player stays `play.sh` without the samp mod):
     sa-game --game GAME_DIR --start-in-world --mods target/mods/resolution,target/mods/samp
 
 `--mods` takes one or more folders, comma-separated, in load order (a folder holding `mod.toml` is one mod, any other
-folder loads each mod folder in it). The mod turns the game's start screens off (as samp.dll's start-up does); with
-`--start-in-world` (main.scm's intro mission skipped; samp.dll ships its own main.scm) the game goes straight into the
-world. In the browser (`FEATURES=mods tools/web/build.sh`, `tools/web/serve.sh --game GAME_DIR --mods target/mods`,
+folder loads each mod folder in it). The mod turns the game's start screens off and gives the game its own main
+script (as samp.dll does), so the game goes straight into that script's world; `--start-in-world` is not needed and
+changes nothing then. What the mod changes in the game, patch by patch: `docs/samp/patch-parity.md`. In the browser (`FEATURES=mods tools/web/build.sh`, `tools/web/serve.sh --game GAME_DIR --mods target/mods`,
 `sa-udp-proxy HOST:PORT --bind 127.0.0.1:7781` running): `?mods=resolution,samp&proxy=ws://127.0.0.1:7781`.
 
 SA:MP's own UI files are the user's (never shipped): copy `sampgui.png`, `mouse.png` and `sampaux3.ttf` from the SA:MP
 install and `gtaweap3.ttf` from the GTA folder into the mod's folder (`target/mods/samp/`; `arialbd.ttf` too for the
 original UI font, else Liberation Sans Bold). Without them the controls are flat and the cursor the platform's.
+`samp.saa` from the SA:MP install in the same folder gives the game samp's own `main.scm` and `script.img` (its stunt
+bonus, garages, ...); without it the mod runs samp-rs's minimal main script.
 
 Joining: once the world runs the mod covers it with its connect screen, a server browser, until the server accepted
 the join (backdrop: the game's own loading screens). Tabs: Internet (the open.mp list, `https://api.open.mp/servers/`,

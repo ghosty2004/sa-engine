@@ -4898,3 +4898,24 @@
   (target/cmp in the worktree): colours, removed doors, repair, bonnet, explosion, camera moves, behind-player,
   widescreen match; differences in the divergence ledger. Tests: sa-access (4 new), sa-mod-api / sa-mod-host,
   samp-client lib (212, 3 new), clippy samp-client host + i686-pc-windows-gnu, the writer gate.
+## 2026-11-19 — MOD-2: samp.dll's game patches as generic game options, limits and script files (agent, worktree)
+
+- Inventory of samp.dll's 87 patches (samp-rs `patches.rs`) in docs/samp/patch-parity.md: 12 covered by existing
+  options, 25 done here, 28 still need a switch (ledger), 6 belong to the DLL host, 16 not wanted (remote player peds,
+  samp.saa's own data and loading screen).
+- Engine (generic, named for what they do; every port the original while nothing is switched or raised): game options
+  `VehicleNameOnHud`, `VitalStatsOnHud`, `SinglePlayerPickups`, `AmbientGunfire`, `RealTimeShadows`,
+  `PauseMenuOnFocus`, `DeathModelCleanup`; `AmbientPeds` also skips `AddPedInCar`'s seating and the interior ambient
+  peds. The limits (pools, matrices, texture dictionaries, streaming budget) landed first on their own (API 1.10).
+  Script files: a mod's `main.scm` / `script.img` served by the platform's
+  file redirect (`vfs::set_redirect` now gets the absolute path); the main script's global variables.
+- Mod API (not numbered yet, after `set_game_limit`): `set_script_file` (only in `sa_init` / `sa_settings`),
+  `set_script_global`; option numbers 14..=20.
+- samp mod: `setup.rs` switches samp's options, raises samp's limits and gives the game samp.saa's main.scm + script.img when samp.saa is in its
+  folder, else samp-rs's minimal script; the per-frame densities / wanted stopgap is gone. RPC 104 and InitGame's
+  stunt flag write `$709` (`scm::VAR_STUNT_BONUS`, also the DLL's address now).
+- Verified: `SCENARIO=parity` of mod-join.sh (port 7893) and LANE=4 samp-rs-ab.sh (port 7895) with
+  tools/e2e/samp/parity.steps; see the ROADMAP ledger entry for what agrees and what is left. Unit tests (sa-core
+  limits, sa-access setup, sa-mod-host boot calls, samp-client patch table), clippy, wasm32 mods build.
+  Writer gate 17/17 (queue regenerated: line numbers), verify-all IDENTICAL 13/13 on lanes 5-7 (tag
+  parity-options).
