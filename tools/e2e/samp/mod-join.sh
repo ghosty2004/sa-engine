@@ -55,7 +55,8 @@
 # mouse buttons at fixed iterations; FRAMES defaults to the scenario's length), as samp-rs-ab.sh SCENARIO=keys presses
 # them on the DLL client; the server's key events in OUT/key-events.txt.
 # SA_GAME = the sa-game binary (default target/i686-unknown-linux-gnu/release/sa-game), MODS = the built mods
-# (default target/mods). FRAMES (default 1800). Port SAMP_PORT (default 7813).
+# (default target/mods). FRAMES (default 1800). Port SAMP_PORT (default 7813). SA_GAME_ARGS: more sa-game arguments
+# (e.g. `--window --auto-input` on a headless display the caller provides, for input from xdotool).
 # Output: server.log, sa-game.log, report.md, present/*.png (every 20th in-game frame), server-events.txt, and
 # goal.txt: samp-rs's goal scenario (tools/e2e/goal.sh on the DLL host) as this host can show it: connected, spawned,
 # the server's commands acknowledged, our own walk seen by the server (>= 1 m from the teleport point), and with
@@ -263,7 +264,7 @@ else
     SA_GAME_KEY_FILE="$OUT/keys.txt" SA_MOD_DATA="$OUT/moddata" SA_GAME_STUB="${SA_GAME_STUB:-$STUBS}" SA_GAME_SCRIPT_SKIP=1 SA_GAME_PRESENT_GAME=1 \
         SA_GAME_PRESENT_EVERY="${SA_GAME_PRESENT_EVERY:-20}" \
         "$GAME_BIN" --game "$SA_ROOT/wine/gta-sa" --frames "$FRAMES" --start-in-world --mods "$MOD_DIRS" \
-        --present-dir "$OUT/present" --report "$OUT/report.md" > "$OUT/sa-game.log" 2>&1 &
+        --present-dir "$OUT/present" --report "$OUT/report.md" ${SA_GAME_ARGS:-} > "$OUT/sa-game.log" 2>&1 &
     GAME_PID=$!
     say "sa-game pid $GAME_PID ($FRAMES frames)"
 fi
