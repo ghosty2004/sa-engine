@@ -215,7 +215,9 @@ pub fn service_ambient_gun_fire(this: GPtr<u8>) {
                     }
                     w32(LAST_TIME, r32(TIME_MS));
                 };
-                if !m.fcom(x(f32::from_bits(r32(0x85F114)))).test_parity(0x41) {
+                if !m.fcom(x(f32::from_bits(r32(0x85F114)))).test_parity(0x41)
+                    || !sa_core::options::enabled(sa_core::options::Feature::AmbientGunfire)
+                {
                     reset(true);
                 } else {
                     wr::<u8>(ph, 0x36, (rd::<u8>(ph, 0x36) & 0xFE) | 6);

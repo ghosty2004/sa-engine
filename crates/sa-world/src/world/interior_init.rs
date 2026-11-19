@@ -88,7 +88,7 @@ pub fn interior_init(this: GPtr<u8>, pos: GPtr<u8>) -> u32 {
         }
     }
     let t = rd::<u8>(rd::<GPtr<u8>>(this, 0x14), 0);
-    if t == 2 || t == 3 {
+    if (t == 2 || t == 3) && sa_core::options::enabled(sa_core::options::Feature::SinglePlayerPickups) {
         interior_add_pickups(this);
     }
     matrix_dtor(m);

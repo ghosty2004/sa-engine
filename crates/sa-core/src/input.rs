@@ -860,7 +860,9 @@ pub fn main_wnd_proc(hwnd: u32, msg: u32, wparam: u32, lparam: u32) -> i32 {
             def()
         }
         0x7 => {
-            wp_init_after_lost_focus();
+            if crate::options::enabled(crate::options::Feature::PauseMenuOnFocus) {
+                wp_init_after_lost_focus();
+            }
             g32(FOREGROUND_APP).write(1);
             def()
         }

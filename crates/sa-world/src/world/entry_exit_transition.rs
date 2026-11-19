@@ -479,7 +479,9 @@ fn transition_finish(this: GPtr<u8>, ped: GPtr<u8>, pos: &mut [u32; 3]) -> u8 {
     entry_exit_request_objects_in_frustum(spawn_point().read());
     streaming_load_scene(GPtr::<u8>::cast::<u32>(buf(pos)));
     streaming_load_all_requested_models(0);
-    entry_exit_generate_ambient_peds(this, buf(pos));
+    if sa_core::options::enabled(sa_core::options::Feature::AmbientPeds) {
+        entry_exit_generate_ambient_peds(this, buf(pos));
+    }
     if interior_manager_update(interiors) != 0 {
         streaming_set_flag_407a30(0);
         streaming_load_scene(GPtr::<u8>::cast::<u32>(buf(pos)));

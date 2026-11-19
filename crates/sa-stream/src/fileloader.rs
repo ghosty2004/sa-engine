@@ -2158,6 +2158,9 @@ pub fn pickup_model(t: i32) -> Option<u32> {
 /// `CFileLoader::LoadPickup` (0x5B47B0): `"%d %f %f %f"`; known types become a pickup of type 2.
 #[hook(addr = 0x5B47B0, conv = cdecl, name = "CFileLoader::LoadPickup", expect = "83 EC 1C 8D 44 24 08")]
 pub fn load_pickup(line: GPtr<u8>) {
+    if !sa_core::options::enabled(sa_core::options::Feature::SinglePlayerPickups) {
+        return;
+    }
     let mut t = 0i32;
     let (mut x, mut y, mut z) = (0u32, 0u32, 0u32);
     if sscanf_n(line, s(0x868CF8), &[lp(&mut t), lp(&mut x), lp(&mut y), lp(&mut z)]) != 4 {

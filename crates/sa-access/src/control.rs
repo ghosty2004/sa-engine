@@ -98,6 +98,13 @@ impl<V: View> Game<V> {
             GameOption::HelpMessages => F::HelpMessages,
             GameOption::ZoneNames => F::ZoneNames,
             GameOption::StartScreens => F::StartScreens,
+            GameOption::VehicleNameOnHud => F::VehicleNameOnHud,
+            GameOption::VitalStatsOnHud => F::VitalStatsOnHud,
+            GameOption::SinglePlayerPickups => F::SinglePlayerPickups,
+            GameOption::AmbientGunfire => F::AmbientGunfire,
+            GameOption::RealTimeShadows => F::RealTimeShadows,
+            GameOption::PauseMenuOnFocus => F::PauseMenuOnFocus,
+            GameOption::DeathModelCleanup => F::DeathModelCleanup,
         };
         set(feature, on);
     }

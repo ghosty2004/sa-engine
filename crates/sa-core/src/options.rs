@@ -14,7 +14,9 @@ pub enum Feature {
     TypedCheats,
     /// The game clock: `CClock::Update` runs and `CHud::DrawPlayerInfo` prints "%02d:%02d".
     Clock,
-    /// Ambient peds: `CPopulation::AddPed` 0x612710 (returns NULL when off).
+    /// Ambient peds: `CPopulation::AddPed` 0x612710 (returns NULL when off), with the callers that would use that
+    /// NULL: the `CCarEnterExit::SetPedInCarDirect` call 0x613BA7 in `CPopulation::AddPedInCar` and the
+    /// `CEntryExit::GenerateAmbientPeds` call 0x440833 in `CEntryExit::TransitionFinished`.
     AmbientPeds,
     /// Random traffic: `CCarCtrl::GenerateRandomCars` call 0x53C1C1 in `CGame::Process`.
     RandomTraffic,
@@ -40,6 +42,26 @@ pub enum Feature {
     /// `psInitialize` 0x747483 skipped) and the main menu (the menu flags set and `gGameState` 8 at frontend idle),
     /// so the game loads straight into the world.
     StartScreens,
+    /// The vehicle name on the HUD: `CHud::DrawVehicleName` call 0x58FBE9 in `CHud::Draw`.
+    VehicleNameOnHud,
+    /// The vital stats on the HUD while their button is held: the `CHud::DrawVitalStats` branch 0x58FC2E of
+    /// `CHud::Draw` (off, the radar is drawn instead).
+    VitalStatsOnHud,
+    /// The single-player pickups of the map: `CFileLoader::LoadPickup` 0x5B47B0 (returns at once when off; the
+    /// IPL pickups) and the `Interior_c::AddPickups` call 0x593D7C in `Interior_c::Init` (interior pickups).
+    SinglePlayerPickups,
+    /// Ambient gunfire: the shot branch 0x4DF7E2 of `CAEGlobalWeaponAudioEntity::ServiceAmbientGunFire` (off, a
+    /// due burst only resets the state).
+    AmbientGunfire,
+    /// Real-time shadows: `CRealTimeShadowManager::Update` call 0x53EA08 in `Idle` and the
+    /// `ReturnRealTimeShadow` call 0x542485 in `CPhysical::~CPhysical`.
+    RealTimeShadows,
+    /// The pause menu when the window gets the focus back: `CGame::InitAfterLostFocus` call 0x748063 in
+    /// `__MainWndProc` (`WM_SETFOCUS`).
+    PauseMenuOnFocus,
+    /// The models around the old position freed on a respawn: `CStreaming::DeleteRwObjectsAfterDeath` call
+    /// 0x441482 in `CGameLogic::SortOutStreamingAndMemory`.
+    DeathModelCleanup,
 }
 
 /// The features turned off, as bits.

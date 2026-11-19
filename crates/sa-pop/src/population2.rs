@@ -1639,7 +1639,9 @@ pub fn add_ped_in_car(veh: GPtr<u8>, driver: u8, gang: i32, seat: i32, male: u8,
     };
     let ped = add_ped_call(ty as u32, m as u32, GPtr::from_raw(pos.as_mut_ptr()).cast(), 0);
     let door = if seat >= 0 { compute_target_door_to_enter_as_passenger(veh, seat as u32) as i32 } else { 0 };
-    set_ped_in_car_direct(ped, veh, door, driver);
+    if sa_core::options::enabled(sa_core::options::Feature::AmbientPeds) {
+        set_ped_in_car_direct(ped, veh, door, driver);
+    }
     if criminal != 0 {
         update_ped_count_call(ped, 1);
         wr::<i32>(ped, 0x598, 0x14);

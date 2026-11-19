@@ -574,7 +574,9 @@ pub fn idle(param: GPtr<u8>) {
         renderer_construct_render_list();
         renderer_pre_render();
         world_process_peds_after_pre_render();
-        real_time_shadow_man_update(g(G_REAL_TIME_SHADOW_MAN));
+        if crate::options::enabled(crate::options::Feature::RealTimeShadows) {
+            real_time_shadow_man_update(g(G_REAL_TIME_SHADOW_MAN));
+        }
         mirrors_before_main_render();
         let ok = if g::<u8>(WEATHER_LIGHTNING_FLASH).read() != 0 {
             // fog red/green/blue (0xB7C4CA/CC/CE) = 255

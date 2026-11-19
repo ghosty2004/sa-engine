@@ -10,6 +10,7 @@
 use sa_core::abi::HookReg;
 use sa_core::mem::{GPtr, GlobalDesc};
 use sa_core::{hook, orig};
+use sa_core::options::{Feature, enabled};
 use sa_math::x87::X87;
 
 use crate::common::{f32_of, ftol32, g, rd, x, xi};
@@ -602,7 +603,7 @@ pub fn draw() {
             draw_player_info_call();
             draw_wanted_call();
         }
-        if b(DONT_DISPLAY_VEHICLE_NAME) == 0 {
+        if b(DONT_DISPLAY_VEHICLE_NAME) == 0 && enabled(Feature::VehicleNameOnHud) {
             draw_vehicle_name_call();
         }
         draw_mission_timers_call();
@@ -612,6 +613,7 @@ pub fn draw() {
         let ped = sa_world::world::common::find_player_ped(-1);
         let pad = get_pad(0);
         if pad_get_display_vital_stats(pad, ped) as u16 != 0
+            && enabled(Feature::VitalStatsOnHud)
             && sa_world::world::common::find_player_vehicle(-1, 0).is_null()
         {
             DRAWING_VITAL_STATS.set(1);

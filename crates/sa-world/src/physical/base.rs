@@ -150,7 +150,7 @@ pub fn constructor(this: Ent) -> Ent {
 pub fn destructor(this: Ent) -> u32 {
     wu(this, 0, VTABLE);
     let shadow = rp(this, SHADOW_DATA);
-    if !shadow.is_null() {
+    if !shadow.is_null() && sa_core::options::enabled(sa_core::options::Feature::RealTimeShadows) {
         return_real_time_shadow(GPtr::from_addr(REAL_TIME_SHADOW_MAN), shadow);
     }
     entry_info_list_flush(this.byte_add(COLLISION_LIST).cast());

@@ -265,7 +265,7 @@ pub enum GameOption {
     TypedCheats,
     /// The game clock runs and the HUD shows it.
     Clock,
-    /// Ambient peds.
+    /// Ambient peds (on foot, as drivers of the cars the game creates, in interiors).
     AmbientPeds,
     /// Random traffic.
     RandomTraffic,
@@ -290,11 +290,26 @@ pub enum GameOption {
     /// The start screens (logos, intro movie, main menu): off, the game loads straight into a new game. Read when
     /// the game starts, so only a mod's `sa_init` or `sa_settings` changes it in time.
     StartScreens,
+    /// The vehicle name on the HUD when the player enters a vehicle.
+    VehicleNameOnHud,
+    /// The vital stats on the HUD while their button is held (off, the radar stays).
+    VitalStatsOnHud,
+    /// The pickups the map places (weapons, health, armour, interior pickups); read as the map loads, so only a
+    /// mod's `sa_init` or `sa_settings` changes the map's own pickups in time.
+    SinglePlayerPickups,
+    /// Ambient gunfire sounds.
+    AmbientGunfire,
+    /// Real-time shadows of peds and vehicles.
+    RealTimeShadows,
+    /// The pause menu opens when the window gets the focus back.
+    PauseMenuOnFocus,
+    /// The models around the old position are freed when the player respawns.
+    DeathModelCleanup,
 }
 
 impl GameOption {
     /// Every option, in declaration order.
-    pub const ALL: [GameOption; 14] = [
+    pub const ALL: [GameOption; 21] = [
         GameOption::TypedCheats,
         GameOption::Clock,
         GameOption::AmbientPeds,
@@ -309,6 +324,13 @@ impl GameOption {
         GameOption::HelpMessages,
         GameOption::ZoneNames,
         GameOption::StartScreens,
+        GameOption::VehicleNameOnHud,
+        GameOption::VitalStatsOnHud,
+        GameOption::SinglePlayerPickups,
+        GameOption::AmbientGunfire,
+        GameOption::RealTimeShadows,
+        GameOption::PauseMenuOnFocus,
+        GameOption::DeathModelCleanup,
     ];
 }
 
@@ -370,4 +392,26 @@ impl GameLimit {
         GameLimit::StreamingMemory,
         GameLimit::VehicleStructures,
     ];
+}
+
+/// A file of the game's script a host may provide in place of the install's.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum ScriptFile {
+    /// `data\script\main.scm`: the main script (its MAIN thread creates the player) and the missions.
+    Main,
+    /// `data\script\script.img`: the streamed scripts the main script declares.
+    Streamed,
+}
+
+impl ScriptFile {
+    /// Every script file, in declaration order.
+    pub const ALL: [ScriptFile; 2] = [ScriptFile::Main, ScriptFile::Streamed];
+
+    /// The file's path in the game folder.
+    pub const fn path(self) -> &'static str {
+        match self {
+            ScriptFile::Main => "data\\script\\main.scm",
+            ScriptFile::Streamed => "data\\script\\script.img",
+        }
+    }
 }

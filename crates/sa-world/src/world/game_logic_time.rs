@@ -78,7 +78,9 @@ pub fn sort_out_streaming_and_memory(pos: GPtr<u8>, angle: u32) {
         .to_f32();
     rw_camera_set_far_clip_plane(g::<GPtr<u8>>(0xB6_F97C).read(), far);
     flush_request_list();
-    delete_rw_objects_after_death(pos);
+    if sa_core::options::enabled(sa_core::options::Feature::DeathModelCleanup) {
+        delete_rw_objects_after_death(pos);
+    }
     remove_unused_models_in_loaded_list();
     drastic_tidy_up_memory(1);
     load_scene_collision(pos);

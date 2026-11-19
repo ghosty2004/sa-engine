@@ -72,7 +72,6 @@ fn give_weapon(ped: GPtr<u8>, w: u32) {
        note = "was a partial port (popw4-partial-1, cheat paths new there): the unhandled types no longer run the original")]
 pub fn add_ped(ty: u32, model: u32, pos: GPtr<f32>, make_wander_slot: u32) -> GPtr<u8> {
     let make_wander = make_wander_slot as u8;
-    // samp mode: no ambient peds (samp makes this entry return NULL).
     if !sa_core::options::enabled(sa_core::options::Feature::AmbientPeds) {
         return GPtr::from_addr(0);
     }
