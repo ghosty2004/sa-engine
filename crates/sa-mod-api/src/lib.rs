@@ -34,7 +34,7 @@ pub const EXPORT_MEMORY: &str = "memory";
 /// The API's major version.
 pub const API_MAJOR: u16 = 1;
 /// The API's minor version.
-pub const API_MINOR: u16 = 14;
+pub const API_MINOR: u16 = 15;
 
 /// `major << 16 | minor`, the value of the `sa_api_version` export.
 pub const fn pack_version(major: u16, minor: u16) -> i32 {
@@ -1262,17 +1262,17 @@ macro_rules! for_each_import {
             /// in or out, also for a player already inside. On gives each the flags it had before the first switch
             /// off; the host does that too when it disables the mod. Not inside a hook.
             [Write] fn set_entry_exits_enabled(on: i32) -> i32;
-            /// (1.14) Writes vehicle `handle`'s matrix: right, forward, up and position (12 little-endian `f32` at
+            /// (1.15) Writes vehicle `handle`'s matrix: right, forward, up and position (12 little-endian `f32` at
             /// `matrix_ptr`) as they are, the way a physics step leaves it (no teleport: the speeds, the suspension
             /// and the collision state stay; the game files the vehicle under its new world sectors as its physics
             /// runs). `BAD_ARG` for values that are not finite, rows that are not unit vectors or a position
             /// outside the world. Not inside a hook.
             [Write] fn set_vehicle_matrix(handle: i32, matrix_ptr: i32) -> i32;
-            /// (1.14) Writes how vehicle `handle` moves and what it tows ([`state::VehicleMotion`]: turn speed,
+            /// (1.15) Writes how vehicle `handle` moves and what it tows ([`state::VehicleMotion`]: turn speed,
             /// whether its physics runs, the cab towing it, its trailer, its passenger seats) to the buffer, as
             /// `vehicle_info`.
             [State] fn vehicle_motion(handle: i32, buf_ptr: i32, buf_len: i32) -> i32;
-            /// (1.14) Ped `handle` fires one shot of its current weapon, an instant-hit one (pistols, shotguns,
+            /// (1.15) Ped `handle` fires one shot of its current weapon, an instant-hit one (pistols, shotguns,
             /// sub-machine guns, rifles, the minigun), at the point (`x`, `y`, `z`): `CWeapon::FireInstantHit` from
             /// the muzzle at its right hand toward the point, aimed whatever its tasks, with the muzzle flash, the
             /// sound and the shell; the game's line test decides what it hits and its damage response what that

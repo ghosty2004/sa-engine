@@ -1,4 +1,4 @@
-# Mod API reference (API 1.14)
+# Mod API reference (API 1.15)
 
 The interface is defined once, in `crates/sa-mod-api/src/lib.rs` (`for_each_import!`, `for_each_export!`); this page
 explains it. The Rust SDK (`crates/sa-mod`) wraps every function; other languages import the functions from module
@@ -683,7 +683,7 @@ Every call but `create_menu` takes only the mod's own menus (DENIED otherwise).
 
 Nothing of level 12 runs without a mod that asks for it; `CText::Get` is observed only while some text entry exists.
 
-## Other players' peds and vehicles: matrices, motion, shots (1.14)
+## Level 15: other players' peds and vehicles: matrices, motion, shots (1.15)
 
 What a multiplayer client needs to show the other players driving, towing, pushing, aiming and shooting, in GTA terms.
 
