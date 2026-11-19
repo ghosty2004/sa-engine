@@ -195,6 +195,9 @@ impl<V: View> Game<V> {
             area: AreaCode(m.read_u8(p + off::AREA)),
             train_speed: if class == Some(VehicleClass::Train) { m.read_f32(p + off::TRAIN_SPEED) } else { 0.0 },
             special: 0.0,
+            moving: m.read_u32(p + off::MOVING_LIST) != 0,
+            tractor: self.vehicle_ref(m.read_u32(p + off::VEH_TRACTOR)),
+            trailer: self.vehicle_ref(m.read_u32(p + off::VEH_TRAILER)),
         })
     }
 

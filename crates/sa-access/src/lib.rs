@@ -44,6 +44,7 @@ mod damage;
 pub mod menus;
 pub mod text;
 mod trains;
+mod weapons;
 
 pub use sa_types::{EntityRef, GameError, GameResult, ObjectRef, PedRef, VehicleRef};
 pub use objects::{MaterialSlot, Removal, SavedMaterials};

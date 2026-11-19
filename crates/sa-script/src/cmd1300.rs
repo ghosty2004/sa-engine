@@ -69,7 +69,7 @@ use sa_ped::bindings::ped_give_weapon as give_weapon;
 use sa_stream::bindings::generate_new_one;
 use sa_weapon::bindings::add_gunshell;
 use sa_world::bindings::add_ped_in_car;
-use sa_world::bindings::fire_instant_hit;
+use sa_core::bindings::fire_instant_hit;
 use sa_world::bindings::load_mission_text;
 use sa_ped::bindings::ped_set_current_weapon as set_current_weapon;
 use sa_world::bindings::report_weapon_event;

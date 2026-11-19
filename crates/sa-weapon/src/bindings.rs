@@ -119,6 +119,11 @@ orig! {
 }
 
 orig! {
+    /// `CWeapon::FireInstantHit` (0x73FB10)
+    pub fn fire_instant_hit(w: GPtr<u8>, by: GPtr<u8>, origin: GPtr<u8>, muzzle: GPtr<u8>, target: GPtr<u8>, pos: GPtr<u8>, drive_by: GPtr<u8>, a: u32, b: u32) -> u8 = thiscall 0x73FB10 => crate::fire_instant_hit::fire_instant_hit;
+}
+
+orig! {
     /// `CWeapon::FireProjectile` (0x741360)
     pub fn weapon_fire_projectile(w: GPtr<u8>, firer: GPtr<u8>, origin: GPtr<u8>, target_ent: GPtr<u8>, target: GPtr<u8>, force: f32) -> u8 = thiscall 0x741360 => crate::fire_projectile::fire_projectile;
 }

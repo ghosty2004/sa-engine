@@ -91,7 +91,7 @@ pub use sa_world::bindings::add_light as point_lights_add_light;
 pub use sa_world::bindings::dm_get_panel_status as get_panel_status;
 pub use sa_world::bindings::event_gun_shot_ctor;
 pub use sa_world::bindings::event_gun_shot_dtor;
-pub use sa_world::bindings::fire_instant_hit as fire_instant_hit_call;
+pub use crate::bindings::fire_instant_hit as fire_instant_hit_call;
 pub use sa_world::bindings::get_weapon_skill_type_call as ped_get_weapon_skill;
 pub use sa_world::bindings::interesting_events_add;
 pub use sa_world::bindings::ped_say;

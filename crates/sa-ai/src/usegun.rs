@@ -61,7 +61,7 @@ use sa_world::bindings::intel_get_task_duck as ug_get_task_duck;
 use sa_world::bindings::pad_get_ped_walk_left_right as ug_pad_walk_left_right;
 use sa_world::bindings::pad_get_ped_walk_up_down as ug_pad_walk_up_down;
 use sa_core::bindings::ped_get_bone_position as ug_ped_get_bone_position;
-use sa_world::bindings::ped_get_transformed_bone_position as ug_ped_get_transformed_bone_position;
+use sa_core::bindings::ped_get_transformed_bone_position as ug_ped_get_transformed_bone_position;
 use sa_world::bindings::ped_get_weapon_skill as ug_ped_get_weapon_skill;
 use crate::bindings::task_simple_ctor as ug_task_simple_ctor;
 use crate::bindings::task_simple_dtor as ug_task_simple_dtor;

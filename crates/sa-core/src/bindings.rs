@@ -1834,6 +1834,11 @@ orig! {
 }
 
 orig! {
+    /// `CPed::GetTransformedBonePosition` (0x5E01C0)
+    pub fn ped_get_transformed_bone_position(p: GPtr<u8>, io: GPtr<u8>, bone: u32, b: u32) = thiscall 0x5E01C0 => unported;
+}
+
+orig! {
     /// `CPed::GetBonePosition-Original` (0x5E4280)
     pub fn ped_get_bone_position(p: GPtr<u8>, out: GPtr<u8>, bone: i32, b: u32) = thiscall 0x5E4280 => unported;
 }
@@ -2586,6 +2591,11 @@ orig! {
 orig! {
     /// `CWeapon::InitialiseWeapons` (0x73A300)
     pub fn weapon_initialise_weapons() = cdecl 0x73A300 => unported;
+}
+
+orig! {
+    /// `CWeapon::FireInstantHit` (0x73FB10)
+    pub fn fire_instant_hit(w: GPtr<u8>, by: GPtr<u8>, origin: GPtr<u8>, muzzle: GPtr<u8>, target: GPtr<u8>, pos: GPtr<u8>, drive_by: GPtr<u8>, a: u32, b: u32) -> u8 = thiscall 0x73FB10 => unported;
 }
 
 orig! {

@@ -2999,11 +2999,6 @@ orig! {
 }
 
 orig! {
-    /// `CPed::GetTransformedBonePosition` (0x5E01C0)
-    pub fn ped_get_transformed_bone_position(p: GPtr<u8>, io: GPtr<u8>, bone: u32, b: u32) = thiscall 0x5E01C0 => unported;
-}
-
-orig! {
     /// `CPed::GetEntityThatThisPedIsHolding` (0x5E02E0)
     pub fn ped_get_held_entity(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x5E02E0 => unported;
 }
@@ -4571,11 +4566,6 @@ orig! {
 orig! {
     /// `CWeapon::PickTargetForHeatSeekingMissile` (0x73F910)
     pub fn pick_target_for_heat_seeking_missile(ox: f32, oy: f32, oz: f32, dx: f32, dy: f32, dz: f32, mul: f32, ignore: GPtr<u8>, from_veh: u32, last: GPtr<u8>) -> GPtr<u8> = cdecl 0x73F910 => unported;
-}
-
-orig! {
-    /// `CWeapon::FireInstantHit` (0x73FB10)
-    pub fn fire_instant_hit(w: GPtr<u8>, by: GPtr<u8>, origin: GPtr<u8>, muzzle: GPtr<u8>, target: GPtr<u8>, pos: GPtr<u8>, drive_by: GPtr<u8>, a: u32, b: u32) -> u8 = thiscall 0x73FB10 => unported;
 }
 
 orig! {

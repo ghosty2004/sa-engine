@@ -30,9 +30,10 @@ use sa_world::bindings::{membership_get_leader, vec_mul_assign, vector_add_assig
 use crate::bindings::{intel_clear_task_duck_secondary, tm_get_task_secondary};
 use sa_math::x87::X87;
 use sa_world::bindings::{
-    duck_ctor, go_to_point_and_stand_still_ctor, pause_ctor, ped_get_transformed_bone_position, ped_get_weapon_skill,
+    duck_ctor, go_to_point_and_stand_still_ctor, pause_ctor, ped_get_weapon_skill,
     ped_say, seek_entity_standard_ctor, stand_still_ctor, task_gun_control_ctor, weapon_is_type_melee,
 };
+use sa_core::bindings::ped_get_transformed_bone_position;
 use sa_core::field::gf as fc;
 use sa_world::world::common::{entity_pos, entity_pos3 as pos3};
 use sa_world::world::garage_update::now;

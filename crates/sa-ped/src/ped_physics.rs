@@ -96,7 +96,7 @@ use sa_world::bindings::anim_blend_animation as blend_animation;
 use sa_world::bindings::audio_report_water_splash;
 use sa_world::bindings::matrix_copy_ctor;
 use sa_world::bindings::multiply3x3 as multiply_3x3;
-use sa_world::bindings::ped_get_transformed_bone_position as get_transformed_bone_position;
+use sa_core::bindings::ped_get_transformed_bone_position as get_transformed_bone_position;
 use crate::bindings::ped_set_move_anim_speed as set_move_anim_speed;
 orig! {
     /// `CTask::GetTaskType` (vtable slot 0x10)

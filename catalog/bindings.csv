@@ -700,7 +700,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x5DFD60,sa-world,ped_restore_heading_rate,thiscall,,p:GPtr<u8>,,unported,CPed::RestoreHeadingRate,
 0x5DFDF0,sa-world,ped_position_attached_ped,thiscall,,ped:GPtr<u8>,,unported,CPed::PositionAttachedPed,sa_ped::ped_coll::position_attached_ped
 0x5E01A0,sa-world,ped_update_stat_entering_vehicle,thiscall,,ped:GPtr<u8>,,unported,CPed::UpdateStatEnteringVehicle,
-0x5E01C0,sa-world,ped_get_transformed_bone_position,thiscall,,p:GPtr<u8>;io:GPtr<u8>;bone:u32;b:u32,,unported,CPed::GetTransformedBonePosition,
+0x5E01C0,sa-core,ped_get_transformed_bone_position,thiscall,,p:GPtr<u8>;io:GPtr<u8>;bone:u32;b:u32,,unported,CPed::GetTransformedBonePosition,
 0x5E02E0,sa-world,ped_get_held_entity,thiscall,,p:GPtr<u8>,GPtr<u8>,unported,CPed::GetEntityThatThisPedIsHolding,
 0x5E0360,sa-world,ped_drop_held_entity,thiscall,,p:GPtr<u8>;b:u32,,unported,CPed::DropEntityThatThisPedIsHolding,sa_ped::ped_coll::drop_entity_that_this_ped_is_holding
 0x5E05B0,sa-world,event_sound_quiet_ctor,thiscall,,e:GPtr<u8>;ent:GPtr<u8>;volume:f32;time:u32;pos:GPtr<u8>,GPtr<u8>,unported,CEventSoundQuiet::Constructor,
@@ -1005,7 +1005,7 @@ address,crate,name,conv,spec,args,ret,target,catalogue_name,port
 0x73DB40,sa-world,weapon_update,thiscall,,w:GPtr<u8>;owner:GPtr<u8>,,unported,CWeapon::Update,
 0x73E240,sa-world,weapon_find_nearest_target_entity_with_screen_coors,cdecl,,sx:f32;sy:f32;range:f32;px:f32;py:f32;pz:f32;ox:GPtr<f32>;oy:GPtr<f32>,GPtr<u8>,unported,CWeapon::FindNearestTargetEntityWithScreenCoors,sa_weapon::frontier_b2::weapon_find_nearest_target_entity_with_screen_coors
 0x73F910,sa-world,pick_target_for_heat_seeking_missile,cdecl,,ox:f32;oy:f32;oz:f32;dx:f32;dy:f32;dz:f32;mul:f32;ignore:GPtr<u8>;from_veh:u32;last:GPtr<u8>,GPtr<u8>,unported,CWeapon::PickTargetForHeatSeekingMissile,
-0x73FB10,sa-world,fire_instant_hit,thiscall,,w:GPtr<u8>;by:GPtr<u8>;origin:GPtr<u8>;muzzle:GPtr<u8>;target:GPtr<u8>;pos:GPtr<u8>;drive_by:GPtr<u8>;a:u32;b:u32,u8,unported,CWeapon::FireInstantHit,
+0x73FB10,sa-core,fire_instant_hit,thiscall,,w:GPtr<u8>;by:GPtr<u8>;origin:GPtr<u8>;muzzle:GPtr<u8>;target:GPtr<u8>;pos:GPtr<u8>;drive_by:GPtr<u8>;a:u32;b:u32,u8,unported,CWeapon::FireInstantHit,sa_weapon::fire_instant_hit::fire_instant_hit
 0x742BD0,sa-world,weapon_effects_is_locked_on,cdecl,,n:i32,u8,unported,CWeaponEffects::IsLockedOn,
 0x742BF0,sa-world,weapon_effects_mark_target,cdecl,,i:u32;px:u32;py:u32;pz:u32;r:u32;gr:u32;b:u32;a:u32;size:u32;flag:u32,,unported,CWeaponEffects::MarkTarget,
 0x742C60,sa-world,clear_cross_hair,cdecl,,n:u32,,unported,CWeaponEffects::ClearCrossHair,

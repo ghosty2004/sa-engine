@@ -1,6 +1,6 @@
 //! Vehicles.
 
-use crate::{AreaCode, Matrix, ModelId, PedRef, Vec3};
+use crate::{AreaCode, Matrix, ModelId, PedRef, Vec3, VehicleRef};
 
 /// Vehicle class, from the vtable (0x871120 … 0x872370).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -60,6 +60,12 @@ pub struct VehicleSnapshot {
     pub train_speed: f32,
     /// Hydra thrust / special control value (+0x86A etc.), raw.
     pub special: f32,
+    /// In the world's moving list: its physics runs (`CPhysical::m_pMovingList` +0xB4 set).
+    pub moving: bool,
+    /// The cab towing it (`CVehicle::m_pTractor` +0x4C4).
+    pub tractor: Option<VehicleRef>,
+    /// The trailer it tows (`CVehicle::m_pTrailer` +0x4C8).
+    pub trailer: Option<VehicleRef>,
 }
 
 /// What a new vehicle is made with.

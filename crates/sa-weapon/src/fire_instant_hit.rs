@@ -35,7 +35,7 @@ use crate::weapon_fire::{
 
 use crate::bindings::audio_report_bullet_hit;
 use sa_core::bindings::ped_get_bone_position;
-use sa_world::bindings::ped_get_transformed_bone_position;
+use sa_core::bindings::ped_get_transformed_bone_position;
 use crate::bindings::add_gunshell as add_gunshell_call;
 use sa_world::bindings::cam_get_two_player_aim_vector;
 use sa_world::bindings::fx_trigger_gunshot;

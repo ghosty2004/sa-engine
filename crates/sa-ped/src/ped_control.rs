@@ -243,7 +243,7 @@ use crate::bindings::handle_sprint_energy;
 use sa_world::bindings::pad_get_accelerate;
 use sa_world::bindings::pad_get_ped_walk_left_right;
 use sa_world::bindings::pad_get_weapon;
-use sa_world::bindings::ped_get_transformed_bone_position as get_transformed_bone_position;
+use sa_core::bindings::ped_get_transformed_bone_position as get_transformed_bone_position;
 use crate::bindings::ped_get_weapon_skill;
 use sa_world::bindings::ped_say;
 use sa_world::bindings::physical_process_control;

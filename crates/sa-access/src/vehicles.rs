@@ -4,9 +4,9 @@
 use sa_core::mem::GPtr;
 use sa_types::script::ScriptArg;
 use sa_types::vehicle::VehicleClass;
-use sa_types::{EntityRef, GameError, GameResult, ModelId, PedRef, Vec3, VehicleRef};
+use sa_types::{EntityRef, GameError, GameResult, Matrix, ModelId, PedRef, Vec3, VehicleRef};
 
-use crate::addr::{self, off};
+use crate::addr::{self, matrix, off};
 use crate::{Game, View};
 
 /// `CAutomobile`'s damage manager: the four wheel-status bytes (in address order), the door states (the four
@@ -38,6 +38,13 @@ const FIGHT_STYLES: std::ops::RangeInclusive<i32> = 4..=16;
 const WEAPON_SLOTS: std::ops::RangeInclusive<i32> = 1..=13;
 /// Paintjobs (`CVehicleModelInfo::m_anRemapTxds[4]`; -1 removes it).
 const PAINTJOBS: std::ops::RangeInclusive<i32> = -1..=3;
+/// A ped's weapon accuracy (`CPed::m_nWeaponAccuracy`, a percentage the shot spread is computed from).
+const ACCURACY: std::ops::RangeInclusive<i32> = 0..=100;
+/// The lengths a written matrix row may have (a rotation's rows are unit vectors).
+const MATRIX_ROW_LENGTH: std::ops::RangeInclusive<f32> = 0.9..=1.1;
+/// The positions a written matrix may have: the world sectors' range and then some.
+const WORLD_XY: std::ops::RangeInclusive<f32> = -20000.0..=20000.0;
+const WORLD_Z: std::ops::RangeInclusive<f32> = -10000.0..=100000.0;
 
 /// The classes built on `CAutomobile` (car nodes, damage manager, upgrades).
 fn automobile_based(c: VehicleClass) -> bool {
@@ -160,6 +167,36 @@ impl<V: View> Game<V> {
         Ok(())
     }
 
+    /// Writes the vehicle's matrix (the rows and the position as they are), as a physics step leaves it: no
+    /// teleport, so the speeds, the suspension and the collision state stay; the game files the vehicle under the
+    /// world sectors of its new position as its physics runs. Refused for a matrix that is not finite, rows that
+    /// are not near unit length, or a position outside the world's range.
+    pub fn set_vehicle_matrix(&mut self, v: VehicleRef, m: &Matrix) -> GameResult<()> {
+        let p = self.vehicle_addr(v)?;
+        let rows = [m.right, m.forward, m.up];
+        let len = |r: Vec3| (r.x * r.x + r.y * r.y + r.z * r.z).sqrt();
+        if !rows.iter().chain([&m.pos]).all(|r| r.x.is_finite() && r.y.is_finite() && r.z.is_finite()) {
+            return Err(GameError::Other("matrix is not finite".into()));
+        }
+        if !rows.iter().all(|&r| (MATRIX_ROW_LENGTH).contains(&len(r))) {
+            return Err(GameError::Other("matrix rows are not unit vectors".into()));
+        }
+        if !(WORLD_XY.contains(&m.pos.x) && WORLD_XY.contains(&m.pos.y) && WORLD_Z.contains(&m.pos.z)) {
+            return Err(GameError::Other(format!("position {:?} outside the world", m.pos)));
+        }
+        let mat = self.view.read_u32(p + off::MATRIX);
+        if mat == 0 {
+            return Err(GameError::Other("the vehicle has no matrix".into()));
+        }
+        let at = [(m.right, matrix::RIGHT), (m.forward, matrix::FORWARD), (m.up, matrix::UP), (m.pos, matrix::POS)];
+        for (row, at) in at {
+            for (i, c) in [row.x, row.y, row.z].into_iter().enumerate() {
+                self.view.write(mat + at + 4 * i as u32, &c.to_le_bytes());
+            }
+        }
+        Ok(())
+    }
+
     /// Why `op` must not run with `args`: the game's handler would read past a table or use a vehicle as a class
     /// it is not (none of them checks).
     pub fn refused_arguments(&self, op: u16, args: &[ScriptArg<'_>]) -> Option<String> {
@@ -195,6 +232,8 @@ impl<V: View> Game<V> {
             0x041E => range(0, RADIO_CHANNELS, "radio channel"),
             0x07FE => range(1, FIGHT_STYLES, "fighting style"),
             0x04B8 => range(1, WEAPON_SLOTS, "weapon slot"),
+            // SET_CHAR_ACCURACY: the spread is computed from 100 - accuracy
+            0x02E2 => range(1, ACCURACY, "accuracy"),
             _ => None,
         }
     }

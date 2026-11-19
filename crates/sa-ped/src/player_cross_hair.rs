@@ -15,7 +15,7 @@ use sa_world::bindings::cam_shake_no_pos as camera_cam_shake_no_pos;
 use sa_world::bindings::pad_get_car_gun_fired;
 use sa_world::bindings::pad_get_steering_left_right;
 use sa_world::bindings::pad_get_steering_up_down;
-use sa_world::bindings::fire_instant_hit as weapon_fire_instant_hit;
+use sa_core::bindings::fire_instant_hit as weapon_fire_instant_hit;
 use sa_world::bindings::weapon_ctor;
 use sa_world::bindings::camera_find_cam_fov;
 

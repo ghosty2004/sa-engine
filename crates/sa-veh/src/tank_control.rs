@@ -21,11 +21,12 @@ use crate::bindings::weapon_do_tank_doom_aiming as do_tank_doom_aiming;
 use sa_pop::bindings::{car_gun_just_down, get_car_gun_up_down};
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::{
-    add_explosion, add_gunshell, apply_force, find_player_ped, fire_instant_hit, get_pad_from_player, max_f,
+    add_explosion, add_gunshell, apply_force, find_player_ped, get_pad_from_player, max_f,
     multiply3x3, multiply3x3_vm, physical_get_speed as get_speed, process_line_of_sight, report_weapon_event,
     vector_add_assign, vector_mul_scalar, vector_scale, vector_sub, weapon_ctor,
 };
 use sa_rwcore::bindings::frame_get_ltm;
+use sa_core::bindings::fire_instant_hit;
 
 orig! {
     /// `FxManager_c::TriggerTankFire(CVector& pos, CVector& dir)` (0x4A0FA0, thiscall on `g_fx` 0xA9AE00)

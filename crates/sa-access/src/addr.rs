@@ -247,6 +247,10 @@ pub mod off {
     pub const VEH_MAX_PASSENGERS: u32 = 0x488;
     /// `CVehicle::m_fHealth`.
     pub const VEH_HEALTH: u32 = 0x4C0;
+    /// `CVehicle::m_pTractor` (the cab towing this trailer).
+    pub const VEH_TRACTOR: u32 = 0x4C4;
+    /// `CVehicle::m_pTrailer`.
+    pub const VEH_TRAILER: u32 = 0x4C8;
     /// `CTrain::m_fTrainSpeed`.
     pub const TRAIN_SPEED: u32 = 0x5A4;
 }
