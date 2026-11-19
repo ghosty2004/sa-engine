@@ -50,6 +50,9 @@
 # Crash reports of sa-game go to OUT/crashes (SA_GAME_CRASH_DIR).
 # SCENARIO=parity: the steps of tools/e2e/samp/parity.steps (what samp.dll changes in the game), as samp-rs-ab.sh
 # SCENARIO=parity runs them on the DLL client; screenshots in OUT/shots/.
+# SCENARIO=keys: the key steps of tools/e2e/samp/keys.sh on foot, as a driver and as a passenger (scripted keys and
+# mouse buttons at fixed iterations; FRAMES defaults to the scenario's length), as samp-rs-ab.sh SCENARIO=keys presses
+# them on the DLL client; the server's key events in OUT/key-events.txt.
 # SA_GAME = the sa-game binary (default target/i686-unknown-linux-gnu/release/sa-game), MODS = the built mods
 # (default target/mods). FRAMES (default 1800). Port SAMP_PORT (default 7813).
 # Output: server.log, sa-game.log, report.md, present/*.png (every 20th in-game frame), server-events.txt, and
@@ -66,6 +69,13 @@ export SA_GAME_CRASH_DIR="${SA_GAME_CRASH_DIR:-$OUT/crashes}"
 PORT="${SAMP_PORT:-7813}"
 GAME_BIN="${SA_GAME:-$ROOT/target/i686-unknown-linux-gnu/release/sa-game}"
 MODS="${MODS:-$ROOT/target/mods}"
+if [ "${SCENARIO:-join}" = keys ]; then
+    # shellcheck source=keys.sh
+    source "$HERE/keys.sh"
+    keys_mod_env
+    FRAMES="${FRAMES:-$KEY_FRAMES}"
+    export SA_GAME_WALK=0:0
+fi
 FRAMES="${FRAMES:-1800}"
 # W held from iteration 1000 for 450 iterations (after the server's commands): the server sees the walk in the
 # on-foot sync.
@@ -306,6 +316,26 @@ elif [ "${SCENARIO:-join}" = parity ] && wait_log '\[cov\] spawn id=' 150; then
     sleep 4
     run_steps "$HERE/parity.steps"
     kill "$GAME_PID" 2> /dev/null
+elif [ "${SCENARIO:-join}" = keys ] && wait_log '\[cov\] spawn id=' 150; then
+    say "spawned"
+    wait_frame() { # N
+        while kill -0 "$GAME_PID" 2> /dev/null; do
+            [ "$(tail -c 100000 "$OUT/sa-game.log" | grep -oE '^frame [0-9]+:' | tail -1 | tr -dc 0-9)" -ge "$1" ] 2> /dev/null && return 0
+            sleep 0.2
+        done
+        return 1
+    }
+    sleep 4
+    cmd "weapon|24|100"
+    cmd "pos|2495|-1680|13.5|0"
+    wait_frame $((KEY_START_FOOT - 50)) && cmd "msg|keys on foot"
+    wait_frame $((KEY_START_DRIVER - 250)) && cmd "veh|560|2500|-1676|13.4|0"
+    V="$(grep -oE "\[cov\] $SEQ veh -?[0-9]+" "$SLOG" | awk '{print $4}')"
+    sleep 2
+    cmd "putin|$V|0"
+    wait_frame $((KEY_START_DRIVER - 50)) && cmd "msg|keys as the driver"
+    wait_frame $((KEY_START_PASSENGER - 250)) && cmd "putin|$V|1"
+    wait_frame $((KEY_START_PASSENGER - 50)) && cmd "msg|keys as a passenger"
 elif wait_log '\[cov\] spawn id=' 150; then
     say "spawned"
     if [ "${BOT:-0}" = 1 ]; then
@@ -362,6 +392,10 @@ fi
 wait "$GAME_PID"
 say "game exit $?"
 GAME_PID=
+if [ "${SCENARIO:-join}" = keys ]; then
+    keys_events "$SLOG" > "$OUT/key-events.txt"
+    say "key events: $(grep -c ' change ' "$OUT/key-events.txt") changes in $OUT/key-events.txt"
+fi
 grep -E '\[(join|part|connection)\]|\[cov\] (connect|class|spawn|state|where|npc|pickup|cp-enter|rcp-enter|loaded|[0-9]+ (done|obj)|disconnect)' "$SLOG" > "$OUT/server-events.txt"
 say "server events: $(wc -l < "$OUT/server-events.txt") lines; PNGs: $(ls "$OUT/present" | wc -l)"
 GLOG="$OUT/sa-game.log"

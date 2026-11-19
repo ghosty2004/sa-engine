@@ -6,6 +6,8 @@
 # interior, death and respawn, /q). Used to show that an adapter step of samp-rs is a pure refactor: run it once
 # with the build before the step (A) and once after (B) and diff the two `sequence.txt` files. SCENARIO=parity runs
 # tools/e2e/samp/parity.steps after the spawn instead (what samp.dll changes in the game; mod-join.sh runs the same).
+# SCENARIO=keys presses the key steps of tools/e2e/samp/keys.sh on foot, as a driver and as a passenger (mod-join.sh
+# SCENARIO=keys scripts the same on the samp mod); the server's key events in OUT/key-events.txt.
 #
 #   LANE=3 SA_ROOT=~/sa-engine tools/e2e/samp/samp-rs-ab.sh DLL_DIR NAME
 #
@@ -251,6 +253,35 @@ mark "spawned"
 sleep 4
 shot spawn
 probe spawned
+if [ "${SCENARIO:-}" = keys ]; then
+    # shellcheck source=keys.sh
+    source "$HERE/keys.sh"
+    cmd "weapon|24|100"
+    cmd "pos|2495|-1680|13.5|0"
+    sleep 3
+    cmd "msg|keys on foot"
+    keys_dll_phase foot
+    sleep 1
+    cmd "veh|560|2500|-1676|13.4|0"
+    V="$(cmd_id)"
+    sleep 2
+    cmd "putin|$V|0"
+    sleep 3
+    cmd "msg|keys as the driver"
+    keys_dll_phase driver
+    sleep 3
+    cmd "putin|$V|1"
+    sleep 3
+    cmd "msg|keys as a passenger"
+    keys_dll_phase passenger
+    sleep 3
+    keys_events "$SLOG" > "$OUT/key-events.txt"
+    say "key events: $(grep -c ' change ' "$OUT/key-events.txt") changes in $OUT/key-events.txt"
+    mark "quit (/q)"
+    e2e_key t; sleep 0.5; DISPLAY="$E2E_DISPLAY" xdotool type --delay 60 "/q"; e2e_key Return
+    wait_log "\[cov\] disconnect id=" 15 || say "no disconnect"
+    exit 0
+fi
 if [ "${SCENARIO:-}" = parity ]; then
     # the main script's stunt-bonus switch ($709) as well
     PEEKS="$PEEKS 0xA4A474:4"

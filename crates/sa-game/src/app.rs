@@ -538,9 +538,9 @@ thread_local! {
 
 
 
-/// `SA_GAME_KEYS=KEY:DOWN[:UP],...` (evidence runs): `KEY` (a letter, `f1`..`f12`, `space`, `enter`, `shift`, `ctrl`,
-/// `up`, `down`, `left`, `right`, `esc`) is pressed at main-loop iteration DOWN and released at UP (held to the end
-/// without UP).
+/// `SA_GAME_KEYS=KEY:DOWN[:UP],...` (evidence runs): `KEY` (a letter, a digit, `f1`..`f12`, `num0`..`num9`, `space`,
+/// `enter`, `shift`, `ctrl`, `rctrl`, `alt`, `capslock`, `tab`, `up`, `down`, `left`, `right`, `esc`) is pressed at
+/// main-loop iteration DOWN and released at UP (held to the end without UP).
 /// The synthetic Enter stops 8 iterations before the first press.
 fn keys_spec() -> Vec<(Key, u32, Option<u32>)> {
     let Ok(v) = crate::env::var("SA_GAME_KEYS") else {
@@ -567,11 +567,18 @@ fn key_named(name: &str) -> Option<Key> {
         "tab" => Key::Tab,
         "shift" => Key::ShiftLeft,
         "ctrl" => Key::ControlLeft,
+        "rctrl" => Key::ControlRight,
+        "alt" => Key::AltLeft,
+        "capslock" => Key::CapsLock,
         "up" => Key::Up,
         "down" => Key::Down,
         "left" => Key::Left,
         "right" => Key::Right,
         n if n.len() == 1 && n.as_bytes()[0].is_ascii_lowercase() => letter_key(n.as_bytes()[0]),
+        n if n.len() == 1 && n.as_bytes()[0].is_ascii_digit() => Key::Digit(n.as_bytes()[0] - b'0'),
+        n if n.len() == 4 && n.starts_with("num") && n.as_bytes()[3].is_ascii_digit() => {
+            Key::Numpad(n.as_bytes()[3] - b'0')
+        }
         n if n.len() > 1 && n.starts_with('f') => match n[1..].parse::<u8>() {
             Ok(f @ 1..=12) => Key::Fn(f),
             _ => return None,

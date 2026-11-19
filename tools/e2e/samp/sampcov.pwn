@@ -13,7 +13,8 @@
 //   cp|x|y|z|size  rcp|type|x|y|z|nx|ny|nz|size  cpoff  gz|minx|miny|maxx|maxy  icon|id|x|y|z|type
 //   actor|skin|x|y|z|angle  explode|x|y|z|type|radius  time|h  weather|w  money|n  wanted|n
 //   anim|lib|name  clranim  special|action  campos|x|y|z|lx|ly|lz  camback  spec|1/0  drunk|level  attach|model|bone
-//   menu  hidemenu  forceclass  sound|id  gravity|g  control|0/1  rcon|command
+//   menu  hidemenu  forceclass  sound|id  gravity|g  control|0/1  rcon|command  spawnp (SpawnPlayer)  freezeonspawn|0/1
+//   (control off in OnPlayerSpawn, as login scripts do)
 //   Objects (tools/e2e/samp/objects.cmds): objscene (a small mapping with materials, a moving and turning object,
 //   an object on the player and one on a bone, a removed house)  objscene2 (moves, stops, rotations, a deletion)
 //   objwhere (every scene object's position)  rmbuild|model|x|y|z|radius
@@ -32,6 +33,9 @@ new Menu:gMenu = Menu:INVALID_MENU;
 new gVehs[16];
 new gVehCount = 0;
 new gObj[8] = { INVALID_OBJECT_ID, ... };
+// The local player's last polled GetPlayerKeys (keys, up/down, left/right): the arrow keys raise no key-change event.
+new gKeys[3];
+new bool:gFreezeOnSpawn = false;
 
 // Built with FILTERSCRIPT=1 it is a filterscript beside another gamemode (the soak runs of soak.sh): the command
 // channel and the "[cov]" lines without the classes, the train and the class-selection camera.
@@ -103,7 +107,12 @@ public OnPlayerRequestClass(playerid, classid)
     return 1;
 }
 
-public OnPlayerSpawn(playerid) { printf("[cov] spawn id=%d", playerid); return 1; }
+public OnPlayerSpawn(playerid)
+{
+    printf("[cov] spawn id=%d", playerid);
+    if (gFreezeOnSpawn) TogglePlayerControllable(playerid, false);
+    return 1;
+}
 public OnPlayerDeath(playerid, killerid, WEAPON:reason) { printf("[cov] death id=%d killer=%d reason=%d", playerid, killerid, _:reason); return 1; }
 public OnPlayerText(playerid, text[]) { printf("[cov] text id=%d '%s'", playerid, text); return 1; }
 public OnPlayerCommandText(playerid, cmdtext[]) { printf("[cov] command id=%d '%s'", playerid, cmdtext); return 1; }
@@ -135,6 +144,11 @@ public OnVehicleDeath(vehicleid, killerid) { printf("[cov] vehicle-death %d by %
 public OnPlayerSelectedMenuRow(playerid, row) { printf("[cov] menu-row id=%d row=%d", playerid, row); return 1; }
 public OnPlayerExitedMenu(playerid) { printf("[cov] menu-exit id=%d", playerid); return 1; }
 public OnObjectMoved(objectid) { printf("[cov] object-moved %d", objectid); return 1; }
+public OnPlayerKeyStateChange(playerid, KEY:newkeys, KEY:oldkeys)
+{
+    printf("[cov] keys id=%d change new=%d old=%d", playerid, _:newkeys, _:oldkeys);
+    return 1;
+}
 
 forward CovState();
 public CovState()
@@ -359,6 +373,8 @@ Run(seq, const line[])
     else if (!strcmp(cmd, "findz")) SetPlayerPosFindZ(p, fl(line, 1), fl(line, 2), fl(line, 3));
     else if (!strcmp(cmd, "gravity")) SetGravity(fl(line, 1));
     else if (!strcmp(cmd, "control")) TogglePlayerControllable(p, in(line, 1) != 0);
+    else if (!strcmp(cmd, "spawnp")) SpawnPlayer(p);
+    else if (!strcmp(cmd, "freezeonspawn")) gFreezeOnSpawn = in(line, 1) != 0;
     else if (!strcmp(cmd, "rcon")) { field(line, 1, a); SendRconCommand(a); }
     // Server-side NPCs (open.mp NPC component): remote players for the client.
     else if (!strcmp(cmd, "npc"))
@@ -390,6 +406,18 @@ Run(seq, const line[])
 forward CovPoll();
 public CovPoll()
 {
+    if (gLocal != INVALID_PLAYER_ID)
+    {
+        new KEY:keys, ud, lr;
+        GetPlayerKeys(gLocal, keys, ud, lr);
+        if (_:keys != gKeys[0] || ud != gKeys[1] || lr != gKeys[2])
+        {
+            gKeys[0] = _:keys;
+            gKeys[1] = ud;
+            gKeys[2] = lr;
+            printf("[cov] keys id=%d poll keys=%d ud=%d lr=%d", gLocal, _:keys, ud, lr);
+        }
+    }
     new File:f = fopen("sampcov.txt", io_read);
     if (!f) return 1;
     new line[512];
