@@ -11,9 +11,9 @@
 //!   `Session::iterate`; this pipeline hands each motion over once);
 //! - the game reads its input only in the iterations that run a frame (the ones that present); between two frames
 //!   the main loop may run many iterations that only peek messages (always in the browser, where the frame limiter
-//!   does not sleep). So a key pressed since the last frame stays pending until an iteration presents, and a key
-//!   released before any frame saw it held is released after the next frame instead (a quick tap, or one shorter
-//!   than a slow frame, still reaches `CPad`). Window-message events go to the queue once.
+//!   does not sleep). So a key or mouse button pressed since the last frame stays pending until an iteration
+//!   presents, and one released before any frame saw it held is released after the next frame instead (a quick tap
+//!   or click, or one shorter than a slow frame, still reaches `CPad`). Window-message events go to the queue once.
 //!
 //! No platform `cfg` here: those belong to the backends.
 
@@ -71,15 +71,45 @@ fn presents() -> u32 {
     crate::d3d9::PRESENTS.load(std::sync::atomic::Ordering::Relaxed)
 }
 
-/// The input gathered since the last main-loop iteration and the key rules above.
+/// A key or a mouse button: what the release rule above applies to.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Held {
+    Key(Key),
+    Button(MouseButton),
+}
+
+impl Held {
+    fn is_held(self, i: &InputState) -> bool {
+        match self {
+            Held::Key(k) => i.held.contains(&k),
+            Held::Button(b) => i.mouse_held.contains(&b),
+        }
+    }
+
+    fn press(self, i: &mut InputState) {
+        match self {
+            Held::Key(k) => i.key_down(k),
+            Held::Button(b) => i.mouse_down(b),
+        }
+    }
+
+    fn release(self, i: &mut InputState) {
+        match self {
+            Held::Key(k) => i.key_up(k),
+            Held::Button(b) => i.mouse_up(b),
+        }
+    }
+}
+
+/// The input gathered since the last main-loop iteration and the release rule above.
 #[derive(Default)]
 pub struct FrontEnd {
     /// Platform input not yet handed to an iteration (held keys and buttons persist).
     pending: InputState,
-    /// Keys released before a frame saw them held, with the present count at their key-down.
-    deferred_up: Vec<(Key, u32)>,
-    /// The present count when each held key went down.
-    down_at: Vec<(Key, u32)>,
+    /// Keys and buttons released before a frame saw them held, with the present count when they went down.
+    deferred_up: Vec<(Held, u32)>,
+    /// The present count when each held key and button went down.
+    down_at: Vec<(Held, u32)>,
     /// The offscreen mode's synthetic input is added to every iteration (`--auto-input`, `SA_WEB_AUTO_INPUT`).
     auto_input: bool,
 }
@@ -94,24 +124,29 @@ impl FrontEnd {
 
     /// A key going down (`repeat`: auto-repeat while held) or up.
     pub fn key(&mut self, k: Key, down: bool, repeat: bool) {
+        if down && repeat {
+            self.pending.key_repeat(k);
+        } else {
+            self.press_or_release(Held::Key(k), down);
+        }
+    }
+
+    /// A key or button going down or up, with the release rule above.
+    fn press_or_release(&mut self, h: Held, down: bool) {
         let now = presents();
-        match (down, repeat) {
-            (true, false) => {
-                self.deferred_up.retain(|&(x, _)| x != k);
-                self.down_at.retain(|&(x, _)| x != k);
-                self.down_at.push((k, now));
-                self.pending.key_down(k)
-            }
-            (true, true) => self.pending.key_repeat(k),
-            (false, _) => {
-                let at = self.down_at.iter().find(|&&(x, _)| x == k).map(|&(_, a)| a);
-                self.down_at.retain(|&(x, _)| x != k);
-                // no frame since the key went down: release it after the next one
-                match at {
-                    Some(at) if at >= now && self.pending.held.contains(&k) => self.deferred_up.push((k, at)),
-                    _ => self.pending.key_up(k),
-                }
-            }
+        if down {
+            self.deferred_up.retain(|&(x, _)| x != h);
+            self.down_at.retain(|&(x, _)| x != h);
+            self.down_at.push((h, now));
+            h.press(&mut self.pending);
+            return;
+        }
+        let at = self.down_at.iter().find(|&&(x, _)| x == h).map(|&(_, a)| a);
+        self.down_at.retain(|&(x, _)| x != h);
+        // no frame since it went down: release it after the next one
+        match at {
+            Some(at) if at >= now && h.is_held(&self.pending) => self.deferred_up.push((h, at)),
+            _ => h.release(&mut self.pending),
         }
     }
 
@@ -133,7 +168,7 @@ impl FrontEnd {
 
     /// A mouse button going down or up.
     pub fn mouse_button(&mut self, b: MouseButton, down: bool) {
-        if down { self.pending.mouse_down(b) } else { self.pending.mouse_up(b) }
+        self.press_or_release(Held::Button(b), down);
     }
 
     /// Wheel lines (positive = away from the user).
@@ -159,13 +194,13 @@ impl FrontEnd {
     }
 
     /// The input of the next main-loop iteration, and the present count before it (for [`FrontEnd::after`]). Keys
-    /// whose release was deferred are released now if a frame has run since they went down.
+    /// and buttons whose release was deferred are released now if a frame has run since they went down.
     pub fn take(&mut self, n: u32) -> (InputState, u32) {
         let now = presents();
         let pending = &mut self.pending;
-        self.deferred_up.retain(|&(k, at)| {
+        self.deferred_up.retain(|&(h, at)| {
             if now > at {
-                pending.key_up(k);
+                h.release(pending);
                 false
             } else {
                 true
@@ -218,6 +253,22 @@ mod tests {
         let (i, _) = f.take(1);
         assert!(!i.held.contains(&Key::W));
         assert!(i.events.contains(&InputEvent::KeyUp { key: Key::W }));
+    }
+
+    #[test]
+    fn a_click_between_frames_reaches_the_next_frame() {
+        let mut f = FrontEnd::new(false);
+        f.mouse_button(MouseButton::Left, true);
+        f.mouse_button(MouseButton::Left, false);
+        // released before any frame: still down in the DirectInput state of the next iteration
+        let (i, before) = f.take(0);
+        assert!(i.mouse_held.contains(&MouseButton::Left));
+        assert_eq!(i.events, [InputEvent::MouseDown(MouseButton::Left)]);
+        crate::d3d9::PRESENTS.fetch_add(1, Ordering::Relaxed);
+        f.after(before);
+        let (i, _) = f.take(1);
+        assert!(!i.mouse_held.contains(&MouseButton::Left));
+        assert_eq!(i.events, [InputEvent::MouseUp(MouseButton::Left)]);
     }
 
     #[test]
