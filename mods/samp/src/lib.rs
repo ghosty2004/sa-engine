@@ -30,6 +30,7 @@ use sa_mod::game::{GameOption, set_option};
 use sa_mod::{Error, Event, GameState, Mod, Overlay, Vec3, event_kind, events, state, storage, time};
 use sa_samp_api::hooks::{FramePhase, GameHooks};
 use sa_samp_api::input::{EventResult, WindowEvent};
+use sa_samp_api::world::WorldState;
 use samp_client::hosted::{HostedClient, HostedConfig};
 use samp_client::ui::host::UiHost;
 use samp_client::ui::render::LabelDraw;
@@ -155,6 +156,8 @@ struct Samp {
     screen: connect::Screen,
     game: game::ModGame,
     images: canvas::Images,
+    /// Ped and car densities are 0 (as samp's main.scm sets them in the world's first frame).
+    densities_zeroed: bool,
 }
 
 impl Default for Samp {
@@ -168,6 +171,7 @@ impl Default for Samp {
             screen: connect::Screen::load(DEFAULT_SERVER, DEFAULT_NAME),
             game,
             images: Default::default(),
+            densities_zeroed: false,
         }
     }
 }
@@ -282,6 +286,11 @@ impl Mod for Samp {
     fn event(&mut self, event: Event) {
         if let Event::FrameBegin(_) = event {
             if state::game_state() == Some(GameState::Playing) {
+                // With ambient peds off the game's population code still runs and dereferences the NULL
+                // `AddPed` returns unless the ped density is 0, so zero it before the user connects.
+                if !self.densities_zeroed {
+                    self.densities_zeroed = self.game.set_densities(0.0, 0.0).is_ok();
+                }
                 self.approval();
             }
             self.frame(FramePhase::BeforeGameProcess);
