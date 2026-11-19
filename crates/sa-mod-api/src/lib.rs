@@ -34,7 +34,7 @@ pub const EXPORT_MEMORY: &str = "memory";
 /// The API's major version.
 pub const API_MAJOR: u16 = 1;
 /// The API's minor version.
-pub const API_MINOR: u16 = 12;
+pub const API_MINOR: u16 = 13;
 
 /// `major << 16 | minor`, the value of the `sa_api_version` export.
 pub const fn pack_version(major: u16, minor: u16) -> i32 {
@@ -384,6 +384,7 @@ pub mod script {
         (0x015F, "SET_FIXED_CAMERA_POSITION", "ffffff"),
         (0x0160, "POINT_CAMERA_AT_POINT", "fffi"),
         (0x016C, "ADD_HOSPITAL_RESTART", "ffffi"),
+        (0x016E, "OVERRIDE_NEXT_RESTART", "ffff"),
         (0x01B4, "SET_PLAYER_CONTROL", "Pi"),
         (0x01B6, "FORCE_WEATHER_NOW", "i"),
         (0x01B7, "RELEASE_WEATHER", ""),
@@ -1211,6 +1212,47 @@ macro_rules! for_each_import {
             /// `4 * index` of its variables) to `value`, as the script's own `SET_VAR_INT` would. Returns 0,
             /// `BAD_ARG` (not a variable of the loaded main script, or none is loaded yet).
             [Write] fn set_script_global(index: i32, value: i32) -> i32;
+            /// (1.13) Writes what last damaged ped `handle` ([`state::DamageInfo`]: the weapon type the game recorded and
+            /// the ped or vehicle that dealt it) to the buffer, as `ped_info`.
+            [State] fn ped_damage(handle: i32, buf_ptr: i32, buf_len: i32) -> i32;
+            /// (1.13) Registers the text entry `key` (`key_len` bytes at `key_ptr`, [`gxt::valid_key`]) with `text`
+            /// (`text_len` bytes at `text_ptr`, at most [`gxt::MAX_TEXT`], the game font's code page, no NUL): the
+            /// game's lookups of the label find it before the game's own texts, until the mod removes it or is
+            /// disabled. Replaces the text of a key the mod holds; `DENIED` for a key another mod holds, `FAILED` over
+            /// [`gxt::MAX_ENTRIES`] keys.
+            [Write] fn set_text_entry(key_ptr: i32, key_len: i32, text_ptr: i32, text_len: i32) -> i32;
+            /// (1.13) Removes the mod's text entry `key`. Returns 0 or `NOT_FOUND`.
+            [Write] fn remove_text_entry(key_ptr: i32, key_len: i32) -> i32;
+            /// (1.13) Creates one of the game's script menus (`CREATE_MENU`; shown from the next frame, its first
+            /// selectable row selected) with the title label `title` ([`menu::NO_TEXT`]: none) at (`x`, `y`) with
+            /// column width `width`, in 640 x 448 menu units, `columns` columns (1 ..= [`menu::MAX_COLUMNS`]),
+            /// [`menu`] `flags` and alignment `align`. Returns its handle; the mod owns it. `FAILED` while the game's
+            /// two menus are in use, `WRONG_PHASE` inside a hook.
+            [Entities] fn create_menu(title_ptr: i32, title_len: i32, x: f32, y: f32, width: f32, columns: i32, flags: i32, align: i32) -> i32;
+            /// (1.13) Deletes the mod's menu `handle` (`DELETE_MENU`); `DENIED` for any other.
+            [Entities] fn destroy_menu(handle: i32) -> i32;
+            /// (1.13) Sets column `column` of the mod's menu `handle` (`SET_MENU_COLUMN`): `labels` (`labels_len` bytes
+            /// at `labels_ptr`) holds the header label and up to [`menu::MAX_ROWS`] row labels, each followed by a
+            /// NUL; missing rows are empty.
+            [Entities] fn set_menu_column(handle: i32, column: i32, labels_ptr: i32, labels_len: i32) -> i32;
+            /// (1.13) Sets the width of column `column` of the mod's menu `handle` (`SET_MENU_COLUMN_WIDTH`, 0 ..= 640).
+            [Entities] fn set_menu_column_width(handle: i32, column: i32, width: i32) -> i32;
+            /// (1.13) Lets row `row` of the mod's menu `handle` be selected (1) or not (0) (`ACTIVATE_MENU_ITEM`).
+            [Entities] fn set_menu_row_enabled(handle: i32, row: i32, on: i32) -> i32;
+            /// (1.13) The selected row of the mod's menu `handle` (`GET_MENU_ITEM_SELECTED`).
+            [Entities] fn menu_selected_row(handle: i32) -> i32;
+            /// (1.13) Creates a train of type `kind` (0 .. [`train::TYPES`]) on the track nearest to (`x`, `y`, `z`),
+            /// its locomotive there, running clockwise (`clockwise` 1) or not (`CREATE_MISSION_TRAIN`; the type's models
+            /// are loaded first). Returns the first carriage's vehicle handle; the mod owns the train. `FAILED` without
+            /// room in the vehicle and ped pools, `WRONG_PHASE` inside a hook.
+            [Entities] fn create_train(kind: i32, x: f32, y: f32, z: f32, clockwise: i32) -> i32;
+            /// (1.13) Deletes the mod's train whose first carriage is `handle`, every carriage
+            /// (`DELETE_MISSION_TRAIN`); `DENIED` for any other vehicle.
+            [Entities] fn destroy_train(handle: i32) -> i32;
+            /// (1.13) Writes the vehicle handles of the carriages of the train whose first carriage is `handle` (one
+            /// `u32` each, in order, the first one first) to the buffer, as `ped_list`; `BAD_ARG` for a vehicle that
+            /// is no train.
+            [State] fn train_carriages(handle: i32, buf_ptr: i32, buf_len: i32) -> i32;
         }
     };
 }
@@ -1418,6 +1460,53 @@ pub mod input {
     pub const WHEEL: i32 = 5;
     /// The window gained (`a` 1) or lost (0) the focus.
     pub const FOCUS: i32 = 6;
+}
+
+/// Text entries (`set_text_entry`): labels the game's text lookup (`CText::Get`) finds before its GXT tables, for the
+/// game's menus, help boxes and messages, which show labels.
+pub mod gxt {
+    /// The longest key: 1 ..= 7 bytes of `A-Z a-z 0-9 _` (the game reads labels into 8 bytes; keys compare
+    /// without case).
+    pub const MAX_KEY: usize = 7;
+    /// The longest text, in bytes of the game font's code page (its `~x~` codes), without a NUL.
+    pub const MAX_TEXT: usize = 511;
+    /// Keys one mod may hold.
+    pub const MAX_ENTRIES: usize = 1024;
+
+    /// Whether `key` is a key `set_text_entry` takes.
+    pub fn valid_key(key: &[u8]) -> bool {
+        (1..=MAX_KEY).contains(&key.len()) && key.iter().all(|c| c.is_ascii_alphanumeric() || *c == b'_')
+    }
+}
+
+/// The game's script menus (`create_menu`): the panels of `CMenuSystem`, two at a time, in the game's 640 x 448 menu
+/// units, their texts labels ([`gxt`]).
+pub mod menu {
+    /// The columns of a menu.
+    pub const MAX_COLUMNS: i32 = 4;
+    /// The rows of a menu column.
+    pub const MAX_ROWS: usize = 12;
+    /// The label of no text (an empty title, header or row).
+    pub const NO_TEXT: &str = "DUMMY";
+    /// `create_menu` flags: rows can be selected.
+    pub const INTERACTIVE: i32 = 1;
+    /// `create_menu` flags: a background box.
+    pub const BACKGROUND: i32 = 2;
+    /// `create_menu` alignments (`eFontAlignment`).
+    pub const ALIGN_CENTRE: i32 = 0;
+    /// See [`ALIGN_CENTRE`].
+    pub const ALIGN_LEFT: i32 = 1;
+    /// See [`ALIGN_CENTRE`].
+    pub const ALIGN_RIGHT: i32 = 2;
+}
+
+/// Mission trains (`create_train`).
+pub mod train {
+    /// The train types (`CTrain`'s configurations: which locomotive and carriages; 3 a freight train, 5 the
+    /// passenger train, 9 the tram, as the game's scripts use them).
+    pub const TYPES: i32 = 16;
+    /// The most carriages of a train (`train_carriages`).
+    pub const MAX_CARRIAGES: usize = 16;
 }
 
 /// `request_video_mode`'s accepted sizes (inclusive).

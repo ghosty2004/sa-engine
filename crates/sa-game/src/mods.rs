@@ -172,6 +172,9 @@ const LOAD_OBJECT_INSTANCE: u32 = 0x538090;
 /// `CObject::Render`: objects drawn with other materials get them around it.
 const OBJECT_RENDER: u32 = 0x59F180;
 
+/// `CText::Get(const char* key)`: the text entries the mods registered answer their labels before the game's tables.
+const TEXT_GET: u32 = 0x6A0050;
+
 thread_local! {
     /// What the materials of the object being drawn replaced.
     static DRAWN_MATERIALS: RefCell<Vec<Option<sa_access::SavedMaterials>>> = const { RefCell::new(Vec::new()) };
@@ -185,6 +188,9 @@ fn watch_world_points() {
     }
     if sa_access::objects::materials_active() {
         EngineRegistry.watch(OBJECT_RENDER, true);
+    }
+    if sa_access::text::active() {
+        EngineRegistry.watch(TEXT_GET, true);
     }
 }
 
@@ -200,6 +206,13 @@ fn address(r: Option<Raw>) -> Option<u32> {
 /// The observer of the hooked functions: hands the call to the mods hooked there and applies their decisions.
 fn observed(o: &mut Observed<'_>) {
     crate::data_mods::observed(o);
+    if o.entry.addr == TEXT_GET
+        && matches!(o.phase, Phase::Before)
+        && let Some(text) = address(o.arg(1)).and_then(sa_access::text::lookup_at)
+        && o.skip(Some(Raw::Address(text)))
+    {
+        return;
+    }
     if o.entry.addr == RENDER_2D_STUFF && matches!(o.phase, Phase::After) {
         draw_game_2d();
     }

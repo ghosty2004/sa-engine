@@ -4,7 +4,7 @@
 //! (`sa-access`).
 
 use sa_types::camera::CameraState;
-use sa_types::ped::PedSnapshot;
+use sa_types::ped::{DamageSource, PedDamage, PedSnapshot};
 use sa_types::vehicle::VehicleSnapshot;
 use sa_types::input::PadState;
 use sa_types::{AreaCode, GameState, Matrix, ModelId, ObjectSnapshot, PedRef, TimeStep, Vec3, VehicleRef, WeaponType};
@@ -455,6 +455,45 @@ impl WorldInfo {
             area,
             gravity,
         }
+    }
+}
+
+record! {
+    /// What last damaged a ped (`ped_damage`): at most one of `ped`, `vehicle` and `other`.
+    pub struct DamageInfo {
+        /// The weapon type the game recorded (`eWeaponType`, or 49 rammed, 50 helicopter blades, 51 explosion, 53
+        /// drowned, 54 collision or fall; 255 none).
+        pub weapon: WeaponType,
+        /// The ped that dealt it.
+        pub ped: Option<PedRef>,
+        /// The vehicle that dealt it.
+        pub vehicle: Option<VehicleRef>,
+        /// Something else dealt it (an object, a building).
+        pub other: bool,
+    }
+}
+
+impl From<&PedDamage> for DamageInfo {
+    fn from(d: &PedDamage) -> DamageInfo {
+        let (ped, vehicle, other) = match d.source {
+            DamageSource::None => (None, None, false),
+            DamageSource::Ped(p) => (Some(p), None, false),
+            DamageSource::Vehicle(v) => (None, Some(v), false),
+            DamageSource::Other => (None, None, true),
+        };
+        DamageInfo { weapon: d.weapon, ped, vehicle, other }
+    }
+}
+
+impl From<DamageInfo> for PedDamage {
+    fn from(d: DamageInfo) -> PedDamage {
+        let source = match (d.ped, d.vehicle, d.other) {
+            (Some(p), _, _) => DamageSource::Ped(p),
+            (None, Some(v), _) => DamageSource::Vehicle(v),
+            (None, None, true) => DamageSource::Other,
+            (None, None, false) => DamageSource::None,
+        };
+        PedDamage { weapon: d.weapon, source }
     }
 }
 

@@ -31,6 +31,9 @@ pub use sa_mod_api::{API_MAJOR, API_MINOR, blip, event as event_kind, level, sta
 
 #[doc(hidden)]
 pub mod ffi;
+mod gameplay;
+
+pub use gameplay::{damage, gxt, menus, trains};
 
 /// Why a host function refused a call.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -496,7 +499,7 @@ pub mod state {
 
     use super::*;
 
-    fn record<T: Words>(f: impl FnOnce(i32, i32) -> i32) -> Option<T> {
+    pub(crate) fn record<T: Words>(f: impl FnOnce(i32, i32) -> i32) -> Option<T> {
         let mut buf = vec![0u8; 4 * T::WORDS];
         let (p, n) = (buf.as_mut_ptr() as usize as i32, buf.len() as i32);
         check(f(p, n)).ok()?;

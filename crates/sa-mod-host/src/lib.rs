@@ -25,6 +25,7 @@ mod backend;
 pub mod data;
 pub mod engine;
 pub mod events;
+pub mod gameplay;
 pub mod http;
 pub mod images;
 pub mod manifest;

@@ -14,8 +14,8 @@ use sa_mod_api::{
 use sa_platform::gpu::OverlayQuad;
 use sa_types::script::{Opcode, ScriptArg, ScriptLocals};
 use sa_types::{
-    BlipRef, CheckpointRef, EntityRef, GameError, GameOption, GameResult, ModelId, ObjectRef, PedRef, PickupRef, Vec3,
-    VehicleRef, WeaponType,
+    BlipRef, CheckpointRef, EntityRef, GameError, GameOption, GameResult, MenuRef, ModelId, ObjectRef, PedRef, PickupRef,
+    Vec3, VehicleRef, WeaponType,
 };
 
 use crate::ModSource;
@@ -121,6 +121,12 @@ pub enum Owned {
     Checkpoint(CheckpointRef),
     /// A radar blip.
     Blip(BlipRef),
+    /// One of the game's script menus.
+    Menu(MenuRef),
+    /// A mission train, by its first carriage.
+    Train(VehicleRef),
+    /// A text entry.
+    Text(sa_access::text::Key),
 }
 
 /// A radar area a mod shows (`set_radar_area`).
@@ -432,6 +438,9 @@ pub fn dispatch(ctx: &mut CallCtx, mem: &mut dyn Mem, index: usize, args: &[Val]
         return Ok(r);
     }
     if let Some(r) = crate::objects::calls(ctx, mem, call) {
+        return Ok(r);
+    }
+    if let Some(r) = crate::gameplay::calls(ctx, mem, call) {
         return Ok(r);
     }
     if let Some(r) = boot_setup(ctx, call) {
@@ -1318,7 +1327,7 @@ fn radar_area_id(id: i32) -> Option<u16> {
 }
 
 /// Creates a pickup-less marker (a checkpoint or a blip) with `f`; the mod owns it.
-fn create_marker(ctx: &mut CallCtx, game: Option<Game>, what: &str, f: impl FnOnce(&mut GameAccess) -> GameResult<Owned>) -> i32 {
+pub(crate) fn create_marker(ctx: &mut CallCtx, game: Option<Game>, what: &str, f: impl FnOnce(&mut GameAccess) -> GameResult<Owned>) -> i32 {
     if ctx.in_hook() {
         return status::WRONG_PHASE;
     }
@@ -1339,7 +1348,10 @@ fn owned_handle(o: Owned) -> i32 {
         Owned::Entity(EntityRef::Ped(PedRef(h)) | EntityRef::Vehicle(VehicleRef(h)) | EntityRef::Object(ObjectRef(h)))
         | Owned::Pickup(PickupRef(h))
         | Owned::Checkpoint(CheckpointRef(h))
-        | Owned::Blip(BlipRef(h)) => h as i32,
+        | Owned::Blip(BlipRef(h))
+        | Owned::Menu(MenuRef(h))
+        | Owned::Train(VehicleRef(h)) => h as i32,
+        Owned::Text(_) => status::OK,
         Owned::Entity(_) => status::FAILED,
     }
 }
@@ -1509,7 +1521,7 @@ fn create(
 }
 
 /// Deletes `e`, which the mod must own.
-fn destroy(ctx: &mut CallCtx, game: Option<Game>, e: Owned) -> i32 {
+pub(crate) fn destroy(ctx: &mut CallCtx, game: Option<Game>, e: Owned) -> i32 {
     if ctx.in_hook() {
         return status::WRONG_PHASE;
     }
@@ -1532,6 +1544,12 @@ pub fn destroy_owned(g: &mut GameAccess, e: Owned, logs: &mut Vec<(i32, String)>
         Owned::Pickup(p) => g.remove_pickup(p),
         Owned::Checkpoint(c) => g.delete_checkpoint(c),
         Owned::Blip(b) => g.remove_blip(b),
+        Owned::Menu(m) => g.delete_menu(m),
+        Owned::Train(v) => g.destroy_train(v),
+        Owned::Text(k) => {
+            sa_access::text::remove(k, None);
+            Ok(())
+        }
     });
     r.map_or_else(|s| s, |()| status::OK)
 }
