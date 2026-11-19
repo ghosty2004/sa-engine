@@ -466,12 +466,8 @@ pub struct RemotePlayer {
     pub look_last: Option<Instant>,
     /// Phone special action active.
     pub phone: bool,
-    /// Radar blip handle of the 208 marker (0 = none).
-    pub marker_blip: i32,
-    /// The last 208 record had a position.
-    pub marker_active: bool,
-    /// Radar blip handle on the ped (0 = none). GTA's `CPed` destructor clears it.
-    pub ped_blip: i32,
+    /// The radar blips of the player (208 coordinate blip, the blip on the ped).
+    pub marker: crate::markers::PlayerMarker,
 }
 
 impl RemotePlayer {
@@ -500,9 +496,7 @@ impl RemotePlayer {
             look_refresh: None,
             look_last: None,
             phone: false,
-            marker_blip: 0,
-            marker_active: false,
-            ped_blip: 0,
+            marker: crate::markers::PlayerMarker::default(),
         }
     }
 
@@ -559,8 +553,8 @@ pub fn format_remote(
         p.state,
         p.teleports,
         p.last_speed,
-        p.marker_blip,
-        p.ped_blip,
+        p.marker.coord_blip.map_or(0, |b| b.0),
+        p.marker.ped_blip.map_or(0, |b| b.0),
         p.foot_rx,
         p.foot_late,
         p.last_ts.map(|t| t.to_string()).unwrap_or_else(|| "-".into())

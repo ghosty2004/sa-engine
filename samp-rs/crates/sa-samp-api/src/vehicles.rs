@@ -41,8 +41,12 @@ pub trait Vehicles {
     fn create_vehicle(&mut self, spawn: &VehicleSpawn) -> GameResult<VehicleRef>;
     /// Deletes a vehicle (`DELETE_CAR` 00A6 / `DELETE_MISSION_TRAIN` 07BD).
     fn destroy_vehicle(&mut self, v: VehicleRef) -> GameResult<()>;
-    /// Writes the matrix.
+    /// Writes the matrix as it is (no teleport: speeds and collision state stay).
     fn set_vehicle_matrix(&mut self, v: VehicleRef, m: &Matrix) -> GameResult<()>;
+    /// Moves the vehicle to `pos`, keeping its heading (`CEntity::Teleport`, `SET_CAR_COORDINATES` 00AB).
+    fn teleport_vehicle(&mut self, _v: VehicleRef, _pos: Vec3) -> GameResult<()> {
+        Err(crate::GameError::Unsupported("Vehicles::teleport_vehicle"))
+    }
     /// Writes move and turn speed.
     fn set_vehicle_speed(&mut self, v: VehicleRef, move_speed: Vec3, turn_speed: Vec3) -> GameResult<()>;
     /// `SET_CAR_HEADING` (0175).

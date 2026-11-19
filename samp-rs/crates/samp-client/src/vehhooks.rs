@@ -731,16 +731,14 @@ extern "thiscall" fn break_tow_link(veh: u32) -> bool {
     unsafe {
         let original: extern "thiscall" fn(u32) -> bool = std::mem::transmute(g::BREAK_TOW_LINK as usize);
         let tractor: u32 = rd(veh + g::VEH_TRACTOR);
-        let suppress = SHARED.try_lock().ok().and_then(|g| {
+        let kept = SHARED.try_lock().ok().and_then(|g| {
             let s = g.as_ref()?;
-            if s.detaching || rd::<f32>(veh + g::VEH_HEALTH) <= 0.0 || tractor == 0 {
-                return Some(false);
-            }
-            let cab = s.by_ptr.get(&tractor)?;
-            let local_drives = rd::<u32>(tractor + g::VEH_DRIVER) == local_ped() && local_ped() != 0;
-            Some(!local_drives && cab.has_trailer)
+            let cab = (tractor != 0).then(|| s.by_ptr.get(&tractor).map(|c| c.has_trailer)).flatten();
+            let local_drives = tractor != 0 && rd::<u32>(tractor + g::VEH_DRIVER) == local_ped() && local_ped() != 0;
+            let wreck = rd::<f32>(veh + g::VEH_HEALTH) <= 0.0;
+            Some(crate::vehicle::tow_link_kept(s.detaching, wreck, tractor != 0, cab, local_drives))
         });
-        if suppress == Some(true) { false } else { original(veh) }
+        if kept == Some(true) { false } else { original(veh) }
     }
 }
 

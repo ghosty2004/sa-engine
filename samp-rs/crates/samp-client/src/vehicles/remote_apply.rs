@@ -84,11 +84,9 @@ impl Vehicles {
     /// Mirrors samp.dll 0x10016220 (build B).
     fn car_jacked(&mut self, runner: &mut Runner, old_state: u8, vehicle_id: u16) {
         let ped = local_ped();
-        if old_state != remote::state::ON_FOOT || ped == 0 || !in_vehicle(ped) {
-            return;
-        }
-        let veh = ped_vehicle(ped);
-        if veh == 0 || driver_of(veh) != ped || self.id_of_ptr(veh) != Some(vehicle_id) {
+        let veh = if ped != 0 && in_vehicle(ped) { ped_vehicle(ped) } else { 0 };
+        let driven = (veh != 0 && driver_of(veh) == ped).then(|| self.id_of_ptr(veh)).flatten();
+        if !vm::car_jacked(old_state, driven, vehicle_id) {
             return;
         }
         let (Some(p), Some(h)) = (pos_of(ped), ped_handle(ped)) else { return };
@@ -170,11 +168,9 @@ impl Vehicles {
         let Some(v) = self.pool.get_mut(&s.vehicle_id).filter(|v| v.ptr != 0) else { return };
         let ptr = v.ptr;
         let driver = driver_of(ptr);
-        if driver != 0 && rd::<u32>(driver + g::PED_TYPE) == 0 {
-            return;
-        }
         let tractor: u32 = rd(ptr + g::VEH_TRACTOR);
-        if tractor != 0 && driver_of(tractor) != 0 {
+        let player_driver = driver != 0 && rd::<u32>(driver + g::PED_TYPE) == 0;
+        if !vm::unoccupied_applies(player_driver, tractor != 0 && driver_of(tractor) != 0) {
             return;
         }
         v.last_unocc_sender = Some(pid);

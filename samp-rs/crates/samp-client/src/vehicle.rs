@@ -64,6 +64,10 @@ pub const UNOCC_TELEPORT_Z: f32 = 3.0;
 pub const UNOCC_AXIS_ZONE: f32 = 0.05;
 /// Share of the position error added to the move speed.
 pub const UNOCC_GAIN: f32 = 0.06;
+/// Trailer sync: no correction within this on every axis.
+pub const TRAILER_DEAD_ZONE: f32 = 0.5;
+/// Trailer sync: share of the position error added to the move speed.
+pub const TRAILER_GAIN: f32 = 0.025;
 /// Unoccupied vehicles farther than this from the local player are not sent.
 pub const UNOCC_SEND_RANGE: f32 = 90.0;
 /// Per-vehicle 209 interval ("> 100 ms"). Checked only on pool-tick frames, so the real spacing is about 150 ms at
@@ -135,6 +139,62 @@ pub fn kind_from_vtable(vt: u32) -> Kind {
         vtbl::TRAIN => Kind::Train,
         _ => Kind::Other,
     }
+}
+
+/// The [`Kind`] of a game vehicle class (quads, monster trucks and trailers are [`Kind::Other`], as their vtables).
+pub fn kind_from_class(c: sa_samp_api::vehicles::VehicleClass) -> Kind {
+    use sa_samp_api::vehicles::VehicleClass as C;
+    match c {
+        C::Automobile => Kind::Automobile,
+        C::Bike => Kind::Bike,
+        C::Heli => Kind::Heli,
+        C::Boat => Kind::Boat,
+        C::Plane => Kind::Plane,
+        C::Bmx => Kind::Bmx,
+        C::Train => Kind::Train,
+        _ => Kind::Other,
+    }
+}
+
+/// Whether a remote ped may be warped into `seat` (0 driver, 1… passengers) of a vehicle: not a wreck (health 0),
+/// a seat the automobile or bike has, and the driver's seat only while it is free. Mirrors samp.dll 0x10014800.
+pub fn seat_allowed(kind: Kind, health: f32, seat: u8, max_passengers: u8, has_driver: bool) -> bool {
+    if health == 0.0 {
+        return false;
+    }
+    if matches!(kind, Kind::Automobile | Kind::Bike) && seat > max_passengers {
+        return false;
+    }
+    !(seat == 0 && has_driver)
+}
+
+/// "Car Jacked": a remote player going from on foot to driving the vehicle the local ped drives warps the local
+/// ped out (1 m above where it is) with this game text. Mirrors samp.dll 0x10016220 (build B).
+pub const CAR_JACKED_TEXT: &str = "~r~Car Jacked~w~!";
+pub const CAR_JACKED_MS: u32 = 1000;
+pub const CAR_JACKED_STYLE: u32 = 5;
+
+/// Whether a new 200 of a remote player whose state was `old_state` jacks the local player out of vehicle
+/// `vehicle_id`, which `local_driven` names when the local ped drives a server vehicle.
+pub fn car_jacked(old_state: u8, local_driven: Option<u16>, vehicle_id: u16) -> bool {
+    old_state == crate::remote::state::ON_FOOT && local_driven == Some(vehicle_id)
+}
+
+/// `BreakTowLink` of a trailer: whether the tow stays (the game's call is skipped). A tow the server made (`cab`:
+/// the cab is a server vehicle, `Some(true)` while it has a trailer from the server) holds unless the client detaches
+/// it itself, the trailer is a wreck, nothing tows it, or the local player drives the cab (then the game's own
+/// rules apply). Mirrors samp.dll's `BreakTowLink` hook (patch table, the five vtable slots).
+pub fn tow_link_kept(detaching: bool, wreck: bool, towed: bool, cab: Option<bool>, local_drives_cab: bool) -> bool {
+    if detaching || wreck || !towed {
+        return false;
+    }
+    cab.is_some_and(|has_trailer| has_trailer && !local_drives_cab)
+}
+
+/// RPC 154 relayed for a remote player: its ped leaves the vehicle (TASK_LEAVE_CAR) unless that is the freight
+/// carriage or the Streak, which no ped leaves by a task.
+pub fn remote_exit_applies(model: u32) -> bool {
+    !matches!(model, MODEL_FREIGHT_CARRIAGE | 538)
 }
 
 /// Train, tram or carriage.
@@ -433,6 +493,12 @@ pub fn unoccupied_valid(s: &UnoccupiedSync) -> bool {
         && small(s.turn_velocity)
 }
 
+/// Whether a 209 moves the vehicle at all: not while a player drives it, nor while a cab with a driver tows it.
+/// Mirrors samp.dll 0x100158D0.
+pub fn unoccupied_applies(player_driver: bool, towed_by_driven_cab: bool) -> bool {
+    !player_driver && !towed_by_driven_cab
+}
+
 /// Unoccupied sync (209) apply: `None`, `Speed(v)` = keep the position, set rotation, turn speed and this
 /// velocity, or `Teleport` (position, rotation, velocity and turn speed from the packet).
 /// Mirrors samp.dll 0x100158D0.
@@ -446,6 +512,28 @@ pub fn correct_unoccupied(current: [f32; 3], target: [f32; 3], synced: [f32; 3])
         for i in 0..3 {
             if d[i] > UNOCC_AXIS_ZONE {
                 s[i] += (target[i] - current[i]) * UNOCC_GAIN;
+            }
+        }
+        VehCorrection::Speed(s)
+    } else {
+        VehCorrection::Teleport
+    }
+}
+
+/// Trailer sync (210) apply, after the attach: `None` within 0.5 on every axis, `Speed(v)` = rotation and turn
+/// speed from the packet and this move speed (the current one nudged by 0.025 of the error on each axis off by
+/// more than 0.05) within 6 / 6 / 3, else `Teleport` (position, rotation, velocity and turn speed from the
+/// packet). Mirrors samp.dll 0x10015C90.
+pub fn correct_trailer(current: [f32; 3], target: [f32; 3], current_speed: [f32; 3]) -> VehCorrection {
+    let d = [0, 1, 2].map(|i| (target[i] - current[i]).abs());
+    if d.iter().all(|&v| v <= TRAILER_DEAD_ZONE) {
+        return VehCorrection::None;
+    }
+    if d[0] <= UNOCC_TELEPORT_XY && d[1] <= UNOCC_TELEPORT_XY && d[2] <= UNOCC_TELEPORT_Z {
+        let mut s = current_speed;
+        for i in 0..3 {
+            if d[i] > UNOCC_AXIS_ZONE {
+                s[i] += (target[i] - current[i]) * TRAILER_GAIN;
             }
         }
         VehCorrection::Speed(s)
@@ -894,6 +982,35 @@ mod tests {
         assert!(matches!(correct_driver(c, [0.0, 0.0, 0.6], v, true, 2.0), VehCorrection::Speed(_)));
         assert_eq!(clamp_turn([0.5, -0.5, 0.01]), [0.02, -0.02, 0.01]);
         assert!(train_needs_teleport(c, [10.5, 0.0, 0.0]) && !train_needs_teleport(c, [9.0, 9.0, 50.0]));
+    }
+
+    #[test]
+    fn seats_and_car_jacking() {
+        assert!(seat_allowed(Kind::Automobile, 1000.0, 0, 3, false));
+        assert!(!seat_allowed(Kind::Automobile, 1000.0, 0, 3, true));
+        assert!(!seat_allowed(Kind::Automobile, 1000.0, 4, 3, false));
+        assert!(seat_allowed(Kind::Boat, 1000.0, 4, 3, false));
+        assert!(!seat_allowed(Kind::Automobile, 0.0, 1, 3, false));
+        assert!(car_jacked(crate::remote::state::ON_FOOT, Some(7), 7));
+        assert!(!car_jacked(state::PASSENGER, Some(7), 7));
+        assert!(!car_jacked(crate::remote::state::ON_FOOT, Some(8), 7));
+        assert!(unoccupied_applies(false, false) && !unoccupied_applies(true, false) && !unoccupied_applies(false, true));
+        assert!(tow_link_kept(false, false, true, Some(true), false));
+        assert!(!tow_link_kept(true, false, true, Some(true), false));
+        assert!(!tow_link_kept(false, false, true, Some(true), true));
+        assert!(!tow_link_kept(false, false, true, None, false));
+        assert!(!tow_link_kept(false, true, true, Some(true), false));
+    }
+
+    #[test]
+    fn trailer_correction() {
+        let c = [0.0, 0.0, 0.0];
+        assert_eq!(correct_trailer(c, [0.5, -0.5, 0.5], [1.0; 3]), VehCorrection::None);
+        match correct_trailer(c, [2.0, 0.04, 0.0], [0.1, 0.2, 0.0]) {
+            VehCorrection::Speed(s) => assert!((s[0] - 0.15).abs() < 1e-6 && s[1] == 0.2 && s[2] == 0.0),
+            o => panic!("{o:?}"),
+        }
+        assert_eq!(correct_trailer(c, [6.5, 0.0, 0.0], [0.0; 3]), VehCorrection::Teleport);
     }
 
     #[test]

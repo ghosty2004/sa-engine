@@ -24,6 +24,7 @@ pub mod game;
 pub mod hosted;
 pub mod hostedobjects;
 pub mod lifecycle;
+pub mod markers;
 pub mod log;
 pub mod netclient;
 pub mod objedit;

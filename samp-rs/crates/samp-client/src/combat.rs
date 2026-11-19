@@ -17,6 +17,8 @@ use samp_proto::types::Vec3;
 pub const DAMAGE_SCALE: f32 = 0.33;
 /// No player / actor / target.
 pub const NONE_ID: u16 = 0xFFFF;
+/// The ammo a remote player's ped is given a synced weapon with. Mirrors samp.dll 0x100AF7D0.
+pub const REMOTE_WEAPON_AMMO: u32 = 9999;
 /// Offsets of a remote 206 with a hit entity must lie in ±300.
 pub const MAX_OFFSET: f32 = 300.0;
 /// The AddBullet hook multiplies the sniper bullet's velocity by this. Mirrors samp.dll 0x100EA63C (the constant).

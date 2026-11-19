@@ -53,26 +53,20 @@ impl Vehicles {
         }
         let cur = v3(m + off::MATRIX_POS);
         let target = vm::vec3(s.position);
-        let d = [0, 1, 2].map(|i| (target[i] - cur[i]).abs());
         let rows = rows_from_quat(normalise(s.rotation));
-        if d.iter().all(|&x| x <= 0.5) {
-            return;
-        }
-        if d[0] <= 6.0 && d[1] <= 6.0 && d[2] <= 3.0 {
-            write_rows(m, &rows);
-            put_v3(t.ptr + g::TURN_SPEED, vm::vec3(s.turn_velocity));
-            let mut vel = v3(t.ptr + off::MOVE_SPEED);
-            for i in 0..3 {
-                if d[i] > 0.05 {
-                    vel[i] += (target[i] - cur[i]) * 0.025;
-                }
+        match vm::correct_trailer(cur, target, v3(t.ptr + off::MOVE_SPEED)) {
+            VehCorrection::None => {}
+            VehCorrection::Speed(vel) => {
+                write_rows(m, &rows);
+                put_v3(t.ptr + g::TURN_SPEED, vm::vec3(s.turn_velocity));
+                put_v3(t.ptr + off::MOVE_SPEED, vel);
             }
-            put_v3(t.ptr + off::MOVE_SPEED, vel);
-        } else {
-            write_rows(m, &rows);
-            put_v3(m + off::MATRIX_POS, target);
-            put_v3(t.ptr + off::MOVE_SPEED, vm::vec3(s.velocity));
-            put_v3(t.ptr + g::TURN_SPEED, vm::vec3(s.turn_velocity));
+            VehCorrection::Teleport => {
+                write_rows(m, &rows);
+                put_v3(m + off::MATRIX_POS, target);
+                put_v3(t.ptr + off::MOVE_SPEED, vm::vec3(s.velocity));
+                put_v3(t.ptr + g::TURN_SPEED, vm::vec3(s.turn_velocity));
+            }
         }
     }
 

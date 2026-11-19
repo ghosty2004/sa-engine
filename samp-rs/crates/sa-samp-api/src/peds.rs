@@ -109,6 +109,13 @@ pub enum PedTask {
     },
     /// Secondary duck task (`CPedIntelligence::SetTaskDuckSecondary` 0x601230).
     DuckSecondary(u16),
+    /// `TASK_AIM_GUN_AT_COORD` (0667): the ped aims its gun at a point (`CTaskSimpleGunControl`).
+    AimGunAt {
+        /// The point.
+        target: Vec3,
+        /// Duration in ms.
+        time_ms: i32,
+    },
 }
 
 /// Ped operations. Reads take `&self` (allowed in mid-frame hooks), writes `&mut self`.
@@ -171,6 +178,15 @@ pub trait Peds {
     /// The ped's last damage (`CPed::m_nLastWeaponDamage` +0x760, `m_pLastEntityDamage` +0x764).
     fn ped_damage(&self, _ped: PedRef) -> GameResult<PedDamage> {
         Err(crate::GameError::Unsupported("Peds::ped_damage"))
+    }
+    /// The ped fires one instant-hit shot of its current weapon at a point (`CWeapon::FireInstantHit` 0x73FB10 from
+    /// the muzzle at the right hand); the game decides what it hits and what that takes.
+    fn fire_weapon_at(&mut self, _ped: PedRef, _target: Vec3) -> GameResult<()> {
+        Err(crate::GameError::Unsupported("Peds::fire_weapon_at"))
+    }
+    /// `SET_CHAR_ACCURACY` (02E2): the weapon accuracy the ped's shot spread comes from (100: no spread).
+    fn set_accuracy(&mut self, _ped: PedRef, _accuracy: u8) -> GameResult<()> {
+        Err(crate::GameError::Unsupported("Peds::set_accuracy"))
     }
 
     // --- state writes -------------------------------------------------------------------------------

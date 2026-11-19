@@ -147,7 +147,7 @@ impl Client {
                 self.update_combat_shared();
                 self.combat.on_bullet(&mut self.runner, &mut self.players, &self.vehicles, &b);
             }
-            S::Markers(m) => self.players.on_markers(&mut self.runner, &m),
+            S::Markers(m) => self.players.on_markers(&m),
             s => self.players.on_sync(s, now),
         }
     }

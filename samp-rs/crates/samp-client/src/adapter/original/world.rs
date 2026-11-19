@@ -222,12 +222,19 @@ impl<M: Memory> WorldEntities for OriginalGame<M> {
 
     /// A coordinate blip: one of the four sprite blip opcodes (`worldents::coord_blip_opcode`).
     fn add_blip(&mut self, target: BlipTarget) -> GameResult<BlipRef> {
-        let BlipTarget::Coord { pos, sprite, short_range, contact_point } = target else {
-            return Err(GameError::Unsupported("WorldEntities::add_blip (entity)"));
-        };
         let f = ScriptArg::Float;
-        let opcode = crate::worldents::coord_blip_opcode(short_range, contact_point);
-        self.run_op_out(opcode, &[f(pos.x), f(pos.y), f(pos.z), ScriptArg::Int(i32::from(sprite)), ScriptArg::Local(0)]).map(BlipRef)
+        match target {
+            BlipTarget::Coord { pos, sprite, short_range, contact_point } => {
+                let opcode = crate::worldents::coord_blip_opcode(short_range, contact_point);
+                let args = [f(pos.x), f(pos.y), f(pos.z), ScriptArg::Int(i32::from(sprite)), ScriptArg::Local(0)];
+                self.run_op_out(opcode, &args).map(BlipRef)
+            }
+            BlipTarget::Ped(p) => {
+                let h = self.ped_script_handle(p)?;
+                self.run_op_out(op::ADD_BLIP_FOR_CHAR, &[ScriptArg::Int(h.0), ScriptArg::Local(0)]).map(BlipRef)
+            }
+            BlipTarget::Vehicle(_) => Err(GameError::Unsupported("WorldEntities::add_blip (vehicle)")),
+        }
     }
 
     /// `REMOVE_BLIP` (0164) with the blip's script handle.
@@ -245,8 +252,9 @@ impl<M: Memory> WorldEntities for OriginalGame<M> {
         self.run_op(op::CHANGE_BLIP_SCALE, &[ScriptArg::Int(b.0 as i32), ScriptArg::Int(scale)]).map(|_| ())
     }
 
-    fn set_blip_display(&mut self, _b: BlipRef, _display: i32) -> GameResult<()> {
-        Err(GameError::Unsupported("WorldEntities::set_blip_display"))
+    /// `CHANGE_BLIP_DISPLAY` (018B).
+    fn set_blip_display(&mut self, b: BlipRef, display: i32) -> GameResult<()> {
+        self.run_op(op::CHANGE_BLIP_DISPLAY, &[ScriptArg::Int(b.0 as i32), ScriptArg::Int(display)]).map(|_| ())
     }
 
     /// The zone record samp's radar hook draws (worldhooks), the colours back in the wire's byte order.

@@ -53,9 +53,7 @@ pub(crate) use mem::pool_ref;
 pub use stream::{create_at, create_detached, delete_handle, samp_type};
 
 /// "Car Jacked" game text, shown for 1000 ms in style 5.
-pub const CAR_JACKED_TEXT: &str = "~r~Car Jacked~w~!";
-const CAR_JACKED_MS: u32 = 1000;
-const CAR_JACKED_STYLE: u32 = 5;
+pub use crate::vehicle::{CAR_JACKED_MS, CAR_JACKED_STYLE, CAR_JACKED_TEXT};
 
 /// GTA addresses / fields (names via gta-reversed / plugin-sdk).
 mod g {

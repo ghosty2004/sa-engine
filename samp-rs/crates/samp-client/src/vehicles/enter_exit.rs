@@ -70,7 +70,7 @@ impl Vehicles {
         }
         let veh = ped_vehicle(p.ped);
         let model = if veh != 0 { model_of_entity(veh) } else { 0 };
-        if matches!(model, 570 | 538) {
+        if !vm::remote_exit_applies(model) {
             return;
         }
         clear_keys(p);
@@ -189,15 +189,8 @@ fn clear_keys(p: &mut remote::RemotePlayer) {
 /// (automobile/bike kinds), a deleted entity, or an occupied driver seat.
 pub(super) fn seat_allowed(v: &Veh, seat: u8) -> bool {
     let ptr = v.ptr;
-    if is_deleted(ptr) || rd::<f32>(ptr + g::VEH_HEALTH) == 0.0 {
-        return false;
-    }
-    if matches!(v.kind, Kind::Automobile | Kind::Bike)
-        && u32::from(seat) > u32::from(rd::<u8>(ptr + g::VEH_MAX_PASSENGERS))
-    {
-        return false;
-    }
-    !(seat == 0 && driver_of(ptr) != 0)
+    !is_deleted(ptr)
+        && vm::seat_allowed(v.kind, rd(ptr + g::VEH_HEALTH), seat, rd(ptr + g::VEH_MAX_PASSENGERS), driver_of(ptr) != 0)
 }
 
 pub(super) fn warp_into(runner: &mut Runner, ped_handle: i32, v: &Veh, seat: u8) {
