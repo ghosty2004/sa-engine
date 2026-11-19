@@ -17,6 +17,7 @@ net = ["udp:user-approved"]  # the servers the user approves (the host asks once
 files = "own"               # SA:MP's UI files the user copies in: sampgui.png, mouse.png, gtaweap3.ttf, sampaux3.ttf
 storage = true              # server, name, favourites, recent, auth_table.txt, auto_connect, auto_spawn; the serial seed
 http = ["https://api.open.mp/"]  # the Internet tab's server list
+hooks = ["CAutomobile::BreakTowLink"]  # the server's tows hold (state = "write" decides)
 
 # SA:MP's own models (ids 18631..19999), collision, cull zones, the "SAMP" animation block (SAMP.ifp inside SAMP.img)
 # and texture dictionaries, from the user's SA:MP install (its SAMP folder, copied into the mod's folder). Without

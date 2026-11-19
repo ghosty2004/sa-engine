@@ -12,12 +12,12 @@ use crate::vehicle as vm;
 /// What the client keeps of a server vehicle besides its game vehicle.
 #[derive(Clone, Debug, Default)]
 pub(super) struct HostedVehicle {
-    model: u32,
+    pub(super) model: u32,
     /// SetVehicleParams' engine and lights: -1 unset, 0 off, 1 on.
     engine: i32,
     lights: i32,
-    /// The trailer attached by RPC 148.
-    trailer: Option<u16>,
+    /// The trailer attached by RPC 148 or a trailer sync.
+    pub(super) trailer: Option<u16>,
     /// RPC 123's plate text (the engine draws the model's own plate).
     plate: Vec<u8>,
 }
@@ -120,10 +120,8 @@ impl HostedClient {
                 let model = self.vehicle_state.get(&p.vehicle_id).map_or(0, |s| s.model);
                 if vm::TRAIN_SYNC_MODELS.contains(&model) {
                     report(self, "set_train_position", game.set_train_position(v, pos));
-                } else if let Ok(s) = game.vehicle_snapshot(v) {
-                    let mut m = s.matrix;
-                    m.pos = pos;
-                    report(self, "set_vehicle_matrix", game.set_vehicle_matrix(v, &m));
+                } else {
+                    report(self, "teleport_vehicle", game.teleport_vehicle(v, pos));
                 }
             }
             V::SetVehicleZAngle(a) => {
@@ -132,7 +130,8 @@ impl HostedClient {
                 }
             }
             V::SetVehicleParams(p) => self.set_vehicle_params(p.vehicle_id, &p.params, game),
-            other => self.note(format!("vehicle rpc {} (not applied natively yet)", other.id())),
+            V::EnterVehicle(e) => self.other_enters(e.player_id, e.vehicle_id, e.passenger != 0, game),
+            V::ExitVehicle(e) => self.other_exits(e.player_id, game),
         }
     }
 
@@ -320,7 +319,7 @@ impl HostedClient {
         self.vehicle_state.iter().filter(|(_, s)| s.trailer == Some(trailer)).map(|(&id, _)| id).collect()
     }
 
-    fn detach_trailer(&mut self, cab: u16, game: &mut dyn GameAdapter) {
+    pub(super) fn detach_trailer(&mut self, cab: u16, game: &mut dyn GameAdapter) {
         let Some(&c) = self.vehicles.get(&cab) else { return };
         if self.vehicle_state.get_mut(&cab).and_then(|s| s.trailer.take()).is_some() {
             report(self, "set_trailer", game.set_trailer(c, None));

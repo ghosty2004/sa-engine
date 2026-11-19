@@ -28,8 +28,8 @@ use std::time::Duration;
 
 use sa_mod::input::Input;
 use sa_mod::net::Socket;
-use sa_mod::{Error, Event, GameState, Mod, Overlay, Vec3, event_kind, events, state, storage, time};
-use sa_samp_api::hooks::{FramePhase, GameHooks};
+use sa_mod::{Error, Event, GameState, Mod, Overlay, Vec3, event_kind, events, hooks, state, storage, time};
+use sa_samp_api::hooks::{FramePhase, GameHooks, HookAction};
 use sa_samp_api::input::{EventResult, WindowEvent};
 
 use connect::Tone;
@@ -158,6 +158,8 @@ impl Scene {
 
 struct Samp {
     stage: Stage,
+    /// The hook that keeps the server's tows (`CAutomobile::BreakTowLink`).
+    tow_hook: Option<hooks::HookId>,
     screen: connect::Screen,
     game: game::ModGame,
     images: canvas::Images,
@@ -171,6 +173,7 @@ impl Default for Samp {
         }));
         Samp {
             stage: Stage::Screen,
+            tow_hook: None,
             screen: connect::Screen::load(DEFAULT_SERVER, DEFAULT_NAME),
             game,
             images: Default::default(),
@@ -291,11 +294,24 @@ impl Mod for Samp {
             return Ok(());
         }
         setup::apply()?;
+        self.tow_hook = hooks::subscribe("CAutomobile::BreakTowLink", true, false)
+            .map_err(|e| sa_mod::log(sa_mod::level::WARN, &format!("samp: no BreakTowLink hook: {e:?}")))
+            .ok();
         if setting("auto_connect").is_some_and(|v| v == "1") {
             self.stage = Stage::Approval { server: self.screen.server.clone(), name: self.screen.name.clone() };
         }
         events::subscribe(&[event_kind::FRAME_BEGIN]);
         Ok(())
+    }
+
+    fn hook(&mut self, hook: hooks::HookId, phase: hooks::Phase, call: &hooks::Call) {
+        let (Some(tow), hooks::Phase::Before) = (self.tow_hook, phase) else { return };
+        let (Stage::Client { client, .. }, Some(sa_mod::Value::Vehicle(v))) = (&mut self.stage, call.arg(0)) else {
+            return;
+        };
+        if hook == tow && client.break_tow_link(v, &self.game) == HookAction::Skip {
+            let _ = call.skip(sa_mod::Value::Int(0));
+        }
     }
 
     fn event(&mut self, event: Event) {

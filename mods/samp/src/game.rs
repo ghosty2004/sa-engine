@@ -507,6 +507,9 @@ impl Peds for ModGame {
             }
             PedTask::LeaveCar { vehicle } => cmd(0x05CD, &[p, v(vehicle)]),
             PedTask::UseMobilePhone(on) => cmd(0x0729, &[p, i(i32::from(on))]),
+            PedTask::AimGunAt { target, time_ms } => {
+                cmd(0x0667, &[p, Arg::Float(target.x), Arg::Float(target.y), Arg::Float(target.z), i(time_ms)])
+            }
             _ => Err(GameError::Unsupported("Peds::start_task (this task)")),
         }
     }
@@ -569,6 +572,12 @@ impl Peds for ModGame {
     }
     fn ped_damage(&self, ped: PedRef) -> GameResult<PedDamage> {
         sa_mod::damage::last(ped).ok_or(GameError::InvalidHandle)
+    }
+    fn fire_weapon_at(&mut self, ped: PedRef, target: Vec3) -> GameResult<()> {
+        world::fire_ped_weapon(ped, target).map_err(failed("fire_weapon_at"))
+    }
+    fn set_accuracy(&mut self, ped: PedRef, accuracy: u8) -> GameResult<()> {
+        cmd(0x02E2, &[Arg::Ped(ped), Arg::Int(i32::from(accuracy))])
     }
 }
 
@@ -654,6 +663,7 @@ impl Vehicles for ModGame {
                     .map(|o| PedRef(o.outputs[0]));
             }
         }
+        let motion = state::vehicle_motion(v).unwrap_or_default();
         Ok(VehicleSnapshot {
             passengers,
             matrix: m.into(),
@@ -662,6 +672,11 @@ impl Vehicles for ModGame {
             model: i.model,
             driver: i.driver,
             class: world::vehicle_class(v).ok(),
+            turn_speed: motion.turn_speed,
+            moving: motion.moving,
+            tractor: motion.tractor,
+            trailer: motion.trailer,
+            max_passengers: motion.max_passengers,
             colours: [i.colour1, i.colour2],
             siren: i.siren,
             area: i.area,
@@ -691,9 +706,11 @@ impl Vehicles for ModGame {
     /// The position (`SET_CAR_COORDINATES` 00AB) and the heading of the forward row (`SET_CAR_HEADING` 0175); the
     /// pitch and roll of the matrix are not taken.
     fn set_vehicle_matrix(&mut self, v: VehicleRef, m: &Matrix) -> GameResult<()> {
-        world::set_vehicle_position(v, m.pos).map_err(failed("set_vehicle_matrix"))?;
-        let heading = (-m.forward.x).atan2(m.forward.y).to_degrees();
-        world::set_vehicle_heading(v, heading).map_err(failed("set_vehicle_matrix"))
+        world::set_vehicle_matrix(v, &m.into()).map_err(failed("set_vehicle_matrix"))
+    }
+    /// `SET_CAR_COORDINATES`: the heading stays (the handler keeps the rotation).
+    fn teleport_vehicle(&mut self, v: VehicleRef, pos: Vec3) -> GameResult<()> {
+        world::set_vehicle_position(v, pos).map_err(failed("teleport_vehicle"))
     }
     fn set_vehicle_speed(&mut self, v: VehicleRef, move_speed: Vec3, turn_speed: Vec3) -> GameResult<()> {
         world::set_vehicle_speed(v, move_speed, turn_speed).map_err(failed("set_vehicle_speed"))

@@ -41,6 +41,7 @@ use sa_samp_api::world::LineFilter;
 use sa_samp_api::{AreaCode, GameAdapter, ModelId, PedRef, Vec3, VehicleRef, WeaponType};
 
 mod death;
+mod remotes;
 mod trains;
 mod vehicles;
 
@@ -119,6 +120,8 @@ pub struct HostedClient {
     life: death::LocalLife,
     /// The server's trains.
     trains: trains::Trains,
+    /// The other players in vehicles, aiming and shooting, and their markers.
+    others: remotes::Others,
 }
 
 /// The keys class selection polls (Windows virtual-key codes): left, right, and either Shift key (samp asks for
@@ -176,6 +179,7 @@ impl HostedClient {
             objects: HostedObjects::default(),
             life: death::LocalLife::default(),
             trains: trains::Trains::default(),
+            others: remotes::Others::default(),
         }
     }
 
@@ -227,6 +231,7 @@ impl HostedClient {
         }
         if self.netgame.connected() {
             self.world_tick(game);
+            self.others_tick(game);
             self.vehicle_params_tick(game);
         }
         if !self.netgame.connected() {
@@ -315,6 +320,7 @@ impl HostedClient {
                 self.netgame.on_init_game();
                 self.note(format!("chat (debug): Connected to {{B9C9BF}}{}", g.server_name));
                 self.ui.core.on_init_game(&g);
+                self.others_init_game(&g);
                 // samp enters class selection on InitGame; its first tick sends RPC 128 for class 0.
                 self.enter_class_selection(game, g.spawns_available);
             }
@@ -356,6 +362,7 @@ impl HostedClient {
                 A::Disconnect(_) => self.net.disconnect_silent(),
                 A::Reset => self.reset_routine(game),
                 A::DeletePlayers => {
+                    self.others_reset(game);
                     let ids: Vec<u16> = self.players.keys().copied().collect();
                     for id in ids {
                         self.remove_player(id, game);
@@ -376,6 +383,7 @@ impl HostedClient {
     /// executable).
     fn reset_routine(&mut self, game: &mut dyn GameAdapter) {
         self.note("reset routine (server restart / lost connection)".into());
+        self.others_reset(game);
         let ids: Vec<u16> = self.players.keys().copied().collect();
         for id in ids {
             self.remove_player(id, game);
@@ -718,7 +726,7 @@ impl HostedClient {
             // teams only cancel same-team damage, which this client does not simulate yet
             P::SetPlayerTeam(t) => self.note(format!("SetPlayerTeam {} {}", t.player_id, t.team)),
             // the UI's player colours take RPC 72 (chat, nametags, scoreboard)
-            P::SetPlayerColor(_) => {}
+            P::SetPlayerColor(c) => self.other_recoloured(c.player_id, game),
             other => self.note(format!("player rpc {} (not applied natively yet)", other.id())),
         }
     }
@@ -742,6 +750,7 @@ impl HostedClient {
                 match game.create_actor(ModelId(model), pos, p.facing_angle) {
                     Ok(ped) => {
                         self.players.insert(p.player_id, ped);
+                        self.other_streamed_in(p.player_id, game);
                         self.note(format!(
                             "player {} (skin {}) streamed in at ({:.1},{:.1},{:.1}) as {:#x}",
                             p.player_id, p.skin, pos.x, pos.y, pos.z, ped.0
@@ -751,10 +760,12 @@ impl HostedClient {
                 }
             }
             R::PlayerStreamOut(p) => {
+                self.other_streamed_out(p.player_id, game);
                 self.remove_player(p.player_id, game);
                 self.note(format!("player {} streamed out", p.player_id));
             }
             R::PlayerQuit(p) => {
+                self.other_left(p.player_id, game);
                 self.remove_player(p.player_id, game);
                 self.remotes.remove(&p.player_id);
                 self.note(format!("player {} left", p.player_id));
@@ -772,10 +783,15 @@ impl HostedClient {
         }
     }
 
-    /// The other players' on-foot sync: their stand-in peds take the position and the heading.
+    /// The other players' syncs: on foot their stand-in peds take the position and the heading; the rest is
+    /// `remotes`'.
     fn on_sync(&mut self, sync: samp_proto::sync::IncomingSync, game: &mut dyn GameAdapter) {
-        let samp_proto::sync::IncomingSync::Foot { sync, .. } = sync else { return };
+        let samp_proto::sync::IncomingSync::Foot { sync, .. } = sync else {
+            self.other_sync(sync, game);
+            return;
+        };
         let Some(&ped) = self.players.get(&sync.player_id) else { return };
+        self.other_on_foot(&sync, ped, game);
         let f = crate::remote::FootData::from_sync(&sync);
         let tag = self.remotes.entry(sync.player_id).or_default();
         (tag.health, tag.armour, tag.synced) = (f.health, f.armour, Some(Instant::now()));
@@ -1255,6 +1271,10 @@ impl GameHooks for HostedClient {
 
     fn window_event(&mut self, event: WindowEvent, game: &dyn GameAdapter) -> EventResult {
         self.ui.window_event(event, game)
+    }
+
+    fn break_tow_link(&mut self, vehicle: VehicleRef, game: &dyn GameAdapter) -> sa_samp_api::hooks::HookAction {
+        self.tow_link(vehicle, game)
     }
 
     fn shutdown(&mut self, _game: &mut dyn GameAdapter) {
