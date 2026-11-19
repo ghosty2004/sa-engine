@@ -391,6 +391,11 @@ Sections: *pending* (blocks "done") · *original UB, not reproducible* · *accep
   NULL ped); carriages the server streams in on their own are created with `CREATE_CAR`, as the DLL client does;
   the tram is deleted as a mission train (samp.dll uses `DELETE_CAR` for it: one carriage either way); remote
   drivers of trains (driver sync 200 on a train) are not applied on the mod (no remote vehicle sync there yet).
+  Unsupported. (12) InitGame "disable enter/exits": both hosts clear the entry-exit flags as samp does (the mod only
+  the used pool slots, through `set_entry_exits_enabled`; free slots are rewritten by the constructor before use),
+  but the per-frame shop unload samp runs while the setting is on is applied by the DLL client only (the mod keeps no
+  shop-name pointer on the ped, see (8)). The mod sends no RPC 118 on an interior change, so the server keeps
+  interior 0 after a walk-in (seen in the enex.cmds run with the entry-exits on).
 
 *original UB, not reproducible*
 - `CTheZones::AssignZoneInfoForThisZone` loops forever when index < count (port loops too; never hit). `CEntryExit::GetPositionRelativeToOutsideWorld` writes the z sum into its own unused stack argument slot (not reproduced). `CStuntJumpManager::Init` SEH frame around the pool constructor not reproduced. `FindPlayerCentreOfWorld_NoSniperShift` reads Players[-1] for id -1 and CShopping touches the byte before its bought-flags table for unknown keys (kept) (PORT-WORLD p1).

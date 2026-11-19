@@ -4972,3 +4972,20 @@
   target/e2e/mod-trains): the trains of npc_trains and the gamemode stream in, the same Unity Station picture.
   Unit tests: sa-access (4), sa-mod-host (2), samp-client (2). Differences in the divergence ledger ("death, menus
   and trains").
+## 2026-11-19 — MOD-2: the server's "disable enter/exits" on both SA:MP hosts (agent, worktree)
+- RE (samp.dll B, static; A checked at the same sites; samp-rs/docs/re/subsystems/session-misc.md "Disable
+  enter/exits"): InitGame bit #8 (settings +0x1A) is used once, after the fields are read: the routine clears the
+  16-bit flags word (+0x30) of every `CEntryExitManager::mp_poolEntryExits` slot up to the pool size. Nothing writes
+  the flags back (RPC 40 and the constructor only clear the settings byte). While the byte is set, the
+  connected-state frame unloads a loaded shop (`LoadShop("")`) when the local ped has no shop-name pointer.
+- Mod API (1.11, no minor bump): `set_entry_exits_enabled(on)` (`[Write]`): sa-access `entry_exit_flags` /
+  `set_entry_exit_flags` (by pool reference); off saves the words once and writes 0, on writes them back, and so does
+  the host when it disables the mod (`GameChanges::entry_exit_flags`). SDK `world::set_entry_exits_enabled`.
+- samp-rs: `WorldState::disable_entry_exits` (original backend: the pool walk samp does; the samp mod: the mod
+  API call); `world::apply_enter_exits` shared by both hosts on InitGame; the DLL client's per-frame shop unload
+  (`behaviourclient::unload_unnamed_shop`). sampcov.pwn: `NO_ENEX` define (`PAWN_DEFINES=NO_ENEX=1` in mod-join.sh /
+  samp-rs-ab.sh); `tools/e2e/samp/enex.cmds` (CJ's house, CARLS).
+- Verified: mod-join.sh (SAMP_PORT=7943, SAMP_LOCK=enex.lock) and samp-rs-ab.sh (LANE=7) with enex.cmds, with and
+  without NO_ENEX: disabled, no marker and the player stays on the porch at the marker (2495.33,-1690.75) on both
+  hosts; enabled, the cone shows and the player is inside CJ's house (2496.05,-1692.93,1014.74; DLL client RPC 118
+  0->3). Tests: sa-access (1 new), samp-client (1 new), clippy (host, i686-pc-windows-gnu, wasm32 samp mod).
