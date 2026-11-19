@@ -57,7 +57,7 @@ use sa_stream::bindings::streaming_request_model;
 use sa_core::bindings::tm_get_active_task as task_manager_get_active_task;
 use sa_anim::bindings::anim_add_block_ref;
 use sa_stream::bindings::anim_remove_block_ref;
-use sa_stream::bindings::get_animation_block_index as anim_get_block_index;
+use sa_core::bindings::get_animation_block_index as anim_get_block_index;
 use sa_stream::bindings::ped_is_player;
 use sa_world::bindings::are_friends as ped_intelligence_are_friends;
 use sa_world::bindings::compute_target_door_to_exit as car_enter_exit_compute_target_door_to_exit;

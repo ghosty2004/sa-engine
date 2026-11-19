@@ -42,7 +42,7 @@ use sa_anim::bindings::assoc_set_finish_callback;
 use sa_core::bindings::clump_get_association;
 use sa_stream::bindings::streaming_request_model as request_model;
 use sa_stream::bindings::anim_blend_animation_hier as blend_animation_hier;
-use sa_stream::bindings::get_animation_block_index;
+use sa_core::bindings::get_animation_block_index;
 use sa_world::bindings::anim_blend_animation as blend_animation;
 use sa_world::bindings::anim_get_anim_block_name as get_anim_block_name;
 use sa_world::bindings::event_sound_quiet_ctor;

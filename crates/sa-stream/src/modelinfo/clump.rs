@@ -63,7 +63,7 @@ pub const FILL_FRAME_ARRAY_CB: u32 = 0x4C5390;
 pub const ANIM_BLOCKS: u32 = 0xB5D4A0;
 
 pub use crate::bindings::get_anim_hierarchy_from_clump;
-pub use crate::bindings::get_animation_block_index;
+pub use sa_core::bindings::get_animation_block_index;
 pub use crate::bindings::rp_skin_atomic_set_hanim_hierarchy;
 pub use crate::bindings::set_atomic_render_callback;
 pub use sa_core::bindings::crt_free_8214bd as free;

@@ -25,7 +25,8 @@ use sa_core::bindings::{
 use sa_core::crt::rand_at;
 use sa_math::fpu::{fld_fst, st0};
 use sa_pop::bindings::wander_gang_ctor;
-use sa_stream::bindings::{anim_remove_block_ref, get_animation_block_index};
+use sa_stream::bindings::anim_remove_block_ref;
+use sa_core::bindings::get_animation_block_index;
 use sa_anim::bindings::anim_add_block_ref;
 use crate::fall::fild_u32;
 use sa_core::bindings::{

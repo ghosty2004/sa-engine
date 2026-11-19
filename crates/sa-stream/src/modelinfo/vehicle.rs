@@ -229,7 +229,7 @@ pub mod call {
     use super::*;
     pub use sa_core::bindings::find_txd_slot;
     pub use sa_core::bindings::frame_for_all_objects as rw_frame_for_all_objects;
-    pub use crate::bindings::get_animation_block_index;
+    pub use sa_core::bindings::get_animation_block_index;
     pub use crate::bindings::get_atomic_id;
     pub use crate::bindings::get_first_object;
     pub use crate::bindings::get_model_info_min_max;

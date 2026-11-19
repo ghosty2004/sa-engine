@@ -435,7 +435,7 @@ use sa_world::bindings::is_this_car_being_targetted_by_any_crane;
 use sa_world::bindings::ped_give_object_to_hold;
 use sa_world::bindings::ped_update_stat_entering_vehicle;
 use sa_world::bindings::vehicle_can_be_deleted;
-use sa_stream::bindings::get_animation_block_index;
+use sa_core::bindings::get_animation_block_index;
 use sa_stream::bindings::is_car_model;
 orig! {
     /// vtable slot 0 (scalar deleting destructor, `ret 4`)

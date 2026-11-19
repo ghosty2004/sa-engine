@@ -47,7 +47,7 @@ use sa_stream::bindings::streaming_request_model;
 use sa_core::bindings::vector2d_normalise;
 use sa_anim::bindings::anim_add_block_ref;
 use sa_stream::bindings::anim_remove_block_ref;
-use sa_stream::bindings::get_animation_block_index as anim_get_block_index;
+use sa_core::bindings::get_animation_block_index as anim_get_block_index;
 use sa_world::bindings::attractor_manager_get_ped_using_effect;
 use sa_world::bindings::event_acquaintance_ped_dtor;
 use crate::bindings::event_group_add;

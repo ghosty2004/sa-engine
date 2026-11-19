@@ -17,7 +17,7 @@ use sa_core::bindings::{
     general_random_int_in_range, ped_get_bone_position, streaming_request_model,
 };
 use sa_math::fpu::{fcom_c0, fcom_ne, gt, le_or_nan, st0};
-use sa_stream::bindings::get_animation_block_index;
+use sa_core::bindings::get_animation_block_index;
 use sa_world::bindings::{
     anim_blend_animation, anim_get_anim_block_name, damage_calc_compute_damage_response, damage_calc_ctor, damage_calc_dtor,
     get_player_info,

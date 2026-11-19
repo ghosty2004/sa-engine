@@ -24,7 +24,7 @@ use sa_world::bindings::seek_entity_xy_offset_ctor;
 use sa_stream::bindings::streaming_request_model as request_model;
 use crate::bindings::tm_get_task_secondary as task_manager_get_task_secondary;
 use crate::bindings::tm_set_task_secondary as task_manager_set_task_secondary;
-use sa_stream::bindings::get_animation_block_index;
+use sa_core::bindings::get_animation_block_index;
 use sa_world::bindings::go_to_point_and_stand_still_ctor;
 use sa_world::bindings::physical_get_speed;
 use sa_world::bindings::stand_still_ctor;

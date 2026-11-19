@@ -25,7 +25,7 @@ use sa_core::bindings::general_random_int_in_range as random_int;
 use sa_stream::bindings::streaming_request_model;
 use sa_anim::bindings::anim_add_block_ref;
 use sa_stream::bindings::anim_remove_block_ref;
-use sa_stream::bindings::get_animation_block_index as anim_get_block_index;
+use sa_core::bindings::get_animation_block_index as anim_get_block_index;
 use sa_world::bindings::ik_is_looking;
 use sa_world::bindings::placeable_get_top_direction as placeable_get_forward;
 use crate::bindings::task_complex_ctor;

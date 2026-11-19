@@ -67,7 +67,7 @@ use crate::bindings::task_simple_ctor;
 use sa_world::bindings::task_walk_alongside_ctor as walk_alongside_ped_ctor;
 use crate::bindings::tm_find_active_task_by_type;
 use sa_world::bindings::turn_to_face_entity_ctor;
-use sa_stream::bindings::get_animation_block_index as anim_get_block_index;
+use sa_core::bindings::get_animation_block_index as anim_get_block_index;
 use sa_world::bindings::kill_ped_on_foot_ctor;
 use sa_world::bindings::leave_car_ctor;
 use sa_world::bindings::run_anim_ctor;

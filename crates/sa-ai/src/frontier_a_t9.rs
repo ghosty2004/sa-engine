@@ -22,7 +22,8 @@ use sa_world::bindings::{anim_blend_animation, get_peds_interior_group, ped_set_
 use sa_anim::bindings::ik_abort_look_at;
 use crate::frontier_a_t5::interior_group_find_closest_info;
 use sa_core::bindings::{clump_get_association, general_random_int_in_range, matrix_dtor};
-use sa_stream::bindings::{anim_remove_block_ref, entity_is_visible, get_animation_block_index, streaming_request_model};
+use sa_stream::bindings::{anim_remove_block_ref, entity_is_visible, streaming_request_model};
+use sa_core::bindings::get_animation_block_index;
 use sa_world::bindings::{
     entity_get_col_model, ik_is_looking, ik_look_at, kill_ped_on_foot_ctor, matrix_copy_ctor, placeable_get_heading,
     process_col_models, run_anim_ctor, shake_fist_ctor,

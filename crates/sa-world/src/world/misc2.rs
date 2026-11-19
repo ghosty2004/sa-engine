@@ -52,7 +52,7 @@ pub use sa_stream::bindings::streaming_request_model as request_model;
 pub use sa_anim::bindings::anim_add_block_ref as add_anim_block_ref;
 pub use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
 pub use sa_stream::bindings::get_2d_effect;
-pub use sa_stream::bindings::get_animation_block_index;
+pub use sa_core::bindings::get_animation_block_index;
 pub use sa_stream::bindings::stream_peds_for_interior;
 pub use crate::bindings::request_objects_in_direction;
 pub use sa_core::bindings::display_script_stat_update_message;

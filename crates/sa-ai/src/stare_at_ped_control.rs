@@ -19,7 +19,7 @@ use crate::bindings::tm_get_task_secondary;
 use crate::bindings::tm_set_task_secondary;
 use sa_anim::bindings::anim_add_block_ref;
 use sa_stream::bindings::anim_remove_block_ref;
-use sa_stream::bindings::get_animation_block_index as anim_get_block_index;
+use sa_core::bindings::get_animation_block_index as anim_get_block_index;
 use sa_world::bindings::ik_is_looking;
 use sa_world::bindings::membership_get_leader;
 use sa_world::bindings::vector_magnitude_sqr;

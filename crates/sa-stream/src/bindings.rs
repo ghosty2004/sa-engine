@@ -444,11 +444,6 @@ orig! {
 }
 
 orig! {
-    /// `CAnimManager::GetAnimationBlockIndex-by-name` (0x4D3990)
-    pub fn get_animation_block_index(name: GPtr<u8>) -> i32 = cdecl 0x4D3990 => unported;
-}
-
-orig! {
     /// `CAnimManager::GetAnimGroupName` (0x4D3A20)
     pub fn get_anim_group_name(group: u32) -> GPtr<u8> = cdecl 0x4D3A20 => unported;
 }

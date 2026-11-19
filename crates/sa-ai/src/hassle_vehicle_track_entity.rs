@@ -12,7 +12,7 @@ use crate::bindings::task_complex_dtor;
 use crate::bindings::vehicle_set_hassle_pos_id;
 use sa_world::bindings::entity_clean_up_old_reference;
 use sa_stream::bindings::anim_remove_block_ref;
-use sa_stream::bindings::get_animation_block_index as anim_get_block_index;
+use sa_core::bindings::get_animation_block_index as anim_get_block_index;
 orig! {
     /// `CTaskComplex::CreateNextSubTask`-slot +0x20 of the task's vtable (the tail jump of 0x65F700)
     fn v_slot_20(t: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x20 => unported;

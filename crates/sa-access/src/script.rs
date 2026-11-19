@@ -239,6 +239,10 @@ impl Threads {
     }
 
     fn run(&mut self, t: ScriptThreadRef, op: Opcode, args: &[ScriptArg<'_>]) -> GameResult<bool> {
+        #[cfg(not(any(test, feature = "fake")))]
+        if let Some(block) = unknown_anim_block(op, args) {
+            return Err(GameError::Other(format!("no animation block {block:?}")));
+        }
         let exec = self.exec;
         let th = self.get_mut(t)?;
         encode(op, args, &mut th.code);
@@ -258,6 +262,23 @@ impl Threads {
         self.in_command = false;
         Ok(self.get(t)?.script[layout::COND_RESULT] != 0)
     }
+}
+
+/// Commands whose text argument (at the index) names an animation block. The game looks the block up and uses it
+/// without checking for a miss, so a name it does not know (a server's own library) would fault inside the command.
+#[cfg(not(any(test, feature = "fake")))]
+const ANIM_BLOCK_ARGS: [(u16, usize); 3] = [(0x04ED, 0), (0x04EE, 0), (0x0812, 2)];
+
+/// The block name of `args` that `CAnimManager::GetAnimationBlockIndex` does not know, if `op` takes one.
+#[cfg(not(any(test, feature = "fake")))]
+fn unknown_anim_block(op: Opcode, args: &[ScriptArg<'_>]) -> Option<String> {
+    let &(_, i) = ANIM_BLOCK_ARGS.iter().find(|(o, _)| *o == op.0)?;
+    let ScriptArg::Text(name) = *args.get(i)? else { return None };
+    let mut buf = [0u8; 32];
+    let n = name.len().min(buf.len() - 1);
+    buf[..n].copy_from_slice(&name[..n]);
+    let index = sa_core::bindings::get_animation_block_index(GPtr::from_raw(buf.as_mut_ptr()));
+    (index < 0).then(|| String::from_utf8_lossy(&name[..n]).into_owned())
 }
 
 impl<V: View> Game<V> {

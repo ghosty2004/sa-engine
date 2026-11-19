@@ -41,7 +41,7 @@ pub use sa_core::bindings::file_close;
 pub use sa_core::bindings::get_uppercase_key;
 pub use sa_core::bindings::open_file as file_open;
 pub use sa_stream::bindings::add_image_to_list;
-pub use sa_stream::bindings::get_animation_block_index;
+pub use sa_core::bindings::get_animation_block_index;
 pub use crate::bindings::get_texture_dependency as get_texture_dependency_call;
 pub use sa_stream::bindings::add_tex_dictionary_ref;
 pub use sa_stream::bindings::remove_tex_dictionary_ref;

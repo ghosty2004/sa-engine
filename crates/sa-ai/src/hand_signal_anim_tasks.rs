@@ -24,7 +24,7 @@ use sa_stream::bindings::streaming_request_model;
 use sa_world::bindings::world_add;
 use sa_anim::bindings::anim_add_block_ref;
 use sa_stream::bindings::anim_remove_block_ref;
-use sa_stream::bindings::get_animation_block_index as anim_get_block_index;
+use sa_core::bindings::get_animation_block_index as anim_get_block_index;
 use sa_stream::bindings::model_info_add_ref;
 use sa_stream::bindings::model_info_remove_ref;
 use sa_core::bindings::anim_get_anim_association;

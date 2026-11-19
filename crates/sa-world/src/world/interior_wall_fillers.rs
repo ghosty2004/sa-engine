@@ -29,7 +29,7 @@ use crate::bindings::get_furniture;
 use crate::bindings::get_num_empty_tiles;
 use crate::bindings::place_furniture;
 use sa_core::bindings::general_random_int_in_range as random_in_range;
-use sa_stream::bindings::get_animation_block_index;
+use sa_core::bindings::get_animation_block_index;
 
 /// `g_furnitureMan` (0xBAB380).
 const FURNITURE_MAN: usize = 0xBA_B380;

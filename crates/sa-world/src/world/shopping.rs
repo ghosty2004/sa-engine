@@ -371,7 +371,8 @@ orig! {
     fn is_valid_mod_for_vehicle_call(key: u32, veh: GPtr<u8>) -> u8 = cdecl 0x49B010 => is_valid_mod_for_vehicle;
 }
 use crate::bindings::find_player_vehicle;
-use sa_stream::bindings::{get_animation_block_index, load_all_requested_models};
+use sa_stream::bindings::load_all_requested_models;
+use sa_core::bindings::get_animation_block_index;
 use crate::bindings::load_prices as load_prices_call;
 use sa_core::bindings::{crt_strncpy, streaming_request_model, timer_resume, timer_suspend};
 

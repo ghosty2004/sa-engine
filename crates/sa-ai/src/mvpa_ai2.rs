@@ -41,7 +41,7 @@ use sa_anim::bindings::anim_set_delete_callback as assoc_set_delete_callback;
 use sa_anim::bindings::assoc_set_finish_callback;
 use sa_core::bindings::general_get_radian_angle_between_points as radian_angle_between_points;
 use sa_core::bindings::general_limit_radian_angle as limit_radian_angle;
-use sa_stream::bindings::get_animation_block_index as anim_block_index_by_name;
+use sa_core::bindings::get_animation_block_index as anim_block_index_by_name;
 use sa_world::bindings::achieve_heading_ctor;
 use sa_core::bindings::crt_new as operator_new;
 use sa_world::bindings::follow_point_route_ctor;

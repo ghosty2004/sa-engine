@@ -134,7 +134,7 @@ use crate::bindings::pass_object_ctor;
 use crate::bindings::veh_spare_hassle_pos as vehicle_get_spare_hassle_pos_id;
 use sa_core::bindings::clump_get_association;
 use sa_world::bindings::vector_sub;
-use sa_stream::bindings::get_animation_block_index as anim_get_block_index;
+use sa_core::bindings::get_animation_block_index as anim_get_block_index;
 use sa_world::bindings::event_script_command_ctor;
 use sa_world::bindings::fx_attach_to_bone;
 use sa_world::bindings::fx_create_system as fx_create_fx_system;

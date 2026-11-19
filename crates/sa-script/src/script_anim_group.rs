@@ -9,7 +9,7 @@ use sa_core::{hook, orig};
 /// `CModelInfo::ms_modelInfoPtrs`
 const MODEL_INFO_PTRS: usize = 0xA9B0C8;
 
-use sa_stream::bindings::get_animation_block_index;
+use sa_core::bindings::get_animation_block_index;
 orig! {
     /// `CBaseModelInfo::GetAnimFileIndex()` (vtable +0x38)
     fn mi_get_anim_file_index(mi: GPtr<u8>) -> i32 = thiscall vslot 0x38 => unported;

@@ -579,7 +579,7 @@ use sa_world::bindings::ped_set_ped_state;
 use sa_world::bindings::player_ped_set_initial_state;
 use crate::bindings::ped_ctor;
 use crate::bindings::ped_set_model_index;
-use sa_stream::bindings::get_animation_block_index;
+use sa_core::bindings::get_animation_block_index;
 use sa_world::bindings::group_intel_set_default_task_allocator_type;
 use sa_world::bindings::stats_get_fat_and_muscle_modifier;
 orig! {

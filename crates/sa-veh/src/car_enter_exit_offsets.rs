@@ -10,7 +10,7 @@ use sa_stream::bindings::load_all_requested_models;
 use sa_anim::bindings::uncompress_animation;
 use sa_anim::bindings::anim_add_block_ref as add_anim_block_ref;
 use sa_stream::bindings::anim_remove_block_ref as remove_anim_block_ref;
-use sa_stream::bindings::get_animation_block_index;
+use sa_core::bindings::get_animation_block_index;
 use sa_core::bindings::anim_get_anim_association as get_anim_association;
 use sa_stream::bindings::streaming_request_model as request_model;
 
