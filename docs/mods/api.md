@@ -1,4 +1,4 @@
-# Mod API reference (API 1.15)
+# Mod API reference (API 1.16)
 
 The interface is defined once, in `crates/sa-mod-api/src/lib.rs` (`for_each_import!`, `for_each_export!`); this page
 explains it. The Rust SDK (`crates/sa-mod`) wraps every function; other languages import the functions from module
@@ -709,3 +709,16 @@ and trailer drifting apart under synced positions); `CTrailer::BreakTowLink` sta
 ### Determinism
 
 Nothing of this runs without a mod that asks for it.
+
+## Level 16: the frame rate and the aimed gun move (1.16)
+
+`set_game_option` 30 `GunMoveTimeStep` (after 29 `StandingSpeedClamp`): the load of
+`CTimer::ms_fTimeStep` in `CTaskSimpleUseGun::ControlGunMove`, which speeds a ped up and slows it down while it moves
+with a gun aimed. Off, every frame steps it by `sa_types::GUN_MOVE_FIXED_TIME_STEP` (2.0, a 25 fps frame), whatever
+the frame rate, so at a higher frame rate an aimed strafe starts and stops sooner.
+
+| function | SDK | what |
+|---|---|---|
+| `set_frame_limit(fps)` (`state = "write"`; not inside a hook: WRONG_PHASE) | `game::set_frame_limit(fps)` | `RsGlobal.frameLimit` (30; `RsInitialize` sets it as the game starts, so from `sa_settings` on), 1..=1000: the rate `WinMain`'s frame limiter caps at while the menu's Frame Limiter is on (the default). Above 71 the native pacing also skips `Idle`'s 14 ms minimum frame time, as it does with the limiter off. The host gives the game its value back when it disables the mod; BAD_ARG outside the range |
+
+Nothing changes without a mod that asks for it: the option is on and the limit the game's own.

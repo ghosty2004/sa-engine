@@ -1,5 +1,5 @@
 //! The vehicle damage and class, speed, gravity, statistics and entry-exit host functions (API 1.11), vehicle
-//! matrices and motion, and a ped's shot (1.14).
+//! matrices and motion, and a ped's shot (1.15), and the frame limit (1.16).
 
 use sa_mod_api::state::VehicleMotion;
 use sa_mod_api::{Call, status, vehicle};
@@ -22,6 +22,7 @@ pub fn calls(ctx: &mut CallCtx, mem: &mut dyn Mem, call: Call) -> Option<i32> {
             | Call::set_entry_exits_enabled { .. }
             | Call::set_vehicle_matrix { .. }
             | Call::fire_ped_weapon { .. }
+            | Call::set_frame_limit { .. }
     );
     if !reads && !writes {
         return None;
@@ -126,6 +127,15 @@ pub fn calls(ctx: &mut CallCtx, mem: &mut dyn Mem, call: Call) -> Option<i32> {
                 }
             }
             status::OK
+        }
+        Call::set_frame_limit { fps } => {
+            let Some(fps) = u32::try_from(fps).ok().filter(|f| (1..=sa_access::FRAME_LIMIT_MAX).contains(f)) else {
+                return Some(status::BAD_ARG);
+            };
+            if ctx.changes.frame_limit.is_none() {
+                ctx.changes.frame_limit = Some(g.frame_limit());
+            }
+            done(guarded(&mut ctx.logs, "set_frame_limit", || g.set_frame_limit(fps)))
         }
         _ => return None,
     })

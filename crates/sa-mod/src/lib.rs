@@ -1038,6 +1038,12 @@ pub mod game {
         check(unsafe { ffi::set_game_option(sa_mod_api::option::number(option), i32::from(on)) }).map(drop)
     }
 
+    /// Sets the frame rate the game's frame limiter caps at (1 to 1000; the game's own is 30).
+    pub fn set_frame_limit(fps: u32) -> Result<(), Error> {
+        let v = i32::try_from(fps).map_err(|_| Error::BadArg)?;
+        check(unsafe { ffi::set_frame_limit(v) }).map(drop)
+    }
+
     pub use sa_mod_api::sa_types::GameLimit;
 
     /// Raises one of the game's limits to `value` (from the original's value up to the limit's maximum). Only in

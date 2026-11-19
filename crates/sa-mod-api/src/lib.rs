@@ -34,7 +34,7 @@ pub const EXPORT_MEMORY: &str = "memory";
 /// The API's major version.
 pub const API_MAJOR: u16 = 1;
 /// The API's minor version.
-pub const API_MINOR: u16 = 15;
+pub const API_MINOR: u16 = 16;
 
 /// `major << 16 | minor`, the value of the `sa_api_version` export.
 pub const fn pack_version(major: u16, minor: u16) -> i32 {
@@ -1280,6 +1280,11 @@ macro_rules! for_each_import {
             /// that fires no instant hits or a ped whose model is not streamed in, `BAD_ARG` for a point that is not
             /// finite. Not inside a hook.
             [Write] fn fire_ped_weapon(handle: i32, x: f32, y: f32, z: f32) -> i32;
+            /// (1.16) Sets the frame rate the game's frame limiter caps at while the menu's Frame Limiter is on
+            /// (`RsGlobal.frameLimit`, 30 in the game), 1 to 1000; the game's 14 ms minimum frame time in `Idle` no
+            /// longer applies above 71. Any time but inside a hook; the host gives the game its value back when it
+            /// disables the mod. `BAD_ARG` outside the range.
+            [Write] fn set_frame_limit(fps: i32) -> i32;
         }
     };
 }

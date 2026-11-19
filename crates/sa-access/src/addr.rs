@@ -13,6 +13,8 @@ pub const TIME_STEP_NON_CLIPPED: u32 = 0xB7CB58;
 pub const TIME_IN_MS: u32 = 0xB7CB84;
 /// `RsGlobal.quit` (`RsGlobal` 0xC17040 + 0x10).
 pub const RS_QUIT: u32 = 0xC17050;
+/// `RsGlobal.frameLimit`: the frame rate the frame limiter caps at (30, set by `RsInitialize`).
+pub const RS_FRAME_LIMIT: u32 = 0xC1704C;
 /// `RsGlobal.maximumWidth` / `maximumHeight`.
 pub const RS_MAX_WIDTH: u32 = 0xC17044;
 /// See [`RS_MAX_WIDTH`].

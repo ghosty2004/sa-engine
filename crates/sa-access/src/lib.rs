@@ -48,7 +48,7 @@ mod weapons;
 
 pub use sa_types::{EntityRef, GameError, GameResult, ObjectRef, PedRef, VehicleRef};
 pub use objects::{MaterialSlot, Removal, SavedMaterials};
-pub use control::{draw_sprite, load_texture, load_txd_slot, print_text, txd_slot, world_to_screen};
+pub use control::{FRAME_LIMIT_MAX, draw_sprite, load_texture, load_txd_slot, print_text, txd_slot, world_to_screen};
 pub use markers::{BlipStyle, draw_radar_area};
 pub use vehicles::FLOAT_STAT_COUNT;
 pub use menus::MenuLayout;

@@ -17,6 +17,8 @@ pub struct GameChanges {
     pub gravity: Option<f32>,
     /// The entry-exits' flags before it switched them off (pool reference, flags word).
     pub entry_exit_flags: Option<Vec<(u32, u16)>>,
+    /// The frame limit before its first change.
+    pub frame_limit: Option<u32>,
 }
 
 impl GameChanges {
@@ -33,6 +35,9 @@ impl GameChanges {
         }
         if let Some(flags) = self.entry_exit_flags {
             g.set_entry_exit_flags(&flags);
+        }
+        if let Some(fps) = self.frame_limit {
+            let _ = g.set_frame_limit(fps);
         }
     }
 }

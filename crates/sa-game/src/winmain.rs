@@ -351,13 +351,16 @@ impl Drop for ClearOnDrop {
 const LAST_TICK_TIME: usize = 0xB72CA8;
 
 /// Not original (PERF-1, user decision 2026-11-16; ROADMAP divergence ledger, *accepted*): with the frame limiter
-/// off (`FrontEndMenuManager.m_bPrefsFrameLimiter` 0xBA6794 == 0), `Game::Idle`'s 14 ms rule is skipped. The port
-/// (`sa_core::mvpb_app::idle`, 0x53E920) is unchanged: it spins while `cycles / cyclesPerMs - g_LastTickTime < 14`
-/// (unsigned), so setting `g_LastTickTime` to 14 ms before now makes its first test pass, and the port then stores the
-/// real value as always. With the limiter on (the default), and in the deterministic mode (`--fixed-step`, the
-/// virtual clock: its runs replay the original's frames), nothing changes.
+/// off (`FrontEndMenuManager.m_bPrefsFrameLimiter` 0xBA6794 == 0), or on with a frame limit above 71 fps (a mod's
+/// `set_frame_limit`: the limiter's own interval, shorter than 14 ms, paces the frames, as samp.dll's 2 ms wait does),
+/// `Game::Idle`'s 14 ms rule is skipped. The port (`sa_core::mvpb_app::idle`, 0x53E920) is unchanged: it spins while
+/// `cycles / cyclesPerMs - g_LastTickTime < 14` (unsigned), so setting `g_LastTickTime` to 14 ms before now makes its
+/// first test pass, and the port then stores the real value as always. With the limiter on at the game's own limit
+/// (30), and in the deterministic mode (`--fixed-step`, the virtual clock: its runs replay the original's frames),
+/// nothing changes.
 fn skip_idle_spin_when_unlimited() {
-    if rd::<u8>(MENU_PREFS_FRAME_LIMITER) != 0 || crate::det::on() {
+    let limited = rd::<u8>(MENU_PREFS_FRAME_LIMITER) != 0 && rd::<i32>(RS_FRAME_LIMIT) <= 1000 / 14;
+    if limited || crate::det::on() {
         return;
     }
     if let Some(now_ms) = get_current_time_in_cycles().checked_div(get_cycles_per_millisecond()) {
