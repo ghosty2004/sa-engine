@@ -14,6 +14,8 @@
 # SCENARIO=world: after the spawn, the world scenario of world-scenario.sh (pickups, checkpoints, map icons, a gang
 # zone, an actor, then gmx and a server restart) instead of the join steps, then /q; mod-join.sh SCENARIO=world runs the
 # same steps on the samp mod.
+# CMDS=FILE (tools/e2e/samp/objects.cmds): after the spawn, the file's server commands instead of the fixed scenario
+# (`sleep|S` waits, `shot|NAME` takes a screenshot), then /q.
 # Output: target/e2e/lane-N/samp-ab/NAME/ (server.log, samp-rs.log, shots, sequence.txt).
 # sequence.txt = the server's [cov] event lines + the client's RPC/state lines, with timestamps removed.
 set -uo pipefail
@@ -205,6 +207,29 @@ PY
     done
 }
 
+# The client's objects and world entities (control channel `world`) into FILE.
+world() {
+    python3 -I - "$SAMP_RS_CTL_PORT" > "$1" << 'PY'
+import socket, sys
+try:
+    s = socket.create_connection(("127.0.0.1", int(sys.argv[1])), timeout=3)
+    s.settimeout(2)
+    s.sendall(b"world\n")
+    data = b""
+    while True:
+        try:
+            chunk = s.recv(65536)
+        except socket.timeout:
+            break
+        if not chunk:
+            break
+        data += chunk
+    sys.stdout.write(data.decode(errors="replace"))
+except OSError as e:
+    print("error", e)
+PY
+}
+
 wait_log "\[cov\] connect id=[0-9]+ name=AbPlayer" 180 || { shot fail-connect; say "FAIL: no connect"; exit 1; }
 mark "connected"
 wait_log "\[cov\] class id=" 90 || { shot fail-class; say "FAIL: no class selection"; exit 1; }
@@ -222,6 +247,7 @@ mark "spawned"
 sleep 4
 shot spawn
 probe spawned
+if [ "${SCENARIO:-join}" = world ] || [ -n "${CMDS:-}" ]; then
 if [ "${SCENARIO:-join}" = world ]; then
     wait_count() { # REGEX N SECS
         local i
@@ -252,6 +278,17 @@ if [ "${SCENARIO:-join}" = world ]; then
     # shellcheck source=world-scenario.sh
     source "$HERE/world-scenario.sh"
     world_scenario
+else
+    mark "commands of $CMDS"
+    while IFS= read -r c; do
+        case "$c" in
+            '#'* | '') ;;
+            sleep\|*) sleep "${c#sleep|}" ;;
+            shot\|*) alive; shot "${c#shot|}"; world "$OUT/world-${c#shot|}.txt" ;;
+            *) cmd "$c" ;;
+        esac
+    done < "$CMDS"
+fi
     mark "quit (/q)"
     e2e_key t; sleep 0.5; DISPLAY="$E2E_DISPLAY" xdotool type --delay 60 "/q"; e2e_key Return
     wait_log "\[cov\] disconnect id=" 15 || say "no disconnect"

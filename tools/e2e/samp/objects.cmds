@@ -1,0 +1,31 @@
+# The objects scenario (sampcov.pwn commands, one per line; `sleep|S` waits, `shot|NAME` takes a screenshot), run
+# after the spawn by samp-rs-ab.sh (CMDS=...) on the DLL client and by mod-join.sh (CMDS=...) on the samp mod.
+# The NPC and the car mod-join.sh adds are removed first, so both clients see the same world.
+clearnpcs
+clearvehs
+time|12
+weather|10
+pos|2495|-1680|13.5|0
+sleep|3
+objscene
+sleep|6
+campos|2495|-1692|22|2502|-1655|13
+sleep|4
+shot|scene
+objwhere
+campos|2489|-1674|16|2495|-1680|14
+sleep|3
+shot|player
+objscene2
+sleep|6
+objwhere
+campos|2495|-1692|22|2502|-1655|13
+sleep|3
+shot|scene2
+pos|1480|-1740|13.5|0
+sleep|8
+pos|2495|-1680|13.5|0
+campos|2495|-1692|22|2502|-1655|13
+sleep|8
+shot|reloaded
+objwhere

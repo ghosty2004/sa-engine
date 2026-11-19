@@ -19,7 +19,8 @@
 # the resolution mod (from MODS) at that video mode.
 # SA:MP's UI files (sampgui.png, mouse.png, sampaux3.ttf from SAMP_CLIENT, default $SA_ROOT/re/samp/client, and the
 # game's gtaweap3.ttf; third-party, never committed) are copied into the samp mod's folder when they exist.
-# EXTRA_CMDS: more server commands after the scripted ones, `;`-separated (`sleep|S` waits), e.g.
+# EXTRA_CMDS: more server commands after the scripted ones, `;`-separated (`sleep|S` waits, `shot|NAME` copies the
+# newest complete presented frame to OUT/shots/NAME.png), then the lines of the file CMDS (tools/e2e/samp/objects.cmds), e.g.
 # 'td|~y~textdraw;dialog|1|0|Welcome|Hello;sleep|8'; SA_GAME_KEYS adds scripted keys (`tab:1500:1502`
 # opens the scoreboard). BOT=1: samp-rs's samp-bot (SAMP_BOT, default samp-rs/target/release/samp-bot) joins as
 # a second, real player once ours spawned, stands at the spawn point, ahead of our player (its nametag), and leaves
@@ -76,8 +77,8 @@ exec {LOCK_FD}> "$SA_ROOT/target/locks/${SAMP_LOCK:-samp-mod.lock}"
 flock "$LOCK_FD"
 if ss -lun | grep -q ":$PORT "; then echo "mod-join: UDP $PORT busy" >&2; exit 1; fi
 
-rm -rf "$OUT/present" "$OUT/report.md" "$OUT/moddata"
-mkdir -p "$SRV" "$OUT/present" "$OUT/moddata/samp"
+rm -rf "$OUT/present" "$OUT/shots" "$OUT/report.md" "$OUT/moddata"
+mkdir -p "$SRV" "$OUT/present" "$OUT/shots" "$OUT/moddata/samp"
 printf '127.0.0.1:%s' "$PORT" > "$OUT/moddata/samp/server"
 printf 'ModCJ' > "$OUT/moddata/samp/name"
 printf '1' > "$OUT/moddata/samp/auto_spawn"
@@ -294,8 +295,14 @@ elif wait_log '\[cov\] spawn id=' 150; then
     cmd "veh|560|2502|-1690|13.4|90"
     sleep 6
     IFS=';' read -ra EXTRA <<< "${EXTRA_CMDS:-}"
+    [ -n "${CMDS:-}" ] && mapfile -t -O "${#EXTRA[@]}" EXTRA < <(grep -vE '^(#|$)' "$CMDS")
     for c in "${EXTRA[@]}"; do
-        case "$c" in sleep\|*) sleep "${c#sleep|}" ;; ?*) cmd "$c" ;; esac
+        case "$c" in
+            sleep\|*) sleep "${c#sleep|}" ;;
+            shot\|*) shot="$(ls -t "$OUT/present" | grep -E '^present-[0-9]+[.]png$' | sed -n 2p)"
+                [ -n "$shot" ] && cp "$OUT/present/$shot" "$OUT/shots/${c#shot|}.png" && say "shot ${c#shot|} ($shot)" ;;
+            ?*) cmd "$c" ;;
+        esac
     done
     if [ -n "$BOT_PID" ]; then
         wait "$BOT_PID" 2> /dev/null
@@ -308,7 +315,7 @@ fi
 wait "$GAME_PID"
 say "game exit $?"
 GAME_PID=
-grep -E '\[(join|part|connection)\]|\[cov\] (connect|class|spawn|state|where|npc|pickup|cp-enter|rcp-enter|loaded|[0-9]+ done|disconnect)' "$SLOG" > "$OUT/server-events.txt"
+grep -E '\[(join|part|connection)\]|\[cov\] (connect|class|spawn|state|where|npc|pickup|cp-enter|rcp-enter|loaded|[0-9]+ (done|obj)|disconnect)' "$SLOG" > "$OUT/server-events.txt"
 say "server events: $(wc -l < "$OUT/server-events.txt") lines; PNGs: $(ls "$OUT/present" | wc -l)"
 GLOG="$OUT/sa-game.log"
 [ "$WEB" = 1 ] && GLOG="$OUT/web/game-log.txt"

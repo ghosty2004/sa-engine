@@ -13,15 +13,19 @@
 //   actor|skin|x|y|z|angle  explode|x|y|z|type|radius  time|h  weather|w  money|n  wanted|n
 //   anim|lib|name  clranim  special|action  campos|x|y|z|lx|ly|lz  camback  spec|1/0  drunk|level  attach|model|bone
 //   menu  sound|id  gravity|g  control|0/1  rcon|command
+//   Objects (tools/e2e/samp/objects.cmds): objscene (a small mapping with materials, a moving and turning object,
+//   an object on the player and one on a bone, a removed house)  objscene2 (moves, stops, rotations, a deletion)
+//   objwhere (every scene object's position)  rmbuild|model|x|y|z|radius
 //   NPCs (open.mp NPC component; remote players for the client):
 //   npc|name|x|y|z|skin|weapon  npcmove|id|x|y|z  npcfollow|id  npcaim|id|shoot  npcstop|id  npcmelee|id
-//   npcanim|id|lib|name  npcveh|id|vehid|seat  npcenter|id|vehid|seat  npckill|id  npcdel|id
+//   npcanim|id|lib|name  npcveh|id|vehid|seat  npcenter|id|vehid|seat  npckill|id  npcdel|id  clearnpcs  clearvehs (all but the train)
 #include <open.mp>
 
 new gLast = 0;
 new gLocal = INVALID_PLAYER_ID;
 new Text:gTd = Text:INVALID_TEXT_DRAW;
 new Menu:gMenu = Menu:INVALID_MENU;
+new gObj[8] = { INVALID_OBJECT_ID, ... };
 
 main() {}
 
@@ -215,6 +219,47 @@ Run(seq, const line[])
     else if (!strcmp(cmd, "spec")) TogglePlayerSpectating(p, in(line, 1) != 0);
     else if (!strcmp(cmd, "drunk")) SetPlayerDrunkLevel(p, in(line, 1));
     else if (!strcmp(cmd, "attach")) SetPlayerAttachedObject(p, 0, in(line, 1), in(line, 2), 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0, 0);
+    else if (!strcmp(cmd, "rmbuild")) RemoveBuildingForPlayer(p, in(line, 1), fl(line, 2), fl(line, 3), fl(line, 4), fl(line, 5));
+    else if (!strcmp(cmd, "objscene"))
+    {
+        // a metal platform with a marble top, a red fence, a tower drawn from afar, a marble roof piece, a crate
+        // that rises and turns, a crate above the player and a rifle on the player's back
+        gObj[0] = CreateObject(3095, 2495.0, -1662.0, 12.4, 0.0, 0.0, 0.0);
+        gObj[1] = CreateObject(987, 2486.0, -1668.0, 12.5, 0.0, 0.0, 90.0);
+        gObj[2] = CreateObject(3279, 2506.0, -1662.0, 12.5, 0.0, 0.0, 45.0, 300.0);
+        gObj[3] = CreateObject(1697, 2495.0, -1652.0, 15.0, 10.0, 0.0, 30.0);
+        gObj[4] = CreateObject(1271, 2491.0, -1668.0, 13.0, 0.0, 0.0, 0.0);
+        gObj[5] = CreateObject(1271, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        SetObjectMaterial(gObj[0], 0, 3922, "bistro", "Marble2", 0xFFFFFFFF);
+        SetObjectMaterial(gObj[1], 0, -1, "none", "none", 0xFFFF0000);
+        MoveObject(gObj[4], 2491.0, -1668.0, 17.0, 1.0, 0.0, 0.0, 180.0);
+        SetObjectMaterial(gObj[3], 0, 3922, "bistro", "Marble2", 0);
+        AttachObjectToPlayer(gObj[5], p, 0.0, 0.0, 3.0, 0.0, 0.0, 45.0);
+        SetObjectNoCameraCol(gObj[3]);
+        SetPlayerAttachedObject(p, 1, 355, 1, 0.1, -0.2, 0.0, 0.0, 60.0, 0.0, 1.0, 1.0, 1.0, 0, 0);
+        RemoveBuildingForPlayer(p, -1, 2517.48, -1644.70, 15.2, 6.0);
+        for (new i = 0; i < 6; i++) printf("[cov] %d objscene %d id %d", seq, i, gObj[i]);
+    }
+    else if (!strcmp(cmd, "objscene2"))
+    {
+        SetObjectPos(gObj[3], 2497.0, -1652.0, 16.0);
+        SetObjectRot(gObj[0], 0.0, 0.0, 15.0);
+        StopObject(gObj[4]);
+        MoveObject(gObj[1], 2486.0, -1668.0, 14.5, 0.5);
+        DestroyObject(gObj[2]);
+        gObj[2] = INVALID_OBJECT_ID;
+    }
+    else if (!strcmp(cmd, "objwhere"))
+    {
+        new Float:x, Float:y, Float:z, Float:rx, Float:ry, Float:rz;
+        for (new i = 0; i < 6; i++)
+        {
+            if (gObj[i] == INVALID_OBJECT_ID) continue;
+            GetObjectPos(gObj[i], x, y, z);
+            GetObjectRot(gObj[i], rx, ry, rz);
+            printf("[cov] %d objwhere %d pos=%.2f,%.2f,%.2f rot=%.1f,%.1f,%.1f moving=%d", seq, gObj[i], x, y, z, rx, ry, rz, IsObjectMoving(gObj[i]));
+        }
+    }
     else if (!strcmp(cmd, "menu"))
     {
         if (gMenu == Menu:INVALID_MENU)
@@ -240,6 +285,8 @@ Run(seq, const line[])
         NPC_SetWeapon(n, WEAPON:in(line, 6));
         printf("[cov] %d npc %d", seq, n);
     }
+    else if (!strcmp(cmd, "clearvehs")) { for (new v = 1; v <= MAX_VEHICLES; v++) if (GetVehicleModel(v) != 0 && GetVehicleModel(v) != 538) DestroyVehicle(v); }
+    else if (!strcmp(cmd, "clearnpcs")) { for (new i = 0; i < MAX_PLAYERS; i++) if (IsPlayerConnected(i) && IsPlayerNPC(i)) NPC_Destroy(i); }
     else if (!strcmp(cmd, "npcmove")) NPC_Move(in(line, 1), fl(line, 2), fl(line, 3), fl(line, 4), NPC_MOVE_TYPE_AUTO);
     else if (!strcmp(cmd, "npcfollow")) NPC_MoveToPlayer(in(line, 1), p, NPC_MOVE_TYPE_WALK);
     else if (!strcmp(cmd, "npcaim")) NPC_AimAtPlayer(in(line, 1), p, in(line, 2) != 0, 400);
