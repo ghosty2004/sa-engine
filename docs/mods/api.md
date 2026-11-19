@@ -521,3 +521,48 @@ pool slots. The streaming budget is how much model data the game keeps loaded be
 fills the same heap. Some slot indices are 16-bit in the game (collision models, texture dictionaries), so the pools
 stay below 0x8000. Ports read a limit where the original sizes from its constant (`sa_core::options::limit`); with
 nothing raised the game is the original (verify-all unchanged).
+## Level 11: vehicle damage, speeds, gravity, statistics (1.11)
+
+What a multiplayer client needs to show the server's vehicles and the player's state, in GTA terms.
+
+### Reads (`state = "read"`)
+
+| function | SDK | what |
+|---|---|---|
+| `vehicle_class(handle)` | `world::vehicle_class(v)` | the vehicle's class from its vtable, numbered as `sa_mod_api::vehicle::CLASSES` (automobile, bike, BMX, heli, monster truck, plane, quad, trailer, boat, train) |
+| `vehicle_damage(handle, out)` | `world::vehicle_damage(v)` | 4 `u32`: the damage manager's panel, door and light states (automobiles and planes; lights automobiles only) and the burst tyres (automobiles bit 3 = first wheel .. bit 0 = fourth; bikes bit 1 front, bit 0 rear) |
+
+### Changes (`state = "write"`; not inside a hook: WRONG_PHASE)
+
+| function | SDK | what |
+|---|---|---|
+| `set_vehicle_damage(handle, panels, doors, lights, tyres)` | `world::set_vehicle_damage(v, [..])` | an automobile or plane takes the states and rebuilds its parts as a loaded saved game does (`CAutomobile::SetupDamageAfterLoad`); automobiles and bikes take the tyres (set bit: burst); other classes keep their state |
+| `set_vehicle_speed(handle, ptr)` | `world::set_vehicle_speed(v, move, turn)` | move and turn speed (6 `f32`, units per 1/50 s) |
+| `set_ped_speed(handle, x, y, z)` | `world::set_ped_speed(p, v)` | the move speed; a standing ped has its two standing flags toggled so it leaves the ground |
+| `set_gravity(g)` | `world::set_gravity(g)` | `GAME_GRAVITY` (0.008 in the game's data; constant data the engine writes through its image writer); restored when the host disables the mod |
+| `set_float_stat(stat, value)` | `world::set_float_stat(stat, value)` | `CStats::StatTypesFloat[stat]` (0..=81; 69..=79 the weapon skills) without the on-screen notice |
+
+### Script commands
+
+1.10 adds `POINT_CAMERA_AT_CAR` (0158), `POINT_CAMERA_AT_CHAR` (0159), `ADD_EXPLOSION` (020C), `IS_CAR_IN_WATER`
+(02BF), `GET_GROUND_Z_FOR_3D_COORD` (02CE), `START_CHAR_FIRE` (0326), `SET_RADIO_CHANNEL` (041E),
+`GET_CHAR_WEAPON_IN_SLOT` (04B8), `SET_CAN_BURST_CAR_TYRES` (053F), `IS_CHAR_PLAYING_ANIM` (0611), `FORCE_CAR_LIGHTS`
+(067F), `TASK_LOOK_AT_COORD` (06A9), `SET_TRAIN_SPEED` (06DC), `SET_TRAIN_CRUISE_SPEED` (06DD), `ADD_VEHICLE_MOD` (06E7),
+`REMOVE_VEHICLE_MOD` (06E8), `REQUEST_VEHICLE_MOD` (06E9), `HAS_VEHICLE_MOD_LOADED` (06EA), `GIVE_VEHICLE_PAINTJOB`
+(06ED), `TASK_USE_MOBILE_PHONE` (0729), `LOAD_SHOP` (075E), `TASK_JETPACK` (07A7), `DETACH_TRAILER_FROM_CAB` (07AC),
+`SET_MISSION_TRAIN_COORDINATES` (07C7), `GIVE_MELEE_ATTACK_TO_CHAR` (07FE), `SET_CAR_HYDRAULICS` (07FF),
+`SET_VEHICLE_AREA_VISIBLE` (0840), `ATTACH_TRAILER_TO_CAB` (0893), `OPEN_CAR_DOOR_A_BIT` (08A6),
+`SET_PLANE_UNDERCARRIAGE_UP` (08E6), `SET_CAR_ENGINE_ON` (0918), `CAMERA_SET_VECTOR_TRACK` (0920),
+`CAMERA_SET_LERP_FOV` (0922), `CAMERA_RESET_NEW_SCRIPTABLES` (0925), `CAMERA_PERSIST_TRACK` (092F),
+`CAMERA_PERSIST_POS` (0930), `CAMERA_SET_VECTOR_MOVE` (0936), `ADD_EXPLOSION_VARIABLE_SHAKE` (0948),
+`SET_PETROL_TANK_WEAKPOINT` (09C4), `IS_PLAYER_USING_JETPACK` (0A0C) and `FIX_CAR` (0A30).
+
+Their handlers do not check what they are given; the host refuses (FAILED, with a log line) an upgrade outside
+1000..=1193, `ADD_VEHICLE_MOD` of an upgrade that is not loaded, upgrades, paintjobs (-1..=3) and door openings
+(doors 0..=5) on a vehicle that is no automobile (or heli, plane, monster truck, quad, trailer), train commands on
+a vehicle that is no train, the gear command on one that is no plane, explosion types outside 0..=12, radio
+channels outside 0..=13, melee styles outside 4..=16 and weapon slots outside 1..=13.
+
+### Determinism
+
+Nothing of level 10 runs without a mod that asks for it.

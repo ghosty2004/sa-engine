@@ -13,6 +13,8 @@ pub struct GameChanges {
     pub models: Vec<ModelId>,
     /// Draw distances it changed: (model, the original distance).
     pub draw_distances: Vec<(ModelId, f32)>,
+    /// The gravity before its first change.
+    pub gravity: Option<f32>,
 }
 
 impl GameChanges {
@@ -23,6 +25,9 @@ impl GameChanges {
         }
         for (m, d) in self.draw_distances.into_iter().rev() {
             let _ = g.set_model_draw_distance(m, d);
+        }
+        if let Some(gravity) = self.gravity {
+            let _ = g.set_gravity(gravity);
         }
     }
 }
@@ -77,7 +82,7 @@ pub fn apply(g: &mut GameAccess, call: Call, logs: &mut Vec<(i32, String)>) -> i
 }
 
 /// Reads `N` little-endian `f32` at `ptr`, all finite.
-fn floats<const N: usize>(mem: &dyn Mem, ptr: i32) -> Option<[f32; N]> {
+pub(crate) fn floats<const N: usize>(mem: &dyn Mem, ptr: i32) -> Option<[f32; N]> {
     let raw = mem.read(u32::try_from(ptr).ok()?, 4 * N as u32)?;
     let mut out = [0f32; N];
     for (o, w) in out.iter_mut().zip(raw.as_chunks::<4>().0) {

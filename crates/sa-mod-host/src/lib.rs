@@ -31,6 +31,7 @@ pub mod module;
 pub mod net;
 pub mod objects;
 pub mod storage;
+pub mod vehicles;
 
 use std::rc::Rc;
 

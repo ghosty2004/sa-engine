@@ -754,6 +754,41 @@ pub mod world {
     pub fn set_vehicle_colours(vehicle: VehicleRef, primary: u8, secondary: u8) -> Result<(), Error> {
         done(unsafe { ffi::set_vehicle_colours(vehicle.0 as i32, i32::from(primary), i32::from(secondary)) })
     }
+    /// Sets the gravity (API 1.10).
+    pub fn set_gravity(gravity: f32) -> Result<(), Error> {
+        done(unsafe { ffi::set_gravity(gravity) })
+    }
+    /// Sets the game's float statistic `stat` (API 1.10).
+    pub fn set_float_stat(stat: u16, value: f32) -> Result<(), Error> {
+        done(unsafe { ffi::set_float_stat(i32::from(stat), value) })
+    }
+    /// `vehicle`'s class (API 1.10).
+    pub fn vehicle_class(vehicle: VehicleRef) -> Result<sa_mod_api::sa_types::vehicle::VehicleClass, Error> {
+        let n = check(unsafe { ffi::vehicle_class(vehicle.0 as i32) })?;
+        sa_mod_api::vehicle::class_of(n).ok_or(Error::Failed)
+    }
+    /// `vehicle`'s damage: panels, doors, lights, tyres (API 1.10, `sa_mod_api` `vehicle_damage`).
+    pub fn vehicle_damage(vehicle: VehicleRef) -> Result<[u32; sa_mod_api::vehicle::DAMAGE_WORDS], Error> {
+        let mut out = [0u32; sa_mod_api::vehicle::DAMAGE_WORDS];
+        // SAFETY: the host writes the words of `out`
+        done(unsafe { ffi::vehicle_damage(vehicle.0 as i32, out.as_mut_ptr() as usize as i32) })?;
+        Ok(out)
+    }
+    /// Gives `vehicle` the damage `[panels, doors, lights, tyres]` (API 1.10).
+    pub fn set_vehicle_damage(vehicle: VehicleRef, d: [u32; sa_mod_api::vehicle::DAMAGE_WORDS]) -> Result<(), Error> {
+        let w = |i: usize| d[i] as i32;
+        done(unsafe { ffi::set_vehicle_damage(vehicle.0 as i32, w(0), w(1), w(2), w(3)) })
+    }
+    /// Writes `vehicle`'s move and turn speed (API 1.10).
+    pub fn set_vehicle_speed(vehicle: VehicleRef, move_speed: Vec3, turn_speed: Vec3) -> Result<(), Error> {
+        let w = [move_speed.x, move_speed.y, move_speed.z, turn_speed.x, turn_speed.y, turn_speed.z].map(f32::to_bits);
+        // SAFETY: the host reads the 6 words of `w`
+        done(unsafe { ffi::set_vehicle_speed(vehicle.0 as i32, w.as_ptr() as usize as i32) })
+    }
+    /// Writes `ped`'s move speed; a standing ped leaves the ground (API 1.10).
+    pub fn set_ped_speed(ped: PedRef, speed: Vec3) -> Result<(), Error> {
+        done(unsafe { ffi::set_ped_speed(ped.0 as i32, speed.x, speed.y, speed.z) })
+    }
 }
 
 /// Entities the mod creates and owns (permission `entities = true`; API 1.3): deleted by the host when the mod is

@@ -402,6 +402,31 @@ Reference `docs/mods/api.md` level 9. What SA:MP's objects needed, in GTA terms:
   `RwTextureRead`, the hierarchy lookups) through `sa-core`'s bindings and a `vslot`; the host keeps the session
   state the render and IPL observers need (`sa_access::objects` thread-locals) and per mod what it must give back.
 
+### 4.1h Vehicle damage, speeds, gravity, statistics; more script commands (API 1.10, 2026-11-19)
+
+Reference `docs/mods/api.md` level 10. What SA:MP's vehicle, player and camera RPCs needed, in GTA terms:
+
+- **Vehicles** (`state = "read"` / `"write"`): the class (from the vtable, as the game's `IsAutomobile` & co.
+  decide), the damage manager's panel, door and light states and the tyre states, and setting them as a loaded
+  saved game does (`CAutomobile::SetupDamageAfterLoad`, through an `sa-core` binding of the port); the move and turn
+  speed.
+- **Peds** (`state = "write"`): the move speed, with the standing flags toggled so the ped leaves the ground.
+- **World** (`state = "write"`): the gravity and the float statistics (`CStats::StatTypesFloat`, written as the game
+  stores them, without its on-screen notice). `GAME_GRAVITY` is constant data (`.rdata`), which sa-game maps
+  read-only natively as the original's loader does: the engine registers an image writer
+  (`sa_core::orig::registry::set_image_writer`, sa-game's `arena::write_image`, which lifts the protection for the
+  write the way samp.dll's `VirtualProtect` does), and `View::write_image` uses it; the browser build has no page
+  protection. The host gives the gravity back when it disables the mod.
+- **Script commands** (`scripts = true`): the vehicle tuning, door, train, trailer, siren, engine and lights,
+  plane gear, proofs and water commands, the camera's point-at, scripted move and FOV commands, explosions, the
+  ground height, jetpack, look-at, melee style, mobile phone, weapon slots, radio channel, shops and fires. The
+  handlers of several of them trust a vehicle's class or an index (an upgrade on a bike, a train command on a car,
+  a door past the car nodes, an explosion type past the table): `sa-access` refuses those arguments before the
+  command runs (`Game::refused_arguments`), as it refuses unknown animation blocks and models.
+- **Not here**: train creation (mission trains are script-thread things the private thread does not own), particle
+  effects (registered with the calling script's cleanup), window flags, the plate texture and GXT entries for menus
+  stay for a later level.
+
 ### 4.2 Data mods (added by the user, 2026-11-17)
 
 Code mods (levels 1–4) cannot add content on their own: a new vehicle, ped, weapon or building needs files (models,

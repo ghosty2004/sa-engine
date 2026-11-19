@@ -437,6 +437,9 @@ pub fn dispatch(ctx: &mut CallCtx, mem: &mut dyn Mem, index: usize, args: &[Val]
     if let Some(r) = boot_setup(ctx, call) {
         return Ok(r);
     }
+    if let Some(r) = crate::vehicles::calls(ctx, mem, call) {
+        return Ok(r);
+    }
     if let Some(r) = services(ctx, mem, call) {
         return Ok(r);
     }

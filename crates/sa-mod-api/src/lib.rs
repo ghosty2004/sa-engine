@@ -34,7 +34,7 @@ pub const EXPORT_MEMORY: &str = "memory";
 /// The API's major version.
 pub const API_MAJOR: u16 = 1;
 /// The API's minor version.
-pub const API_MINOR: u16 = 10;
+pub const API_MINOR: u16 = 11;
 
 /// `major << 16 | minor`, the value of the `sa_api_version` export.
 pub const fn pack_version(major: u16, minor: u16) -> i32 {
@@ -365,6 +365,8 @@ pub mod script {
         (0x0110, "CLEAR_WANTED_LEVEL", "P"),
         (0x0118, "IS_CHAR_DEAD", "p"),
         (0x0119, "IS_CAR_DEAD", "v"),
+        (0x0158, "POINT_CAMERA_AT_CAR", "vii"),
+        (0x0159, "POINT_CAMERA_AT_CHAR", "pii"),
         (0x015F, "SET_FIXED_CAMERA_POSITION", "ffffff"),
         (0x0160, "POINT_CAMERA_AT_POINT", "fffi"),
         (0x016C, "ADD_HOSPITAL_RESTART", "ffffi"),
@@ -376,6 +378,7 @@ pub mod script {
         (0x01EB, "SET_CAR_DENSITY_MULTIPLIER", "f"),
         (0x01F0, "SET_MAX_WANTED_LEVEL", "i"),
         (0x020A, "LOCK_CAR_DOORS", "vi"),
+        (0x020C, "ADD_EXPLOSION", "fffi"),
         (0x0223, "SET_CHAR_HEALTH", "pi"),
         (0x0224, "SET_CAR_HEALTH", "vi"),
         (0x0229, "CHANGE_CAR_COLOUR", "vii"),
@@ -384,8 +387,11 @@ pub mod script {
         (0x02A3, "SWITCH_WIDESCREEN", "i"),
         (0x02AB, "SET_CHAR_PROOFS", "piiiii"),
         (0x02AC, "SET_CAR_PROOFS", "viiiii"),
+        (0x02BF, "IS_CAR_IN_WATER", "v"),
+        (0x02CE, "GET_GROUND_Z_FOR_3D_COORD", "fffo"),
         (0x02EB, "RESTORE_CAMERA_JUMPCUT", ""),
         (0x0321, "EXPLODE_CHAR_HEAD", "p"),
+        (0x0326, "START_CHAR_FIRE", "po"),
         (0x0330, "SET_PLAYER_NEVER_GETS_TIRED", "Pi"),
         (0x0362, "WARP_CHAR_FROM_CAR_TO_COORD", "pfff"),
         (0x036A, "WARP_CHAR_INTO_CAR", "pv"),
@@ -394,30 +400,65 @@ pub mod script {
         (0x0397, "SWITCH_CAR_SIREN", "vi"),
         (0x03C0, "STORE_CAR_CHAR_IS_IN_NO_SAVE", "po"),
         (0x03DE, "SET_PED_DENSITY_MULTIPLIER", "f"),
+        (0x041E, "SET_RADIO_CHANNEL", "i"),
         (0x0430, "WARP_CHAR_INTO_CAR_AS_PASSENGER", "pvi"),
         (0x0446, "SET_CHAR_SUFFERS_CRITICAL_HITS", "pi"),
         (0x048F, "REMOVE_ALL_CHAR_WEAPONS", "p"),
+        (0x04B8, "GET_CHAR_WEAPON_IN_SLOT", "piooo"),
         (0x04BB, "SET_AREA_VISIBLE", "i"),
         (0x04D7, "FREEZE_CHAR_POSITION", "pi"),
         (0x04E4, "REQUEST_COLLISION", "ff"),
         (0x04ED, "REQUEST_ANIMATION", "s"),
         (0x04EE, "HAS_ANIMATION_LOADED", "s"),
         (0x052C, "SET_PLAYER_DRUNKENNESS", "Pi"),
+        (0x053F, "SET_CAN_BURST_CAR_TYRES", "vi"),
         (0x0581, "DISPLAY_RADAR", "i"),
         (0x05C4, "TASK_HANDS_UP", "pi"),
         (0x05CA, "TASK_ENTER_CAR_AS_PASSENGER", "pvii"),
         (0x05CB, "TASK_ENTER_CAR_AS_DRIVER", "pvi"),
         (0x05CD, "TASK_LEAVE_CAR", "pv"),
         (0x060B, "SET_CHAR_DECISION_MAKER", "pi"),
+        (0x0611, "IS_CHAR_PLAYING_ANIM", "ps"),
+        (0x067F, "FORCE_CAR_LIGHTS", "vi"),
         (0x0687, "CLEAR_CHAR_TASKS", "p"),
+        (0x06A9, "TASK_LOOK_AT_COORD", "pfffi"),
         (0x06BD, "IS_LINE_OF_SIGHT_CLEAR", "ffffffiiiii"),
         (0x06D7, "SWITCH_RANDOM_TRAINS", "i"),
+        (0x06DC, "SET_TRAIN_SPEED", "vf"),
+        (0x06DD, "SET_TRAIN_CRUISE_SPEED", "vf"),
+        (0x06E7, "ADD_VEHICLE_MOD", "vio"),
+        (0x06E8, "REMOVE_VEHICLE_MOD", "vi"),
+        (0x06E9, "REQUEST_VEHICLE_MOD", "i"),
+        (0x06EA, "HAS_VEHICLE_MOD_LOADED", "i"),
+        (0x06ED, "GIVE_VEHICLE_PAINTJOB", "vi"),
+        (0x0729, "TASK_USE_MOBILE_PHONE", "pi"),
+        (0x075E, "LOAD_SHOP", "s"),
         (0x0792, "CLEAR_CHAR_TASKS_IMMEDIATELY", "p"),
+        (0x07A7, "TASK_JETPACK", "p"),
+        (0x07AC, "DETACH_TRAILER_FROM_CAB", "vv"),
+        (0x07C7, "SET_MISSION_TRAIN_COORDINATES", "vfff"),
+        (0x07FE, "GIVE_MELEE_ATTACK_TO_CHAR", "pii"),
+        (0x07FF, "SET_CAR_HYDRAULICS", "vi"),
         (0x0812, "TASK_PLAY_ANIM_NON_INTERRUPTABLE", "pssfiiiii"),
         (0x0826, "DISPLAY_HUD", "i"),
+        (0x0840, "SET_VEHICLE_AREA_VISIBLE", "vi"),
         (0x0860, "SET_CHAR_AREA_VISIBLE", "pi"),
         (0x087E, "SET_CHAR_DROPS_WEAPONS_WHEN_DEAD", "pi"),
+        (0x0893, "ATTACH_TRAILER_TO_CAB", "vv"),
+        (0x08A6, "OPEN_CAR_DOOR_A_BIT", "vif"),
+        (0x08E6, "SET_PLANE_UNDERCARRIAGE_UP", "vi"),
+        (0x0918, "SET_CAR_ENGINE_ON", "vi"),
+        (0x0920, "CAMERA_SET_VECTOR_TRACK", "ffffffii"),
+        (0x0922, "CAMERA_SET_LERP_FOV", "ffii"),
+        (0x0925, "CAMERA_RESET_NEW_SCRIPTABLES", ""),
+        (0x092F, "CAMERA_PERSIST_TRACK", "i"),
+        (0x0930, "CAMERA_PERSIST_POS", "i"),
+        (0x0936, "CAMERA_SET_VECTOR_MOVE", "ffffffii"),
+        (0x0948, "ADD_EXPLOSION_VARIABLE_SHAKE", "fffif"),
         (0x09BA, "DISPLAY_ZONE_NAMES", "i"),
+        (0x09C4, "SET_PETROL_TANK_WEAKPOINT", "vi"),
+        (0x0A0C, "IS_PLAYER_USING_JETPACK", "P"),
+        (0x0A30, "FIX_CAR", "v"),
     ];
 
     /// The parameters of `opcode` ([`COMMANDS`]), if a mod may run it.
@@ -637,6 +678,37 @@ pub mod model {
             WEAPON => ModelKind::Weapon,
             _ => ModelKind::None,
         }
+    }
+}
+
+/// Vehicle classes and damage (API 1.10: `vehicle_class`, `vehicle_damage`, `set_vehicle_damage`).
+pub mod vehicle {
+    use sa_types::vehicle::VehicleClass;
+
+    /// The classes in `vehicle_class`'s numbering (the number is the index).
+    pub const CLASSES: [VehicleClass; 10] = [
+        VehicleClass::Automobile,
+        VehicleClass::Bike,
+        VehicleClass::Bmx,
+        VehicleClass::Heli,
+        VehicleClass::MonsterTruck,
+        VehicleClass::Plane,
+        VehicleClass::QuadBike,
+        VehicleClass::Trailer,
+        VehicleClass::Boat,
+        VehicleClass::Train,
+    ];
+    /// Words `vehicle_damage` writes: panels, doors, lights, tyres.
+    pub const DAMAGE_WORDS: usize = 4;
+
+    /// The class's number.
+    pub fn class_number(c: VehicleClass) -> i32 {
+        CLASSES.iter().position(|x| *x == c).map_or(-1, |i| i as i32)
+    }
+
+    /// The class of a number.
+    pub fn class_of(n: i32) -> Option<VehicleClass> {
+        usize::try_from(n).ok().and_then(|i| CLASSES.get(i)).copied()
     }
 }
 
@@ -1085,6 +1157,33 @@ macro_rules! for_each_import {
             /// (`docs/mods/api.md`). The game sizes them as it starts: only in `sa_init` and `sa_settings`
             /// (`WRONG_PHASE` later). Returns 0, `BAD_ARG` (no such limit, a value outside the range).
             [Write] fn set_game_limit(limit: i32, value: i32) -> i32;
+            /// (1.11) Sets the gravity (`GAME_GRAVITY`: what every falling body gains in speed per 1/50 s, in units
+            /// per 1/50 s; 0.008 in the game's data), which `world_info` reports. The host puts the game's value back
+            /// when it disables the mod. `BAD_ARG` for a value that is not finite.
+            [Write] fn set_gravity(gravity: f32) -> i32;
+            /// (1.11) The class of vehicle `handle` (its game class, numbered as [`vehicle::CLASSES`]); `NOT_FOUND`
+            /// for a stale handle.
+            [State] fn vehicle_class(handle: i32) -> i32;
+            /// (1.11) Writes vehicle `handle`'s damage, [`vehicle::DAMAGE_WORDS`] little-endian `u32` at `out_ptr`:
+            /// the damage manager's panel states (4 bits each), door states (a byte each) and light states (2 bits
+            /// each) of an automobile or a plane (0 for other classes; lights for automobiles only), and the burst
+            /// tyres (automobiles: bit 3 the first wheel .. bit 0 the fourth; bikes: bit 1 front, bit 0 rear).
+            [State] fn vehicle_damage(handle: i32, out_ptr: i32) -> i32;
+            /// (1.11) Gives vehicle `handle` the damage of `vehicle_damage`'s words: an automobile or a plane takes the
+            /// panel, door and light states and rebuilds its parts from them as a loaded saved game does
+            /// (`CAutomobile::SetupDamageAfterLoad`); automobiles and bikes take the tyres (a set bit bursts the
+            /// tyre, a clear one mends it). Other classes keep their state. Not inside a hook.
+            [Write] fn set_vehicle_damage(handle: i32, panels: i32, doors: i32, lights: i32, tyres: i32) -> i32;
+            /// (1.11) Writes vehicle `handle`'s move speed and turn speed (6 little-endian `f32` at `speeds_ptr`, units
+            /// per 1/50 s), as `set_object_speed`. Not inside a hook.
+            [Write] fn set_vehicle_speed(handle: i32, speeds_ptr: i32) -> i32;
+            /// (1.11) Writes ped `handle`'s move speed (units per 1/50 s); a ped standing on the ground has its two
+            /// standing flags toggled, so that it leaves the ground as the speed carries it. Not inside a hook.
+            [Write] fn set_ped_speed(handle: i32, x: f32, y: f32, z: f32) -> i32;
+            /// (1.11) Sets the game's float statistic `stat` (0..=81, `CStats::StatTypesFloat`, e.g. 69..=79 the weapon
+            /// skills) to `value`, without the on-screen notice. `BAD_ARG` for another statistic or a value that is
+            /// not finite.
+            [Write] fn set_float_stat(stat: i32, value: f32) -> i32;
         }
     };
 }
