@@ -11,6 +11,9 @@
 # Inputs (gitignored, never committed): $SA_ROOT/re/samp/client (samp.saa, SAMP/, ... - samp.dll is NOT used),
 # $SA_ROOT/re/samp/server (open.mp), the auth table AUTH_TABLE (default $SA_ROOT/re/samp/auth_table.txt, gitignored third-party
 # data, read only). The lane's game dir gets lane-private copies/symlinks that are removed afterwards.
+# SCENARIO=world: after the spawn, the world scenario of world-scenario.sh (pickups, checkpoints, map icons, a gang
+# zone, an actor, then gmx and a server restart) instead of the join steps, then /q; mod-join.sh SCENARIO=world runs the
+# same steps on the samp mod.
 # Output: target/e2e/lane-N/samp-ab/NAME/ (server.log, samp-rs.log, shots, sequence.txt).
 # sequence.txt = the server's [cov] event lines + the client's RPC/state lines, with timestamps removed.
 set -uo pipefail
@@ -94,8 +97,16 @@ wait_log() { # REGEX SECS
     return 1
 }
 if ss -lun | grep -q ":$SAMP_PORT "; then echo "samp-rs-ab: UDP $SAMP_PORT busy" >&2; exit 1; fi
-( cd "$SRV" && exec ./omp-server > "$SLOG" 2>&1 ) &
-SRV_PID=$!
+: > "$SLOG"
+server_start() {
+    ( cd "$SRV" && exec ./omp-server >> "$SLOG" 2>&1 ) &
+    SRV_PID=$!
+}
+server_kill() {
+    kill -KILL "$SRV_PID" 2> /dev/null
+    wait "$SRV_PID" 2> /dev/null
+}
+server_start
 wait_log 'Legacy Network started' 20 || { echo "samp-rs-ab: server did not start" >&2; server_stop; exit 1; }
 say "server pid $SRV_PID on UDP $SAMP_PORT"
 
@@ -211,6 +222,43 @@ mark "spawned"
 sleep 4
 shot spawn
 probe spawned
+if [ "${SCENARIO:-join}" = world ]; then
+    wait_count() { # REGEX N SECS
+        local i
+        for ((i = 0; i < $3 * 2; i++)); do
+            [ "$(grep -cE "$1" "$SLOG" 2> /dev/null)" -ge "$2" ] && return 0
+            alive
+            sleep 0.5
+        done
+        return 1
+    }
+    client_wait() { # REGEX SECS
+        local i
+        for ((i = 0; i < $2 * 2; i++)); do
+            grep -qE "$1" "$GTA_DIR/samp-rs.log" 2> /dev/null && return 0
+            sleep 0.5
+        done
+        return 1
+    }
+    spawn_again() {
+        local _
+        for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+            [ "$(grep -c "\[cov\] spawn id=" "$SLOG")" -ge "$1" ] && return 0
+            e2e_key shift
+            sleep 3
+        done
+        return 1
+    }
+    # shellcheck source=world-scenario.sh
+    source "$HERE/world-scenario.sh"
+    world_scenario
+    mark "quit (/q)"
+    e2e_key t; sleep 0.5; DISPLAY="$E2E_DISPLAY" xdotool type --delay 60 "/q"; e2e_key Return
+    wait_log "\[cov\] disconnect id=" 15 || say "no disconnect"
+    for ((i = 0; i < 20; i++)); do e2e_game_alive || break; sleep 1; done
+    say "scenario done"
+    exit 0
+fi
 hold w 2; sleep 1
 mark "server commands"
 cmd "msg|ab message"

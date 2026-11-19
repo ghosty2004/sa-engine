@@ -32,6 +32,9 @@
 # auth table from files in its served folder (OUT/webmods/samp), and the scripted Y presses answer the game's
 # approval prompt. The server waits 60 s for a silent client (software rendering can hold one frame for seconds).
 # Screenshots in OUT/web/.
+# SCENARIO=world: instead of the commands above, the world scenario of world-scenario.sh (pickups, checkpoints, map
+# icons, a gang zone, an actor, then gmx and a server restart), as samp-rs-ab.sh SCENARIO=world runs it on the DLL
+# client; screenshots (the newest present frame at each step) in OUT/shots/. Give it FRAMES for about 4 minutes.
 # SA_GAME = the sa-game binary (default target/i686-unknown-linux-gnu/release/sa-game), MODS = the built mods
 # (default target/mods). FRAMES (default 1800). Port SAMP_PORT (default 7813).
 # Output: server.log, sa-game.log, report.md, present/*.png (every 20th in-game frame), server-events.txt, and
@@ -143,8 +146,16 @@ d["pawn"]["main_scripts"] = ["sampcov 1"]
 d["pawn"]["side_scripts"] = []
 json.dump(d, open(p, "w"), indent=4)
 PY
-(cd "$SRV" && exec ./omp-server > "$SLOG" 2>&1) &
-SRV_PID=$!
+: > "$SLOG"
+server_start() {
+    (cd "$SRV" && exec ./omp-server >> "$SLOG" 2>&1) &
+    SRV_PID=$!
+}
+server_kill() {
+    kill -KILL "$SRV_PID" 2> /dev/null
+    wait "$SRV_PID" 2> /dev/null
+}
+server_start
 # the fixture list, with the CORS header a page's fetch needs
 python3 -I - "$OUT/list" "$LIST_PORT" > "$OUT/list.log" 2>&1 << 'PY' &
 import functools, http.server, sys
@@ -219,7 +230,40 @@ cmd() {
     wait_log "\[cov\] $SEQ (done|unknown)" 10 && say "server: $1" || say "command $SEQ ($1) not acknowledged"
 }
 if wait_log '\[cov\] connect id=[0-9]+ name=ModCJ' 150; then say "connected"; else say "FAIL: no connect"; fi
-if wait_log '\[cov\] spawn id=' 150; then
+if [ "${SCENARIO:-join}" = world ] && wait_log '\[cov\] spawn id=' 150; then
+    say "spawned"
+    GLOG_LIVE="$OUT/sa-game.log"
+    mkdir -p "$OUT/shots"
+    rm -f "$OUT"/shots/*.png
+    wait_count() { # REGEX N SECS
+        local i
+        for ((i = 0; i < $3 * 2; i++)); do
+            [ "$(grep -cE "$1" "$SLOG" 2> /dev/null)" -ge "$2" ] && return 0
+            [ -n "$GAME_PID" ] && ! kill -0 "$GAME_PID" 2> /dev/null && return 1
+            sleep 0.5
+        done
+        return 1
+    }
+    client_wait() { # REGEX SECS
+        local i
+        for ((i = 0; i < $2 * 2; i++)); do
+            grep -qE "$1" "$GLOG_LIVE" 2> /dev/null && return 0
+            sleep 0.5
+        done
+        return 1
+    }
+    shot() {
+        local f
+        f="$(ls -t "$OUT"/present/*.png 2> /dev/null | head -1)"
+        [ -n "$f" ] && cp "$f" "$OUT/shots/$1.png" && say "shot $1: $(basename "$f")"
+    }
+    spawn_again() { wait_count '\[cov\] spawn id=' "$1" 120; }
+    # shellcheck source=world-scenario.sh
+    source "$HERE/world-scenario.sh"
+    sleep 4
+    world_scenario
+    kill "$GAME_PID" 2> /dev/null
+elif wait_log '\[cov\] spawn id=' 150; then
     say "spawned"
     if [ "${BOT:-0}" = 1 ]; then
         "${SAMP_BOT:-$ROOT/samp-rs/target/release/samp-bot}" "127.0.0.1:$PORT" --name BotPlayer --mode idle \
@@ -264,7 +308,7 @@ fi
 wait "$GAME_PID"
 say "game exit $?"
 GAME_PID=
-grep -E '\[(join|part|connection)\]|\[cov\] (connect|class|spawn|state|where|npc|[0-9]+ done|disconnect)' "$SLOG" > "$OUT/server-events.txt"
+grep -E '\[(join|part|connection)\]|\[cov\] (connect|class|spawn|state|where|npc|pickup|cp-enter|rcp-enter|loaded|[0-9]+ done|disconnect)' "$SLOG" > "$OUT/server-events.txt"
 say "server events: $(wc -l < "$OUT/server-events.txt") lines; PNGs: $(ls "$OUT/present" | wc -l)"
 GLOG="$OUT/sa-game.log"
 [ "$WEB" = 1 ] && GLOG="$OUT/web/game-log.txt"
