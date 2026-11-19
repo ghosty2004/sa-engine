@@ -18,6 +18,7 @@
 # CMDS=FILE (tools/e2e/samp/objects.cmds): after the spawn, the file's server commands instead of the fixed scenario
 # (`sleep|S` waits, `shot|NAME` takes a screenshot, `key|NAME` presses an xdotool key), then /q. FILTERSCRIPTS adds the
 # server's filterscripts (comma-separated, e.g. npc_trains), as mod-join.sh does.
+# PAWN_DEFINES: defines for sampcov.pwn, e.g. NO_ENEX=1 (the gamemode disables the entry-exits).
 # Output: target/e2e/lane-N/samp-ab/NAME/ (server.log, samp-rs.log, shots, sequence.txt).
 # sequence.txt = the server's [cov] event lines + the client's RPC/state lines, with timestamps removed.
 set -uo pipefail
@@ -69,7 +70,7 @@ printf 'fpslimit=50\r\nmulticore=1\r\naudioproxyoff=0\r\ntimestamp=0\r\n' > "$US
 mkdir -p "$SRV"
 rsync -a --delete --exclude log.txt "$SERVER_SRC/" "$SRV/"
 ( cd "$SRV" && LD_LIBRARY_PATH=qawno ./qawno/pawncc "$HERE/sampcov.pwn" -iqawno/include \
-    -ogamemodes/sampcov.amx -d0 > "$OUT/pawncc.log" 2>&1 ) || { cat "$OUT/pawncc.log"; exit 1; }
+    -ogamemodes/sampcov.amx -d0 ${PAWN_DEFINES:-} > "$OUT/pawncc.log" 2>&1 ) || { cat "$OUT/pawncc.log"; exit 1; }
 python3 -I - "$SRV/config.json" "$SAMP_PORT" "${FILTERSCRIPTS:-}" << 'PY'
 import json, sys
 p, port = sys.argv[1], int(sys.argv[2])

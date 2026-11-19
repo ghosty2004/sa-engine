@@ -54,6 +54,12 @@ public OnGameModeInit()
     // Trains can only be added statically.
     printf("[cov] static train %d", AddStaticVehicle(538, 1700.7551, -1953.6531, 14.8756, 200.0, 1, 1));
     UsePlayerPedAnims();
+    // Built with NO_ENEX=1 (PAWN_DEFINES of the drivers): the server's InitGame tells the clients to disable the
+    // entry-exits.
+#if defined NO_ENEX
+    DisableInteriorEnterExits();
+    print("[cov] entry-exits disabled");
+#endif
     CovStart();
     return 1;
 }

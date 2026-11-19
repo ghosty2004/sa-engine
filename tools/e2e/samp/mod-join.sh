@@ -46,6 +46,7 @@
 # server's filterscripts (comma-separated, e.g. npc_trains). Two more commands for EXTRA_CMDS / CMDS: `restart|S` kills
 # the server (SIGKILL), waits S seconds and starts it again; SOAK_SECONDS stops the command list after that many
 # seconds and KILL_AFTER=1 then ends the game instead of waiting for FRAMES (tools/e2e/samp/soak.sh uses both).
+# PAWN_DEFINES: defines for sampcov.pwn, e.g. NO_ENEX=1 (the gamemode disables the entry-exits).
 # Crash reports of sa-game go to OUT/crashes (SA_GAME_CRASH_DIR).
 # SCENARIO=parity: the steps of tools/e2e/samp/parity.steps (what samp.dll changes in the game), as samp-rs-ab.sh
 # SCENARIO=parity runs them on the DLL client; screenshots in OUT/shots/.
@@ -152,10 +153,10 @@ rsync -a --delete --exclude log.txt "$SERVER_SRC/" "$SRV/"
 if [ -n "${GAMEMODE:-}" ]; then
     [ -f "$SRV/gamemodes/$GAMEMODE.amx" ] || { echo "mod-join: gamemode $GAMEMODE missing in $SERVER_SRC/gamemodes" >&2; exit 1; }
     ( cd "$SRV" && LD_LIBRARY_PATH=qawno ./qawno/pawncc "$HERE/sampcov.pwn" -iqawno/include \
-        -ofilterscripts/sampcov.amx -d0 FILTERSCRIPT=1 > "$OUT/pawncc.log" 2>&1 ) || { cat "$OUT/pawncc.log"; exit 1; }
+        -ofilterscripts/sampcov.amx -d0 FILTERSCRIPT=1 ${PAWN_DEFINES:-} > "$OUT/pawncc.log" 2>&1 ) || { cat "$OUT/pawncc.log"; exit 1; }
 else
     ( cd "$SRV" && LD_LIBRARY_PATH=qawno ./qawno/pawncc "$HERE/sampcov.pwn" -iqawno/include \
-        -ogamemodes/sampcov.amx -d0 > "$OUT/pawncc.log" 2>&1 ) || { cat "$OUT/pawncc.log"; exit 1; }
+        -ogamemodes/sampcov.amx -d0 ${PAWN_DEFINES:-} > "$OUT/pawncc.log" 2>&1 ) || { cat "$OUT/pawncc.log"; exit 1; }
 fi
 python3 -I - "$SRV/config.json" "$PORT" "$WEB" "${GAMEMODE:-}" "${FILTERSCRIPTS:-}" << 'PY'
 import json, sys

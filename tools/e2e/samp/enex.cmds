@@ -1,0 +1,13 @@
+# The entry-exit into CJ's house in Grove Street (CARLS: the outside marker at 2495.33,-1690.75,13.78, 1.4 x 1.4,
+# no ambient peds inside). Run with PAWN_DEFINES=NO_ENEX=1 (DisableInteriorEnterExits in OnGameModeInit) and
+# without: with the entry-exits on, stepping onto the marker takes the player inside (the server sees
+# "[cov] interior id=N 0->3"); disabled, there is no marker and the player stays in the street.
+#   SAMP_LOCK=enex.lock SAMP_PORT=7943 CMDS=tools/e2e/samp/enex.cmds tools/e2e/samp/mod-join.sh OUT
+#   LANE=7 CMDS=tools/e2e/samp/enex.cmds tools/e2e/samp/samp-rs-ab.sh DLL_DIR NAME
+pos|2495.33|-1686.5|13.5|180
+time|12
+sleep|4
+shot|enex-door
+pos|2495.33|-1690.75|13.9|180
+sleep|10
+shot|enex-step
