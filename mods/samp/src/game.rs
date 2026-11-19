@@ -18,6 +18,9 @@ use sa_samp_api::vehicles::*;
 use sa_samp_api::world::*;
 use sa_samp_api::*;
 
+/// A spawn colour pair of this value keeps the model's own colours.
+const MODEL_COLOURS: u8 = 0xFF;
+
 /// The ped models: the skins `SetPlayerSkin` may name.
 const PED_MODELS: std::ops::RangeInclusive<i32> = 0..=311;
 
@@ -27,6 +30,8 @@ pub struct ModGame {
     config: SampModeConfig,
     /// What the UI draws through; [`crate::draw_ui`] turns it into overlay quads.
     pub ui: samp_overlay::QuadUi,
+    /// The trailers attached through [`Vehicles::set_trailer`]: (cab, trailer).
+    trailers: Vec<(VehicleRef, VehicleRef)>,
 }
 
 
@@ -46,6 +51,14 @@ fn cmd(opcode: u16, args: &[Arg<'_>]) -> GameResult<()> {
 /// Runs a script command for its condition.
 fn cond(opcode: u16, args: &[Arg<'_>]) -> GameResult<bool> {
     script::run(opcode, args).map(|o| o.condition).map_err(failed("script command"))
+}
+
+/// The cut argument of the camera commands: 2 a jump cut, 1 a smooth move.
+fn cut_arg(cut: CameraCut) -> i32 {
+    match cut {
+        CameraCut::Cut => 2,
+        CameraCut::Smooth => 1,
+    }
 }
 
 fn cross(a: Vec3, b: Vec3) -> Vec3 {
@@ -89,7 +102,9 @@ impl GameAdapter for ModGame {
 impl GameAudio for ModGame {
     fn radio_volume(&self) -> u8 { Default::default() }
     fn stop_radio(&mut self) -> GameResult<()> { Err(GameError::Unsupported("GameAudio::stop_radio")) }
-    fn start_radio(&mut self, _station: i8) -> GameResult<()> { Err(GameError::Unsupported("GameAudio::start_radio")) }
+    fn start_radio(&mut self, station: i8) -> GameResult<()> {
+        cmd(0x041E, &[Arg::Int(i32::from(station))])
+    }
     fn mission_ambience(&mut self, _track: Option<i32>) -> GameResult<()> { Err(GameError::Unsupported("GameAudio::mission_ambience")) }
     fn one_off_sound(&mut self, pos: Vec3, sound: i32) -> GameResult<()> {
         audio::at(sound, pos).map_err(failed("one_off_sound"))
@@ -120,23 +135,42 @@ impl Camera for ModGame {
         cmd(0x015F, &[f(pos.x), f(pos.y), f(pos.z), f(rot.x), f(rot.y), f(rot.z)])
     }
     fn point_at(&mut self, target: Vec3, cut: CameraCut) -> GameResult<()> {
-        let mode = match cut {
-            CameraCut::Cut => 2,
-            CameraCut::Smooth => 1,
-        };
-        cmd(0x0160, &[Arg::Float(target.x), Arg::Float(target.y), Arg::Float(target.z), Arg::Int(mode)])
+        cmd(0x0160, &[Arg::Float(target.x), Arg::Float(target.y), Arg::Float(target.z), Arg::Int(cut_arg(cut))])
     }
-    fn point_at_ped(&mut self, _ped: PedRef, _mode: i32, _cut: CameraCut) -> GameResult<()> { Err(GameError::Unsupported("Camera::point_at_ped")) }
-    fn point_at_vehicle(&mut self, _vehicle: VehicleRef, _mode: i32, _cut: CameraCut) -> GameResult<()> { Err(GameError::Unsupported("Camera::point_at_vehicle")) }
+    fn point_at_ped(&mut self, ped: PedRef, mode: i32, cut: CameraCut) -> GameResult<()> {
+        cmd(0x0159, &[Arg::Ped(ped), Arg::Int(mode), Arg::Int(cut_arg(cut))])
+    }
+    fn point_at_vehicle(&mut self, vehicle: VehicleRef, mode: i32, cut: CameraCut) -> GameResult<()> {
+        cmd(0x0158, &[Arg::Vehicle(vehicle), Arg::Int(mode), Arg::Int(cut_arg(cut))])
+    }
     fn behind_player(&mut self) -> GameResult<()> {
         cmd(0x0373, &[])
     }
     fn restore(&mut self) -> GameResult<()> {
         cmd(0x02EB, &[])
     }
-    fn interpolate( &mut self, _look_at: bool, _from: Vec3, _to: Vec3, _time_ms: i32, _cut: CameraCut, ) -> GameResult<()> { Err(GameError::Unsupported("Camera::interpolate")) }
+    /// A position move resets the camera's scripted moves first (`CAMERA_RESET_NEW_SCRIPTABLES`) and keeps its end
+    /// position (`CAMERA_PERSIST_POS`); a look-at move keeps its end target (`CAMERA_PERSIST_TRACK`).
+    fn interpolate(&mut self, look_at: bool, from: Vec3, to: Vec3, time_ms: i32, cut: CameraCut) -> GameResult<()> {
+        let f = Arg::Float;
+        let args = [f(from.x), f(from.y), f(from.z), f(to.x), f(to.y), f(to.z), Arg::Int(time_ms), Arg::Int(cut_arg(cut))];
+        if look_at {
+            cmd(0x092F, &[Arg::Int(1)])?;
+            cmd(0x0920, &args)
+        } else {
+            cmd(0x0925, &[])?;
+            cmd(0x0930, &[Arg::Int(1)])?;
+            cmd(0x0936, &args)
+        }
+    }
     fn set_widescreen(&mut self, on: bool) -> GameResult<()> {
         cmd(0x02A3, &[Arg::Int(i32::from(on))])
+    }
+    fn reset_scripted_moves(&mut self) -> GameResult<()> {
+        cmd(0x0925, &[])
+    }
+    fn persist_position(&mut self, on: bool) -> GameResult<()> {
+        cmd(0x0930, &[Arg::Int(i32::from(on))])
     }
     fn shake(&mut self, _strength: f32) -> GameResult<()> { Err(GameError::Unsupported("Camera::shake")) }
     fn set_fov(&mut self, _fov: f32) -> GameResult<()> { Err(GameError::Unsupported("Camera::set_fov")) }
@@ -291,8 +325,14 @@ impl Peds for ModGame {
     }
     fn player_ped(&self, _slot: PlayerSlot) -> Option<PedRef> { None }
     fn player_in_focus(&self) -> PlayerSlot { PlayerSlot(0) }
-    fn ped_script_handle(&self, _ped: PedRef) -> GameResult<ScriptHandle> { Err(GameError::Unsupported("Peds::ped_script_handle")) }
-    fn ped_from_script_handle(&self, _h: ScriptHandle) -> Option<PedRef> { None }
+    /// The mod API's handles are the game's script handles (pool references).
+    fn ped_script_handle(&self, ped: PedRef) -> GameResult<ScriptHandle> {
+        state::ped(ped).map(|_| ScriptHandle(ped.0 as i32)).ok_or(GameError::InvalidHandle)
+    }
+    fn ped_from_script_handle(&self, h: ScriptHandle) -> Option<PedRef> {
+        let ped = PedRef(h.0 as u32);
+        state::ped(ped).map(|_| ped)
+    }
     fn ped_in_world(&self, ped: PedRef) -> bool {
         state::ped(ped).is_some_and(|p| p.in_world)
     }
@@ -330,14 +370,33 @@ impl Peds for ModGame {
             ..PedSnapshot::default()
         })
     }
-    fn ped_weapons(&self, _ped: PedRef) -> GameResult<[WeaponSlot; 13]> { Err(GameError::Unsupported("Peds::ped_weapons")) }
-    fn bone_position(&self, _ped: PedRef, _bone: BoneId, _transformed: bool) -> GameResult<Vec3> { Err(GameError::Unsupported("Peds::bone_position")) }
+    fn ped_weapons(&self, ped: PedRef) -> GameResult<[WeaponSlot; 13]> {
+        let mut out = [WeaponSlot::default(); 13];
+        for (slot, w) in (1..).zip(out.iter_mut()) {
+            let o = script::run(0x04B8, &[Arg::Ped(ped), Arg::Int(slot), Arg::Out, Arg::Out, Arg::Out])
+                .map_err(failed("ped_weapons"))?;
+            *w = WeaponSlot { weapon: o.outputs[0] as u8, ammo_total: o.outputs[1], ..WeaponSlot::default() };
+        }
+        Ok(out)
+    }
+    /// The head and neck bones, from the head and neck nodes of the skeleton (the nodes the mod API reads).
+    fn bone_position(&self, ped: PedRef, bone: BoneId, _transformed: bool) -> GameResult<Vec3> {
+        let node = match bone.0 {
+            5 => 17,
+            6..=8 => 2,
+            _ => return Err(GameError::Unsupported("Peds::bone_position (a bone off the head and neck)")),
+        };
+        objects::ped_bone_matrix(ped, node).map(|m| Matrix::from(m).pos).ok_or(GameError::NotLoaded)
+    }
     fn node_matrix(&self, ped: PedRef, node: u8) -> GameResult<Matrix> {
         objects::ped_bone_matrix(ped, node).map(Into::into).ok_or(GameError::NotLoaded)
     }
     fn weapon_skill(&self, _ped: PedRef) -> GameResult<u8> { Err(GameError::Unsupported("Peds::weapon_skill")) }
     fn ped_on_fire(&self, _ped: PedRef) -> GameResult<bool> { Err(GameError::Unsupported("Peds::ped_on_fire")) }
-    fn anim_playing(&self, _ped: PedRef, _block: &str, _name: &str) -> GameResult<bool> { Err(GameError::Unsupported("Peds::anim_playing")) }
+    /// `IS_CHAR_PLAYING_ANIM` (0611) finds the animation by its name in any block.
+    fn anim_playing(&self, ped: PedRef, _block: &str, name: &str) -> GameResult<bool> {
+        cond(0x0611, &[Arg::Ped(ped), Arg::Text(name.as_bytes())])
+    }
     fn player_money(&self) -> i32 {
         state::player().map_or(0, |p| p.money)
     }
@@ -345,7 +404,9 @@ impl Peds for ModGame {
         world::set_ped_position(ped, pos).map_err(failed("set_ped_position"))
     }
     fn set_ped_matrix(&mut self, _ped: PedRef, _m: &Matrix) -> GameResult<()> { Err(GameError::Unsupported("Peds::set_ped_matrix")) }
-    fn set_ped_move_speed(&mut self, _ped: PedRef, _v: Vec3) -> GameResult<()> { Err(GameError::Unsupported("Peds::set_ped_move_speed")) }
+    fn set_ped_move_speed(&mut self, ped: PedRef, v: Vec3) -> GameResult<()> {
+        world::set_ped_speed(ped, v).map_err(failed("set_ped_move_speed"))
+    }
     fn set_ped_heading(&mut self, ped: PedRef, heading: f32, raw: bool) -> GameResult<()> {
         let degrees = if raw { heading.to_degrees() } else { heading };
         world::set_ped_heading(ped, degrees).map_err(failed("set_ped_heading"))
@@ -395,6 +456,9 @@ impl Peds for ModGame {
     fn set_drunkenness(&mut self, level: i32) -> GameResult<()> {
         cmd(0x052C, &[Arg::Int(0), Arg::Int(level)])
     }
+    fn set_fighting_style(&mut self, ped: PedRef, style: u8, moves: u8) -> GameResult<()> {
+        cmd(0x07FE, &[Arg::Ped(ped), Arg::Int(i32::from(style)), Arg::Int(i32::from(moves))])
+    }
     fn set_ped_flags(&mut self, _ped: PedRef, _mask: [u32; 2], _value: [u32; 2]) -> GameResult<()> { Err(GameError::Unsupported("Peds::set_ped_flags")) }
     fn extinguish_ped(&mut self, _ped: PedRef) -> GameResult<()> { Err(GameError::Unsupported("Peds::extinguish_ped")) }
     fn explode_head(&mut self, ped: PedRef) -> GameResult<()> {
@@ -418,6 +482,7 @@ impl Peds for ModGame {
                 cmd(0x05CA, &[p, v(vehicle), i(time_ms), i(seat)])
             }
             PedTask::LeaveCar { vehicle } => cmd(0x05CD, &[p, v(vehicle)]),
+            PedTask::UseMobilePhone(on) => cmd(0x0729, &[p, i(i32::from(on))]),
             _ => Err(GameError::Unsupported("Peds::start_task (this task)")),
         }
     }
@@ -456,9 +521,22 @@ impl Peds for ModGame {
     fn stop_anims(&mut self, ped: PedRef) -> GameResult<()> {
         cmd(0x0687, &[Arg::Ped(ped)])
     }
-    fn look_at(&mut self, _ped: PedRef, _target: Vec3, _time_ms: i32) -> GameResult<()> { Err(GameError::Unsupported("Peds::look_at")) }
-    fn set_jetpack(&mut self, _ped: PedRef, _on: bool) -> GameResult<()> { Err(GameError::Unsupported("Peds::set_jetpack")) }
-    fn has_jetpack(&self, _ped: PedRef) -> GameResult<bool> { Err(GameError::Unsupported("Peds::has_jetpack")) }
+    fn look_at(&mut self, ped: PedRef, target: Vec3, time_ms: i32) -> GameResult<()> {
+        let f = Arg::Float;
+        cmd(0x06A9, &[Arg::Ped(ped), f(target.x), f(target.y), f(target.z), Arg::Int(time_ms)])
+    }
+    /// On: `TASK_JETPACK` (07A7); off: the ped's tasks cleared at once (`CLEAR_CHAR_TASKS_IMMEDIATELY` 0792), which
+    /// ends the jetpack task.
+    fn set_jetpack(&mut self, ped: PedRef, on: bool) -> GameResult<()> {
+        if on { cmd(0x07A7, &[Arg::Ped(ped)]) } else { cmd(0x0792, &[Arg::Ped(ped)]) }
+    }
+    /// The local player's (`IS_PLAYER_USING_JETPACK` 0A0C).
+    fn has_jetpack(&self, ped: PedRef) -> GameResult<bool> {
+        if self.local_player() != Some(ped) {
+            return Err(GameError::Unsupported("Peds::has_jetpack (another ped)"));
+        }
+        cond(0x0A0C, &[Arg::Int(0)])
+    }
     fn wanted_level(&self) -> GameResult<u8> {
         state::player().map(|p| p.wanted).ok_or(GameError::InvalidHandle)
     }
@@ -511,16 +589,30 @@ impl Streaming for ModGame {
         cmd(0x04E4, &[Arg::Float(at.x), Arg::Float(at.y)])
     }
     fn collision_loaded(&self, _at: Vec3, _area: u8) -> bool { false }
-    fn request_anim_block(&mut self, _block: &str) -> GameResult<()> { Err(GameError::Unsupported("Streaming::request_anim_block")) }
-    fn anim_block_loaded(&self, _block: &str) -> bool { false }
-    fn request_component(&mut self, _model: ModelId) -> GameResult<()> { Err(GameError::Unsupported("Streaming::request_component")) }
-    fn component_loaded(&self, _model: ModelId) -> bool { false }
+    fn request_anim_block(&mut self, block: &str) -> GameResult<()> {
+        cmd(0x04ED, &[Arg::Text(block.as_bytes())])
+    }
+    fn anim_block_loaded(&self, block: &str) -> bool {
+        cond(0x04EE, &[Arg::Text(block.as_bytes())]).unwrap_or(false)
+    }
+    fn request_component(&mut self, model: ModelId) -> GameResult<()> {
+        cmd(0x06E9, &[Arg::Int(model.0)])
+    }
+    fn component_loaded(&self, model: ModelId) -> bool {
+        cond(0x06EA, &[Arg::Int(model.0)]).unwrap_or(false)
+    }
     fn streaming_memory(&self) -> (u32, u32) { Default::default() }
 }
 
 impl Vehicles for ModGame {
-    fn vehicle_script_handle(&self, _v: VehicleRef) -> GameResult<ScriptHandle> { Err(GameError::Unsupported("Vehicles::vehicle_script_handle")) }
-    fn vehicle_from_script_handle(&self, _h: ScriptHandle) -> Option<VehicleRef> { None }
+    /// The mod API's handles are the game's script handles (pool references).
+    fn vehicle_script_handle(&self, v: VehicleRef) -> GameResult<ScriptHandle> {
+        state::vehicle(v).map(|_| ScriptHandle(v.0 as i32)).ok_or(GameError::InvalidHandle)
+    }
+    fn vehicle_from_script_handle(&self, h: ScriptHandle) -> Option<VehicleRef> {
+        let v = VehicleRef(h.0 as u32);
+        state::vehicle(v).map(|_| v)
+    }
     fn vehicle_snapshot(&self, v: VehicleRef) -> GameResult<VehicleSnapshot> {
         let i = state::vehicle(v).ok_or(GameError::InvalidHandle)?;
         let m = state::vehicle_matrix(v).ok_or(GameError::InvalidHandle)?;
@@ -530,51 +622,123 @@ impl Vehicles for ModGame {
             health: i.health,
             model: i.model,
             driver: i.driver,
+            class: world::vehicle_class(v).ok(),
             colours: [i.colour1, i.colour2],
             siren: i.siren,
             area: i.area,
             ..VehicleSnapshot::default()
         })
     }
-    fn vehicle_damage(&self, _v: VehicleRef) -> GameResult<VehicleDamage> { Err(GameError::Unsupported("Vehicles::vehicle_damage")) }
-    fn vehicle_in_water(&self, _v: VehicleRef) -> GameResult<bool> { Err(GameError::Unsupported("Vehicles::vehicle_in_water")) }
+    fn vehicle_damage(&self, v: VehicleRef) -> GameResult<VehicleDamage> {
+        let [panels, doors, lights, tyres] = world::vehicle_damage(v).map_err(failed("vehicle_damage"))?;
+        Ok(VehicleDamage { panels, doors, lights: lights as u8, tyres: tyres as u8 })
+    }
+    fn vehicle_in_water(&self, v: VehicleRef) -> GameResult<bool> {
+        cond(0x02BF, &[Arg::Vehicle(v)])
+    }
     fn local_vehicle(&self) -> Option<VehicleRef> {
         state::player().and_then(|p| p.ped.vehicle)
     }
     fn create_vehicle(&mut self, spawn: &VehicleSpawn) -> GameResult<VehicleRef> {
         let v = entities::create_vehicle(spawn.model.0, spawn.pos, spawn.heading_deg).map_err(failed("create_vehicle"))?;
-        world::set_vehicle_colours(v, spawn.colours[0], spawn.colours[1]).map_err(failed("create_vehicle"))?;
+        if spawn.colours != [MODEL_COLOURS; 2] {
+            world::set_vehicle_colours(v, spawn.colours[0], spawn.colours[1]).map_err(failed("create_vehicle"))?;
+        }
         Ok(v)
     }
     fn destroy_vehicle(&mut self, v: VehicleRef) -> GameResult<()> {
         entities::destroy_vehicle(v).map_err(failed("destroy_vehicle"))
     }
-    fn set_vehicle_matrix(&mut self, _v: VehicleRef, _m: &Matrix) -> GameResult<()> { Err(GameError::Unsupported("Vehicles::set_vehicle_matrix")) }
-    fn set_vehicle_speed(&mut self, _v: VehicleRef, _move_speed: Vec3, _turn_speed: Vec3) -> GameResult<()> { Err(GameError::Unsupported("Vehicles::set_vehicle_speed")) }
-    fn set_vehicle_heading(&mut self, _v: VehicleRef, _heading_deg: f32) -> GameResult<()> { Err(GameError::Unsupported("Vehicles::set_vehicle_heading")) }
-    fn set_train_position(&mut self, _v: VehicleRef, _pos: Vec3) -> GameResult<()> { Err(GameError::Unsupported("Vehicles::set_train_position")) }
-    fn set_train_speed(&mut self, _v: VehicleRef, _speed: f32) -> GameResult<()> { Err(GameError::Unsupported("Vehicles::set_train_speed")) }
+    /// The position (`SET_CAR_COORDINATES` 00AB) and the heading of the forward row (`SET_CAR_HEADING` 0175); the
+    /// pitch and roll of the matrix are not taken.
+    fn set_vehicle_matrix(&mut self, v: VehicleRef, m: &Matrix) -> GameResult<()> {
+        world::set_vehicle_position(v, m.pos).map_err(failed("set_vehicle_matrix"))?;
+        let heading = (-m.forward.x).atan2(m.forward.y).to_degrees();
+        world::set_vehicle_heading(v, heading).map_err(failed("set_vehicle_matrix"))
+    }
+    fn set_vehicle_speed(&mut self, v: VehicleRef, move_speed: Vec3, turn_speed: Vec3) -> GameResult<()> {
+        world::set_vehicle_speed(v, move_speed, turn_speed).map_err(failed("set_vehicle_speed"))
+    }
+    fn set_vehicle_heading(&mut self, v: VehicleRef, heading_deg: f32) -> GameResult<()> {
+        world::set_vehicle_heading(v, heading_deg).map_err(failed("set_vehicle_heading"))
+    }
+    fn set_train_position(&mut self, v: VehicleRef, pos: Vec3) -> GameResult<()> {
+        cmd(0x07C7, &[Arg::Vehicle(v), Arg::Float(pos.x), Arg::Float(pos.y), Arg::Float(pos.z)])
+    }
+    fn set_train_speed(&mut self, v: VehicleRef, speed: f32) -> GameResult<()> {
+        cmd(0x06DC, &[Arg::Vehicle(v), Arg::Float(speed)])
+    }
     fn set_vehicle_health(&mut self, v: VehicleRef, health: f32) -> GameResult<()> {
         world::set_vehicle_health(v, health).map_err(failed("set_vehicle_health"))
     }
-    fn set_vehicle_damage(&mut self, _v: VehicleRef, _d: VehicleDamage) -> GameResult<()> { Err(GameError::Unsupported("Vehicles::set_vehicle_damage")) }
-    fn fix_vehicle(&mut self, _v: VehicleRef) -> GameResult<()> { Err(GameError::Unsupported("Vehicles::fix_vehicle")) }
-    fn set_vehicle_colours(&mut self, _v: VehicleRef, _colours: [u8; 2]) -> GameResult<()> { Err(GameError::Unsupported("Vehicles::set_vehicle_colours")) }
-    fn set_paintjob(&mut self, _v: VehicleRef, _paintjob: u8) -> GameResult<()> { Err(GameError::Unsupported("Vehicles::set_paintjob")) }
-    fn add_component(&mut self, _v: VehicleRef, _component: ModelId) -> GameResult<()> { Err(GameError::Unsupported("Vehicles::add_component")) }
-    fn remove_component(&mut self, _v: VehicleRef, _component: ModelId) -> GameResult<()> { Err(GameError::Unsupported("Vehicles::remove_component")) }
-    fn set_hydraulics(&mut self, _v: VehicleRef, _on: bool) -> GameResult<()> { Err(GameError::Unsupported("Vehicles::set_hydraulics")) }
-    fn set_vehicle_proofs(&mut self, _v: VehicleRef, _proofs: Proofs) -> GameResult<()> { Err(GameError::Unsupported("Vehicles::set_vehicle_proofs")) }
-    fn set_tyres_can_burst(&mut self, _v: VehicleRef, _on: bool) -> GameResult<()> { Err(GameError::Unsupported("Vehicles::set_tyres_can_burst")) }
-    fn set_petrol_tank_weakpoint(&mut self, _v: VehicleRef, _on: bool) -> GameResult<()> { Err(GameError::Unsupported("Vehicles::set_petrol_tank_weakpoint")) }
-    fn set_vehicle_area(&mut self, _v: VehicleRef, _area: AreaCode) -> GameResult<()> { Err(GameError::Unsupported("Vehicles::set_vehicle_area")) }
-    fn set_door(&mut self, _v: VehicleRef, _door: u8, _open_ratio: f32) -> GameResult<()> { Err(GameError::Unsupported("Vehicles::set_door")) }
-    fn set_doors_locked(&mut self, _v: VehicleRef, _locked: bool) -> GameResult<()> { Err(GameError::Unsupported("Vehicles::set_doors_locked")) }
+    fn set_vehicle_damage(&mut self, v: VehicleRef, d: VehicleDamage) -> GameResult<()> {
+        let words = [d.panels, d.doors, u32::from(d.lights), u32::from(d.tyres)];
+        world::set_vehicle_damage(v, words).map_err(failed("set_vehicle_damage"))
+    }
+    fn fix_vehicle(&mut self, v: VehicleRef) -> GameResult<()> {
+        cmd(0x0A30, &[Arg::Vehicle(v)])
+    }
+    fn set_vehicle_colours(&mut self, v: VehicleRef, colours: [u8; 2]) -> GameResult<()> {
+        world::set_vehicle_colours(v, colours[0], colours[1]).map_err(failed("set_vehicle_colours"))
+    }
+    fn set_paintjob(&mut self, v: VehicleRef, paintjob: u8) -> GameResult<()> {
+        cmd(0x06ED, &[Arg::Vehicle(v), Arg::Int(i32::from(paintjob))])
+    }
+    /// `ADD_VEHICLE_MOD` (06E7) of a loaded upgrade (`Streaming::request_component` loads it).
+    fn add_component(&mut self, v: VehicleRef, component: ModelId) -> GameResult<()> {
+        cmd(0x06E7, &[Arg::Vehicle(v), Arg::Int(component.0), Arg::Out])
+    }
+    fn remove_component(&mut self, v: VehicleRef, component: ModelId) -> GameResult<()> {
+        cmd(0x06E8, &[Arg::Vehicle(v), Arg::Int(component.0)])
+    }
+    fn set_hydraulics(&mut self, v: VehicleRef, on: bool) -> GameResult<()> {
+        cmd(0x07FF, &[Arg::Vehicle(v), Arg::Int(i32::from(on))])
+    }
+    fn set_vehicle_proofs(&mut self, v: VehicleRef, p: Proofs) -> GameResult<()> {
+        let b = |v: bool| Arg::Int(i32::from(v));
+        cmd(0x02AC, &[Arg::Vehicle(v), b(p.bullet), b(p.fire), b(p.explosion), b(p.collision), b(p.melee)])
+    }
+    fn set_tyres_can_burst(&mut self, v: VehicleRef, on: bool) -> GameResult<()> {
+        cmd(0x053F, &[Arg::Vehicle(v), Arg::Int(i32::from(on))])
+    }
+    fn set_petrol_tank_weakpoint(&mut self, v: VehicleRef, on: bool) -> GameResult<()> {
+        cmd(0x09C4, &[Arg::Vehicle(v), Arg::Int(i32::from(on))])
+    }
+    fn set_vehicle_area(&mut self, v: VehicleRef, area: AreaCode) -> GameResult<()> {
+        cmd(0x0840, &[Arg::Vehicle(v), Arg::Int(i32::from(area.0))])
+    }
+    /// `OPEN_CAR_DOOR_A_BIT` (08A6): the door's node from the game's door table; a missing door stays as it is.
+    fn set_door(&mut self, v: VehicleRef, door: u8, open_ratio: f32) -> GameResult<()> {
+        cmd(0x08A6, &[Arg::Vehicle(v), Arg::Int(i32::from(door)), Arg::Float(open_ratio)])
+    }
+    /// `LOCK_CAR_DOORS` (020A): locked (2) or no lock (0).
+    fn set_doors_locked(&mut self, v: VehicleRef, locked: bool) -> GameResult<()> {
+        cmd(0x020A, &[Arg::Vehicle(v), Arg::Int(if locked { 2 } else { 0 })])
+    }
     fn set_window_open(&mut self, _v: VehicleRef, _window: u8, _open: bool) -> GameResult<()> { Err(GameError::Unsupported("Vehicles::set_window_open")) }
-    fn set_landing_gear(&mut self, _v: VehicleRef, _down: bool) -> GameResult<()> { Err(GameError::Unsupported("Vehicles::set_landing_gear")) }
-    fn set_siren(&mut self, _v: VehicleRef, _on: bool) -> GameResult<()> { Err(GameError::Unsupported("Vehicles::set_siren")) }
-    fn set_engine_lights(&mut self, _v: VehicleRef, _engine: bool, _lights: bool) -> GameResult<()> { Err(GameError::Unsupported("Vehicles::set_engine_lights")) }
-    fn set_trailer(&mut self, _cab: VehicleRef, _trailer: Option<VehicleRef>) -> GameResult<()> { Err(GameError::Unsupported("Vehicles::set_trailer")) }
+    fn set_landing_gear(&mut self, v: VehicleRef, down: bool) -> GameResult<()> {
+        cmd(0x08E6, &[Arg::Vehicle(v), Arg::Int(i32::from(!down))])
+    }
+    fn set_siren(&mut self, v: VehicleRef, on: bool) -> GameResult<()> {
+        cmd(0x0397, &[Arg::Vehicle(v), Arg::Int(i32::from(on))])
+    }
+    /// `SET_CAR_ENGINE_ON` (0918) and `FORCE_CAR_LIGHTS` (067F: 2 on, 1 off).
+    fn set_engine_lights(&mut self, v: VehicleRef, engine: bool, lights: bool) -> GameResult<()> {
+        cmd(0x0918, &[Arg::Vehicle(v), Arg::Int(i32::from(engine))])?;
+        cmd(0x067F, &[Arg::Vehicle(v), Arg::Int(if lights { 2 } else { 1 })])
+    }
+    /// `ATTACH_TRAILER_TO_CAB` (0893) / `DETACH_TRAILER_FROM_CAB` (07AC) of the trailer attached here.
+    fn set_trailer(&mut self, cab: VehicleRef, trailer: Option<VehicleRef>) -> GameResult<()> {
+        if let Some(i) = self.trailers.iter().position(|(c, _)| *c == cab) {
+            let (_, old) = self.trailers.swap_remove(i);
+            cmd(0x07AC, &[Arg::Vehicle(old), Arg::Vehicle(cab)])?;
+        }
+        if let Some(t) = trailer {
+            cmd(0x0893, &[Arg::Vehicle(t), Arg::Vehicle(cab)])?;
+            self.trailers.push((cab, t));
+        }
+        Ok(())
+    }
     fn set_plate_text(&mut self, _v: VehicleRef, _text: &str) -> GameResult<()> { Err(GameError::Unsupported("Vehicles::set_plate_text")) }
     fn vehicles(&self) -> Vec<VehicleRef> {
         state::vehicles()
@@ -594,7 +758,9 @@ impl WorldState for ModGame {
     fn set_weather(&mut self, weather: u8) -> GameResult<()> {
         world::set_weather(weather).map_err(failed("set_weather"))
     }
-    fn force_weather(&mut self, _weather: u8) -> GameResult<()> { Err(GameError::Unsupported("WorldState::force_weather")) }
+    fn force_weather(&mut self, weather: u8) -> GameResult<()> {
+        cmd(0x01B6, &[Arg::Int(i32::from(weather))])
+    }
     fn gravity(&self) -> f32 {
         state::world().map_or(0.0, |w| w.gravity)
     }
@@ -602,7 +768,7 @@ impl WorldState for ModGame {
         if self.gravity().to_bits() == g.to_bits() {
             return Ok(());
         }
-        Err(GameError::Unsupported("WorldState::set_gravity"))
+        world::set_gravity(g).map_err(failed("set_gravity"))
     }
     fn area(&self) -> AreaCode {
         AreaCode(self.area_raw() as u8)
@@ -632,7 +798,11 @@ impl WorldState for ModGame {
         let f = Arg::Float;
         cmd(0x016C, &[f(pos.x), f(pos.y), f(pos.z), f(heading_deg), Arg::Int(0)])
     }
-    fn ground_z(&self, _pos: Vec3) -> f32 { Default::default() }
+    /// `GET_GROUND_Z_FOR_3D_COORD` (02CE); 0 when the command fails.
+    fn ground_z(&self, pos: Vec3) -> f32 {
+        let f = Arg::Float;
+        script::run(0x02CE, &[f(pos.x), f(pos.y), f(pos.z), Arg::Out]).map_or(0.0, |o| f32::from_bits(o.outputs[0]))
+    }
     fn line_of_sight(&self, _from: Vec3, _to: Vec3, _filter: LineFilter) -> Option<LineHit> { None }
     fn line_clear(&self, from: Vec3, to: Vec3, f: LineFilter) -> bool {
         let (x, i) = (Arg::Float, |b: bool| Arg::Int(i32::from(b)));
@@ -640,10 +810,20 @@ impl WorldState for ModGame {
         let flags = [i(f.buildings), i(f.vehicles), i(f.peds), i(f.objects), i(f.dummies)];
         cond(0x06BD, &[args.as_slice(), flags.as_slice()].concat()).unwrap_or(false)
     }
-    fn add_explosion(&mut self, _pos: Vec3, _kind: i32, _radius: f32, _shake: f32) -> GameResult<()> { Err(GameError::Unsupported("WorldState::add_explosion")) }
+    /// `ADD_EXPLOSION_VARIABLE_SHAKE` (0948): the game's explosion of `kind` with the camera shake `shake` (the
+    /// command has no radius).
+    fn add_explosion(&mut self, pos: Vec3, kind: i32, _radius: f32, shake: f32) -> GameResult<()> {
+        let f = Arg::Float;
+        cmd(0x0948, &[f(pos.x), f(pos.y), f(pos.z), Arg::Int(kind), f(shake)])
+    }
     fn create_fx(&mut self, _name: &str, _on: Option<PedRef>, _offset: Vec3, _dir: Vec3) -> GameResult<FxRef> { Err(GameError::Unsupported("WorldState::create_fx")) }
     fn kill_fx(&mut self, _fx: FxRef) -> GameResult<()> { Err(GameError::Unsupported("WorldState::kill_fx")) }
-    fn load_shop(&mut self, _name: &str) -> GameResult<()> { Err(GameError::Unsupported("WorldState::load_shop")) }
+    fn load_shop(&mut self, name: &str) -> GameResult<()> {
+        cmd(0x075E, &[Arg::Text(name.as_bytes())])
+    }
+    fn set_float_stat(&mut self, stat: u16, value: f32) -> GameResult<()> {
+        world::set_float_stat(stat, value).map_err(failed("set_float_stat"))
+    }
 }
 
 impl WorldEntities for ModGame {
