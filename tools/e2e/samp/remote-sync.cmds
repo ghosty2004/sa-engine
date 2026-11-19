@@ -1,0 +1,88 @@
+# The other players' syncs beyond on foot, for both SA:MP hosts (mod-join.sh / samp-rs-ab.sh CMDS=this file, a
+# samp-bot built in samp-rs/target/release): open.mp NPCs far away (208 markers: the player colour, then hidden by
+# SetPlayerMarkerForPlayer), driving and riding a car (200 / 211), aiming and shooting at our player (203 / 206),
+# then samp-bot pushing an unoccupied car (209), towing a trailer (200 + 210) and shooting (203 / 206).
+clearnpcs
+clearvehs
+pos|2495|-1680|13.5|0
+hp|100
+armour|0
+sleep|3
+# 1. far away: a coordinate marker on the radar, red, then hidden for our player
+npc|Far|2250|-1500|13.5|105|0
+sleep|5
+shot|far-marker
+color|N|FF0000FF
+sleep|4
+shot|far-red
+markerfor|N|FF000000
+sleep|4
+shot|far-hidden
+npcdel|N
+sleep|1
+# 2. a passenger and a driver in a car that then drives away north (streamed: a blip on each ped)
+veh|560|2501|-1668|13.4|0
+npc|Rider|2503|-1666|13.5|106|0
+npcveh|N|V|1
+npc|Driver|2503|-1668|13.5|105|0
+npcveh|N|V|0
+sleep|3
+shot|car-seated
+npcdrive|N|2501|-1610|13.4|-1
+sleep|3
+shot|car-driving
+sleep|4
+shot|car-driven
+clearnpcs
+clearvehs
+pos|2495|-1680|13.5|0
+sleep|2
+# 3. an NPC aims a Desert Eagle at our player and shoots
+npc|Shooter|2489|-1670|13.5|105|24
+npcammo|N|500
+sleep|3
+npcaim|N|0
+sleep|3
+shot|npc-aiming
+npcaim|N|1
+sleep|3
+shot|npc-shooting
+npcstop|N
+sleep|2
+clearnpcs
+hp|100
+sleep|2
+# 4. samp-bot pushes an unoccupied car north past our player
+veh|560|2498|-1684|13.4|0
+sleep|2
+bot|--name Pusher --mode push --vehicle @veh --speed 2 --seconds 12
+sleep|8
+shot|pushed
+botwait
+sleep|2
+clearvehs
+pos|2495|-1680|13.5|0
+# 5. samp-bot drives a truck with a trailer
+veh|403|2470|-1660|13.5|0
+veh|435|2470|-1670|13.5|0
+sleep|2
+bot|--name Trucker --mode drive --vehicle @veh2 --trailer @veh --path line --speed 6 --seconds 20
+sleep|12
+shot|towing
+botwait
+sleep|2
+clearvehs
+pos|2495|-1680|13.5|0
+hp|100
+sleep|2
+# 6. samp-bot (at the spawn point, in front of our player facing south) aims and shoots with its Desert Eagle
+pos|2495|-1677|13.5|180
+sleep|2
+bot|--name Gunman --mode shoot --target {me} --weapon 24 --seconds 12
+sleep|3
+shot|bot-aiming
+sleep|5
+shot|bot-shooting
+botwait
+sleep|3
+shot|end

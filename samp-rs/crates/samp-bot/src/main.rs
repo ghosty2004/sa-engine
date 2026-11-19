@@ -18,10 +18,10 @@ usage: samp-bot [HOST:PORT] [options]
   --seconds N          session length (default 15); a seated bot leaves its vehicle first
   --auth-table PATH    a table replacing the built-in one
   --class N            class to request (default 0)
-  --mode MODE          walk (default) | idle | drive | passenger | shoot
+  --mode MODE          walk (default) | idle | drive | passenger | shoot | push
   --sync-ms MS         fixed foot/in-car sync interval instead of rate + N (measurements)
- drive / passenger:
-  --vehicle ID         vehicle to enter (default: nearest streamed, undriven)
+ drive / passenger / push:
+  --vehicle ID         vehicle to enter or push (default: nearest streamed, undriven)
   --seat N             passenger seat for 211 (default 1)
   --path circle|line   circle (default) or 50 m straight + 90° left turn
   --radius M           circle / turn radius (default 10 / 20)

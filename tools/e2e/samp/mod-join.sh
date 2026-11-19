@@ -25,7 +25,8 @@
 # (SAMP_DATA=0: not, the mod then runs without SA:MP's own models).
 # EXTRA_CMDS: more server commands after the scripted ones, `;`-separated (`sleep|S` waits, `shot|NAME` copies the
 # newest complete presented frame to OUT/shots/NAME.png, `key|NAME` presses a key through the game's key file,
-# `SA_GAME_KEY_FILE`), then the lines of the file CMDS (tools/e2e/samp/objects.cmds), e.g.
+# `SA_GAME_KEY_FILE`, `bot|ARGS` / `botwait` start samp-bot with ARGS and wait for it to leave: tools/e2e/samp/bot.sh),
+# then the lines of the file CMDS (tools/e2e/samp/objects.cmds, remote-sync.cmds), e.g.
 # 'td|~y~textdraw;dialog|1|0|Welcome|Hello;sleep|8'; SA_GAME_KEYS adds scripted keys (`tab:1500:1502`
 # opens the scoreboard). BOT=1: samp-rs's samp-bot (SAMP_BOT, default samp-rs/target/release/samp-bot) joins as
 # a second, real player once ours spawned, stands at the spawn point, ahead of our player (its nametag), and leaves
@@ -209,7 +210,11 @@ LIST_PID=$!
 GAME_PID=
 BOT_PID=
 WEB_PIDS=
+# shellcheck source=bot.sh
+source "$HERE/bot.sh"
+BOT_ROOT="$ROOT" BOT_PORT="$PORT" BOT_ME=ModCJ BOT_SLOG="$SLOG" BOT_LOG="$OUT/samp-bot.log" BOT_AUTH="$AUTH"
 cleanup() {
+    bot_stop
     [ -n "$GAME_PID" ] && kill "$GAME_PID" 2> /dev/null
     [ -n "$BOT_PID" ] && kill "$BOT_PID" 2> /dev/null
     for p in $WEB_PIDS; do kill "$p" 2> /dev/null; done
@@ -375,6 +380,8 @@ elif wait_log '\[cov\] spawn id=' 150; then
             sleep\|*) sleep "${c#sleep|}" ;;
             restart\|*) say "server restart"; server_kill; sleep "${c#restart|}"; server_start ;;
             key\|*) echo "${c#key|}" >> "$OUT/keys.txt" ;;
+            bot\|*) say "samp-bot ${c#bot|}"; bot_start "${c#bot|}" ;;
+            botwait) bot_wait; say "samp-bot left" ;;
             shot\|*) shot="$(ls -t "$OUT/present" | grep -E '^present-[0-9]+[.]png$' | sed -n 2p)"
                 [ -n "$shot" ] && cp "$OUT/present/$shot" "$OUT/shots/${c#shot|}.png" && say "shot ${c#shot|} ($shot)" ;;
             ?*) cmd "$c" ;;

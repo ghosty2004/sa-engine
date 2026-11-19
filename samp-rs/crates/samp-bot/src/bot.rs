@@ -87,6 +87,8 @@ pub enum Mode {
     Passenger,
     /// Aim at a player and fire.
     Shoot,
+    /// Push an unoccupied vehicle straight ahead, walking behind it (209 for the vehicle).
+    Push,
 }
 
 impl std::str::FromStr for Mode {
@@ -98,6 +100,7 @@ impl std::str::FromStr for Mode {
             "drive" => Mode::Drive,
             "passenger" => Mode::Passenger,
             "shoot" => Mode::Shoot,
+            "push" => Mode::Push,
             _ => return Err(format!("unknown mode {s:?} (walk|idle|drive|passenger|shoot)")),
         })
     }
@@ -290,7 +293,21 @@ pub struct Bot {
     waiting_note: Option<&'static str>,
     /// A shot is due this tick (fired from the sync step, before 207/203).
     pending_shot: bool,
+    /// Push mode: the vehicle pushed, its position and heading, and when it last moved.
+    push: Option<Pushed>,
 }
+
+/// An unoccupied vehicle the bot pushes.
+#[derive(Clone, Copy, Debug)]
+struct Pushed {
+    vehicle: u16,
+    pos: Vec3,
+    heading: f32,
+    moved: Instant,
+}
+
+/// How far behind the pushed vehicle's centre the bot walks.
+const PUSH_BEHIND: f32 = 3.0;
 
 impl Bot {
     pub fn new(cfg: Config, now: Instant) -> Self {
@@ -334,6 +351,7 @@ impl Bot {
             last_damage: None,
             waiting_note: None,
             pending_shot: false,
+            push: None,
         }
     }
 
@@ -845,7 +863,66 @@ impl Bot {
                 }
             }
             Mode::Shoot => self.shoot_mode(now),
+            Mode::Push => self.push_mode(now),
         }
+    }
+
+    /// Push mode: the vehicle (`--vehicle`, else the nearest undriven) moves ahead at `--speed`, the bot walks
+    /// behind it; the 209 goes out with the syncs.
+    fn push_mode(&mut self, now: Instant) {
+        if self.shutting_down {
+            self.stand();
+            self.push = None;
+            return;
+        }
+        let Some(mut p) = self.push else {
+            self.stand();
+            let id = self.cfg.vehicle.filter(|v| self.world.vehicles.contains_key(v));
+            let id = id.or_else(|| if self.cfg.vehicle.is_some() { None } else { self.world.nearest_free_vehicle(self.pos, now) });
+            match id.and_then(|id| self.world.vehicles.get(&id).map(|v| (id, v.pos, v.heading))) {
+                Some((vehicle, pos, heading)) => {
+                    println!("[push] pushing vehicle {vehicle} from {pos:?}");
+                    self.push = Some(Pushed { vehicle, pos, heading, moved: now });
+                }
+                None => self.note_once("[push] waiting for a vehicle to stream in"),
+            }
+            return;
+        };
+        let dt = now.duration_since(p.moved).as_secs_f32().min(0.25);
+        p.pos = add(p.pos, scale(forward(p.heading), self.cfg.speed * dt));
+        p.moved = now;
+        self.push = Some(p);
+        if let Some(v) = self.world.vehicles.get_mut(&p.vehicle) {
+            v.pos = p.pos;
+        }
+        self.pos = add(p.pos, scale(forward(p.heading), -PUSH_BEHIND));
+        self.heading = p.heading;
+        self.vel = scale(forward(p.heading), self.cfg.speed);
+        self.keys = 0;
+        self.lr = 0;
+        self.ud = -128;
+    }
+
+    /// 209 for the pushed vehicle every in-car interval.
+    fn send_push(&mut self, now: Instant, out: &mut impl Outbox) {
+        let Some(p) = self.push else { return };
+        let interval = self.interval(self.rates.in_car);
+        if self.t.car.is_some_and(|t| now.duration_since(t) <= interval) {
+            return;
+        }
+        self.t.car = Some(now);
+        let health = self.world.vehicles.get(&p.vehicle).map_or(1000.0, |v| v.health);
+        let sync = samp_proto::sync::vehicle::UnoccupiedSync {
+            vehicle_id: p.vehicle,
+            seat: 0,
+            roll: right(p.heading),
+            direction: forward(p.heading),
+            position: p.pos,
+            velocity: geom::move_speed(scale(forward(p.heading), self.cfg.speed)),
+            turn_velocity: v3(0.0, 0.0, 0.0),
+            health,
+        };
+        crate::send_sync(out, &sync);
     }
 
     fn walk_circle(&mut self, now: Instant) {
@@ -1009,6 +1086,7 @@ impl Bot {
                     self.fire_shot(now, out);
                 }
                 self.send_foot(now, out);
+                self.send_push(now, out);
                 self.send_aim_on_foot(now, out);
             }
         }
@@ -1377,6 +1455,27 @@ mod tests {
 
     fn ms(t0: Instant, t: Instant) -> u64 {
         t.duration_since(t0).as_millis() as u64
+    }
+
+    #[test]
+    fn push_moves_the_vehicle_ahead() {
+        let t0 = Instant::now();
+        let mut b = spawned(Config { mode: Mode::Push, speed: 2.0, ..Config::default() }, t0);
+        stream_vehicle(&mut b, 5, v3(10.0, 0.0, 3.0), 560);
+        let mut rec = Rec::default();
+        run(&mut b, &mut rec, t0, 0, 3000);
+        let pushes = rec.syncs(ids::UNOCCUPIED_SYNC);
+        assert!(pushes.len() >= 10, "{} 209s", pushes.len());
+        let ys: Vec<f32> = pushes
+            .iter()
+            .map(|(_, body, _)| {
+                let s = samp_proto::sync::vehicle::UnoccupiedSync::read_body(&mut BitReader::new(body)).expect("209");
+                assert_eq!(s.vehicle_id, 5);
+                s.position.y
+            })
+            .collect();
+        assert!(ys.windows(2).all(|w| w[1] >= w[0]) && ys[ys.len() - 1] > 4.0, "{ys:?}");
+        assert!(b.pos.y < ys[ys.len() - 1]);
     }
 
     #[test]

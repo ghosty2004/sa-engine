@@ -23,6 +23,8 @@
 //   NPCs (open.mp NPC component; remote players for the client):
 //   npc|name|x|y|z|skin|weapon  npcmove|id|x|y|z  npcfollow|id  npcaim|id|shoot  npcstop|id  npcmelee|id
 //   npcanim|id|lib|name  npcveh|id|vehid|seat  npcenter|id|vehid|seat  npckill|id  npcdel|id  clearnpcs  clearvehs (all but the train)
+//   npcdrive|id|x|y|z|speed  npcammo|id|ammo; an NPC id "N" is the NPC made last, a vehicle id "V" the vehicle made last
+//   Markers (tools/e2e/samp/remote-sync.cmds): color|playerid|RRGGBBAA  markerfor|playerid|RRGGBBAA
 //   More (tools/e2e/samp/chaos.py): actoranim|id|lib|name  actordel|id  vcolour|vehid|c1|c2  paintjob|vehid|n
 //   tune|vehid|component  iconoff|id  objdel|id
 #include <open.mp>
@@ -34,6 +36,9 @@ new Menu:gMenu = Menu:INVALID_MENU;
 // The vehicles `vehc` created since the last `clearvehs`; the vehicle commands below name them 1, 2, ...
 new gVehs[16];
 new gVehCount = 0;
+// The NPC and the vehicle the scenario made last ("N" / "V" in a command's argument).
+new gLastNpc = INVALID_PLAYER_ID;
+new gLastVeh = INVALID_VEHICLE_ID;
 new gObj[8] = { INVALID_OBJECT_ID, ... };
 // The local player's last polled GetPlayerKeys (keys, up/down, left/right): the arrow keys raise no key-change event.
 new gKeys[3];
@@ -202,6 +207,23 @@ field(const line[], n, dest[], size = sizeof dest)
 in(const line[], n) { new b[32]; field(line, n, b); return strval(b); }
 vs(const line[], n) { new k = in(line, n); return (k >= 1 && k <= gVehCount) ? gVehs[k - 1] : INVALID_VEHICLE_ID; }
 Float:fl(const line[], n) { new b[32]; field(line, n, b); return floatstr(b); }
+np(const line[], n) { new b[32]; field(line, n, b); return (b[0] == 'N' && b[1] == 0) ? gLastNpc : strval(b); }
+nv(const line[], n) { new b[32]; field(line, n, b); return (b[0] == 'V' && b[1] == 0) ? gLastVeh : strval(b); }
+// A colour in hex (RRGGBBAA).
+hx(const line[], n)
+{
+    new b[16], v = 0;
+    field(line, n, b);
+    for (new i = 0; b[i] != 0; i++)
+    {
+        new c = b[i];
+        v <<= 4;
+        if (c >= '0' && c <= '9') v |= c - '0';
+        else if (c >= 'a' && c <= 'f') v |= c - 'a' + 10;
+        else if (c >= 'A' && c <= 'F') v |= c - 'A' + 10;
+    }
+    return v;
+}
 
 Run(seq, const line[])
 {
@@ -244,6 +266,7 @@ Run(seq, const line[])
     else if (!strcmp(cmd, "veh"))
     {
         new v = CreateVehicle(in(line, 1), fl(line, 2), fl(line, 3), fl(line, 4), fl(line, 5), -1, -1, -1);
+        gLastVeh = v;
         printf("[cov] %d veh %d", seq, v);
     }
     else if (!strcmp(cmd, "vehs"))
@@ -412,20 +435,26 @@ Run(seq, const line[])
         NPC_SetPos(n, fl(line, 2), fl(line, 3), fl(line, 4));
         NPC_SetSkin(n, in(line, 5));
         NPC_SetWeapon(n, WEAPON:in(line, 6));
+        gLastNpc = n;
         printf("[cov] %d npc %d", seq, n);
     }
     else if (!strcmp(cmd, "clearvehs")) { gVehCount = 0; for (new v = 1; v <= MAX_VEHICLES; v++) if (GetVehicleModel(v) != 0 && GetVehicleModel(v) != 538) DestroyVehicle(v); }
     else if (!strcmp(cmd, "clearnpcs")) { for (new i = 0; i < MAX_PLAYERS; i++) if (IsPlayerConnected(i) && IsPlayerNPC(i)) NPC_Destroy(i); }
-    else if (!strcmp(cmd, "npcmove")) NPC_Move(in(line, 1), fl(line, 2), fl(line, 3), fl(line, 4), NPC_MOVE_TYPE_AUTO);
-    else if (!strcmp(cmd, "npcfollow")) NPC_MoveToPlayer(in(line, 1), p, NPC_MOVE_TYPE_WALK);
-    else if (!strcmp(cmd, "npcaim")) NPC_AimAtPlayer(in(line, 1), p, in(line, 2) != 0, 400);
-    else if (!strcmp(cmd, "npcstop")) { NPC_StopAim(in(line, 1)); NPC_StopMove(in(line, 1)); }
-    else if (!strcmp(cmd, "npcmelee")) NPC_MeleeAttack(in(line, 1), 2000);
-    else if (!strcmp(cmd, "npcanim")) { field(line, 2, a); field(line, 3, b); NPC_ApplyAnimation(in(line, 1), a, b, 4.1, true, false, false, false, 0); }
-    else if (!strcmp(cmd, "npcveh")) NPC_PutInVehicle(in(line, 1), in(line, 2), in(line, 3));
-    else if (!strcmp(cmd, "npcenter")) NPC_EnterVehicle(in(line, 1), in(line, 2), in(line, 3), NPC_MOVE_TYPE_WALK);
-    else if (!strcmp(cmd, "npckill")) NPC_Kill(in(line, 1), INVALID_PLAYER_ID, REASON_SUICIDE);
-    else if (!strcmp(cmd, "npcdel")) NPC_Destroy(in(line, 1));
+    else if (!strcmp(cmd, "npcmove")) NPC_Move(np(line, 1), fl(line, 2), fl(line, 3), fl(line, 4), NPC_MOVE_TYPE_AUTO);
+    else if (!strcmp(cmd, "npcfollow")) NPC_MoveToPlayer(np(line, 1), p, NPC_MOVE_TYPE_WALK);
+    else if (!strcmp(cmd, "npcaim")) NPC_AimAtPlayer(np(line, 1), p, in(line, 2) != 0, 400);
+    else if (!strcmp(cmd, "npcstop")) { NPC_StopAim(np(line, 1)); NPC_StopMove(np(line, 1)); }
+    else if (!strcmp(cmd, "npcmelee")) NPC_MeleeAttack(np(line, 1), 2000);
+    else if (!strcmp(cmd, "npcanim")) { field(line, 2, a); field(line, 3, b); NPC_ApplyAnimation(np(line, 1), a, b, 4.1, true, false, false, false, 0); }
+    else if (!strcmp(cmd, "npcveh")) NPC_PutInVehicle(np(line, 1), nv(line, 2), in(line, 3));
+    else if (!strcmp(cmd, "npcenter")) NPC_EnterVehicle(np(line, 1), nv(line, 2), in(line, 3), NPC_MOVE_TYPE_WALK);
+    else if (!strcmp(cmd, "npckill")) NPC_Kill(np(line, 1), INVALID_PLAYER_ID, REASON_SUICIDE);
+    else if (!strcmp(cmd, "npcdel")) NPC_Destroy(np(line, 1));
+    else if (!strcmp(cmd, "npcdrive")) NPC_Move(np(line, 1), fl(line, 2), fl(line, 3), fl(line, 4), NPC_MOVE_TYPE_DRIVE, fl(line, 5));
+    else if (!strcmp(cmd, "npcammo")) NPC_SetAmmo(np(line, 1), in(line, 2));
+    // A player's colour (its radar marker for everyone) and its marker for our player only (alpha 0 hides it).
+    else if (!strcmp(cmd, "color")) SetPlayerColor(np(line, 1), hx(line, 2));
+    else if (!strcmp(cmd, "markerfor")) SetPlayerMarkerForPlayer(p, np(line, 1), hx(line, 2));
     else { printf("[cov] %d unknown %s", seq, cmd); return; }
     printf("[cov] %d done %s", seq, cmd);
 }

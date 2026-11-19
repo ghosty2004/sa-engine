@@ -18,7 +18,8 @@
 # zone, an actor, then gmx and a server restart) instead of the join steps, then /q; mod-join.sh SCENARIO=world runs the
 # same steps on the samp mod.
 # CMDS=FILE (tools/e2e/samp/objects.cmds): after the spawn, the file's server commands instead of the fixed scenario
-# (`sleep|S` waits, `shot|NAME` takes a screenshot, `key|NAME` presses an xdotool key), then /q. FILTERSCRIPTS adds the
+# (`sleep|S` waits, `shot|NAME` takes a screenshot, `key|NAME` presses an xdotool key, `bot|ARGS` / `botwait` start
+# samp-bot and wait for it to leave: tools/e2e/samp/bot.sh), then /q. FILTERSCRIPTS adds the
 # server's filterscripts (comma-separated, e.g. npc_trains), as mod-join.sh does.
 # PAWN_DEFINES: defines for sampcov.pwn, e.g. NO_ENEX=1 (the gamemode disables the entry-exits).
 # Output: target/e2e/lane-N/samp-ab/NAME/ (server.log, samp-rs.log, shots, sequence.txt).
@@ -138,8 +139,12 @@ audio_restore() {
     rm -rf "${GTA_DIR:?}/audio" && ln -s "$shared" "$GTA_DIR/audio"
 }
 
+# shellcheck source=bot.sh
+source "$HERE/bot.sh"
+BOT_ROOT="$SA_ROOT" BOT_PORT="$SAMP_PORT" BOT_ME=AbPlayer BOT_SLOG="$SLOG" BOT_LOG="$OUT/samp-bot.log" BOT_AUTH="$AUTH"
 finish() {
     say "teardown"
+    bot_stop
     e2e_cleanup
     server_stop
     cp -f "$GTA_DIR/samp-rs.log" "$OUT/samp-rs.log" 2> /dev/null
@@ -330,6 +335,8 @@ else
             sleep\|*) sleep "${c#sleep|}" ;;
             shot\|*) alive; shot "${c#shot|}"; world "$OUT/world-${c#shot|}.txt" ;;
             key\|*) e2e_key "${c#key|}" ;;
+            bot\|*) say "samp-bot ${c#bot|}"; bot_start "${c#bot|}" ;;
+            botwait) bot_wait; say "samp-bot left" ;;
             *) cmd "$c" ;;
         esac
     done < "$CMDS"
