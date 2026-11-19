@@ -67,6 +67,7 @@ pub mod op {
     pub const REMOVE_PICKUP: u16 = 0x0215;
     pub const CHANGE_CAR_COLOUR: u16 = 0x0229;
     pub const REQUEST_MODEL: u16 = 0x0247;
+    pub const HAS_MODEL_LOADED: u16 = 0x0248;
     pub const MARK_MODEL_AS_NO_LONGER_NEEDED: u16 = 0x0249;
     pub const SWITCH_WIDESCREEN: u16 = 0x02A3;
     pub const RESTORE_CAMERA_JUMPCUT: u16 = 0x02EB;
@@ -264,6 +265,10 @@ impl Threads {
         if let Some(block) = unknown_anim_block(op, args) {
             return Err(GameError::Other(format!("no animation block {block:?}")));
         }
+        #[cfg(not(any(test, feature = "fake")))]
+        if let Some(model) = unknown_model(op, args) {
+            return Err(GameError::Other(format!("no model {model}")));
+        }
         let exec = self.exec;
         let th = self.get_mut(t)?;
         encode(op, args, &mut th.code);
@@ -300,6 +305,31 @@ fn unknown_anim_block(op: Opcode, args: &[ScriptArg<'_>]) -> Option<String> {
     buf[..n].copy_from_slice(&name[..n]);
     let index = sa_core::bindings::get_animation_block_index(GPtr::from_raw(buf.as_mut_ptr()));
     (index < 0).then(|| String::from_utf8_lossy(&name[..n]).into_owned())
+}
+
+/// Commands whose integer argument (at the index) is a model id. The game reads the model's info and streaming
+/// record without checking that the model exists, so an id it does not define (a server's own object model)
+/// would fault inside the command.
+#[cfg(not(any(test, feature = "fake")))]
+const MODEL_ARGS: [(u16, usize); 7] = [
+    (op::REQUEST_MODEL, 0),
+    (op::HAS_MODEL_LOADED, 0),
+    (op::MARK_MODEL_AS_NO_LONGER_NEEDED, 0),
+    (op::CREATE_CHAR, 1),
+    (op::CREATE_CAR, 0),
+    (op::CREATE_OBJECT, 0),
+    (op::CREATE_PICKUP, 0),
+];
+
+/// The model id of `args` the game does not define (`CModelInfo::ms_modelInfoPtrs[id]` unset or out of range),
+/// if `op` takes one.
+#[cfg(not(any(test, feature = "fake")))]
+fn unknown_model(op: Opcode, args: &[ScriptArg<'_>]) -> Option<i32> {
+    let &(_, i) = MODEL_ARGS.iter().find(|(o, _)| *o == op.0)?;
+    let ScriptArg::Int(model) = *args.get(i)? else { return None };
+    let defined = (0..crate::addr::MODEL_INFO_COUNT as i32).contains(&model)
+        && GPtr::<u32>::from_addr((crate::addr::MODEL_INFO_PTRS + 4 * model as u32) as usize).read() != 0;
+    (!defined).then_some(model)
 }
 
 impl<V: View> Game<V> {
